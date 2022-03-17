@@ -43,6 +43,10 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                actions=['sagemaker:CreateApp'],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
                 actions=['sagemaker:Create*'],
                 resources=['*'],
             ),
