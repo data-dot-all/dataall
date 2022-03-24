@@ -1,0 +1,26 @@
+# Dimensions: basic
+
+steps:
+  - name: Dim_{{dimension}}_01
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : {{dimension}}_update_map_table
+      type: sql
+      config:
+        file: "{{path}}/dimension/01_Update map table.sql"
+
+  - name: Dim_{{dimension}}_02
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : {{dimension}}_dim_drop_staging_table
+      type: sql
+      config:
+        file: "{{path}}/dimension/02_Drop staging table.sql"
+
+  - name: Dim_{{dimension}}_03
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : {{dimension}}_update_dimension_data
+      type: sql
+      config:
+        file: "{{path}}/dimension/03_Update dimension data.sql"

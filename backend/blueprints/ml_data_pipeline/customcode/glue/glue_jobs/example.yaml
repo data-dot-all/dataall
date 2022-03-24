@@ -1,0 +1,14 @@
+# An example YAML file
+
+variables:
+  file : variables.yaml
+nblines : 10
+queries: sql_queries
+udfs : udfs
+tests: tests
+
+steps:
+  - name: examplestep
+    type: mock
+    config:
+      message: "This is an example glue step with a variable: {{glue_var_1}}"

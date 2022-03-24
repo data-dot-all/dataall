@@ -1,0 +1,2 @@
+Pillow
+boto3

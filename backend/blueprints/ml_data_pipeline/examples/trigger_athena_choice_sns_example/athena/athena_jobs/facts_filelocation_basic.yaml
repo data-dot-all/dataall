@@ -1,0 +1,12 @@
+# Filelocation Facts: basic
+
+steps:
+  - name: Filelocation_{{fact}}
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : {{fact}}_fact_filelocation
+      type: sql
+      config:
+        file: "{{path}}/fact/FILELOCATION_Alter fact location.sql"
+
+

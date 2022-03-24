@@ -1,0 +1,29 @@
+# YAML for ingestion and SQL transformation of Open-travel data
+name : Ingestion and SQL Transformation
+
+properties:
+  timeout: 2000
+
+triggers:
+  - name: trigger_{{model_name}}
+    type: lambda_function
+    config:
+     entry: "customcode/lambda_functions/opentravel_sfn_trigger"
+     index: "handler.py"
+     handler: "handler"
+groups:
+  - name: Ingest   # The job is where all the dimension tables are ingested
+    jobs:
+      - name : Ingest
+        config: "ingest.yaml"
+        type: glue_job
+
+
+  - name: Join tables  # Join airlines and websites. and materialized
+    jobs:
+        - name: Join_tables
+          config: "join.yaml"
+          type: glue_job
+
+
+

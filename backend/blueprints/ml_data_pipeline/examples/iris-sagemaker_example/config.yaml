@@ -1,0 +1,188 @@
+# An example YAML file
+name : Iris pipeline
+comment: Iris pipeline from preparation to deployment
+aws_resources:
+
+  - name: datascience_layer
+    type: lambda_layer
+    config:
+       layer_entry: "customcode/lambda_layers/pandas_sklearn"
+       bundle_type: custom
+       cmd: "rm -rf /asset-output/python  && pip install -r requirements.txt --target /asset-output/python --quiet &&  rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*"
+
+  - name: numpy_layer
+    type: lambda_layer
+    config:
+        layer_arn:
+                arn: "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python37-SciPy1x:35"
+                id: "scipynumpy"
+triggers:
+   - name: iris_trigger
+     type: lambda_function
+     config:
+       entry: "customcode/lambda_functions/iris_sfn_trigger"
+       index: "handler.py"
+       handler: "handler"
+
+groups:
+
+  - name: "Prepare iris data"
+    jobs:
+      - name: prepare_function
+        description: "Preparing training and test data for iris dataset."
+        type: lambda_function
+        config:
+          entry: "customcode/lambda_functions/prepare_iris"
+          layer_ref:
+             - datascience_layer
+             - numpy_layer
+          timeout: 300
+
+  - name: "Training"
+    jobs:
+      - name: Training
+        type: sagemaker_hpo
+        ext_job_name: "$.model_name"
+        config:
+          resources:
+              - name: hpo_resource
+                instance_count: 1
+                instance_type: "ml.m5.2xlarge"
+                volume_size: 30
+          strategy: Bayesian
+          objective:
+              type: Minimize
+              metric: "validation:merror"
+
+          resource_limits:
+              nb_of_training_jobs: 40
+              max_parallel_training_jobs: 4
+
+          parameter_ranges:
+              - name: "alpha"
+                min_value: 0
+                max_value: 100
+                scaling_type: Auto
+                type: continuous
+
+              - name: "gamma"
+                min_value : 0
+                max_value: 5
+                scaling_type: Auto
+                type: continuous
+
+              - name: "max_delta_step"
+                min_value: 1
+                max_value: 10
+                scaling_type: Auto
+                type: integer
+
+              - name: "max_depth"
+                min_value: 4
+                max_value: 8
+                type : integer
+
+
+              - name: "num_round"
+                min_value: 5
+                max_value: 20
+                type: integer
+
+          static_hyperparameters:
+              - name: num_class
+                value: 3
+
+
+
+          algorithm:
+              name: xgboost
+              version: "1.2-1"
+
+          output_path_from_input : "$.training_output"
+
+          training_input_from_path:
+              content_type: "$.training_input.content_type"
+              train_s3_uri:
+                bucket : "$.training_input.train_s3_uri.bucket"
+                prefix_key: "$.training_input.train_s3_uri.key_prefix"
+              validation_s3_uri:
+                bucket: "$.training_input.validation_s3_uri.bucket"
+                prefix_key:  "$.training_input.validation_s3_uri.key_prefix"
+
+          resource_ref: hpo_resource
+
+          max_runtime: 40000
+
+        retry:
+           retry_attempt: 3
+
+        hpo_result_path : "$.hpo_output"
+
+        model:
+          model_name_path: "$.model_name"
+
+  - name: "Predict on Test Set"
+    jobs:
+        - name: "Predict on Test set"
+          type: sagemaker_batch_transform
+          config:
+              model_name_path: "$.model_name"
+
+              transform_input:
+                 content_type: "text/csv"
+
+                 s3_data_source:
+                    s3_uri_from_path: $.s3_transform_input
+
+              data_processing:
+                input_filter: "$[1:]"
+                join_source: "Input"
+                output_filter: "$[0,-1]"
+             
+              transform_job_name_path: $.transform_job_name
+
+              transform_output:
+                 s3_output_path_from_path: $.s3_transform_output
+
+              transform_resources:
+                 instance_count: 1
+                 instance_type: "ml.m5.2xlarge"
+
+  - name: "Metrics"
+    jobs:
+      - name: compute_metrics
+        type: lambda_function
+        config:
+          entry: "customcode/lambda_functions/metrics"
+          layer_ref:
+            - datascience_layer
+            - numpy_layer
+
+
+  - name: "EndPoint"
+    jobs: 
+        - name: "EndPointChoice"
+          type: "choice"
+          choices :
+              - input: "$.launch_end_point"
+                condition: 
+                    BooleanEquals: true
+                groups:
+                   - name: "Config End Point"
+                     jobs: 
+                         - name : iris-endpoint-config
+                           type: sagemaker_endpoint_config
+                           endpoint: "$.EndPoint"
+                           config:
+                              instance_type: "c5.2xlarge"
+                              model_name_path: "$.model_name"
+
+                   - name: "Launch Endpoint"
+                     jobs:
+                        - name: iris-endpoint
+                          endpoint: "$.EndPoint"
+                          type: sagemaker_endpoint
+                          config:
+                              wait_for_completion: "false"
+                              retry_count:  30
+

@@ -1,0 +1,56 @@
+# An example YAML file
+name :  Cat pipeline
+comment: Cat pipeline that creates model
+
+aws_resources:
+
+  - name: image_manipulation_job_definition
+    type: batch_job_definition
+    job_definition:
+         memory_limit_mib: 2048
+         container_properties:
+           image:
+             assets:
+               directory: customcode/batch/img_manipulation
+               file: Dockerfile
+
+
+  - name: image_manipulation_job_queue
+    type: batch_job_queue
+    properties:
+      compute_environment:
+        {% if stage == 'test' -%}
+        subnet_id:
+            - "subnet-0e5e33dafdd059aca"
+        vpc_id:
+            "vpc-00658e7cb361a1a6a"
+        {%- elif stage == 'prod' -%}
+        vpc_id:
+          "vpc-0632e3934d1b6faa2"
+        subnet_id:
+          - "subnet-0a0cabd936dcc6ffa"
+          - "subnet-07b381813847b581a"
+          - "subnet-0dfd6b23903a8e01c"
+
+        {%- endif %}
+
+groups:
+  - name: cat_image_manipulation
+    jobs:
+       - name : cat_image_execution
+         type: batch
+         job_queue_ref: image_manipulation_job_queue
+         job_definition_ref: image_manipulation_job_definition
+         config:
+           container_overrides:
+             command:
+               - -b
+               - dhdsetsomeuniqueideuwest1
+               - -o
+               - catimages
+               - -d
+               - transformed_cats
+               - --height
+               - "120"
+               - --width
+               - "210"

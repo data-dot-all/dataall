@@ -1,0 +1,33 @@
+# ingests 2 tables from a database
+variables:
+  file : variables.yaml
+
+steps:
+  # Read from the source S3 bucket
+  - name: airlines
+    type : s3
+    config:
+      multiprefix : true
+      bucket: {{bucket}}
+      prefix : {{prefix}}
+      options:
+        format : csv
+        inferSchema: true
+        sep: ","
+        header : true
+
+
+  # Materializing the views
+  - name: airlines_materialize
+    type: materialize
+    config:
+      multiprefix : true
+      target: airlines
+      database: {{bucket}}
+      table: airlines_r
+      bucket: {{bucket}}
+      prefix: {{prefix}}
+      options:
+        format: parquet
+      description: "airlines info"
+

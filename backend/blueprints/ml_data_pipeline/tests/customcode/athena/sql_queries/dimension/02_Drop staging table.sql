@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS {{model_name}}.stg_dim_{{dimension}};

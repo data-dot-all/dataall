@@ -1,0 +1,10 @@
+# Predeployment
+
+steps:
+  - name: Predeployment
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : {{model_name}}_predeployment
+      type: sql
+      config:
+        file: "{{path}}/PREDEPLOY_Create database.sql"

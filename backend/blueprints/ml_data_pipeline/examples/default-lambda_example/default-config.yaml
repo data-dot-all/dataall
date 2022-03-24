@@ -1,0 +1,52 @@
+# An example YAML file
+name : Default pipeline
+comment: To have something when this is deployed
+variables:
+  file : variables.yaml
+aws_resources: # standalone aws resources
+
+  - name: pandas_layer
+    type: lambda_layer
+    config:
+       layer_entry: "customcode/lambda_layers/pandas"
+       bundle_type: custom
+       cmd: "rm -rf /asset-output/python  && pip install -r requirements.txt --target /asset-output/python --quiet &&  rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*"
+
+  - name: numpy_layer
+    type: lambda_layer
+    config:
+        layer_arn:
+                arn: "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python37-SciPy1x:35"
+                id: "scipynumpy"
+
+triggers:
+  - name: trigger_{{model_name}}
+    type: lambda_function
+    config:
+     entry: "customcode/lambda_functions/{{model_name}}_sfn_trigger"
+     index: "handler.py"
+     handler: "handler"
+
+
+groups: # step function
+  - name: My first step function
+    jobs:
+
+      - name: Example_lambda
+        description: "just opens one file"
+        type: lambda_function
+        config:
+          entry: "customcode/lambda_functions/{{model_name}}_fx"
+          index: "example_handler.py"
+          handler: "handler"
+          runtime: "python3.7"
+          layer_ref:
+             - pandas_layer
+             - numpy_layer
+          timeout: 300
+
+  - name: Second group
+    jobs:
+      - name : Example_glue_handlers
+        config: "{{model_name}}.yaml"
+        type: glue_job

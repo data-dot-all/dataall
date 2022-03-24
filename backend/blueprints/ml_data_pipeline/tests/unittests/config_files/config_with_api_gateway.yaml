@@ -1,0 +1,40 @@
+# An example YAML file
+
+name : sample
+
+aws_resources:
+
+  - name: "api"
+    type: "apigateway"
+    config:
+      resources:
+        - path: api-1
+          proxy: true
+          integrations:
+            - name: compute_efficiency
+              config:
+                entry: "tests/customcode/lambda_functions/example_1_fx"
+                index: "example_handler.py"
+                handler: "handler"
+              method: 'GET'
+        - path: api-2
+          proxy: true
+          resources:
+            - path: baseline
+              proxy: true
+              integrations:
+                - name: forecast-baseline
+                  config:
+                    entry: "tests/customcode/lambda_functions/example_2_fx"
+                    index: "example_handler.py"
+                    handler: "handler"
+                  method: 'GET'
+            - path: indicators
+              proxy: true
+              integrations:
+                - name: vwt-api-cip-forecast-indicators
+                  config:
+                    entry: "tests/customcode/lambda_functions/example_3_fx/"
+                    handler: "handler"
+                    index: "example_handler.py"
+                  method: 'GET'

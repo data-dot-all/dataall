@@ -1,0 +1,118 @@
+name: Athena_SNS
+comment: "Athena and SNS example. Also includes reading of variables on the run and from environment variables"
+variables:
+  file: variables.yaml
+aws_resources: []
+triggers:
+- name: trigger_code
+  type: lambda_function
+  config:
+    sns:
+      topic_arn: {{sns_topic_arn}} #Pipeline sns topic created when the pipeline is deployed. Notifications on CodePipeline changes are published here
+    entry: customcode/lambda_functions/sfn_trigger_athenasns
+    index: handler.py
+    handler: handler
+    
+- name: trigger_other_pip
+  type: lambda_function
+  config:
+    sns:
+      topic_arn: arn:aws:sns:eu-central-1:1111111111:sns_topic_ingest_pipeline
+    entry: customcode/lambda_functions/sfn_trigger_athenasns
+    index: handler.py
+    handler: handler
+    
+groups:
+- name: pre_deployment_choice
+  jobs:
+  - name: choice_predeployment
+    type: choice
+    choices:
+    - input: '$.isFirstRunAfterDeploy' #This variable is calculated in the trigger as a response of an event produced in the SNS subscriptions
+      condition:
+        BooleanEquals: true
+      groups: # This runs if the variable isFirstRunAfterDeploy is equal to true
+      - name: predeployment
+        jobs:
+        - name: predeployment
+          type: athena_query
+          comment: 'Predeployment steps, creation of database'
+          config:
+            config_file: "customcode/athena/athena_jobs/predeployment.yaml"
+            workgroup: '{{workgroup}}'
+            retry: #We can define retry parameters for the queries:
+                error_equals: ["Athena.AmazonAthenaException","Athena.TooManyRequestsException" ]
+                interval_seconds: 1
+                retry_attempts: 3
+                backoff_rate: 1.1
+            variables:
+              bucket_name: ''{{pipeline_bucket}}'' #This variable is defined in the environment
+              model_name: '{{model_name}}' #This variable is defined in the variables file
+              path: "customcode/athena/sql_queries"
+
+- name: dimensions
+  jobs:
+  - name: dimension1
+    type: athena_query
+    comment: dso_deviations
+    config:
+      config_file: "customcode/athena/athena_jobs/dim_basic.yaml"
+      workgroup: '{{workgroup}}'
+      variables:
+        bucket_name: '{{pipeline_bucket}}' #It can also be defined from the lambda trigger
+        model_name: '{{model_name}}'
+        path: "customcode/athena/sql_queries"
+        dimension: dimension1
+
+  - name: dimension2
+    type: athena_query
+    comment: dso_deviations
+    config:
+      config_file: "customcode/athena/athena_jobs/dim_basic.yaml"
+      workgroup: '{{workgroup}}'
+      variables:
+        bucket_name: '{{pipeline_bucket}}'
+        model_name: '{{model_name}}'
+        path: "customcode/athena/sql_queries"
+        dimension: dimension2
+
+- name: facts
+  jobs:
+  - name: fact1
+    type: athena_query
+    comment: dso_deviations
+    config:
+      config_file: "customcode/athena/athena_jobs/facts_basic.yaml"
+      workgroup: '{{workgroup}}'
+      variables:
+        bucket_name: '{{pipeline_bucket}}'
+        model_name: '{{model_name}}'
+        path: "customcode/athena/sql_queries"
+        fact: fact1
+
+  - name: fact2
+    type: athena_query
+    comment: dso_deviations
+    config:
+      config_file: "customcode/athena/athena_jobs/facts_basic.yaml"
+      workgroup: '{{workgroup}}'
+      variables:
+        bucket_name: '{{pipeline_bucket}}'
+        model_name: '{{model_name}}'
+        path: "customcode/athena/sql_queries"
+        fact: fact2
+
+- name: filelocations
+  jobs:
+  - name: update_file_locations
+    type: athena_query
+    comment: "after building star model, update the location of files"
+    config:
+      config_file: "customcode/athena/athena_jobs/facts_filelocation_basic.yaml"
+      workgroup: '{{workgroup}}'
+      variables:
+        bucket_name: '{{bucket_name}}'
+        model_name: '{{model_name}}'
+        path: "customcode/athena/sql_queries"
+        execution_id: '$$.Execution.Id'  #Part of the Context object of the StepFunction
+

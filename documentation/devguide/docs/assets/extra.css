@@ -1,0 +1,34 @@
+img {
+    height: auto;
+    width: auto;
+    border: 1px solid #e3e3e3;
+    transition: transform ease-in-out 0.3s;
+}
+
+img[src*="#shadow"] {
+    box-shadow: 0 4px 8px 0 rgba(195, 195, 195, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+img:active[src*="#zoom"] {
+    cursor: zoom-out;
+    transform: scale(1.7);
+}
+
+img[src*="#zoom"] {
+    cursor: zoom-in;
+}
+
+img[src*="#center"] {
+    display: flow-root;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+img[src*="#no-border"] {
+    border: 0px;
+    width: 200px;
+}
+
+a.md-logo img {
+    border: none;
+}

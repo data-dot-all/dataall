@@ -1,0 +1,78 @@
+# An example YAML file
+
+name : Irispipeline
+comment: Iris pipeline from preparation to deployment
+
+aws_resources:
+
+  - name: datascience_layer
+    type: lambda_layer
+    config:
+       layer_entry: "customcode/lambda_layers/pandas_sklearn"
+       bundle_type: custom
+       cmd: "rm -rf /asset-output/python  && pip install -r requirements.txt --target /asset-output/python --quiet &&  rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*"
+
+  - name: numpy_scipy37
+    type: lambda_layer
+    config:
+        layer_arn:
+                arn: "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python37-SciPy1x:35"
+                id: "scipynumpy"
+
+groups:
+  
+  - name: "Prepare iris data"
+    jobs:
+      - name: prepare_function
+        description: "Preparing training and test data for iris dataset."
+        type: lambda_function
+        config:
+          entry: "tests/customcode/lambda_functions/prepare_iris"
+          timeout: 300
+          layer_ref: 
+              - numpy_scipy37
+              - datascience_layer
+  
+  - name: "Training"
+    jobs:
+      - name: Training 
+        type: sagemaker_training
+        config: 
+            timeout: 3600
+            algorithm:
+              name: xgboost
+              version: "1.2-1"
+            input_data:
+              bucket : dhirisdatasetforclassificationbfxkifeuwest1
+              content_type: "text/csv"
+              training_data:
+                  prefix_key: "prepared/training_data.csv"
+              validation_data:
+                  prefix_key: "prepared/validation_data.csv"
+            output_data_path:
+                bucket: dhirisdatasetforclassificationbfxkifeuwest1
+                key_prefix: output
+            hyperparameters:
+              num_round: "10"
+              max_depth: "6"
+            resources:
+              - name: r1
+                instance_count: 1
+                instance_type: "m4.xlarge"
+                volume_size: 35
+            resource_ref: "r1"
+
+   
+  - name: "Model"
+    jobs:
+      - name: Model
+        type: sagemaker_model
+        config:
+           primary_container:
+              algorithm:
+                  name: xgboost
+                  version: "1.2-1"
+              model_path: "$.ModelArtifacts.S3ModelArtifacts"
+ 
+
+

@@ -1,0 +1,53 @@
+site_name: data.all - Developer Guide
+nav:
+    - Overview: index.md
+    - Security: security.md
+    - Networking: networking.md
+    - Deployment : deploy.md
+    - Code Walkthrough: code.md
+
+use_directory_urls: false
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+  palette:
+    scheme: default
+    accent: indigo
+  icon:
+    logo: material/cloud-outline
+    repo: fontawesome/brands/git-alt
+  favicon: material/cloud-outline
+  font:
+    text: Roboto
+    code: Ubuntu Mono
+
+plugins:
+    - mermaid2:
+        arguments:
+          theme: dark
+          sequenceConfig :
+            mirrorActors: false
+    - search
+
+
+markdown_extensions:
+  - attr_list
+  - toc:
+      permalink: true
+      separator: "_"
+  - codehilite
+  - admonition
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+extra_css:
+  - assets/extra.css
+extra_javascript:
+    - https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js

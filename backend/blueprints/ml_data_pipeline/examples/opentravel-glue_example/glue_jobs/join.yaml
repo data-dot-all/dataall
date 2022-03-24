@@ -1,0 +1,23 @@
+# Joins and materializes 2 tables table
+
+nblines : 10
+queries: sql_queries
+udfs : udfs
+tests: tests
+
+steps:
+  - name: joined_airlines
+    type : query
+    config:
+      file: join.sql
+
+  - name : joined_airlines_materialize
+    type: materialize
+    config:
+      target: joined_airlines
+      database: dhhandsoncuratedojmyd2eucentral1
+      table: joined_airlines
+      bucket: dhhandsoncuratedojmyd2eucentral1
+      prefix: joined_airlines
+      options:
+        format: parquet

@@ -1,0 +1,32 @@
+
+queries: "tests/customcode/glue/sql_queries"
+steps:
+  - name: titanic_train_raw
+    type : s3
+    config:
+      bucket: {{ pipeline_bucket }}
+      prefix: "examples/data/titanic/train.csv"
+      options:
+         format : csv
+         inferSchema: true
+         sep: ","
+         header : true
+
+  - name: prepared_titanic
+    type: query
+    config:
+       file: unittest.sql
+
+  - name : titanic_materialize
+    type: materialize
+    config:
+       target: titanic_train_raw
+       database:  {{ pipeline_unittest_db }}
+       table: titanic
+       bucket: {{ pipeline_bucket }}
+       prefix: data/titanic/ingested/train
+       options:
+         format: parquet
+       description: "Ingested Titanic dataset"
+ 
+

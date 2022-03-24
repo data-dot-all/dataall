@@ -1,0 +1,18 @@
+# Facts: basic
+
+steps:
+  - name: Facts_{{fact}}_01
+    jobs:
+# Introduce here the different steps, queries to run in parallel
+      - name : {{fact}}_drop_fact_staging_table
+        type: sql
+        config:
+          file: "{{path}}/fact/01_Drop staging table.sql"
+
+  - name: Facts_{{fact}}_02
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+      - name : {{fact}}_update_fact_data
+        type: sql
+        config:
+          file: "{{path}}/fact/02_Update fact data.sql"

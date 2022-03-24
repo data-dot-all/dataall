@@ -1,0 +1,33 @@
+# An example YAML file
+
+name : Irispipeline
+comment: Iris pipeline from preparation to deployment
+aws_resources:
+
+  - name: datascience_layer
+    type: lambda_layer
+    config:
+       layer_entry: "customcode/lambda_layers/pandas_sklearn"
+       bundle_type: custom
+       cmd: "rm -rf /asset-output/python  && pip install -r requirements.txt --target /asset-output/python --quiet &&  rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*"
+
+  - name: numpy_scipy37
+    type: lambda_layer
+    config: 
+        layer_arn: 
+                arn: "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python37-SciPy1x:35"
+                id: "scipynumpy"
+groups:
+  
+  - name: "Prepare iris data"
+    jobs:
+      - name: prepare_function
+        description: "Preparing training and test data for iris dataset at the bucket {{pipeline_bucket}}."
+        type: lambda_function
+        config:
+          entry: "tests/customcode/lambda_functions/prepare_iris"
+          layer_ref: 
+             - datascience_layer
+             - numpy_scipy37
+          timeout: 300 
+  

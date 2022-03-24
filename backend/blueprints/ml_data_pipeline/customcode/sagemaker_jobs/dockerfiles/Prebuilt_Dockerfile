@@ -1,0 +1,19 @@
+# Use base container to define the container to be used as base container
+ARG BASE_CONTAINER
+
+FROM $BASE_CONTAINER
+
+ARG SOURCE_PATH
+ARG ENTRY_POINT
+
+ENV PATH="/opt/ml/code:${PATH}"
+
+ENV SAGEMAKER_SUBMIT_DIRECTORY /opt/ml/code
+
+# /opt/ml and all subdirectories are utilized by SageMaker, use the /code subdirectory to store your user code.
+COPY smjobs/$SOURCE_PATH /opt/ml/code/
+
+RUN if test -f "opt/ml/code/requirements.txt" ; then pip install -r opt/ml/code/requirements.txt ; fi
+
+# Defines the entry point
+ENV SAGEMAKER_PROGRAM $ENTRY_POINT

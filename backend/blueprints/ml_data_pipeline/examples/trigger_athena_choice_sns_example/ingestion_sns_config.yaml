@@ -1,0 +1,22 @@
+# An example YAML file
+name : SNS
+comment: SNS step in ingestion pipeline
+variables:
+  file : variables.yaml
+aws_resources: # standalone aws resources
+
+  - name: MyTopic # Final name of the topic: MyTopic-pipeline_name-stage
+    type: sns_topic
+    config: #Introduce the SUBSCRIPTION accounts
+        subscriber_accounts: ["11111111111","22222222222"]
+
+groups: # step function
+
+  # SNS publish at the end of the pipeline = can be used as trigger for other pipelines
+  - name: SNS_publish
+    jobs:
+      - name: {{model_name}}_sns_publish
+        type: sns_publish
+        config:
+          topic_name: MyTopic-{{pipeline_name}}-{{stage}}
+          message: "ALL FILES LOADED"

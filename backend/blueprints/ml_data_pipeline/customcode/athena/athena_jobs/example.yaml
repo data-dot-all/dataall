@@ -1,0 +1,23 @@
+# Example
+
+steps:
+  - name: Example_Step_01
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : example_name_pre
+      type: sql
+      config:
+        file: "customcode/athena/sql_queries/example.sql"
+
+    - name : example_name_int
+      type: sql
+      config:
+        file: "customcode/athena/sql_queries/example.sql"
+
+  - name: Example_Step_02
+    jobs:
+    # Introduce here the different steps, queries to run in parallel
+    - name : example_prepared_statement
+      type: prepared_statement
+      config:
+        prepared_statement: MyPreparedStatement

@@ -1,0 +1,32 @@
+# An example YAML file
+
+name : Irispipeline
+comment: Iris pipeline from preparation to deployment
+aws_resources:
+
+  - name: datascience_layer
+    type: lambda_layer
+    config:
+       layer_entry: "customcode/lambda_layers/pandas_sklearn"
+       bundle_type: custom
+       cmd: "rm -rf /asset-output/python  && pip install -r requirements.txt --target /asset-output/python --quiet &&  rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*"
+
+  - name: numpy_scipy37
+    type: lambda_layer
+    config: 
+        layer_arn: 
+                arn: "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python37-SciPy1x:35"
+                id: "scipynumpy"
+
+  - name: cycles_table
+    type: dynamodb
+    config:
+      partition_key:
+        name: equipment
+        type: string
+      sort_key:
+        name: cycle
+        type: number
+
+groups:
+

@@ -1,0 +1,15 @@
+htmlcov
+*.egg-info
+cobertura.xml
+.coverage
+.pytest_cache
+reports
+venv
+response.json
+flake8.log
+.aws-sam
+*__pycache__*
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+.idea

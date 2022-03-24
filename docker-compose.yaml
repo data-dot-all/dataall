@@ -1,0 +1,97 @@
+# This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+version: '3.2'
+services:
+  cdkproxy:
+    build:
+      context: ./backend
+      dockerfile: docker/dev/Dockerfile
+    entrypoint: /bin/bash -c 'aws configure set region "eu-west-1" &&. ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
+    expose:
+      - 2805
+    ports:
+      - 2805:2805
+    depends_on:
+      - db
+    links:
+      - db
+    environment:
+      envname: 'dkrcompose'
+      AWS_DEFAULT_REGION: "eu-west-1"
+    volumes:
+      - ./backend:/code
+      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+    restart:
+      on-failure:60
+
+  graphql:
+    build:
+      context: ./backend
+      dockerfile: docker/dev/Dockerfile
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 local.graphql.server.py"
+    expose:
+      - 5000
+    ports:
+      - 5000:5000
+    environment:
+      envname: 'dkrcompose'
+      AWS_DEFAULT_REGION: "eu-west-1"
+    volumes:
+      - ./backend:/code
+      - $HOME/.aws/credentials:/root/.aws/credentials:ro
+    depends_on:
+      - db
+      - elasticsearch
+      - cdkproxy
+    links:
+      - db
+      - elasticsearch
+      - cdkproxy
+    restart:
+      on-failure:60
+
+  db:
+    build:
+      context: compose/postgres
+    environment:
+      POSTGRES_DB: 'dataall'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'docker'
+    expose:
+    - 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - type: volume
+        target: /usr/share/postgresql/data
+    restart: always
+
+  elasticsearch:
+    build:
+      context: compose/elasticsearch
+      args:
+        ELK_VERSION: 7.9.3
+    volumes:
+      - type: volume
+        target: /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      discovery.type: single-node
+    restart:
+      on-failure:60
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/dev/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 128M
+    ports:
+      - "8080:80"

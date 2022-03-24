@@ -1,0 +1,50 @@
+# ingests 2 tables from a database
+
+steps:
+  # Read from the source S3 bucket
+  - name: airlines
+    type : s3
+    config:
+      bucket: dhhandsonraw8bc4cveucentral1
+      prefix : airlines_raw
+      options:
+        format : csv
+        inferSchema: true
+        sep: ","
+        header : true
+
+  - name: airlines_websites
+    type : s3
+    config:
+      bucket: dhhandsonraw8bc4cveucentral1
+      prefix : airlines_websites_raw
+      options:
+        format : csv
+        inferSchema: true
+        sep: ","
+        header : true
+
+  # Materializing the views
+  - name: airlines_materialize
+    type: materialize
+    config:
+      target: airlines
+      database: dhhandsonraw8bc4cveucentral1
+      table: airlines_r
+      bucket: dhhandsonraw8bc4cveucentral1
+      prefix: ingested/airlines_r
+      options:
+        format: parquet
+      description: "airlines info"
+
+  - name: airlines_websites_materialize
+    type: materialize
+    config:
+      target: airlines_websites
+      database: dhhandsonraw8bc4cveucentral1
+      table: airlines_websites_r
+      bucket: dhhandsonraw8bc4cveucentral1lake
+      prefix: ingested/airlines_websites_r
+      options:
+        format: parquet
+      description: "airlines website info"

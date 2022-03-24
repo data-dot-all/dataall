@@ -1,0 +1,15 @@
+[[source]]
+
+[dev-packages]
+
+[packages]
+
+[requires]
+boto3 = "==1.17.18"
+botocore = "==1.20.18"
+cx_Oracle = "==8.1.0"
+name = "pypi"
+pyarrow = "==4.0.0"
+python_version = "3.8"
+url = "https://pypi.org/simple"
+verify_ssl = true
