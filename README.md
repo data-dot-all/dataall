@@ -22,7 +22,7 @@ By simplifying data discovery, data access management while letting more builder
 
 ### Run commands
 ```bash
-git clone https://github.com/aws-labs/data.all.git
+git clone https://github.com/awslabs/aws-dataall.git
 cd dataall
 docker-compose up
 ```
