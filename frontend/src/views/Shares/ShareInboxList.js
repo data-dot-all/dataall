@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Container, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Box, Container, Typography } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import PropTypes from 'prop-types';
 import useClient from '../../hooks/useClient';
@@ -23,21 +23,33 @@ const ShareInboxList = (props) => {
   const client = useClient();
   const fetchItems = async () => {
     if (dataset) {
-      await client.query(listDatasetShareObjects({ datasetUri: dataset.datasetUri, filter })).then((response) => {
-        setItems(response.data.getDataset.shares);
-      }).catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.Error });
-      }).finally(() => (setLoading(false)));
+      await client
+        .query(
+          listDatasetShareObjects({ datasetUri: dataset.datasetUri, filter })
+        )
+        .then((response) => {
+          setItems(response.data.getDataset.shares);
+        })
+        .catch((error) => {
+          dispatch({ type: SET_ERROR, error: error.Error });
+        })
+        .finally(() => setLoading(false));
     } else {
-      await client.query(searchInbox({
-        filter: {
-          ...filter
-        }
-      })).then((response) => {
-        setItems(response.data.requestsToMe);
-      }).catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.Error });
-      }).finally(() => (setLoading(false)));
+      await client
+        .query(
+          searchInbox({
+            filter: {
+              ...filter
+            }
+          })
+        )
+        .then((response) => {
+          setItems(response.data.requestsToMe);
+        })
+        .catch((error) => {
+          dispatch({ type: SET_ERROR, error: error.Error });
+        })
+        .finally(() => setLoading(false));
     }
   };
 
@@ -78,28 +90,18 @@ const ShareInboxList = (props) => {
             }}
           >
             {items.nodes.length <= 0 ? (
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 No share requests received.
               </Typography>
-            )
-              : (
-                <Box>
-                  {items.nodes.map((node) => (
-                    <ShareInboxListItem
-                      share={node}
-                      reload={fetchItems}
-                    />
-                  ))}
+            ) : (
+              <Box>
+                {items.nodes.map((node) => (
+                  <ShareInboxListItem share={node} reload={fetchItems} />
+                ))}
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

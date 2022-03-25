@@ -17,9 +17,9 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -42,11 +42,18 @@ const PipelineEditForm = (props) => {
 
   const fetchItem = async () => {
     setLoading(true);
-    const response = await client.query(getSagemakerStudioUserProfile(params.uri));
-    if (!response.errors && response.data.getSagemakerStudioUserProfile !== null) {
+    const response = await client.query(
+      getSagemakerStudioUserProfile(params.uri)
+    );
+    if (
+      !response.errors &&
+      response.data.getSagemakerStudioUserProfile !== null
+    ) {
       setNotebook(response.data.getSagemakerStudioUserProfile);
     } else {
-      const error = response.errors ? response.errors[0].message : 'Notebook not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Notebook not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -60,13 +67,17 @@ const PipelineEditForm = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateUserProfile({
-        input: {
-          sagemakerStudioUserProfileUri: notebook.sagemakerStudioUserProfileUri,
-          description: values.description,
-          label: values.label,
-          tags: values.tags
-        } }));
+      const response = await client.mutate(
+        updateUserProfile({
+          input: {
+            sagemakerStudioUserProfileUri:
+              notebook.sagemakerStudioUserProfileUri,
+            description: values.description,
+            label: values.label,
+            tags: values.tags
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -77,7 +88,9 @@ const PipelineEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/notebooks/${response.data.updateUserProfile.sagemakerStudioUserProfileUri}`);
+        navigate(
+          `/console/notebooks/${response.data.updateUserProfile.sagemakerStudioUserProfileUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -107,32 +120,21 @@ const PipelineEditForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Edit notebook
-                {' '}
-                {notebook.label}
+              <Typography color="textPrimary" variant="h5">
+                Edit notebook {notebook.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Discover
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/datasets"
@@ -141,6 +143,7 @@ const PipelineEditForm = (props) => {
                   Datasets
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/notebooks/${notebook.sagemakerStudioUserProfileUri}`}
@@ -173,14 +176,17 @@ const PipelineEditForm = (props) => {
                 SamlGroupName: notebook.SamlAdminGroupName,
                 tags: notebook.tags
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Dataset name is required'),
-                  description: Yup.string().max(5000),
-                  tags: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Dataset name is required'),
+                description: Yup.string().max(5000),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -194,20 +200,9 @@ const PipelineEditForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={7}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={7} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -232,8 +227,12 @@ const PipelineEditForm = (props) => {
                               }
                             }}
                             fullWidth
-                            error={Boolean(touched.description && errors.description)}
-                            helperText={`${200 - values.description.length} characters left`}
+                            error={Boolean(
+                              touched.description && errors.description
+                            )}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -243,7 +242,7 @@ const PipelineEditForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -277,22 +276,14 @@ const PipelineEditForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
-
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={5}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
@@ -335,7 +326,7 @@ const PipelineEditForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -351,7 +342,6 @@ const PipelineEditForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

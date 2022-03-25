@@ -1,4 +1,4 @@
-import createSvgIcon from '@material-ui/core/utils/createSvgIcon';
+import createSvgIcon from '@mui/material/utils/createSvgIcon';
 
 const Archive = createSvgIcon(
   <svg
@@ -12,7 +12,8 @@ const Archive = createSvgIcon(
       d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"
       clipRule="evenodd"
     />
-  </svg>, 'Archive'
+  </svg>,
+  'Archive'
 );
 
 export default Archive;

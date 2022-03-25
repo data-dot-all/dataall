@@ -5,32 +5,32 @@ const getScheduledQuery = (scheduledQueryUri) => ({
     scheduledQueryUri
   },
   query: gql`
-            query GetScheduledQuery($scheduledQueryUri:String!){
-                getScheduledQuery(scheduledQueryUri:$scheduledQueryUri){
-                    scheduledQueryUri
-                    name
-                    label
-                    cronexpr
-                    description
-                    owner
-                    created
-                    description
-                    queries{
-                        count
-                        page
-                        pages
-                        nodes{
-                            savedQueryUri
-                            sqlBody
-                            description
-                            label
-                            name
-                            queryOrder
-                        }
-                    }
-                }
-            }
-        `
+    query GetScheduledQuery($scheduledQueryUri: String!) {
+      getScheduledQuery(scheduledQueryUri: $scheduledQueryUri) {
+        scheduledQueryUri
+        name
+        label
+        cronexpr
+        description
+        owner
+        created
+        description
+        queries {
+          count
+          page
+          pages
+          nodes {
+            savedQueryUri
+            sqlBody
+            description
+            label
+            name
+            queryOrder
+          }
+        }
+      }
+    }
+  `
 });
 
 export default getScheduledQuery;

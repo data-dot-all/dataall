@@ -23,13 +23,13 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import { CloudDownloadOutlined, CopyAllOutlined } from '@material-ui/icons';
-import { useTheme } from '@material-ui/core/styles';
-import Autocomplete from '@material-ui/lab/Autocomplete';
+import { CloudDownloadOutlined, CopyAllOutlined } from '@mui/icons-material';
+import { useTheme } from '@mui/styles';
+import Autocomplete from '@mui/lab/Autocomplete';
 import useClient from '../../hooks/useClient';
 import useGroups from '../../hooks/useGroups';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -59,7 +59,9 @@ const EnvironmentCreateForm = (props) => {
   const [trustedAccount, setTrustedAccount] = useState(null);
   const [pivotRoleName, setPivotRoleName] = useState(null);
   const [loading, setLoading] = useState(true);
-  const groupOptions = groups ? groups.map((g) => ({ value: g, label: g })) : [];
+  const groupOptions = groups
+    ? groups.map((g) => ({ value: g, label: g }))
+    : [];
   const fetchItem = async () => {
     setLoading(true);
     const response = await client.query(getOrganization(params.uri));
@@ -130,30 +132,36 @@ const EnvironmentCreateForm = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchTrustedAccount().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      getRoleName().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchTrustedAccount().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      getRoleName().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
   }, [client]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createEnvironment({
-        organizationUri: organization.organizationUri,
-        AwsAccountId: values.AwsAccountId,
-        label: values.label,
-        SamlGroupName: values.SamlGroupName,
-        tags: values.tags,
-        description: values.description,
-        region: values.region,
-        dashboardsEnabled: values.dashboardsEnabled,
-        notebooksEnabled: values.notebooksEnabled,
-        mlStudiosEnabled: values.mlStudiosEnabled,
-        pipelinesEnabled: values.pipelinesEnabled,
-        warehousesEnabled: values.warehousesEnabled,
-        EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
-        resourcePrefix: values.resourcePrefix
-      }));
+      const response = await client.mutate(
+        createEnvironment({
+          organizationUri: organization.organizationUri,
+          AwsAccountId: values.AwsAccountId,
+          label: values.label,
+          SamlGroupName: values.SamlGroupName,
+          tags: values.tags,
+          description: values.description,
+          region: values.region,
+          dashboardsEnabled: values.dashboardsEnabled,
+          notebooksEnabled: values.notebooksEnabled,
+          mlStudiosEnabled: values.mlStudiosEnabled,
+          pipelinesEnabled: values.pipelinesEnabled,
+          warehousesEnabled: values.warehousesEnabled,
+          EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
+          resourcePrefix: values.resourcePrefix
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -164,7 +172,9 @@ const EnvironmentCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/environments/${response.data.createEnvironment.environmentUri}`);
+        navigate(
+          `/console/environments/${response.data.createEnvironment.environmentUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -194,16 +204,9 @@ const EnvironmentCreateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new environment
               </Typography>
               <Breadcrumbs
@@ -212,6 +215,7 @@ const EnvironmentCreateForm = (props) => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/organizations"
@@ -220,6 +224,7 @@ const EnvironmentCreateForm = (props) => {
                   Organizations
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/organizations/${organization.organizationUri}`}
@@ -228,6 +233,7 @@ const EnvironmentCreateForm = (props) => {
                   {organization.label}
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/organizations/${organization.organizationUri}/link`}
@@ -257,22 +263,23 @@ const EnvironmentCreateForm = (props) => {
             <Divider />
             <CardContent>
               <Box>
-                <Typography
-                  color="textSecondary"
-                  variant="subtitle2"
-                >
+                <Typography color="textSecondary" variant="subtitle2">
                   1. Bootstrap your AWS account with AWS CDK
                 </Typography>
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   <CopyToClipboard
                     onCopy={() => copyNotification()}
                     text={`cdk bootstrap --trust ${trustedAccount} aws://ACCOUNT_ID/REGION`}
                   >
                     <IconButton>
-                      <CopyAllOutlined sx={{ color: theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main }} />
+                      <CopyAllOutlined
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.primary.contrastText
+                              : theme.palette.primary.main
+                        }}
+                      />
                     </IconButton>
                   </CopyToClipboard>
                   {`cdk bootstrap --trust ${trustedAccount} aws://ACCOUNT_ID/REGION`}
@@ -280,35 +287,23 @@ const EnvironmentCreateForm = (props) => {
               </Box>
               <Box>
                 <Box>
-                  <Typography
-                    color="textSecondary"
-                    variant="subtitle2"
-                  >
-                    2. Create
-                    an IAM role named
-                    {' '}
-                    <b>{pivotRoleName}</b>
-                    {' '}
-                    using AWS CloudFormation stack below
+                  <Typography color="textSecondary" variant="subtitle2">
+                    2. Create an IAM role named <b>{pivotRoleName}</b> using AWS
+                    CloudFormation stack below
                   </Typography>
                 </Box>
-                <Grid
-                  container
-                  justifyContent="space-between"
-                  spacing={3}
-                >
-                  <Grid
-                    item
-                    lg={6}
-                    xl={6}
-                    xs={6}
-                  >
+                <Grid container justifyContent="space-between" spacing={3}>
+                  <Grid item lg={6} xl={6} xs={6}>
                     <Button
                       color="primary"
                       startIcon={<CloudDownloadOutlined fontSize="small" />}
                       sx={{ mt: 1, mb: 2, ml: 2 }}
                       variant="outlined"
-                      onClick={() => { getPivotRoleUrl().catch((e) => dispatch({ type: SET_ERROR, error: e.message })); }}
+                      onClick={() => {
+                        getPivotRoleUrl().catch((e) =>
+                          dispatch({ type: SET_ERROR, error: e.message })
+                        );
+                      }}
                     >
                       CloudFormation stack
                     </Button>
@@ -317,7 +312,11 @@ const EnvironmentCreateForm = (props) => {
                       startIcon={<CopyAllOutlined fontSize="small" />}
                       sx={{ mt: 1, mb: 2, ml: 2 }}
                       variant="outlined"
-                      onClick={() => { copyPivotRoleName().catch((e) => dispatch({ type: SET_ERROR, error: e.message })); }}
+                      onClick={() => {
+                        copyPivotRoleName().catch((e) =>
+                          dispatch({ type: SET_ERROR, error: e.message })
+                        );
+                      }}
                     >
                       Pivot role name
                     </Button>
@@ -326,7 +325,11 @@ const EnvironmentCreateForm = (props) => {
                       startIcon={<CopyAllOutlined fontSize="small" />}
                       sx={{ mt: 1, mb: 2, ml: 2 }}
                       variant="outlined"
-                      onClick={() => { getExternalId().catch((e) => dispatch({ type: SET_ERROR, error: e.message })); }}
+                      onClick={() => {
+                        getExternalId().catch((e) =>
+                          dispatch({ type: SET_ERROR, error: e.message })
+                        );
+                      }}
                     >
                       External Id
                     </Button>
@@ -334,10 +337,7 @@ const EnvironmentCreateForm = (props) => {
                 </Grid>
               </Box>
               <Box>
-                <Typography
-                  color="textSecondary"
-                  variant="subtitle2"
-                >
+                <Typography color="textSecondary" variant="subtitle2">
                   3. Manage your environment features
                 </Typography>
               </Box>
@@ -360,31 +360,49 @@ const EnvironmentCreateForm = (props) => {
                 EnvironmentDefaultIAMRoleName: '',
                 resourcePrefix: 'dataall'
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Environment name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                  AwsAccountId: Yup.number('*AWS account ID must be a number').required('*AWS account number is required'),
-                  region: Yup.string().required('*Region is required').test(
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Environment name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                AwsAccountId: Yup.number(
+                  '*AWS account ID must be a number'
+                ).required('*AWS account number is required'),
+                region: Yup.string()
+                  .required('*Region is required')
+                  .test(
                     'region',
                     'Region is not supported',
-                    (region) => AwsRegions.filter((option) => [option.label, option.value].includes(region)).length >= 1
+                    (region) =>
+                      AwsRegions.filter((option) =>
+                        [option.label, option.value].includes(region)
+                      ).length >= 1
                   ),
-                  tags: Yup.array().nullable(),
-                  privateSubnetIds: Yup.array().nullable(),
-                  publicSubnetIds: Yup.array().nullable(),
-                  vpcId: Yup.string().nullable(),
-                  EnvironmentDefaultIAMRoleName: Yup.string().nullable(),
-                  resourcePrefix: Yup.string()
-                    .trim()
-                    .matches('^[a-z-]*$', '*Resource prefix is not valid (^[a-z-]*$)')
-                    .min(1, '*Resource prefix must have at least 1 character')
-                    .max(20, "*Resource prefix can't be longer than 20 characters")
-                    .required('*Resource prefix is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+                tags: Yup.array().nullable(),
+                privateSubnetIds: Yup.array().nullable(),
+                publicSubnetIds: Yup.array().nullable(),
+                vpcId: Yup.string().nullable(),
+                EnvironmentDefaultIAMRoleName: Yup.string().nullable(),
+                resourcePrefix: Yup.string()
+                  .trim()
+                  .matches(
+                    '^[a-z-]*$',
+                    '*Resource prefix is not valid (^[a-z-]*$)'
+                  )
+                  .min(1, '*Resource prefix must have at least 1 character')
+                  .max(
+                    20,
+                    "*Resource prefix can't be longer than 20 characters"
+                  )
+                  .required('*Resource prefix is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -398,20 +416,9 @@ const EnvironmentCreateForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -436,7 +443,9 @@ const EnvironmentCreateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -446,7 +455,7 @@ const EnvironmentCreateForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -463,9 +472,7 @@ const EnvironmentCreateForm = (props) => {
                             label="Tags"
                             placeholder="Hit enter after typing value"
                             onChange={(chip) => {
-                              setFieldValue('tags', [
-                                ...chip
-                              ]);
+                              setFieldValue('tags', [...chip]);
                             }}
                           />
                         </CardContent>
@@ -478,7 +485,7 @@ const EnvironmentCreateForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked
                                       color="primary"
@@ -487,18 +494,20 @@ const EnvironmentCreateForm = (props) => {
                                       name="dashboardsEnabled"
                                       value={values.dashboardsEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Dashboards
-                                      {' '}
-                                      <small>(Requires Amazon QuickSight Enterprise Subscription)</small>
+                                      Dashboards{' '}
+                                      <small>
+                                        (Requires Amazon QuickSight Enterprise
+                                        Subscription)
+                                      </small>
                                     </Typography>
-                                  )}
+                                  }
                                   labelPlacement="end"
                                   value={values.dashboardsEnabled}
                                 />
@@ -508,7 +517,7 @@ const EnvironmentCreateForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked
                                       color="primary"
@@ -517,31 +526,32 @@ const EnvironmentCreateForm = (props) => {
                                       name="notebooksEnabled"
                                       value={values.notebooksEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Box>
                                       <Typography
                                         color="textSecondary"
                                         gutterBottom
                                         variant="subtitle2"
                                       >
-                                        Notebooks
-                                        {' '}
-                                        <small>(Requires Amazon Sagemaker notebook instances)</small>
+                                        Notebooks{' '}
+                                        <small>
+                                          (Requires Amazon Sagemaker notebook
+                                          instances)
+                                        </small>
                                       </Typography>
                                     </Box>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.notebooksEnabled}
                                 />
                               </FormGroup>
-
                             </Box>
                             <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked
                                       color="primary"
@@ -550,18 +560,19 @@ const EnvironmentCreateForm = (props) => {
                                       name="mlStudiosEnabled"
                                       value={values.mlStudiosEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      ML Studio
-                                      {' '}
-                                      <small>(Requires Amazon Sagemaker Studio)</small>
+                                      ML Studio{' '}
+                                      <small>
+                                        (Requires Amazon Sagemaker Studio)
+                                      </small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                 />
                               </FormGroup>
@@ -570,7 +581,7 @@ const EnvironmentCreateForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked
                                       color="primary"
@@ -579,18 +590,17 @@ const EnvironmentCreateForm = (props) => {
                                       name="pipelinesEnabled"
                                       value={values.pipelinesEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Pipelines
-                                      {' '}
+                                      Pipelines{' '}
                                       <small>(Requires AWS DevTools)</small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.pipelinesEnabled}
                                 />
@@ -600,7 +610,7 @@ const EnvironmentCreateForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked
                                       color="primary"
@@ -609,42 +619,41 @@ const EnvironmentCreateForm = (props) => {
                                       name="warehousesEnabled"
                                       value={values.warehousesEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Warehouses
-                                      {' '}
-                                      <small>(Requires Amazon Redshift clusters)</small>
+                                      Warehouses{' '}
+                                      <small>
+                                        (Requires Amazon Redshift clusters)
+                                      </small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.warehousesEnabled}
                                 />
                               </FormGroup>
                             </Box>
-
                           </CardContent>
                         </Card>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={7} md={6} xs={12}>
                       <Box>
                         <Card>
                           <CardHeader title="Deployment" />
                           <CardContent>
                             <TextField
-                              error={Boolean(touched.AwsAccountId && errors.AwsAccountId)}
+                              error={Boolean(
+                                touched.AwsAccountId && errors.AwsAccountId
+                              )}
                               fullWidth
-                              helperText={touched.AwsAccountId && errors.AwsAccountId}
+                              helperText={
+                                touched.AwsAccountId && errors.AwsAccountId
+                              }
                               label="Account Number"
                               name="AwsAccountId"
                               onBlur={handleBlur}
@@ -659,15 +668,24 @@ const EnvironmentCreateForm = (props) => {
                               freeSolo
                               options={AwsRegions.map((option) => option.label)}
                               onChange={(event, value) => {
-                                const selectedRegion = AwsRegions.filter((option) => option.label === value);
-                                setFieldValue('region', selectedRegion ? selectedRegion[0].value : null);
+                                const selectedRegion = AwsRegions.filter(
+                                  (option) => option.label === value
+                                );
+                                setFieldValue(
+                                  'region',
+                                  selectedRegion
+                                    ? selectedRegion[0].value
+                                    : null
+                                );
                               }}
                               renderInput={(regionParams) => (
                                 <TextField
                                   {...regionParams}
                                   label="Region"
                                   margin="normal"
-                                  error={Boolean(touched.region && errors.region)}
+                                  error={Boolean(
+                                    touched.region && errors.region
+                                  )}
                                   helperText={touched.region && errors.region}
                                   onChange={handleChange}
                                   value={values.region}
@@ -681,18 +699,19 @@ const EnvironmentCreateForm = (props) => {
                               fullWidth
                               label="Team"
                               name="SamlGroupName"
-                              error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                              helperText={touched.SamlGroupName && errors.SamlGroupName}
+                              error={Boolean(
+                                touched.SamlGroupName && errors.SamlGroupName
+                              )}
+                              helperText={
+                                touched.SamlGroupName && errors.SamlGroupName
+                              }
                               onChange={handleChange}
                               select
                               value={values.SamlGroupName}
                               variant="outlined"
                             >
                               {groupOptions.map((group) => (
-                                <MenuItem
-                                  key={group.value}
-                                  value={group.value}
-                                >
+                                <MenuItem key={group.value} value={group.value}>
                                   {group.label}
                                 </MenuItem>
                               ))}
@@ -700,9 +719,13 @@ const EnvironmentCreateForm = (props) => {
                           </CardContent>
                           <CardContent>
                             <TextField
-                              error={Boolean(touched.resourcePrefix && errors.resourcePrefix)}
+                              error={Boolean(
+                                touched.resourcePrefix && errors.resourcePrefix
+                              )}
                               fullWidth
-                              helperText={touched.resourcePrefix && errors.resourcePrefix}
+                              helperText={
+                                touched.resourcePrefix && errors.resourcePrefix
+                              }
                               label="Resources Prefix"
                               placeholder="Prefix will be applied to All AWS resources created on this environment"
                               name="resourcePrefix"
@@ -714,9 +737,15 @@ const EnvironmentCreateForm = (props) => {
                           </CardContent>
                           <CardContent>
                             <TextField
-                              error={Boolean(touched.EnvironmentDefaultIAMRoleName && errors.EnvironmentDefaultIAMRoleName)}
+                              error={Boolean(
+                                touched.EnvironmentDefaultIAMRoleName &&
+                                  errors.EnvironmentDefaultIAMRoleName
+                              )}
                               fullWidth
-                              helperText={touched.EnvironmentDefaultIAMRoleName && errors.EnvironmentDefaultIAMRoleName}
+                              helperText={
+                                touched.EnvironmentDefaultIAMRoleName &&
+                                errors.EnvironmentDefaultIAMRoleName
+                              }
                               label="IAM Role Name"
                               placeholder="Bring your own IAM role (Optional)"
                               name="EnvironmentDefaultIAMRoleName"
@@ -730,9 +759,7 @@ const EnvironmentCreateForm = (props) => {
                       </Box>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box
@@ -744,7 +771,7 @@ const EnvironmentCreateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >

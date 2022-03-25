@@ -17,10 +17,10 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
-import { useEffect, useState } from 'react';
+import { LoadingButton } from '@mui/lab';
+import { useCallback, useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -45,34 +45,65 @@ const WarehouseCreateForm = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [environment, setEnvironment] = useState(null);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments({ filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] } }));
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.SelectListFilter })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
-      setEnvironment(response.data.listEnvironments.nodes[response.data.listEnvironments.nodes.findIndex((e) => e.environmentUri === params.uri)]);
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
+      setEnvironment(
+        response.data.listEnvironments.nodes[
+          response.data.listEnvironments.nodes.findIndex(
+            (e) => e.environmentUri === params.uri
+          )
+        ]
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
-      if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+  }, [client, dispatch, params.uri]);
+
+  const fetchGroups = useCallback(
+    async (environmentUri) => {
+      try {
+        const response = await client.query(
+          listEnvironmentGroups({
+            filter: Defaults.SelectListFilter,
+            environmentUri
+          })
+        );
+        if (!response.errors) {
+          setGroupOptions(
+            response.data.listEnvironmentGroups.nodes.map((g) => ({
+              value: g.groupUri,
+              label: g.groupUri
+            }))
+          );
+        } else {
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
+      } catch (e) {
+        dispatch({ type: SET_ERROR, error: e.message });
       }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
+    },
+    [client, dispatch]
+  );
+
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, fetchEnvironments, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -84,9 +115,12 @@ const WarehouseCreateForm = (props) => {
         SamlGroupName: values.SamlGroupName,
         databaseName: values.databaseName
       };
-      const response = await client.mutate(importRedshiftCluster({
-        environmentUri: values.environment.environmentUri,
-        input }));
+      const response = await client.mutate(
+        importRedshiftCluster({
+          environmentUri: values.environment.environmentUri,
+          input
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -97,7 +131,9 @@ const WarehouseCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/warehouse/${response.data.importRedshiftCluster.clusterUri}`);
+        navigate(
+          `/console/warehouse/${response.data.importRedshiftCluster.clusterUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -126,16 +162,9 @@ const WarehouseCreateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Import warehouse
               </Typography>
               <Breadcrumbs
@@ -143,13 +172,11 @@ const WarehouseCreateForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Organize
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/environments"
@@ -158,6 +185,7 @@ const WarehouseCreateForm = (props) => {
                   Environments
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/environments/${environment.environmentUri}`}
@@ -193,23 +221,26 @@ const WarehouseCreateForm = (props) => {
                 SamlGroupName: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string()
-                    .min(2, '*Cluster name must have at least 2 characters')
-                    .max(63, "*Cluster name can't be longer than 63 characters")
-                    .required('*Cluster name is required'),
-                  clusterIdentifier: Yup.string()
-                    .min(2, '*Cluster name must have at least 2 characters')
-                    .max(63, "*Cluster name can't be longer than 63 characters")
-                    .required('*Cluster name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                  environment: Yup.object().required('*Environment is required'),
-                  tags: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .min(2, '*Cluster name must have at least 2 characters')
+                  .max(63, "*Cluster name can't be longer than 63 characters")
+                  .required('*Cluster name is required'),
+                clusterIdentifier: Yup.string()
+                  .min(2, '*Cluster name must have at least 2 characters')
+                  .max(63, "*Cluster name can't be longer than 63 characters")
+                  .required('*Cluster name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                environment: Yup.object().required('*Environment is required'),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -223,20 +254,9 @@ const WarehouseCreateForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -261,7 +281,9 @@ const WarehouseCreateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -271,12 +293,12 @@ const WarehouseCreateForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
-                          <Box sx={{ mt: 2 }}>
-                            <FormHelperText error>
-                              {errors.description}
-                            </FormHelperText>
-                          </Box>
+                          {touched.description && errors.description && (
+                            <Box sx={{ mt: 2 }}>
+                              <FormHelperText error>
+                                {errors.description}
+                              </FormHelperText>
+                            </Box>
                           )}
                         </CardContent>
                       </Card>
@@ -284,9 +306,15 @@ const WarehouseCreateForm = (props) => {
                         <CardHeader title="Redshift cluster" />
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.clusterIdentifier && errors.clusterIdentifier)}
+                            error={Boolean(
+                              touched.clusterIdentifier &&
+                                errors.clusterIdentifier
+                            )}
                             fullWidth
-                            helperText={touched.clusterIdentifier && errors.clusterIdentifier}
+                            helperText={
+                              touched.clusterIdentifier &&
+                              errors.clusterIdentifier
+                            }
                             label="Amazon Redshift cluster identifier"
                             name="clusterIdentifier"
                             onBlur={handleBlur}
@@ -297,9 +325,13 @@ const WarehouseCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.databaseName && errors.databaseName)}
+                            error={Boolean(
+                              touched.databaseName && errors.databaseName
+                            )}
                             fullWidth
-                            helperText={touched.databaseName && errors.databaseName}
+                            helperText={
+                              touched.databaseName && errors.databaseName
+                            }
                             label="data.all database name"
                             name="databaseName"
                             onBlur={handleBlur}
@@ -311,25 +343,34 @@ const WarehouseCreateForm = (props) => {
                         <CardContent />
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.environment && errors.environment)}
-                            helperText={touched.environment && errors.environment}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
                             label="Environment"
                             name="environment"
-                            defaultValue={() => environmentOptions[environmentOptions.findIndex((e) => e.environmentUri === params.uri)]}
+                            defaultValue={() =>
+                              environmentOptions[
+                                environmentOptions.findIndex(
+                                  (e) => e.environmentUri === params.uri
+                                )
+                              ]
+                            }
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
-                              fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
                             }}
                             select
@@ -337,10 +378,7 @@ const WarehouseCreateForm = (props) => {
                             variant="outlined"
                           >
                             {environmentOptions.map((e) => (
-                              <MenuItem
-                                key={e.environmentUri}
-                                value={e}
-                              >
+                              <MenuItem key={e.environmentUri} value={e}>
                                 {e.label}
                               </MenuItem>
                             ))}
@@ -352,7 +390,11 @@ const WarehouseCreateForm = (props) => {
                             fullWidth
                             label="Region"
                             name="region"
-                            value={values.environment ? values.environment.region : ''}
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -362,7 +404,11 @@ const WarehouseCreateForm = (props) => {
                             fullWidth
                             label="Organization"
                             name="organization"
-                            value={values.environment ? values.environment.organization.label : ''}
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -372,8 +418,12 @@ const WarehouseCreateForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={handleChange}
@@ -382,10 +432,7 @@ const WarehouseCreateForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -401,20 +448,16 @@ const WarehouseCreateForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                         </CardContent>
                       </Card>
                       {errors.submit && (
-                      <Box sx={{ mt: 3 }}>
-                        <FormHelperText error>
-                          {errors.submit}
-                        </FormHelperText>
-                      </Box>
+                        <Box sx={{ mt: 3 }}>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
+                        </Box>
                       )}
                       <Box
                         sx={{
@@ -425,7 +468,7 @@ const WarehouseCreateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -441,7 +484,6 @@ const WarehouseCreateForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

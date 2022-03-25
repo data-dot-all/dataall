@@ -4,7 +4,8 @@ import {
   Button,
   Card,
   CardHeader,
-  Divider, Grid,
+  Divider,
+  Grid,
   IconButton,
   InputAdornment,
   Table,
@@ -13,13 +14,13 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
+} from '@mui/material';
 import PropTypes from 'prop-types';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import LinkIcon from '@material-ui/icons/Link';
-import { FaAws } from 'react-icons/all';
+import { Link } from '@mui/icons-material';
+import { FaAws } from 'react-icons/fa';
 import Scrollbar from '../../components/Scrollbar';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -44,7 +45,12 @@ const OrganizationEnvironments = (props) => {
 
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(listOrganizationEnvrionments({ filter, organizationUri: organization.organizationUri }));
+    const response = await client.query(
+      listOrganizationEnvrionments({
+        filter,
+        organizationUri: organization.organizationUri
+      })
+    );
     if (!response.errors) {
       setItems({ ...response.data.getOrganization.environments });
     }
@@ -53,7 +59,9 @@ const OrganizationEnvironments = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -78,13 +86,11 @@ const OrganizationEnvironments = (props) => {
     <Card {...other}>
       <CardHeader
         action={<RefreshTableMenu refresh={fetchItems} />}
-        title={(
+        title={
           <Box>
-            <FaAws style={{ marginRight: '10px' }} />
-            {' '}
-            Environments
+            <FaAws style={{ marginRight: '10px' }} /> Environments
           </Box>
-        )}
+        }
       />
       <Divider />
       <Box
@@ -96,12 +102,7 @@ const OrganizationEnvironments = (props) => {
           p: 2
         }}
       >
-        <Grid
-          item
-          md={10}
-          sm={6}
-          xs={12}
-        >
+        <Grid item md={10} sm={6} xs={12}>
           <Box
             sx={{
               m: 1,
@@ -126,16 +127,11 @@ const OrganizationEnvironments = (props) => {
             />
           </Box>
         </Grid>
-        <Grid
-          item
-          md={2}
-          sm={6}
-          xs={12}
-        >
+        <Grid item md={2} sm={6} xs={12}>
           <Button
             color="primary"
             component={RouterLink}
-            startIcon={<LinkIcon fontSize="small" />}
+            startIcon={<Link fontSize="small" />}
             sx={{ m: 1 }}
             variant="contained"
             to={`/console/organizations/${organization.organizationUri}/link`}
@@ -149,60 +145,42 @@ const OrganizationEnvironments = (props) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  AWS Account
-                </TableCell>
-                <TableCell>
-                  Region
-                </TableCell>
-                <TableCell>
-                  Status
-                </TableCell>
-                <TableCell>
-                  Actions
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>AWS Account</TableCell>
+                <TableCell>Region</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             {loading ? (
-              <CircularProgress
-                sx={{ mt: 1 }}
-                size={20}
-              />
+              <CircularProgress sx={{ mt: 1 }} size={20} />
             ) : (
               <TableBody>
-                {items.nodes.length > 0 ? items.nodes.map((env) => (
-                  <TableRow
-                    hover
-                    key={env.environmentUri}
-                  >
-                    <TableCell>
-                      {env.label}
-                    </TableCell>
-                    <TableCell>
-                      {env.AwsAccountId}
-                    </TableCell>
-                    <TableCell>
-                      {env.region}
-                    </TableCell>
-                    <TableCell>
-                      <StackStatus status={(env.stack?.status)} />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton onClick={() => navigate(`/console/environments/${env.environmentUri}`)}>
-                        <ArrowRightIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow
-                    hover
-                  >
-                    <TableCell>
-                      No environments linked
-                    </TableCell>
+                {items.nodes.length > 0 ? (
+                  items.nodes.map((env) => (
+                    <TableRow hover key={env.environmentUri}>
+                      <TableCell>{env.label}</TableCell>
+                      <TableCell>{env.AwsAccountId}</TableCell>
+                      <TableCell>{env.region}</TableCell>
+                      <TableCell>
+                        <StackStatus status={env.stack?.status} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          onClick={() =>
+                            navigate(
+                              `/console/environments/${env.environmentUri}`
+                            )
+                          }
+                        >
+                          <ArrowRightIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow hover>
+                    <TableCell>No environments linked</TableCell>
                   </TableRow>
                 )}
               </TableBody>

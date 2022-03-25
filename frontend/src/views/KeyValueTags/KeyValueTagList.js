@@ -12,7 +12,7 @@ import {
   TableCell,
   TableHead,
   TableRow
-} from '@material-ui/core';
+} from '@mui/material';
 import useClient from '../../hooks/useClient';
 import Scrollbar from '../../components/Scrollbar';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -30,7 +30,9 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
 
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(listKeyValueTags(targetUri, targetType));
+    const response = await client.query(
+      listKeyValueTags(targetUri, targetType)
+    );
     if (!response.errors) {
       setItems(response.data.listKeyValueTags);
     } else {
@@ -50,7 +52,9 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -70,13 +74,8 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
               closeUpdate={closeUpdate}
             />
           ) : (
-
             <Box>
-              <Box
-                display="flex"
-                justifyContent="flex-end"
-                sx={{ p: 1 }}
-              >
+              <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>
                 <Button
                   color="primary"
                   startIcon={<PencilAlt fontSize="small" />}
@@ -88,40 +87,30 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                 </Button>
               </Box>
               {items && items.length > 0 && (
-              <Card sx={{ mt: 2 }}>
-                <CardHeader
-                  title={<Box>Key-Value Tags</Box>}
-                />
-                <Divider />
-                <Scrollbar>
-                  <Box sx={{ minWidth: 600 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>
-                            Key
-                          </TableCell>
-                          <TableCell>
-                            Value
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {items.map((tag) => (
+                <Card sx={{ mt: 2 }}>
+                  <CardHeader title={<Box>Key-Value Tags</Box>} />
+                  <Divider />
+                  <Scrollbar>
+                    <Box sx={{ minWidth: 600 }}>
+                      <Table>
+                        <TableHead>
                           <TableRow>
-                            <TableCell>
-                              {tag.key || '-'}
-                            </TableCell>
-                            <TableCell>
-                              {tag.value || '-'}
-                            </TableCell>
+                            <TableCell>Key</TableCell>
+                            <TableCell>Value</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Box>
-                </Scrollbar>
-              </Card>
+                        </TableHead>
+                        <TableBody>
+                          {items.map((tag) => (
+                            <TableRow>
+                              <TableCell>{tag.key || '-'}</TableCell>
+                              <TableCell>{tag.value || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  </Scrollbar>
+                </Card>
               )}
             </Box>
           )}

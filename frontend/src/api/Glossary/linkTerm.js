@@ -6,12 +6,22 @@ const linkTerm = ({ nodeUri, targetUri, targetType }) => ({
     targetType,
     targetUri
   },
-  mutation: gql`mutation LinkTerm($nodeUri:String!,$targetUri:String!,$targetType:String!){
-            linkTerm(nodeUri:$nodeUri, targetUri:$targetUri,targetType:$targetType){
-                linkUri
-                created
-            }
-        }`
+  mutation: gql`
+    mutation LinkTerm(
+      $nodeUri: String!
+      $targetUri: String!
+      $targetType: String!
+    ) {
+      linkTerm(
+        nodeUri: $nodeUri
+        targetUri: $targetUri
+        targetType: $targetType
+      ) {
+        linkUri
+        created
+      }
+    }
+  `
 });
 
 export default linkTerm;

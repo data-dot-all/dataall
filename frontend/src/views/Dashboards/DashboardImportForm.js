@@ -9,7 +9,8 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader, Chip,
+  CardHeader,
+  Chip,
   CircularProgress,
   Container,
   FormHelperText,
@@ -18,9 +19,9 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -48,23 +49,38 @@ const DashboardImportForm = (props) => {
 
   const fetchEnvironments = async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments({ filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] } }));
+    const response = await client.query(
+      listEnvironments({
+        filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] }
+      })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
   };
   const fetchTerms = async () => {
-    const response = await client.query(searchGlossary(Defaults.SelectListFilter));
+    const response = await client.query(
+      searchGlossary(Defaults.SelectListFilter)
+    );
     if (!response.errors) {
-      if (response.data.searchGlossary && response.data.searchGlossary.nodes.length > 0) {
+      if (
+        response.data.searchGlossary &&
+        response.data.searchGlossary.nodes.length > 0
+      ) {
         const selectables = response.data.searchGlossary.nodes.map((node) => ({
           label: node.label,
           value: node.nodeUri,
           nodeUri: node.nodeUri,
-          disabled: node.__typename !== 'Term', /* eslint-disable-line*/
+          disabled: node.__typename !== 'Term' /* eslint-disable-line*/,
           nodePath: node.path,
           nodeType: node.__typename /* eslint-disable-line*/
         }));
@@ -76,16 +92,30 @@ const DashboardImportForm = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      fetchTerms().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchTerms().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -96,15 +126,21 @@ const DashboardImportForm = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(importDashboard({ input: {
-        label: values.label,
-        dashboardId: values.dashboardId,
-        environmentUri: values.environment.environmentUri,
-        description: values.description,
-        SamlGroupName: values.SamlGroupName,
-        tags: values.tags,
-        terms: values.terms.nodes ? values.terms.nodes.map((t) => t.nodeUri) : values.terms.map((t) => t.nodeUri)
-      } }));
+      const response = await client.mutate(
+        importDashboard({
+          input: {
+            label: values.label,
+            dashboardId: values.dashboardId,
+            environmentUri: values.environment.environmentUri,
+            description: values.description,
+            SamlGroupName: values.SamlGroupName,
+            tags: values.tags,
+            terms: values.terms.nodes
+              ? values.terms.nodes.map((t) => t.nodeUri)
+              : values.terms.map((t) => t.nodeUri)
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -115,7 +151,9 @@ const DashboardImportForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/dashboards/${response.data.importDashboard.dashboardUri}`);
+        navigate(
+          `/console/dashboards/${response.data.importDashboard.dashboardUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -144,16 +182,9 @@ const DashboardImportForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Import a QuickSight dashboard
               </Typography>
               <Breadcrumbs
@@ -161,13 +192,11 @@ const DashboardImportForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Play
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/dashboards"
@@ -176,6 +205,7 @@ const DashboardImportForm = (props) => {
                   Dashboards
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/dashboards/new"
@@ -211,18 +241,25 @@ const DashboardImportForm = (props) => {
                 tags: [],
                 terms: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Dashboard name is required'),
-                  dashboardId: Yup.string().max(255).required('*QuickSight dashboard identifier is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                  environment: Yup.object().required('*Environment is required'),
-                  tags: Yup.array().nullable(),
-                  terms: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Dashboard name is required'),
+                dashboardId: Yup.string()
+                  .max(255)
+                  .required('*QuickSight dashboard identifier is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                environment: Yup.object().required('*Environment is required'),
+                tags: Yup.array().nullable(),
+                terms: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -236,20 +273,9 @@ const DashboardImportForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -267,9 +293,13 @@ const DashboardImportForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.dashboardId && errors.dashboardId)}
+                            error={Boolean(
+                              touched.dashboardId && errors.dashboardId
+                            )}
                             fullWidth
-                            helperText={touched.dashboardId && errors.dashboardId}
+                            helperText={
+                              touched.dashboardId && errors.dashboardId
+                            }
                             label="QuickSight dashboard identifier"
                             name="dashboardId"
                             onBlur={handleBlur}
@@ -287,7 +317,9 @@ const DashboardImportForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -297,7 +329,7 @@ const DashboardImportForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -318,9 +350,7 @@ const DashboardImportForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
@@ -332,16 +362,20 @@ const DashboardImportForm = (props) => {
                             options={selectableTerms}
                             getOptionLabel={(opt) => opt.label}
                             getOptionDisabled={(opt) => opt.disabled}
-                            getOptionSelected={(option, value) => option.nodeUri === value.nodeUri}
+                            getOptionSelected={(option, value) =>
+                              option.nodeUri === value.nodeUri
+                            }
                             onChange={(event, value) => {
                               setFieldValue('terms', value);
                             }}
-                            renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                              <Chip
-                                label={option.label}
-                                {...getTagProps({ index })}
-                              />
-                            ))}
+                            renderTags={(tagValue, getTagProps) =>
+                              tagValue.map((option, index) => (
+                                <Chip
+                                  label={option.label}
+                                  {...getTagProps({ index })}
+                                />
+                              ))
+                            }
                             renderInput={(p) => (
                               <TextField
                                 {...p}
@@ -354,24 +388,27 @@ const DashboardImportForm = (props) => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.environment && errors.environment)}
-                            helperText={touched.environment && errors.environment}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
                             label="Environment"
                             name="environment"
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
-                              fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
                             }}
                             select
@@ -394,7 +431,11 @@ const DashboardImportForm = (props) => {
                             fullWidth
                             label="Region"
                             name="region"
-                            value={values.environment ? values.environment.region : ''}
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -404,15 +445,23 @@ const DashboardImportForm = (props) => {
                             fullWidth
                             label="Organization"
                             name="organization"
-                            value={values.environment ? values.environment.organization.label : ''}
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={handleChange}
@@ -421,10 +470,7 @@ const DashboardImportForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -433,9 +479,7 @@ const DashboardImportForm = (props) => {
                       </Card>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box
@@ -447,7 +491,7 @@ const DashboardImportForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >

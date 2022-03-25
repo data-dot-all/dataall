@@ -1,4 +1,4 @@
-import { Box, Pagination } from '@material-ui/core';
+import { Box, Pagination } from '@mui/material';
 import * as PropTypes from 'prop-types';
 
 function Pager(props) {
@@ -12,11 +12,7 @@ function Pager(props) {
         mb: mgBottom || 0
       }}
     >
-      <Pagination
-        count={items.pages}
-        page={items.page}
-        onChange={onChange}
-      />
+      <Pagination count={items.pages} page={items.page} onChange={onChange} />
     </Box>
   );
 }

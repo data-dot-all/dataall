@@ -1,9 +1,18 @@
-import { Box, Button, Card, CardHeader, Divider, Grid, Link, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  CardHeader,
+  Divider,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@material-ui/lab';
-import { CheckCircleOutlined } from '@material-ui/icons';
+import { LoadingButton } from '@mui/lab';
+import { CheckCircleOutlined } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import ShareStatus from '../../components/ShareStatus';
@@ -23,12 +32,11 @@ const ShareOutboxListItem = (props) => {
   const [submitting, setSubmitting] = useState(false);
   const submit = async () => {
     setSubmitting(true);
-    const response = await client
-      .mutate(
-        submitApproval({
-          shareUri: share.shareUri
-        })
-      );
+    const response = await client.mutate(
+      submitApproval({
+        shareUri: share.shareUri
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Share request submitted', {
         anchorOrigin: {
@@ -50,18 +58,12 @@ const ShareOutboxListItem = (props) => {
         mt: 2
       }}
     >
-      <Grid
-        container
-      >
-        <Grid
-          item
-          md={10}
-          xs={6}
-        >
+      <Grid container>
+        <Grid item md={10} xs={6}>
           <CardHeader
             avatar={<TextAvatar name={share.owner} />}
             disableTypography
-            subheader={(
+            subheader={
               <Box
                 sx={{
                   alignItems: 'center',
@@ -79,35 +81,26 @@ const ShareOutboxListItem = (props) => {
                 >
                   <ShareStatus status={share.status} />
                 </Box>
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  | For
-                  {' '}
+                <Typography color="textSecondary" variant="body2">
+                  | For{' '}
                   <Link
+                    underline="hover"
                     component={RouterLink}
                     color="textPrimary"
                     variant="subtitle2"
                     to={`/console/datasets/${share.dataset.datasetUri}`}
                   >
                     {share.dataset.datasetName}
-                  </Link>
-                  {' '}
-                  |
-                  {' '}
-                  {share.created}
+                  </Link>{' '}
+                  | {share.created}
                 </Typography>
               </Box>
-                )}
-            title={(
-              <Link
-                color="textPrimary"
-                variant="subtitle2"
-              >
+            }
+            title={
+              <Link underline="hover" color="textPrimary" variant="subtitle2">
                 {share.owner}
               </Link>
-                )}
+            }
           />
           <Box
             sx={{
@@ -115,79 +108,68 @@ const ShareOutboxListItem = (props) => {
               px: 3
             }}
           >
-            {share.status === 'Approved'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                {`Your environment ${share.principal.principalName || '-'} is approved read access
+            {share.status === 'Approved' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Your environment ${
+                  share.principal.principalName || '-'
+                } is approved read access
                   to dataset ${share.dataset.datasetName} .`}
               </Typography>
-              )}
-            {share.status === 'Draft'
-            && (
-            <Typography
-              color="textSecondary"
-              variant="body1"
-            >
-              Submit your request data owners to get read access.
-            </Typography>
             )}
-            {share.status === 'PendingApproval'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                {`Your share request to dataset ${share.dataset.datasetName} for environment ${share.principal.principalName || '-'} is pending approval.`}
+            {share.status === 'Draft' && (
+              <Typography color="textSecondary" variant="body1">
+                Submit your request data owners to get read access.
               </Typography>
-              )}
-            {share.status === 'Rejected'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                {`Your environment ${share.principal.principalName || '-'} was rejected read access
+            )}
+            {share.status === 'PendingApproval' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Your share request to dataset ${
+                  share.dataset.datasetName
+                } for environment ${
+                  share.principal.principalName || '-'
+                } is pending approval.`}
+              </Typography>
+            )}
+            {share.status === 'Rejected' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Your environment ${
+                  share.principal.principalName || '-'
+                } was rejected read access
                   to dataset ${share.dataset.datasetName} .`}
               </Typography>
-              )}
+            )}
           </Box>
         </Grid>
-        <Grid
-          item
-          md={2}
-          xs={6}
-        >
-          {(share.status === 'PendingApproval' || share.status === 'Approved') && (
-          <Box sx={{ ml: 7 }}>
-            <LoadingButton
-              color="primary"
-              startIcon={<PencilAltIcon fontSize="small" />}
-              sx={{ mt: 6, mb: 1, mr: 1 }}
-              onClick={() => navigate(`/console/shares/${share.shareUri}`)}
-              type="button"
-              variant="outlined"
-            >
-              Update
-            </LoadingButton>
-          </Box>
+        <Grid item md={2} xs={6}>
+          {(share.status === 'PendingApproval' ||
+            share.status === 'Approved') && (
+            <Box sx={{ ml: 7 }}>
+              <LoadingButton
+                color="primary"
+                startIcon={<PencilAltIcon fontSize="small" />}
+                sx={{ mt: 6, mb: 1, mr: 1 }}
+                onClick={() => navigate(`/console/shares/${share.shareUri}`)}
+                type="button"
+                variant="outlined"
+              >
+                Update
+              </LoadingButton>
+            </Box>
           )}
-          {(share.status === 'Draft') && (
-          <Box sx={{ ml: 7 }}>
-            <LoadingButton
-              pending={submitting}
-              color="success"
-              startIcon={<CheckCircleOutlined />}
-              sx={{ mt: 6, mb: 1, mr: 1 }}
-              onClick={submit}
-              type="button"
-              variant="outlined"
-            >
-              Submit
-            </LoadingButton>
-          </Box>
+          {share.status === 'Draft' && (
+            <Box sx={{ ml: 7 }}>
+              <LoadingButton
+                loading={submitting}
+                color="success"
+                startIcon={<CheckCircleOutlined />}
+                sx={{ mt: 6, mb: 1, mr: 1 }}
+                onClick={submit}
+                type="button"
+                variant="outlined"
+              >
+                Submit
+              </LoadingButton>
+            </Box>
           )}
         </Grid>
       </Grid>

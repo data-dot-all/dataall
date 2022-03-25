@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Button, Container, Grid, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Container,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
-import { CloudDownloadOutlined } from '@material-ui/icons';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -25,10 +33,7 @@ function DatasetsPageHeader() {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Datasets
         </Typography>
         <Breadcrumbs
@@ -36,13 +41,11 @@ function DatasetsPageHeader() {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Contribute
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/datasets"
@@ -90,16 +93,24 @@ const DatasetList = () => {
   const client = useClient();
   const fetchItems = async () => {
     setLoading(true);
-    await client.query(listDatasets({ filter: {
-      ...filter
-    } })).then((response) => {
-      const nodes = response.data.listDatasets.nodes.map((env) => ({
-        ...env
-      }));
-      setItems({ ...items, ...response.data.listDatasets, nodes });
-    }).catch((error) => {
-      dispatch({ type: SET_ERROR, error: error.Error });
-    }).finally(() => (setLoading(false)));
+    await client
+      .query(
+        listDatasets({
+          filter: {
+            ...filter
+          }
+        })
+      )
+      .then((response) => {
+        const nodes = response.data.listDatasets.nodes.map((env) => ({
+          ...env
+        }));
+        setItems({ ...items, ...response.data.listDatasets, nodes });
+      })
+      .catch((error) => {
+        dispatch({ type: SET_ERROR, error: error.Error });
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleInputChange = (event) => {
@@ -108,7 +119,7 @@ const DatasetList = () => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -153,24 +164,19 @@ const DatasetList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <DatasetListItem dataset={node} />
-                    ))}
-                  </Grid>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <DatasetListItem dataset={node} />
+                  ))}
+                </Grid>
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

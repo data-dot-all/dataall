@@ -6,12 +6,15 @@ const updateDatasetStorageLocation = ({ locationUri, input }) => ({
     input
   },
   mutation: gql`
-            mutation updateDatasetStorageLocation($locationUri:String!,$input:ModifyDatasetStorageLocationInput!){
-                updateDatasetStorageLocation(locationUri:$locationUri,input:$input){
-                    locationUri
-                }
-            }
-        `
+    mutation updateDatasetStorageLocation(
+      $locationUri: String!
+      $input: ModifyDatasetStorageLocationInput!
+    ) {
+      updateDatasetStorageLocation(locationUri: $locationUri, input: $input) {
+        locationUri
+      }
+    }
+  `
 });
 
 export default updateDatasetStorageLocation;

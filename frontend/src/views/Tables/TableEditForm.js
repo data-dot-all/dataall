@@ -16,10 +16,10 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { LoadingButton } from '@material-ui/lab';
+import CircularProgress from '@mui/material/CircularProgress';
+import { LoadingButton } from '@mui/lab';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import useSettings from '../../hooks/useSettings';
@@ -37,16 +37,9 @@ import * as Defaults from '../../components/defaults';
 function TableEditHeader(props) {
   const { table } = props;
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           {`Update Table: ${table.label}`}
         </Typography>
         <Breadcrumbs
@@ -54,13 +47,11 @@ function TableEditHeader(props) {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Discover
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/datasets"
@@ -69,6 +60,7 @@ function TableEditHeader(props) {
             Datasets
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/${table.datasetUri}`}
@@ -76,11 +68,9 @@ function TableEditHeader(props) {
           >
             {table.dataset.name}
           </Link>
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             <Link
+              underline="hover"
               color="textPrimary"
               component={RouterLink}
               to={`/console/datasets/table/${table.tableUri}`}
@@ -89,10 +79,7 @@ function TableEditHeader(props) {
               {table.GlueTableName}
             </Link>
           </Link>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-          >
+          <Typography color="textSecondary" variant="subtitle2">
             Edit
           </Typography>
         </Breadcrumbs>
@@ -128,52 +115,21 @@ const TableEditForm = () => {
   const [loading, setLoading] = useState(true);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
-  const fetchItem = async () => {
-    setLoading(true);
-    let response = await client.query(getDatasetTable(params.uri));
-    let fetchedTerms = [];
-    if (!response.errors && response.data.getDatasetTable !== null) {
-      setTable(response.data.getDatasetTable);
-      if (response.data.getDatasetTable.terms && response.data.getDatasetTable.terms.nodes.length > 0) {
-        fetchedTerms = response.data.getDatasetTable.terms.nodes.map((node) => ({
-          label: node.label,
-          value: node.nodeUri,
-          nodeUri: node.nodeUri,
-          disabled: node.__typename !== 'Term', /*eslint-disable-line*/
-          nodePath: node.path,
-          nodeType: node.__typename /*eslint-disable-line*/
-        }));
-      }
-      setTableTerms(fetchedTerms);
-      response = client.query(searchGlossary(Defaults.SelectListFilter));
-      response.then((result) => {
-        if (result.data.searchGlossary && result.data.searchGlossary.nodes.length > 0) {
-          const selectables = result.data.searchGlossary.nodes.map((node) => ({
-            label: node.label,
-            value: node.nodeUri,
-            nodeUri: node.nodeUri,
-                disabled: node.__typename !== 'Term', /* eslint-disable-line*/
-            nodePath: node.path,
-                nodeType: node.__typename /* eslint-disable-line*/
-          }));
-          setSelectableTerms(selectables);
-        }
-      });
-    } else {
-      const error = response.errors ? response.errors[0].message : 'Dataset table not found';
-      dispatch({ type: SET_ERROR, error });
-    }
-    setLoading(false);
-  };
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      await client.mutate(updateDatasetTable({ tableUri: table.tableUri,
-        input: {
-          description: values.description,
-          terms: values.terms.nodes ? values.terms.nodes.map((t) => t.nodeUri) : values.terms.map((t) => t.nodeUri),
-          tags: values.tags
-        } }));
+      await client.mutate(
+        updateDatasetTable({
+          tableUri: table.tableUri,
+          input: {
+            description: values.description,
+            terms: values.terms.nodes
+              ? values.terms.nodes.map((t) => t.nodeUri)
+              : values.terms.map((t) => t.nodeUri),
+            tags: values.tags
+          }
+        })
+      );
       setStatus({ success: true });
       setSubmitting(false);
       enqueueSnackbar('Table updated', {
@@ -194,10 +150,59 @@ const TableEditForm = () => {
   }
 
   useEffect(() => {
+    const fetchItem = async () => {
+      setLoading(true);
+      let response = await client.query(getDatasetTable(params.uri));
+      let fetchedTerms = [];
+      if (!response.errors && response.data.getDatasetTable !== null) {
+        setTable(response.data.getDatasetTable);
+        if (
+          response.data.getDatasetTable.terms &&
+          response.data.getDatasetTable.terms.nodes.length > 0
+        ) {
+          fetchedTerms = response.data.getDatasetTable.terms.nodes.map(
+            (node) => ({
+              label: node.label,
+              value: node.nodeUri,
+              nodeUri: node.nodeUri,
+              disabled: node.__typename !== 'Term' /*eslint-disable-line*/,
+              nodePath: node.path,
+              nodeType: node.__typename /*eslint-disable-line*/
+            })
+          );
+        }
+        setTableTerms(fetchedTerms);
+        response = client.query(searchGlossary(Defaults.SelectListFilter));
+        response.then((result) => {
+          if (
+            result.data.searchGlossary &&
+            result.data.searchGlossary.nodes.length > 0
+          ) {
+            const selectables = result.data.searchGlossary.nodes.map(
+              (node) => ({
+                label: node.label,
+                value: node.nodeUri,
+                nodeUri: node.nodeUri,
+                disabled: node.__typename !== 'Term' /* eslint-disable-line*/,
+                nodePath: node.path,
+                nodeType: node.__typename /* eslint-disable-line*/
+              })
+            );
+            setSelectableTerms(selectables);
+          }
+        });
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'Dataset table not found';
+        dispatch({ type: SET_ERROR, error });
+      }
+      setLoading(false);
+    };
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, params.uri]);
 
   if (loading) {
     return <CircularProgress />;
@@ -227,7 +232,10 @@ const TableEditForm = () => {
                 tags: table.tags || [],
                 terms: table.terms || []
               }}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -241,19 +249,9 @@ const TableEditForm = () => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={8}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={8} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -277,7 +275,9 @@ const TableEditForm = () => {
                                 }
                               }}
                               fullWidth
-                              helperText={`${200 - values.description.length} characters left`}
+                              helperText={`${
+                                200 - values.description.length
+                              } characters left`}
                               label="Short description"
                               name="description"
                               multiline
@@ -287,7 +287,7 @@ const TableEditForm = () => {
                               value={values.description}
                               variant="outlined"
                             />
-                            {(touched.description && errors.description) && (
+                            {touched.description && errors.description && (
                               <Box sx={{ mt: 2 }}>
                                 <FormHelperText error>
                                   {errors.description}
@@ -298,12 +298,7 @@ const TableEditForm = () => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={4}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={4} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
@@ -315,48 +310,51 @@ const TableEditForm = () => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                           <Box sx={{ mt: 3 }}>
                             {table && (
-                            <Autocomplete
-                              multiple
-                              id="tags-filled"
-                              options={selectableTerms}
-                              defaultValue={tableTerms.map((node) => ({ label: node.label, nodeUri: node.nodeUri }))}
-                              getOptionLabel={(opt) => opt.label}
-                              getOptionDisabled={(opt) => opt.disabled}
-                              getOptionSelected={(option, value) => option.nodeUri === value.nodeUri}
-                              onChange={(event, value) => {
-                                setFieldValue('terms', value);
-                              }}
-                              renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                                <Chip
-                                  label={option.label}
-                                  {...getTagProps({ index })}
-                                />
-                              ))}
-                              renderInput={(p) => (
-                                <TextField
-                                  {...p}
-                                  variant="outlined"
-                                  label="Glossary Terms"
-                                />
-                              )}
-                            />
+                              <Autocomplete
+                                multiple
+                                id="tags-filled"
+                                options={selectableTerms}
+                                defaultValue={tableTerms.map((node) => ({
+                                  label: node.label,
+                                  nodeUri: node.nodeUri
+                                }))}
+                                getOptionLabel={(opt) => opt.label}
+                                getOptionDisabled={(opt) => opt.disabled}
+                                getOptionSelected={(option, value) =>
+                                  option.nodeUri === value.nodeUri
+                                }
+                                onChange={(event, value) => {
+                                  setFieldValue('terms', value);
+                                }}
+                                renderTags={(tagValue, getTagProps) =>
+                                  tagValue.map((option, index) => (
+                                    <Chip
+                                      label={option.label}
+                                      {...getTagProps({ index })}
+                                    />
+                                  ))
+                                }
+                                renderInput={(p) => (
+                                  <TextField
+                                    {...p}
+                                    variant="outlined"
+                                    label="Glossary Terms"
+                                  />
+                                )}
+                              />
                             )}
                           </Box>
                         </CardContent>
                       </Card>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box

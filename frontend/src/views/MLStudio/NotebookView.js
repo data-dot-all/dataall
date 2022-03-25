@@ -13,12 +13,13 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { FaAws, FaTrash, SiJupyter } from 'react-icons/all';
+} from '@mui/material';
+import { FaAws, FaTrash } from 'react-icons/fa';
+import { SiJupyter } from 'react-icons/si';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import { Info } from '@material-ui/icons';
+import { Info } from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -49,7 +50,8 @@ const NotebookView = () => {
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [notebook, setNotebook] = useState(null);
   const [stack, setStack] = useState(null);
-  const [isOpeningSagemakerStudio, setIsOpeningSagemakerStudio] = useState(false);
+  const [isOpeningSagemakerStudio, setIsOpeningSagemakerStudio] =
+    useState(false);
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -61,14 +63,18 @@ const NotebookView = () => {
 
   const fetchItem = async () => {
     setLoading(true);
-    const response = await client.query(getSagemakerStudioUserProfile(params.uri));
+    const response = await client.query(
+      getSagemakerStudioUserProfile(params.uri)
+    );
     if (!response.errors) {
       setNotebook(response.data.getSagemakerStudioUserProfile);
       if (stack) {
         setStack(response.data.getSagemakerStudioUserProfile.stack);
       }
     } else {
-      const error = response.errors ? response.errors[0].message : 'Notebook not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Notebook not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -76,7 +82,11 @@ const NotebookView = () => {
 
   const getNotebookPresignedUrl = async () => {
     setIsOpeningSagemakerStudio(true);
-    const response = await client.query(getSagemakerStudioUserProfilePresignedUrl(notebook.sagemakerStudioUserProfileUri));
+    const response = await client.query(
+      getSagemakerStudioUserProfilePresignedUrl(
+        notebook.sagemakerStudioUserProfileUri
+      )
+    );
     if (!response.errors) {
       window.open(response.data.getSagemakerStudioUserProfilePresignedUrl);
     } else {
@@ -95,7 +105,12 @@ const NotebookView = () => {
     setCurrentTab(value);
   };
   const removeNotebook = async (deleteFromAWS = false) => {
-    const response = await client.mutate(deleteSagemakerStudioUserProfile(notebook.sagemakerStudioUserProfileUri, deleteFromAWS));
+    const response = await client.mutate(
+      deleteSagemakerStudioUserProfile(
+        notebook.sagemakerStudioUserProfileUri,
+        deleteFromAWS
+      )
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Notebook deleted', {
@@ -136,32 +151,21 @@ const NotebookView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Notebook
-                {' '}
-                {notebook.label}
+              <Typography color="textPrimary" variant="h5">
+                Notebook {notebook.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Play
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/mlstudio"
@@ -170,6 +174,7 @@ const NotebookView = () => {
                   ML Studio
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`}
@@ -182,7 +187,7 @@ const NotebookView = () => {
             <Grid item>
               <Box sx={{ m: -1 }}>
                 <LoadingButton
-                  pending={isOpeningSagemakerStudio}
+                  loading={isOpeningSagemakerStudio}
                   color="primary"
                   startIcon={<SiJupyter size={15} />}
                   sx={{ m: 1 }}
@@ -212,7 +217,7 @@ const NotebookView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -220,23 +225,24 @@ const NotebookView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-            && <NotebookOverview notebook={notebook} />}
-            {currentTab === 'stack'
-                      && (
-                      <Stack
-                        environmentUri={notebook.environment.environmentUri}
-                        stackUri={notebook.stack.stackUri}
-                        targetUri={notebook.sagemakerStudioUserProfileUri}
-                        targetType="mlstudio"
-                      />
-                      )}
+            {currentTab === 'overview' && (
+              <NotebookOverview notebook={notebook} />
+            )}
+            {currentTab === 'stack' && (
+              <Stack
+                environmentUri={notebook.environment.environmentUri}
+                stackUri={notebook.stack.stackUri}
+                targetUri={notebook.sagemakerStudioUserProfileUri}
+                targetType="mlstudio"
+              />
+            )}
           </Box>
         </Container>
       </Box>

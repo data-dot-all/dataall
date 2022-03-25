@@ -6,13 +6,13 @@ const getStackLogs = (environmentUri, stackUri) => ({
     stackUri
   },
   query: gql`
-            query getStackLogs($environmentUri:String!,$stackUri:String!){
-                getStackLogs(environmentUri:$environmentUri,stackUri:$stackUri){
-                    message
-                    timestamp
-                }
-            }
-        `
+    query getStackLogs($environmentUri: String!, $stackUri: String!) {
+      getStackLogs(environmentUri: $environmentUri, stackUri: $stackUri) {
+        message
+        timestamp
+      }
+    }
+  `
 });
 
 export default getStackLogs;

@@ -9,26 +9,28 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import React, { useState } from 'react';
-import { FaTrash } from 'react-icons/all';
+import { FaTrash } from 'react-icons/fa';
 
 const DeleteObjectWithFrictionModal = (props) => {
-  const { objectName, deleteMessage, onApply, onClose, open, deleteFunction, isAWSResource = true, ...other } = props;
+  const {
+    objectName,
+    deleteMessage,
+    onApply,
+    onClose,
+    open,
+    deleteFunction,
+    isAWSResource = true,
+    ...other
+  } = props;
   const [confirmValue, setConfirmValue] = useState(null);
   const [deleteFromAWS, setDeleteFromAWS] = useState(false);
   const handleChange = (event) => {
     setConfirmValue(event.target.value);
   };
   return (
-
-    <Dialog
-      maxWidth="sm"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="sm" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -36,58 +38,41 @@ const DeleteObjectWithFrictionModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Delete
-          {' '}
-          {objectName}
-          {' '}
-          ?
+          Delete {objectName} ?
         </Typography>
 
-        {deleteMessage && (
-        <Box sx={{ mt: 1 }}>
-          {deleteMessage}
-        </Box>
-        )}
+        {deleteMessage && <Box sx={{ mt: 1 }}>{deleteMessage}</Box>}
         {isAWSResource && (
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          sx={{ mt: 2 }}
-        >
-          <FormGroup>
-            <FormControlLabel
-              color="primary"
-              control={(
-                <Switch
-                  color="primary"
-                  onChange={() => {
-                    setDeleteFromAWS(!deleteFromAWS);
-                  }}
-                  edge="start"
-                  name="deleteFromAWS"
-                />
-                )}
-              label="Delete associated AWS CloudFormation stack"
-              labelPlacement="end"
-              value={deleteFromAWS}
-            />
-          </FormGroup>
-        </Box>
-        )}
-        <Box
-          sx={{ mt: 2 }}
-        >
-          <Typography
-            align="center"
-            variant="subtitle2"
-            color="textSecondary"
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            sx={{ mt: 2 }}
           >
-            To confirm deletion, type
-            {' '}
-            <i>permanently delete</i>
-            {' '}
-            in the text input field.
+            <FormGroup>
+              <FormControlLabel
+                color="primary"
+                control={
+                  <Switch
+                    color="primary"
+                    onChange={() => {
+                      setDeleteFromAWS(!deleteFromAWS);
+                    }}
+                    edge="start"
+                    name="deleteFromAWS"
+                  />
+                }
+                label="Delete associated AWS CloudFormation stack"
+                labelPlacement="end"
+                value={deleteFromAWS}
+              />
+            </FormGroup>
+          </Box>
+        )}
+        <Box sx={{ mt: 2 }}>
+          <Typography align="center" variant="subtitle2" color="textSecondary">
+            To confirm deletion, type <i>permanently delete</i> in the text
+            input field.
           </Typography>
           <CardContent>
             <TextField
@@ -107,7 +92,9 @@ const DeleteObjectWithFrictionModal = (props) => {
               color="error"
               type="submit"
               variant="contained"
-              onClick={() => { deleteFunction(deleteFromAWS); }}
+              onClick={() => {
+                deleteFunction(deleteFromAWS);
+              }}
             >
               Delete
             </Button>

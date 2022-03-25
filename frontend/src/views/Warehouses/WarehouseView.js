@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,13 +13,19 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { FaAws, FaTrash } from 'react-icons/all';
+} from '@mui/material';
+import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import * as PropTypes from 'prop-types';
-import { Folder, Info, LocalOffer, PauseOutlined, PlayArrowOutlined } from '@material-ui/icons';
+import {
+  Folder,
+  Info,
+  LocalOffer,
+  PauseOutlined,
+  PlayArrowOutlined
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -42,34 +48,30 @@ const tabs = [
   { label: 'Tags', value: 'tags', icon: <LocalOffer /> },
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
-function WarehouseViewPageHeader({ warehouse, deleteCluster, pauseCluster, resumeCluster, resumeLoader, pauseLoader }) {
+function WarehouseViewPageHeader({
+  warehouse,
+  deleteCluster,
+  pauseCluster,
+  resumeCluster,
+  resumeLoader,
+  pauseLoader
+}) {
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
-          Warehouse
-          {' '}
-          {warehouse.label}
+        <Typography color="textPrimary" variant="h5">
+          Warehouse {warehouse.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Organize
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/environments"
@@ -78,6 +80,7 @@ function WarehouseViewPageHeader({ warehouse, deleteCluster, pauseCluster, resum
             Environments
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/environments/${warehouse.environment.environmentUri}`}
@@ -86,6 +89,7 @@ function WarehouseViewPageHeader({ warehouse, deleteCluster, pauseCluster, resum
             {warehouse.environment.label}
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/warehouse/${warehouse.clusterUri}`}
@@ -98,30 +102,30 @@ function WarehouseViewPageHeader({ warehouse, deleteCluster, pauseCluster, resum
       <Grid item>
         <Box sx={{ m: -1 }}>
           {resumeCluster && (
-          <LoadingButton
-            pending={resumeLoader}
-            color="primary"
-            startIcon={<PlayArrowOutlined size={15} />}
-            sx={{ mt: 1, mr: 1 }}
-            onClick={resumeCluster}
-            type="button"
-            variant="outlined"
-          >
-            Resume
-          </LoadingButton>
+            <LoadingButton
+              loading={resumeLoader}
+              color="primary"
+              startIcon={<PlayArrowOutlined size={15} />}
+              sx={{ mt: 1, mr: 1 }}
+              onClick={resumeCluster}
+              type="button"
+              variant="outlined"
+            >
+              Resume
+            </LoadingButton>
           )}
           {pauseCluster && (
-          <LoadingButton
-            pending={pauseLoader}
-            color="primary"
-            startIcon={<PauseOutlined size={15} />}
-            sx={{ mt: 1, mr: 1 }}
-            onClick={pauseCluster}
-            type="button"
-            variant="outlined"
-          >
-            Pause
-          </LoadingButton>
+            <LoadingButton
+              loading={pauseLoader}
+              color="primary"
+              startIcon={<PauseOutlined size={15} />}
+              sx={{ mt: 1, mr: 1 }}
+              onClick={pauseCluster}
+              type="button"
+              variant="outlined"
+            >
+              Pause
+            </LoadingButton>
           )}
           <Button
             color="primary"
@@ -169,7 +173,7 @@ const WarehouseView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getCluster(params.uri));
     if (!response.errors && response.data.getRedshiftCluster !== null) {
@@ -178,23 +182,27 @@ const WarehouseView = () => {
         setStack(response.data.getRedshiftCluster.stack);
       }
     } else {
-      const error = response.errors ? response.errors[0].message : 'Warehouse not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Warehouse not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, stack]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
 
   const deleteCluster = async (deleteFromAWS = false) => {
-    const response = await client.mutate(deleteRedshiftCluster(warehouse.clusterUri, deleteFromAWS));
+    const response = await client.mutate(
+      deleteRedshiftCluster(warehouse.clusterUri, deleteFromAWS)
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       navigate(`/console/environments/${warehouse.environment.environmentUri}`);
@@ -204,7 +212,9 @@ const WarehouseView = () => {
   };
 
   const pauseCluster = async () => {
-    const response = await client.mutate(pauseRedshiftCluster(warehouse.clusterUri));
+    const response = await client.mutate(
+      pauseRedshiftCluster(warehouse.clusterUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Amazon Redshift cluster pause started', {
         anchorOrigin: {
@@ -220,7 +230,9 @@ const WarehouseView = () => {
     setShowPauseCluster(false);
   };
   const resumeCluster = async () => {
-    const response = await client.mutate(resumeRedshiftCluster(warehouse.clusterUri));
+    const response = await client.mutate(
+      resumeRedshiftCluster(warehouse.clusterUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Amazon Redshift cluster resume started', {
         anchorOrigin: {
@@ -267,7 +279,9 @@ const WarehouseView = () => {
             resumeCluster={warehouse.status === 'paused' ? resumeCluster : null}
             resumeLoader={showResumeCluster}
             pauseLoader={showPauseCluster}
-            pauseCluster={warehouse.status === 'available' ? pauseCluster : null}
+            pauseCluster={
+              warehouse.status === 'available' ? pauseCluster : null
+            }
           />
           <Box sx={{ mt: 3 }}>
             <Tabs
@@ -276,7 +290,7 @@ const WarehouseView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -284,33 +298,32 @@ const WarehouseView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-            && <WarehouseOverview warehouse={warehouse} />}
-            {currentTab === 'datasets'
-            && (
-            <WarehouseDatasets warehouse={warehouse} />
+            {currentTab === 'overview' && (
+              <WarehouseOverview warehouse={warehouse} />
             )}
-            {currentTab === 'tags'
-            && (
-            <KeyValueTagList
-              targetUri={warehouse.clusterUri}
-              targetType="redshift"
-            />
+            {currentTab === 'datasets' && (
+              <WarehouseDatasets warehouse={warehouse} />
             )}
-            {currentTab === 'stack'
-            && (
-            <Stack
-              environmentUri={warehouse.environment.environmentUri}
-              stackUri={warehouse.stack.stackUri}
-              targetUri={warehouse.clusterUri}
-              targetType="redshift"
-            />
+            {currentTab === 'tags' && (
+              <KeyValueTagList
+                targetUri={warehouse.clusterUri}
+                targetType="redshift"
+              />
+            )}
+            {currentTab === 'stack' && (
+              <Stack
+                environmentUri={warehouse.environment.environmentUri}
+                stackUri={warehouse.stack.stackUri}
+                targetUri={warehouse.clusterUri}
+                targetType="redshift"
+              />
             )}
           </Box>
         </Container>

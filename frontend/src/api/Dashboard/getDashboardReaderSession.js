@@ -5,10 +5,10 @@ const getReaderSession = (dashboardUri) => ({
     dashboardUri
   },
   query: gql`
-            query GetReaderSession($dashboardUri:String){
-                getReaderSession(dashboardUri:$dashboardUri)
-            }
-        `
+    query GetReaderSession($dashboardUri: String) {
+      getReaderSession(dashboardUri: $dashboardUri)
+    }
+  `
 });
 
 export default getReaderSession;

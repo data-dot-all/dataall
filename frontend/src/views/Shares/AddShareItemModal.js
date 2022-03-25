@@ -11,9 +11,9 @@ import {
   TableHead,
   TableRow,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { Add } from '@material-ui/icons';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { Add } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -38,13 +38,15 @@ const AddShareItemModal = (props) => {
 
   const fetchShareItems = async () => {
     setLoading(true);
-    const response = await client.query(getShareObject({
-      shareUri: params.uri,
-      filter: {
-        ...filter,
-        isShared: false
-      }
-    }));
+    const response = await client.query(
+      getShareObject({
+        shareUri: params.uri,
+        filter: {
+          ...filter,
+          isShared: false
+        }
+      })
+    );
     if (!response.errors) {
       setSharedItems({ ...response.data.getShareObject.items });
     } else {
@@ -54,13 +56,15 @@ const AddShareItemModal = (props) => {
   };
 
   const addItemToShareObject = async (item) => {
-    const response = await client.mutate(addSharedItem({
-      shareUri: share.shareUri,
-      input: {
-        itemUri: item.itemUri,
-        itemType: item.itemType
-      }
-    }));
+    const response = await client.mutate(
+      addSharedItem({
+        shareUri: share.shareUri,
+        input: {
+          itemUri: item.itemUri,
+          itemType: item.itemType
+        }
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Item added', {
         anchorOrigin: {
@@ -84,7 +88,9 @@ const AddShareItemModal = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchShareItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchShareItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -93,13 +99,7 @@ const AddShareItemModal = (props) => {
   }
 
   return (
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -107,81 +107,62 @@ const AddShareItemModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Add new item to share object
-          {' '}
-          {share.dataset.datasetName}
+          Add new item to share object {share.dataset.datasetName}
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          {'After adding an item, share object will be in draft status. Don\'t forget to submit your request !'}
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          {
+            "After adding an item, share object will be in draft status. Don't forget to submit your request !"
+          }
         </Typography>
         <Divider />
         <Box sx={{ p: 3 }} />
-        {(!loading && sharedItems && sharedItems.nodes.length <= 0) ? (
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+        {!loading && sharedItems && sharedItems.nodes.length <= 0 ? (
+          <Typography color="textPrimary" variant="subtitle2">
             No items to add.
           </Typography>
-        )
-          : (
-            <Scrollbar>
-              <Box sx={{ minWidth: 600 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>
-                        Type
-                      </TableCell>
-                      <TableCell>
-                        Name
-                      </TableCell>
-                      <TableCell>
-                        Action
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  {loading ? (
-                    <CircularProgress
-                      sx={{ mt: 1 }}
-                      size={20}
-                    />
-                  ) : (
-                    <TableBody>
-                      {sharedItems.nodes.length > 0 && sharedItems.nodes.map((item) => (
-                        <TableRow
-                          hover
-                          key={item.itemUri}
-                        >
+        ) : (
+          <Scrollbar>
+            <Box sx={{ minWidth: 600 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                {loading ? (
+                  <CircularProgress sx={{ mt: 1 }} size={20} />
+                ) : (
+                  <TableBody>
+                    {sharedItems.nodes.length > 0 &&
+                      sharedItems.nodes.map((item) => (
+                        <TableRow hover key={item.itemUri}>
                           <TableCell>
                             {item.itemType === 'Table' ? 'Table' : 'Folder'}
                           </TableCell>
+                          <TableCell>{item.itemName}</TableCell>
                           <TableCell>
-                            {item.itemName}
-                          </TableCell>
-                          <TableCell>
-                            <IconButton onClick={() => (addItemToShareObject(item))}>
+                            <IconButton
+                              onClick={() => addItemToShareObject(item)}
+                            >
                               <Add fontSize="small" />
                             </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  )}
-                </Table>
-                <Pager
-                  mgTop={2}
-                  mgBottom={2}
-                  items={sharedItems}
-                  onChange={handlePageChange}
-                />
-              </Box>
-            </Scrollbar>
-          )}
+                  </TableBody>
+                )}
+              </Table>
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={sharedItems}
+                onChange={handlePageChange}
+              />
+            </Box>
+          </Scrollbar>
+        )}
       </Box>
     </Dialog>
   );

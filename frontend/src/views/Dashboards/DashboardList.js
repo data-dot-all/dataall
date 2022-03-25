@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Button, Container, Grid, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Container,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
-import { CloudDownloadOutlined } from '@material-ui/icons';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import { MdShowChart } from 'react-icons/md';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -25,10 +33,7 @@ function DashboardPageHeader() {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Dashboards
         </Typography>
         <Breadcrumbs
@@ -36,13 +41,11 @@ function DashboardPageHeader() {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Play
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/dashboards"
@@ -107,7 +110,9 @@ const DashboardList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -119,7 +124,9 @@ const DashboardList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -151,24 +158,19 @@ const DashboardList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <DashboardListItem dashboard={node} />
-                    ))}
-                  </Grid>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <DashboardListItem dashboard={node} />
+                  ))}
+                </Grid>
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

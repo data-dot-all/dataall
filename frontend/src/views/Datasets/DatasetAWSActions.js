@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { FaExternalLinkAlt } from 'react-icons/all';
-import { LoadingButton } from '@material-ui/lab';
-import { CopyAll } from '@material-ui/icons';
+import { FaExternalLinkAlt } from 'react-icons/fa';
+import { LoadingButton } from '@mui/lab';
+import { CopyAll } from '@mui/icons-material';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -18,9 +18,13 @@ function DatasetAWSActions({ dataset, isAdmin }) {
   const [loadingCreds, setLoadingCreds] = useState(false);
   const generateCredentials = async () => {
     setLoadingCreds(true);
-    const response = await client.mutate(generateDatasetAccessToken(dataset.datasetUri));
+    const response = await client.mutate(
+      generateDatasetAccessToken(dataset.datasetUri)
+    );
     if (!response.errors) {
-      await navigator.clipboard.writeText(response.data.generateDatasetAccessToken);
+      await navigator.clipboard.writeText(
+        response.data.generateDatasetAccessToken
+      );
       enqueueSnackbar('Credentials copied to clipboard', {
         anchorOrigin: {
           horizontal: 'right',
@@ -36,7 +40,9 @@ function DatasetAWSActions({ dataset, isAdmin }) {
 
   const goToS3Console = async () => {
     setIsLoadingUI(true);
-    const response = await client.query(getDatasetAdminConsoleUrl(dataset.datasetUri));
+    const response = await client.query(
+      getDatasetAdminConsoleUrl(dataset.datasetUri)
+    );
     if (!response.errors) {
       window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
     } else {
@@ -50,7 +56,7 @@ function DatasetAWSActions({ dataset, isAdmin }) {
       {isAdmin && (
         <>
           <LoadingButton
-            pending={loadingCreds}
+            loading={loadingCreds}
             color="primary"
             startIcon={<CopyAll size={15} />}
             sx={{ mt: 1, mr: 1 }}
@@ -60,7 +66,7 @@ function DatasetAWSActions({ dataset, isAdmin }) {
             AWS Credentials
           </LoadingButton>
           <LoadingButton
-            pending={isLoadingUI}
+            loading={isLoadingUI}
             startIcon={<FaExternalLinkAlt size={15} />}
             sx={{ mt: 1, mr: 1 }}
             variant="outlined"

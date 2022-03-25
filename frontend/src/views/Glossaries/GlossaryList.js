@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Button, Container, Grid, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Container,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -24,10 +32,7 @@ function GlossariesPageHeader() {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Glossaries
         </Typography>
         <Breadcrumbs
@@ -35,13 +40,11 @@ function GlossariesPageHeader() {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Discover
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/glossaries"
@@ -95,8 +98,10 @@ const GlossaryList = () => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -108,7 +113,9 @@ const GlossaryList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -140,24 +147,19 @@ const GlossaryList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <GlossaryListItem glossary={node} />
-                    ))}
-                  </Grid>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <GlossaryListItem glossary={node} />
+                  ))}
+                </Grid>
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

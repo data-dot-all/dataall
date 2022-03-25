@@ -1,7 +1,13 @@
 import React, { useEffect } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, CircularProgress, Grid, IconButton, Typography } from '@material-ui/core';
-import { CancelRounded } from '@material-ui/icons';
+import {
+  Box,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Typography
+} from '@mui/material';
+import { CancelRounded } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { SET_ERROR } from '../../store/errorReducer';
 import useClient from '../../hooks/useClient';
@@ -12,15 +18,6 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const client = useClient();
   const dispatch = useDispatch();
-  const fetchItem = async () => {
-    const response = await client.query(getStack(environmentUri, stack.stackUri));
-    if (!response.errors && response.data.getStack !== null) {
-      setStack(response.data.getStack);
-    } else {
-      const error = response.errors ? response.errors[0].message : 'AWS CloudFormation stack not found';
-      dispatch({ type: SET_ERROR, error });
-    }
-  };
 
   useEffect(() => {
     closeSnackbar();
@@ -32,23 +29,11 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
         case 'PENDING':
           enqueueSnackbar(
             <Box>
-              <Grid
-                container
-                spacing={2}
-              >
-                <Grid
-                  item
-                  sx={1}
-                >
-                  <CircularProgress
-                    sx={{ color: '#fff' }}
-                    size={15}
-                  />
+              <Grid container spacing={2}>
+                <Grid item sx={1}>
+                  <CircularProgress sx={{ color: '#fff' }} size={15} />
                 </Grid>
-                <Grid
-                  item
-                  sx={11}
-                >
+                <Grid item sx={11}>
                   <Typography
                     color="textPrimary"
                     sx={{ color: '#fff' }}
@@ -58,7 +43,8 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
                   </Typography>
                 </Grid>
               </Grid>
-            </Box>, {
+            </Box>,
+            {
               key: new Date().getTime() + Math.random(),
               anchorOrigin: {
                 horizontal: 'right',
@@ -67,9 +53,10 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
               variant: 'info',
               persist: true,
               action: (key) => (
-                <IconButton onClick={() => {
-                  closeSnackbar(key);
-                }}
+                <IconButton
+                  onClick={() => {
+                    closeSnackbar(key);
+                  }}
                 >
                   <CancelRounded sx={{ color: '#fff' }} />
                 </IconButton>
@@ -87,11 +74,10 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
               sx={{ color: '#fff' }}
               variant="subtitle2"
             >
-              An error occurred during the deployment of the AWS CloudFormation stack. Stack status is
-              {' '}
-              {stack.status}
-              .
-            </Typography>, {
+              An error occurred during the deployment of the AWS CloudFormation
+              stack. Stack status is {stack.status}.
+            </Typography>,
+            {
               key: new Date().getTime() + Math.random(),
               anchorOrigin: {
                 horizontal: 'right',
@@ -100,9 +86,10 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
               variant: 'error',
               persist: true,
               action: (key) => (
-                <IconButton onClick={() => {
-                  closeSnackbar(key);
-                }}
+                <IconButton
+                  onClick={() => {
+                    closeSnackbar(key);
+                  }}
                 >
                   <CancelRounded sx={{ color: '#fff' }} />
                 </IconButton>
@@ -115,17 +102,38 @@ const StackStatus = ({ stack, setStack, environmentUri }) => {
           break;
       }
     }
+    const fetchItem = async () => {
+      const response = await client.query(
+        getStack(environmentUri, stack.stackUri)
+      );
+      if (!response.errors && response.data.getStack !== null) {
+        setStack(response.data.getStack);
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'AWS CloudFormation stack not found';
+        dispatch({ type: SET_ERROR, error });
+      }
+    };
     const interval = setInterval(() => {
       if (client && stack) {
-        fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+        fetchItem().catch((e) =>
+          dispatch({ type: SET_ERROR, error: e.message })
+        );
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [client, stack]);
+  }, [
+    client,
+    stack,
+    dispatch,
+    enqueueSnackbar,
+    closeSnackbar,
+    environmentUri,
+    setStack
+  ]);
 
-  return (
-    <></>
-  );
+  return <></>;
 };
 StackStatus.propTypes = {
   stack: PropTypes.object.isRequired,

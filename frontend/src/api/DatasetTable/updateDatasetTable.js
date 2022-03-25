@@ -6,12 +6,15 @@ const updateDatasetTable = ({ tableUri, input }) => ({
     input
   },
   mutation: gql`
-            mutation UpdateDatasetTable($tableUri:String!,$input:ModifyDatasetTableInput!){
-                updateDatasetTable(tableUri:$tableUri,input:$input){
-                    tableUri
-                }
-            }
-        `
+    mutation UpdateDatasetTable(
+      $tableUri: String!
+      $input: ModifyDatasetTableInput!
+    ) {
+      updateDatasetTable(tableUri: $tableUri, input: $input) {
+        tableUri
+      }
+    }
+  `
 });
 
 export default updateDatasetTable;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -18,9 +18,9 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import useGroups from '../../hooks/useGroups';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -41,25 +41,29 @@ const WarehouseEditForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [warehouse, setWarehouse] = useState(null);
-  const groupOptions = groups ? groups.map((g) => ({ value: g, label: g })) : [];
+  const groupOptions = groups
+    ? groups.map((g) => ({ value: g, label: g }))
+    : [];
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getCluster(params.uri));
     if (!response.errors && response.data.get !== null) {
       setWarehouse(response.data.getRedshiftCluster);
     } else {
-      const error = response.errors ? response.errors[0].message : 'Warehouse not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Warehouse not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -74,7 +78,9 @@ const WarehouseEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/warehouse/${response.data.updateSqlWarehouse.clusterUri}`);
+        navigate(
+          `/console/warehouse/${response.data.updateSqlWarehouse.clusterUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -104,32 +110,21 @@ const WarehouseEditForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Edit warehouse
-                {' '}
-                {warehouse.label}
+              <Typography color="textPrimary" variant="h5">
+                Edit warehouse {warehouse.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Discover
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/datasets"
@@ -138,6 +133,7 @@ const WarehouseEditForm = (props) => {
                   Warehouses
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/warehouse/${warehouse.clusterUri}`}
@@ -170,16 +166,20 @@ const WarehouseEditForm = (props) => {
                 SamlGroupName: warehouse.SamlAdminGroupName,
                 tags: warehouse.tags
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Cluster name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                  tags: Yup.array().nullable()
-
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Cluster name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -193,20 +193,9 @@ const WarehouseEditForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={7}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={7} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -231,8 +220,12 @@ const WarehouseEditForm = (props) => {
                               }
                             }}
                             fullWidth
-                            error={Boolean(touched.description && errors.description)}
-                            helperText={`${200 - values.description.length} characters left`}
+                            error={Boolean(
+                              touched.description && errors.description
+                            )}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -242,7 +235,7 @@ const WarehouseEditForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -256,22 +249,26 @@ const WarehouseEditForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={(event) => {
-                              setFieldValue('SamlGroupName', event.target.value);
+                              setFieldValue(
+                                'SamlGroupName',
+                                event.target.value
+                              );
                             }}
                             select
                             value={values.SamlGroupName}
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -288,22 +285,14 @@ const WarehouseEditForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
-
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={5}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
@@ -346,7 +335,7 @@ const WarehouseEditForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -362,7 +351,6 @@ const WarehouseEditForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

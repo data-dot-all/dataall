@@ -5,18 +5,20 @@ const updateSqlPipeline = ({ sqlPipelineUri, input }) => ({
     sqlPipelineUri,
     input
   },
-  mutation: gql`mutation UpdateSqlPipeline(
-            $input:UpdateSqlPipelineInput,
-            $sqlPipelineUri:String!
-        ){
-            updateSqlPipeline(sqlPipelineUri:$sqlPipelineUri,input:$input){
-                sqlPipelineUri
-                name
-                label
-                created
-                tags
-            }
-        }`
+  mutation: gql`
+    mutation UpdateSqlPipeline(
+      $input: UpdateSqlPipelineInput
+      $sqlPipelineUri: String!
+    ) {
+      updateSqlPipeline(sqlPipelineUri: $sqlPipelineUri, input: $input) {
+        sqlPipelineUri
+        name
+        label
+        created
+        tags
+      }
+    }
+  `
 });
 
 export default updateSqlPipeline;

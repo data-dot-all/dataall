@@ -1,10 +1,18 @@
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { Box, CardContent, Dialog, FormHelperText, Switch, TextField, Typography } from '@material-ui/core';
+import {
+  Box,
+  CardContent,
+  Dialog,
+  FormHelperText,
+  Switch,
+  TextField,
+  Typography
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
-import { BugReportOutlined } from '@material-ui/icons';
+import { LoadingButton } from '@mui/lab';
+import { BugReportOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -22,10 +30,12 @@ const DatasetStartCrawlerModal = (props) => {
       if (values.prefixSpecified && values.prefix) {
         prefix = values.prefix;
       }
-      const response = await client.mutate(startGlueCrawler({
-        datasetUri: dataset.datasetUri,
-        input: { prefix }
-      }));
+      const response = await client.mutate(
+        startGlueCrawler({
+          datasetUri: dataset.datasetUri,
+          input: { prefix }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -55,12 +65,7 @@ const DatasetStartCrawlerModal = (props) => {
     return null;
   }
   return (
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -70,13 +75,10 @@ const DatasetStartCrawlerModal = (props) => {
         >
           Crawl dataset
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography align="center" color="textSecondary" variant="subtitle2">
           <p>
-            You can specify an S3 prefix to crawl or toggle off to crawl the whole dataset.
+            You can specify an S3 prefix to crawl or toggle off to crawl the
+            whole dataset.
           </p>
         </Typography>
         <Box sx={{ p: 3 }}>
@@ -85,17 +87,16 @@ const DatasetStartCrawlerModal = (props) => {
               prefixSpecified: false,
               prefix: ''
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                prefix: Yup
-                  .string()
-                  .when('prefixSpecified', {
-                    is: true,
-                    then: Yup.string().max(255).required('Prefix is required')
-                  })
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              prefix: Yup.string().when('prefixSpecified', {
+                is: true,
+                then: Yup.string().max(255).required('Prefix is required')
+              })
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -108,9 +109,7 @@ const DatasetStartCrawlerModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
+              <form onSubmit={handleSubmit}>
                 <Box>
                   <CardContent>
                     <Typography
@@ -145,11 +144,9 @@ const DatasetStartCrawlerModal = (props) => {
                   )}
                 </Box>
                 {errors.submit && (
-                <Box sx={{ mt: 3 }}>
-                  <FormHelperText error>
-                    {errors.submit}
-                  </FormHelperText>
-                </Box>
+                  <Box sx={{ mt: 3 }}>
+                    <FormHelperText error>{errors.submit}</FormHelperText>
+                  </Box>
                 )}
                 <CardContent>
                   <LoadingButton

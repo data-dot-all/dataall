@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
-import { Avatar } from '@material-ui/core';
+import { makeStyles } from '@mui/styles';
+import { Avatar } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
   primary: {
@@ -15,9 +15,7 @@ const TextAvatar = (props) => {
   return (
     <>
       {name && (
-      <Avatar className={classes.primary}>
-        {name[0].toUpperCase()}
-      </Avatar>
+        <Avatar className={classes.primary}>{name[0].toUpperCase()}</Avatar>
       )}
     </>
   );

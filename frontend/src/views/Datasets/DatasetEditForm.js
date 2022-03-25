@@ -16,12 +16,13 @@ import {
   Container,
   FormHelperText,
   Grid,
-  Link, MenuItem,
+  Link,
+  MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -48,13 +49,27 @@ const DatasetEditForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
-  const [confidentialityOptions] = useState(['Unclassified', 'Official', 'Secret']);
+  const [confidentialityOptions] = useState([
+    'Unclassified',
+    'Official',
+    'Secret'
+  ]);
 
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -68,26 +83,34 @@ const DatasetEditForm = (props) => {
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
-      fetchGroups(response.data.getDataset.environment.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchGroups(response.data.getDataset.environment.environmentUri).catch(
+        (e) => dispatch({ type: SET_ERROR, error: e.message })
+      );
       let fetchedTerms = [];
-      if (response.data.getDataset.terms && response.data.getDataset.terms.nodes.length > 0) {
+      if (
+        response.data.getDataset.terms &&
+        response.data.getDataset.terms.nodes.length > 0
+      ) {
         fetchedTerms = response.data.getDataset.terms.nodes.map((node) => ({
           label: node.label,
           value: node.nodeUri,
           nodeUri: node.nodeUri,
-          disabled: node.__typename !== 'Term', /*eslint-disable-line*/
+          disabled: node.__typename !== 'Term' /*eslint-disable-line*/,
           nodePath: node.path,
           nodeType: node.__typename /*eslint-disable-line*/
         }));
       }
       setTableTerms(fetchedTerms);
       client.query(searchGlossary(Defaults.SelectListFilter)).then((result) => {
-        if (result.data.searchGlossary && result.data.searchGlossary.nodes.length > 0) {
+        if (
+          result.data.searchGlossary &&
+          result.data.searchGlossary.nodes.length > 0
+        ) {
           const selectables = result.data.searchGlossary.nodes.map((node) => ({
             label: node.label,
             value: node.nodeUri,
             nodeUri: node.nodeUri,
-            disabled: node.__typename !== 'Term', /* eslint-disable-line*/
+            disabled: node.__typename !== 'Term' /* eslint-disable-line*/,
             nodePath: node.path,
             nodeType: node.__typename /* eslint-disable-line*/
           }));
@@ -95,7 +118,9 @@ const DatasetEditForm = (props) => {
         }
       });
     } else {
-      const error = response.errors ? response.errors[0].message : 'Dataset not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dataset not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -109,16 +134,22 @@ const DatasetEditForm = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateDataset({ datasetUri: dataset.datasetUri,
-        input: {
-          label: values.label,
-          description: values.description,
-          tags: values.tags,
-          stewards: values.stewards,
-          topics: values.topics ? values.topics.map((t) => t.value) : [],
-          terms: values.terms.nodes ? values.terms.nodes.map((t) => t.nodeUri) : values.terms.map((t) => t.nodeUri),
-          confidentiality: values.confidentiality
-        } }));
+      const response = await client.mutate(
+        updateDataset({
+          datasetUri: dataset.datasetUri,
+          input: {
+            label: values.label,
+            description: values.description,
+            tags: values.tags,
+            stewards: values.stewards,
+            topics: values.topics ? values.topics.map((t) => t.value) : [],
+            terms: values.terms.nodes
+              ? values.terms.nodes.map((t) => t.nodeUri)
+              : values.terms.map((t) => t.nodeUri),
+            confidentiality: values.confidentiality
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -159,32 +190,21 @@ const DatasetEditForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Edit dataset
-                {' '}
-                {dataset.label}
+              <Typography color="textPrimary" variant="h5">
+                Edit dataset {dataset.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Contribute
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/datasets"
@@ -193,6 +213,7 @@ const DatasetEditForm = (props) => {
                   Datasets
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/datasets/${dataset.datasetUri}`}
@@ -200,10 +221,7 @@ const DatasetEditForm = (props) => {
                 >
                   {dataset.label}
                 </Link>
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Edit
                 </Typography>
               </Breadcrumbs>
@@ -235,17 +253,21 @@ const DatasetEditForm = (props) => {
                 stewards: dataset.stewards,
                 confidentiality: dataset.confidentiality
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Dataset name is required'),
-                  description: Yup.string().max(5000),
-                  topics: Yup.array().min(1).required('*Topics are required'),
-                  tags: Yup.array().min(1).required('*Tags are required'),
-                  confidentiality: Yup.string().required('*Confidentiality is required')
-
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Dataset name is required'),
+                description: Yup.string().max(5000),
+                topics: Yup.array().min(1).required('*Topics are required'),
+                tags: Yup.array().min(1).required('*Tags are required'),
+                confidentiality: Yup.string().required(
+                  '*Confidentiality is required'
+                )
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -259,20 +281,9 @@ const DatasetEditForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={7}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={7} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -297,8 +308,12 @@ const DatasetEditForm = (props) => {
                               }
                             }}
                             fullWidth
-                            error={Boolean(touched.description && errors.description)}
-                            helperText={`${200 - values.description.length} characters left`}
+                            error={Boolean(
+                              touched.description && errors.description
+                            )}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -308,7 +323,7 @@ const DatasetEditForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -323,8 +338,12 @@ const DatasetEditForm = (props) => {
                           <TextField
                             fullWidth
                             defaultValue={dataset.confidentiality}
-                            error={Boolean(touched.confidentiality && errors.confidentiality)}
-                            helperText={touched.confidentiality && errors.confidentiality}
+                            error={Boolean(
+                              touched.confidentiality && errors.confidentiality
+                            )}
+                            helperText={
+                              touched.confidentiality && errors.confidentiality
+                            }
                             label="Confidentiality"
                             name="confidentiality"
                             onChange={handleChange}
@@ -333,10 +352,7 @@ const DatasetEditForm = (props) => {
                             variant="outlined"
                           >
                             {confidentialityOptions.map((c) => (
-                              <MenuItem
-                                key={c}
-                                value={c}
-                              >
+                              <MenuItem key={c} value={c}>
                                 {c}
                               </MenuItem>
                             ))}
@@ -348,17 +364,21 @@ const DatasetEditForm = (props) => {
                             id="tags-filled"
                             defaultValue={values.topics}
                             options={TopicsData}
-                            getOptionSelected={(option, value) => option.value === value.value}
+                            getOptionSelected={(option, value) =>
+                              option.value === value.value
+                            }
                             getOptionLabel={(opt) => opt.label}
                             onChange={(event, value) => {
                               setFieldValue('topics', value);
                             }}
-                            renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                              <Chip
-                                label={option.label}
-                                {...getTagProps({ index })}
-                              />
-                            ))}
+                            renderTags={(tagValue, getTagProps) =>
+                              tagValue.map((option, index) => (
+                                <Chip
+                                  label={option.label}
+                                  {...getTagProps({ index })}
+                                />
+                              ))
+                            }
                             renderInput={(p) => (
                               <TextField
                                 {...p}
@@ -372,31 +392,38 @@ const DatasetEditForm = (props) => {
                         </CardContent>
                         <CardContent>
                           {dataset && (
-                          <Autocomplete
-                            multiple
-                            id="tags-filled"
-                            options={selectableTerms}
-                            defaultValue={tableTerms.map((node) => ({ label: node.label, nodeUri: node.nodeUri }))}
-                            getOptionLabel={(opt) => opt.label}
-                            getOptionDisabled={(opt) => opt.disabled}
-                            getOptionSelected={(option, value) => option.nodeUri === value.nodeUri}
-                            onChange={(event, value) => {
-                              setFieldValue('terms', value);
-                            }}
-                            renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                              <Chip
-                                label={option.label}
-                                {...getTagProps({ index })}
-                              />
-                            ))}
-                            renderInput={(p) => (
-                              <TextField
-                                {...p}
-                                variant="outlined"
-                                label="Glossary Terms"
-                              />
-                            )}
-                          />
+                            <Autocomplete
+                              multiple
+                              id="tags-filled"
+                              options={selectableTerms}
+                              defaultValue={tableTerms.map((node) => ({
+                                label: node.label,
+                                nodeUri: node.nodeUri
+                              }))}
+                              getOptionLabel={(opt) => opt.label}
+                              getOptionDisabled={(opt) => opt.disabled}
+                              getOptionSelected={(option, value) =>
+                                option.nodeUri === value.nodeUri
+                              }
+                              onChange={(event, value) => {
+                                setFieldValue('terms', value);
+                              }}
+                              renderTags={(tagValue, getTagProps) =>
+                                tagValue.map((option, index) => (
+                                  <Chip
+                                    label={option.label}
+                                    {...getTagProps({ index })}
+                                  />
+                                ))
+                              }
+                              renderInput={(p) => (
+                                <TextField
+                                  {...p}
+                                  variant="outlined"
+                                  label="Glossary Terms"
+                                />
+                              )}
+                            />
                           )}
                         </CardContent>
                         <CardContent>
@@ -410,21 +437,14 @@ const DatasetEditForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={5}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
@@ -503,7 +523,7 @@ const DatasetEditForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -519,7 +539,6 @@ const DatasetEditForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

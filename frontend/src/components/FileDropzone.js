@@ -11,7 +11,7 @@ import {
   ListItemText,
   Tooltip,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import DuplicateIcon from '../icons/Duplicate';
 import XIcon from '../icons/X';
 import bytesToSize from '../utils/bytesToSize';
@@ -81,32 +81,18 @@ const FileDropzone = (props) => {
             }
           }}
         >
-          <img
-            alt="Select file"
-            src="/static/undraw_add_file2_gvbb.svg"
-          />
+          <img alt="Select file" src="/static/undraw_add_file2_gvbb.svg" />
         </Box>
         <Box sx={{ p: 2 }}>
-          <Typography
-            color="textPrimary"
-            variant="h6"
-          >
-            {`Select file${(maxFiles && maxFiles === 1) ? '' : 's'}`}
+          <Typography color="textPrimary" variant="h6">
+            {`Select file${maxFiles && maxFiles === 1 ? '' : 's'}`}
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography
-              color="textPrimary"
-              variant="body1"
-            >
-              {`Drop file${(maxFiles && maxFiles === 1) ? '' : 's'}`}
-              {' '}
-              <Link
-                color="primary"
-                underline="always"
-              >
+            <Typography color="textPrimary" variant="body1">
+              {`Drop file${maxFiles && maxFiles === 1 ? '' : 's'}`}{' '}
+              <Link underline="hover" color="primary" underline="always">
                 browse
-              </Link>
-              {' '}
+              </Link>{' '}
               through your machine
             </Typography>
           </Box>

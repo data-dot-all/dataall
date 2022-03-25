@@ -1,6 +1,14 @@
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Card, CardContent, CardHeader, Link, List, ListItem, Typography } from '@material-ui/core';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Link,
+  List,
+  ListItem,
+  Typography
+} from '@mui/material';
 import React from 'react';
 import TextAvatar from './TextAvatar';
 import StackStatus from './StackStatus';
@@ -21,38 +29,32 @@ const ObjectMetadata = (props) => {
     organization,
     accountId,
     quicksightEnabled,
-    ...other } = props;
+    ...other
+  } = props;
 
   return (
-    <Card
-      {...other}
-    >
+    <Card {...other}>
       <CardHeader
-        avatar={(
-          <TextAvatar name={owner} />
-                )}
+        avatar={<TextAvatar name={owner} />}
         disableTypography
-        subheader={(
+        subheader={
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="#"
-            underline="none"
+            underline="hover"
             variant="subtitle2"
           >
             {owner}
           </Link>
-                )}
+        }
         style={{ paddingBottom: 0 }}
-        title={(
-          <Typography
-            color="textPrimary"
-            display="block"
-            variant="overline"
-          >
+        title={
+          <Typography color="textPrimary" display="block" variant="overline">
             Created by
           </Typography>
-                )}
+        }
       />
       <CardContent sx={{ pt: 0 }}>
         <List>
@@ -65,17 +67,12 @@ const ObjectMetadata = (props) => {
                 padding: 2
               }}
             >
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Organization
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+              <Typography color="textPrimary" variant="body2">
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/organizations/${organization.organizationUri}`}
@@ -87,57 +84,46 @@ const ObjectMetadata = (props) => {
             </ListItem>
           )}
           {environment && (
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
+            <ListItem
+              disableGutters
+              divider
+              sx={{
+                justifyContent: 'space-between',
+                padding: 2
+              }}
             >
-              Environment
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
-              <Link
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/environments/${environment.environmentUri}`}
-                variant="subtitle2"
-              >
-                {environment.label}
-              </Link>
-            </Typography>
-          </ListItem>
+              <Typography color="textSecondary" variant="subtitle2">
+                Environment
+              </Typography>
+              <Typography color="textPrimary" variant="body2">
+                <Link
+                  underline="hover"
+                  color="textPrimary"
+                  component={RouterLink}
+                  to={`/console/environments/${environment.environmentUri}`}
+                  variant="subtitle2"
+                >
+                  {environment.label}
+                </Link>
+              </Typography>
+            </ListItem>
           )}
           {accountId && (
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
+            <ListItem
+              disableGutters
+              divider
+              sx={{
+                justifyContent: 'space-between',
+                padding: 2
+              }}
             >
-              AWS account
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
-              {accountId}
-            </Typography>
-          </ListItem>
+              <Typography color="textSecondary" variant="subtitle2">
+                AWS account
+              </Typography>
+              <Typography color="textPrimary" variant="body2">
+                {accountId}
+              </Typography>
+            </ListItem>
           )}
           {region && (
             <ListItem
@@ -148,16 +134,10 @@ const ObjectMetadata = (props) => {
                 padding: 2
               }}
             >
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Region
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+              <Typography color="textPrimary" variant="body2">
                 {region}
               </Typography>
             </ListItem>
@@ -172,45 +152,15 @@ const ObjectMetadata = (props) => {
                 padding: 2
               }}
             >
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Team
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+              <Typography color="textPrimary" variant="body2">
                 {admins}
               </Typography>
             </ListItem>
           )}
           {quicksightEnabled && (
-          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
-              QuickSight integration
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
-              <Label color="info">{quicksightEnabled ? 'Yes' : 'No'}</Label>
-            </Typography>
-          </ListItem>
-          )}
-          {objectType && objectType === 'dataset' && stewards
-            && (
             <ListItem
               disableGutters
               divider
@@ -219,20 +169,31 @@ const ObjectMetadata = (props) => {
                 padding: 2
               }}
             >
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
+                QuickSight integration
+              </Typography>
+              <Typography color="textPrimary" variant="body2">
+                <Label color="info">{quicksightEnabled ? 'Yes' : 'No'}</Label>
+              </Typography>
+            </ListItem>
+          )}
+          {objectType && objectType === 'dataset' && stewards && (
+            <ListItem
+              disableGutters
+              divider
+              sx={{
+                justifyContent: 'space-between',
+                padding: 2
+              }}
+            >
+              <Typography color="textSecondary" variant="subtitle2">
                 Stewards
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+              <Typography color="textPrimary" variant="body2">
                 {stewards || '-'}
               </Typography>
             </ListItem>
-            )}
+          )}
 
           <ListItem
             disableGutters
@@ -242,40 +203,28 @@ const ObjectMetadata = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Created
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {dayjs(created).fromNow()}
             </Typography>
           </ListItem>
           {status && (
-          <ListItem
-            disableGutters
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
+            <ListItem
+              disableGutters
+              sx={{
+                justifyContent: 'space-between',
+                padding: 2
+              }}
             >
-              Status
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
-              <StackStatus status={status} />
-            </Typography>
-          </ListItem>
+              <Typography color="textSecondary" variant="subtitle2">
+                Status
+              </Typography>
+              <Typography color="textPrimary" variant="body2">
+                <StackStatus status={status} />
+              </Typography>
+            </ListItem>
           )}
         </List>
       </CardContent>

@@ -1,9 +1,18 @@
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { Box, CardContent, CardHeader, Dialog, FormHelperText, Grid, TextField, Typography } from '@material-ui/core';
+import {
+  Box,
+  CardContent,
+  CardHeader,
+  Dialog,
+  FormHelperText,
+  Grid,
+  TextField,
+  Typography
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -18,12 +27,16 @@ const WorksheetEditFormModal = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateWorksheet({ worksheetUri: worksheet.worksheetUri,
-        input: {
-          label: values.label,
-          tags: values.tags,
-          description: values.description
-        } }));
+      const response = await client.mutate(
+        updateWorksheet({
+          worksheetUri: worksheet.worksheetUri,
+          input: {
+            label: values.label,
+            tags: values.tags,
+            description: values.description
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -57,13 +70,7 @@ const WorksheetEditFormModal = (props) => {
   }
 
   return (
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -71,9 +78,7 @@ const WorksheetEditFormModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Edit worksheet
-          {' '}
-          {worksheet.label}
+          Edit worksheet {worksheet.label}
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -82,15 +87,17 @@ const WorksheetEditFormModal = (props) => {
               description: worksheet.description,
               tags: worksheet.tags
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                label: Yup.string().max(255).required('*Worksheet name is required'),
-                description: Yup.string().max(5000),
-                tags: Yup.array().nullable()
-
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              label: Yup.string()
+                .max(255)
+                .required('*Worksheet name is required'),
+              description: Yup.string().max(5000),
+              tags: Yup.array().nullable()
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -104,19 +111,9 @@ const WorksheetEditFormModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
-                <Grid
-                  container
-                  spacing={3}
-                >
-                  <Grid
-                    item
-                    lg={8}
-                    md={6}
-                    xs={12}
-                  >
+              <form onSubmit={handleSubmit}>
+                <Grid container spacing={3}>
+                  <Grid item lg={8} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Details" />
                       <CardContent>
@@ -141,7 +138,9 @@ const WorksheetEditFormModal = (props) => {
                             }
                           }}
                           fullWidth
-                          helperText={`${200 - values.description.length} characters left`}
+                          helperText={`${
+                            200 - values.description.length
+                          } characters left`}
                           label="Short description"
                           name="description"
                           multiline
@@ -151,22 +150,17 @@ const WorksheetEditFormModal = (props) => {
                           value={values.description}
                           variant="outlined"
                         />
-                        {(touched.description && errors.description) && (
-                        <Box sx={{ mt: 2 }}>
-                          <FormHelperText error>
-                            {errors.description}
-                          </FormHelperText>
-                        </Box>
+                        {touched.description && errors.description && (
+                          <Box sx={{ mt: 2 }}>
+                            <FormHelperText error>
+                              {errors.description}
+                            </FormHelperText>
+                          </Box>
                         )}
                       </CardContent>
                     </Box>
                   </Grid>
-                  <Grid
-                    item
-                    lg={4}
-                    md={6}
-                    xs={12}
-                  >
+                  <Grid item lg={4} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Organize" />
                       <CardContent>
@@ -178,19 +172,15 @@ const WorksheetEditFormModal = (props) => {
                           label="Tags"
                           placeholder="Hit enter after typing value"
                           onChange={(chip) => {
-                            setFieldValue('tags', [
-                              ...chip
-                            ]);
+                            setFieldValue('tags', [...chip]);
                           }}
                         />
                       </CardContent>
                     </Box>
                     {errors.submit && (
-                    <Box sx={{ mt: 3 }}>
-                      <FormHelperText error>
-                        {errors.submit}
-                      </FormHelperText>
-                    </Box>
+                      <Box sx={{ mt: 3 }}>
+                        <FormHelperText error>{errors.submit}</FormHelperText>
+                      </Box>
                     )}
                     <CardContent>
                       <LoadingButton
@@ -204,7 +194,6 @@ const WorksheetEditFormModal = (props) => {
                     </CardContent>
                   </Grid>
                 </Grid>
-
               </form>
             )}
           </Formik>

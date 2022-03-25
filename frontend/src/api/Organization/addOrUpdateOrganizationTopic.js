@@ -5,16 +5,20 @@ const createTopic = ({ input, organizationUri }) => ({
     organizationUri,
     input
   },
-  mutation: gql`mutation createTopic($organizationUri:String,$input:OrganizationTopicInput){
-            createTopic(organizationUri:$organizationUri,input:$input){
-                    topicUri
-                    label
-                    description
-                    created
-                    owner
-                }
-            }
-        `
+  mutation: gql`
+    mutation createTopic(
+      $organizationUri: String
+      $input: OrganizationTopicInput
+    ) {
+      createTopic(organizationUri: $organizationUri, input: $input) {
+        topicUri
+        label
+        description
+        created
+        owner
+      }
+    }
+  `
 });
 
 export default createTopic;

@@ -1,8 +1,17 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { Box, Card, CardContent, CardHeader, Divider, List, ListItem, Typography } from '@material-ui/core';
-import { LoadingButton } from '@material-ui/lab';
-import { CopyAll } from '@material-ui/icons';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  List,
+  ListItem,
+  Typography
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { CopyAll } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -18,9 +27,13 @@ const PipelineCodeCommit = (props) => {
 
   const generateCredentials = async () => {
     setLoadingCreds(true);
-    const response = await client.query(getSqlPipelineCredsLinux(pipeline.sqlPipelineUri));
+    const response = await client.query(
+      getSqlPipelineCredsLinux(pipeline.sqlPipelineUri)
+    );
     if (!response.errors) {
-      await navigator.clipboard.writeText(response.data.getSqlPipelineCredsLinux);
+      await navigator.clipboard.writeText(
+        response.data.getSqlPipelineCredsLinux
+      );
       enqueueSnackbar('Credentials copied to clipboard', {
         anchorOrigin: {
           horizontal: 'right',
@@ -48,16 +61,10 @@ const PipelineCodeCommit = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Account
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {pipeline.environment.AwsAccountId}
             </Typography>
           </ListItem>
@@ -69,16 +76,10 @@ const PipelineCodeCommit = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Region
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {pipeline.environment.region}
             </Typography>
           </ListItem>
@@ -90,16 +91,10 @@ const PipelineCodeCommit = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Repository name
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {pipeline.repo}
             </Typography>
           </ListItem>
@@ -111,17 +106,13 @@ const PipelineCodeCommit = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Git clone
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
-              {`git clone codecommit::${pipeline.environment.region}:${'//'}${pipeline.repo}`}
+            <Typography color="textPrimary" variant="body2">
+              {`git clone codecommit::${pipeline.environment.region}:${'//'}${
+                pipeline.repo
+              }`}
             </Typography>
           </ListItem>
         </List>
@@ -134,7 +125,7 @@ const PipelineCodeCommit = (props) => {
           }}
         >
           <LoadingButton
-            pending={loadingCreds}
+            loading={loadingCreds}
             color="primary"
             startIcon={<CopyAll size={15} />}
             sx={{ mr: 1 }}

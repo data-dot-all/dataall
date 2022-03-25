@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -16,12 +16,12 @@ import {
   TableRow,
   TextField,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { DeleteOutlined, Warning } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { DeleteOutlined, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import { BsFolder } from 'react-icons/all';
+import { BsFolder } from 'react-icons/bs';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import Scrollbar from '../../components/Scrollbar';
@@ -56,16 +56,21 @@ const WarehouseDatasets = ({ warehouse }) => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listClusterDatasets({ clusterUri: warehouse.clusterUri, filter: { ...filter } }));
+    const response = await client.query(
+      listClusterDatasets({
+        clusterUri: warehouse.clusterUri,
+        filter: { ...filter }
+      })
+    );
     if (!response.errors) {
       setItems({ ...response.data.listRedshiftClusterDatasets });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [warehouse.clusterUri, client, dispatch, filter]);
 
   const handleLoadDatasetsModalOpen = () => {
     setIsLoadDatasetsOpen(true);
@@ -75,9 +80,13 @@ const WarehouseDatasets = ({ warehouse }) => {
     setIsLoadDatasetsOpen(false);
   };
 
-  const unloadDataset = async () => {
-    const response = await client.mutate(removeDatasetFromCluster({
-      clusterUri: warehouse.clusterUri, datasetUri: datasetToDelete.datasetUri }));
+  const unloadDataset = useCallback(async () => {
+    const response = await client.mutate(
+      removeDatasetFromCluster({
+        clusterUri: warehouse.clusterUri,
+        datasetUri: datasetToDelete.datasetUri
+      })
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Dataset unloaded', {
@@ -87,11 +96,20 @@ const WarehouseDatasets = ({ warehouse }) => {
         },
         variant: 'success'
       });
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [
+    warehouse.clusterUri,
+    enqueueSnackbar,
+    fetchItems,
+    dispatch,
+    client,
+    datasetToDelete
+  ]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -99,8 +117,10 @@ const WarehouseDatasets = ({ warehouse }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -112,15 +132,17 @@ const WarehouseDatasets = ({ warehouse }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <Box>
       <Card>
         <CardHeader
-          action={(
+          action={
             <LoadingButton
               color="primary"
               onClick={handleLoadDatasetsModalOpen}
@@ -130,13 +152,13 @@ const WarehouseDatasets = ({ warehouse }) => {
             >
               Load dataset
             </LoadingButton>
-)}
-          title={(
+          }
+          title={
             <Box>
               <BsFolder style={{ marginRight: '10px' }} />
               Loaded Datasets
             </Box>
-                    )}
+          }
         />
         <Divider />
         <Box
@@ -148,12 +170,7 @@ const WarehouseDatasets = ({ warehouse }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -184,75 +201,62 @@ const WarehouseDatasets = ({ warehouse }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    S3 Bucket
-                  </TableCell>
-                  <TableCell>
-                    Glue Database
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>S3 Bucket</TableCell>
+                  <TableCell>Glue Database</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((dataset) => (
-                    <TableRow
-                      hover
-                      key={dataset.datasetUri}
-                    >
-                      <TableCell>
-                        {dataset.name}
-                      </TableCell>
-                      <TableCell>
-                        {`s3://${dataset.S3BucketName}`}
-                      </TableCell>
-                      <TableCell>
-                        {dataset.GlueDatabaseName}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => { setDatasetToDelete(dataset); handleDeleteObjectModalOpen(dataset); }}>
-                          <DeleteOutlined fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No datasets loaded to cluster.
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((dataset) => (
+                      <TableRow hover key={dataset.datasetUri}>
+                        <TableCell>{dataset.name}</TableCell>
+                        <TableCell>{`s3://${dataset.S3BucketName}`}</TableCell>
+                        <TableCell>{dataset.GlueDatabaseName}</TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={() => {
+                              setDatasetToDelete(dataset);
+                              handleDeleteObjectModalOpen(dataset);
+                            }}
+                          >
+                            <DeleteOutlined fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No datasets loaded to cluster.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>
       </Card>
 
-      {isLoadDatasetsOpen
-      && (
-      <WarehouseLoadDatasetModal
-        warehouse={warehouse}
-        open={isLoadDatasetsOpen}
-        reload={fetchItems}
-        onApply={handleLoadDatasetsModalClose}
-        onClose={handleLoadDatasetsModalClose}
-      />
+      {isLoadDatasetsOpen && (
+        <WarehouseLoadDatasetModal
+          warehouse={warehouse}
+          open={isLoadDatasetsOpen}
+          reload={fetchItems}
+          onApply={handleLoadDatasetsModalClose}
+          onClose={handleLoadDatasetsModalClose}
+        />
       )}
 
       {datasetToDelete && (
@@ -262,20 +266,16 @@ const WarehouseDatasets = ({ warehouse }) => {
           onClose={handleDeleteObjectModalClose}
           open={isDeleteObjectModalOpen}
           deleteFunction={unloadDataset}
-          deleteMessage={(
+          deleteMessage={
             <Card>
               <CardContent>
-                <Typography
-                  gutterBottom
-                  variant="body2"
-                >
-                  <Warning />
-                  {' '}
-                  Dataset Spectrum schema will be removed from the cluster.
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Dataset Spectrum schema will be removed from the
+                  cluster.
                 </Typography>
               </CardContent>
             </Card>
-                    )}
+          }
         />
       )}
       <Box sx={{ mt: 3 }}>

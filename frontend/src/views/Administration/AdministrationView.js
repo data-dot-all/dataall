@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Box, Breadcrumbs, Container, Divider, Grid, Link, Tab, Tabs, Typography } from '@material-ui/core';
+import {
+  Box,
+  Breadcrumbs,
+  Container,
+  Divider,
+  Grid,
+  Link,
+  Tab,
+  Tabs,
+  Typography
+} from '@mui/material';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import AdministrationTeams from './AdministrationTeams';
 
-const tabs = [
-  { label: 'Teams', value: 'teams' }
-];
+const tabs = [{ label: 'Teams', value: 'teams' }];
 
 const AdministrationView = () => {
   const { settings } = useSettings();
@@ -31,16 +39,9 @@ const AdministrationView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Settings
               </Typography>
               <Breadcrumbs
@@ -49,6 +50,7 @@ const AdministrationView = () => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/administration"
@@ -57,6 +59,7 @@ const AdministrationView = () => {
                   Administration
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/administration"
@@ -74,21 +77,16 @@ const AdministrationView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
-                <Tab
-                  key={tab.value}
-                  label={tab.label}
-                  value={tab.value}
-                />
+                <Tab key={tab.value} label={tab.label} value={tab.value} />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'teams'
-                && <AdministrationTeams />}
+            {currentTab === 'teams' && <AdministrationTeams />}
           </Box>
         </Container>
       </Box>

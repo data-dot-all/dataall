@@ -5,15 +5,20 @@ const updateWorksheetShare = ({ worksheetShareUri, canEdit }) => ({
     worksheetShareUri,
     canEdit
   },
-  mutation: gql`mutation RemoveWorksheetShare(
-            $worksheetShareUri:String!,
-            $canEdit:Boolean
-        ){
-            updateWorksheetShare(worksheetShareUri:$worksheetShareUri,canEdit:$canEdit){
-                worksheetShareUri
-                canEdit
-            }
-        }`
+  mutation: gql`
+    mutation RemoveWorksheetShare(
+      $worksheetShareUri: String!
+      $canEdit: Boolean
+    ) {
+      updateWorksheetShare(
+        worksheetShareUri: $worksheetShareUri
+        canEdit: $canEdit
+      ) {
+        worksheetShareUri
+        canEdit
+      }
+    }
+  `
 });
 
 export default updateWorksheetShare;

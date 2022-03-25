@@ -15,13 +15,13 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import * as PropTypes from 'prop-types';
-import { FaExternalLinkAlt, FaTrash } from 'react-icons/all';
+import { FaExternalLinkAlt, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Warning } from '@material-ui/icons';
+import { ForumOutlined, Warning } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -35,9 +35,7 @@ import PencilAltIcon from '../../icons/PencilAlt';
 import FeedComments from '../Feed/FeedComments';
 import getDatasetAdminConsoleUrl from '../../api/Dataset/getDatasetAdminConsoleUrl';
 
-const tabs = [
-  { label: 'Overview', value: 'overview' }
-];
+const tabs = [{ label: 'Overview', value: 'overview' }];
 
 function FolderPageHeader(props) {
   const { folder, handleDeleteObjectModalOpen, isAdmin } = props;
@@ -48,7 +46,9 @@ function FolderPageHeader(props) {
 
   const goToS3Console = async () => {
     setIsLoadingUI(true);
-    const response = await client.query(getDatasetAdminConsoleUrl(folder.dataset.datasetUri));
+    const response = await client.query(
+      getDatasetAdminConsoleUrl(folder.dataset.datasetUri)
+    );
     if (!response.errors) {
       window.open(response.data.getDatasetAssumeRoleUrl, '_blank');
     } else {
@@ -57,19 +57,10 @@ function FolderPageHeader(props) {
     setIsLoadingUI(false);
   };
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
-          Folder
-          {' '}
-          {folder.label}
+        <Typography color="textPrimary" variant="h5">
+          Folder {folder.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
@@ -77,6 +68,7 @@ function FolderPageHeader(props) {
           sx={{ mt: 1 }}
         >
           <Link
+            underline="hover"
             component={RouterLink}
             color="textPrimary"
             variant="subtitle2"
@@ -85,6 +77,7 @@ function FolderPageHeader(props) {
             Discover
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/datasets"
@@ -93,6 +86,7 @@ function FolderPageHeader(props) {
             Datasets
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/${folder?.dataset?.datasetUri}`}
@@ -101,6 +95,7 @@ function FolderPageHeader(props) {
             {folder?.dataset?.name}
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/folder/${folder.locationUri}`}
@@ -111,61 +106,61 @@ function FolderPageHeader(props) {
         </Breadcrumbs>
       </Grid>
       {isAdmin && (
-      <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            startIcon={<ForumOutlined fontSize="small" />}
-            sx={{ m: 1 }}
-            onClick={() => setOpenFeed(true)}
-            type="button"
-            variant="outlined"
-          >
-            Chat
-          </Button>
-          {isAdmin && (
-          <LoadingButton
-            pending={isLoadingUI}
-            startIcon={<FaExternalLinkAlt size={15} />}
-            variant="outlined"
-            color="primary"
-            sx={{ m: 1 }}
-            onClick={goToS3Console}
-          >
-            S3 Bucket
-          </LoadingButton>
-          )}
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<PencilAltIcon fontSize="small" />}
-            sx={{ m: 1 }}
-            to={`/console/datasets/folder/${folder.locationUri}/edit`}
-            variant="outlined"
-          >
-            Edit
-          </Button>
-          <Button
-            color="primary"
-            startIcon={<FaTrash size={15} />}
-            sx={{ m: 1 }}
-            onClick={handleDeleteObjectModalOpen}
-            type="button"
-            variant="outlined"
-          >
-            Delete
-          </Button>
-        </Box>
-      </Grid>
+        <Grid item>
+          <Box sx={{ m: -1 }}>
+            <Button
+              color="primary"
+              startIcon={<ForumOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              onClick={() => setOpenFeed(true)}
+              type="button"
+              variant="outlined"
+            >
+              Chat
+            </Button>
+            {isAdmin && (
+              <LoadingButton
+                loading={isLoadingUI}
+                startIcon={<FaExternalLinkAlt size={15} />}
+                variant="outlined"
+                color="primary"
+                sx={{ m: 1 }}
+                onClick={goToS3Console}
+              >
+                S3 Bucket
+              </LoadingButton>
+            )}
+            <Button
+              color="primary"
+              component={RouterLink}
+              startIcon={<PencilAltIcon fontSize="small" />}
+              sx={{ m: 1 }}
+              to={`/console/datasets/folder/${folder.locationUri}/edit`}
+              variant="outlined"
+            >
+              Edit
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<FaTrash size={15} />}
+              sx={{ m: 1 }}
+              onClick={handleDeleteObjectModalOpen}
+              type="button"
+              variant="outlined"
+            >
+              Delete
+            </Button>
+          </Box>
+        </Grid>
       )}
       {openFeed && (
-      <FeedComments
-        objectOwner={folder.dataset.owner}
-        targetType="DatasetStorageLocation"
-        targetUri={folder.locationUri}
-        open={openFeed}
-        onClose={() => setOpenFeed(false)}
-      />
+        <FeedComments
+          objectOwner={folder.dataset.owner}
+          targetType="DatasetStorageLocation"
+          targetUri={folder.locationUri}
+          open={openFeed}
+          onClose={() => setOpenFeed(false)}
+        />
       )}
     </Grid>
   );
@@ -197,7 +192,9 @@ const FolderView = () => {
   };
 
   const deleteFolder = async () => {
-    const response = await client.mutate(deleteDatasetStorageLocation({ locationUri: folder.locationUri }));
+    const response = await client.mutate(
+      deleteDatasetStorageLocation({ locationUri: folder.locationUri })
+    );
     if (!response.errors) {
       enqueueSnackbar('Folder deleted', {
         anchorOrigin: {
@@ -217,7 +214,11 @@ const FolderView = () => {
     const response = await client.query(getDatasetStorageLocation(params.uri));
     if (!response.errors && response.data.getDatasetStorageLocation !== null) {
       setFolder(response.data.getDatasetStorageLocation);
-      setIsAdmin(['Creator', 'Admin', 'Owner'].indexOf(response.data.getDatasetStorageLocation.dataset.userRoleForDataset) !== -1);
+      setIsAdmin(
+        ['Creator', 'Admin', 'Owner'].indexOf(
+          response.data.getDatasetStorageLocation.dataset.userRoleForDataset
+        ) !== -1
+      );
     } else {
       setFolder(null);
       const error = response.errors[0].message;
@@ -267,7 +268,7 @@ const FolderView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -275,44 +276,37 @@ const FolderView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-                        && (
-                        <FolderOverview
-                          folder={folder}
-                          isAdmin={isAdmin}
-                        />
-                        )}
+            {currentTab === 'overview' && (
+              <FolderOverview folder={folder} isAdmin={isAdmin} />
+            )}
           </Box>
         </Container>
       </Box>
       {isAdmin && (
-      <DeleteObjectModal
-        objectName={folder.label}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={deleteFolder}
-        deleteMessage={(
-          <Card>
-            <CardContent>
-              <Typography
-                gutterBottom
-                variant="body2"
-              >
-                <Warning />
-                {' '}
-                Folder will be deleted from data.all catalog, but will still be available on Amazon S3.
-              </Typography>
-            </CardContent>
-          </Card>
-        )}
-      />
+        <DeleteObjectModal
+          objectName={folder.label}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={deleteFolder}
+          deleteMessage={
+            <Card>
+              <CardContent>
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Folder will be deleted from data.all catalog, but
+                  will still be available on Amazon S3.
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
       )}
     </>
   );

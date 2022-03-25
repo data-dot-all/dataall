@@ -13,11 +13,16 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { FaTrash } from 'react-icons/all';
+} from '@mui/material';
+import { FaTrash } from 'react-icons/fa';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Info, ShareOutlined, ShowChart } from '@material-ui/icons';
+import {
+  ForumOutlined,
+  Info,
+  ShareOutlined,
+  ShowChart
+} from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -54,11 +59,19 @@ const DashboardView = () => {
 
   const getTabs = () => {
     const tabs = [
-      { label: 'Viewer', value: 'viewer', icon: <ShowChart fontSize="small" /> },
+      {
+        label: 'Viewer',
+        value: 'viewer',
+        icon: <ShowChart fontSize="small" />
+      },
       { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> }
     ];
     if (isAdmin) {
-      tabs.push({ label: 'Shares', value: 'shares', icon: <ShareOutlined fontSize="small" /> });
+      tabs.push({
+        label: 'Shares',
+        value: 'shares',
+        icon: <ShareOutlined fontSize="small" />
+      });
     }
     return tabs;
   };
@@ -88,7 +101,13 @@ const DashboardView = () => {
   };
 
   const upVoteDashboard = async (dashboardUri) => {
-    const response = await client.mutate(upVote({ targetUri: dashboardUri, targetType: 'dashboard', upvote: !isUpVoted }));
+    const response = await client.mutate(
+      upVote({
+        targetUri: dashboardUri,
+        targetType: 'dashboard',
+        upvote: !isUpVoted
+      })
+    );
     if (!response.errors && response.data.upVote !== null) {
       setIsUpVoted(response.data.upVote.upvote);
     }
@@ -101,9 +120,15 @@ const DashboardView = () => {
     if (!response.errors) {
       setDashboard(response.data.getDashboard);
       setUpvotes(response.data.getDashboard.upvotes);
-      setIsAdmin(['Admin', 'Creator'].indexOf(response.data.getDashboard.userRoleForDashboard) !== -1);
+      setIsAdmin(
+        ['Admin', 'Creator'].indexOf(
+          response.data.getDashboard.userRoleForDashboard
+        ) !== -1
+      );
     } else {
-      const error = response.errors ? response.errors[0].message : 'Dashboard not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dashboard not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -111,7 +136,9 @@ const DashboardView = () => {
 
   useEffect(() => {
     if (client) {
-      getUserDashboardVote(params.uri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getUserDashboardVote(params.uri).catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
   }, [client]);
@@ -120,7 +147,9 @@ const DashboardView = () => {
     setCurrentTab(value);
   };
   const removeDashboard = async () => {
-    const response = await client.mutate(deleteDashboard(dashboard.dashboardUri));
+    const response = await client.mutate(
+      deleteDashboard(dashboard.dashboardUri)
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Dashboard deleted', {
@@ -156,32 +185,21 @@ const DashboardView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Dashboard
-                {' '}
-                {dashboard.label}
+              <Typography color="textPrimary" variant="h5">
+                Dashboard {dashboard.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Play
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/dashboards"
@@ -190,6 +208,7 @@ const DashboardView = () => {
                   Dashboards
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/dashboards/${dashboard.dashboardUri}`}
@@ -246,7 +265,7 @@ const DashboardView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {getTabs().map((tab) => (
                 <Tab
@@ -254,18 +273,22 @@ const DashboardView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'viewer'
-            && <DashboardViewer dashboard={dashboard} />}
-            {currentTab === 'overview'
-            && <DashboardOverview dashboard={dashboard} />}
-            {isAdmin && currentTab === 'shares'
-            && <DashboardShares dashboard={dashboard} />}
+            {currentTab === 'viewer' && (
+              <DashboardViewer dashboard={dashboard} />
+            )}
+            {currentTab === 'overview' && (
+              <DashboardOverview dashboard={dashboard} />
+            )}
+            {isAdmin && currentTab === 'shares' && (
+              <DashboardShares dashboard={dashboard} />
+            )}
           </Box>
         </Container>
       </Box>
@@ -278,13 +301,13 @@ const DashboardView = () => {
         isAWSResource={false}
       />
       {openFeed && (
-      <FeedComments
-        objectOwner={dashboard.owner}
-        targetType="Dashboard"
-        targetUri={dashboard.dashboardUri}
-        open={openFeed}
-        onClose={() => setOpenFeed(false)}
-      />
+        <FeedComments
+          objectOwner={dashboard.owner}
+          targetType="Dashboard"
+          targetUri={dashboard.dashboardUri}
+          open={openFeed}
+          onClose={() => setOpenFeed(false)}
+        />
       )}
     </>
   );

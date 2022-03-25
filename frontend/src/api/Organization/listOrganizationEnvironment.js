@@ -6,22 +6,21 @@ const listOrganizationGroups = ({ term, organizationUri }) => ({
     filter: { term: term || '' }
   },
   query: gql`
-            query getOrg($organizationUri:String,$filter:GroupFilter){
-                getOrganization(organizationUri:$organizationUri){
-                    groups(filter:$filter){
-                        count
-                        nodes{
-                            groupUri
-                            label
-                            created
-                            groupRoleInOrganization
-                            userRoleInGroup
-                        }
-                    }
-
-                }
-            }
-        `
+    query getOrg($organizationUri: String, $filter: GroupFilter) {
+      getOrganization(organizationUri: $organizationUri) {
+        groups(filter: $filter) {
+          count
+          nodes {
+            groupUri
+            label
+            created
+            groupRoleInOrganization
+            userRoleInGroup
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listOrganizationGroups;

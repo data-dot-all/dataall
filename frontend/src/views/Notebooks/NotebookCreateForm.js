@@ -18,9 +18,9 @@ import {
   Slider,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { Autocomplete, LoadingButton } from '@material-ui/lab';
+import { Autocomplete, LoadingButton } from '@mui/lab';
 import { useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -71,9 +71,17 @@ const NotebookCreateForm = (props) => {
 
   const fetchEnvironments = async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments({ filter: Defaults.SelectListFilter }));
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.SelectListFilter })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -81,9 +89,19 @@ const NotebookCreateForm = (props) => {
   };
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -93,23 +111,27 @@ const NotebookCreateForm = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createSagemakerNotebook({
-        label: values.label,
-        environmentUri: values.environment.environmentUri,
-        description: values.description,
-        SamlAdminGroupName: values.SamlAdminGroupName,
-        tags: values.tags,
-        VpcId: values.VpcId,
-        SubnetId: values.SubnetId,
-        VolumeSizeInGB: values.VolumeSizeInGB,
-        InstanceType: values.InstanceType
-      }));
+      const response = await client.mutate(
+        createSagemakerNotebook({
+          label: values.label,
+          environmentUri: values.environment.environmentUri,
+          description: values.description,
+          SamlAdminGroupName: values.SamlAdminGroupName,
+          tags: values.tags,
+          VpcId: values.VpcId,
+          SubnetId: values.SubnetId,
+          VolumeSizeInGB: values.VolumeSizeInGB,
+          InstanceType: values.InstanceType
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -120,7 +142,9 @@ const NotebookCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/notebooks/${response.data.createSagemakerNotebook.notebookUri}`);
+        navigate(
+          `/console/notebooks/${response.data.createSagemakerNotebook.notebookUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -148,16 +172,9 @@ const NotebookCreateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new notebook
               </Typography>
               <Breadcrumbs
@@ -165,13 +182,11 @@ const NotebookCreateForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Play
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/notebooks"
@@ -180,6 +195,7 @@ const NotebookCreateForm = (props) => {
                   Notebooks
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/notebooks/new"
@@ -217,20 +233,30 @@ const NotebookCreateForm = (props) => {
                 environment: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Notebook name is required'),
-                  description: Yup.string().max(5000),
-                  SamlAdminGroupName: Yup.string().max(255).required('*Team is required'),
-                  environment: Yup.object().required('*Environment is required'),
-                  tags: Yup.array().nullable(),
-                  VpcId: Yup.string().nullable(),
-                  SubnetId: Yup.string().nullable(),
-                  InstanceType: Yup.string().min(1).required('*Instance type is required'),
-                  VolumeSizeInGB: Yup.number().min(32).max(256).required('*Volume size in GB is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Notebook name is required'),
+                description: Yup.string().max(5000),
+                SamlAdminGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                environment: Yup.object().required('*Environment is required'),
+                tags: Yup.array().nullable(),
+                VpcId: Yup.string().nullable(),
+                SubnetId: Yup.string().nullable(),
+                InstanceType: Yup.string()
+                  .min(1)
+                  .required('*Instance type is required'),
+                VolumeSizeInGB: Yup.number()
+                  .min(32)
+                  .max(256)
+                  .required('*Volume size in GB is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -244,20 +270,9 @@ const NotebookCreateForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -282,7 +297,9 @@ const NotebookCreateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -292,7 +309,7 @@ const NotebookCreateForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -309,9 +326,7 @@ const NotebookCreateForm = (props) => {
                               variant="outlined"
                               label="Tags"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
@@ -323,8 +338,12 @@ const NotebookCreateForm = (props) => {
                           <TextField
                             id="InstanceType"
                             fullWidth
-                            error={Boolean(touched.InstanceType && errors.InstanceType)}
-                            helperText={touched.InstanceType && errors.InstanceType}
+                            error={Boolean(
+                              touched.InstanceType && errors.InstanceType
+                            )}
+                            helperText={
+                              touched.InstanceType && errors.InstanceType
+                            }
                             label="Instance type"
                             name="InstanceType"
                             onChange={handleChange}
@@ -333,10 +352,7 @@ const NotebookCreateForm = (props) => {
                             variant="outlined"
                           >
                             {instanceTypes.map((i) => (
-                              <MenuItem
-                                key={i.value}
-                                value={i.value}
-                              >
+                              <MenuItem key={i.value} value={i.value}>
                                 {i.label}
                               </MenuItem>
                             ))}
@@ -344,10 +360,7 @@ const NotebookCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <Box sx={{ p: 1 }}>
-                            <Typography
-                              color="textSecondary"
-                              gutterBottom
-                            >
+                            <Typography color="textSecondary" gutterBottom>
                               Volume size
                             </Typography>
                             <Slider
@@ -361,37 +374,46 @@ const NotebookCreateForm = (props) => {
                                 setFieldValue('VolumeSizeInGB', value);
                               }}
                             />
-                            {(touched.VolumeSizeInGB && errors.VolumeSizeInGB) && (
-                            <Box sx={{ mt: 2 }}>
-                              <FormHelperText error>
-                                {errors.VolumeSizeInGB}
-                              </FormHelperText>
-                            </Box>
+                            {touched.VolumeSizeInGB && errors.VolumeSizeInGB && (
+                              <Box sx={{ mt: 2 }}>
+                                <FormHelperText error>
+                                  {errors.VolumeSizeInGB}
+                                </FormHelperText>
+                              </Box>
                             )}
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.environment && errors.environment)}
-                            helperText={touched.environment && errors.environment}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
                             label="Environment"
                             name="environment"
                             onChange={(event) => {
                               setFieldValue('SamlAdminGroupName', '');
-                              fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
-                              setVpcOptions(event.target.value.networks.map((v) => ({ ...v, value: v, label: v.VpcId })));
+                              setVpcOptions(
+                                event.target.value.networks.map((v) => ({
+                                  ...v,
+                                  value: v,
+                                  label: v.VpcId
+                                }))
+                              );
                             }}
                             select
                             value={values.environment}
@@ -413,7 +435,11 @@ const NotebookCreateForm = (props) => {
                             fullWidth
                             label="Region"
                             name="region"
-                            value={values.environment ? values.environment.region : ''}
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -423,15 +449,25 @@ const NotebookCreateForm = (props) => {
                             fullWidth
                             label="Organization"
                             name="organization"
-                            value={values.environment ? values.environment.organization.label : ''}
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlAdminGroupName && errors.SamlAdminGroupName)}
-                            helperText={touched.SamlAdminGroupName && errors.SamlAdminGroupName}
+                            error={Boolean(
+                              touched.SamlAdminGroupName &&
+                                errors.SamlAdminGroupName
+                            )}
+                            helperText={
+                              touched.SamlAdminGroupName &&
+                              errors.SamlAdminGroupName
+                            }
                             label="Team"
                             name="SamlAdminGroupName"
                             onChange={handleChange}
@@ -440,10 +476,7 @@ const NotebookCreateForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -460,9 +493,19 @@ const NotebookCreateForm = (props) => {
                               options={vpcOptions.map((option) => option.label)}
                               onChange={(event, value) => {
                                 setSubnetOptions([]);
-                                const filteredVpc = vpcOptions.filter((v) => v.VpcId === value);
-                                if (value && vpcOptions && filteredVpc.length === 1) {
-                                  setSubnetOptions(filteredVpc[0].privateSubnetIds.concat(filteredVpc[0].publicSubnetIds));
+                                const filteredVpc = vpcOptions.filter(
+                                  (v) => v.VpcId === value
+                                );
+                                if (
+                                  value &&
+                                  vpcOptions &&
+                                  filteredVpc.length === 1
+                                ) {
+                                  setSubnetOptions(
+                                    filteredVpc[0].privateSubnetIds.concat(
+                                      filteredVpc[0].publicSubnetIds
+                                    )
+                                  );
                                   setFieldValue('VpcId', value);
                                 } else {
                                   setFieldValue('VpcId', value);
@@ -495,8 +538,12 @@ const NotebookCreateForm = (props) => {
                                   {...params}
                                   label="Subnet ID"
                                   margin="normal"
-                                  error={Boolean(touched.SubnetId && errors.SubnetId)}
-                                  helperText={touched.SubnetId && errors.SubnetId}
+                                  error={Boolean(
+                                    touched.SubnetId && errors.SubnetId
+                                  )}
+                                  helperText={
+                                    touched.SubnetId && errors.SubnetId
+                                  }
                                   onChange={handleChange}
                                   value={values.SubnetId}
                                   variant="outlined"
@@ -509,9 +556,7 @@ const NotebookCreateForm = (props) => {
 
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box
@@ -523,7 +568,7 @@ const NotebookCreateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -539,7 +584,6 @@ const NotebookCreateForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

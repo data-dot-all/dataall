@@ -6,10 +6,13 @@ const getDatasetPresignedUrl = ({ datasetUri, input }) => ({
     input
   },
   query: gql`
-            query GetDatasetPresignedUrl($datasetUri:String!,$input:DatasetPresignedUrlInput){
-                getDatasetPresignedUrl(datasetUri:$datasetUri,input:$input)
-                }
-        `
+    query GetDatasetPresignedUrl(
+      $datasetUri: String!
+      $input: DatasetPresignedUrlInput
+    ) {
+      getDatasetPresignedUrl(datasetUri: $datasetUri, input: $input)
+    }
+  `
 });
 
 export default getDatasetPresignedUrl;

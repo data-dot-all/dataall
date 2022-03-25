@@ -9,12 +9,12 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import React, { useEffect, useState } from 'react';
-import SendIcon from '@material-ui/icons/Send';
+import SendIcon from '@mui/icons-material/Send';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -34,9 +34,19 @@ const RequestAccessModal = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
 
   const fetchEnvironments = async () => {
-    const response = await client.query(listEnvironments({ filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] } }));
+    const response = await client.query(
+      listEnvironments({
+        filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] }
+      })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -48,10 +58,19 @@ const RequestAccessModal = (props) => {
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => (
-          { value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -64,8 +83,9 @@ const RequestAccessModal = (props) => {
 
   useEffect(() => {
     if (client && open) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      // fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, open]);
 
@@ -73,41 +93,49 @@ const RequestAccessModal = (props) => {
     try {
       let response;
       if (hit.resourceKind === 'dataset') {
-        response = await client.mutate(createShareObject({
-          datasetUri: hit._id,
-          input: {
-            environmentUri: values.environment.environmentUri,
-            principalId: values.groupUri,
-            principalType: 'Group'
-          }
-        }));
+        response = await client.mutate(
+          createShareObject({
+            datasetUri: hit._id,
+            input: {
+              environmentUri: values.environment.environmentUri,
+              principalId: values.groupUri,
+              principalType: 'Group'
+            }
+          })
+        );
       }
       if (hit.resourceKind === 'table') {
-        response = await client.mutate(createShareObject({
-          datasetUri: hit.datasetUri,
-          itemUri: hit._id,
-          itemType: 'DatasetTable',
-          input: {
-            environmentUri: values.environment.environmentUri,
-            principalId: values.groupUri,
-            principalType: 'Group'
-          }
-        }));
+        response = await client.mutate(
+          createShareObject({
+            datasetUri: hit.datasetUri,
+            itemUri: hit._id,
+            itemType: 'DatasetTable',
+            input: {
+              environmentUri: values.environment.environmentUri,
+              principalId: values.groupUri,
+              principalType: 'Group'
+            }
+          })
+        );
       }
       if (hit.resourceKind === 'folder') {
-        response = await client.mutate(createShareObject({
-          datasetUri: hit.datasetUri,
-          itemUri: hit._id,
-          itemType: 'DatasetStorageLocation',
-          input: {
-            environmentUri: values.environment.environmentUri,
-            principalId: values.groupUri,
-            principalType: 'Group'
-          }
-        }));
+        response = await client.mutate(
+          createShareObject({
+            datasetUri: hit.datasetUri,
+            itemUri: hit._id,
+            itemType: 'DatasetStorageLocation',
+            input: {
+              environmentUri: values.environment.environmentUri,
+              principalId: values.groupUri,
+              principalType: 'Group'
+            }
+          })
+        );
       }
       if (hit.resourceKind === 'dashboard') {
-        response = await client.mutate(requestDashboardShare(hit._id, values.groupUri));
+        response = await client.mutate(
+          requestDashboardShare(hit._id, values.groupUri)
+        );
       }
       if (response && !response.errors) {
         setStatus({ success: true });
@@ -139,14 +167,7 @@ const RequestAccessModal = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -156,11 +177,7 @@ const RequestAccessModal = (props) => {
         >
           Request Access
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography align="center" color="textSecondary" variant="subtitle2">
           Your request will be submitted to the data owners
         </Typography>
         <Box sx={{ p: 3 }}>
@@ -169,14 +186,15 @@ const RequestAccessModal = (props) => {
               environment: '',
               comment: ''
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                environment: Yup.object().required('*Environment is required'),
-                groupUri: Yup.string().required('*Team is required'),
-                comment: Yup.string().max(5000)
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              environment: Yup.object().required('*Environment is required'),
+              groupUri: Yup.string().required('*Team is required'),
+              comment: Yup.string().max(5000)
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -190,119 +208,129 @@ const RequestAccessModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
+              <form onSubmit={handleSubmit}>
                 <Box>
                   <CardContent>
                     {hit.resourceKind === 'table' && (
-                    <TextField
-                      fullWidth
-                      disabled
-                      label="Table name"
-                      name="table"
-                      value={hit.label}
-                      variant="outlined"
-                    />
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Table name"
+                        name="table"
+                        value={hit.label}
+                        variant="outlined"
+                      />
                     )}
                     {hit.resourceKind === 'folder' && (
-                    <TextField
-                      fullWidth
-                      disabled
-                      label="Folder name"
-                      name="folder"
-                      value={hit.label}
-                      variant="outlined"
-                    />
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Folder name"
+                        name="folder"
+                        value={hit.label}
+                        variant="outlined"
+                      />
                     )}
                     {hit.resourceKind === 'dataset' && (
-                    <TextField
-                      fullWidth
-                      disabled
-                      label="Dataset name"
-                      name="dataset"
-                      value={hit.label}
-                      variant="outlined"
-                    />
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Dataset name"
+                        name="dataset"
+                        value={hit.label}
+                        variant="outlined"
+                      />
                     )}
                     {hit.resourceKind === 'dashboard' && (
-                    <TextField
-                      fullWidth
-                      disabled
-                      label="Dashboard name"
-                      name="dashboard"
-                      value={hit.label}
-                      variant="outlined"
-                    />
+                      <TextField
+                        fullWidth
+                        disabled
+                        label="Dashboard name"
+                        name="dashboard"
+                        value={hit.label}
+                        variant="outlined"
+                      />
                     )}
                   </CardContent>
                   {hit.resourceKind !== 'dashboard' && (
-                  <Box>
-                    <CardContent>
-                      <TextField
-                        fullWidth
-                        error={Boolean(touched.environment && errors.environment)}
-                        helperText={touched.environment && errors.environment}
-                        label="Environment"
-                        name="environment"
-                        onChange={(event) => {
-                          setFieldValue('groupUri', '');
-                          fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-                          setFieldValue('environment', event.target.value);
-                        }}
-                        select
-                        value={values.environment}
-                        variant="outlined"
-                      >
-                        {environmentOptions.map((environment) => (
-                          <MenuItem
-                            key={environment.environmentUri}
-                            value={environment}
-                          >
-                            {environment.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </CardContent>
-                    <CardContent>
-                      {loadingGroups ? <CircularProgress size={10} /> : (
-                        <Box>
-                          {groupOptions.length > 0 ? (
-                            <TextField
-                              error={Boolean(touched.groupUri && errors.groupUri)}
-                              helperText={touched.groupUri && errors.groupUri}
-                              fullWidth
-                              label="Team"
-                              name="groupUri"
-                              onChange={handleChange}
-                              select
-                              value={values.groupUri}
-                              variant="outlined"
-                            >
-                              {groupOptions.map((group) => (
-                                <MenuItem
-                                  key={group.value}
-                                  value={group.value}
-                                >
-                                  {group.label}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                          ) : (
-                            <TextField
-                              error={Boolean(touched.groupUri && errors.groupUri)}
-                              helperText={touched.groupUri && errors.groupUri}
-                              fullWidth
-                              disabled
-                              label="Team"
-                              value="No teams found for this environment"
-                              variant="outlined"
-                            />
+                    <Box>
+                      <CardContent>
+                        <TextField
+                          fullWidth
+                          error={Boolean(
+                            touched.environment && errors.environment
                           )}
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Box>
+                          helperText={touched.environment && errors.environment}
+                          label="Environment"
+                          name="environment"
+                          onChange={(event) => {
+                            setFieldValue('groupUri', '');
+                            fetchGroups(
+                              event.target.value.environmentUri
+                            ).catch((e) =>
+                              dispatch({ type: SET_ERROR, error: e.message })
+                            );
+                            setFieldValue('environment', event.target.value);
+                          }}
+                          select
+                          value={values.environment}
+                          variant="outlined"
+                        >
+                          {environmentOptions.map((environment) => (
+                            <MenuItem
+                              key={environment.environmentUri}
+                              value={environment}
+                            >
+                              {environment.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </CardContent>
+                      <CardContent>
+                        {loadingGroups ? (
+                          <CircularProgress size={10} />
+                        ) : (
+                          <Box>
+                            {groupOptions.length > 0 ? (
+                              <TextField
+                                error={Boolean(
+                                  touched.groupUri && errors.groupUri
+                                )}
+                                helperText={touched.groupUri && errors.groupUri}
+                                fullWidth
+                                label="Team"
+                                name="groupUri"
+                                onChange={handleChange}
+                                select
+                                value={values.groupUri}
+                                variant="outlined"
+                              >
+                                {groupOptions.map((group) => (
+                                  <MenuItem
+                                    key={group.value}
+                                    value={group.value}
+                                  >
+                                    {group.label}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            ) : (
+                              <TextField
+                                error={Boolean(
+                                  touched.groupUri && errors.groupUri
+                                )}
+                                helperText={touched.groupUri && errors.groupUri}
+                                fullWidth
+                                disabled
+                                label="Team"
+                                value="No teams found for this environment"
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Box>
                   )}
                   <CardContent>
                     <TextField
@@ -313,7 +341,9 @@ const RequestAccessModal = (props) => {
                         }
                       }}
                       fullWidth
-                      helperText={`${200 - values.comment.length} characters left`}
+                      helperText={`${
+                        200 - values.comment.length
+                      } characters left`}
                       label="Request purpose"
                       name="comment"
                       multiline
@@ -323,12 +353,10 @@ const RequestAccessModal = (props) => {
                       value={values.comment}
                       variant="outlined"
                     />
-                    {(touched.comment && errors.comment) && (
-                    <Box sx={{ mt: 2 }}>
-                      <FormHelperText error>
-                        {errors.comment}
-                      </FormHelperText>
-                    </Box>
+                    {touched.comment && errors.comment && (
+                      <Box sx={{ mt: 2 }}>
+                        <FormHelperText error>{errors.comment}</FormHelperText>
+                      </Box>
                     )}
                   </CardContent>
                 </Box>

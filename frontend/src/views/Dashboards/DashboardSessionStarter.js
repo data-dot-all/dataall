@@ -17,11 +17,11 @@ import {
   TableRow,
   TextField,
   Typography
-} from '@material-ui/core';
-import { BsCloud } from 'react-icons/all';
-import { ArrowLeft, ArrowRightAlt, ChevronRight } from '@material-ui/icons';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { LoadingButton } from '@material-ui/lab';
+} from '@mui/material';
+import { BsCloud } from 'react-icons/bs';
+import { ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { LoadingButton } from '@mui/lab';
 import { Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
@@ -45,10 +45,7 @@ function DashboardSessionStarterPageHeader() {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Start QuickSight session
         </Typography>
         <Breadcrumbs
@@ -56,13 +53,11 @@ function DashboardSessionStarterPageHeader() {
           separator={<ChevronRight fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Play
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/dashboards"
@@ -70,10 +65,7 @@ function DashboardSessionStarterPageHeader() {
           >
             Dashboards
           </Link>
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Start session
           </Typography>
         </Breadcrumbs>
@@ -110,21 +102,13 @@ function EnvironmentRow({ env, client, dispatch }) {
     setIsOpeningSession(false);
   };
   return (
-    <TableRow
-      hover
-    >
-      <TableCell>
-        {env.label}
-      </TableCell>
-      <TableCell>
-        {env.AwsAccountId}
-      </TableCell>
-      <TableCell>
-        {env.region}
-      </TableCell>
+    <TableRow hover>
+      <TableCell>{env.label}</TableCell>
+      <TableCell>{env.AwsAccountId}</TableCell>
+      <TableCell>{env.region}</TableCell>
       <TableCell>
         <LoadingButton
-          pending={isOpeningSession}
+          loading={isOpeningSession}
           color="primary"
           endIcon={<ArrowRightAlt fontSize="small" />}
           variant="outlined"
@@ -169,12 +153,18 @@ const DashboardSessionStarter = () => {
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
-    setFilter({ ...filter, roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'], term: event.target.value });
+    setFilter({
+      ...filter,
+      roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'],
+      term: event.target.value
+    });
   };
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -186,9 +176,11 @@ const DashboardSessionStarter = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
   return (
     <>
@@ -207,12 +199,12 @@ const DashboardSessionStarter = () => {
           <Box sx={{ mt: 3 }}>
             <Card>
               <CardHeader
-                title={(
+                title={
                   <Box>
                     <BsCloud style={{ marginRight: '10px' }} />
                     Environments
                   </Box>
-                )}
+                }
               />
               <Divider />
               <Box
@@ -224,12 +216,7 @@ const DashboardSessionStarter = () => {
                   p: 2
                 }}
               >
-                <Grid
-                  item
-                  md={10}
-                  sm={6}
-                  xs={12}
-                >
+                <Grid item md={10} sm={6} xs={12}>
                   <Box
                     sx={{
                       m: 1,
@@ -260,36 +247,28 @@ const DashboardSessionStarter = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>
-                          Environment
-                        </TableCell>
-                        <TableCell>
-                          AWS Account
-                        </TableCell>
-                        <TableCell>
-                          Region
-                        </TableCell>
-                        <TableCell>
-                          Actions
-                        </TableCell>
+                        <TableCell>Environment</TableCell>
+                        <TableCell>AWS Account</TableCell>
+                        <TableCell>Region</TableCell>
+                        <TableCell>Actions</TableCell>
                       </TableRow>
                     </TableHead>
-                    {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+                    {loading ? (
+                      <CircularProgress sx={{ mt: 1 }} />
+                    ) : (
                       <TableBody>
-                        {items && items.nodes && items.nodes.length > 0 ? items.nodes.map((env) => (
-                          <EnvironmentRow
-                            key={env.environmentUri}
-                            env={env}
-                            client={client}
-                            dispatch={dispatch}
-                          />
-                        )) : (
-                          <TableRow
-                            hover
-                          >
-                            <TableCell>
-                              No environments found
-                            </TableCell>
+                        {items && items.nodes && items.nodes.length > 0 ? (
+                          items.nodes.map((env) => (
+                            <EnvironmentRow
+                              key={env.environmentUri}
+                              env={env}
+                              client={client}
+                              dispatch={dispatch}
+                            />
+                          ))
+                        ) : (
+                          <TableRow hover>
+                            <TableCell>No environments found</TableCell>
                           </TableRow>
                         )}
                       </TableBody>

@@ -1,24 +1,32 @@
 import PropTypes from 'prop-types';
-import { Box, Button, CardContent, Dialog, TextField, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  CardContent,
+  Dialog,
+  TextField,
+  Typography
+} from '@mui/material';
 import { useState } from 'react';
-import { ArchiveOutlined } from '@material-ui/icons';
+import { ArchiveOutlined } from '@mui/icons-material';
 
 const ArchiveObjectWithFrictionModal = (props) => {
-  const { objectName, archiveMessage, onApply, onClose, open, archiveFunction, ...other } = props;
+  const {
+    objectName,
+    archiveMessage,
+    onApply,
+    onClose,
+    open,
+    archiveFunction,
+    ...other
+  } = props;
   const [confirmValue, setConfirmValue] = useState(null);
 
   const handleChange = (event) => {
     setConfirmValue(event.target.value);
   };
   return (
-
-    <Dialog
-      maxWidth="sm"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="sm" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Box sx={{ mb: 5 }}>
           <Typography
@@ -27,19 +35,11 @@ const ArchiveObjectWithFrictionModal = (props) => {
             gutterBottom
             variant="h4"
           >
-            Archive
-            {' '}
-            {objectName}
-            {' '}
-            ?
+            Archive {objectName} ?
           </Typography>
         </Box>
 
-        {archiveMessage && (
-        <Box sx={{ mt: 1 }}>
-          {archiveMessage}
-        </Box>
-        )}
+        {archiveMessage && <Box sx={{ mt: 1 }}>{archiveMessage}</Box>}
 
         <CardContent>
           <TextField
@@ -59,7 +59,9 @@ const ArchiveObjectWithFrictionModal = (props) => {
             color="error"
             type="submit"
             variant="contained"
-            onClick={() => { archiveFunction(); }}
+            onClick={() => {
+              archiveFunction();
+            }}
           >
             Archive
           </Button>

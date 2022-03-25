@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { Box, Card, CardContent, Container, Typography } from '@material-ui/core';
+import { Box, Card, CardContent, Container, Typography } from '@mui/material';
 import { LoginAmplify } from '../../components/authentication/login';
 import Logo from '../../components/Logo';
 import useAuth from '../../hooks/useAuth';
@@ -24,11 +24,7 @@ const Login = () => {
           minHeight: '100vh'
         }}
       >
-
-        <Container
-          maxWidth="sm"
-          sx={{ py: '80px' }}
-        >
+        <Container maxWidth="sm" sx={{ py: '80px' }}>
           <Box
             sx={{
               display: 'flex',
@@ -63,11 +59,7 @@ const Login = () => {
                 }}
               >
                 <div>
-                  <Typography
-                    color="textPrimary"
-                    gutterBottom
-                    variant="h4"
-                  >
+                  <Typography color="textPrimary" gutterBottom variant="h4">
                     Login
                   </Typography>
                 </div>
@@ -80,10 +72,7 @@ const Login = () => {
                     }
                   }}
                 >
-                  <img
-                    alt="Auth platform"
-                    src={platformIcons[platform]}
-                  />
+                  <img alt="Auth platform" src={platformIcons[platform]} />
                 </Box>
               </Box>
               <Box

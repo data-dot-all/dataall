@@ -1,15 +1,12 @@
 import 'simplebar/dist/simplebar.min.css';
 import { forwardRef } from 'react';
 import SimpleBar from 'simplebar-react';
-import { experimentalStyled } from '@material-ui/core/styles';
+import { styled } from '@mui/styles';
 
-const ScrollbarRoot = experimentalStyled(SimpleBar)``;
+const ScrollbarRoot = styled(SimpleBar)``;
 
 const Scrollbar = forwardRef((props, ref) => (
-  <ScrollbarRoot
-    ref={ref}
-    {...props}
-  />
+  <ScrollbarRoot ref={ref} {...props} />
 ));
 
 export default Scrollbar;

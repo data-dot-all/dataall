@@ -5,10 +5,10 @@ const deleteDatasetQualityRule = (ruleUri) => ({
     ruleUri
   },
   mutation: gql`
-            mutation DeleteDatasetQualityRule($ruleUri:String!){
-                deleteDatasetQualityRule(ruleUri:$ruleUri)
-            }
-        `
+    mutation DeleteDatasetQualityRule($ruleUri: String!) {
+      deleteDatasetQualityRule(ruleUri: $ruleUri)
+    }
+  `
 });
 
 export default deleteDatasetQualityRule;

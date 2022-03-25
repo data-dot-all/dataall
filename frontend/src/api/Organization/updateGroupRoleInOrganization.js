@@ -5,15 +5,17 @@ const updateGroupRoleInOrganization = ({ groupUri, role }) => ({
     input: { role: role || 'Member' },
     groupUri
   },
-  mutation: gql`mutation UpdateGroup($groupUri:String,$input:ModifyGroupInput){
-            updateGroup(groupUri:$groupUri,input:$input){
-                groupUri
-                groupRoleInOrganization
-                userRoleInGroup
-                created
-                updated
-            }
-        }`
+  mutation: gql`
+    mutation UpdateGroup($groupUri: String, $input: ModifyGroupInput) {
+      updateGroup(groupUri: $groupUri, input: $input) {
+        groupUri
+        groupRoleInOrganization
+        userRoleInGroup
+        created
+        updated
+      }
+    }
+  `
 });
 
 export default updateGroupRoleInOrganization;

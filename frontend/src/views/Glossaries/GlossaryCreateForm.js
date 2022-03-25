@@ -15,10 +15,10 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
-import Autocomplete from '@material-ui/lab/Autocomplete';
+import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import React from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -36,15 +36,19 @@ const GlossaryCreateForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const groups = useGroups();
-  const groupOptions = groups ? groups.map((g) => ({ value: g, label: g })) : [];
+  const groupOptions = groups
+    ? groups.map((g) => ({ value: g, label: g }))
+    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createGlossary({
-        label: values.label,
-        readme: values.readme,
-        admin: values.admin
-      }));
+      const response = await client.mutate(
+        createGlossary({
+          label: values.label,
+          readme: values.readme,
+          admin: values.admin
+        })
+      );
 
       if (!response.errors) {
         setStatus({ success: true });
@@ -82,16 +86,9 @@ const GlossaryCreateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new glossary
               </Typography>
               <Breadcrumbs
@@ -99,13 +96,11 @@ const GlossaryCreateForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Discover
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/glossaries"
@@ -114,6 +109,7 @@ const GlossaryCreateForm = (props) => {
                   Glossaries
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/glossaries/new"
@@ -145,14 +141,19 @@ const GlossaryCreateForm = (props) => {
                 readme: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Glossary name is required'),
-                  readme: Yup.string().max(5000).required('*Glossary readme is required'),
-                  tags: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Glossary name is required'),
+                readme: Yup.string()
+                  .max(5000)
+                  .required('*Glossary readme is required'),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -166,20 +167,9 @@ const GlossaryCreateForm = (props) => {
                 values,
                 setFieldValue
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={12}
-                      md={12}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={12} md={12} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -204,7 +194,9 @@ const GlossaryCreateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.readme.length} characters left`}
+                            helperText={`${
+                              200 - values.readme.length
+                            } characters left`}
                             label="Short description"
                             name="readme"
                             multiline
@@ -214,7 +206,7 @@ const GlossaryCreateForm = (props) => {
                             value={values.readme}
                             variant="outlined"
                           />
-                          {(touched.readme && errors.readme) && (
+                          {touched.readme && errors.readme && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.readme}
@@ -254,7 +246,7 @@ const GlossaryCreateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -270,7 +262,6 @@ const GlossaryCreateForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

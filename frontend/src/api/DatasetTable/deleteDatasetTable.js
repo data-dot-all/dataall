@@ -5,10 +5,10 @@ const deleteDatasetTable = ({ tableUri }) => ({
     tableUri
   },
   mutation: gql`
-            mutation deleteDatasetTable($tableUri:String!){
-                deleteDatasetTable(tableUri:$tableUri)
-            }
-        `
+    mutation deleteDatasetTable($tableUri: String!) {
+      deleteDatasetTable(tableUri: $tableUri)
+    }
+  `
 });
 
 export default deleteDatasetTable;

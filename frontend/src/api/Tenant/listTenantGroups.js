@@ -5,23 +5,23 @@ const listTenantGroups = (filter) => ({
     filter
   },
   query: gql`
-            query listTenantGroups($filter:GroupFilter){
-                listTenantGroups(filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        groupUri
-                        tenantPermissions{
-                            name
-                            description
-                        }
-                    }
-                }
-            }
-        `
+    query listTenantGroups($filter: GroupFilter) {
+      listTenantGroups(filter: $filter) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          groupUri
+          tenantPermissions {
+            name
+            description
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listTenantGroups;

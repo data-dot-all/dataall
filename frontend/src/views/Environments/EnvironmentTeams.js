@@ -15,14 +15,19 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { CopyAllOutlined, GroupAddOutlined, SupervisedUserCircleRounded } from '@material-ui/icons';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import {
+  CopyAllOutlined,
+  GroupAddOutlined,
+  SupervisedUserCircleRounded
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import * as FaIcons from 'react-icons/fa';
-import { LoadingButton } from '@material-ui/lab';
-import { useTheme } from '@material-ui/core/styles';
-import { HiUserRemove, VscChecklist } from 'react-icons/all';
+import { LoadingButton } from '@mui/lab';
+import { useTheme } from '@mui/styles';
+import { HiUserRemove } from 'react-icons/hi';
+import { VscChecklist } from 'react-icons/vsc';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -56,7 +61,12 @@ function TeamRow({ team, environment, fetchItems }) {
   };
   const removeGroup = async (groupUri) => {
     try {
-      const response = await client.mutate(removeGroupFromEnvironment({ environmentUri: environment.environmentUri, groupUri }));
+      const response = await client.mutate(
+        removeGroupFromEnvironment({
+          environmentUri: environment.environmentUri,
+          groupUri
+        })
+      );
       if (!response.errors) {
         enqueueSnackbar('Team removed from environment', {
           anchorOrigin: {
@@ -78,7 +88,12 @@ function TeamRow({ team, environment, fetchItems }) {
 
   const getConsoleLink = async (groupUri) => {
     setAccessingConsole(true);
-    const response = await client.query(getEnvironmentAssumeRoleUrl({ environmentUri: environment.environmentUri, groupUri }));
+    const response = await client.query(
+      getEnvironmentAssumeRoleUrl({
+        environmentUri: environment.environmentUri,
+        groupUri
+      })
+    );
     if (!response.errors) {
       window.open(response.data.getEnvironmentAssumeRoleUrl, '_blank');
     } else {
@@ -89,9 +104,16 @@ function TeamRow({ team, environment, fetchItems }) {
 
   const generateCredentials = async (groupUri) => {
     setLoadingCreds(true);
-    const response = await client.query(generateEnvironmentAccessToken({ environmentUri: environment.environmentUri, groupUri }));
+    const response = await client.query(
+      generateEnvironmentAccessToken({
+        environmentUri: environment.environmentUri,
+        groupUri
+      })
+    );
     if (!response.errors) {
-      await navigator.clipboard.writeText(response.data.generateEnvironmentAccessToken);
+      await navigator.clipboard.writeText(
+        response.data.generateEnvironmentAccessToken
+      );
       enqueueSnackbar('Credentials copied to clipboard', {
         anchorOrigin: {
           horizontal: 'right',
@@ -105,34 +127,25 @@ function TeamRow({ team, environment, fetchItems }) {
     setLoadingCreds(false);
   };
   return (
-    <TableRow
-      hover
-    >
+    <TableRow hover>
       <TableCell>
-        {team.groupUri}
-        {' '}
+        {team.groupUri}{' '}
         {team.groupUri === environment.SamlGroupName && (
-        <Label
-          color="primary"
-        >
-          Admins
-        </Label>
+          <Label color="primary">Admins</Label>
         )}
       </TableCell>
-      <TableCell>
-        {team.environmentIAMRoleArn}
-      </TableCell>
-      <TableCell>
-        {team.environmentAthenaWorkGroup}
-      </TableCell>
+      <TableCell>{team.environmentIAMRoleArn}</TableCell>
+      <TableCell>{team.environmentAthenaWorkGroup}</TableCell>
       <TableCell>
         {team.groupUri !== environment.SamlGroupName ? (
-          <LoadingButton
-            onClick={() => (handleTeamEditModalOpen(team))}
-          >
+          <LoadingButton onClick={() => handleTeamEditModalOpen(team)}>
             <VscChecklist
               size={20}
-              color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+              color={
+                theme.palette.mode === 'dark'
+                  ? theme.palette.primary.contrastText
+                  : theme.palette.primary.main
+              }
             />
           </LoadingButton>
         ) : (
@@ -145,42 +158,56 @@ function TeamRow({ team, environment, fetchItems }) {
           />
         )}
         {isTeamEditModalOpen && (
-        <EnvironmentTeamInviteEditForm
-          environment={environment}
-          team={team}
-          open
-          reloadTeams={fetchItems}
-          onClose={handleTeamEditModalClose}
-        />
+          <EnvironmentTeamInviteEditForm
+            environment={environment}
+            team={team}
+            open
+            reloadTeams={fetchItems}
+            onClose={handleTeamEditModalClose}
+          />
         )}
       </TableCell>
       <TableCell>
         <Box>
           <LoadingButton
-            pending={accessingConsole}
-            onClick={() => (getConsoleLink(team.groupUri))}
+            loading={accessingConsole}
+            onClick={() => getConsoleLink(team.groupUri)}
           >
             <FaIcons.FaAws
               size={25}
-              color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+              color={
+                theme.palette.mode === 'dark'
+                  ? theme.palette.primary.contrastText
+                  : theme.palette.primary.main
+              }
             />
           </LoadingButton>
           <LoadingButton
-            pending={loadingCreds}
-            onClick={() => (generateCredentials(team.groupUri))}
+            loading={loadingCreds}
+            onClick={() => generateCredentials(team.groupUri)}
           >
-            <CopyAllOutlined sx={{ color: theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main }} />
-          </LoadingButton>
-          {team.groupUri !== environment.SamlGroupName && (
-          <LoadingButton onClick={() => removeGroup(team.groupUri)}>
-            <HiUserRemove
-              size={25}
-              color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+            <CopyAllOutlined
+              sx={{
+                color:
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.primary.main
+              }}
             />
           </LoadingButton>
+          {team.groupUri !== environment.SamlGroupName && (
+            <LoadingButton onClick={() => removeGroup(team.groupUri)}>
+              <HiUserRemove
+                size={25}
+                color={
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.primary.main
+                }
+              />
+            </LoadingButton>
           )}
         </Box>
-
       </TableCell>
     </TableRow>
   );
@@ -208,7 +235,12 @@ const EnvironmentTeams = ({ environment }) => {
 
   const fetchItems = async () => {
     try {
-      const response = await client.query(listAllEnvironmentGroups({ environmentUri: environment.environmentUri, filter }));
+      const response = await client.query(
+        listAllEnvironmentGroups({
+          environmentUri: environment.environmentUri,
+          filter
+        })
+      );
       if (!response.errors) {
         setItems({ ...response.data.listAllEnvironmentGroups });
       } else {
@@ -223,7 +255,9 @@ const EnvironmentTeams = ({ environment }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -233,8 +267,10 @@ const EnvironmentTeams = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -249,13 +285,12 @@ const EnvironmentTeams = ({ environment }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
-              <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />
-              {' '}
+              <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
               Environment Teams
             </Box>
-                )}
+          }
         />
         <Divider />
         <Box
@@ -267,12 +302,7 @@ const EnvironmentTeams = ({ environment }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -297,12 +327,7 @@ const EnvironmentTeams = ({ environment }) => {
               />
             </Box>
           </Grid>
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={2} sm={6} xs={12}>
             <Button
               color="primary"
               startIcon={<GroupAddOutlined fontSize="small" />}
@@ -313,12 +338,12 @@ const EnvironmentTeams = ({ environment }) => {
               Invite
             </Button>
             {isTeamInviteModalOpen && (
-            <EnvironmentTeamInviteForm
-              environment={environment}
-              open
-              reloadTeams={fetchItems}
-              onClose={handleTeamInviteModalClose}
-            />
+              <EnvironmentTeamInviteForm
+                environment={environment}
+                open
+                reloadTeams={fetchItems}
+                onClose={handleTeamInviteModalClose}
+              />
             )}
           </Grid>
         </Box>
@@ -327,38 +352,28 @@ const EnvironmentTeams = ({ environment }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    IAM Role
-                  </TableCell>
-                  <TableCell>
-                    Athena WorkGroup
-                  </TableCell>
-                  <TableCell>
-                    Permissions
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>IAM Role</TableCell>
+                  <TableCell>Athena WorkGroup</TableCell>
+                  <TableCell>Permissions</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((team) => (
-                    <TeamRow
-                      team={team}
-                      environment={environment}
-                      fetchItems={fetchItems}
-                    />
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No Team invited
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((team) => (
+                      <TeamRow
+                        team={team}
+                        environment={environment}
+                        fetchItems={fetchItems}
+                      />
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No Team invited</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

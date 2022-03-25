@@ -15,12 +15,12 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router';
-import { CloudDownloadOutlined } from '@material-ui/icons';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
-import { GoDatabase } from 'react-icons/all';
+import { GoDatabase } from 'react-icons/go';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -45,7 +45,9 @@ const EnvironmentWarehouses = ({ environment }) => {
 
   const fetchItems = async () => {
     try {
-      const response = await client.query(listEnvironmentClusters(environment.environmentUri, filter));
+      const response = await client.query(
+        listEnvironmentClusters(environment.environmentUri, filter)
+      );
       if (!response.errors) {
         setItems({ ...response.data.listEnvironmentClusters });
       } else {
@@ -60,7 +62,9 @@ const EnvironmentWarehouses = ({ environment }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -70,7 +74,7 @@ const EnvironmentWarehouses = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -85,13 +89,11 @@ const EnvironmentWarehouses = ({ environment }) => {
     <Card>
       <CardHeader
         action={<RefreshTableMenu refresh={fetchItems} />}
-        title={(
+        title={
           <Box>
-            <GoDatabase style={{ marginRight: '10px' }} />
-            {' '}
-            Redshift Clusters
+            <GoDatabase style={{ marginRight: '10px' }} /> Redshift Clusters
           </Box>
-)}
+        }
       />
       <Divider />
       <Box
@@ -103,12 +105,7 @@ const EnvironmentWarehouses = ({ environment }) => {
           p: 2
         }}
       >
-        <Grid
-          item
-          md={10}
-          sm={6}
-          xs={12}
-        >
+        <Grid item md={10} sm={6} xs={12}>
           <Box
             sx={{
               m: 1,
@@ -133,12 +130,7 @@ const EnvironmentWarehouses = ({ environment }) => {
             />
           </Box>
         </Grid>
-        <Grid
-          item
-          md={2}
-          sm={6}
-          xs={12}
-        >
+        <Grid item md={2} sm={6} xs={12}>
           <Button
             color="primary"
             component={RouterLink}
@@ -159,7 +151,6 @@ const EnvironmentWarehouses = ({ environment }) => {
           >
             Create
           </Button>
-
         </Grid>
       </Box>
       <Scrollbar>
@@ -167,61 +158,52 @@ const EnvironmentWarehouses = ({ environment }) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  Endpoint
-                </TableCell>
-                <TableCell>
-                  Status
-                </TableCell>
-                <TableCell>
-                  Actions
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Endpoint</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
-            {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+            {loading ? (
+              <CircularProgress sx={{ mt: 1 }} />
+            ) : (
               <TableBody>
-                {items.nodes.length > 0 ? items.nodes.map((warehouse) => (
-                  <TableRow
-                    hover
-                    key={warehouse.clusterUri}
-                  >
-                    <TableCell>
-                      {warehouse.label}
-                    </TableCell>
-                    <TableCell>
-                      {warehouse.endpoint}
-                    </TableCell>
-                    <TableCell>
-                      <StackStatus status={(warehouse.stack?.status)} />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => { navigate(`/console/warehouse/${warehouse.clusterUri}`); }}>
-                        <ArrowRightIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow
-                    hover
-                  >
-                    <TableCell>
-                      No Redshift cluster found
-                    </TableCell>
+                {items.nodes.length > 0 ? (
+                  items.nodes.map((warehouse) => (
+                    <TableRow hover key={warehouse.clusterUri}>
+                      <TableCell>{warehouse.label}</TableCell>
+                      <TableCell>{warehouse.endpoint}</TableCell>
+                      <TableCell>
+                        <StackStatus status={warehouse.stack?.status} />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            navigate(
+                              `/console/warehouse/${warehouse.clusterUri}`
+                            );
+                          }}
+                        >
+                          <ArrowRightIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow hover>
+                    <TableCell>No Redshift cluster found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             )}
           </Table>
           {!loading && items.nodes.length > 0 && (
-          <Pager
-            mgTop={2}
-            mgBottom={2}
-            items={items}
-            onChange={handlePageChange}
-          />
+            <Pager
+              mgTop={2}
+              mgBottom={2}
+              items={items}
+              onChange={handlePageChange}
+            />
           )}
         </Box>
       </Scrollbar>

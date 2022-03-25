@@ -12,7 +12,10 @@ const SQLQueryEditor = ({ sql, setSqlBody }) => {
   }
   return (
     <div
-      style={{ width: '100%', border: settings.theme === THEMES.LIGHT ? '1px solid #eee' : '' }}
+      style={{
+        width: '100%',
+        border: settings.theme === THEMES.LIGHT ? '1px solid #eee' : ''
+      }}
     >
       <Editor
         value={sql}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Container, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Box, Container, Typography } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -20,9 +20,13 @@ const ShareOutboxList = () => {
   const client = useClient();
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(searchOutbox({ filter: {
-      ...filter
-    } }));
+    const response = await client.query(
+      searchOutbox({
+        filter: {
+          ...filter
+        }
+      })
+    );
     if (!response.errors) {
       setItems(response.data.requestsFromMe);
     } else {
@@ -69,28 +73,18 @@ const ShareOutboxList = () => {
             }}
           >
             {items.nodes.length <= 0 ? (
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 No share requests sent.
               </Typography>
-            )
-              : (
-                <Box>
-                  {items.nodes.map((node) => (
-                    <ShareOutboxListItem
-                      share={node}
-                      reload={fetchItems}
-                    />
-                  ))}
+            ) : (
+              <Box>
+                {items.nodes.map((node) => (
+                  <ShareOutboxListItem share={node} reload={fetchItems} />
+                ))}
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

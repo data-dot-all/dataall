@@ -6,19 +6,25 @@ const listOrganizationNotInvitedGroups = ({ filter, organizationUri }) => ({
     filter
   },
   query: gql`
-            query listOrganizationNotInvitedGroups($filter:GroupFilter,$organizationUri:String){
-                listOrganizationNotInvitedGroups(organizationUri:$organizationUri,filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        groupUri
-                    }
-                }
-            }
-        `
+    query listOrganizationNotInvitedGroups(
+      $filter: GroupFilter
+      $organizationUri: String
+    ) {
+      listOrganizationNotInvitedGroups(
+        organizationUri: $organizationUri
+        filter: $filter
+      ) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          groupUri
+        }
+      }
+    }
+  `
 });
 
 export default listOrganizationNotInvitedGroups;

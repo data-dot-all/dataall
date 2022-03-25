@@ -5,10 +5,10 @@ const startSagemakerNotebook = (notebookUri) => ({
     notebookUri
   },
   mutation: gql`
-            mutation StartSagemakerNotebook($notebookUri:String!){
-                startSagemakerNotebook(notebookUri:$notebookUri)
-            }
-        `
+    mutation StartSagemakerNotebook($notebookUri: String!) {
+      startSagemakerNotebook(notebookUri: $notebookUri)
+    }
+  `
 });
 
 export default startSagemakerNotebook;

@@ -1,10 +1,10 @@
-import { Box, CircularProgress, Typography } from '@material-ui/core';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { LoadingButton, TreeItem, TreeView } from '@material-ui/lab';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
+import { makeStyles } from '@mui/styles';
+import { LoadingButton, TreeItem, TreeView } from '@mui/lab';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import * as BsIcons from 'react-icons/bs';
 import Plus from '../../icons/Plus';
 import GlossaryNodeForm from './GlossaryNodeForm';
@@ -24,9 +24,10 @@ const useTreeItemStyles = makeStyles((theme) => ({
       backgroundColor: `var(--tree-view-bg-color, ${theme.palette.grey[400]})`,
       color: 'var(--tree-view-color)'
     },
-    '&:focus > $content $label, &:hover > $content $label, &$selected > $content $label': {
-      backgroundColor: 'transparent'
-    }
+    '&:focus > $content $label, &:hover > $content $label, &$selected > $content $label':
+      {
+        backgroundColor: 'transparent'
+      }
   },
   content: {
     color: theme.palette.text.secondary,
@@ -65,30 +66,28 @@ const useTreeItemStyles = makeStyles((theme) => ({
 }));
 function StyledTreeItem(props) {
   const classes = useTreeItemStyles();
-  const { labelText, labelIcon: LabelIcon, labelInfo, color, bgColor, ...other } = props;
+  const {
+    labelText,
+    labelIcon: LabelIcon,
+    labelInfo,
+    color,
+    bgColor,
+    ...other
+  } = props;
 
   return (
     <TreeItem
-      label={(
+      label={
         <div className={classes.labelRoot}>
-          <LabelIcon
-            color="inherit"
-            className={classes.labelIcon}
-          />
-          <Typography
-            variant="body2"
-            className={classes.labelText}
-          >
+          <LabelIcon color="inherit" className={classes.labelIcon} />
+          <Typography variant="body2" className={classes.labelText}>
             {labelText}
           </Typography>
-          <Typography
-            variant="caption"
-            color="inherit"
-          >
+          <Typography variant="caption" color="inherit">
             {labelInfo}
           </Typography>
         </div>
-              )}
+      }
       style={{
         '--tree-view-color': color,
         '--tree-view-bg-color': bgColor
@@ -151,11 +150,15 @@ const GlossaryManagement = (props) => {
   const fetchItems = async () => {
     setFetchingItems(true);
     setData(glossary);
-    const response = await client.query(listGlossaryTree({ nodeUri: glossary.nodeUri }));
+    const response = await client.query(
+      listGlossaryTree({ nodeUri: glossary.nodeUri })
+    );
     if (!response.errors && response.data.getGlossary !== null) {
       setItems({ ...response.data.getGlossary.tree });
     } else {
-      const error = response.errors ? response.errors[0].message : 'Glossary not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Glossary not found';
       dispatch({ type: SET_ERROR, error });
     }
     setFetchingItems(false);
@@ -163,7 +166,9 @@ const GlossaryManagement = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -183,7 +188,8 @@ const GlossaryManagement = (props) => {
   const getIcon = (nodeItem) => {
     if (nodeItem.__typename === 'Glossary') {
       return <BsIcons.BsBookmark size={12} />;
-    } if (nodeItem.__typename === 'Category') {
+    }
+    if (nodeItem.__typename === 'Category') {
       return <BsIcons.BsFolder size={12} />;
     }
     return <BsIcons.BsTag size={12} />;
@@ -214,7 +220,9 @@ const GlossaryManagement = (props) => {
           borderColor: 'divider'
         }}
       >
-        {fetchingItems ? <CircularProgress /> : (
+        {fetchingItems ? (
+          <CircularProgress />
+        ) : (
           <TreeView
             className={classes.root}
             defaultExpanded={['3']}
@@ -226,7 +234,7 @@ const GlossaryManagement = (props) => {
               <StyledTreeItem
                 nodeId={node.nodeUri}
                 onClick={() => setData(node)}
-                labelText={(
+                labelText={
                   <Box
                     sx={{
                       display: 'flex',
@@ -243,62 +251,66 @@ const GlossaryManagement = (props) => {
                       {node.label}
                     </Typography>
                   </Box>
-            )}
+                }
                 labelIcon={() => getIcon(node)}
               >
-                {node.children && node.children.map((category) => (
-                  <StyledTreeItem
-                    nodeId={category.nodeUri}
-                    onClick={() => { setData(category); }}
-                    labelText={(
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          ml: 1
-                        }}
-                      >
-                        <Typography
+                {node.children &&
+                  node.children.map((category) => (
+                    <StyledTreeItem
+                      nodeId={category.nodeUri}
+                      onClick={() => {
+                        setData(category);
+                      }}
+                      labelText={
+                        <Box
                           sx={{
-                            flexGrow: 1,
-                            fontWeight: 'inherit'
+                            display: 'flex',
+                            ml: 1
                           }}
-                          variant="body2"
                         >
-                          {category.label}
-                        </Typography>
-                      </Box>
-                    )}
-                    labelIcon={() => getIcon(category)}
-                  >
-                    {category.children && category.children.map((term) => (
-                      <StyledTreeItem
-                        nodeId={term.nodeUri}
-                        labelText={(
-                          <Box
+                          <Typography
                             sx={{
-                              display: 'flex',
-                              ml: 1
+                              flexGrow: 1,
+                              fontWeight: 'inherit'
                             }}
+                            variant="body2"
                           >
-                            <Typography
-                              sx={{
-                                flexGrow: 1,
-                                fontWeight: 'inherit'
-                              }}
-                              variant="body2"
-                            >
-                              {term.label}
-                            </Typography>
-                          </Box>
-                    )}
-                        labelIcon={() => getIcon(term)}
-                        color="#1a73e8"
-                        bgColor="#e8f0fe"
-                        onClick={() => setData(term)}
-                      />
-                    ))}
-                  </StyledTreeItem>
-                ))}
+                            {category.label}
+                          </Typography>
+                        </Box>
+                      }
+                      labelIcon={() => getIcon(category)}
+                    >
+                      {category.children &&
+                        category.children.map((term) => (
+                          <StyledTreeItem
+                            nodeId={term.nodeUri}
+                            labelText={
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  ml: 1
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    flexGrow: 1,
+                                    fontWeight: 'inherit'
+                                  }}
+                                  variant="body2"
+                                >
+                                  {term.label}
+                                </Typography>
+                              </Box>
+                            }
+                            labelIcon={() => getIcon(term)}
+                            color="#1a73e8"
+                            bgColor="#e8f0fe"
+                            onClick={() => setData(term)}
+                          />
+                        ))}
+                    </StyledTreeItem>
+                  ))}
               </StyledTreeItem>
             ))}
           </TreeView>
@@ -313,74 +325,76 @@ const GlossaryManagement = (props) => {
         }}
       >
         {isAdmin && (
-        <Box
-          sx={{
-            alignItems: 'center',
-            backgroundColor: 'background.paper',
-            display: 'flex',
-            flexShrink: 0,
-            height: 68,
-            p: 2,
-            borderBottom: 1,
-            borderColor: 'divider'
-          }}
-        >
-          <Box sx={{ flexGrow: 1 }} />
-          <LoadingButton
-            color="primary"
-            disabled={data.__typename !== 'Glossary'}
-            onClick={handleCategoryCreateModalOpen}
-            startIcon={<Plus fontSize="small" />}
-            sx={{ m: 1 }}
-            variant="outlined"
+          <Box
+            sx={{
+              alignItems: 'center',
+              backgroundColor: 'background.paper',
+              display: 'flex',
+              flexShrink: 0,
+              height: 68,
+              p: 2,
+              borderBottom: 1,
+              borderColor: 'divider'
+            }}
           >
-            Category
-          </LoadingButton>
-          <LoadingButton
-            color="primary"
-            disabled={data.__typename === 'Term'}
-            onClick={handleTermCreateModalOpen}
-            startIcon={<Plus fontSize="small" />}
-            sx={{ m: 1 }}
-            variant="outlined"
-          >
-            Term
-          </LoadingButton>
-        </Box>
+            <Box sx={{ flexGrow: 1 }} />
+            <LoadingButton
+              color="primary"
+              disabled={data.__typename !== 'Glossary'}
+              onClick={handleCategoryCreateModalOpen}
+              startIcon={<Plus fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+            >
+              Category
+            </LoadingButton>
+            <LoadingButton
+              color="primary"
+              disabled={data.__typename === 'Term'}
+              onClick={handleTermCreateModalOpen}
+              startIcon={<Plus fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+            >
+              Term
+            </LoadingButton>
+          </Box>
         )}
-        {fetchingItems ? <CircularProgress /> : (
+        {fetchingItems ? (
+          <CircularProgress />
+        ) : (
           <Box>
             {isAdmin && data && (
-            <GlossaryNodeForm
-              isAdmin={isAdmin}
-              refresh={fetchItems}
-              nodeType={data.__typename}
-              client={client}
-              data={data}
-            />
+              <GlossaryNodeForm
+                isAdmin={isAdmin}
+                refresh={fetchItems}
+                nodeType={data.__typename}
+                client={client}
+                data={data}
+              />
             )}
             {!isAdmin && (
-            <Box sx={{ p: 3 }}>
-              <ObjectBrief
-                uri={data.nodeUri}
-                description={data.description || 'No description provided'}
-                name={data.label}
-              />
-            </Box>
+              <Box sx={{ p: 3 }}>
+                <ObjectBrief
+                  uri={data.nodeUri}
+                  description={data.description || 'No description provided'}
+                  name={data.label}
+                />
+              </Box>
             )}
           </Box>
         )}
       </Box>
       {isCategoryCreateOpen && (
-      <GlossaryCreateCategoryForm
-        data={data}
-        client={client}
-        onApply={handleCategoryCreateModalClose}
-        onClose={handleCategoryCreateModalClose}
-        refresh={fetchItems}
-        isAdmin={isAdmin}
-        open={isCategoryCreateOpen}
-      />
+        <GlossaryCreateCategoryForm
+          data={data}
+          client={client}
+          onApply={handleCategoryCreateModalClose}
+          onClose={handleCategoryCreateModalClose}
+          refresh={fetchItems}
+          isAdmin={isAdmin}
+          open={isCategoryCreateOpen}
+        />
       )}
       {isTermCreateOpen && (
         <GlossaryCreateTermForm

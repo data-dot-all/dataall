@@ -1,8 +1,19 @@
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Box, Breadcrumbs, Container, Divider, Grid, Link, Tab, Tabs, Typography } from '@material-ui/core';
-import { FiSend, RiInboxArchiveLine } from 'react-icons/all';
+import {
+  Box,
+  Breadcrumbs,
+  Container,
+  Divider,
+  Grid,
+  Link,
+  Tab,
+  Tabs,
+  Typography
+} from '@mui/material';
+import { RiInboxArchiveLine } from 'react-icons/ri';
+import { FiSend } from 'react-icons/fi';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ShareInboxList from './ShareInboxList';
@@ -34,16 +45,9 @@ const ShareList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Share Requests
               </Typography>
               <Breadcrumbs
@@ -51,13 +55,11 @@ const ShareList = () => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Shares
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/shares"
@@ -90,10 +92,8 @@ const ShareList = () => {
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'inbox'
-                        && <ShareInboxList />}
-            {currentTab === 'outbox'
-            && <ShareOutboxList />}
+            {currentTab === 'inbox' && <ShareInboxList />}
+            {currentTab === 'outbox' && <ShareOutboxList />}
           </Box>
         </Container>
       </Box>

@@ -6,13 +6,15 @@ const createDataset = (input) => {
     variables: {
       input
     },
-    mutation: gql`mutation CreateDataset($input:NewDatasetInput){
-            createDataset(input:$input){
-                datasetUri
-                label
-                userRoleForDataset
-            }
-        }`
+    mutation: gql`
+      mutation CreateDataset($input: NewDatasetInput) {
+        createDataset(input: $input) {
+          datasetUri
+          label
+          userRoleForDataset
+        }
+      }
+    `
   };
 };
 

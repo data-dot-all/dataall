@@ -10,10 +10,10 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import React, { useEffect, useState } from 'react';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -24,7 +24,8 @@ import createNetwork from '../../api/Vpc/createNetwork';
 import * as Defaults from '../../components/defaults';
 
 const NetworkCreateModal = (props) => {
-  const { environment, onApply, onClose, open, reloadNetworks, ...other } = props;
+  const { environment, onApply, onClose, open, reloadNetworks, ...other } =
+    props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
@@ -32,9 +33,19 @@ const NetworkCreateModal = (props) => {
 
   const fetchGroups = async () => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri: environment.environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri: environment.environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -45,8 +56,8 @@ const NetworkCreateModal = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createNetwork(
-        {
+      const response = await client.mutate(
+        createNetwork({
           environmentUri: environment.environmentUri,
           tags: values.tags,
           description: values.description,
@@ -55,8 +66,8 @@ const NetworkCreateModal = (props) => {
           SamlGroupName: values.SamlGroupName,
           privateSubnetIds: values.privateSubnetIds,
           publicSubnetIds: values.publicSubnetIds
-        }
-      ));
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -87,7 +98,9 @@ const NetworkCreateModal = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchGroups().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchGroups().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -96,14 +109,7 @@ const NetworkCreateModal = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -113,12 +119,9 @@ const NetworkCreateModal = (props) => {
         >
           Create a new network configuration
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          Networks are VPC and subnets information required for AWS resources created under a VPC.
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          Networks are VPC and subnets information required for AWS resources
+          created under a VPC.
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -130,18 +133,20 @@ const NetworkCreateModal = (props) => {
               publicSubnetIds: [],
               tags: []
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                label: Yup.string().max(255).required('*VPC name is required'),
-                vpcId: Yup.string().max(255).required('*VPC ID is required'),
-                SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                privateSubnetIds: Yup.array().nullable(),
-                publicSubnetIds: Yup.array().nullable(),
-                tags: Yup.array().nullable()
-
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              label: Yup.string().max(255).required('*VPC name is required'),
+              vpcId: Yup.string().max(255).required('*VPC ID is required'),
+              SamlGroupName: Yup.string()
+                .max(255)
+                .required('*Team is required'),
+              privateSubnetIds: Yup.array().nullable(),
+              publicSubnetIds: Yup.array().nullable(),
+              tags: Yup.array().nullable()
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -155,19 +160,9 @@ const NetworkCreateModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
-                <Grid
-                  container
-                  spacing={3}
-                >
-                  <Grid
-                    item
-                    lg={8}
-                    md={6}
-                    xs={12}
-                  >
+              <form onSubmit={handleSubmit}>
+                <Grid container spacing={3}>
+                  <Grid item lg={8} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Details" />
                       <CardContent>
@@ -200,15 +195,17 @@ const NetworkCreateModal = (props) => {
                         <ChipInput
                           fullWidth
                           defaultValue={values.publicSubnetIds}
-                          error={Boolean(touched.publicSubnetIds && errors.publicSubnetIds)}
-                          helperText={touched.publicSubnetIds && errors.publicSubnetIds}
+                          error={Boolean(
+                            touched.publicSubnetIds && errors.publicSubnetIds
+                          )}
+                          helperText={
+                            touched.publicSubnetIds && errors.publicSubnetIds
+                          }
                           variant="outlined"
                           label="Public subnets"
                           placeholder="Hit enter after typing value"
                           onChange={(chip) => {
-                            setFieldValue('publicSubnetIds', [
-                              ...chip
-                            ]);
+                            setFieldValue('publicSubnetIds', [...chip]);
                           }}
                         />
                       </CardContent>
@@ -216,33 +213,34 @@ const NetworkCreateModal = (props) => {
                         <ChipInput
                           fullWidth
                           defaultValue={values.privateSubnetIds}
-                          error={Boolean(touched.privateSubnetIds && errors.privateSubnetIds)}
-                          helperText={touched.privateSubnetIds && errors.privateSubnetIds}
+                          error={Boolean(
+                            touched.privateSubnetIds && errors.privateSubnetIds
+                          )}
+                          helperText={
+                            touched.privateSubnetIds && errors.privateSubnetIds
+                          }
                           variant="outlined"
                           label="Private subnets"
                           placeholder="Hit enter after typing value"
                           onChange={(chip) => {
-                            setFieldValue('privateSubnetIds', [
-                              ...chip
-                            ]);
+                            setFieldValue('privateSubnetIds', [...chip]);
                           }}
                         />
                       </CardContent>
                     </Box>
                   </Grid>
-                  <Grid
-                    item
-                    lg={4}
-                    md={6}
-                    xs={12}
-                  >
+                  <Grid item lg={4} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Organize" />
                       <CardContent>
                         <TextField
                           fullWidth
-                          error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                          helperText={touched.SamlGroupName && errors.SamlGroupName}
+                          error={Boolean(
+                            touched.SamlGroupName && errors.SamlGroupName
+                          )}
+                          helperText={
+                            touched.SamlGroupName && errors.SamlGroupName
+                          }
                           label="Team"
                           name="SamlGroupName"
                           onChange={handleChange}
@@ -251,10 +249,7 @@ const NetworkCreateModal = (props) => {
                           variant="outlined"
                         >
                           {groupOptions.map((group) => (
-                            <MenuItem
-                              key={group.value}
-                              value={group.value}
-                            >
+                            <MenuItem key={group.value} value={group.value}>
                               {group.label}
                             </MenuItem>
                           ))}
@@ -269,18 +264,14 @@ const NetworkCreateModal = (props) => {
                           label="Tags"
                           placeholder="Hit enter after typing value"
                           onChange={(chip) => {
-                            setFieldValue('tags', [
-                              ...chip
-                            ]);
+                            setFieldValue('tags', [...chip]);
                           }}
                         />
                       </CardContent>
                     </Box>
                     {errors.submit && (
                       <Box sx={{ mt: 3 }}>
-                        <FormHelperText error>
-                          {errors.submit}
-                        </FormHelperText>
+                        <FormHelperText error>{errors.submit}</FormHelperText>
                       </Box>
                     )}
                     <CardContent>
@@ -295,7 +286,6 @@ const NetworkCreateModal = (props) => {
                     </CardContent>
                   </Grid>
                 </Grid>
-
               </form>
             )}
           </Formik>

@@ -6,27 +6,33 @@ const listEnvironmentNetworks = ({ filter, environmentUri }) => ({
     filter
   },
   query: gql`
-            query listEnvironmentNetworks($filter:VpcFilter,$environmentUri:String!){
-                listEnvironmentNetworks(environmentUri:$environmentUri,filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        VpcId
-                        vpcUri
-                        label
-                        name
-                        default
-                        SamlGroupName
-                        publicSubnetIds
-                        privateSubnetIds
-                        region
-                    }
-                }
-            }
-        `
+    query listEnvironmentNetworks(
+      $filter: VpcFilter
+      $environmentUri: String!
+    ) {
+      listEnvironmentNetworks(
+        environmentUri: $environmentUri
+        filter: $filter
+      ) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          VpcId
+          vpcUri
+          label
+          name
+          default
+          SamlGroupName
+          publicSubnetIds
+          privateSubnetIds
+          region
+        }
+      }
+    }
+  `
 });
 
 export default listEnvironmentNetworks;

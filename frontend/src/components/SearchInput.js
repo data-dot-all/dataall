@@ -1,4 +1,4 @@
-import { Box, Card, Input } from '@material-ui/core';
+import { Box, Card, Input } from '@mui/material';
 import * as PropTypes from 'prop-types';
 import SearchIcon from '../icons/Search';
 

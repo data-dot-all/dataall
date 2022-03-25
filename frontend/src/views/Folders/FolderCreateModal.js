@@ -4,16 +4,17 @@ import {
   Autocomplete,
   Box,
   CardContent,
-  CardHeader, Chip,
+  CardHeader,
+  Chip,
   Dialog,
   FormHelperText,
   Grid,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { useEffect, useState } from 'react';
 import addDatasetStorageLocation from '../../api/Dataset/addDatasetStorageLocation';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -31,14 +32,19 @@ const FolderCreateModal = (props) => {
   const [selectableTerms, setSelectableTerms] = useState([]);
 
   const fetchTerms = async () => {
-    const response = await client.query(searchGlossary(Defaults.SelectListFilter));
+    const response = await client.query(
+      searchGlossary(Defaults.SelectListFilter)
+    );
     if (!response.errors) {
-      if (response.data.searchGlossary && response.data.searchGlossary.nodes.length > 0) {
+      if (
+        response.data.searchGlossary &&
+        response.data.searchGlossary.nodes.length > 0
+      ) {
         const selectables = response.data.searchGlossary.nodes.map((node) => ({
           label: node.label,
           value: node.nodeUri,
           nodeUri: node.nodeUri,
-          disabled: node.__typename !== 'Term', /* eslint-disable-line*/
+          disabled: node.__typename !== 'Term' /* eslint-disable-line*/,
           nodePath: node.path,
           nodeType: node.__typename /* eslint-disable-line*/
         }));
@@ -50,19 +56,27 @@ const FolderCreateModal = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchTerms().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchTerms().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(addDatasetStorageLocation({ datasetUri: dataset.datasetUri,
-        input: {
-          label: values.label,
-          prefix: values.prefix,
-          tags: values.tags,
-          description: values.description,
-          terms: values.terms.nodes ? values.terms.nodes.map((t) => t.nodeUri) : values.terms.map((t) => t.nodeUri)
-        } }));
+      const response = await client.mutate(
+        addDatasetStorageLocation({
+          datasetUri: dataset.datasetUri,
+          input: {
+            label: values.label,
+            prefix: values.prefix,
+            tags: values.tags,
+            description: values.description,
+            terms: values.terms.nodes
+              ? values.terms.nodes.map((t) => t.nodeUri)
+              : values.terms.map((t) => t.nodeUri)
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -96,14 +110,7 @@ const FolderCreateModal = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="lg"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -113,11 +120,7 @@ const FolderCreateModal = (props) => {
         >
           Create a new folder
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography align="center" color="textSecondary" variant="subtitle2">
           Creates an Amazon S3 prefix under the dataset bucket
         </Typography>
         <Box sx={{ p: 3 }}>
@@ -129,16 +132,17 @@ const FolderCreateModal = (props) => {
               tags: [],
               terms: []
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                label: Yup.string().max(255).required('*Folder name is required'),
-                prefix: Yup.string().max(255).required('*Prefix is required'),
-                description: Yup.string().max(5000),
-                tags: Yup.array().nullable(),
-                terms: Yup.array().nullable()
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              label: Yup.string().max(255).required('*Folder name is required'),
+              prefix: Yup.string().max(255).required('*Prefix is required'),
+              description: Yup.string().max(5000),
+              tags: Yup.array().nullable(),
+              terms: Yup.array().nullable()
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -152,19 +156,9 @@ const FolderCreateModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
-                <Grid
-                  container
-                  spacing={3}
-                >
-                  <Grid
-                    item
-                    lg={8}
-                    md={6}
-                    xs={12}
-                  >
+              <form onSubmit={handleSubmit}>
+                <Grid container spacing={3}>
+                  <Grid item lg={8} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Details" />
                       <CardContent>
@@ -202,7 +196,9 @@ const FolderCreateModal = (props) => {
                             }
                           }}
                           fullWidth
-                          helperText={`${200 - values.description.length} characters left`}
+                          helperText={`${
+                            200 - values.description.length
+                          } characters left`}
                           label="Short description"
                           name="description"
                           multiline
@@ -212,7 +208,7 @@ const FolderCreateModal = (props) => {
                           value={values.description}
                           variant="outlined"
                         />
-                        {(touched.description && errors.description) && (
+                        {touched.description && errors.description && (
                           <Box sx={{ mt: 2 }}>
                             <FormHelperText error>
                               {errors.description}
@@ -222,12 +218,7 @@ const FolderCreateModal = (props) => {
                       </CardContent>
                     </Box>
                   </Grid>
-                  <Grid
-                    item
-                    lg={4}
-                    md={6}
-                    xs={12}
-                  >
+                  <Grid item lg={4} md={6} xs={12}>
                     <Box>
                       <CardHeader title="Organize" />
                       <CardContent>
@@ -239,9 +230,7 @@ const FolderCreateModal = (props) => {
                           label="Tags"
                           placeholder="Hit enter after typing value"
                           onChange={(chip) => {
-                            setFieldValue('tags', [
-                              ...chip
-                            ]);
+                            setFieldValue('tags', [...chip]);
                           }}
                         />
                       </CardContent>
@@ -252,16 +241,20 @@ const FolderCreateModal = (props) => {
                           options={selectableTerms}
                           getOptionLabel={(opt) => opt.label}
                           getOptionDisabled={(opt) => opt.disabled}
-                          getOptionSelected={(option, value) => option.nodeUri === value.nodeUri}
+                          getOptionSelected={(option, value) =>
+                            option.nodeUri === value.nodeUri
+                          }
                           onChange={(event, value) => {
                             setFieldValue('terms', value);
                           }}
-                          renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                            <Chip
-                              label={option.label}
-                              {...getTagProps({ index })}
-                            />
-                          ))}
+                          renderTags={(tagValue, getTagProps) =>
+                            tagValue.map((option, index) => (
+                              <Chip
+                                label={option.label}
+                                {...getTagProps({ index })}
+                              />
+                            ))
+                          }
                           renderInput={(p) => (
                             <TextField
                               {...p}
@@ -275,9 +268,7 @@ const FolderCreateModal = (props) => {
                     </Box>
                     {errors.submit && (
                       <Box sx={{ mt: 3 }}>
-                        <FormHelperText error>
-                          {errors.submit}
-                        </FormHelperText>
+                        <FormHelperText error>{errors.submit}</FormHelperText>
                       </Box>
                     )}
                   </Grid>

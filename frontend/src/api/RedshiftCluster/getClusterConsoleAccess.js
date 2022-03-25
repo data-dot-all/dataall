@@ -5,10 +5,10 @@ const getClusterConsoleAccess = (clusterUri) => ({
     clusterUri
   },
   query: gql`
-            query getRedshiftClusterConsoleAccess($clusterUri:String!){
-                getRedshiftClusterConsoleAccess(clusterUri:$clusterUri)
-            }
-        `
+    query getRedshiftClusterConsoleAccess($clusterUri: String!) {
+      getRedshiftClusterConsoleAccess(clusterUri: $clusterUri)
+    }
+  `
 });
 
 export default getClusterConsoleAccess;

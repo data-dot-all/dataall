@@ -10,7 +10,7 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
 import useClient from '../../hooks/useClient';
@@ -36,8 +36,9 @@ const DatasetUpload = (props) => {
   };
 
   const handleRemove = (file) => {
-    setFiles((prevFiles) => prevFiles.filter((_file) => _file.path
-        !== file.path));
+    setFiles((prevFiles) =>
+      prevFiles.filter((_file) => _file.path !== file.path)
+    );
   };
 
   const handleRemoveAll = () => {
@@ -45,9 +46,12 @@ const DatasetUpload = (props) => {
   };
 
   const runCrawler = async () => {
-    const response = await client.mutate(startGlueCrawler({
-      datasetUri: dataset.datasetUri,
-      input: { prefix } }));
+    const response = await client.mutate(
+      startGlueCrawler({
+        datasetUri: dataset.datasetUri,
+        input: { prefix }
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Crawler started', {
         anchorOrigin: {
@@ -62,15 +66,19 @@ const DatasetUpload = (props) => {
   };
 
   const fileUpload = async (file) => {
-    const response = await client.query(getDatasetPresignedUrl({
-      datasetUri: dataset.datasetUri,
-      input: {
-        fileName: file.name,
-        prefix
-      }
-    }));
+    const response = await client.query(
+      getDatasetPresignedUrl({
+        datasetUri: dataset.datasetUri,
+        input: {
+          fileName: file.name,
+          prefix
+        }
+      })
+    );
     if (!response.errors) {
-      const presignedUrlResponse = JSON.parse(response.data.getDatasetPresignedUrl);
+      const presignedUrlResponse = JSON.parse(
+        response.data.getDatasetPresignedUrl
+      );
       const { url } = presignedUrlResponse;
       const { fields } = presignedUrlResponse;
       const formData = new FormData();
@@ -82,9 +90,10 @@ const DatasetUpload = (props) => {
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-          'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
-
+          'Access-Control-Allow-Methods':
+            'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+          'Access-Control-Allow-Headers':
+            'X-Requested-With, content-type, Authorization'
         },
         withCredentials: false,
         onUploadProgress: (e) => {
@@ -92,18 +101,24 @@ const DatasetUpload = (props) => {
         }
       };
       setIsUploading(true);
-      await axios.post(url, formData, config).then(() => {
-        enqueueSnackbar('File uploaded to S3', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
+      await axios
+        .post(url, formData, config)
+        .then(() => {
+          enqueueSnackbar('File uploaded to S3', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+        })
+        .catch((e) => {
+          dispatch({
+            type: SET_ERROR,
+            error: `Failed to upload: ${e.message}.
+      S3 CORS configuration needs to be enabled on the bucket for the upload to succeed.`
+          });
         });
-      }).catch((e) => {
-        dispatch({ type: SET_ERROR, error: `Failed to upload: ${e.message}.
-      S3 CORS configuration needs to be enabled on the bucket for the upload to succeed.` });
-      });
       setTimeout(() => {
         setIsUploading(false);
         setFiles([]);
@@ -115,7 +130,9 @@ const DatasetUpload = (props) => {
   const multiFilesUpload = async () => {
     await files.map((file) => fileUpload(file));
     if (startCrawler) {
-      runCrawler().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      runCrawler().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -142,28 +159,25 @@ const DatasetUpload = (props) => {
                 name="label"
                 variant="outlined"
                 value={prefix}
-                onChange={(e) => { setPrefix(e.target.value); }}
+                onChange={(e) => {
+                  setPrefix(e.target.value);
+                }}
               />
             </Box>
             <Box sx={{ mt: 2 }}>
-              <Typography
-                color="textPrimary"
-                gutterBottom
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" gutterBottom variant="subtitle2">
                 Infer Schema
               </Typography>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                Enabling this will automatically start a crawler
-                to infer your file schema
+              <Typography color="textSecondary" variant="body2">
+                Enabling this will automatically start a crawler to infer your
+                file schema
               </Typography>
               <Switch
                 color="primary"
                 defaultChecked
-                onChange={() => { setStartCrawler(!startCrawler); }}
+                onChange={() => {
+                  setStartCrawler(!startCrawler);
+                }}
                 edge="start"
                 name="startCrawler"
               />
@@ -182,18 +196,14 @@ const DatasetUpload = (props) => {
             </Box>
 
             {isUploading && (
-            <Box
-              sx={{
-                mt: 2
-              }}
-            >
-              <LinearProgress
-                variant="determinate"
-                value={progress}
-              />
-            </Box>
+              <Box
+                sx={{
+                  mt: 2
+                }}
+              >
+                <LinearProgress variant="determinate" value={progress} />
+              </Box>
             )}
-
           </CardContent>
         </Card>
       )}

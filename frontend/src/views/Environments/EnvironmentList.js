@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Card, Container, Grid, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Card,
+  Container,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -23,10 +31,7 @@ function EnvironmentsPageHeader() {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Environments
         </Typography>
         <Breadcrumbs
@@ -34,13 +39,11 @@ function EnvironmentsPageHeader() {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Organize
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/environments"
@@ -65,16 +68,24 @@ const EnvironmentList = () => {
   const client = useClient();
   const fetchItems = async () => {
     setLoading(true);
-    await client.query(listEnvironments({ filter: {
-      ...filter
-    } })).then((response) => {
-      const nodes = response.data.listEnvironments.nodes.map((env) => ({
-        ...env
-      }));
-      setItems({ ...items, ...response.data.listEnvironments, nodes });
-    }).catch((error) => {
-      dispatch({ type: SET_ERROR, error: error.Error });
-    }).finally(() => (setLoading(false)));
+    await client
+      .query(
+        listEnvironments({
+          filter: {
+            ...filter
+          }
+        })
+      )
+      .then((response) => {
+        const nodes = response.data.listEnvironments.nodes.map((env) => ({
+          ...env
+        }));
+        setItems({ ...items, ...response.data.listEnvironments, nodes });
+      })
+      .catch((error) => {
+        dispatch({ type: SET_ERROR, error: error.Error });
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleInputChange = (event) => {
@@ -83,7 +94,7 @@ const EnvironmentList = () => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -96,7 +107,9 @@ const EnvironmentList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -129,24 +142,19 @@ const EnvironmentList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <EnvironmentListItem environment={node} />
-                    ))}
-                  </Grid>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <EnvironmentListItem environment={node} />
+                  ))}
+                </Grid>
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

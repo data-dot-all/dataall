@@ -5,10 +5,10 @@ const getDatasetETLCredentials = (datasetUri) => ({
     datasetUri
   },
   query: gql`
-            query GetDatasetETLCredentials($datasetUri:String!){
-                getDatasetETLCredentials(datasetUri:$datasetUri)
-            }
-        `
+    query GetDatasetETLCredentials($datasetUri: String!) {
+      getDatasetETLCredentials(datasetUri: $datasetUri)
+    }
+  `
 });
 
 export default getDatasetETLCredentials;

@@ -4,16 +4,16 @@ const createSqlPipeline = ({ input }) => ({
   variables: {
     input
   },
-  mutation: gql`mutation CreateSqlPipeline(
-            $input:NewSqlPipelineInput,
-        ){
-            createSqlPipeline(input:$input){
-                sqlPipelineUri
-                name
-                label
-                created
-            }
-        }`
+  mutation: gql`
+    mutation CreateSqlPipeline($input: NewSqlPipelineInput) {
+      createSqlPipeline(input: $input) {
+        sqlPipelineUri
+        name
+        label
+        created
+      }
+    }
+  `
 });
 
 export default createSqlPipeline;

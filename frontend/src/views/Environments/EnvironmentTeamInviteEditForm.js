@@ -15,9 +15,9 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
-import { LoadingButton } from '@material-ui/lab';
-import { GroupAddOutlined } from '@material-ui/icons';
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -29,7 +29,9 @@ const EnvironmentTeamInviteEditForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [permissions, setPermissions] = useState(team.environmentPermissions.map((perm) => (perm.name)));
+  const [permissions, setPermissions] = useState(
+    team.environmentPermissions.map((perm) => perm.name)
+  );
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +40,11 @@ const EnvironmentTeamInviteEditForm = (props) => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const response = await client.query(listEnvironmentGroupInvitationPermissions({ environmentUri: environment.environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroupInvitationPermissions({
+          environmentUri: environment.environmentUri
+        })
+      );
       if (!response.errors) {
         setItems(response.data.listEnvironmentGroupInvitationPermissions);
       } else {
@@ -53,7 +59,9 @@ const EnvironmentTeamInviteEditForm = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -63,11 +71,13 @@ const EnvironmentTeamInviteEditForm = (props) => {
       if (!permissions || permissions.length < 1) {
         setPermissionsError('* At least one permission is required');
       } else {
-        const response = await client.mutate(updateGroupEnvironmentPermissions({
-          groupUri: team.groupUri,
-          environmentUri: environment.environmentUri,
-          permissions
-        }));
+        const response = await client.mutate(
+          updateGroupEnvironmentPermissions({
+            groupUri: team.groupUri,
+            environmentUri: environment.environmentUri,
+            permissions
+          })
+        );
         if (!response.errors) {
           enqueueSnackbar('Team permissions updated', {
             anchorOrigin: {
@@ -103,14 +113,7 @@ const EnvironmentTeamInviteEditForm = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="lg"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -118,16 +121,11 @@ const EnvironmentTeamInviteEditForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Team
-          {' '}
-          {team.groupUri}
+          Team {team.groupUri}
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          A Team is a group from your identity provider that you are a member of. All members of that group will be able to access your environment.
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          A Team is a group from your identity provider that you are a member
+          of. All members of that group will be able to access your environment.
         </Typography>
         <Box sx={{ p: 3 }}>
           <CardContent>
@@ -155,52 +153,55 @@ const EnvironmentTeamInviteEditForm = (props) => {
               <CardHeader title="Environment Permissions" />
               <Divider />
               <CardContent sx={{ ml: 2 }}>
-                {items.length > 0 ? items.map((perm) => (
-                  <Box>
-                    <FormGroup>
-                      <FormControlLabel
-                        color="primary"
-                        control={(
-                          <Switch
-                            defaultChecked={team.environmentPermissions.filter((envperm) => envperm.name === perm.name).length === 1}
-                            color="primary"
-                            onChange={(event) => {
-                              const newPerms = permissions;
-                              if (event.target.checked) {
-                                newPerms.push(event.target.value);
-                              } else {
-                                const index = newPerms.indexOf(event.target.value);
-                                if (index > -1) {
-                                  newPerms.splice(index, 1);
-                                }
+                {items.length > 0 ? (
+                  items.map((perm) => (
+                    <Box>
+                      <FormGroup>
+                        <FormControlLabel
+                          color="primary"
+                          control={
+                            <Switch
+                              defaultChecked={
+                                team.environmentPermissions.filter(
+                                  (envperm) => envperm.name === perm.name
+                                ).length === 1
                               }
-                              setPermissions(newPerms);
-                            }}
-                            edge="start"
-                            name={perm.name}
-                            value={perm.name}
-                          />
-                                          )}
-                        label={perm.description}
-                        labelPlacement="end"
-                        value={perm.name}
-                      />
-                    </FormGroup>
-                  </Box>
-                )) : (
-                  <Typography
-                    color="textPrimary"
-                    variant="subtitle2"
-                  >
+                              color="primary"
+                              onChange={(event) => {
+                                const newPerms = permissions;
+                                if (event.target.checked) {
+                                  newPerms.push(event.target.value);
+                                } else {
+                                  const index = newPerms.indexOf(
+                                    event.target.value
+                                  );
+                                  if (index > -1) {
+                                    newPerms.splice(index, 1);
+                                  }
+                                }
+                                setPermissions(newPerms);
+                              }}
+                              edge="start"
+                              name={perm.name}
+                              value={perm.name}
+                            />
+                          }
+                          label={perm.description}
+                          labelPlacement="end"
+                          value={perm.name}
+                        />
+                      </FormGroup>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography color="textPrimary" variant="subtitle2">
                     Failed to load permissions.
                   </Typography>
                 )}
-                {(permissionsError) && (
-                <Box sx={{ mt: 2 }}>
-                  <FormHelperText error>
-                    {permissionsError}
-                  </FormHelperText>
-                </Box>
+                {permissionsError && (
+                  <Box sx={{ mt: 2 }}>
+                    <FormHelperText error>{permissionsError}</FormHelperText>
+                  </Box>
                 )}
               </CardContent>
             </Paper>
@@ -211,7 +212,7 @@ const EnvironmentTeamInviteEditForm = (props) => {
                 fullWidth
                 startIcon={<GroupAddOutlined fontSize="small" />}
                 color="primary"
-                pending={isSubmitting}
+                loading={isSubmitting}
                 type="submit"
                 onClick={() => submit()}
                 variant="contained"
@@ -220,7 +221,6 @@ const EnvironmentTeamInviteEditForm = (props) => {
               </LoadingButton>
             </CardContent>
           </Box>
-
         </Box>
       </Box>
     </Dialog>

@@ -2,13 +2,20 @@ import { gql } from 'apollo-boost';
 
 const deleteSagemakerNotebook = (notebookUri, deleteFromAWS) => ({
   variables: {
-    notebookUri, deleteFromAWS
+    notebookUri,
+    deleteFromAWS
   },
   mutation: gql`
-        mutation deleteSagemakerNotebook($notebookUri:String!, $deleteFromAWS:Boolean){
-            deleteSagemakerNotebook(notebookUri:$notebookUri, deleteFromAWS:$deleteFromAWS)
-        }
-        `
+    mutation deleteSagemakerNotebook(
+      $notebookUri: String!
+      $deleteFromAWS: Boolean
+    ) {
+      deleteSagemakerNotebook(
+        notebookUri: $notebookUri
+        deleteFromAWS: $deleteFromAWS
+      )
+    }
+  `
 });
 
 export default deleteSagemakerNotebook;

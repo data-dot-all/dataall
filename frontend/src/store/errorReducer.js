@@ -14,7 +14,8 @@ export function errorReducer(state = initState, action) {
       error,
       isOpen: true
     };
-  } if (action.type === HIDE_ERROR) {
+  }
+  if (action.type === HIDE_ERROR) {
     return {
       error: null,
       isOpen: false

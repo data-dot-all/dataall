@@ -14,10 +14,10 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -45,7 +45,9 @@ const EnvironmentWorkflows = ({ environment }) => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const response = await client.query(listEnvironmentAirflowClusters(environment.environmentUri, filter));
+      const response = await client.query(
+        listEnvironmentAirflowClusters(environment.environmentUri, filter)
+      );
       if (!response.errors) {
         setItems({ ...response.data.listEnvironmentAirflowClusters });
       } else {
@@ -60,7 +62,9 @@ const EnvironmentWorkflows = ({ environment }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -70,7 +74,7 @@ const EnvironmentWorkflows = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -82,7 +86,9 @@ const EnvironmentWorkflows = ({ environment }) => {
   };
   const goToAirflowUI = async (item) => {
     setIsLoadingUI(true);
-    const response = await client.query(getAirflowClusterWebLoginToken(item.clusterUri));
+    const response = await client.query(
+      getAirflowClusterWebLoginToken(item.clusterUri)
+    );
     if (!response.errors) {
       window.open(response.data.getAirflowClusterConsoleAccess, '_blank');
     } else {
@@ -95,13 +101,12 @@ const EnvironmentWorkflows = ({ environment }) => {
     <Card>
       <CardHeader
         action={<RefreshTableMenu refresh={fetchItems} />}
-        title={(
+        title={
           <Box>
-            <SiIcon.SiApacheairflow style={{ marginRight: '10px' }} />
-            {' '}
-            Airflow Environments
+            <SiIcon.SiApacheairflow style={{ marginRight: '10px' }} /> Airflow
+            Environments
           </Box>
-)}
+        }
       />
       <Divider />
       <Box
@@ -142,73 +147,64 @@ const EnvironmentWorkflows = ({ environment }) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  Airflow UI
-                </TableCell>
-                <TableCell>
-                  Status
-                </TableCell>
-                <TableCell>
-                  Actions
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Airflow UI</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
-            {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+            {loading ? (
+              <CircularProgress sx={{ mt: 1 }} />
+            ) : (
               <TableBody>
-                {items.nodes.length > 0 ? items.nodes.map((workflow) => (
-                  <TableRow
-                    hover
-                    key={workflow.clusterUri}
-                  >
-                    <TableCell>
-                      {workflow.label}
-                    </TableCell>
-                    <TableCell>
-                      {workflow.webServerUrl
-                        ? (
+                {items.nodes.length > 0 ? (
+                  items.nodes.map((workflow) => (
+                    <TableRow hover key={workflow.clusterUri}>
+                      <TableCell>{workflow.label}</TableCell>
+                      <TableCell>
+                        {workflow.webServerUrl ? (
                           <LoadingButton
-                            pending={isLoadingUI}
+                            loading={isLoadingUI}
                             color="primary"
                             onClick={() => goToAirflowUI(workflow)}
                           >
-                            {workflow.webServerUrl}
-                            {' '}
-                            <ExternalLink />
+                            {workflow.webServerUrl} <ExternalLink />
                           </LoadingButton>
-                        )
-                        : <span>-</span>}
-                    </TableCell>
-                    <TableCell>
-                      <StackStatus status={(workflow.stack?.status)} />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => { navigate(`/console/workflows/${workflow.clusterUri}`); }}>
-                        <ArrowRightIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow
-                    hover
-                  >
-                    <TableCell>
-                      No Airflow environment found
-                    </TableCell>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StackStatus status={workflow.stack?.status} />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            navigate(
+                              `/console/workflows/${workflow.clusterUri}`
+                            );
+                          }}
+                        >
+                          <ArrowRightIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow hover>
+                    <TableCell>No Airflow environment found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             )}
           </Table>
           {!loading && items.nodes.length > 0 && (
-          <Pager
-            mgTop={2}
-            mgBottom={2}
-            items={items}
-            onChange={handlePageChange}
-          />
+            <Pager
+              mgTop={2}
+              mgBottom={2}
+              items={items}
+              onChange={handlePageChange}
+            />
           )}
         </Box>
       </Scrollbar>

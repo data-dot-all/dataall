@@ -4,10 +4,11 @@ const listToTree = (data, options) => {
   const PARENT_KEY = options.parentKey || 'parent';
   const CHILDREN_KEY = options.childrenKey || 'children';
 
-  const tree = []; const
-    childrenOf = {};
-  let item; let id; let
-    parentId;
+  const tree = [];
+  const childrenOf = {};
+  let item;
+  let id;
+  let parentId;
 
   for (let i = 0, { length } = data; i < length; i++) {
     item = data[i];

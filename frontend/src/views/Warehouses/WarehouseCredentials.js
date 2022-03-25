@@ -1,6 +1,14 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, Divider, List, ListItem, Typography } from '@material-ui/core';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  List,
+  ListItem,
+  Typography
+} from '@mui/material';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -10,23 +18,30 @@ const WarehouseCredentials = (props) => {
   const { warehouse } = props;
   const client = useClient();
   const dispatch = useDispatch();
-  const [clusterCredentials, setClusterCredentials] = useState({ password: '-' });
-  const getCredentials = async () => {
+  const [clusterCredentials, setClusterCredentials] = useState({
+    password: '-'
+  });
+
+  const getCredentials = useCallback(async () => {
     const response = await client.query(
       getRedshiftClusterDatabaseCredentials(warehouse.clusterUri)
     );
     if (!response.errors) {
-      setClusterCredentials({ ...response.data.getRedshiftClusterDatabaseCredentials });
+      setClusterCredentials({
+        ...response.data.getRedshiftClusterDatabaseCredentials
+      });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, warehouse.clusterUri, dispatch]);
 
   useEffect(() => {
     if (client && warehouse) {
-      getCredentials().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getCredentials().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, warehouse, getCredentials, dispatch]);
 
   return (
     <Card {...warehouse}>
@@ -42,16 +57,10 @@ const WarehouseCredentials = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Cluster identifier
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {warehouse.name}
             </Typography>
           </ListItem>
@@ -63,16 +72,10 @@ const WarehouseCredentials = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Database name
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {warehouse.databaseName}
             </Typography>
           </ListItem>
@@ -84,16 +87,10 @@ const WarehouseCredentials = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Database user
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {warehouse.databaseUser}
             </Typography>
           </ListItem>
@@ -105,16 +102,10 @@ const WarehouseCredentials = (props) => {
               padding: 2
             }}
           >
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Database password
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="body2"
-            >
+            <Typography color="textPrimary" variant="body2">
               {clusterCredentials?.password || '-'}
             </Typography>
           </ListItem>

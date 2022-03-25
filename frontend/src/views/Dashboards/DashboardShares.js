@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Container, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Box, Container, Typography } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import PropTypes from 'prop-types';
 import useClient from '../../hooks/useClient';
@@ -22,7 +22,9 @@ const DashboardShares = (props) => {
   const client = useClient();
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(listDashboardShares({ dashboardUri: dashboard.dashboardUri, filter }));
+    const response = await client.query(
+      listDashboardShares({ dashboardUri: dashboard.dashboardUri, filter })
+    );
     if (!response.errors) {
       setItems(response.data.listDashboardShares);
     } else {
@@ -68,29 +70,22 @@ const DashboardShares = (props) => {
             }}
           >
             {items.nodes.length <= 0 ? (
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 No shares found.
               </Typography>
-            )
-              : (
-                <Box>
-                  {items.nodes.map((node) => (
-                    <DashboardShareItem
-                      share={node}
-                      dashboard={dashboard}
-                      reload={fetchItems}
-                    />
-                  ))}
-
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
+            ) : (
+              <Box>
+                {items.nodes.map((node) => (
+                  <DashboardShareItem
+                    share={node}
+                    dashboard={dashboard}
+                    reload={fetchItems}
                   />
-                </Box>
-              )}
+                ))}
+
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

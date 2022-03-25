@@ -15,9 +15,9 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
-import { LoadingButton } from '@material-ui/lab';
-import { GroupAddOutlined } from '@material-ui/icons';
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -29,7 +29,9 @@ const TeamPermissionsEditForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [permissions, setPermissions] = useState(team.tenantPermissions.map((perm) => (perm.name)));
+  const [permissions, setPermissions] = useState(
+    team.tenantPermissions.map((perm) => perm.name)
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissionsError, setPermissionsError] = useState(null);
   const [items, setItems] = useState([]);
@@ -53,7 +55,9 @@ const TeamPermissionsEditForm = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -67,10 +71,12 @@ const TeamPermissionsEditForm = (props) => {
       if (!permissions || permissions.length < 1) {
         setPermissionsError('* At least one permission is required');
       } else {
-        const response = await client.mutate(updateTenantGroupPermissions({
-          groupUri: team.groupUri,
-          permissions
-        }));
+        const response = await client.mutate(
+          updateTenantGroupPermissions({
+            groupUri: team.groupUri,
+            permissions
+          })
+        );
         if (!response.errors) {
           enqueueSnackbar('Team permissions updated', {
             anchorOrigin: {
@@ -102,13 +108,7 @@ const TeamPermissionsEditForm = (props) => {
   }
 
   return (
-    <Dialog
-      maxWidth="lg"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -116,16 +116,11 @@ const TeamPermissionsEditForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Team
-          {' '}
-          {team.groupUri}
+          Team {team.groupUri}
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          A Team is a group from your identity provider that has access to data.all. Administrators can manage permissions for each team.
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          A Team is a group from your identity provider that has access to
+          data.all. Administrators can manage permissions for each team.
         </Typography>
         <Box sx={{ p: 3 }}>
           <CardContent>
@@ -143,52 +138,55 @@ const TeamPermissionsEditForm = (props) => {
               <CardHeader title="Tenant Permissions" />
               <Divider />
               <CardContent sx={{ ml: 2 }}>
-                {items.length > 0 ? items.map((perm) => (
-                  <Box>
-                    <FormGroup>
-                      <FormControlLabel
-                        color="primary"
-                        control={(
-                          <Switch
-                            defaultChecked={team.tenantPermissions.filter((tenantPerm) => tenantPerm.name === perm.name).length === 1}
-                            color="primary"
-                            onChange={(event) => {
-                              const newPerms = permissions;
-                              if (event.target.checked) {
-                                newPerms.push(event.target.value);
-                              } else {
-                                const index = newPerms.indexOf(event.target.value);
-                                if (index > -1) {
-                                  newPerms.splice(index, 1);
-                                }
+                {items.length > 0 ? (
+                  items.map((perm) => (
+                    <Box>
+                      <FormGroup>
+                        <FormControlLabel
+                          color="primary"
+                          control={
+                            <Switch
+                              defaultChecked={
+                                team.tenantPermissions.filter(
+                                  (tenantPerm) => tenantPerm.name === perm.name
+                                ).length === 1
                               }
-                              setPermissions(newPerms);
-                            }}
-                            edge="start"
-                            name={perm.name}
-                            value={perm.name}
-                          />
-                                          )}
-                        label={perm.description}
-                        labelPlacement="end"
-                        value={perm.name}
-                      />
-                    </FormGroup>
-                  </Box>
-                )) : (
-                  <Typography
-                    color="textPrimary"
-                    variant="subtitle2"
-                  >
+                              color="primary"
+                              onChange={(event) => {
+                                const newPerms = permissions;
+                                if (event.target.checked) {
+                                  newPerms.push(event.target.value);
+                                } else {
+                                  const index = newPerms.indexOf(
+                                    event.target.value
+                                  );
+                                  if (index > -1) {
+                                    newPerms.splice(index, 1);
+                                  }
+                                }
+                                setPermissions(newPerms);
+                              }}
+                              edge="start"
+                              name={perm.name}
+                              value={perm.name}
+                            />
+                          }
+                          label={perm.description}
+                          labelPlacement="end"
+                          value={perm.name}
+                        />
+                      </FormGroup>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography color="textPrimary" variant="subtitle2">
                     Failed to load permissions.
                   </Typography>
                 )}
-                {(permissionsError) && (
-                <Box sx={{ mt: 2 }}>
-                  <FormHelperText error>
-                    {permissionsError}
-                  </FormHelperText>
-                </Box>
+                {permissionsError && (
+                  <Box sx={{ mt: 2 }}>
+                    <FormHelperText error>{permissionsError}</FormHelperText>
+                  </Box>
                 )}
               </CardContent>
             </Paper>
@@ -199,7 +197,7 @@ const TeamPermissionsEditForm = (props) => {
                 fullWidth
                 startIcon={<GroupAddOutlined fontSize="small" />}
                 color="primary"
-                pending={isSubmitting}
+                loading={isSubmitting}
                 type="submit"
                 onClick={() => submit()}
                 variant="contained"
@@ -208,7 +206,6 @@ const TeamPermissionsEditForm = (props) => {
               </LoadingButton>
             </CardContent>
           </Box>
-
         </Box>
       </Box>
     </Dialog>

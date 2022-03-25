@@ -8,7 +8,8 @@ import {
   Divider,
   Grid,
   IconButton,
-  InputAdornment, Link,
+  InputAdornment,
+  Link,
   Table,
   TableBody,
   TableCell,
@@ -16,12 +17,12 @@ import {
   TableRow,
   TextField,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { DeleteOutlined, Warning } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { DeleteOutlined, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import { BsFolder } from 'react-icons/all';
+import { BsFolder } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import useClient from '../../hooks/useClient';
@@ -62,7 +63,9 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
 
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(listDatasetStorageLocations(dataset.datasetUri, filter));
+    const response = await client.query(
+      listDatasetStorageLocations(dataset.datasetUri, filter)
+    );
     if (!response.errors) {
       setItems({ ...response.data.getDataset.locations });
     } else {
@@ -85,8 +88,10 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -97,7 +102,9 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
   };
 
   const deleteFolder = async () => {
-    const response = await client.mutate(removeDatasetStorageLocation({ locationUri: folderToDelete.locationUri }));
+    const response = await client.mutate(
+      removeDatasetStorageLocation({ locationUri: folderToDelete.locationUri })
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Folder deleted', {
@@ -107,7 +114,9 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
         },
         variant: 'success'
       });
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -115,7 +124,9 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -124,12 +135,12 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
               <BsFolder style={{ marginRight: '10px' }} />
               Folders
             </Box>
-                    )}
+          }
         />
         <Divider />
         <Box
@@ -141,12 +152,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -172,22 +178,17 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
             </Box>
           </Grid>
           {isAdmin && (
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          >
-            <LoadingButton
-              color="primary"
-              onClick={handleFolderCreateModalOpen}
-              startIcon={<PlusIcon fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-            >
-              Create
-            </LoadingButton>
-          </Grid>
+            <Grid item md={2} sm={6} xs={12}>
+              <LoadingButton
+                color="primary"
+                onClick={handleFolderCreateModalOpen}
+                startIcon={<PlusIcon fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+              >
+                Create
+              </LoadingButton>
+            </Grid>
           )}
         </Box>
         <Scrollbar>
@@ -195,110 +196,103 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    S3 Location
-                  </TableCell>
-                  <TableCell>
-                    Description
-                  </TableCell>
-                  {isAdmin && (
-                  <TableCell>
-                    Actions
-                  </TableCell>
-                  )}
+                  <TableCell>Name</TableCell>
+                  <TableCell>S3 Location</TableCell>
+                  <TableCell>Description</TableCell>
+                  {isAdmin && <TableCell>Actions</TableCell>}
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((folder) => (
-                    <TableRow
-                      hover
-                      key={folder.locationUri}
-                    >
-                      <TableCell>
-                        <Link
-                          color="textPrimary"
-                          component={RouterLink}
-                          to={`/console/datasets/folder/${folder.locationUri}`}
-                          variant="subtitle2"
-                        >
-                          {folder.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {`s3://${dataset.S3BucketName}/${folder.S3Prefix}`}
-                      </TableCell>
-                      <TableCell>
-                        {folder.description}
-                      </TableCell>
-                      <TableCell>
-                        {isAdmin && (
-                        <IconButton onClick={() => { setFolderToDelete(folder); handleDeleteObjectModalOpen(folder); }}>
-                          <DeleteOutlined fontSize="small" />
-                        </IconButton>
-                        )}
-                        <IconButton onClick={() => { navigate(`/console/datasets/folder/${folder.locationUri}`); }}>
-                          <ArrowRightIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No folders found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((folder) => (
+                      <TableRow hover key={folder.locationUri}>
+                        <TableCell>
+                          <Link
+                            underline="hover"
+                            color="textPrimary"
+                            component={RouterLink}
+                            to={`/console/datasets/folder/${folder.locationUri}`}
+                            variant="subtitle2"
+                          >
+                            {folder.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          {`s3://${dataset.S3BucketName}/${folder.S3Prefix}`}
+                        </TableCell>
+                        <TableCell>{folder.description}</TableCell>
+                        <TableCell>
+                          {isAdmin && (
+                            <IconButton
+                              onClick={() => {
+                                setFolderToDelete(folder);
+                                handleDeleteObjectModalOpen(folder);
+                              }}
+                            >
+                              <DeleteOutlined fontSize="small" />
+                            </IconButton>
+                          )}
+                          <IconButton
+                            onClick={() => {
+                              navigate(
+                                `/console/datasets/folder/${folder.locationUri}`
+                              );
+                            }}
+                          >
+                            <ArrowRightIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No folders found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {!loading && items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>
       </Card>
       {isAdmin && (
-      <FolderCreateModal
-        dataset={dataset}
-        onApply={handleFolderCreateModalClose}
-        onClose={handleFolderCreateModalClose}
-        reloadFolders={fetchItems}
-        open={isFolderCreateOpen}
-      />
+        <FolderCreateModal
+          dataset={dataset}
+          onApply={handleFolderCreateModalClose}
+          onClose={handleFolderCreateModalClose}
+          reloadFolders={fetchItems}
+          open={isFolderCreateOpen}
+        />
       )}
       {isAdmin && folderToDelete && (
-      <DeleteObjectModal
-        objectName={folderToDelete.S3Prefix}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={deleteFolder}
-        deleteMessage={(
-          <Card>
-            <CardContent>
-              <Typography
-                gutterBottom
-                variant="body2"
-              >
-                <Warning />
-                {' '}
-                Folder will be deleted from data.all catalog, but will still be available on Amazon S3 bucket.
-              </Typography>
-            </CardContent>
-          </Card>
-              )}
-      />
+        <DeleteObjectModal
+          objectName={folderToDelete.S3Prefix}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={deleteFolder}
+          deleteMessage={
+            <Card>
+              <CardContent>
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Folder will be deleted from data.all catalog, but
+                  will still be available on Amazon S3 bucket.
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
       )}
     </Box>
   );

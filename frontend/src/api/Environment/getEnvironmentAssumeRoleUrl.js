@@ -6,10 +6,16 @@ const getEnvironmentAssumeRoleUrl = ({ environmentUri, groupUri }) => ({
     groupUri
   },
   query: gql`
-            query getEnvironmentAssumeRoleUrl($environmentUri:String!, $groupUri: String){
-                getEnvironmentAssumeRoleUrl(environmentUri:$environmentUri, groupUri:$groupUri)
-            }
-        `
+    query getEnvironmentAssumeRoleUrl(
+      $environmentUri: String!
+      $groupUri: String
+    ) {
+      getEnvironmentAssumeRoleUrl(
+        environmentUri: $environmentUri
+        groupUri: $groupUri
+      )
+    }
+  `
 });
 
 export default getEnvironmentAssumeRoleUrl;

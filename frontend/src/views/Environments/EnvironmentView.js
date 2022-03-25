@@ -15,7 +15,7 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import {
   FolderOpen,
   Info,
@@ -23,10 +23,11 @@ import {
   NotificationsActive,
   SupervisedUserCircleRounded,
   Warning
-} from '@material-ui/icons';
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
-import { FaAws, FaNetworkWired, FaTrash, GoDatabase } from 'react-icons/all';
+import { FaAws, FaNetworkWired, FaTrash } from 'react-icons/fa';
+import { GoDatabase } from 'react-icons/go';
 import useSettings from '../../hooks/useSettings';
 import getEnvironment from '../../api/Environment/getEnvironment';
 import useClient from '../../hooks/useClient';
@@ -48,11 +49,23 @@ import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Teams', value: 'teams', icon: <SupervisedUserCircleRounded fontSize="small" /> },
-  { label: 'Datasets', value: 'datasets', icon: <FolderOpen fontSize="small" /> },
+  {
+    label: 'Teams',
+    value: 'teams',
+    icon: <SupervisedUserCircleRounded fontSize="small" />
+  },
+  {
+    label: 'Datasets',
+    value: 'datasets',
+    icon: <FolderOpen fontSize="small" />
+  },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
   { label: 'Warehouses', value: 'warehouses', icon: <GoDatabase size={20} /> },
-  { label: 'Subscriptions', value: 'subscriptions', icon: <NotificationsActive fontSize="small" /> },
+  {
+    label: 'Subscriptions',
+    value: 'subscriptions',
+    icon: <NotificationsActive fontSize="small" />
+  },
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
@@ -69,7 +82,8 @@ const EnvironmentView = () => {
   const [env, setEnv] = useState(null);
   const [stack, setStack] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] = useState(false);
+  const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
+    useState(false);
   const handleArchiveObjectModalOpen = () => {
     setIsArchiveObjectModalOpen(true);
   };
@@ -82,7 +96,12 @@ const EnvironmentView = () => {
   };
 
   const archiveEnv = async () => {
-    const response = await client.mutate(archiveEnvironment({ environmentUri: env.environmentUri, deleteFromAWS: true }));
+    const response = await client.mutate(
+      archiveEnvironment({
+        environmentUri: env.environmentUri,
+        deleteFromAWS: true
+      })
+    );
     if (!response.errors) {
       handleArchiveObjectModalClose();
       enqueueSnackbar('Environment deleted', {
@@ -99,13 +118,21 @@ const EnvironmentView = () => {
   };
 
   const fetchItem = async () => {
-    const response = await client.query(getEnvironment({ environmentUri: params.uri }));
+    const response = await client.query(
+      getEnvironment({ environmentUri: params.uri })
+    );
     if (!response.errors && response.data.getEnvironment) {
       setEnv(response.data.getEnvironment);
       setStack(response.data.getEnvironment.stack);
-      setIsAdmin(['Admin', 'Owner'].indexOf(response.data.getEnvironment.userRoleInEnvironment) !== -1);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(
+          response.data.getEnvironment.userRoleInEnvironment
+        ) !== -1
+      );
     } else {
-      const error = response.errors ? response.errors[0].message : 'Environment not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Environment not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
@@ -141,32 +168,21 @@ const EnvironmentView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Environment
-                {' '}
-                {env.label}
+              <Typography color="textPrimary" variant="h5">
+                Environment {env.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Organize
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/environments"
@@ -175,6 +191,7 @@ const EnvironmentView = () => {
                   Environments
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/environments/${env.environmentUri}`}
@@ -216,7 +233,7 @@ const EnvironmentView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -224,74 +241,68 @@ const EnvironmentView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-                        && <EnvironmentOverview environment={env} />}
-            {currentTab === 'teams'
-            && <EnvironmentTeams environment={env} />}
-            {currentTab === 'datasets'
-                        && <EnvironmentDatasets environment={env} />}
-            {currentTab === 'networks'
-            && <EnvironmentNetworks environment={env} />}
-            {currentTab === 'warehouses'
-                        && <EnvironmentWarehouses environment={env} />}
-            {currentTab === 'subscriptions'
-                        && (
-                        <EnvironmentSubscriptions
-                          environment={env}
-                          fetchItem={fetchItem}
-                        />
-                        )}
-            {isAdmin && currentTab === 'tags'
-                        && (
-                        <KeyValueTagList
-                          targetUri={env.environmentUri}
-                          targetType="environment"
-                        />
-                        )}
-            {isAdmin && currentTab === 'stack'
-                        && (
-                        <Stack
-                          environmentUri={env.environmentUri}
-                          stackUri={env.stack.stackUri}
-                          targetUri={env.environmentUri}
-                          targetType="environment"
-                        />
-                        )}
+            {currentTab === 'overview' && (
+              <EnvironmentOverview environment={env} />
+            )}
+            {currentTab === 'teams' && <EnvironmentTeams environment={env} />}
+            {currentTab === 'datasets' && (
+              <EnvironmentDatasets environment={env} />
+            )}
+            {currentTab === 'networks' && (
+              <EnvironmentNetworks environment={env} />
+            )}
+            {currentTab === 'warehouses' && (
+              <EnvironmentWarehouses environment={env} />
+            )}
+            {currentTab === 'subscriptions' && (
+              <EnvironmentSubscriptions
+                environment={env}
+                fetchItem={fetchItem}
+              />
+            )}
+            {isAdmin && currentTab === 'tags' && (
+              <KeyValueTagList
+                targetUri={env.environmentUri}
+                targetType="environment"
+              />
+            )}
+            {isAdmin && currentTab === 'stack' && (
+              <Stack
+                environmentUri={env.environmentUri}
+                stackUri={env.stack.stackUri}
+                targetUri={env.environmentUri}
+                targetType="environment"
+              />
+            )}
           </Box>
         </Container>
       </Box>
       {isArchiveObjectModalOpen && (
-      <DeleteObjectWithFrictionModal
-        objectName={env.label}
-        onApply={handleArchiveObjectModalClose}
-        onClose={handleArchiveObjectModalClose}
-        open={isArchiveObjectModalOpen}
-        deleteFunction={archiveEnv}
-        isAWSResource
-        deleteMessage={(
-          <Card
-            variant="outlined"
-            sx={{ mb: 2 }}
-          >
-            <CardContent>
-              <Typography
-                variant="subtitle2"
-                color="error"
-              >
-                <Warning sx={{ mr: 1 }} />
-                {' '}
-                Remove all environment related objects before proceeding with the deletion !
-              </Typography>
-            </CardContent>
-          </Card>
-      )}
-      />
+        <DeleteObjectWithFrictionModal
+          objectName={env.label}
+          onApply={handleArchiveObjectModalClose}
+          onClose={handleArchiveObjectModalClose}
+          open={isArchiveObjectModalOpen}
+          deleteFunction={archiveEnv}
+          isAWSResource
+          deleteMessage={
+            <Card variant="outlined" sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="error">
+                  <Warning sx={{ mr: 1 }} /> Remove all environment related
+                  objects before proceeding with the deletion !
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
       )}
     </>
   );

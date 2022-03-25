@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -15,12 +15,13 @@ import {
   MenuList,
   Tooltip,
   Typography
-} from '@material-ui/core';
-import { PlayArrowOutlined, RefreshRounded } from '@material-ui/icons';
-import { CgHashtag, VscSymbolString } from 'react-icons/all';
+} from '@mui/material';
+import { PlayArrowOutlined, RefreshRounded } from '@mui/icons-material';
+import { CgHashtag } from 'react-icons/cg';
+import { VscSymbolString } from 'react-icons/vsc';
 import Chart from 'react-apexcharts';
 import { useTheme } from '@emotion/react';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import * as PropTypes from 'prop-types';
 import useClient from '../../hooks/useClient';
 import getDatasetTableProfilingRun from '../../api/DatasetTable/getDatasetTableProfilingRun';
@@ -127,7 +128,7 @@ const TableMetrics = ({ table, isAdmin }) => {
     series: [
       {
         name: 'Histogram',
-        data: column?.Metadata?.Histogram.map((r) => (r.count))
+        data: column?.Metadata?.Histogram.map((r) => r.count)
       }
     ]
   };
@@ -156,12 +157,19 @@ const TableMetrics = ({ table, isAdmin }) => {
     return color;
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setReady(false);
-    const response = await client.query(getDatasetTableProfilingRun(table.tableUri));
+    const response = await client.query(
+      getDatasetTableProfilingRun(table.tableUri)
+    );
     if (!response.errors) {
-      if (response.data.getDatasetTableProfilingRun && response.data.getDatasetTableProfilingRun.results) {
-        const res = JSON.parse(response.data.getDatasetTableProfilingRun.results);
+      if (
+        response.data.getDatasetTableProfilingRun &&
+        response.data.getDatasetTableProfilingRun.results
+      ) {
+        const res = JSON.parse(
+          response.data.getDatasetTableProfilingRun.results
+        );
         setMetrics(res);
         setColumn(res?.columns[0]);
         setActiveItem(res?.columns[0]?.Name);
@@ -170,25 +178,34 @@ const TableMetrics = ({ table, isAdmin }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setReady(true);
-  };
+  }, [client, dispatch, table.tableUri]);
 
-  const listProfilingRuns = async () => {
-    const response = await client.query(listDatasetTableProfilingRuns(table.tableUri));
+  const listProfilingRuns = useCallback(async () => {
+    const response = await client.query(
+      listDatasetTableProfilingRuns(table.tableUri)
+    );
     if (!response.errors) {
-      if (response.data.listDatasetTableProfilingRuns && response.data.listDatasetTableProfilingRuns.nodes.length > 0) {
-        setProfilingStatus(response.data.listDatasetTableProfilingRuns.nodes[0].status);
+      if (
+        response.data.listDatasetTableProfilingRuns &&
+        response.data.listDatasetTableProfilingRuns.nodes.length > 0
+      ) {
+        setProfilingStatus(
+          response.data.listDatasetTableProfilingRuns.nodes[0].status
+        );
       }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch, table.tableUri]);
 
   const startProfilingRun = async () => {
     try {
       setProfiling(true);
-      const response = await client.mutate(startDatasetProfilingRun({
-        input: { datasetUri: table.datasetUri, tableUri: table.tableUri }
-      }));
+      const response = await client.mutate(
+        startDatasetProfilingRun({
+          input: { datasetUri: table.datasetUri, tableUri: table.tableUri }
+        })
+      );
       if (!response.errors) {
         await listProfilingRuns();
       } else {
@@ -203,10 +220,12 @@ const TableMetrics = ({ table, isAdmin }) => {
 
   useEffect(() => {
     if (client) {
-      listProfilingRuns().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      listProfilingRuns().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchData().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client, table]);
+  }, [client, listProfilingRuns, fetchData, dispatch]);
   if (!ready) {
     return (
       <div
@@ -229,46 +248,32 @@ const TableMetrics = ({ table, isAdmin }) => {
   };
   return (
     <Box>
-      <Grid
-        container
-        spacing={6}
-        wrap="wrap"
-      >
-        <Grid
-          item
-          md={9}
-          sm={6}
-          xs={12}
-        />
+      <Grid container spacing={6} wrap="wrap">
+        <Grid item md={9} sm={6} xs={12} />
         {isAdmin && (
-        <Grid
-          item
-          md={3}
-          sm={6}
-          xs={12}
-        >
-          <Box sx={{ m: -1, mb: 2, ml: 10 }}>
-            <Button
-              color="primary"
-              startIcon={<RefreshRounded fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={fetchData}
-            >
-              Refresh
-            </Button>
-            <LoadingButton
-              pending={profiling}
-              color="primary"
-              onClick={startProfilingRun}
-              startIcon={<PlayArrowOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="contained"
-            >
-              Profile
-            </LoadingButton>
-          </Box>
-        </Grid>
+          <Grid item md={3} sm={6} xs={12}>
+            <Box sx={{ m: -1, mb: 2, ml: 10 }}>
+              <Button
+                color="primary"
+                startIcon={<RefreshRounded fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={fetchData}
+              >
+                Refresh
+              </Button>
+              <LoadingButton
+                loading={profiling}
+                color="primary"
+                onClick={startProfilingRun}
+                startIcon={<PlayArrowOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="contained"
+              >
+                Profile
+              </LoadingButton>
+            </Box>
+          </Grid>
         )}
       </Grid>
       <Card>
@@ -292,16 +297,10 @@ const TableMetrics = ({ table, isAdmin }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 Rows
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 {metrics?.table_nb_rows || '-'}
               </Typography>
             </div>
@@ -325,16 +324,10 @@ const TableMetrics = ({ table, isAdmin }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 Columns
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 {metrics?.columns.length || '-'}
               </Typography>
             </div>
@@ -358,16 +351,10 @@ const TableMetrics = ({ table, isAdmin }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 Data Types
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 {metrics?.dataTypes.length || '-'}
               </Typography>
             </div>
@@ -384,26 +371,19 @@ const TableMetrics = ({ table, isAdmin }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 Last job run
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                <Label color={statusColor(profilingStatus)}>{profilingStatus}</Label>
+              <Typography color="textPrimary" variant="h5">
+                <Label color={statusColor(profilingStatus)}>
+                  {profilingStatus}
+                </Label>
               </Typography>
             </div>
           </Grid>
         </Grid>
       </Card>
-      <Grid
-        container
-        spacing={2}
-      >
+      <Grid container spacing={2}>
         <Grid
           item
           md={3}
@@ -412,194 +392,178 @@ const TableMetrics = ({ table, isAdmin }) => {
             mt: 2
           }}
         >
-
           {metrics && metrics.columns && (
-          <Card>
-            <Scrollbar options={{ suppressScrollX: false }}>
-              <MenuList>
-                {metrics.columns.map((col, index) => (
-                  <Box>
-                    <MenuItem
-                      key={col.columnUri}
-                      onClick={() => { handleItemClick(col.Name, index); }}
-                      selected={activeItem === index}
-                    >
-                      {col.Type !== 'String' ? (
-                        <IconButton>
-                          <CgHashtag />
-                        </IconButton>
-                      ) : <IconButton><VscSymbolString /></IconButton>}
-                      <Typography
-                        sx={{
-                          width: '200px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          WebkitBoxOrient: 'vertical',
-                          WebkitLineClamp: 2
+            <Card>
+              <Scrollbar options={{ suppressScrollX: false }}>
+                <MenuList>
+                  {metrics.columns.map((col, index) => (
+                    <Box>
+                      <MenuItem
+                        key={col.columnUri}
+                        onClick={() => {
+                          handleItemClick(col.Name, index);
                         }}
+                        selected={activeItem === index}
                       >
-                        <Tooltip title={col.Name}><span>{col.Name.substring(0, 22)}</span></Tooltip>
-                      </Typography>
-
-                    </MenuItem>
-
-                  </Box>
-
-                ))}
-              </MenuList>
-            </Scrollbar>
-          </Card>
+                        {col.Type !== 'String' ? (
+                          <IconButton>
+                            <CgHashtag />
+                          </IconButton>
+                        ) : (
+                          <IconButton>
+                            <VscSymbolString />
+                          </IconButton>
+                        )}
+                        <Typography
+                          sx={{
+                            width: '200px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: 2
+                          }}
+                        >
+                          <Tooltip title={col.Name}>
+                            <span>{col.Name.substring(0, 22)}</span>
+                          </Tooltip>
+                        </Typography>
+                      </MenuItem>
+                    </Box>
+                  ))}
+                </MenuList>
+              </Scrollbar>
+            </Card>
           )}
         </Grid>
         {column && (
-        <Grid
-          item
-          md={9}
-          xs={12}
-          sx={{
-            mt: 2
-          }}
-        >
-
-          <Box
+          <Grid
+            item
+            md={9}
+            xs={12}
             sx={{
-              backgroundColor: 'background.default'
+              mt: 2
             }}
           >
-            <Card sx={{ mb: 2 }}>
-              <CardHeader
-                title={(
-                  <Typography
-                    color="textPrimary"
-                    variant="h5"
-                  >
-                    {column.Name}
-                  </Typography>
-)}
-                subheader={column.Type}
-              />
-            </Card>
-            <Card sx={{ mb: 2 }}>
-              <CardHeader title="Data Quality" />
-              <Divider />
-              <Box
-                sx={{ p: 2 }}
-                alignItems="center"
-              >
-                <LinearProgress
-                  sx={{ height: 10,
-                    borderRadius: 5 }}
-                  variant="determinate"
-                  value={Math.trunc(column?.Metadata?.Completeness * 100)}
+            <Box
+              sx={{
+                backgroundColor: 'background.default'
+              }}
+            >
+              <Card sx={{ mb: 2 }}>
+                <CardHeader
+                  title={
+                    <Typography color="textPrimary" variant="h5">
+                      {column.Name}
+                    </Typography>
+                  }
+                  subheader={column.Type}
                 />
-              </Box>
-              <Grid
-                container
-                spacing={2}
-              >
-                <Grid
-                  item
-                  md={9}
-                  xs={12}
-                  sx={{
-                    mt: 1
-                  }}
-                >
-
-                  <Box sx={{
-                    display: 'flex',
-                    ml: 3,
-                    mb: 2
-                  }}
+              </Card>
+              <Card sx={{ mb: 2 }}>
+                <CardHeader title="Data Quality" />
+                <Divider />
+                <Box sx={{ p: 2 }} alignItems="center">
+                  <LinearProgress
+                    sx={{ height: 10, borderRadius: 5 }}
+                    variant="determinate"
+                    value={Math.trunc(column?.Metadata?.Completeness * 100)}
+                  />
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid
+                    item
+                    md={9}
+                    xs={12}
+                    sx={{
+                      mt: 1
+                    }}
                   >
-                    <Chip
-                      color="primary"
-                      label={buildPercentValue(column?.Metadata?.Completeness)}
-                      size="small"
-                      sx={{ mr: 1 }}
-                    />
-                    <Typography
-                      color="textSecondary"
-                      variant="subtitle2"
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        ml: 3,
+                        mb: 2
+                      }}
                     >
-                      VALID VALUES
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid
-                  item
-                  md={3}
-                  xs={12}
-                  sx={{
-                    mt: 1
-                  }}
-                >
-                  <Box sx={{
-                    display: 'flex',
-                    ml: 3,
-                    mb: 2
-                  }}
+                      <Chip
+                        color="primary"
+                        label={buildPercentValue(
+                          column?.Metadata?.Completeness
+                        )}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      />
+                      <Typography color="textSecondary" variant="subtitle2">
+                        VALID VALUES
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid
+                    item
+                    md={3}
+                    xs={12}
+                    sx={{
+                      mt: 1
+                    }}
                   >
-                    <Chip
-                      color="primary"
-                      label={buildPercentValue(1 - column?.Metadata?.Completeness)}
-                      size="small"
-                      sx={{ mr: 1 }}
-                    />
-                    <Typography
-                      color="textSecondary"
-                      variant="subtitle2"
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        ml: 3,
+                        mb: 2
+                      }}
                     >
-                      MISSING VALUES
-                    </Typography>
-                  </Box>
+                      <Chip
+                        color="primary"
+                        label={buildPercentValue(
+                          1 - column?.Metadata?.Completeness
+                        )}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      />
+                      <Typography color="textSecondary" variant="subtitle2">
+                        MISSING VALUES
+                      </Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
-              </Grid>
-
-            </Card>
-            {column && column.Type !== 'String' && (
-            <Card>
-
-              <CardHeader title="Value Distribution" />
-              <Divider />
-              <Chart
-                height="350"
-                type="bar"
-                options={valueDistributionChart.options}
-                series={valueDistributionChart.series}
-              />
-
-              <CardContent />
-            </Card>
-            )}
-
-            <Card sx={{ mt: 2 }}>
-
-              <CardHeader title="Histogram" />
-              <Divider />
-              <CardContent>
-                {column.Metadata?.Histogram.length > 0 ? (
+              </Card>
+              {column && column.Type !== 'String' && (
+                <Card>
+                  <CardHeader title="Value Distribution" />
+                  <Divider />
                   <Chart
                     height="350"
                     type="bar"
-                    options={histogramChart.options}
-                    series={histogramChart.series}
+                    options={valueDistributionChart.options}
+                    series={valueDistributionChart.series}
                   />
-                ) : (
-                  <Typography
-                    color="textPrimary"
-                    variant="subtitle2"
-                  >
-                    No histogram data available.
-                  </Typography>
-                )}
 
-              </CardContent>
-            </Card>
-          </Box>
+                  <CardContent />
+                </Card>
+              )}
 
-        </Grid>
+              <Card sx={{ mt: 2 }}>
+                <CardHeader title="Histogram" />
+                <Divider />
+                <CardContent>
+                  {column.Metadata?.Histogram.length > 0 ? (
+                    <Chart
+                      height="350"
+                      type="bar"
+                      options={histogramChart.options}
+                      series={histogramChart.series}
+                    />
+                  ) : (
+                    <Typography color="textPrimary" variant="subtitle2">
+                      No histogram data available.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
+          </Grid>
         )}
       </Grid>
     </Box>

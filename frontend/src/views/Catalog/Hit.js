@@ -2,10 +2,20 @@ import { Link as RouterLink } from 'react-router-dom';
 import * as BsIcons from 'react-icons/bs';
 import * as FiIcons from 'react-icons/fi';
 import * as ReactIf from 'react-if';
-import { Box, Card, CircularProgress, Divider, Grid, IconButton, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Card,
+  CircularProgress,
+  Divider,
+  Grid,
+  IconButton,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
-import { LockOpen, ThumbUp } from '@material-ui/icons';
+import { LockOpen, ThumbUp } from '@mui/icons-material';
 import React, { useState } from 'react';
 import { MdShowChart } from 'react-icons/md';
 import IconAvatar from '../../components/IconAvatar';
@@ -39,7 +49,8 @@ const Hit = ({ hit }) => {
   const classes = useCardStyle();
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
-  const [isRequestDashboardAccessOpen, setIsRequestDashboardAccessOpen] = useState(false);
+  const [isRequestDashboardAccessOpen, setIsRequestDashboardAccessOpen] =
+    useState(false);
   const [isOpeningDashboardModal, setIsOpeningDashboardModal] = useState(false);
   const handleRequestAccessModalOpen = () => {
     setIsOpeningModal(true);
@@ -61,10 +72,7 @@ const Hit = ({ hit }) => {
   };
 
   return (
-    <Card
-      sx={{ mb: 2 }}
-      className={classes.card}
-    >
+    <Card sx={{ mb: 2 }} className={classes.card}>
       <Box sx={{ p: 2 }}>
         <Box
           sx={{
@@ -75,61 +83,55 @@ const Hit = ({ hit }) => {
           <HitICon hit={hit} />
           <Box sx={{ ml: 2 }}>
             {hit.resourceKind === 'dataset' && (
-            <Link
-              color="textPrimary"
-              component={RouterLink}
-                  to={`/console/datasets/${hit._id}/`} /*eslint-disable-line*/
-              variant="h6"
-            >
-              {hit.label}
-            </Link>
+              <Link
+                underline="hover"
+                color="textPrimary"
+                component={RouterLink}
+                to={`/console/datasets/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
+              >
+                {hit.label}
+              </Link>
             )}
             {hit.resourceKind === 'table' && (
-            <Link
-              color="textPrimary"
-              component={RouterLink}
-                  to={`/console/datasets/table/${hit._id}/`} /*eslint-disable-line*/
-              variant="h6"
-            >
-              {hit.label}
-            </Link>
+              <Link
+                underline="hover"
+                color="textPrimary"
+                component={RouterLink}
+                to={`/console/datasets/table/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
+              >
+                {hit.label}
+              </Link>
             )}
             {hit.resourceKind === 'folder' && (
-            <Link
-              color="textPrimary"
-              component={RouterLink}
-                  to={`/console/datasets/folder/${hit._id}/`} /*eslint-disable-line*/
-              variant="h6"
-            >
-              {hit.label}
-            </Link>
+              <Link
+                underline="hover"
+                color="textPrimary"
+                component={RouterLink}
+                to={`/console/datasets/folder/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
+              >
+                {hit.label}
+              </Link>
             )}
             {hit.resourceKind === 'dashboard' && (
-            <Link
-              color="textPrimary"
-              component={RouterLink}
-                  to={`/console/dashboards/${hit._id}/`} /*eslint-disable-line*/
-              variant="h6"
-            >
-              {hit.label}
-            </Link>
-            )}
-            <Typography
-              color="textSecondary"
-              variant="body2"
-            >
-              by
-              {' '}
               <Link
+                underline="hover"
                 color="textPrimary"
-                variant="subtitle2"
+                component={RouterLink}
+                to={`/console/dashboards/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
               >
-                {hit.owner}
+                {hit.label}
               </Link>
-              {' '}
-              | created
-              {' '}
-              {dayjs(hit.created).fromNow()}
+            )}
+            <Typography color="textSecondary" variant="body2">
+              by{' '}
+              <Link underline="hover" color="textPrimary" variant="subtitle2">
+                {hit.owner}
+              </Link>{' '}
+              | created {dayjs(hit.created).fromNow()}
             </Typography>
           </Box>
         </Box>
@@ -160,28 +162,13 @@ const Hit = ({ hit }) => {
           py: 0.5
         }}
       >
-        <Grid
-          container
-        >
-          <Grid
-            item
-            md={4}
-            xs={12}
-          >
-            <Typography
-              color="textSecondary"
-              variant="body2"
-            >
-              <FaIcons.FaUsersCog />
-              {' '}
-              Team
+        <Grid container>
+          <Grid item md={4} xs={12}>
+            <Typography color="textSecondary" variant="body2">
+              <FaIcons.FaUsersCog /> Team
             </Typography>
           </Grid>
-          <Grid
-            item
-            md={8}
-            xs={12}
-          >
+          <Grid item md={8} xs={12}>
             <Typography
               color="textPrimary"
               variant="subtitle2"
@@ -194,11 +181,12 @@ const Hit = ({ hit }) => {
                 WebkitLineClamp: 2
               }}
             >
-              <Tooltip title={hit.admins || '-'}><span>{hit.admins || '-'}</span></Tooltip>
+              <Tooltip title={hit.admins || '-'}>
+                <span>{hit.admins || '-'}</span>
+              </Tooltip>
             </Typography>
           </Grid>
         </Grid>
-
       </Box>
       <Box
         sx={{
@@ -206,28 +194,14 @@ const Hit = ({ hit }) => {
           py: 0.5
         }}
       >
-        <Grid
-          container
-        >
-          <Grid
-            item
-            md={4}
-            xs={12}
-          >
-            <Typography
-              color="textSecondary"
-              variant="body2"
-            >
+        <Grid container>
+          <Grid item md={4} xs={12}>
+            <Typography color="textSecondary" variant="body2">
               <FaIcons.FaCloud />
               {' Environment'}
-
             </Typography>
           </Grid>
-          <Grid
-            item
-            md={8}
-            xs={12}
-          >
+          <Grid item md={8} xs={12}>
             <Typography
               color="textPrimary"
               variant="subtitle2"
@@ -241,7 +215,9 @@ const Hit = ({ hit }) => {
                 ml: 0.25
               }}
             >
-              <Tooltip title={hit.environmentName || '-'}><span>{hit.environmentName || '-'}</span></Tooltip>
+              <Tooltip title={hit.environmentName || '-'}>
+                <span>{hit.environmentName || '-'}</span>
+              </Tooltip>
             </Typography>
           </Grid>
         </Grid>
@@ -253,32 +229,14 @@ const Hit = ({ hit }) => {
           mb: 2
         }}
       >
-        <Grid
-          container
-        >
-          <Grid
-            item
-            md={4}
-            xs={12}
-          >
-            <Typography
-              color="textSecondary"
-              variant="body2"
-            >
-              <FaIcons.FaGlobe />
-              {' '}
-              Region
+        <Grid container>
+          <Grid item md={4} xs={12}>
+            <Typography color="textSecondary" variant="body2">
+              <FaIcons.FaGlobe /> Region
             </Typography>
           </Grid>
-          <Grid
-            item
-            md={8}
-            xs={12}
-          >
-            <Typography
-              color="textPrimary"
-              variant="subtitle2"
-            >
+          <Grid item md={8} xs={12}>
+            <Typography color="textPrimary" variant="subtitle2">
               {hit.region}
             </Typography>
           </Grid>
@@ -295,12 +253,18 @@ const Hit = ({ hit }) => {
         }}
       >
         <Box>
-          {isOpeningModal || isOpeningDashboardModal ? <CircularProgress size={20} /> : (
+          {isOpeningModal || isOpeningDashboardModal ? (
+            <CircularProgress size={20} />
+          ) : (
             <Tooltip title="Request Access">
               <IconButton
                 color="primary"
                 edge="end"
-                onClick={() => (hit.resourceKind === 'dashboard' ? handleRequestDashboardAccessModalOpen() : handleRequestAccessModalOpen())}
+                onClick={() =>
+                  hit.resourceKind === 'dashboard'
+                    ? handleRequestDashboardAccessModalOpen()
+                    : handleRequestAccessModalOpen()
+                }
               >
                 <LockOpen fontSize="small" />
               </IconButton>
@@ -322,29 +286,26 @@ const Hit = ({ hit }) => {
           />
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        {(hit.resourceKind === 'dashboard' || hit.resourceKind === 'dataset') && hit.upvotes !== undefined && hit.upvotes >= 0 && (
-        <Tooltip title="UpVotes">
-          <Box sx={{
-            alignItems: 'center',
-            display: 'flex'
-          }}
-          >
-            <IconButton
-              color="primary"
-              disabled
-            >
-              <ThumbUp fontSize="small" />
-            </IconButton>
+        {(hit.resourceKind === 'dashboard' || hit.resourceKind === 'dataset') &&
+          hit.upvotes !== undefined &&
+          hit.upvotes >= 0 && (
+            <Tooltip title="UpVotes">
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex'
+                }}
+              >
+                <IconButton color="primary" disabled>
+                  <ThumbUp fontSize="small" />
+                </IconButton>
 
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
-              {hit.upvotes}
-            </Typography>
-          </Box>
-        </Tooltip>
-        )}
+                <Typography color="textSecondary" variant="subtitle2">
+                  {hit.upvotes}
+                </Typography>
+              </Box>
+            </Tooltip>
+          )}
       </Box>
     </Card>
   );

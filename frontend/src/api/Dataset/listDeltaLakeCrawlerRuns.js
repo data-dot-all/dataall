@@ -5,19 +5,19 @@ const listDeltaLakeCrawlerRuns = ({ datasetUri }) => ({
     datasetUri
   },
   query: gql`
-            query listDeltaLakeCrawlerRuns($datasetUri:String!){
-                listDeltaLakeCrawlerRuns(datasetUri:$datasetUri){
-                        datasetUri
-                        GlueJobName
-                        GlueJobRunId
-                        AwsAccountId
-                        GlueTriggerName
-                        created
-                        status
-                        owner
-                    }
-                }
-        `
+    query listDeltaLakeCrawlerRuns($datasetUri: String!) {
+      listDeltaLakeCrawlerRuns(datasetUri: $datasetUri) {
+        datasetUri
+        GlueJobName
+        GlueJobRunId
+        AwsAccountId
+        GlueTriggerName
+        created
+        status
+        owner
+      }
+    }
+  `
 });
 
 export default listDeltaLakeCrawlerRuns;

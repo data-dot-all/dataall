@@ -13,8 +13,8 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -39,7 +39,12 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
 
   const fetchItems = async () => {
     setLoading(true);
-    const response = await client.query(listDatasetsCreatedInEnvironment({ filter, environmentUri: environment.environmentUri }));
+    const response = await client.query(
+      listDatasetsCreatedInEnvironment({
+        filter,
+        environmentUri: environment.environmentUri
+      })
+    );
     if (!response.errors) {
       setItems({ ...response.data.listDatasetsCreatedInEnvironment });
     }
@@ -48,7 +53,9 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, filter.page]);
 
@@ -58,7 +65,7 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -114,67 +121,56 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  AWS Account
-                </TableCell>
-                <TableCell>
-                  Region
-                </TableCell>
-                <TableCell>
-                  Status
-                </TableCell>
-                <TableCell>
-                  Actions
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>AWS Account</TableCell>
+                <TableCell>Region</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
-            {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+            {loading ? (
+              <CircularProgress sx={{ mt: 1 }} />
+            ) : (
               <TableBody>
-                {items.nodes.length > 0 ? items.nodes.map((dataset) => (
-                  <TableRow
-                    hover
-                    key={dataset.environmentUri}
-                  >
-                    <TableCell>
-                      {dataset.label}
-                    </TableCell>
-                    <TableCell>
-                      {dataset.AwsAccountId}
-                    </TableCell>
-                    <TableCell>
-                      {dataset.region}
-                    </TableCell>
-                    <TableCell>
-                      <StackStatus status={dataset.stack ? dataset.stack.status : 'NOT_FOUND'} />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => { navigate(`/console/datasets/${dataset.datasetUri}`); }}>
-                        <ArrowRightIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow
-                    hover
-                  >
-                    <TableCell>
-                      No datasets found
-                    </TableCell>
+                {items.nodes.length > 0 ? (
+                  items.nodes.map((dataset) => (
+                    <TableRow hover key={dataset.environmentUri}>
+                      <TableCell>{dataset.label}</TableCell>
+                      <TableCell>{dataset.AwsAccountId}</TableCell>
+                      <TableCell>{dataset.region}</TableCell>
+                      <TableCell>
+                        <StackStatus
+                          status={
+                            dataset.stack ? dataset.stack.status : 'NOT_FOUND'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            navigate(`/console/datasets/${dataset.datasetUri}`);
+                          }}
+                        >
+                          <ArrowRightIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow hover>
+                    <TableCell>No datasets found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             )}
           </Table>
           {!loading && items.nodes.length > 0 && (
-          <Pager
-            mgTop={2}
-            mgBottom={2}
-            items={items}
-            onChange={handlePageChange}
-          />
+            <Pager
+              mgTop={2}
+              mgBottom={2}
+              items={items}
+              onChange={handlePageChange}
+            />
           )}
         </Box>
       </Scrollbar>

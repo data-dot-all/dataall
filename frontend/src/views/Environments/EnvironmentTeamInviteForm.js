@@ -16,12 +16,12 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
-import Autocomplete from '@material-ui/lab/Autocomplete';
+} from '@mui/material';
+import Autocomplete from '@mui/lab/Autocomplete';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
-import { GroupAddOutlined } from '@material-ui/icons';
+import { LoadingButton } from '@mui/lab';
+import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -44,9 +44,19 @@ const EnvironmentTeamInviteForm = (props) => {
   const fetchGroups = async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listEnvironmentNotInvitedGroups({ environmentUri: environment.environmentUri }));
+      const response = await client.query(
+        listEnvironmentNotInvitedGroups({
+          environmentUri: environment.environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentNotInvitedGroups.nodes.map((g) => ({ ...g, value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentNotInvitedGroups.nodes.map((g) => ({
+            ...g,
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -60,9 +70,17 @@ const EnvironmentTeamInviteForm = (props) => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const response = await client.query(listEnvironmentGroupInvitationPermissions({ environmentUri: environment.environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroupInvitationPermissions({
+          environmentUri: environment.environmentUri
+        })
+      );
       if (!response.errors) {
-        setPermissions(response.data.listEnvironmentGroupInvitationPermissions.map((perm) => (perm.name)));
+        setPermissions(
+          response.data.listEnvironmentGroupInvitationPermissions.map(
+            (perm) => perm.name
+          )
+        );
         setItems(response.data.listEnvironmentGroupInvitationPermissions);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -76,8 +94,12 @@ const EnvironmentTeamInviteForm = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchGroups().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchGroups().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -86,12 +108,14 @@ const EnvironmentTeamInviteForm = (props) => {
       if (!permissions || permissions.length < 1) {
         setPermissionsError('* At least one permission is required');
       } else {
-        const response = await client.mutate(inviteGroupOnEnvironment({
-          groupUri: values.groupUri,
-          environmentUri: environment.environmentUri,
-          environmentIAMRoleName: values.environmentIAMRoleName,
-          permissions
-        }));
+        const response = await client.mutate(
+          inviteGroupOnEnvironment({
+            groupUri: values.groupUri,
+            environmentUri: environment.environmentUri,
+            environmentIAMRoleName: values.environmentIAMRoleName,
+            permissions
+          })
+        );
         if (!response.errors) {
           setStatus({ success: true });
           setSubmitting(false);
@@ -130,14 +154,7 @@ const EnvironmentTeamInviteForm = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="lg"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -145,25 +162,18 @@ const EnvironmentTeamInviteForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Invite a team to environment
-          {' '}
-          {environment.label}
+          Invite a team to environment {environment.label}
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          A Team is a group from your identity provider that you are a member of. All members of that group will be able to access your environment.
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          A Team is a group from your identity provider that you are a member
+          of. All members of that group will be able to access your environment.
         </Typography>
         {loadingGroups ? (
           <Card sx={{ mt: 2 }}>
             <CardContent>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
-                All your teams (IDP groups) are already invited to this environment.
+              <Typography color="textPrimary" variant="subtitle2">
+                All your teams (IDP groups) are already invited to this
+                environment.
               </Typography>
             </CardContent>
           </Card>
@@ -173,12 +183,15 @@ const EnvironmentTeamInviteForm = (props) => {
               initialValues={{
                 groupUri: ''
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  groupUri: Yup.string().max(255).required('*Team name is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                groupUri: Yup.string()
+                  .max(255)
+                  .required('*Team name is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -191,9 +204,7 @@ const EnvironmentTeamInviteForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                >
+                <form onSubmit={handleSubmit}>
                   <CardContent>
                     <Autocomplete
                       id="groupUri"
@@ -218,9 +229,15 @@ const EnvironmentTeamInviteForm = (props) => {
                   </CardContent>
                   <CardContent>
                     <TextField
-                      error={Boolean(touched.environmentIAMRoleName && errors.environmentIAMRoleName)}
+                      error={Boolean(
+                        touched.environmentIAMRoleName &&
+                          errors.environmentIAMRoleName
+                      )}
                       fullWidth
-                      helperText={touched.environmentIAMRoleName && errors.environmentIAMRoleName}
+                      helperText={
+                        touched.environmentIAMRoleName &&
+                        errors.environmentIAMRoleName
+                      }
                       label="IAM Role Name"
                       placeholder="Bring your own IAM role (Optional)"
                       name="environmentIAMRoleName"
@@ -234,53 +251,57 @@ const EnvironmentTeamInviteForm = (props) => {
                       <CardHeader title="Environment Permissions" />
                       <Divider />
                       <CardContent sx={{ ml: 2 }}>
-                        {items.length > 0 ? items.map((perm) => (
-                          <Box>
-                            <FormGroup>
-                              <FormControlLabel
-                                color="primary"
-                                control={(
-                                  <Switch
-                                    defaultChecked
-                                    color="primary"
-                                    onChange={(event) => {
-                                      const newPerms = permissions;
-                                      if (event.target.checked) {
-                                        newPerms.push(event.target.value);
-                                      } else {
-                                        const index = newPerms.indexOf(event.target.value);
-                                        if (index > -1) {
-                                          newPerms.splice(index, 1);
+                        {items.length > 0 ? (
+                          items.map((perm) => (
+                            <Box>
+                              <FormGroup>
+                                <FormControlLabel
+                                  color="primary"
+                                  control={
+                                    <Switch
+                                      defaultChecked
+                                      color="primary"
+                                      onChange={(event) => {
+                                        const newPerms = permissions;
+                                        if (event.target.checked) {
+                                          newPerms.push(event.target.value);
+                                        } else {
+                                          const index = newPerms.indexOf(
+                                            event.target.value
+                                          );
+                                          if (index > -1) {
+                                            newPerms.splice(index, 1);
+                                          }
                                         }
-                                      }
-                                      setPermissions(newPerms);
-                                      setFieldValue('permissions', permissions);
-                                    }}
-                                    edge="start"
-                                    name={perm.name}
-                                    value={perm.name}
-                                  />
-                                        )}
-                                label={perm.description}
-                                labelPlacement="end"
-                                value={perm.name}
-                              />
-                            </FormGroup>
-                          </Box>
-                        )) : (
-                          <Typography
-                            color="textPrimary"
-                            variant="subtitle2"
-                          >
+                                        setPermissions(newPerms);
+                                        setFieldValue(
+                                          'permissions',
+                                          permissions
+                                        );
+                                      }}
+                                      edge="start"
+                                      name={perm.name}
+                                      value={perm.name}
+                                    />
+                                  }
+                                  label={perm.description}
+                                  labelPlacement="end"
+                                  value={perm.name}
+                                />
+                              </FormGroup>
+                            </Box>
+                          ))
+                        ) : (
+                          <Typography color="textPrimary" variant="subtitle2">
                             Failed to load permissions.
                           </Typography>
                         )}
-                        {(permissionsError) && (
-                        <Box sx={{ mt: 2 }}>
-                          <FormHelperText error>
-                            {permissionsError}
-                          </FormHelperText>
-                        </Box>
+                        {permissionsError && (
+                          <Box sx={{ mt: 2 }}>
+                            <FormHelperText error>
+                              {permissionsError}
+                            </FormHelperText>
+                          </Box>
                         )}
                       </CardContent>
                     </Paper>
