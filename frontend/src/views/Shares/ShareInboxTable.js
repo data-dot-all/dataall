@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -33,7 +33,7 @@ const ShareInboxTable = () => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     await client
       .query(
@@ -50,7 +50,7 @@ const ShareInboxTable = () => {
         dispatch({ type: SET_ERROR, error: error.Error });
       })
       .finally(() => setLoading(false));
-  };
+  }, [filter, dispatch, client]);
 
   useEffect(() => {
     if (client) {
@@ -58,7 +58,7 @@ const ShareInboxTable = () => {
         dispatch({ type: SET_ERROR, error: error.message });
       });
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   return (
     <>

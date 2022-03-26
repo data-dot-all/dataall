@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -90,20 +90,20 @@ const OrganizationView = () => {
     }
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrg(response.data.getOrganization);
       setLoading(false);
     }
     setLoading(false);
-  };
+  }, [client, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   if (!org) {
     return null;

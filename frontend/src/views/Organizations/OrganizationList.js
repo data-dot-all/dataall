@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -33,13 +33,12 @@ const OrganizationList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listOrganizations({
         filter: {
-          ...filter,
-          roles: ['Admin', 'Owner', 'Member']
+          ...filter
         }
       })
     );
@@ -50,7 +49,7 @@ const OrganizationList = () => {
       setItems({ ...items, ...response.data.listOrganizations, nodes });
     }
     setLoading(false);
-  };
+  }, [filter, client, items]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -75,7 +74,7 @@ const OrganizationList = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <>

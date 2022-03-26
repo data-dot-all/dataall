@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -341,7 +341,7 @@ const ShareView = () => {
     setIsAddItemModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       getShareObject({ shareUri: params.uri })
@@ -352,29 +352,32 @@ const ShareView = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
-  const fetchShareItems = async (isAddingItem = false) => {
-    setLoadingShareItems(true);
-    const response = await client.query(
-      getShareObject({
-        shareUri: params.uri,
-        filter: {
-          ...filter,
-          isShared: true
+  const fetchShareItems = useCallback(
+    async (isAddingItem = false) => {
+      setLoadingShareItems(true);
+      const response = await client.query(
+        getShareObject({
+          shareUri: params.uri,
+          filter: {
+            ...filter,
+            isShared: true
+          }
+        })
+      );
+      if (!response.errors) {
+        if (isAddingItem) {
+          await fetchItem();
         }
-      })
-    );
-    if (!response.errors) {
-      if (isAddingItem) {
-        await fetchItem();
+        setSharedItems({ ...response.data.getShareObject.items });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      setSharedItems({ ...response.data.getShareObject.items });
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoadingShareItems(false);
-  };
+      setLoadingShareItems(false);
+    },
+    [client, dispatch, filter, fetchItem, params.uri]
+  );
 
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
@@ -389,7 +392,7 @@ const ShareView = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, fetchShareItems, fetchItem, dispatch]);
 
   if (!share) {
     return null;

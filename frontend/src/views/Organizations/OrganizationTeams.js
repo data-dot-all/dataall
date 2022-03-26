@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import {
   Box,
@@ -157,7 +157,7 @@ const OrganizationTeams = ({ organization }) => {
     setIsTeamInviteModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
       const response = await client.query(
@@ -176,7 +176,7 @@ const OrganizationTeams = ({ organization }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter, organization.organizationUri]);
 
   useEffect(() => {
     if (client) {
@@ -184,7 +184,7 @@ const OrganizationTeams = ({ organization }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

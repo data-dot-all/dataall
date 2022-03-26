@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -36,7 +36,7 @@ const PipelineRuns = ({ pipeline }) => {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(null);
   const [outputs] = useState(JSON.parse(pipeline?.stack?.outputs));
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listSqlPipelineExecutions({
@@ -50,7 +50,7 @@ const PipelineRuns = ({ pipeline }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, pipeline.sqlPipelineUri]);
 
   const runPipeline = async () => {
     setRunning(true);
@@ -80,7 +80,7 @@ const PipelineRuns = ({ pipeline }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   return (
     <Box>

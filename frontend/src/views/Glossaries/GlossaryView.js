@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import { Info } from '@mui/icons-material';
-import LinkIcon from '@mui/icons-material/Link';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -119,7 +118,7 @@ const GlossaryView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getGlossary(params.uri));
     if (!response.errors && response.data.getGlossary !== null) {
@@ -135,13 +134,13 @@ const GlossaryView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, user.email]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };

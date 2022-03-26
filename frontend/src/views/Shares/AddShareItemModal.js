@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Add } from '@mui/icons-material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -36,7 +36,7 @@ const AddShareItemModal = (props) => {
   const params = useParams();
   const [loading, setLoading] = useState(true);
 
-  const fetchShareItems = async () => {
+  const fetchShareItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       getShareObject({
@@ -53,32 +53,42 @@ const AddShareItemModal = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, filter]);
 
-  const addItemToShareObject = async (item) => {
-    const response = await client.mutate(
-      addSharedItem({
-        shareUri: share.shareUri,
-        input: {
-          itemUri: item.itemUri,
-          itemType: item.itemType
-        }
-      })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Item added', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await fetchShareItems();
-      reloadSharedItems(true);
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  };
+  const addItemToShareObject = useCallback(
+    async (item) => {
+      const response = await client.mutate(
+        addSharedItem({
+          shareUri: share.shareUri,
+          input: {
+            itemUri: item.itemUri,
+            itemType: item.itemType
+          }
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Item added', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        await fetchShareItems();
+        reloadSharedItems(true);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    },
+    [
+      client,
+      dispatch,
+      fetchShareItems,
+      reloadSharedItems,
+      enqueueSnackbar,
+      share.shareUri
+    ]
+  );
 
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
@@ -92,7 +102,7 @@ const AddShareItemModal = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchShareItems]);
 
   if (!share) {
     return null;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
@@ -21,7 +21,7 @@ const ShareInboxList = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     if (dataset) {
       await client
         .query(
@@ -51,7 +51,7 @@ const ShareInboxList = (props) => {
         })
         .finally(() => setLoading(false));
     }
-  };
+  }, [client, dispatch, dataset, filter]);
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
@@ -65,7 +65,7 @@ const ShareInboxList = (props) => {
         dispatch({ type: SET_ERROR, error: error.message });
       });
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   if (loading) {
     return <CircularProgress />;
