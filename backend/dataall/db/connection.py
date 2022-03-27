@@ -112,7 +112,7 @@ def drop_schema_if_exists(engine, envname):
 
 
 def get_engine(envname=ENVNAME):
-    schema = envname
+    schema = os.getenv('schema_name', envname)
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
         secret = Secrets()
