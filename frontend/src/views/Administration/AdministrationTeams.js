@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import {
   Box,
@@ -79,7 +79,7 @@ const AdministrationTeams = () => {
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(listTenantGroups(filter));
       if (!response.errors) {
@@ -92,7 +92,7 @@ const AdministrationTeams = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -119,7 +119,7 @@ const AdministrationTeams = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <Box>

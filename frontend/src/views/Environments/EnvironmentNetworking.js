@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -92,7 +92,7 @@ const EnvironmentNetworks = ({ environment }) => {
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(
         listEnvironmentNetworks({
@@ -110,7 +110,7 @@ const EnvironmentNetworks = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, environment, filter]);
 
   useEffect(() => {
     if (client) {
@@ -118,7 +118,7 @@ const EnvironmentNetworks = ({ environment }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

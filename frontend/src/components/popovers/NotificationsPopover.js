@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Avatar,
   Badge,
@@ -36,16 +36,16 @@ const NotificationsPopover = () => {
     setOpen(false);
   };
 
-  const getCountInbox = async () => {
+  const getCountInbox = useCallback(async () => {
     setLoading(true);
     const response = await client.query(countUnreadNotifications());
     if (!response.errors) {
       setCountInbox(response.data.countUnreadNotifications);
     }
     setLoading(false);
-  };
+  },[client]);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listNotifications(Defaults.SelectListFilter)
@@ -55,13 +55,13 @@ const NotificationsPopover = () => {
       getCountInbox();
     }
     setLoading(false);
-  };
+  },[client, getCountInbox]);
 
   useEffect(() => {
     if (client) {
       fetchItems({ unread: true });
     }
-  }, [client]);
+  }, [client, fetchItems]);
 
   return (
     <>
@@ -115,7 +115,6 @@ const NotificationsPopover = () => {
                           underline="hover"
                           color="textPrimary"
                           sx={{ cursor: 'pointer' }}
-                          underline="hover"
                           variant="subtitle2"
                         >
                           {notification.message}

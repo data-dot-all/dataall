@@ -90,7 +90,7 @@ const FileDropzone = (props) => {
           <Box sx={{ mt: 2 }}>
             <Typography color="textPrimary" variant="body1">
               {`Drop file${maxFiles && maxFiles === 1 ? '' : 's'}`}{' '}
-              <Link underline="hover" color="primary" underline="always">
+              <Link color="primary" underline="always">
                 browse
               </Link>{' '}
               through your machine

@@ -14,7 +14,7 @@ import {
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { LoadingButton } from '@mui/lab';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -31,7 +31,7 @@ const NetworkCreateModal = (props) => {
   const client = useClient();
   const [groupOptions, setGroupOptions] = useState([]);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
@@ -52,7 +52,7 @@ const NetworkCreateModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
-  };
+  }, [client, dispatch, environment]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -88,7 +88,6 @@ const NetworkCreateModal = (props) => {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
-      console.error(err);
       setStatus({ success: false });
       setErrors({ submit: err.message });
       setSubmitting(false);
@@ -102,7 +101,7 @@ const NetworkCreateModal = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchGroups]);
 
   if (!environment) {
     return null;

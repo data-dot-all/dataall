@@ -7,7 +7,7 @@ import {
   Link,
   Typography
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@mui/styles';
 import { useDispatch } from '../../store';
@@ -29,7 +29,7 @@ const FeedComments = (props) => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(Defaults.PagedResponseDefault);
   const [filter] = useState(Defaults.SelectListFilter);
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listFeedMessages({ targetType, targetUri, filter })
@@ -40,7 +40,7 @@ const FeedComments = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter, targetUri, targetType]);
 
   useEffect(() => {
     if (client) {
@@ -48,7 +48,7 @@ const FeedComments = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   return (
     <>

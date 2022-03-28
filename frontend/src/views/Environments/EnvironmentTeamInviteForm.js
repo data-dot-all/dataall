@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
@@ -41,7 +41,7 @@ const EnvironmentTeamInviteForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [permissionsError, setPermissionsError] = useState(null);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
       const response = await client.query(
@@ -65,9 +65,9 @@ const EnvironmentTeamInviteForm = (props) => {
     } finally {
       setLoadingGroups(false);
     }
-  };
+  }, [client, dispatch, environment]);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       const response = await client.query(
@@ -90,7 +90,7 @@ const EnvironmentTeamInviteForm = (props) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, environment]);
 
   useEffect(() => {
     if (client) {
@@ -101,7 +101,7 @@ const EnvironmentTeamInviteForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, fetchGroups, fetchItems, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -42,7 +42,7 @@ const NotebookCreateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listEnvironments({ filter: Defaults.SelectListFilter })
@@ -59,7 +59,7 @@ const NotebookCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch]);
   const fetchGroups = async (environmentUri) => {
     try {
       const response = await client.query(
@@ -88,7 +88,7 @@ const NotebookCreateForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

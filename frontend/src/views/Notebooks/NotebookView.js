@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -92,7 +92,7 @@ const NotebookView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  async function getNotebookInstance() {
+  const getNotebookInstance = useCallback(async () => {
     const response = await client.query(getSagemakerNotebook(params.uri));
     if (!response.errors) {
       setNotebook(response.data.getSagemakerNotebook);
@@ -116,7 +116,7 @@ const NotebookView = () => {
         : 'Notebook not found';
       dispatch({ type: SET_ERROR, error });
     }
-  }
+  }, [params.uri, client, dispatch]);
 
   const refreshInstance = async () => {
     setIsRefreshingNotebook(true);
@@ -131,11 +131,11 @@ const NotebookView = () => {
     setIsRefreshingNotebook(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     await getNotebookInstance();
     setLoading(false);
-  };
+  }, [getNotebookInstance]);
 
   const removeNotebook = async (deleteFromAWS = false) => {
     const response = await client.mutate(
@@ -172,7 +172,7 @@ const NotebookView = () => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);

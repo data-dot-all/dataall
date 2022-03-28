@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -39,25 +39,20 @@ const OrganizationEditForm = (props) => {
   const params = useParams();
   const [organization, setOrganization] = useState({});
   const [loading, setLoading] = useState(true);
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrganization(response.data.getOrganization);
       setLoading(false);
-    } /* else {
-      setError({
-        header: 'Error',
-        content: `Could not retrieve organization ${params.uri}`
-      });
-    } */
+    }
     setLoading(false);
-  };
+  }, [client, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

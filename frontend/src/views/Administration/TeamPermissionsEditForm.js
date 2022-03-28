@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
@@ -37,7 +37,7 @@ const TeamPermissionsEditForm = (props) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       const response = await client.query(listTenantPermissions({}));
@@ -51,7 +51,7 @@ const TeamPermissionsEditForm = (props) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch]);
 
   useEffect(() => {
     if (client) {
@@ -59,7 +59,7 @@ const TeamPermissionsEditForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
   /**
    * @description Handle Submit action.

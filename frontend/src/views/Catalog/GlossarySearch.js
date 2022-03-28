@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { makeStyles } from '@mui/styles';
 import { TreeItem, TreeView } from '@mui/lab';
 import { Box, CircularProgress, Typography } from '@mui/material';
@@ -167,7 +167,7 @@ const GlossarySearch = ({ matches, setQuery }) => {
       select(node);
     }
   };
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setFetchingItems(true);
     const response = await client.query(
       searchGlossary(Defaults.SelectListFilter)
@@ -183,14 +183,14 @@ const GlossarySearch = ({ matches, setQuery }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setFetchingItems(false);
-  };
+  }, [client, dispatch]);
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
   return (
     <Box>
       {fetchingItems ? (

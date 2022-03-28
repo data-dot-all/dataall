@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -41,7 +41,7 @@ const GlossaryAssociations = ({ glossary }) => {
   const isAdmin =
     glossary.owner === user.email || glossary.admin === user.email;
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listGlossaryAssociations({
@@ -55,7 +55,7 @@ const GlossaryAssociations = ({ glossary }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter, glossary]);
 
   const approveAssociation = async (linkUri) => {
     setApproving(true);
@@ -108,7 +108,7 @@ const GlossaryAssociations = ({ glossary }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <Box>

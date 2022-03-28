@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -61,7 +61,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listDatasetStorageLocations(dataset.datasetUri, filter)
@@ -72,7 +72,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, dataset, filter]);
 
   const handleFolderCreateModalOpen = () => {
     setIsFolderCreateOpen(true);
@@ -128,7 +128,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
   return (
     <Box>

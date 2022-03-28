@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -43,7 +43,7 @@ const EnvironmentWarehouses = ({ environment }) => {
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(
         listEnvironmentClusters(environment.environmentUri, filter)
@@ -58,7 +58,7 @@ const EnvironmentWarehouses = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter, environment]);
 
   useEffect(() => {
     if (client) {
@@ -66,7 +66,7 @@ const EnvironmentWarehouses = ({ environment }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

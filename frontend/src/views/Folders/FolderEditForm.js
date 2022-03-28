@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -116,7 +116,7 @@ const FolderEditForm = () => {
   const [loading, setLoading] = useState(true);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [folderTerms, setFolderTerms] = useState([]);
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     let response = await client.query(getDatasetStorageLocation(params.uri));
     let fetchedTerms = [];
@@ -162,7 +162,7 @@ const FolderEditForm = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [dispatch, client, params.uri]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -190,7 +190,6 @@ const FolderEditForm = () => {
       });
       navigate(`/console/datasets/folder/${folder.locationUri}`);
     } catch (err) {
-      console.error(err);
       setStatus({ success: false });
       setErrors({ submit: err.message });
       setSubmitting(false);
@@ -202,7 +201,7 @@ const FolderEditForm = () => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   if (loading) {
     return <CircularProgress />;

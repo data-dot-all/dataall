@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
@@ -37,7 +37,7 @@ const EnvironmentTeamInviteEditForm = (props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissionsError, setPermissionsError] = useState(null);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       const response = await client.query(
@@ -55,7 +55,7 @@ const EnvironmentTeamInviteEditForm = (props) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, environment]);
 
   useEffect(() => {
     if (client) {
@@ -63,7 +63,7 @@ const EnvironmentTeamInviteEditForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
   async function submit() {
     setIsSubmitting(true);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
@@ -123,7 +123,7 @@ const DatasetSchemaViewer = (props) => {
   const [loading, setLoading] = useState(true);
   const [tables, setTables] = useState(PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.SelectListFilter);
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       getDatasetSchema({ datasetUri: dataset.datasetUri, filter })
@@ -134,7 +134,7 @@ const DatasetSchemaViewer = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [dataset, client, dispatch, filter]);
   const handlePageChange = async (event, value) => {
     if (value <= tables.pages && value !== tables.page) {
       await setFilter({ ...filter, page: value });
@@ -146,7 +146,7 @@ const DatasetSchemaViewer = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   if (loading) {
     return <CircularProgress />;

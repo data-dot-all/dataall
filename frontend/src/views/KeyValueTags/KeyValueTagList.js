@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -28,7 +28,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
   const [openUpdateForm, setOpenUpdateForm] = useState(false);
   const [loading, setLoading] = useState(null);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listKeyValueTags(targetUri, targetType)
@@ -39,7 +39,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, targetType, targetUri]);
 
   const openUpdate = () => {
     setOpenUpdateForm(true);
@@ -56,7 +56,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
   if (loading) {
     return <CircularProgress />;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -43,7 +43,7 @@ const EnvironmentEditForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [env, setEnv] = useState('');
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(
       getEnvironment({ environmentUri: params.uri })
     );
@@ -56,12 +56,12 @@ const EnvironmentEditForm = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(

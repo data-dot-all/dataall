@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -51,7 +51,7 @@ const DatasetCreateForm = (props) => {
     'Secret'
   ]);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listEnvironments(Defaults.SelectListFilter)
@@ -68,7 +68,7 @@ const DatasetCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
     try {
@@ -99,7 +99,7 @@ const DatasetCreateForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, fetchEnvironments, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

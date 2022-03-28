@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -116,7 +116,7 @@ const EnvironmentNetworks = ({ environment }) => {
     setIsNetworkCreateOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(
         listEnvironmentNetworks({
@@ -134,7 +134,7 @@ const EnvironmentNetworks = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter, environment.environmentUri]);
 
   const deleteVpcNetwork = async (vpcUri) => {
     const response = await client.mutate(deleteNetwork({ vpcUri }));
@@ -160,7 +160,7 @@ const EnvironmentNetworks = ({ environment }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Breadcrumbs,
@@ -136,11 +136,10 @@ const DashboardSessionStarter = () => {
   const [filter, setFilter] = useState({
     page: 1,
     pageSize: 10,
-    term: '',
-    roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator']
+    term: ''
   });
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(listEnvironments({ filter }));
     if (!response.errors) {
@@ -149,7 +148,7 @@ const DashboardSessionStarter = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

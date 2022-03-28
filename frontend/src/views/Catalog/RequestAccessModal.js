@@ -13,7 +13,7 @@ import {
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { LoadingButton } from '@mui/lab';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -33,10 +33,10 @@ const RequestAccessModal = (props) => {
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     const response = await client.query(
       listEnvironments({
-        filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] }
+        filter: Defaults.SelectListFilter
       })
     );
     if (!response.errors) {
@@ -53,7 +53,7 @@ const RequestAccessModal = (props) => {
     if (stopLoader) {
       stopLoader();
     }
-  };
+  }, [client, dispatch, stopLoader]);
 
   const fetchGroups = async (environmentUri) => {
     setLoadingGroups(true);
@@ -87,7 +87,7 @@ const RequestAccessModal = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, open]);
+  }, [client, open, fetchEnvironments, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

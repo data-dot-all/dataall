@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
@@ -20,7 +20,7 @@ const DashboardShares = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listDashboardShares({ dashboardUri: dashboard.dashboardUri, filter })
@@ -31,7 +31,7 @@ const DashboardShares = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, dashboard, filter]);
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
@@ -45,7 +45,7 @@ const DashboardShares = (props) => {
         dispatch({ type: SET_ERROR, error: error.message });
       });
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   if (loading) {
     return <CircularProgress />;

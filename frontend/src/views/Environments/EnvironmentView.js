@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -117,7 +117,7 @@ const EnvironmentView = () => {
     }
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(
       getEnvironment({ environmentUri: params.uri })
     );
@@ -136,12 +136,12 @@ const EnvironmentView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   if (loading) {
     return <CircularProgress />;

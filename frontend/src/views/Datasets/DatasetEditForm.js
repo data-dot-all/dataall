@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -55,30 +55,33 @@ const DatasetEditForm = (props) => {
     'Secret'
   ]);
 
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
+  const fetchGroups = useCallback(
+    async (environmentUri) => {
+      try {
+        const response = await client.query(
+          listEnvironmentGroups({
+            filter: Defaults.SelectListFilter,
+            environmentUri
+          })
         );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        if (!response.errors) {
+          setGroupOptions(
+            response.data.listEnvironmentGroups.nodes.map((g) => ({
+              value: g.groupUri,
+              label: g.groupUri
+            }))
+          );
+        } else {
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
+      } catch (e) {
+        dispatch({ type: SET_ERROR, error: e.message });
       }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
+    },
+    [client, dispatch]
+  );
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
@@ -124,13 +127,13 @@ const DatasetEditForm = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, fetchGroups]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

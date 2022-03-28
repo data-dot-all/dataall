@@ -1,4 +1,4 @@
-import { createRef, useEffect, useState } from 'react';
+import { createRef, useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { FaExternalLinkAlt } from 'react-icons/fa';
@@ -16,7 +16,7 @@ const DashboardViewer = ({ dashboard }) => {
   const [dashboardRef] = useState(createRef());
   const [sessionUrl, setSessionUrl] = useState(null);
 
-  const fetchReaderSessionUrl = async () => {
+  const fetchReaderSessionUrl = useCallback(async () => {
     const response = await client.query(
       getReaderSession(dashboard.dashboardUri)
     );
@@ -38,7 +38,7 @@ const DashboardViewer = ({ dashboard }) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch, dashboard, dashboardRef]);
 
   useEffect(() => {
     if (client && !sessionUrl) {
@@ -46,7 +46,7 @@ const DashboardViewer = ({ dashboard }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchReaderSessionUrl, sessionUrl]);
 
   if (!sessionUrl) {
     return <CircularProgress />;

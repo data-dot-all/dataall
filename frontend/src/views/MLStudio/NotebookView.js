@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -61,7 +61,7 @@ const NotebookView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       getSagemakerStudioUserProfile(params.uri)
@@ -78,7 +78,7 @@ const NotebookView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, stack]);
 
   const getNotebookPresignedUrl = async () => {
     setIsOpeningSagemakerStudio(true);
@@ -99,7 +99,7 @@ const NotebookView = () => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);

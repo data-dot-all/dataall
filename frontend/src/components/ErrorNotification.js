@@ -33,7 +33,7 @@ const ErrorNotification = () => {
     } else {
       closeSnackbar();
     }
-  }, [error]);
+  }, [error, dispatch, enqueueSnackbar, closeSnackbar]);
 
   return <></>;
 };

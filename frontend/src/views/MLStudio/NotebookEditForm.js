@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -40,7 +40,7 @@ const PipelineEditForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [notebook, setNotebook] = useState(null);
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       getSagemakerStudioUserProfile(params.uri)
@@ -57,13 +57,13 @@ const PipelineEditForm = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

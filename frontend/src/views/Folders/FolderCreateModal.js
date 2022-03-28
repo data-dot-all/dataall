@@ -15,7 +15,7 @@ import {
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { LoadingButton } from '@mui/lab';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import addDatasetStorageLocation from '../../api/Dataset/addDatasetStorageLocation';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -31,7 +31,7 @@ const FolderCreateModal = (props) => {
   const client = useClient();
   const [selectableTerms, setSelectableTerms] = useState([]);
 
-  const fetchTerms = async () => {
+  const fetchTerms = useCallback(async () => {
     const response = await client.query(
       searchGlossary(Defaults.SelectListFilter)
     );
@@ -53,14 +53,14 @@ const FolderCreateModal = (props) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch]);
   useEffect(() => {
     if (client) {
       fetchTerms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchTerms]);
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(

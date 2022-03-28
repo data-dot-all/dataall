@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -36,7 +36,7 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     const response = await client.query(
       listDatasetsPublishedInEnvironment({
         filter,
@@ -47,7 +47,7 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
       setItems({ ...response.data.searchEnvironmentDataItems });
     }
     setLoading(false);
-  };
+  }, [client, environment, filter]);
 
   useEffect(() => {
     if (client) {
@@ -55,7 +55,7 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

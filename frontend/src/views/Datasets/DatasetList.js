@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -91,27 +91,17 @@ const DatasetList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    await client
-      .query(
-        listDatasets({
-          filter: {
-            ...filter
-          }
-        })
-      )
-      .then((response) => {
-        const nodes = response.data.listDatasets.nodes.map((env) => ({
-          ...env
-        }));
-        setItems({ ...items, ...response.data.listDatasets, nodes });
-      })
-      .catch((error) => {
-        dispatch({ type: SET_ERROR, error: error.Error });
-      })
-      .finally(() => setLoading(false));
-  };
+    const response = await client.query(listDatasets(filter));
+    if (!response.errors) {
+      setItems(response.data.listDatasets);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -120,7 +110,9 @@ const DatasetList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      fetchItems();
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -132,9 +124,11 @@ const DatasetList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems();
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <>

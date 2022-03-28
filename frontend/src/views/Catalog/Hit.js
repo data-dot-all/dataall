@@ -5,6 +5,7 @@ import * as ReactIf from 'react-if';
 import {
   Box,
   Card,
+  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -153,7 +154,9 @@ const Hit = ({ hit }) => {
             WebkitLineClamp: 2
           }}
         >
-          {hit.description || 'No description provided'}
+          <Tooltip title={hit.description || 'No description provided'}>
+            <span>{hit.description || 'No description provided'}</span>
+          </Tooltip>
         </Typography>
       </Box>
       <Box
@@ -241,6 +244,29 @@ const Hit = ({ hit }) => {
             </Typography>
           </Grid>
         </Grid>
+      </Box>
+      <Box
+        sx={{
+          pb: 2,
+          px: 3
+        }}
+      >
+        {hit.tags && hit.tags.length > 0 && (
+          <Box>
+            {hit.topics.concat(hit.tags.slice(0, 5)).map((tag) => (
+              <Chip
+                sx={{ mr: 0.5, mb: 0.5 }}
+                key={tag}
+                label={
+                  <Typography color="textPrimary" variant="subtitle2">
+                    {tag}
+                  </Typography>
+                }
+                variant="filled"
+              />
+            ))}
+          </Box>
+        )}
       </Box>
       <Divider />
       <Box

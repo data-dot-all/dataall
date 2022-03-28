@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -43,7 +43,7 @@ const OrganizationEnvironments = (props) => {
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listOrganizationEnvrionments({
@@ -55,7 +55,7 @@ const OrganizationEnvironments = (props) => {
       setItems({ ...response.data.getOrganization.environments });
     }
     setLoading(false);
-  };
+  }, [client, organization.organizationUri, filter]);
 
   useEffect(() => {
     if (client) {
@@ -63,7 +63,7 @@ const OrganizationEnvironments = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

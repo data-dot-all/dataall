@@ -35,21 +35,14 @@ const OrganizationList = () => {
   const client = useClient();
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      listOrganizations({
-        filter: {
-          ...filter
-        }
-      })
-    );
+    const response = await client.query(listOrganizations(filter));
     if (!response.errors) {
-      const nodes = response.data.listOrganizations.nodes.map((org) => ({
-        ...org
-      }));
-      setItems({ ...items, ...response.data.listOrganizations, nodes });
+      setItems(response.data.listOrganizations);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [filter, client, items]);
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

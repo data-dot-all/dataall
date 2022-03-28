@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -92,7 +92,7 @@ const DashboardList = () => {
   const [loading, setLoading] = useState(true);
   const client = useClient();
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(searchDashboards(filter));
     if (!response.errors) {
@@ -101,7 +101,7 @@ const DashboardList = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -128,7 +128,7 @@ const DashboardList = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <>

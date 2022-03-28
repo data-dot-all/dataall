@@ -43,7 +43,6 @@ const ObjectMetadata = (props) => {
             color="textPrimary"
             component={RouterLink}
             to="#"
-            underline="hover"
             variant="subtitle2"
           >
             {owner}

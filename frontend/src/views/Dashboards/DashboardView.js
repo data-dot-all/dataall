@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -84,12 +84,15 @@ const DashboardView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const getUserDashboardVote = async (dashboardUri) => {
-    const response = await client.query(getVote(dashboardUri, 'dashboard'));
-    if (!response.errors && response.data.getVote !== null) {
-      setIsUpVoted(response.data.getVote.upvote);
-    }
-  };
+  const getUserDashboardVote = useCallback(
+    async (dashboardUri) => {
+      const response = await client.query(getVote(dashboardUri, 'dashboard'));
+      if (!response.errors && response.data.getVote !== null) {
+        setIsUpVoted(response.data.getVote.upvote);
+      }
+    },
+    [client]
+  );
 
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dashboard'));
@@ -114,7 +117,7 @@ const DashboardView = () => {
     reloadVotes().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDashboard(params.uri));
     if (!response.errors) {
@@ -132,7 +135,7 @@ const DashboardView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
@@ -141,7 +144,7 @@ const DashboardView = () => {
       );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem, getUserDashboardVote, params.uri]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);

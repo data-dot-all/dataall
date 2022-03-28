@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -69,7 +69,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listDatasetTables({
@@ -83,7 +83,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [dispatch, client, dataset, filter]);
 
   const synchronizeTables = async () => {
     setSyncingTables(true);
@@ -133,7 +133,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);

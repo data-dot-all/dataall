@@ -1,6 +1,6 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { makeStyles } from '@mui/styles';
 import { LoadingButton, TreeItem, TreeView } from '@mui/lab';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -147,7 +147,7 @@ const GlossaryManagement = (props) => {
     setIsTermCreateOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setFetchingItems(true);
     setData(glossary);
     const response = await client.query(
@@ -162,7 +162,7 @@ const GlossaryManagement = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setFetchingItems(false);
-  };
+  }, [glossary, client, dispatch]);
 
   useEffect(() => {
     if (client) {
@@ -170,9 +170,9 @@ const GlossaryManagement = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
 
-  const refreshTree = () => {
+  const refreshTree = useCallback(() => {
     const transformedTree = listToTree(
       items.nodes.map((n) => n),
       {
@@ -181,10 +181,10 @@ const GlossaryManagement = (props) => {
       }
     );
     setNodes(transformedTree);
-  };
+  }, [items.nodes]);
   useEffect(() => {
     refreshTree();
-  }, [items]);
+  }, [items, refreshTree]);
   const getIcon = (nodeItem) => {
     if (nodeItem.__typename === 'Glossary') {
       return <BsIcons.BsBookmark size={12} />;

@@ -20,7 +20,7 @@ import { LoadingButton } from '@mui/lab';
 import * as Yup from 'yup';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ChipInput from '../../components/TagsInput';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -97,7 +97,7 @@ const FolderCreateForm = () => {
   const [loading, setLoading] = useState(true);
   const [dataset, setDataset] = useState(null);
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
@@ -109,12 +109,12 @@ const FolderCreateForm = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -47,11 +47,11 @@ const DashboardImportForm = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [selectableTerms, setSelectableTerms] = useState([]);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listEnvironments({
-        filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] }
+        filter: Defaults.SelectListFilter
       })
     );
     if (!response.errors) {
@@ -66,8 +66,8 @@ const DashboardImportForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
-  const fetchTerms = async () => {
+  }, [client, dispatch]);
+  const fetchTerms = useCallback(async () => {
     const response = await client.query(
       searchGlossary(Defaults.SelectListFilter)
     );
@@ -89,7 +89,7 @@ const DashboardImportForm = (props) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch]);
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -99,7 +99,7 @@ const DashboardImportForm = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client]);
+  }, [client, fetchTerms, fetchEnvironments, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
     try {

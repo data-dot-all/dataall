@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -62,7 +62,7 @@ const EnvironmentCreateForm = (props) => {
   const groupOptions = groups
     ? groups.map((g) => ({ value: g, label: g }))
     : [];
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
@@ -71,23 +71,23 @@ const EnvironmentCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
-  const fetchTrustedAccount = async () => {
+  }, [client, dispatch, params.uri]);
+  const fetchTrustedAccount = useCallback(async () => {
     const response = await client.query(getTrustAccount());
     if (!response.errors) {
       setTrustedAccount(response.data.getTrustAccount);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
-  const getRoleName = async () => {
+  }, [client, dispatch]);
+  const getRoleName = useCallback(async () => {
     const response = await client.query(getPivotRoleName(params.uri));
     if (!response.errors) {
       setPivotRoleName(response.data.getPivotRoleName);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch, params.uri]);
   const getPivotRoleUrl = async () => {
     const response = await client.query(getPivotRolePresignedUrl(params.uri));
     if (!response.errors) {
@@ -140,7 +140,7 @@ const EnvironmentCreateForm = (props) => {
       );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem, fetchTrustedAccount, getRoleName]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {

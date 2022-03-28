@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -109,12 +109,15 @@ const DatasetView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const getUserDatasetVote = async (datasetUri) => {
-    const response = await client.query(getVote(datasetUri, 'dataset'));
-    if (!response.errors && response.data.getVote !== null) {
-      setIsUpVoted(response.data.getVote.upvote);
-    }
-  };
+  const getUserDatasetVote = useCallback(
+    async (datasetUri) => {
+      const response = await client.query(getVote(datasetUri, 'dataset'));
+      if (!response.errors && response.data.getVote !== null) {
+        setIsUpVoted(response.data.getVote.upvote);
+      }
+    },
+    [client]
+  );
 
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
@@ -139,7 +142,7 @@ const DatasetView = () => {
     reloadVotes().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
@@ -162,7 +165,7 @@ const DatasetView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
@@ -171,7 +174,7 @@ const DatasetView = () => {
       );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, getUserDatasetVote, dispatch, params.uri]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
