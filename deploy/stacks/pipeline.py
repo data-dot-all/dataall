@@ -297,6 +297,12 @@ class PipelineStack(Stack):
                     f'account are the same in the same region with the same envname and git_branch.'
                     f'Try a different envname than git_branch for it to work'
                 )
+            if (
+                env.get("internet_facing") not in ["True","False"]
+            ):
+                raise ValueError(
+                    f'internet_facing value not supported choose one of ["True","False"]'
+                )
         if len(resource_prefix) >= 20:
             raise ValueError(
                 f'Resource prefix {resource_prefix} '
