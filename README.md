@@ -22,8 +22,8 @@ By simplifying data discovery, data access management while letting more builder
 
 ### Run commands
 ```bash
-git clone https://github.com/aws-labs/data.all.git
-cd dataall
+git clone https://github.com/awslabs/aws-dataall.git
+cd aws-dataall
 docker-compose up
 ```
 
@@ -33,14 +33,14 @@ Now visit [http://localhost:8080](http://localhost:8080)
 
 ### User Guide
 ```bash
-cd dataall/documentation/userguide
+cd aws-dataall/documentation/userguide
 pip install -r requirements.txt
 mkdocs serve
 ```
 
 ### Dev Guide
 ```bash
-cd dataall/documentation/devguide
+cd aws-dataall/documentation/devguide
 pip install -r requirements.txt
 mkdocs serve
 ```
