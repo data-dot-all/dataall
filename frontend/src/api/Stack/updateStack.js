@@ -5,13 +5,15 @@ const updateStack = (targetUri, targetType) => ({
     targetUri,
     targetType
   },
-  mutation: gql`mutation updateStack($targetUri:String!, $targetType:String!){
-            updateStack(targetUri:$targetUri, targetType:$targetType){
-                stackUri
-                targetUri
-                name
-            }
-        }`
+  mutation: gql`
+    mutation updateStack($targetUri: String!, $targetType: String!) {
+      updateStack(targetUri: $targetUri, targetType: $targetType) {
+        stackUri
+        targetUri
+        name
+      }
+    }
+  `
 });
 
 export default updateStack;

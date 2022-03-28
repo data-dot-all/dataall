@@ -5,22 +5,22 @@ const getMetrics = (filter) => ({
     filter
   },
   query: gql`
-            query GetMetrics($filter:MetricFilter){
-                getMetrics(filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    nodes{
-                        metricName
-                        metricValue
-                        AwsAccountId
-                        region
-                        created
-                    }
-                }
-            }
-        `
+    query GetMetrics($filter: MetricFilter) {
+      getMetrics(filter: $filter) {
+        count
+        page
+        pages
+        hasNext
+        nodes {
+          metricName
+          metricValue
+          AwsAccountId
+          region
+          created
+        }
+      }
+    }
+  `
 });
 
 export default getMetrics;

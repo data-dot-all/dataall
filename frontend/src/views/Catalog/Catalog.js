@@ -1,9 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DataSearch, MultiList, ReactiveBase, ReactiveList, SelectedFilters } from '@appbaseio/reactivesearch';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { Box, Breadcrumbs, Button, Container, Divider, Grid, Link, Paper, Popover, Typography } from '@material-ui/core';
+import {
+  DataSearch,
+  MultiList,
+  ReactiveBase,
+  ReactiveList,
+  SelectedFilters
+} from '@appbaseio/reactivesearch';
+import CircularProgress from '@mui/material/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Container,
+  Divider,
+  Grid,
+  Link,
+  Paper,
+  Popover,
+  Typography
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles, useTheme } from '@mui/styles';
 import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -65,10 +82,7 @@ function CatalogFilter(props) {
         open={openMenu}
       >
         <Box sx={{ p: 3 }}>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-          >
+          <Typography color="textSecondary" variant="subtitle2">
             <MultiList
               innerClass={{ input: classes.mainSearch }}
               showCheckbox
@@ -105,7 +119,10 @@ function GlossaryFilter(props) {
       <Button
         color="inherit"
         endIcon={<ChevronDown fontSize="small" />}
-        onClick={() => { setOpenMenu(!openMenu); setFilter(false); }}
+        onClick={() => {
+          setOpenMenu(!openMenu);
+          setFilter(false);
+        }}
         ref={anchorRef}
         sx={{
           ml: 2,
@@ -130,11 +147,10 @@ function GlossaryFilter(props) {
         }}
       >
         <Box sx={{ p: 3 }}>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-          >
-            <GlossarySearchComponent innerClass={{ input: 'mini', list: 'items' }} />
+          <Typography color="textSecondary" variant="subtitle2">
+            <GlossarySearchComponent
+              innerClass={{ input: 'mini', list: 'items' }}
+            />
           </Typography>
         </Box>
       </Popover>
@@ -154,13 +170,42 @@ const Catalog = () => {
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
   const [filterItems] = useState([
-    { title: 'Type', dataField: 'resourceKind', componentId: 'KindSensor', filterLabel: 'Type' },
-    { title: 'Tags', dataField: 'tags', componentId: 'TagSensor', filterLabel: 'Tags' },
-    { title: 'Topics', dataField: 'topics', componentId: 'TopicSensor', filterLabel: 'Topics' },
-    { title: 'Region', dataField: 'region', componentId: 'RegionSensor', filterLabel: 'Region' },
-    { title: 'Classification', dataField: 'classification', componentId: 'ClassificationSensor', filterLabel: 'Classification' }
+    {
+      title: 'Type',
+      dataField: 'resourceKind',
+      componentId: 'KindSensor',
+      filterLabel: 'Type'
+    },
+    {
+      title: 'Tags',
+      dataField: 'tags',
+      componentId: 'TagSensor',
+      filterLabel: 'Tags'
+    },
+    {
+      title: 'Topics',
+      dataField: 'topics',
+      componentId: 'TopicSensor',
+      filterLabel: 'Topics'
+    },
+    {
+      title: 'Region',
+      dataField: 'region',
+      componentId: 'RegionSensor',
+      filterLabel: 'Region'
+    },
+    {
+      title: 'Classification',
+      dataField: 'classification',
+      componentId: 'ClassificationSensor',
+      filterLabel: 'Classification'
+    }
   ]);
-  const [listClass, setListClass] = useState(settings.theme === THEMES.LIGHT ? classes.lightListSearch : classes.darkListSearch);
+  const [listClass, setListClass] = useState(
+    settings.theme === THEMES.LIGHT
+      ? classes.lightListSearch
+      : classes.darkListSearch
+  );
   const [selectedFiltersCleared, setSelectedFiltersCleared] = useState(true);
   const transformRequest = (request) => {
     const transformedRequest = { ...request };
@@ -180,8 +225,12 @@ const Catalog = () => {
     };
   };
   useEffect(() => {
-    setListClass(settings.theme === THEMES.LIGHT ? classes.lightListSearch : classes.darkListSearch);
-  }, [settings.theme]);
+    setListClass(
+      settings.theme === THEMES.LIGHT
+        ? classes.lightListSearch
+        : classes.darkListSearch
+    );
+  }, [settings.theme, classes]);
   if (!token) {
     return <CircularProgress />;
   }
@@ -206,10 +255,7 @@ const Catalog = () => {
             spacing={3}
           >
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Catalog
               </Typography>
               <Breadcrumbs
@@ -218,6 +264,7 @@ const Catalog = () => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/catalog"
@@ -226,6 +273,7 @@ const Catalog = () => {
                   Discover
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/catalog"
@@ -265,7 +313,6 @@ const Catalog = () => {
                 fontSize: 'small',
                 color: theme.palette.text.primary
               }
-
             }}
             app="dataall-index"
             enableAppbase={false}
@@ -300,21 +347,20 @@ const Catalog = () => {
                   />
                 </Box>
                 <Divider />
-                <Box sx={{
-                  mt: 1,
-                  mb: 1
-                }}
+                <Box
+                  sx={{
+                    mt: 1,
+                    mb: 1
+                  }}
                 >
-                  { selectedFiltersCleared ? (
+                  {selectedFiltersCleared ? (
                     <Box sx={{ p: 1 }}>
-                      <Typography
-                        color="textSecondary"
-                        variant="subtitle2"
-                      >
+                      <Typography color="textSecondary" variant="subtitle2">
                         No filters applied
                       </Typography>
                     </Box>
-                  ) : (<SelectedFilters />
+                  ) : (
+                    <SelectedFilters />
                   )}
                 </Box>
                 <Divider />
@@ -323,9 +369,7 @@ const Catalog = () => {
                     mr: 2
                   }}
                 >
-                  <Grid
-                    container
-                  >
+                  <Grid container>
                     {filterItems.map((item) => (
                       <Grid item>
                         <CatalogFilter
@@ -354,20 +398,19 @@ const Catalog = () => {
                 </Box>
               </Paper>
             </Box>
-            <Grid
-              container
-              spacing={3}
-              sx={{ mt: 1 }}
-            >
-              <Grid
-                item
-                key="node1"
-                md={12}
-                xs={12}
-              >
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item key="node1" md={12} xs={12}>
                 <ReactiveList
                   react={{
-                    and: ['RegionSensor', 'SearchSensor', 'GlossaryPathSensor', 'TagSensor', 'TopicSensor', 'KindSensor', 'ClassificationSensor']
+                    and: [
+                      'RegionSensor',
+                      'SearchSensor',
+                      'GlossaryPathSensor',
+                      'TagSensor',
+                      'TopicSensor',
+                      'KindSensor',
+                      'ClassificationSensor'
+                    ]
                   }}
                   dataField="model"
                   loader={<CircularProgress />}
@@ -376,17 +419,9 @@ const Catalog = () => {
                   componentId="SearchResult"
                   render={({ data }) => (
                     <Box>
-                      <Grid
-                        container
-                        spacing={3}
-                      >
+                      <Grid container spacing={3}>
                         {data.map((hit) => (
-                          <Grid
-                            item
-                            key={hit._id}
-                            md={3}
-                            xs={12}
-                          >
+                          <Grid item key={hit._id} md={3} xs={12}>
                             <Hit hit={hit} />
                           </Grid>
                         ))}

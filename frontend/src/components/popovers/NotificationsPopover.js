@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Avatar,
   Badge,
@@ -12,7 +12,7 @@ import {
   Popover,
   Tooltip,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import countUnreadNotifications from '../../api/Notification/countUnreadNotifications';
 import listNotifications from '../../api/Notification/listNotifications';
 import BellIcon from '../../icons/Bell';
@@ -36,43 +36,38 @@ const NotificationsPopover = () => {
     setOpen(false);
   };
 
-  const getCountInbox = async () => {
+  const getCountInbox = useCallback(async () => {
     setLoading(true);
     const response = await client.query(countUnreadNotifications());
     if (!response.errors) {
       setCountInbox(response.data.countUnreadNotifications);
     }
     setLoading(false);
-  };
+  },[client]);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listNotifications(Defaults.SelectListFilter));
+    const response = await client.query(
+      listNotifications(Defaults.SelectListFilter)
+    );
     if (!response.errors) {
       setNotifications(response.data.listNotifications);
       getCountInbox();
     }
     setLoading(false);
-  };
+  },[client, getCountInbox]);
 
   useEffect(() => {
     if (client) {
       fetchItems({ unread: true });
     }
-  }, [client]);
+  }, [client, fetchItems]);
 
   return (
     <>
       <Tooltip title="Notifications">
-        <IconButton
-          ref={anchorRef}
-          color="inherit"
-          onClick={handleOpen}
-        >
-          <Badge
-            color="error"
-            badgeContent={countInbox}
-          >
+        <IconButton ref={anchorRef} color="inherit" onClick={handleOpen}>
+          <Badge color="error" badgeContent={countInbox}>
             <BellIcon fontSize="small" />
           </Badge>
         </IconButton>
@@ -90,32 +85,22 @@ const NotificationsPopover = () => {
         }}
       >
         <Box sx={{ p: 2 }}>
-          <Typography
-            color="textPrimary"
-            variant="h6"
-          >
+          <Typography color="textPrimary" variant="h6">
             Notifications
           </Typography>
         </Box>
-        {loading || notifications.nodes.length === 0
-          ? (
-            <Box sx={{ p: 2 }}>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
-                There are no notifications
-              </Typography>
-            </Box>
-          )
-          : (
-            <>
-              <List disablePadding>
-                {notifications.nodes.length > 0 && notifications.nodes.map((notification) => (
-                  <ListItem
-                    divider
-                    key={notification.id}
-                  >
+        {loading || notifications.nodes.length === 0 ? (
+          <Box sx={{ p: 2 }}>
+            <Typography color="textPrimary" variant="subtitle2">
+              There are no notifications
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <List disablePadding>
+              {notifications.nodes.length > 0 &&
+                notifications.nodes.map((notification) => (
+                  <ListItem divider key={notification.id}>
                     <ListItemAvatar>
                       <Avatar
                         sx={{
@@ -125,22 +110,22 @@ const NotificationsPopover = () => {
                       />
                     </ListItemAvatar>
                     <ListItemText
-                      primary={(
+                      primary={
                         <Link
+                          underline="hover"
                           color="textPrimary"
                           sx={{ cursor: 'pointer' }}
-                          underline="none"
                           variant="subtitle2"
                         >
                           {notification.message}
                         </Link>
-                        )}
+                      }
                     />
                   </ListItem>
                 ))}
-              </List>
-            </>
-          )}
+            </List>
+          </>
+        )}
       </Popover>
     </>
   );

@@ -5,16 +5,22 @@ const importAirflowCluster = ({ environmentUri, input }) => ({
     environmentUri,
     clusterInput: input
   },
-  mutation: gql`mutation importAirflowCluster(
-            $environmentUri: String!, $clusterInput: ImportClusterInput!
-        ){
-            importAirflowCluster(environmentUri:$environmentUri, clusterInput:$clusterInput){
-                clusterUri
-                name
-                label
-                created
-            }
-        }`
+  mutation: gql`
+    mutation importAirflowCluster(
+      $environmentUri: String!
+      $clusterInput: ImportClusterInput!
+    ) {
+      importAirflowCluster(
+        environmentUri: $environmentUri
+        clusterInput: $clusterInput
+      ) {
+        clusterUri
+        name
+        label
+        created
+      }
+    }
+  `
 });
 
 export default importAirflowCluster;

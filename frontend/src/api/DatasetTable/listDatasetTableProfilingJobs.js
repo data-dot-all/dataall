@@ -5,30 +5,29 @@ const listDatasetTableProfilingJobs = (tableUri) => ({
     tableUri
   },
   query: gql`
-            query GetDatasetTable($tableUri:String!){
-                getDatasetTable(tableUri:$tableUri){
-                        datasetUri
-                        owner
-                        created
-                        tableUri
-                        AwsAccountId
-                        GlueTableName
-                        profilingJobs{
-                            count
-                            page
-                            pages
-                            hasNext
-                            hasPrevious
-                            nodes{
-                                jobUri
-                                created
-                                status
-                            }
-
-                        }
-                    }
-                }
-        `
+    query GetDatasetTable($tableUri: String!) {
+      getDatasetTable(tableUri: $tableUri) {
+        datasetUri
+        owner
+        created
+        tableUri
+        AwsAccountId
+        GlueTableName
+        profilingJobs {
+          count
+          page
+          pages
+          hasNext
+          hasPrevious
+          nodes {
+            jobUri
+            created
+            status
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listDatasetTableProfilingJobs;

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -14,12 +14,12 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { DeleteOutlined } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import { BsTable } from 'react-icons/all';
+import { BsTable } from 'react-icons/bs';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import Scrollbar from '../../components/Scrollbar';
@@ -42,20 +42,21 @@ const WarehouseTables = ({ warehouse }) => {
   const [inputValue, setInputValue] = useState('');
   const [isCopyTablesOpen, setIsLoadDatasetsOpen] = useState(false);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client
-      .query(listClusterDatasetTables({
+    const response = await client.query(
+      listClusterDatasetTables({
         clusterUri: warehouse.clusterUri,
         filter
-      }));
+      })
+    );
     if (!response.errors) {
       setItems({ ...response.data.listRedshiftClusterCopyEnabledTables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter, warehouse.clusterUri]);
 
   const handleCopyTablesModalOpen = () => {
     setIsLoadDatasetsOpen(true);
@@ -71,8 +72,10 @@ const WarehouseTables = ({ warehouse }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -82,37 +85,44 @@ const WarehouseTables = ({ warehouse }) => {
     }
   };
 
-  const disableCopy = async (table) => {
-    const res = await client.mutate(disableRedshiftClusterDatasetCopy({
-      clusterUri: warehouse.clusterUri,
-      datasetUri: table.datasetUri,
-      tableUri: table.tableUri
-    }));
-    if (!res.errors) {
-      enqueueSnackbar('Table copy disabled', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await fetchItems();
-    } else {
-      dispatch({ type: SET_ERROR, error: res.errors[0].message });
-    }
-  };
+  const disableCopy = useCallback(
+    async (table) => {
+      const res = await client.mutate(
+        disableRedshiftClusterDatasetCopy({
+          clusterUri: warehouse.clusterUri,
+          datasetUri: table.datasetUri,
+          tableUri: table.tableUri
+        })
+      );
+      if (!res.errors) {
+        enqueueSnackbar('Table copy disabled', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        await fetchItems();
+      } else {
+        dispatch({ type: SET_ERROR, error: res.errors[0].message });
+      }
+    },
+    [client, enqueueSnackbar, dispatch, warehouse.clusterUri, fetchItems]
+  );
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, dispatch, filter.page, fetchItems]);
 
   return (
     <Box>
       <Card>
         <CardHeader
-          action={(
+          action={
             <LoadingButton
               color="primary"
               onClick={handleCopyTablesModalOpen}
@@ -122,13 +132,13 @@ const WarehouseTables = ({ warehouse }) => {
             >
               Copy table
             </LoadingButton>
-          )}
-          title={(
+          }
+          title={
             <Box>
               <BsTable style={{ marginRight: '10px' }} />
               Tables copied from loaded datasets
             </Box>
-          )}
+          }
         />
         <Divider />
         <Box
@@ -140,12 +150,7 @@ const WarehouseTables = ({ warehouse }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -176,78 +181,63 @@ const WarehouseTables = ({ warehouse }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    Schema
-                  </TableCell>
-                  <TableCell>
-                    Location
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Schema</TableCell>
+                  <TableCell>Location</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((table) => (
-                    <TableRow
-                      hover
-                      key={table.tableUri}
-                    >
-                      <TableCell>
-                        {table.name}
-                      </TableCell>
-                      <TableCell>
-                        {table.RedshiftSchema}
-                      </TableCell>
-                      <TableCell>
-                        {table.RedshiftCopyDataLocation}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => {
-                          disableCopy(table).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-                        }}
-                        >
-                          <DeleteOutlined fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No tables found.
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((table) => (
+                      <TableRow hover key={table.tableUri}>
+                        <TableCell>{table.name}</TableCell>
+                        <TableCell>{table.RedshiftSchema}</TableCell>
+                        <TableCell>{table.RedshiftCopyDataLocation}</TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={() => {
+                              disableCopy(table).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            <DeleteOutlined fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No tables found.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>
       </Card>
 
-      {isCopyTablesOpen
-      && (
-      <WarehouseCopyTableModal
-        warehouse={warehouse}
-        open={isCopyTablesOpen}
-        reload={fetchItems}
-        onApply={handleCopyTablesModalClose}
-        onClose={handleCopyTablesModalClose}
-      />
+      {isCopyTablesOpen && (
+        <WarehouseCopyTableModal
+          warehouse={warehouse}
+          open={isCopyTablesOpen}
+          reload={fetchItems}
+          onApply={handleCopyTablesModalClose}
+          onClose={handleCopyTablesModalClose}
+        />
       )}
     </Box>
   );

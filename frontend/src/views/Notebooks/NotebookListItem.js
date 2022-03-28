@@ -1,9 +1,18 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as FiIcons from 'react-icons/fi';
 import * as FaIcons from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
-import { SiJupyter } from 'react-icons/all';
+import { SiJupyter } from 'react-icons/si';
 import { Link as RouterLink } from 'react-router-dom';
 import React from 'react';
 import IconAvatar from '../../components/IconAvatar';
@@ -22,18 +31,8 @@ const NotebookListItem = (props) => {
   const navigate = useNavigate();
 
   return (
-    <Grid
-      item
-      key={notebook.notebookUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={notebook.notebookUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={notebook.notebookUri} md={3} xs={12} {...props}>
+      <Card key={notebook.notebookUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -44,6 +43,7 @@ const NotebookListItem = (props) => {
             <IconAvatar icon={<SiJupyter size={20} />} />
             <Box sx={{ ml: 2 }}>
               <Link
+                underline="hover"
                 component="button"
                 color="textPrimary"
                 variant="h6"
@@ -60,18 +60,13 @@ const NotebookListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={notebook.label}><span>{notebook.label}</span></Tooltip>
+                <Tooltip title={notebook.label}>
+                  <span>{notebook.label}</span>
+                </Tooltip>
               </Link>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                by
-                {' '}
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+              <Typography color="textSecondary" variant="body2">
+                by{' '}
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   {notebook.owner}
                 </Link>
               </Typography>
@@ -85,34 +80,21 @@ const NotebookListItem = (props) => {
               py: 0.5
             }}
           >
-            <Grid
-              container
-            >
-              <Grid
-                item
-                md={4}
-                xs={12}
-              >
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  <FaIcons.FaUserShield />
-                  {' '}
-                  Role
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FaIcons.FaUserShield /> Role
                 </Typography>
               </Grid>
-              <Grid
-                item
-                md={8}
-                xs={12}
-              >
-
-                <Typography
-                  color="textPrimary"
-                  variant="body2"
-                >
-                  <Label color={notebook.userRoleForNotebook === 'Creator' ? 'primary' : 'info'}>
+              <Grid item md={8} xs={12}>
+                <Typography color="textPrimary" variant="body2">
+                  <Label
+                    color={
+                      notebook.userRoleForNotebook === 'Creator'
+                        ? 'primary'
+                        : 'info'
+                    }
+                  >
                     {notebook.userRoleForNotebook || '-'}
                   </Label>
                 </Typography>
@@ -125,28 +107,13 @@ const NotebookListItem = (props) => {
               py: 0.5
             }}
           >
-            <Grid
-              container
-            >
-              <Grid
-                item
-                md={4}
-                xs={12}
-              >
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  <FaIcons.FaUsersCog />
-                  {' '}
-                  Team
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FaIcons.FaUsersCog /> Team
                 </Typography>
               </Grid>
-              <Grid
-                item
-                md={8}
-                xs={12}
-              >
+              <Grid item md={8} xs={12}>
                 <Typography
                   color="textPrimary"
                   variant="body2"
@@ -159,11 +126,12 @@ const NotebookListItem = (props) => {
                     WebkitLineClamp: 2
                   }}
                 >
-                  <Tooltip title={notebook.SamlAdminGroupName || '-'}><span>{notebook.SamlAdminGroupName || '-'}</span></Tooltip>
+                  <Tooltip title={notebook.SamlAdminGroupName || '-'}>
+                    <span>{notebook.SamlAdminGroupName || '-'}</span>
+                  </Tooltip>
                 </Typography>
               </Grid>
             </Grid>
-
           </Box>
           <Box
             sx={{
@@ -171,32 +139,14 @@ const NotebookListItem = (props) => {
               py: 0.5
             }}
           >
-            <Grid
-              container
-            >
-              <Grid
-                item
-                md={4}
-                xs={12}
-              >
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  <FaIcons.FaAws />
-                  {' '}
-                  Account
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FaIcons.FaAws /> Account
                 </Typography>
               </Grid>
-              <Grid
-                item
-                md={8}
-                xs={6}
-              >
-                <Typography
-                  color="textPrimary"
-                  variant="body2"
-                >
+              <Grid item md={8} xs={6}>
+                <Typography color="textPrimary" variant="body2">
                   {notebook.environment.AwsAccountId}
                 </Typography>
               </Grid>
@@ -208,32 +158,14 @@ const NotebookListItem = (props) => {
               py: 0.5
             }}
           >
-            <Grid
-              container
-            >
-              <Grid
-                item
-                md={4}
-                xs={12}
-              >
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  <FaIcons.FaGlobe />
-                  {' '}
-                  Region
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FaIcons.FaGlobe /> Region
                 </Typography>
               </Grid>
-              <Grid
-                item
-                md={8}
-                xs={12}
-              >
-                <Typography
-                  color="textPrimary"
-                  variant="body2"
-                >
+              <Grid item md={8} xs={12}>
+                <Typography color="textPrimary" variant="body2">
                   {notebook.environment.region}
                 </Typography>
               </Grid>
@@ -245,32 +177,14 @@ const NotebookListItem = (props) => {
               py: 0.5
             }}
           >
-            <Grid
-              container
-            >
-              <Grid
-                item
-                md={4}
-                xs={12}
-              >
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  <FiIcons.FiActivity />
-                  {' '}
-                  Status
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FiIcons.FiActivity /> Status
                 </Typography>
               </Grid>
-              <Grid
-                item
-                md={8}
-                xs={12}
-              >
-                <Typography
-                  color="textPrimary"
-                  variant="body2"
-                >
+              <Grid item md={8} xs={12}>
+                <Typography color="textPrimary" variant="body2">
                   <StackStatus status={notebook.stack.status} />
                 </Typography>
               </Grid>

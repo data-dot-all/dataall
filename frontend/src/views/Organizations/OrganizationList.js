@@ -1,7 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Button, Card, Container, Grid, Input, Link, Pagination, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Card,
+  Container,
+  Grid,
+  Input,
+  Link,
+  Pagination,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -22,20 +33,16 @@ const OrganizationList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listOrganizations({ filter: {
-      ...filter,
-      roles: ['Admin', 'Owner', 'Member']
-    } }));
+    const response = await client.query(listOrganizations(filter));
     if (!response.errors) {
-      const nodes = response.data.listOrganizations.nodes.map((org) => ({
-        ...org
-      }));
-      setItems({ ...items, ...response.data.listOrganizations, nodes });
+      setItems(response.data.listOrganizations);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -43,7 +50,7 @@ const OrganizationList = () => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
+    if (event.code === 'Enter') {
       fetchItems();
     }
   };
@@ -56,9 +63,11 @@ const OrganizationList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <>
@@ -80,10 +89,7 @@ const OrganizationList = () => {
             spacing={3}
           >
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Organizations
               </Typography>
               <Breadcrumbs
@@ -92,6 +98,7 @@ const OrganizationList = () => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console"
@@ -100,6 +107,7 @@ const OrganizationList = () => {
                   Admin
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/organizations"
@@ -160,36 +168,34 @@ const OrganizationList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <OrganizationListItem
-                        key={node.organizationUri}
-                        organization={node}
-                      />
-                    ))}
-                  </Grid>
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      mt: 6
-                    }}
-                  >
-                    <Pagination
-                      count={items.pages}
-                      page={items.page}
-                      onChange={handlePageChange}
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <OrganizationListItem
+                      key={node.organizationUri}
+                      organization={node}
                     />
-                  </Box>
+                  ))}
+                </Grid>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mt: 6
+                  }}
+                >
+                  <Pagination
+                    count={items.pages}
+                    page={items.page}
+                    onChange={handlePageChange}
+                  />
                 </Box>
-              )}
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

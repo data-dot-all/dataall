@@ -1,7 +1,14 @@
 import { memo, useRef, useState } from 'react';
-import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@material-ui/core';
-import RefreshIcon from '@material-ui/icons/Refresh';
-import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
+import {
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip
+} from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PropTypes from 'prop-types';
 
 const RefreshTableMenu = ({ refresh }) => {
@@ -19,10 +26,7 @@ const RefreshTableMenu = ({ refresh }) => {
   return (
     <>
       <Tooltip title="More options">
-        <IconButton
-          onClick={handleMenuOpen}
-          ref={anchorRef}
-        >
+        <IconButton onClick={handleMenuOpen} ref={anchorRef}>
           <MoreHorizIcon fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -45,7 +49,11 @@ const RefreshTableMenu = ({ refresh }) => {
           vertical: 'top'
         }}
       >
-        <MenuItem onClick={() => { refresh(); }}>
+        <MenuItem
+          onClick={() => {
+            refresh();
+          }}
+        >
           <ListItemIcon>
             <RefreshIcon />
           </ListItemIcon>

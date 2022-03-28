@@ -11,7 +11,7 @@ import {
   MenuItem,
   Popover,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import useAuth from '../../hooks/useAuth';
 import TextAvatar from '../TextAvatar';
 import useGroups from '../../hooks/useGroups';
@@ -78,35 +78,25 @@ const AccountPopover = () => {
         }}
       >
         <Box sx={{ p: 2 }}>
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             {user?.name}
           </Typography>
         </Box>
         <Divider />
         <Box sx={{ mt: 2 }}>
-          {groups && groups.indexOf('DAAdministrators') !== -1
-          && (
-          <MenuItem
-            component={RouterLink}
-            to="/console/administration"
-          >
-            <ListItemIcon>
-              <Cog fontSize="small" />
-            </ListItemIcon>
-            <ListItemText
-              primary={(
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
-                  Admin Settings
-                </Typography>
-              )}
-            />
-          </MenuItem>
+          {groups && groups.indexOf('DAAdministrators') !== -1 && (
+            <MenuItem component={RouterLink} to="/console/administration">
+              <ListItemIcon>
+                <Cog fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography color="textPrimary" variant="subtitle2">
+                    Admin Settings
+                  </Typography>
+                }
+              />
+            </MenuItem>
           )}
         </Box>
         <Box sx={{ p: 2 }}>

@@ -1,8 +1,8 @@
 import { Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Box, Button, Container, Typography } from '@material-ui/core';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { useTheme } from '@material-ui/core/styles';
+import { Box, Button, Container, Typography } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/styles';
 
 const NotFound = () => {
   const theme = useTheme();
@@ -37,9 +37,8 @@ const NotFound = () => {
             sx={{ mt: 0.5 }}
             variant="subtitle2"
           >
-            You either tried some shady route or you
-            came here by mistake. Whichever it is, try using the
-            navigation.
+            You either tried some shady route or you came here by mistake.
+            Whichever it is, try using the navigation.
           </Typography>
           <Box
             sx={{

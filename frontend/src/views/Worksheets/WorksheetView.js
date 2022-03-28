@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   Box,
@@ -13,11 +13,13 @@ import {
   TextField,
   Tooltip,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CgHashtag, FaTrash, VscSymbolString } from 'react-icons/all';
-import { PlayArrowOutlined, SaveOutlined } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+import { CgHashtag } from 'react-icons/cg';
+import { FaTrash } from 'react-icons/fa';
+import { VscSymbolString } from 'react-icons/vsc';
+import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { useDispatch } from '../../store';
 import * as WorksheetApi from '../../api/Worksheet';
@@ -48,7 +50,9 @@ const WorksheetView = () => {
   const [worksheet, setWorksheet] = useState({ worksheetUri: '' });
   const [results, setResults] = useState({ rows: [], fields: [] });
   const [loading, setLoading] = useState(true);
-  const [sqlBody, setSqlBody] = useState(" select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb ");
+  const [sqlBody, setSqlBody] = useState(
+    " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
+  );
   const [currentEnv, setCurrentEnv] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
@@ -75,88 +79,135 @@ const WorksheetView = () => {
     setIsDeleteWorksheetOpen(false);
   };
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoadingEnvs(true);
-    const response = await client.query(listEnvironments({ filter: Defaults.DefaultFilter }));
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.DefaultFilter })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoadingEnvs(false);
-  };
+  }, [client, dispatch]);
 
-  const fetchDatabases = async (environment) => {
-    setLoadingDatabases(true);
-    let ownedDatabases = [];
-    let sharedWithDatabases = [];
-    let response = await client.query(listDatasetsCreatedInEnvironment({
-      environmentUri: environment.environmentUri,
-      filter: Defaults.SelectListFilter
-    }));
-    if (response.errors) {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    if (response.data.listDatasetsCreatedInEnvironment.nodes) {
-      ownedDatabases = response.data.listDatasetsCreatedInEnvironment.nodes?.map((d) => ({
-        ...d,
-        value: d.datasetUri,
-        label: d.GlueDatabaseName
-      }));
-    }
-    response = await client.query(searchEnvironmentDataItems({
-      environmentUri: environment.environmentUri,
-      filter: {
-        page: 1,
-        pageSize: 10000,
-        term: '',
-        itemTypes: 'DatasetTable'
+  const fetchDatabases = useCallback(
+    async (environment) => {
+      setLoadingDatabases(true);
+      let ownedDatabases = [];
+      let sharedWithDatabases = [];
+      let response = await client.query(
+        listDatasetsCreatedInEnvironment({
+          environmentUri: environment.environmentUri,
+          filter: Defaults.SelectListFilter
+        })
+      );
+      if (response.errors) {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-    }));
-    if (response.errors) {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    if (response.data.searchEnvironmentDataItems.nodes) {
-      sharedWithDatabases = response.data.searchEnvironmentDataItems.nodes.map((d) => ({
-        datasetUri: d.datasetUri,
-        value: d.datasetUri,
-        label: `${d.GlueDatabaseName}shared`,
-        GlueDatabaseName: `${d.GlueDatabaseName}shared`
-      }));
-    }
-    setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
-    setLoadingDatabases(false);
-  };
-  const fetchTables = async (dataset) => {
-    setLoadingTables(true);
-    const response = await client.query(listDatasetTables({ datasetUri: dataset.datasetUri,
-      filter: Defaults.SelectListFilter }));
-    if (!response.errors) {
-      setTableOptions(response.data.getDataset.tables.nodes.map((t) => ({ ...t, value: t.tableUri, label: t.GlueTableName })));
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoadingTables(false);
-  };
-  const fetchColumns = async (table) => {
-    setLoadingColumns(true);
-    const response = await client.query(listDatasetTableColumns({ tableUri: table.tableUri,
-      filter: Defaults.SelectListFilter }));
-    if (!response.errors) {
-      setColumns(response.data.listDatasetTableColumns.nodes.map((c) => ({ ...c, value: c.columnUri, label: c.name })));
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoadingColumns(false);
-  };
-  const saveWorksheet = async () => {
-    const response = await client.mutate(updateWorksheet({ worksheetUri: worksheet.worksheetUri,
-      input: {
-        label: worksheet.label,
-        sqlBody,
-        description: worksheet.description,
-        tags: worksheet.tags
-      } }));
+      if (response.data.listDatasetsCreatedInEnvironment.nodes) {
+        ownedDatabases =
+          response.data.listDatasetsCreatedInEnvironment.nodes?.map((d) => ({
+            ...d,
+            value: d.datasetUri,
+            label: d.GlueDatabaseName
+          }));
+      }
+      response = await client.query(
+        searchEnvironmentDataItems({
+          environmentUri: environment.environmentUri,
+          filter: {
+            page: 1,
+            pageSize: 10000,
+            term: '',
+            itemTypes: 'DatasetTable'
+          }
+        })
+      );
+      if (response.errors) {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      if (response.data.searchEnvironmentDataItems.nodes) {
+        sharedWithDatabases =
+          response.data.searchEnvironmentDataItems.nodes.map((d) => ({
+            datasetUri: d.datasetUri,
+            value: d.datasetUri,
+            label: `${d.GlueDatabaseName}shared`,
+            GlueDatabaseName: `${d.GlueDatabaseName}shared`
+          }));
+      }
+      setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
+      setLoadingDatabases(false);
+    },
+    [client, dispatch]
+  );
+  const fetchTables = useCallback(
+    async (dataset) => {
+      setLoadingTables(true);
+      const response = await client.query(
+        listDatasetTables({
+          datasetUri: dataset.datasetUri,
+          filter: Defaults.SelectListFilter
+        })
+      );
+      if (!response.errors) {
+        setTableOptions(
+          response.data.getDataset.tables.nodes.map((t) => ({
+            ...t,
+            value: t.tableUri,
+            label: t.GlueTableName
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      setLoadingTables(false);
+    },
+    [client, dispatch]
+  );
+  const fetchColumns = useCallback(
+    async (table) => {
+      setLoadingColumns(true);
+      const response = await client.query(
+        listDatasetTableColumns({
+          tableUri: table.tableUri,
+          filter: Defaults.SelectListFilter
+        })
+      );
+      if (!response.errors) {
+        setColumns(
+          response.data.listDatasetTableColumns.nodes.map((c) => ({
+            ...c,
+            value: c.columnUri,
+            label: c.name
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      setLoadingColumns(false);
+    },
+    [client, dispatch]
+  );
+  const saveWorksheet = useCallback(async () => {
+    const response = await client.mutate(
+      updateWorksheet({
+        worksheetUri: worksheet.worksheetUri,
+        input: {
+          label: worksheet.label,
+          sqlBody,
+          description: worksheet.description,
+          tags: worksheet.tags
+        }
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Worksheet saved', {
         anchorOrigin: {
@@ -168,20 +219,25 @@ const WorksheetView = () => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch, enqueueSnackbar, worksheet, sqlBody]);
 
-  const runQuery = async () => {
+  const runQuery = useCallback(async () => {
     try {
       setRunningQuery(true);
-      const response = await client.query(runSqlQuery({
-        environmentUri: currentEnv.environmentUri,
-        sqlQuery: sqlBody
-      }));
+      const response = await client.query(
+        runSqlQuery({
+          environmentUri: currentEnv.environmentUri,
+          sqlQuery: sqlBody
+        })
+      );
       if (!response.errors) {
         const athenaResults = response.data.runAthenaSqlQuery;
         setResults({
           rows: athenaResults.rows.map((c, index) => ({ ...c, id: index })),
-          columns: athenaResults.columns.map((c, index) => ({ ...c, id: index }))
+          columns: athenaResults.columns.map((c, index) => ({
+            ...c,
+            id: index
+          }))
         });
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -191,9 +247,11 @@ const WorksheetView = () => {
     } finally {
       setRunningQuery(false);
     }
-  };
-  const deleteWorksheet = async () => {
-    const response = await client.mutate(WorksheetApi.deleteWorksheet(worksheet.worksheetUri));
+  }, [client, dispatch, currentEnv, sqlBody]);
+  const deleteWorksheet = useCallback(async () => {
+    const response = await client.mutate(
+      WorksheetApi.deleteWorksheet(worksheet.worksheetUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Worksheet deleted', {
         anchorOrigin: {
@@ -206,8 +264,8 @@ const WorksheetView = () => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
-  const fetchWorksheet = async () => {
+  }, [client, dispatch, enqueueSnackbar, navigate, worksheet]);
+  const fetchWorksheet = useCallback(async () => {
     setLoading(true);
     const response = await client.query(WorksheetApi.getWorksheet(params.uri));
     if (!response.errors) {
@@ -218,13 +276,17 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, params.uri, dispatch]);
   useEffect(() => {
     if (client) {
-      fetchWorksheet().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchWorksheet().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, fetchWorksheet, fetchEnvironments, dispatch]);
 
   function handleEnvironmentChange(event) {
     setColumns([]);
@@ -233,7 +295,9 @@ const WorksheetView = () => {
     setDatabaseOptions([]);
     setTableOptions([]);
     setCurrentEnv(event.target.value);
-    fetchDatabases(event.target.value).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    fetchDatabases(event.target.value).catch((e) =>
+      dispatch({ type: SET_ERROR, error: e.message })
+    );
   }
 
   function handleDatabaseChange(event) {
@@ -241,14 +305,20 @@ const WorksheetView = () => {
     setTableOptions([]);
     setSelectedTable('');
     setSelectedDatabase(event.target.value);
-    fetchTables(event.target.value).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    fetchTables(event.target.value).catch((e) =>
+      dispatch({ type: SET_ERROR, error: e.message })
+    );
   }
 
   function handleTableChange(event) {
     setColumns([]);
     setSelectedTable(event.target.value);
-    fetchColumns(event.target.value).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-    setSqlBody(`SELECT * FROM "${selectedDatabase.GlueDatabaseName}"."${event.target.value.GlueTableName}" limit 10;`);
+    fetchColumns(event.target.value).catch((e) =>
+      dispatch({ type: SET_ERROR, error: e.message })
+    );
+    setSqlBody(
+      `SELECT * FROM "${selectedDatabase.GlueDatabaseName}"."${event.target.value.GlueTableName}" limit 10;`
+    );
   }
 
   if (loading) {
@@ -298,10 +368,7 @@ const WorksheetView = () => {
                       endAdornment: (
                         <>
                           {loadingEnvs ? (
-                            <CircularProgress
-                              color="inherit"
-                              size={20}
-                            />
+                            <CircularProgress color="inherit" size={20} />
                           ) : null}
                         </>
                       )
@@ -332,26 +399,20 @@ const WorksheetView = () => {
                       endAdornment: (
                         <>
                           {loadingDatabases ? (
-                            <CircularProgress
-                              color="inherit"
-                              size={20}
-                            />
+                            <CircularProgress color="inherit" size={20} />
                           ) : null}
                         </>
                       )
                     }}
                   >
-                    {databaseOptions.length > 0 ? databaseOptions.map((database) => (
-                      <MenuItem
-                        key={database.datasetUri}
-                        value={database}
-                      >
-                        {database.label}
-                      </MenuItem>
-                    )) : (
-                      <MenuItem disabled>
-                        No databases found
-                      </MenuItem>
+                    {databaseOptions.length > 0 ? (
+                      databaseOptions.map((database) => (
+                        <MenuItem key={database.datasetUri} value={database}>
+                          {database.label}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No databases found</MenuItem>
                     )}
                   </TextField>
                 </Box>
@@ -370,74 +431,69 @@ const WorksheetView = () => {
                       endAdornment: (
                         <>
                           {loadingTables ? (
-                            <CircularProgress
-                              color="inherit"
-                              size={20}
-                            />
+                            <CircularProgress color="inherit" size={20} />
                           ) : null}
                         </>
                       )
                     }}
                   >
-                    {tableOptions.length > 0 ? tableOptions.map((table) => (
-                      <MenuItem
-                        key={table.tableUri}
-                        value={table}
-                      >
-                        {table.GlueTableName}
-                      </MenuItem>
-                    )) : (
-                      <MenuItem disabled>
-                        No tables found
-                      </MenuItem>
+                    {tableOptions.length > 0 ? (
+                      tableOptions.map((table) => (
+                        <MenuItem key={table.tableUri} value={table}>
+                          {table.GlueTableName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No tables found</MenuItem>
                     )}
                   </TextField>
                 </Box>
-                {loadingColumns ? <CircularProgress size={15} /> : (
+                {loadingColumns ? (
+                  <CircularProgress size={15} />
+                ) : (
                   <Box sx={{ p: 2 }}>
                     {columns && columns.length > 0 && (
-                    <Box>
-                      <Typography
-                        color="textSecondary"
-                        variant="subtitle2"
-                      >
-                        Columns
-                      </Typography>
-                      <List dense>
-                        {columns.map((col) => (
-                          <Box>
-                            <ListItem
-                              key={col.columnUri}
-                            >
-                              {col.typeName !== 'string' ? (
-                                <ListItemIcon>
-                                  <CgHashtag />
-                                </ListItemIcon>
-                              ) : <ListItemIcon><VscSymbolString /></ListItemIcon>}
-                              <Typography
-                                sx={{
-                                  width: '200px',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  WebkitBoxOrient: 'vertical',
-                                  WebkitLineClamp: 2
-                                }}
-                              >
-                                <Tooltip title={col.name}>
-                                  <Typography
-                                    color="textPrimary"
-                                    variant="subtitle2"
-                                  >
-                                    {col.name.substring(0, 22)}
-                                  </Typography>
-                                </Tooltip>
-                              </Typography>
-                            </ListItem>
-                          </Box>
-                        ))}
-                      </List>
-                    </Box>
+                      <Box>
+                        <Typography color="textSecondary" variant="subtitle2">
+                          Columns
+                        </Typography>
+                        <List dense>
+                          {columns.map((col) => (
+                            <Box>
+                              <ListItem key={col.columnUri}>
+                                {col.typeName !== 'string' ? (
+                                  <ListItemIcon>
+                                    <CgHashtag />
+                                  </ListItemIcon>
+                                ) : (
+                                  <ListItemIcon>
+                                    <VscSymbolString />
+                                  </ListItemIcon>
+                                )}
+                                <Typography
+                                  sx={{
+                                    width: '200px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    WebkitBoxOrient: 'vertical',
+                                    WebkitLineClamp: 2
+                                  }}
+                                >
+                                  <Tooltip title={col.name}>
+                                    <Typography
+                                      color="textPrimary"
+                                      variant="subtitle2"
+                                    >
+                                      {col.name.substring(0, 22)}
+                                    </Typography>
+                                  </Tooltip>
+                                </Typography>
+                              </ListItem>
+                            </Box>
+                          ))}
+                        </List>
+                      </Box>
                     )}
                   </Box>
                 )}
@@ -464,36 +520,24 @@ const WorksheetView = () => {
             }}
           >
             <Box>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 {worksheet.label}
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 1 }} />
-            <IconButton
-              onClick={handleEditWorksheetModalOpen}
-            >
+            <IconButton onClick={handleEditWorksheetModalOpen}>
               <PencilAltIcon fontSize="small" />
             </IconButton>
-            <IconButton
-              onClick={saveWorksheet}
-            >
+            <IconButton onClick={saveWorksheet}>
               <SaveOutlined fontSize="small" />
             </IconButton>
-            <IconButton
-              onClick={handleDeleteWorksheetModalOpen}
-            >
+            <IconButton onClick={handleDeleteWorksheetModalOpen}>
               <FaTrash size={16} />
             </IconButton>
           </Box>
           <Divider />
           <Box sx={{ p: 2 }}>
-            <SQLQueryEditor
-              sql={sqlBody}
-              setSqlBody={setSqlBody}
-            />
+            <SQLQueryEditor sql={sqlBody} setSqlBody={setSqlBody} />
           </Box>
           <Divider />
           <Box
@@ -508,7 +552,7 @@ const WorksheetView = () => {
           >
             <LoadingButton
               disabled={!currentEnv?.value}
-              pending={runningQuery}
+              loading={runningQuery}
               color="primary"
               onClick={runQuery}
               startIcon={<PlayArrowOutlined fontSize="small" />}
@@ -520,10 +564,7 @@ const WorksheetView = () => {
           </Box>
           <Divider />
           <Box sx={{ p: 2 }}>
-            <WorksheetResult
-              results={results}
-              loading={runningQuery}
-            />
+            <WorksheetResult results={results} loading={runningQuery} />
           </Box>
         </Box>
       </Box>
@@ -537,14 +578,14 @@ const WorksheetView = () => {
         />
       )}
       {worksheet && isDeleteWorksheetOpen && (
-      <DeleteObjectWithFrictionModal
-        objectName={worksheet.label}
-        onApply={handleDeleteWorksheetModalClose}
-        onClose={handleDeleteWorksheetModalClose}
-        open={isDeleteWorksheetOpen}
-        deleteFunction={deleteWorksheet}
-        isAWSResource={false}
-      />
+        <DeleteObjectWithFrictionModal
+          objectName={worksheet.label}
+          onApply={handleDeleteWorksheetModalClose}
+          onClose={handleDeleteWorksheetModalClose}
+          open={isDeleteWorksheetOpen}
+          deleteFunction={deleteWorksheet}
+          isAWSResource={false}
+        />
       )}
     </>
   );

@@ -7,20 +7,20 @@ const addTablePermissions = ({ tableUri, role, userName }) => ({
     userName
   },
   mutation: gql`
-            mutation AddTablePermission(
-                $tableUri:String!,
-                $userName:String!
-                $role : DatasetRole!
-            ){
-                addTablePermission(
-                    tableUri:$tableUri,
-                    userName:$userName,
-                    role : $role
-                ){
-                    tableUri
-                }
-            }
-        `
+    mutation AddTablePermission(
+      $tableUri: String!
+      $userName: String!
+      $role: DatasetRole!
+    ) {
+      addTablePermission(
+        tableUri: $tableUri
+        userName: $userName
+        role: $role
+      ) {
+        tableUri
+      }
+    }
+  `
 });
 
 export default addTablePermissions;

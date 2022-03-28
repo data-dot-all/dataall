@@ -1,4 +1,13 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
@@ -13,18 +22,8 @@ const GlossaryListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={glossary.nodeUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={glossary.nodeUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={glossary.nodeUri} md={3} xs={12} {...props}>
+      <Card key={glossary.nodeUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -35,6 +34,7 @@ const GlossaryListItem = (props) => {
             <IconAvatar icon={<BsTag size={15} />} />
             <Box sx={{ ml: 2 }}>
               <Link
+                underline="hover"
                 component="button"
                 color="textPrimary"
                 variant="h6"
@@ -51,18 +51,13 @@ const GlossaryListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={glossary.label}><span>{glossary.label}</span></Tooltip>
+                <Tooltip title={glossary.label}>
+                  <span>{glossary.label}</span>
+                </Tooltip>
               </Link>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                by
-                {' '}
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+              <Typography color="textSecondary" variant="body2">
+                by{' '}
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   {glossary.owner}
                 </Link>
               </Typography>
@@ -75,28 +70,13 @@ const GlossaryListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
+            <Grid item md={8} xs={12}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -109,11 +89,12 @@ const GlossaryListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={glossary.admin || '-'}><span>{glossary.admin || '-'}</span></Tooltip>
+                <Tooltip title={glossary.admin || '-'}>
+                  <span>{glossary.admin || '-'}</span>
+                </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -121,32 +102,14 @@ const GlossaryListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <BsBookmark />
-                {' '}
-                Categories
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <BsBookmark /> Categories
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {glossary.stats.categories}
               </Typography>
             </Grid>
@@ -158,32 +121,14 @@ const GlossaryListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <BsTag />
-                {' '}
-                Terms
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <BsTag /> Terms
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
                 {glossary.stats.terms}
               </Typography>
             </Grid>

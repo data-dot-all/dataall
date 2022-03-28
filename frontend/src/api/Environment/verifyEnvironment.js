@@ -5,10 +5,10 @@ const checkEnvironment = (input) => ({
     input
   },
   query: gql`
-            query CheckEnvironment($input:AwsEnvironmentInput!){
-                checkEnvironment(input:$input)
-            }
-        `
+    query CheckEnvironment($input: AwsEnvironmentInput!) {
+      checkEnvironment(input: $input)
+    }
+  `
 });
 
 export default checkEnvironment;

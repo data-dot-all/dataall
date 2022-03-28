@@ -5,17 +5,17 @@ const getRedshiftClusterDatabaseCredentials = (clusterUri) => ({
     clusterUri
   },
   query: gql`
-            query getRedshiftClusterDatabaseCredentials($clusterUri:String!){
-                getRedshiftClusterDatabaseCredentials(clusterUri:$clusterUri){
-                     clusterUri
-                     user
-                     database
-                     port
-                     endpoint
-                     password
-                }
-            }
-        `
+    query getRedshiftClusterDatabaseCredentials($clusterUri: String!) {
+      getRedshiftClusterDatabaseCredentials(clusterUri: $clusterUri) {
+        clusterUri
+        user
+        database
+        port
+        endpoint
+        password
+      }
+    }
+  `
 });
 
 export default getRedshiftClusterDatabaseCredentials;

@@ -5,14 +5,16 @@ const shareWorksheet = ({ worksheetUri, input }) => ({
     worksheetUri,
     input
   },
-  mutation: gql`mutation ShareWorksheet(
-            $worksheetUri:String!,
-            $input: WorksheetShareInput!
-        ){
-            shareWorksheet(worksheetUri:$worksheetUri,input:$input){
-                worksheetShareUri
-            }
-        }`
+  mutation: gql`
+    mutation ShareWorksheet(
+      $worksheetUri: String!
+      $input: WorksheetShareInput!
+    ) {
+      shareWorksheet(worksheetUri: $worksheetUri, input: $input) {
+        worksheetShareUri
+      }
+    }
+  `
 });
 
 export default shareWorksheet;

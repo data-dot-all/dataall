@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -12,11 +12,11 @@ import {
   TableHead,
   TableRow,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
-import { PlayCircle } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+import { PlayCircle } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import Scrollbar from '../../components/Scrollbar';
@@ -36,23 +36,27 @@ const PipelineRuns = ({ pipeline }) => {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(null);
   const [outputs] = useState(JSON.parse(pipeline?.stack?.outputs));
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listSqlPipelineExecutions({
-      sqlPipelineUri: pipeline.sqlPipelineUri,
-      stage: 'prod'
-    }));
+    const response = await client.query(
+      listSqlPipelineExecutions({
+        sqlPipelineUri: pipeline.sqlPipelineUri,
+        stage: 'prod'
+      })
+    );
     if (!response.errors) {
       setItems(response.data.listSqlPipelineExecutions);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, pipeline.sqlPipelineUri]);
 
   const runPipeline = async () => {
     setRunning(true);
-    const response = await client.mutate(startDataProcessingPipeline(pipeline.sqlPipelineUri));
+    const response = await client.mutate(
+      startDataProcessingPipeline(pipeline.sqlPipelineUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Pipeline started successfully', {
         anchorOrigin: {
@@ -61,7 +65,9 @@ const PipelineRuns = ({ pipeline }) => {
         },
         variant: 'success'
       });
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -70,9 +76,11 @@ const PipelineRuns = ({ pipeline }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   return (
     <Box>
@@ -97,16 +105,10 @@ const PipelineRuns = ({ pipeline }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 State Machine
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 {outputs.PipelineNameOutput || '-'}
               </Typography>
             </div>
@@ -130,16 +132,10 @@ const PipelineRuns = ({ pipeline }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 CodeCommit
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 {pipeline.cloneUrlHttp}
               </Typography>
             </div>
@@ -156,18 +152,17 @@ const PipelineRuns = ({ pipeline }) => {
             }}
           >
             <div>
-              <Typography
-                color="textSecondary"
-                variant="overline"
-              >
+              <Typography color="textSecondary" variant="overline">
                 Status
               </Typography>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                <Label color={items?.nodes[0]?.status !== 'FAILED' ? 'success' : 'error'}>{items?.nodes[0]?.status}</Label>
-
+              <Typography color="textPrimary" variant="h5">
+                <Label
+                  color={
+                    items?.nodes[0]?.status !== 'FAILED' ? 'success' : 'error'
+                  }
+                >
+                  {items?.nodes[0]?.status}
+                </Label>
               </Typography>
             </div>
           </Grid>
@@ -176,11 +171,7 @@ const PipelineRuns = ({ pipeline }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
-            <Box>
-              Execution History
-            </Box>
-                    )}
+          title={<Box>Execution History</Box>}
         />
         <Divider />
         <Box
@@ -192,20 +183,10 @@ const PipelineRuns = ({ pipeline }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          />
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12} />
+          <Grid item md={2} sm={6} xs={12}>
             <LoadingButton
-              pending={running}
+              loading={running}
               color="primary"
               onClick={runPipeline}
               startIcon={<PlayCircle fontSize="small" />}
@@ -214,7 +195,6 @@ const PipelineRuns = ({ pipeline }) => {
             >
               Run Pipeline
             </LoadingButton>
-
           </Grid>
         </Box>
         <Scrollbar>
@@ -222,47 +202,36 @@ const PipelineRuns = ({ pipeline }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Execution ID
-                  </TableCell>
-                  <TableCell>
-                    Start Date
-                  </TableCell>
-                  <TableCell>
-                    End Date
-                  </TableCell>
-                  <TableCell>
-                    Status
-                  </TableCell>
+                  <TableCell>Execution ID</TableCell>
+                  <TableCell>Start Date</TableCell>
+                  <TableCell>End Date</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((item) => (
-                    <TableRow
-                      hover
-                      key={item.name}
-                    >
-                      <TableCell>
-                        {item.name}
-                      </TableCell>
-                      <TableCell>
-                        {item.startDate}
-                      </TableCell>
-                      <TableCell>
-                        {item.stopDate}
-                      </TableCell>
-                      <TableCell>
-                        <Label color={item.status !== 'FAILED' ? 'success' : 'error'}>{item.status}</Label>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No pipeline executions found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((item) => (
+                      <TableRow hover key={item.name}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.startDate}</TableCell>
+                        <TableCell>{item.stopDate}</TableCell>
+                        <TableCell>
+                          <Label
+                            color={
+                              item.status !== 'FAILED' ? 'success' : 'error'
+                            }
+                          >
+                            {item.status}
+                          </Label>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No pipeline executions found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

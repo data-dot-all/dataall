@@ -9,7 +9,7 @@ import {
   TextField,
   Tooltip,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { THEMES } from '../constants';
 import useSettings from '../hooks/useSettings';
 import Adjustments from '../icons/adjustments';
@@ -56,19 +56,15 @@ const SettingsDrawer = () => {
   return (
     <>
       <Tooltip title="Settings">
-        <IconButton
-          color="inherit"
-          onClick={handleOpen}
-        >
-          <Adjustments
-            fontSize="small"
-          />
+        <IconButton color="inherit" onClick={handleOpen}>
+          <Adjustments fontSize="small" />
         </IconButton>
       </Tooltip>
       <Drawer
         anchor="right"
         onClose={handleClose}
         open={open}
+        style={{ zIndex: 1250 }}
         PaperProps={{
           sx: {
             p: 2,
@@ -76,10 +72,7 @@ const SettingsDrawer = () => {
           }
         }}
       >
-        <Typography
-          color="textPrimary"
-          variant="h6"
-        >
+        <Typography color="textPrimary" variant="h6">
           Settings
         </Typography>
         <Box sx={{ mt: 3 }}>
@@ -94,10 +87,7 @@ const SettingsDrawer = () => {
             variant="outlined"
           >
             {Object.keys(THEMES).map((theme) => (
-              <option
-                key={theme}
-                value={theme}
-              >
+              <option key={theme} value={theme}>
                 {theme
                   .split('_')
                   .map((w) => w[0].toUpperCase() + w.substr(1).toLowerCase())
@@ -113,16 +103,18 @@ const SettingsDrawer = () => {
           }}
         >
           <FormControlLabel
-            control={(
+            control={
               <Switch
                 checked={values.isAdvancedMode}
                 color="primary"
                 edge="start"
                 name="isAdvancedMode"
-                onChange={(event) => handleChange('isAdvancedMode', !!event.target.checked)}
+                onChange={(event) =>
+                  handleChange('isAdvancedMode', !!event.target.checked)
+                }
               />
-            )}
-            label={(
+            }
+            label={
               <div>
                 Advanced UX
                 <Typography
@@ -133,7 +125,7 @@ const SettingsDrawer = () => {
                   Add advanced users menus and options
                 </Typography>
               </div>
-            )}
+            }
           />
         </Box>
         <Box
@@ -143,16 +135,18 @@ const SettingsDrawer = () => {
           }}
         >
           <FormControlLabel
-            control={(
+            control={
               <Switch
                 checked={values.tabIcons}
                 color="primary"
                 edge="start"
                 name="tabIcons"
-                onChange={(event) => handleChange('tabIcons', event.target.checked)}
+                onChange={(event) =>
+                  handleChange('tabIcons', event.target.checked)
+                }
               />
-                  )}
-            label={(
+            }
+            label={
               <div>
                 Tab Icons
                 <Typography
@@ -163,7 +157,7 @@ const SettingsDrawer = () => {
                   Show tabs icons
                 </Typography>
               </div>
-                  )}
+            }
           />
         </Box>
         <Box
@@ -173,16 +167,18 @@ const SettingsDrawer = () => {
           }}
         >
           <FormControlLabel
-            control={(
+            control={
               <Switch
                 checked={values.roundedCorners}
                 color="primary"
                 edge="start"
                 name="roundedCorners"
-                onChange={(event) => handleChange('roundedCorners', event.target.checked)}
+                onChange={(event) =>
+                  handleChange('roundedCorners', event.target.checked)
+                }
               />
-            )}
-            label={(
+            }
+            label={
               <div>
                 Rounded Corners
                 <Typography
@@ -193,7 +189,7 @@ const SettingsDrawer = () => {
                   Increase border radius
                 </Typography>
               </div>
-            )}
+            }
           />
         </Box>
         <Box sx={{ mt: 3 }}>

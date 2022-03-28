@@ -5,14 +5,16 @@ const listEnvironmentGroupInvitationPermissions = ({ environmentUri }) => ({
     environmentUri
   },
   query: gql`
-            query listEnvironmentGroupInvitationPermissions($environmentUri:String){
-                listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
-                    permissionUri
-                    name
-                    description
-                }
-            }
-        `
+    query listEnvironmentGroupInvitationPermissions($environmentUri: String) {
+      listEnvironmentGroupInvitationPermissions(
+        environmentUri: $environmentUri
+      ) {
+        permissionUri
+        name
+        description
+      }
+    }
+  `
 });
 
 export default listEnvironmentGroupInvitationPermissions;

@@ -4,11 +4,15 @@ const updateGroupEnvironmentPermissions = (input) => ({
   variables: {
     input
   },
-  mutation: gql`mutation updateGroupEnvironmentPermissions($input:InviteGroupOnEnvironmentInput!){
-            updateGroupEnvironmentPermissions(input:$input){
-                environmentUri
-            }
-        }`
+  mutation: gql`
+    mutation updateGroupEnvironmentPermissions(
+      $input: InviteGroupOnEnvironmentInput!
+    ) {
+      updateGroupEnvironmentPermissions(input: $input) {
+        environmentUri
+      }
+    }
+  `
 });
 
 export default updateGroupEnvironmentPermissions;

@@ -6,12 +6,22 @@ const requestLink = ({ nodeUri, targetUri, targetType }) => ({
     targetType,
     targetUri
   },
-  mutation: gql`mutation RequestLink($nodeUri:String!,$targetUri:String!,$targetType:String!){
-            requestLink(nodeUri:$nodeUri, targetUri:$targetUri,targetType:$targetType){
-                linkUri
-                created
-            }
-        }`
+  mutation: gql`
+    mutation RequestLink(
+      $nodeUri: String!
+      $targetUri: String!
+      $targetType: String!
+    ) {
+      requestLink(
+        nodeUri: $nodeUri
+        targetUri: $targetUri
+        targetType: $targetType
+      ) {
+        linkUri
+        created
+      }
+    }
+  `
 });
 
 export default requestLink;

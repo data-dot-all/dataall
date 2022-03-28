@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -15,11 +15,11 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { FaNetworkWired } from 'react-icons/all';
-import { LoadingButton } from '@material-ui/lab';
-import { DeleteOutlined } from '@material-ui/icons';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { FaNetworkWired } from 'react-icons/fa';
+import { LoadingButton } from '@mui/lab';
+import { DeleteOutlined } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -37,23 +37,11 @@ import deleteNetwork from '../../api/Vpc/deleteNetwork';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {
   return (
-    <TableRow
-      hover
-    >
+    <TableRow hover>
       <TableCell>
-        {vpc.label}
-        {' '}
-        {vpc.default && (
-        <Label
-          color="primary"
-        >
-          Default
-        </Label>
-        )}
+        {vpc.label} {vpc.default && <Label color="primary">Default</Label>}
       </TableCell>
-      <TableCell>
-        {vpc.VpcId}
-      </TableCell>
+      <TableCell>{vpc.VpcId}</TableCell>
       <TableCell>
         {vpc.privateSubnetIds && (
           <Box
@@ -95,7 +83,11 @@ function VpcRow({ vpc, deleteVpcNetwork }) {
         )}
       </TableCell>
       <TableCell>
-        <IconButton onClick={() => { deleteVpcNetwork(vpc.vpcUri); }}>
+        <IconButton
+          onClick={() => {
+            deleteVpcNetwork(vpc.vpcUri);
+          }}
+        >
           <DeleteOutlined fontSize="small" />
         </IconButton>
       </TableCell>
@@ -124,9 +116,14 @@ const EnvironmentNetworks = ({ environment }) => {
     setIsNetworkCreateOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
-      const response = await client.query(listEnvironmentNetworks({ environmentUri: environment.environmentUri, filter }));
+      const response = await client.query(
+        listEnvironmentNetworks({
+          environmentUri: environment.environmentUri,
+          filter
+        })
+      );
       if (!response.errors) {
         setItems({ ...response.data.listEnvironmentNetworks });
       } else {
@@ -137,7 +134,7 @@ const EnvironmentNetworks = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter, environment.environmentUri]);
 
   const deleteVpcNetwork = async (vpcUri) => {
     const response = await client.mutate(deleteNetwork({ vpcUri }));
@@ -149,7 +146,9 @@ const EnvironmentNetworks = ({ environment }) => {
         },
         variant: 'success'
       });
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -157,9 +156,11 @@ const EnvironmentNetworks = ({ environment }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -167,8 +168,10 @@ const EnvironmentNetworks = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -183,13 +186,11 @@ const EnvironmentNetworks = ({ environment }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
-              <FaNetworkWired style={{ marginRight: '10px' }} />
-              {' '}
-              Networks
+              <FaNetworkWired style={{ marginRight: '10px' }} /> Networks
             </Box>
-                    )}
+          }
         />
         <Divider />
         <Box
@@ -201,12 +202,7 @@ const EnvironmentNetworks = ({ environment }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -231,12 +227,7 @@ const EnvironmentNetworks = ({ environment }) => {
               />
             </Box>
           </Grid>
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={2} sm={6} xs={12}>
             <LoadingButton
               color="primary"
               onClick={handleNetworkCreateModalOpen}
@@ -253,63 +244,53 @@ const EnvironmentNetworks = ({ environment }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    VPC
-                  </TableCell>
-                  <TableCell>
-                    Private Subnets
-                  </TableCell>
-                  <TableCell>
-                    Public Subnets
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>VPC</TableCell>
+                  <TableCell>Private Subnets</TableCell>
+                  <TableCell>Public Subnets</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((vpc) => (
-                    <VpcRow
-                      vpc={vpc}
-                      environment={environment}
-                      fetchItems={fetchItems}
-                      deleteVpcNetwork={deleteVpcNetwork}
-                    />
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No VPC found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((vpc) => (
+                      <VpcRow
+                        vpc={vpc}
+                        environment={environment}
+                        fetchItems={fetchItems}
+                        deleteVpcNetwork={deleteVpcNetwork}
+                      />
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No VPC found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {!loading && items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>
       </Card>
       {isNetworkCreateOpen && (
-      <NetworkCreateModal
-        environment={environment}
-        onApply={handleNetworkCreateModalClose}
-        onClose={handleNetworkCreateModalClose}
-        reloadNetworks={fetchItems}
-        open={isNetworkCreateOpen}
-      />
+        <NetworkCreateModal
+          environment={environment}
+          onApply={handleNetworkCreateModalClose}
+          onClose={handleNetworkCreateModalClose}
+          reloadNetworks={fetchItems}
+          open={isNetworkCreateOpen}
+        />
       )}
     </Box>
   );

@@ -5,16 +5,18 @@ const updateCategory = ({ input, nodeUri }) => ({
     input,
     nodeUri
   },
-  mutation: gql`mutation UpdateCategory($nodeUri:String!,$input:UpdateCategoryInput){
-            updateCategory(nodeUri:$nodeUri, input:$input){
-                nodeUri
-                label
-                path
-                readme
-                created
-                owner
-            }
-        }`
+  mutation: gql`
+    mutation UpdateCategory($nodeUri: String!, $input: UpdateCategoryInput) {
+      updateCategory(nodeUri: $nodeUri, input: $input) {
+        nodeUri
+        label
+        path
+        readme
+        created
+        owner
+      }
+    }
+  `
 });
 
 export default updateCategory;

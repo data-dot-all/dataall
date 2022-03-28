@@ -4,11 +4,15 @@ const inviteGroupToOrganization = (input) => ({
   variables: {
     input
   },
-  mutation: gql`mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput!){
-            inviteGroupToOrganization(input:$input){
-                organizationUri
-            }
-        }`
+  mutation: gql`
+    mutation inviteGroupToOrganization(
+      $input: InviteGroupToOrganizationInput!
+    ) {
+      inviteGroupToOrganization(input: $input) {
+        organizationUri
+      }
+    }
+  `
 });
 
 export default inviteGroupToOrganization;

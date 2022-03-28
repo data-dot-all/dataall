@@ -6,13 +6,16 @@ const updateColumnDescription = ({ columnUri, input }) => ({
     input
   },
   mutation: gql`
-            mutation updateDatasetTableColumn($columnUri:String!,$input:DatasetTableColumnInput){
-                updateDatasetTableColumn(columnUri:$columnUri,input:$input){
-                    columnUri
-                    description
-                }
-            }
-        `
+    mutation updateDatasetTableColumn(
+      $columnUri: String!
+      $input: DatasetTableColumnInput
+    ) {
+      updateDatasetTableColumn(columnUri: $columnUri, input: $input) {
+        columnUri
+        description
+      }
+    }
+  `
 });
 
 export default updateColumnDescription;

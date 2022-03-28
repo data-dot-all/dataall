@@ -5,10 +5,10 @@ const generateEnvironmentAccessToken = ({ environmentUri }) => ({
     environmentUri
   },
   query: gql`
-            query GenerateEnvironmentAccessToken($environmentUri:String){
-                generateEnvironmentAccessToken(environmentUri:$environmentUri)
-            }
-        `
+    query GenerateEnvironmentAccessToken($environmentUri: String) {
+      generateEnvironmentAccessToken(environmentUri: $environmentUri)
+    }
+  `
 });
 
 export default generateEnvironmentAccessToken;

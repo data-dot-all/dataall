@@ -5,16 +5,18 @@ const updateWorksheet = ({ worksheetUri, input }) => ({
     worksheetUri,
     input
   },
-  mutation: gql`mutation UpdateWorksheet(
-            $worksheetUri:String!,
-            $input:UpdateWorksheetInput,
-        ){
-            updateWorksheet(worksheetUri:$worksheetUri,input:$input){
-                worksheetUri
-                label
-                created
-            }
-        }`
+  mutation: gql`
+    mutation UpdateWorksheet(
+      $worksheetUri: String!
+      $input: UpdateWorksheetInput
+    ) {
+      updateWorksheet(worksheetUri: $worksheetUri, input: $input) {
+        worksheetUri
+        label
+        created
+      }
+    }
+  `
 });
 
 export default updateWorksheet;

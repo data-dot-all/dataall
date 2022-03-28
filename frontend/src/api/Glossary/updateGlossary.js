@@ -5,16 +5,18 @@ const updateGlossary = ({ input, nodeUri }) => ({
     input,
     nodeUri
   },
-  mutation: gql`mutation UpdateGlossary($nodeUri:String!,$input:UpdateGlossaryInput){
-            updateGlossary(nodeUri:$nodeUri, input:$input){
-                nodeUri
-                label
-                path
-                readme
-                created
-                owner
-            }
-        }`
+  mutation: gql`
+    mutation UpdateGlossary($nodeUri: String!, $input: UpdateGlossaryInput) {
+      updateGlossary(nodeUri: $nodeUri, input: $input) {
+        nodeUri
+        label
+        path
+        readme
+        created
+        owner
+      }
+    }
+  `
 });
 
 export default updateGlossary;

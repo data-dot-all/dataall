@@ -1,4 +1,4 @@
-import createSvgIcon from '@material-ui/core/utils/createSvgIcon';
+import createSvgIcon from '@mui/material/utils/createSvgIcon';
 
 const Menu = createSvgIcon(
   <svg
@@ -11,7 +11,8 @@ const Menu = createSvgIcon(
       d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
       clipRule="evenodd"
     />
-  </svg>, 'Menu'
+  </svg>,
+  'Menu'
 );
 
 export default Menu;

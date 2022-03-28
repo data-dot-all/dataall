@@ -5,14 +5,16 @@ const startGlueCrawler = ({ datasetUri, input }) => ({
     datasetUri,
     input
   },
-  mutation: gql`mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
-            startGlueCrawler(datasetUri:$datasetUri,input:$input){
-                Name
-                AwsAccountId
-                region
-                status
-            }
-        }`
+  mutation: gql`
+    mutation StartGlueCrawler($datasetUri: String, $input: CrawlerInput) {
+      startGlueCrawler(datasetUri: $datasetUri, input: $input) {
+        Name
+        AwsAccountId
+        region
+        status
+      }
+    }
+  `
 });
 
 export default startGlueCrawler;

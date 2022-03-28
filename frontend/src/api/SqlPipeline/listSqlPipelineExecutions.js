@@ -6,24 +6,27 @@ const listSqlPipelineExecutions = ({ sqlPipelineUri, stage }) => ({
     stage
   },
   query: gql`
-            query ListSqlPipelineExecutions($sqlPipelineUri:String!,$stage:String){
-                listSqlPipelineExecutions(sqlPipelineUri:$sqlPipelineUri, stage:$stage){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        executionArn
-                        stateMachineArn
-                        name
-                        status
-                        startDate
-                        stopDate
-                    }
-                }
-            }
-        `
+    query ListSqlPipelineExecutions($sqlPipelineUri: String!, $stage: String) {
+      listSqlPipelineExecutions(
+        sqlPipelineUri: $sqlPipelineUri
+        stage: $stage
+      ) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          executionArn
+          stateMachineArn
+          name
+          status
+          startDate
+          stopDate
+        }
+      }
+    }
+  `
 });
 
 export default listSqlPipelineExecutions;

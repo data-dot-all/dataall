@@ -6,10 +6,13 @@ const getAuthorSession = (environmentUri, dashboardUri) => ({
     dashboardUri
   },
   query: gql`
-            query GetAuthorSession($environmentUri:String,$dashboardUri:String){
-                getAuthorSession(environmentUri:$environmentUri,dashboardUri:$dashboardUri)
-            }
-        `
+    query GetAuthorSession($environmentUri: String, $dashboardUri: String) {
+      getAuthorSession(
+        environmentUri: $environmentUri
+        dashboardUri: $dashboardUri
+      )
+    }
+  `
 });
 
 export default getAuthorSession;

@@ -5,13 +5,13 @@ const listTenantPermissions = (filter) => ({
     filter
   },
   query: gql`
-            query listTenantPermissions{
-            listTenantPermissions{
-                name
-                description
-            }
-        }
-        `
+    query listTenantPermissions {
+      listTenantPermissions {
+        name
+        description
+      }
+    }
+  `
 });
 
 export default listTenantPermissions;

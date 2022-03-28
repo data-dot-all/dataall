@@ -1,11 +1,20 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as FiIcons from 'react-icons/fi';
 import * as FaIcons from 'react-icons/fa';
 import * as BsIcons from 'react-icons/bs';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
-import { BsTable } from 'react-icons/all';
+import { BsTable } from 'react-icons/bs';
 import React from 'react';
 import IconAvatar from '../../components/IconAvatar';
 import StackStatus from '../../components/StackStatus';
@@ -18,27 +27,11 @@ const DatasetListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={dataset.datasetUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={dataset.datasetUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={dataset.datasetUri} md={3} xs={12} {...props}>
+      <Card key={dataset.datasetUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={11}
-              xs={11}
-            >
+          <Grid container>
+            <Grid item md={11} xs={11}>
               <Box
                 sx={{
                   alignItems: 'center',
@@ -48,6 +41,7 @@ const DatasetListItem = (props) => {
                 <IconAvatar icon={<FiIcons.FiPackage size={18} />} />
                 <Box sx={{ ml: 2 }}>
                   <Link
+                    underline="hover"
                     component="button"
                     color="textPrimary"
                     variant="h6"
@@ -64,15 +58,14 @@ const DatasetListItem = (props) => {
                       WebkitLineClamp: 2
                     }}
                   >
-                    <Tooltip title={dataset.label}><span>{dataset.label}</span></Tooltip>
+                    <Tooltip title={dataset.label}>
+                      <span>{dataset.label}</span>
+                    </Tooltip>
                   </Link>
-                  <Typography
-                    color="textSecondary"
-                    variant="body2"
-                  >
-                    by
-                    {' '}
+                  <Typography color="textSecondary" variant="body2">
+                    by{' '}
                     <Link
+                      underline="hover"
                       color="textPrimary"
                       variant="subtitle2"
                     >
@@ -102,9 +95,7 @@ const DatasetListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip
-              title={dataset.description || 'No description provided'}
-            >
+            <Tooltip title={dataset.description || 'No description provided'}>
               <span>{dataset.description || 'No description provided'}</span>
             </Tooltip>
           </Typography>
@@ -115,34 +106,22 @@ const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUserShield />
-                {' '}
-                Role
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> Role
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Label color={dataset.userRoleForDataset === 'Creator' ? 'primary' : 'info'}>
+            <Grid item md={8} xs={12}>
+              <Label
+                color={
+                  dataset.userRoleForDataset === 'Creator' ? 'primary' : 'info'
+                }
+              >
                 {dataset.userRoleForDataset || '-'}
               </Label>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -150,28 +129,13 @@ const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
+            <Grid item md={8} xs={12}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -184,15 +148,12 @@ const DatasetListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip
-                  title={dataset.SamlAdminGroupName || '-'}
-                >
+                <Tooltip title={dataset.SamlAdminGroupName || '-'}>
                   <span>{dataset.SamlAdminGroupName || '-'}</span>
                 </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -200,32 +161,14 @@ const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <BsTable />
-                {' '}
-                Tables
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <BsTable /> Tables
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {dataset.statistics.tables}
               </Typography>
             </Grid>
@@ -237,32 +180,14 @@ const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <BsIcons.BsFolder />
-                {' '}
-                Folders
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <BsIcons.BsFolder /> Folders
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {dataset.statistics.locations}
               </Typography>
             </Grid>
@@ -274,33 +199,17 @@ const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FiIcons.FiActivity />
-                {' '}
-                Status
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FiIcons.FiActivity /> Status
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
-                <StackStatus status={dataset.stack ? dataset.stack.status : 'NOT_FOUND'} />
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
+                <StackStatus
+                  status={dataset.stack ? dataset.stack.status : 'NOT_FOUND'}
+                />
               </Typography>
             </Grid>
           </Grid>

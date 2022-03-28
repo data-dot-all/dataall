@@ -5,22 +5,21 @@ const listTablePermissions = ({ tableUri }) => ({
     tableUri
   },
   query: gql`
-            query GetDatasetTable($tableUri:String!){
-                getDatasetTable(tableUri:$tableUri){
-                        tableUri
-                        userRoleForTable
-                        permissions{
-                            count
-                            nodes{
-                                userName
-                                userRoleForTable
-                                created
-                            }
-                        }
-
-                    }
-                }
-        `
+    query GetDatasetTable($tableUri: String!) {
+      getDatasetTable(tableUri: $tableUri) {
+        tableUri
+        userRoleForTable
+        permissions {
+          count
+          nodes {
+            userName
+            userRoleForTable
+            created
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listTablePermissions;

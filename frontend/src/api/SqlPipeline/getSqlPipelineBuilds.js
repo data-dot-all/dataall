@@ -5,19 +5,18 @@ const getSqlPipelineBuilds = (sqlPipelineUri) => ({
     sqlPipelineUri
   },
   query: gql`
-            query GetSqlPipeline($sqlPipelineUri:String!){
-                getSqlPipeline(sqlPipelineUri:$sqlPipelineUri){
-                    sqlPipelineUri
-                    builds{
-                        pipelineExecutionId
-                        status
-                        startTime
-                        lastUpdateTime
-                    }
-
-                }
-            }
-        `
+    query GetSqlPipeline($sqlPipelineUri: String!) {
+      getSqlPipeline(sqlPipelineUri: $sqlPipelineUri) {
+        sqlPipelineUri
+        builds {
+          pipelineExecutionId
+          status
+          startTime
+          lastUpdateTime
+        }
+      }
+    }
+  `
 });
 
 export default getSqlPipelineBuilds;

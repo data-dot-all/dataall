@@ -5,10 +5,12 @@ const removeTenantAdministrator = (input) => ({
     input
   },
   mutation: gql`
-            mutation updateGroupTenantPermissions($input:UpdateGroupTenantPermissionsInput!){
-                updateGroupTenantPermissions(input:$input)
-            }
-        `
+    mutation updateGroupTenantPermissions(
+      $input: UpdateGroupTenantPermissionsInput!
+    ) {
+      updateGroupTenantPermissions(input: $input)
+    }
+  `
 });
 
 export default removeTenantAdministrator;

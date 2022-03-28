@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
@@ -15,12 +15,12 @@ import {
   Switch,
   TextField,
   Typography
-} from '@material-ui/core';
-import Autocomplete from '@material-ui/lab/Autocomplete';
+} from '@mui/material';
+import Autocomplete from '@mui/lab/Autocomplete';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
-import { GroupAddOutlined } from '@material-ui/icons';
+import { LoadingButton } from '@mui/lab';
+import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -37,12 +37,22 @@ const OrganizationTeamInviteForm = (props) => {
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listOrganizationNotInvitedGroups({ organizationUri: organization.organizationUri }));
+      const response = await client.query(
+        listOrganizationNotInvitedGroups({
+          organizationUri: organization.organizationUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listOrganizationNotInvitedGroups.nodes.map((g) => ({ ...g, value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listOrganizationNotInvitedGroups.nodes.map((g) => ({
+            ...g,
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -51,32 +61,47 @@ const OrganizationTeamInviteForm = (props) => {
     } finally {
       setLoadingGroups(false);
     }
-  };
+  }, [client, dispatch, organization.organizationUri]);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
-      setPermissions([{ name: 'LINK_ENVIRONMENTS', description: 'Link environments to this organization' }, { name: 'INVITE_ENVIRONMENT_GROUP', description: 'Invite teams to this organization' }]);
+      setPermissions([
+        {
+          name: 'LINK_ENVIRONMENTS',
+          description: 'Link environments to this organization'
+        },
+        {
+          name: 'INVITE_ENVIRONMENT_GROUP',
+          description: 'Invite teams to this organization'
+        }
+      ]);
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
       setLoading(false);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     if (client) {
-      fetchGroups().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchGroups().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems, fetchGroups]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(inviteGroupToOrganization({
-        groupUri: values.groupUri,
-        organizationUri: organization.organizationUri
-      }));
+      const response = await client.mutate(
+        inviteGroupToOrganization({
+          groupUri: values.groupUri,
+          organizationUri: organization.organizationUri
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -114,14 +139,7 @@ const OrganizationTeamInviteForm = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="lg"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -129,25 +147,19 @@ const OrganizationTeamInviteForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Invite a team to organization
-          {' '}
-          {organization.label}
+          Invite a team to organization {organization.label}
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
-          A Team is a group from your identity provider that you are a member of. All members of that group will be able to access your organization.
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          A Team is a group from your identity provider that you are a member
+          of. All members of that group will be able to access your
+          organization.
         </Typography>
         {loadingGroups ? (
           <Card sx={{ mt: 2 }}>
             <CardContent>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
-                All your teams (IDP groups) are already invited to this organization.
+              <Typography color="textPrimary" variant="subtitle2">
+                All your teams (IDP groups) are already invited to this
+                organization.
               </Typography>
             </CardContent>
           </Card>
@@ -157,12 +169,15 @@ const OrganizationTeamInviteForm = (props) => {
               initialValues={{
                 groupUri: ''
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  groupUri: Yup.string().max(255).required('*Team name is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                groupUri: Yup.string()
+                  .max(255)
+                  .required('*Team name is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -175,9 +190,7 @@ const OrganizationTeamInviteForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                >
+                <form onSubmit={handleSubmit}>
                   <CardContent>
                     <Autocomplete
                       id="groupUri"
@@ -205,32 +218,31 @@ const OrganizationTeamInviteForm = (props) => {
                       <CardHeader title="Organization Permissions" />
                       <Divider />
                       <CardContent sx={{ ml: 2 }}>
-                        {permissions.length > 0 ? permissions.map((perm) => (
-                          <Box>
-                            <FormGroup>
-                              <FormControlLabel
-                                color="primary"
-                                control={(
-                                  <Switch
-                                    disabled
-                                    defaultChecked
-                                    color="primary"
-                                    edge="start"
-                                    name={perm.name}
-                                    value={perm.name}
-                                  />
-                                        )}
-                                label={perm.description}
-                                labelPlacement="end"
-                                value={perm.name}
-                              />
-                            </FormGroup>
-                          </Box>
-                        )) : (
-                          <Typography
-                            color="textPrimary"
-                            variant="subtitle2"
-                          >
+                        {permissions.length > 0 ? (
+                          permissions.map((perm) => (
+                            <Box>
+                              <FormGroup>
+                                <FormControlLabel
+                                  color="primary"
+                                  control={
+                                    <Switch
+                                      disabled
+                                      defaultChecked
+                                      color="primary"
+                                      edge="start"
+                                      name={perm.name}
+                                      value={perm.name}
+                                    />
+                                  }
+                                  label={perm.description}
+                                  labelPlacement="end"
+                                  value={perm.name}
+                                />
+                              </FormGroup>
+                            </Box>
+                          ))
+                        ) : (
+                          <Typography color="textPrimary" variant="subtitle2">
                             Failed to load permissions.
                           </Typography>
                         )}

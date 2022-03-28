@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
-import { Avatar } from '@material-ui/core';
+import { makeStyles } from '@mui/styles';
+import { Avatar } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
   primary: {
@@ -14,15 +14,7 @@ const useStyles = makeStyles((theme) => ({
 const IconAvatar = (props) => {
   const { icon } = props;
   const classes = useStyles();
-  return (
-    <>
-      {icon && (
-      <Avatar className={classes.primary}>
-        {icon}
-      </Avatar>
-      )}
-    </>
-  );
+  return <>{icon && <Avatar className={classes.primary}>{icon}</Avatar>}</>;
 };
 
 IconAvatar.propTypes = {

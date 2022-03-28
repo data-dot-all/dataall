@@ -5,10 +5,10 @@ const getDatasetSummary = (datasetUri) => ({
     datasetUri
   },
   query: gql`
-            query GetDatasetSummary($datasetUri:String!){
-                getDatasetSummary(datasetUri:$datasetUri)
-            }
-        `
+    query GetDatasetSummary($datasetUri: String!) {
+      getDatasetSummary(datasetUri: $datasetUri)
+    }
+  `
 });
 
 export default getDatasetSummary;

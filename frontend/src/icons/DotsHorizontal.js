@@ -1,4 +1,4 @@
-import createSvgIcon from '@material-ui/core/utils/createSvgIcon';
+import createSvgIcon from '@mui/material/utils/createSvgIcon';
 
 const DotsHorizontal = createSvgIcon(
   <svg
@@ -7,7 +7,8 @@ const DotsHorizontal = createSvgIcon(
     fill="currentColor"
   >
     <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-  </svg>, 'DotsHorizontal'
+  </svg>,
+  'DotsHorizontal'
 );
 
 export default DotsHorizontal;

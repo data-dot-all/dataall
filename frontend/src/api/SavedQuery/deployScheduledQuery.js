@@ -5,13 +5,10 @@ const deployScheduledQuery = (scheduledQueryUri) => ({
     scheduledQueryUri
   },
   mutation: gql`
-            mutation DeployScheduledQuery (
-                $scheduledQueryUri:String!){
-                deployScheduledQuery (
-                    scheduledQueryUri:$scheduledQueryUri
-                )
-            }
-        `
+    mutation DeployScheduledQuery($scheduledQueryUri: String!) {
+      deployScheduledQuery(scheduledQueryUri: $scheduledQueryUri)
+    }
+  `
 });
 
 export default deployScheduledQuery;

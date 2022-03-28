@@ -5,13 +5,18 @@ const updateOrganization = ({ organizationUri, input }) => ({
     organizationUri,
     input
   },
-  mutation: gql`mutation UpdateOrg($organizationUri:String,$input:ModifyOrganizationInput){
-            updateOrganization(organizationUri:$organizationUri,input:$input){
-                organizationUri
-                label
-                created
-            }
-        }`
+  mutation: gql`
+    mutation UpdateOrg(
+      $organizationUri: String
+      $input: ModifyOrganizationInput
+    ) {
+      updateOrganization(organizationUri: $organizationUri, input: $input) {
+        organizationUri
+        label
+        created
+      }
+    }
+  `
 });
 
 export default updateOrganization;

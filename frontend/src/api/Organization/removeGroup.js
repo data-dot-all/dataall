@@ -5,11 +5,19 @@ const removeGroupFromOrganization = ({ organizationUri, groupUri }) => ({
     organizationUri,
     groupUri
   },
-  mutation: gql`mutation removeGroupFromOrganization($organizationUri:String!,$groupUri:String!){
-            removeGroupFromOrganization(organizationUri:$organizationUri, groupUri:$groupUri){
-              organizationUri
-            }
-        }`
+  mutation: gql`
+    mutation removeGroupFromOrganization(
+      $organizationUri: String!
+      $groupUri: String!
+    ) {
+      removeGroupFromOrganization(
+        organizationUri: $organizationUri
+        groupUri: $groupUri
+      ) {
+        organizationUri
+      }
+    }
+  `
 });
 
 export default removeGroupFromOrganization;

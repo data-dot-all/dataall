@@ -5,10 +5,10 @@ const generateDatasetAccessToken = (datasetUri) => ({
     datasetUri
   },
   mutation: gql`
-            mutation GenerateDatasetAccessToken($datasetUri:String!){
-                generateDatasetAccessToken(datasetUri:$datasetUri)
-            }
-        `
+    mutation GenerateDatasetAccessToken($datasetUri: String!) {
+      generateDatasetAccessToken(datasetUri: $datasetUri)
+    }
+  `
 });
 
 export default generateDatasetAccessToken;

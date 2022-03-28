@@ -4,11 +4,13 @@ const startDatasetProfilingRun = ({ input }) => ({
   variables: {
     input
   },
-  mutation: gql`mutation startDatasetProfilingRun($input:StartDatasetProfilingRunInput!){
-            startDatasetProfilingRun(input:$input){
-                profilingRunUri
-            }
-        }`
+  mutation: gql`
+    mutation startDatasetProfilingRun($input: StartDatasetProfilingRunInput!) {
+      startDatasetProfilingRun(input: $input) {
+        profilingRunUri
+      }
+    }
+  `
 });
 
 export default startDatasetProfilingRun;

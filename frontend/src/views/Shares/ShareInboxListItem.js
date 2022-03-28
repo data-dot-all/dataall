@@ -1,8 +1,17 @@
-import { Box, Button, Card, CardHeader, Divider, Grid, Link, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  CardHeader,
+  Divider,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { BlockOutlined, CheckCircleOutlined } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import ShareStatus from '../../components/ShareStatus';
@@ -24,12 +33,11 @@ const ShareInboxListItem = (props) => {
   const [rejecting, setRejecting] = useState(false);
   const accept = async () => {
     setAccepting(true);
-    const response = await client
-      .mutate(
-        approveShareObject({
-          shareUri: share.shareUri
-        })
-      );
+    const response = await client.mutate(
+      approveShareObject({
+        shareUri: share.shareUri
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Share request approved', {
         anchorOrigin: {
@@ -47,12 +55,11 @@ const ShareInboxListItem = (props) => {
 
   const reject = async () => {
     setRejecting(true);
-    const response = await client
-      .mutate(
-        rejectShareObject({
-          shareUri: share.shareUri
-        })
-      );
+    const response = await client.mutate(
+      rejectShareObject({
+        shareUri: share.shareUri
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
@@ -75,18 +82,12 @@ const ShareInboxListItem = (props) => {
         mt: 2
       }}
     >
-      <Grid
-        container
-      >
-        <Grid
-          item
-          md={share.status === 'PendingApproval' ? 9 : 10}
-          xs={6}
-        >
+      <Grid container>
+        <Grid item md={share.status === 'PendingApproval' ? 9 : 10} xs={6}>
           <CardHeader
             avatar={<TextAvatar name={share.owner} />}
             disableTypography
-            subheader={(
+            subheader={
               <Box
                 sx={{
                   alignItems: 'center',
@@ -104,35 +105,26 @@ const ShareInboxListItem = (props) => {
                 >
                   <ShareStatus status={share.status} />
                 </Box>
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  | For
-                  {' '}
+                <Typography color="textSecondary" variant="body2">
+                  | For{' '}
                   <Link
+                    underline="hover"
                     component={RouterLink}
                     color="textPrimary"
                     variant="subtitle2"
                     to={`/console/datasets/${share.dataset.datasetUri}`}
                   >
                     {share.dataset.datasetName}
-                  </Link>
-                  {' '}
-                  |
-                  {' '}
-                  {share.created}
+                  </Link>{' '}
+                  | {share.created}
                 </Typography>
               </Box>
-            )}
-            title={(
-              <Link
-                color="textPrimary"
-                variant="subtitle2"
-              >
+            }
+            title={
+              <Link underline="hover" color="textPrimary" variant="subtitle2">
                 {share.owner}
               </Link>
-            )}
+            }
           />
           <Box
             sx={{
@@ -140,83 +132,74 @@ const ShareInboxListItem = (props) => {
               px: 3
             }}
           >
-            {share.status === 'Approved'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
+            {share.status === 'Approved' && (
+              <Typography color="textSecondary" variant="body1">
                 {`Dataset  ${share.dataset.datasetName} read access
-                  approved for the team ${share.principal.principalName || '-'}.`}
+                  approved for the team ${
+                    share.principal.principalName || '-'
+                  }.`}
               </Typography>
-              )}
-            {share.status === 'PendingApproval'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                  {`Approving will grant the team ${share.principal.principalName || '-'}
+            )}
+            {share.status === 'PendingApproval' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Approving will grant the team ${
+                  share.principal.principalName || '-'
+                }
                    read access on dataset ${share.dataset.datasetName}.`}
               </Typography>
-              )}
-            {share.status === 'Rejected'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                  {`Dataset ${share.dataset.datasetName} read access
-                  rejected for the team ${share.principal.principalName || '-'}.`}
+            )}
+            {share.status === 'Rejected' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Dataset ${share.dataset.datasetName} read access
+                  rejected for the team ${
+                    share.principal.principalName || '-'
+                  }.`}
               </Typography>
-              )}
-
+            )}
           </Box>
         </Grid>
-        <Grid
-          item
-          md={share.status === 'PendingApproval' ? 3 : 2}
-          xs={6}
-        >
-          {share.userRoleForShareObject === 'Approvers' && share.status === 'PendingApproval' && (
-            <Box sx={{ ml: 7 }}>
+        <Grid item md={share.status === 'PendingApproval' ? 3 : 2} xs={6}>
+          {share.userRoleForShareObject === 'Approvers' &&
+            share.status === 'PendingApproval' && (
+              <Box sx={{ ml: 7 }}>
+                <LoadingButton
+                  loading={accepting}
+                  color="success"
+                  startIcon={<CheckCircleOutlined />}
+                  sx={{ mt: 6, mb: 1, mr: 1 }}
+                  onClick={accept}
+                  type="button"
+                  variant="outlined"
+                >
+                  Approve
+                </LoadingButton>
+                <LoadingButton
+                  loading={rejecting}
+                  color="error"
+                  sx={{ mt: 6, mb: 1 }}
+                  startIcon={<BlockOutlined />}
+                  onClick={reject}
+                  type="button"
+                  variant="outlined"
+                >
+                  Reject
+                </LoadingButton>
+              </Box>
+            )}
+          {share.userRoleForShareObject === 'Approvers' &&
+            share.status === 'Approved' && (
               <LoadingButton
-                pending={accepting}
-                color="success"
-                startIcon={<CheckCircleOutlined />}
-                sx={{ mt: 6, mb: 1, mr: 1 }}
-                onClick={accept}
-                type="button"
-                variant="outlined"
-              >
-                Approve
-              </LoadingButton>
-              <LoadingButton
-                pending={rejecting}
+                loading={rejecting}
                 color="error"
-                sx={{ mt: 6, mb: 1 }}
                 startIcon={<BlockOutlined />}
+                sx={{ mt: 6, mb: 3 }}
                 onClick={reject}
                 type="button"
                 variant="outlined"
               >
                 Reject
               </LoadingButton>
-            </Box>
-          )}
-          {share.userRoleForShareObject === 'Approvers' && share.status === 'Approved' && (
-            <LoadingButton
-              pending={rejecting}
-              color="error"
-              startIcon={<BlockOutlined />}
-              sx={{ mt: 6, mb: 3 }}
-              onClick={reject}
-              type="button"
-              variant="outlined"
-            >
-              Reject
-            </LoadingButton>
-          )}
+            )}
         </Grid>
       </Grid>
       <Divider />

@@ -5,18 +5,20 @@ const startWorksheetQuery = ({ worksheetUri, input }) => ({
     worksheetUri,
     input
   },
-  mutation: gql`mutation StartWorksheetQuery(
-            $worksheetUri:String!,
-            $input:WorksheetQueryInput!,
-        ){
-            startWorksheetQuery(worksheetUri:$worksheetUri,input:$input){
-                AthenaQueryId
-                Error
-                Status
-                DataScannedInBytes
-                ElapsedTimeInMs
-            }
-        }`
+  mutation: gql`
+    mutation StartWorksheetQuery(
+      $worksheetUri: String!
+      $input: WorksheetQueryInput!
+    ) {
+      startWorksheetQuery(worksheetUri: $worksheetUri, input: $input) {
+        AthenaQueryId
+        Error
+        Status
+        DataScannedInBytes
+        ElapsedTimeInMs
+      }
+    }
+  `
 });
 
 export default startWorksheetQuery;

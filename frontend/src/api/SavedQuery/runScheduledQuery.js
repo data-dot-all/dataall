@@ -5,13 +5,10 @@ const runScheduledQuery = (scheduledQueryUri) => ({
     scheduledQueryUri
   },
   mutation: gql`
-            mutation RunScheduledQuery(
-                $scheduledQueryUri:String!){
-                runScheduledQuery(
-                    scheduledQueryUri:$scheduledQueryUri
-                )
-            }
-        `
+    mutation RunScheduledQuery($scheduledQueryUri: String!) {
+      runScheduledQuery(scheduledQueryUri: $scheduledQueryUri)
+    }
+  `
 });
 
 export default runScheduledQuery;

@@ -1,4 +1,4 @@
-import createSvgIcon from '@material-ui/core/utils/createSvgIcon';
+import createSvgIcon from '@mui/material/utils/createSvgIcon';
 
 const ArrowsExpand = createSvgIcon(
   <svg
@@ -13,7 +13,8 @@ const ArrowsExpand = createSvgIcon(
       strokeWidth={2}
       d="M3 8V4m0 0h4M3 4l4 4m8 0V4m0 0h-4m4 0l-4 4m-8 4v4m0 0h4m-4 0l4-4m8 4l-4-4m4 4v-4m0 4h-4"
     />
-  </svg>, 'ArrowsExpand'
+  </svg>,
+  'ArrowsExpand'
 );
 
 export default ArrowsExpand;

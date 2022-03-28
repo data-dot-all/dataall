@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { experimentalStyled } from '@material-ui/core/styles';
-import { Box, makeStyles } from '@material-ui/core';
+import { styled, makeStyles } from '@mui/styles';
+import { Box } from '@mui/material';
 import DefaultNavbar from './DefaultNavbar';
 import DefaultSidebar from './DefaultSidebar';
 import ErrorNotification from '../ErrorNotification';
 
-const DefaultLayoutRoot = experimentalStyled(Box)(({ theme }) => ({
+const DefaultLayoutRoot = styled(Box)(({ theme }) => ({
   ...(theme.palette.mode === 'light' && {
     backgroundColor: theme.palette.background.default,
     display: 'flex',
@@ -25,24 +25,24 @@ const DefaultLayoutRoot = experimentalStyled(Box)(({ theme }) => ({
   })
 }));
 
-const DefaultMain = experimentalStyled(Box)({
+const DefaultMain = styled(Box)({
   display: 'flex',
   flex: '1 1 auto',
   overflow: 'hidden'
 });
 
-const DefaultLayoutContainer = experimentalStyled(Box)({
+const DefaultLayoutContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column'
 });
 
-const DefaultLayoutContent = experimentalStyled(Box)({
+const DefaultLayoutContent = styled(Box)({
   flex: '1 1 auto',
   overflow: 'auto',
   WebkitOverflowScrolling: 'touch'
 });
 
-const DefaultLayoutWrapper = experimentalStyled(Box)({
+const DefaultLayoutWrapper = styled(Box)({
   display: 'flex',
   flex: '1 1 auto',
   overflow: 'scroll',
@@ -73,7 +73,9 @@ const DefaultLayout = () => {
           openDrawer={openDrawer}
           onOpenDrawerChange={setOpenDrawer}
         />
-        <DefaultLayoutWrapper className={openDrawer ? classes.defaultLayoutWrapper : null}>
+        <DefaultLayoutWrapper
+          className={openDrawer ? classes.defaultLayoutWrapper : null}
+        >
           <DefaultLayoutContainer>
             <DefaultLayoutContent>
               <ErrorNotification />

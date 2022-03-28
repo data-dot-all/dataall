@@ -5,10 +5,10 @@ const deleteApiKey = (ApiKeyId) => ({
     ApiKeyId
   },
   mutation: gql`
-            mutation DeleteApiKey($ApiKeyId:String!){
-                deleteApiKey(ApiKeyId:$ApiKeyId)
-            }
-        `
+    mutation DeleteApiKey($ApiKeyId: String!) {
+      deleteApiKey(ApiKeyId: $ApiKeyId)
+    }
+  `
 });
 
 export default deleteApiKey;

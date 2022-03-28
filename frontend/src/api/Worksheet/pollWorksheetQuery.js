@@ -5,29 +5,31 @@ const pollWorksheetQuery = ({ worksheetUri, AthenaQueryId }) => ({
     worksheetUri,
     AthenaQueryId
   },
-  query: gql`query  PollWorksheetQuery(
-            $worksheetUri:String!,
-            $AthenaQueryId : String!
-        ){
-            pollWorksheetQuery(worksheetUri:$worksheetUri,AthenaQueryId:$AthenaQueryId){
-                AthenaQueryId
-                Status
-                Error
-                ElapsedTimeInMs
-                DataScannedInBytes
-                rows{
-                    cells{
-                        value
-                        typeName
-                        columnName
-                    }
-                }
-                columns{
-                    columnName
-                    typeName
-                }
-            }
-        }`
+  query: gql`
+    query PollWorksheetQuery($worksheetUri: String!, $AthenaQueryId: String!) {
+      pollWorksheetQuery(
+        worksheetUri: $worksheetUri
+        AthenaQueryId: $AthenaQueryId
+      ) {
+        AthenaQueryId
+        Status
+        Error
+        ElapsedTimeInMs
+        DataScannedInBytes
+        rows {
+          cells {
+            value
+            typeName
+            columnName
+          }
+        }
+        columns {
+          columnName
+          typeName
+        }
+      }
+    }
+  `
 });
 
 export default pollWorksheetQuery;

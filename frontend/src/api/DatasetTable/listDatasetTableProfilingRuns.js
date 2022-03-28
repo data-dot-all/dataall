@@ -5,24 +5,24 @@ const listDatasetTableProfilingRuns = (tableUri) => ({
     tableUri
   },
   query: gql`
-            query listDatasetTableProfilingRuns($tableUri:String!){
-                listDatasetTableProfilingRuns(tableUri:$tableUri){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        profilingRunUri
-                        GlueJobRunId
-                        GlueTableName
-                        results
-                        created
-                        status
-                    }
-                }
-            }
-        `
+    query listDatasetTableProfilingRuns($tableUri: String!) {
+      listDatasetTableProfilingRuns(tableUri: $tableUri) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          profilingRunUri
+          GlueJobRunId
+          GlueTableName
+          results
+          created
+          status
+        }
+      }
+    }
+  `
 });
 
 export default listDatasetTableProfilingRuns;

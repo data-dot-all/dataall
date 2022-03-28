@@ -5,10 +5,10 @@ const getSqlPipelineCredsLinux = (sqlPipelineUri) => ({
     sqlPipelineUri
   },
   query: gql`
-            query GetSqlPipelineCredsLinux($sqlPipelineUri:String!){
-                getSqlPipelineCredsLinux(sqlPipelineUri:$sqlPipelineUri)
-            }
-        `
+    query GetSqlPipelineCredsLinux($sqlPipelineUri: String!) {
+      getSqlPipelineCredsLinux(sqlPipelineUri: $sqlPipelineUri)
+    }
+  `
 });
 
 export default getSqlPipelineCredsLinux;

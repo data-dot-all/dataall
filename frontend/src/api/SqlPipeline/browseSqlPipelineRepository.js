@@ -5,10 +5,10 @@ const browseSqlPipelineRepository = (input) => ({
     input
   },
   query: gql`
-            query BrowseSqlPipelineRepository($input:SqlPipelineBrowseInput!){
-                browseSqlPipelineRepository(input:$input)
-            }
-        `
+    query BrowseSqlPipelineRepository($input: SqlPipelineBrowseInput!) {
+      browseSqlPipelineRepository(input: $input)
+    }
+  `
 });
 
 export default browseSqlPipelineRepository;

@@ -31,6 +31,13 @@ export const baseThemeOptions = {
         }
       }
     },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none'
+        }
+      }
+    },
     MuiLinearProgress: {
       styleOverrides: {
         root: {
@@ -52,7 +59,8 @@ export const baseThemeOptions = {
     button: {
       fontWeight: 600
     },
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
     h1: {
       fontWeight: 600,
       fontSize: '3.5rem'

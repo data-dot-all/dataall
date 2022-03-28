@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Box, Grid } from '@material-ui/core';
+import { Box, Grid } from '@mui/material';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 import EnvironmentConsoleAccess from './EnvironmentConsoleAccess';
@@ -9,17 +9,8 @@ const EnvironmentOverview = (props) => {
   const { environment, ...other } = props;
 
   return (
-    <Grid
-      container
-      spacing={3}
-      {...other}
-    >
-      <Grid
-        item
-        lg={8}
-        xl={9}
-        xs={12}
-      >
+    <Grid container spacing={3} {...other}>
+      <Grid item lg={8} xl={9} xs={12}>
         <Box>
           <ObjectBrief
             uri={environment.environmentUri || '-'}
@@ -28,14 +19,11 @@ const EnvironmentOverview = (props) => {
             tags={environment.tags.length > 0 ? environment.tags : ['-']}
           />
         </Box>
-        <Box sx={{ mt: 3 }}><EnvironmentConsoleAccess environment={environment} /></Box>
+        <Box sx={{ mt: 3 }}>
+          <EnvironmentConsoleAccess environment={environment} />
+        </Box>
       </Grid>
-      <Grid
-        item
-        lg={4}
-        xl={3}
-        xs={12}
-      >
+      <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           accountId={environment.AwsAccountId}
           region={environment.region}
@@ -45,7 +33,9 @@ const EnvironmentOverview = (props) => {
           created={environment.created}
           status={environment.stack?.status}
         />
-        <Box sx={{ mt: 3 }}><EnvironmentFeatures environment={environment} /></Box>
+        <Box sx={{ mt: 3 }}>
+          <EnvironmentFeatures environment={environment} />
+        </Box>
       </Grid>
     </Grid>
   );

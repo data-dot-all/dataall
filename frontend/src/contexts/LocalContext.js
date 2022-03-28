@@ -40,7 +40,8 @@ const handlers = {
   })
 };
 
-const reducer = (state, action) => (handlers[action.type] ? handlers[action.type](state, action) : state);
+const reducer = (state, action) =>
+  handlers[action.type] ? handlers[action.type](state, action) : state;
 
 const LocalContext = createContext({
   ...initialState,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,13 +13,12 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { FaTrash } from 'react-icons/all';
+} from '@mui/material';
+import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { Info } from '@material-ui/icons';
-import LinkIcon from '@material-ui/icons/Link';
+import { Info } from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -34,24 +33,19 @@ import deleteGlossary from '../../api/Glossary/deleteGlossary';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Associations', value: 'associations', icon: <LinkIcon fontSize="small" /> }
+  {
+    label: 'Associations',
+    value: 'associations',
+    icon: <Link underline="hover" Icon fontSize="small" />
+  }
 ];
 
 function GlossaryViewPageHeader({ glossary, deleteFunction, isAdmin }) {
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
-          Glossary
-          {' '}
-          {glossary.label}
+        <Typography color="textPrimary" variant="h5">
+          Glossary {glossary.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
@@ -59,6 +53,7 @@ function GlossaryViewPageHeader({ glossary, deleteFunction, isAdmin }) {
           sx={{ mt: 1 }}
         >
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/glossaries"
@@ -67,6 +62,7 @@ function GlossaryViewPageHeader({ glossary, deleteFunction, isAdmin }) {
             Glossaries
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/glossaries/${glossary.nodeUri}`}
@@ -77,20 +73,20 @@ function GlossaryViewPageHeader({ glossary, deleteFunction, isAdmin }) {
         </Breadcrumbs>
       </Grid>
       {isAdmin && (
-      <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            startIcon={<FaTrash size={15} />}
-            sx={{ mt: 1 }}
-            onClick={deleteFunction}
-            type="button"
-            variant="outlined"
-          >
-            Delete
-          </Button>
-        </Box>
-      </Grid>
+        <Grid item>
+          <Box sx={{ m: -1 }}>
+            <Button
+              color="primary"
+              startIcon={<FaTrash size={15} />}
+              sx={{ mt: 1 }}
+              onClick={deleteFunction}
+              type="button"
+              variant="outlined"
+            >
+              Delete
+            </Button>
+          </Box>
+        </Grid>
       )}
     </Grid>
   );
@@ -122,24 +118,29 @@ const GlossaryView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getGlossary(params.uri));
     if (!response.errors && response.data.getGlossary !== null) {
-      setIsAdmin(response.data.getGlossary.owner === user.email || response.data.getGlossary.admin === user.email);
+      setIsAdmin(
+        response.data.getGlossary.owner === user.email ||
+          response.data.getGlossary.admin === user.email
+      );
       setGlossary(response.data.getGlossary);
     } else {
-      const error = response.errors ? response.errors[0].message : 'Glossary not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Glossary not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, user.email]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
@@ -193,7 +194,7 @@ const GlossaryView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -201,36 +202,35 @@ const GlossaryView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-            && (
-            <GlossaryManagement
-              glossary={glossary}
-              client={client}
-              isAdmin={isAdmin}
-            />
+            {currentTab === 'overview' && (
+              <GlossaryManagement
+                glossary={glossary}
+                client={client}
+                isAdmin={isAdmin}
+              />
             )}
-            {currentTab === 'associations'
-            && (
-            <GlossaryAssociations glossary={glossary} />
+            {currentTab === 'associations' && (
+              <GlossaryAssociations glossary={glossary} />
             )}
           </Box>
         </Container>
       </Box>
       {isDeleteObjectModalOpen && (
-      <DeleteObjectWithFrictionModal
-        objectName={glossary.label}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={deleteGlossaryNode}
-        isAWSResource={false}
-      />
+        <DeleteObjectWithFrictionModal
+          objectName={glossary.label}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={deleteGlossaryNode}
+          isAWSResource={false}
+        />
       )}
     </>
   );

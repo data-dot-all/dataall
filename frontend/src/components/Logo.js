@@ -1,13 +1,9 @@
-import { Box, CardMedia, Grid, Typography } from '@material-ui/core';
+import { Box, CardMedia, Grid, Typography } from '@mui/material';
 
 const Logo = () => (
   <>
-    <Grid
-      container
-    >
-      <Grid
-        item
-      >
+    <Grid container>
+      <Grid item>
         <Box sx={{ mt: 0.5 }}>
           <CardMedia
             src="/static/logo-dataall.svg"
@@ -19,14 +15,9 @@ const Logo = () => (
           />
         </Box>
       </Grid>
-      <Grid
-        item
-      >
-        <Typography
-          variant="h5"
-          color="#fff"
-        >
-            &nbsp;data.all
+      <Grid item>
+        <Typography variant="h5" color="#fff">
+          &nbsp;data.all
         </Typography>
       </Grid>
     </Grid>
