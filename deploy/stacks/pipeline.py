@@ -298,10 +298,15 @@ class PipelineStack(Stack):
                     f'Try a different envname than git_branch for it to work'
                 )
             if (
-                env.get("internet_facing") not in ["True","False"]
+                    env.get("internet_facing", True) not in [True, False]
+                    or env.get("with_approval", False) not in [True, False]
+                    or env.get("prod_sizing", False) not in [True, False]
+                    or env.get("enable_cw_canaries", False) not in [True, False]
+                    or env.get("enable_cw_rum", False) not in [True, False]
             ):
                 raise ValueError(
-                    f'internet_facing value not supported choose one of ["True","False"]'
+                    f'Data type not supported in one of cdk.json variables (internet_facing,with_approvalprod_sizing,enable_cw_canaries,enable_cw_rum) \n'
+                    f'Supported data type : Boolean'
                 )
         if len(resource_prefix) >= 20:
             raise ValueError(
