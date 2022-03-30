@@ -234,6 +234,16 @@ cdk deploy {resource_prefix}-{git_branch}-cicd-stack
 ```
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file.
 
+## 9. Login to Data.all
+
+Once your pipeline {resource_prefix}-pipeline-{git_branch} has finished successfully, Visit Data.all URL (Cloudfront URL if internet_facing to true, or your custom_domain if deployed in ECS)
+![Screenshot](assets/dataall-login-page.png#zoom#shadow)
+
+To login, you'll need to create a Cognito user in the Cognito Pool that has been created by Data.all, the user created need to have an email (mandatory). Log in with the newly created user to be redirected to your Data.all instance.
+![Screenshot](assets/dataall-first-page.png#zoom#shadow)
+
+Visit the user guide URL (can be found on Amazon Cloudfront console) that has been deployed as part of the CI/CD to start using Data.all.
+
 ## **Additional resources**
 
 **How does the `prod_sizing` field in `cdk.json` affect the architecture ?**

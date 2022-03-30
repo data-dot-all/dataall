@@ -5,6 +5,7 @@ nav:
     - Networking: networking.md
     - Deployment : deploy.md
     - Code Walkthrough: code.md
+    - FAQ: FAQ.md
 
 use_directory_urls: false
 

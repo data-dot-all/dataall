@@ -297,6 +297,17 @@ class PipelineStack(Stack):
                     f'account are the same in the same region with the same envname and git_branch.'
                     f'Try a different envname than git_branch for it to work'
                 )
+            if (
+                    env.get("internet_facing", True) not in [True, False]
+                    or env.get("with_approval", False) not in [True, False]
+                    or env.get("prod_sizing", False) not in [True, False]
+                    or env.get("enable_cw_canaries", False) not in [True, False]
+                    or env.get("enable_cw_rum", False) not in [True, False]
+            ):
+                raise ValueError(
+                    f'Data type not supported in one of cdk.json variables (internet_facing,with_approvalprod_sizing,enable_cw_canaries,enable_cw_rum) \n'
+                    f'Supported data type : Boolean'
+                )
         if len(resource_prefix) >= 20:
             raise ValueError(
                 f'Resource prefix {resource_prefix} '
