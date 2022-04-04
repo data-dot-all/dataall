@@ -1,4 +1,4 @@
-name: Coverage
+name: Validate DB migration
 
 on:
   workflow_dispatch:
@@ -10,6 +10,10 @@ on:
     branches:
     - main
     - release/*
+
+env:
+  envname: test
+  schema_name: schema_name
 
 jobs:
   run-tests:
@@ -38,5 +42,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - name: coverage
-        run: make coverage
+      - name: drop tables
+        run: make drop-tables
+      - name: drop tables
+        run: make upgrade-db
