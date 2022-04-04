@@ -133,7 +133,7 @@ def get_engine(envname=ENVNAME):
             'schema': schema,
         }
     else:
-        hostname = 'db' if envname == 'dkrcompose' else 'localhost'
+        hostname = 'db' if envname == 'dkrcompose' else os.getenv("POSTGRES_HOST", 'localhost')
         db_params = {
             'host': hostname,
             'port': '5432',
