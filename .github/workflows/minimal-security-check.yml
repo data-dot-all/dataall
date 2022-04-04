@@ -2,9 +2,9 @@ name: "Minimal Security checks"
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-    - feature/*
+#  push:
+#    branches:
+#    - feature/*
   pull_request:
     branches:
     - main

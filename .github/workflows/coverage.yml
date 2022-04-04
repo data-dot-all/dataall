@@ -13,9 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: python:3
     services:
-      postgres:
+      localhost:
         image: postgres
         env:
           POSTGRES_DB: dataall
