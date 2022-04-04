@@ -12,8 +12,8 @@ on:
     - release/*
 
 env:
-  envname: test
-  schema_name: schema_name
+  envname: local
+  schema_name: validation
 
 jobs:
   run-tests:
