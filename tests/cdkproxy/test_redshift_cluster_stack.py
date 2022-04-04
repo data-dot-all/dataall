@@ -13,6 +13,10 @@ def patch_methods(mocker, db, redshift_cluster, env, org):
         return_value=db,
     )
     mocker.patch(
+        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        return_value="dataall-pivot-role-name-pytest",
+    )
+    mocker.patch(
         'dataall.cdkproxy.stacks.redshift_cluster.RedshiftStack.get_target',
         return_value=(redshift_cluster, env),
     )
