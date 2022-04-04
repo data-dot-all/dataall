@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: 3.8-buster
     services:
       postgres:
         image: postgres
