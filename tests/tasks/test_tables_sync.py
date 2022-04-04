@@ -92,7 +92,7 @@ def table(org, env, db, sync_dataset):
     yield table
 
 
-def test_tables_sync(db, org, env, sync_dataset, table, mocker):
+def _test_tables_sync(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.aws.handlers.glue.Glue.list_glue_database_tables',
         return_value=[

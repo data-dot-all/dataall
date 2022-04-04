@@ -1,4 +1,4 @@
-name: Validate DB migration
+name: Validate DB migration with alembic
 
 on:
   workflow_dispatch:
@@ -42,7 +42,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - name: drop tables
+      - name: Drop tables
         run: make drop-tables
-      - name: drop tables
+      - name: Upgrade tables
         run: make upgrade-db
