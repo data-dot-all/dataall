@@ -30,5 +30,3 @@ jobs:
           python -m pip install isort
       - name: Lint
         run: make lint
-      - name: Imports order check (isort)
-        run: isort --check .
