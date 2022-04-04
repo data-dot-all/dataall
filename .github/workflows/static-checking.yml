@@ -2,9 +2,6 @@ name: Static Checking
 
 on:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - feature/*
   pull_request:
     branches:
       - main
