@@ -21,9 +21,14 @@
 title: data.all
 email: aws-proserve-opensource@amazon.com
 description: An AWS Professional Services open source initiative | ©2022 Amazon Web Services
+
 domain: awslabs.github.io
-baseurl: /aws-dataall/
 url: https://awslabs.github.io
+baseurl: /aws-dataall/
+
+github_baseurl: https://github.com/awslabs/aws-dataall/ # required for the github-corner links
+
+
 twitter_username: jekyllrb
 github_username:  jekyll
 
