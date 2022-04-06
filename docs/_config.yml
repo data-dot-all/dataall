@@ -46,6 +46,7 @@ plugins:
 # their entries' file path in the `include:` list.
 #
 # exclude:
+exclude: ['README.markdown', 'Gemfile.lock', 'Gemfile','README.md']
 #   - .sass-cache/
 #   - .jekyll-cache/
 #   - gemfiles/
