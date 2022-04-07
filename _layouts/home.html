@@ -6,7 +6,7 @@ layout: default
         <section class="page-header">
             <div class="header-container">
                 <div class="image-container">
-                    <img style="max-width: 30" class="logo" alt="dataall Logo" src="{{ '/img/logo.png' | relative_url }}"/>
+                    <img style="max-width: 10" class="logo" alt="dataall Logo" src="{{ '/img/logo.png' | relative_url }}"/>
                 </div>
                 <div class="title-container">
                     <div class="header-title"><h1>{{ site.title }}</h1></div>
@@ -27,11 +27,6 @@ layout: default
                                 </div>
                             </a>
                         </div>
-                        <div class="release-links">
-                            <div>Documenation:</div>
-                            <div><a class="highlight-link" href="/aws-dataall/userguide"><b>User guide</b></a></div>
-                            <div>・</div>
-                        </div>
                     </div>
 
                 </div>
@@ -47,39 +42,6 @@ layout: default
         {{ content }}
     </section>
     <section class="main-content">
-        <div class="main-areas">
-            <div class="box">
-                <a class="box-link" href="{{ site.workshop_url }}">
-                    <div class="box-top"></div>
-                    <div class="box-content">
-                        <span class="iconify icon" data-icon="eos-icons:system-ok-outlined" data-inline="false"></span>
-                        <h3>Workshop</h3>
-                        <h5>Learn about the AWS DDK</h5>
-                    </div>
-                </a>
-            </div>
 
-            <div class="box">
-                <a class="box-link" href="/aws-ddk/release/{{ site.data.versions.last | map: 'root' }}/how-to">
-                    <div class="box-top"></div>
-                    <div class="box-content">
-                        <span class="iconify icon" data-icon="eos-icons:pipeline-outlined" data-inline="false"></span>
-                        <h3>How To</h3>
-                        <h5>Use-case based tutorials</h5>
-                    </div>
-                </a>
-            </div>
-
-            <div class="box">
-                <a class="box-link" href="/aws-ddk/release/{{ site.data.versions.last | map: 'root' }}/api" target=”_blank” rel="noreferrer noopener">
-                    <div class="box-top"></div>
-                    <div class="box-content">
-                        <span class="iconify icon" data-icon="eos-icons:api-outlined" data-inline="false"></span>
-                        <h3>Documentation</h3>
-                        <h5>View the API guides</h5>
-                    </div>
-                </a>
-            </div>
-        </div>
     </section>
 </div>

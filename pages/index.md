@@ -1,41 +1,196 @@
-# **Introduction**
-This section defines what is data.all, what is the challenge that it is trying to overcome and the value that it can
-bring to your teams.
 
-## **What is data.all?**
-A modern data workspace that makes collaboration among diverse users (like business, analysts and engineers) easier,
-increasing efficiency and agility in data projects ✨
+# **DATAHUB ARCHITECTURE**
 
-## **Why did we built data.all?**
-Data teams can be diverse: analysts, scientists, engineers, business users. Diverse people, with diverse tools and
-skillsets — diverse "DNAs". All leading to chaos and resulting in titanic efforts spent in **Collaboration Overhead**.
+## **Architecture overview**
 
-Using data.all, any line of business within an organization can create their own isolated data lake, produce,
-consume and share data within and across business units, worldwide. By simplifying data discovery, data access
-management while letting more builders use AWS vast portfolio of data and analytics services, data.all helps more data
-teams discover relevant data and let them use the power of the AWS cloud to create data driven applications faster.
+DATAHUB can be best understood when compared to a classical 3-tier application,
+implemented using mostly AWS serverless services.
+The three layers of DATAHUB are no different from a classical web application layers which are:
 
-## **How can data.all help data teams?**
+1.	**Presentation layer** (Amazon Cloudfront)
+2.	**API layer** :
+    - **Client**  (AWS API Gateway)
+    - **Server** (AWS Lambda)
+3. **Persistence layer** (Amazon Aurora serverless -- Postgres version)
 
-**Teams can easily DISCOVER AND UNDERSTAND data** 💫
+The code and the architecture **decouples** the DATAHUB business logic (CRUD)
+from the AWS logic and processing. To achieve this decoupling the Web application delegates any AWS related tasks to two components:
 
-data.all makes all your datasets easily discoverable! No more Slack messages saying "Where's that dataset?"
-or long email threads for approvals. With data.all, you can simply browse the data catalog.
+4. **Long Running Background Tasks Processor**(Amazon ECS Fargate) : this containerized application exposes a REST API that runs AWS CloudFormtion Stacks
+5. **Short Running Asynchronous Tasks Processor** (AWS Lambda) : this lambda runs tasks sent by the web application
+to a message queue (over SQS) and that performs short or long-running tasks against AWS Apis (e.g. : list Glue tables ).
 
-*Key Capabilities:* <a href="understanding-data.html">Discovery and Search, Data Preview</a> &
-<a href="collaborating-data.html">Worksheets and Notebooks</a>
+!!!abstract " 10% not serverless !"
+    DATAHUB infrastructure runs 90% on serverless services in a private VPC, the remaining 10% are for the **ElasticSearch cluster** that is not serverless... **yet !**
 
-**Teams can easily SHARE AND COLLABORATE with data** 🤝
+DATAHUB architecture is optimized to fit the requirements of enterprise grade customers. It comes with two variants:
 
-Data practitioners spend 30-50% of their time finding and understanding data.
-data.all cuts that time by 95%. Your data team will be shipping 2-3 times more projects in no time.
+1. **Internet facing architecture**
+2. **VPC facing architecture**
 
-*Key Capabilities:* <a href="understanding-data.html">Data Profiling</a> &
-<a href="collaborating-data.html">Data Sharing and Subscriptions</a>
+### **Internet facing architecture**
+This architecture relies on AWS services living outside the VPC like S3 and CloudFront for DATAHUB UI and doncumentation hosting.
+Also, The backend APIs are public and can be reached from the internet.
 
-**Teams don't have to worry about SECURING their data** 🛡️
+Internet facing services are protected with **AWS Wep Application Firewall (WAF)**.
 
-Don't lose sleep trying to figure out if your sensitive data is secure. Build ecosystems of trust, make your team happy,
-and let data.all manage governance and security behind the scenes.
+![Screenshot](assets/internetFacingArchitecture.png#zoom#shadow)
 
-*Key Capabilities:* <a href="collaborating-data.html">Granular Access Control</a>
+### **VPC facing architecture**
+In this architecture, DATAHUB static sites are deployed on an AWS internal application load
+balancer (ALB) deployed on the VPC's private subnet. This ALB is
+reachable only from Amazon VPCs and not from the internet.
+Also, APIs are private and accessible only through VPC endpoints.
+
+![](assets/vpconly/vpcfacing.png#zoom#shadow)
+
+!!!success "Pro Tip"
+    **Both architectures are part of DATAHUB code base and can be configured with AWS CDK**
+
+### **Users Authentication**
+Amazon Cognito is used to manage user authentication. It can be configured to be **federated with an external IDP**, in which case Cognito acts as a simple proxy,
+abstracting the different Idp providers protocols.
+![Screenshot](assets/auth.png#zoom#shadow)
+
+### **DATAHUB User Interface and Documentation**
+DATAHUB UI and documentation follow static websites pattern on AWS with a Cloudfront distribution protected
+by Web Application Firewall (WAF) on top of S3 encrypted buckets hosting the sites assets.
+
+Authentication is managed by Cognito that offers multiple identity providers integrations.
+
+![Screenshot](assets/staticpart.png#zoom#shadow)
+### **Cloudfront**
+
+Cloudfront is used as the Content Delivery Network (CDN) for the DATAHUB User Interface.
+
+The frontend code is a **React application**, its code is bundled using React create-react-app utility, and saved to S3 as the Cloudfront distribution origin.
+
+![Screenshot](assets/cloudfront.png#zoom#shadow)
+## **Backend Components Dive Deep**
+
+### **VPC**
+
+DATAHUB creates its own VPC in the account where it is set up, with usual configuration.
+
+!!! danger "Private Subnets ONLY !"
+    All compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
+
+![Screenshot](assets/vpc.png#zoom#shadow)
+
+### **Backend API Gateway**
+API Gateway is used to host the DATAHUB backend API, and exposes a **GraphQL API**.
+This API is authenticated using **JWT Tokens** from **Cognito** service.
+![Screenshot](assets/apigw.png#zoom#shadow)
+
+### **Metadata API Gateway**
+API Gateway is used to host the DATAHUB metadata API, and exposes a **GraphQL API**.
+
+This API is authenticated using **IAM** and can be used for a machine to machine access when it comes
+to updating datasets metadata.
+This API is authenticated using **IAM_AUTH** type.
+![Screenshot](assets/apigw.png#zoom#shadow)
+
+### **Lambda Functions**
+
+DATAHUB is using three AWS Lambda functions for the application logic:
+
+1. The **Backend** Lambda function that implements the business logic.
+2. The **AWS Worker** lambda function that performs AWS SDK calls for short running tasks.
+3. The  **Authorizer** lambda function that performs authorization checks.
+4. The  **Metadata** lambda that exposes api to update datasets metadata.
+
+#### **Backend and Metadata Lambda Functions**
+
+!!!abstract "API and AWS SDK call decoupling"
+    The **Backend** and **Metadata** functions does not perform AWS API calls, but process incoming GraphQL queries and delegates AWS SDK calls to:
+
+1. **AWS Worker** lambda function
+2. **CDK Service** running on AWS Fargate service (see below).
+
+![Screenshot](assets/graphql-lambda.png#zoom#shadow)
+
+Backend and worker functions communicate through a **message queue** using **SQS queue**.
+
+![Screenshot](assets/worker-lambda.png#zoom#shadow)
+
+#### **AWS Worker Lambda Function**
+The worker function is the background worker process explained in the eagle-eye view section, and is the one performing short and / or long running tasks against the AWS API.
+
+#### **AWS Authorizer Lambda Function**
+The last Lambda function is the authorizer, that is in charge of authentications:
+1.	Validating JWT Token received by the UI
+2.	Validating API keys received through programmatic requests to the service
+
+!!!abstract "Everything Python"
+    All Lambda functions are coded in **Python 3.8**.
+
+### **ECS Fargate (Serverless)**
+
+ECS Fargate is used to host a **web service only accessible from the private VPC subnets**
+that exposes an API to create Cloudformation stacks using the **AWS CDK (Cloud Development Kit)** framework.
+
+!!!abstract "CDK superpowers"
+    Most of the resources created on AWS by DATAHUB are created through this service and are instantiated using **CloudFormation stacks generated by CDK**.
+
+![Screenshot](assets/fargate.png#zoom#shadow)
+
+### **Aurora**
+DATAHUB uses **Amazon Aurora (serverless – PostgreSQL version)** to persist the application data
+that is encrypted at rest with **AWS KMS customer managed key (CMK)**.
+
+![Screenshot](assets/db.png#zoom#shadow)
+
+
+### **Amazon ElasticSearch**
+DATAHUB uses **Amazon Elastic Search (ES)** to index the datasets metadata for a better search experience.
+The ES cluster is encrypted at rest with **AWS KMS customer managed key (CMK)**.
+
+## **Deployment and monitoring**
+
+DATAHUB infrastructure is fully automated using AWS (Cloud Development
+Kit), and it comes with a CI/CD pipeline for integrating and deployment
+DATAHUB code base when changes are introduced.
+
+Deployment task can be achieved running 3 commands and the
+infrastructure can take 3 hours to be up and running on AWS.
+
+Operation teams can subscribe to a topic on Amazon SNS to receive near
+real time alarms notifications when issues are occurring on the
+infrastructure (DDoS attack, Database session limits...)
+
+## **Infrastructure cost**
+
+Running DATAHUB in production costs around **1000\$** per month for
+around 50 active users, this is an estimation that may vary if you
+introduce change to the DATAHUB's default infrastructure or you have
+more active users for you may need to scale the resources.
+
+All DATAHUB infrastructure is tagged with a key "Application" and a
+value "datahub", adding this tag to AWS Cost Explorer gives a clear
+visibility on DATAHUB infrastructure cost separation:
+
+Figure 1: AWS Cost Explorer filtered by **datahub** tag
+
+### **Cost Report example**
+
+  |Service                        |Cost (\$)|
+  |------------------------------ |----------------|
+  |Relational Database Service|    318.378647|
+  |Elasticsearch Service|          237.804468|
+  |EC2-Other|                      41.5842477|
+  |CodeBuild |                     14.85|
+  |WAF  |                         9.01514395|
+  |EC2 Container Registry (ECR)|   3.04734135|
+  |Key Management Service|         1.96205035|
+  |Cognito |                       0.3|
+  |CodeArtifact  |                 0.29626176|
+  |S3       |                      0.24205666|
+  |Secrets Manager |               0.011725|
+  |Lambda     |                    0|
+  |API Gateway    |                0|
+  |CloudFront |                    0|
+  |EC2-Instances |                 0|
+  |EC2-ELB  |                      0|
+  |SNS     |                       0|
+  |SQS   |                         0|
+  Total                          **637.771971**
