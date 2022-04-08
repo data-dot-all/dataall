@@ -1,6 +1,11 @@
-# Deployment
+---
+layout: default
+homePage: false
+title: Deployment
+permalink: /deploy/
+---
 
-## **Pre-requisites**
+# **Pre-requisites**
 You need to have the tools below up and running to proceed with the deployment:
 
 * python 3.8

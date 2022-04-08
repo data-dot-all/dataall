@@ -1,4 +1,9 @@
-
+---
+layout: default
+homePage: false
+title: Architecture
+permalink: /architecture/
+---
 # **DATAHUB ARCHITECTURE**
 
 ## **Architecture overview**

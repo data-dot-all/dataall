@@ -1,3 +1,10 @@
+---
+layout: default
+homePage: false
+title: Security
+permalink: /security/
+---
+
 # **SECURITY**
 
 DATAHUB enforces security best practices on AWS Resources that it creates, in terms

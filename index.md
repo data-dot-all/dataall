@@ -5,9 +5,6 @@ title: About
 order: 1
 ---
 
-# **Introduction**
-This section defines what is data.all, what is the challenge that it is trying to overcome and the value that it can
-bring to your teams.
 
 ## **What is data.all?**
 A modern data workspace that makes collaboration among diverse users (like business, analysts and engineers) easier,
