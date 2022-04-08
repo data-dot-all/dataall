@@ -5,7 +5,7 @@ title: Security
 permalink: /security/
 ---
 
-
+# **Security**
 data.all enforces security best practices on AWS Resources that it creates, in terms
 of encryption, access control and traceability.
 
