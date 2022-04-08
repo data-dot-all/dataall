@@ -54,3 +54,5 @@ exclude: ['README.markdown', 'Gemfile.lock', 'Gemfile','README.md']
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+theme: jekyll-theme-cayman
