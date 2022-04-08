@@ -6,269 +6,268 @@ permalink: /security/
 ---
 
 
-DATAHUB enforces security best practices on AWS Resources that it creates, in terms
+data.all enforces security best practices on AWS Resources that it creates, in terms
 of encryption, access control and traceability.
 
-## **Authentication**
+## Authentication
 
-Users in DATAHUB are authenticated against AWS Cognito
-In a typical step of DATAHUB, Cognito is federated with a  corporate Identity Provider, such
+Users in data.all are authenticated against AWS Cognito
+In a typical step of data.all, Cognito is federated with a  corporate Identity Provider, such
 as Okta or Active Directory (including Azure AD 365)
 
 !!! note
     Saml2 and Oauth federation are supported.
 
-DATAHUB doesn't have a user store and does not create or manage groups.
+data.all doesn't have a user store and does not create or manage groups.
 It relies only on information provided by IDP as username, email, groups
 etc...
 
 ![Screenshot](assets/auth.png#zoom#shadow){: style="width:80%"}
 
 
-## **Static Sites Networking & Security**
+## Static Sites Networking & Security
 
-### **Overview**
+### Overview
 
-DATAHUB solution comes with 3 different static sites that are served to
+data.all solution comes with 3 different static sites that are served to
 the users:
 
-1.  DATAHUB User Interface: React JS application that integrates with
+1.  data.all User Interface: React JS application that integrates with
     AWS Cognito for user authentication, which is also the main UI.
 
-2.  DATAHUB development guide: Static HTML documents generated from
+2.  data.all development guide: Static HTML documents generated from
     markdown files using Mkdocs library available to all users having
     access to the server hosting the documentation.
 
-3.  DATAHUB user guide: Static HTML documents generated from markdown
+3.  data.all user guide: Static HTML documents generated from markdown
     files using Mkdocs library available to all users having access to
     the server hosting the documentation.
 
-### **Hosting**
+### Hosting
 
-DATAHUB static sites are hosted on Amazon ECS using docker containers:
+data.all static sites are hosted on Amazon ECS using docker containers:
 
 ![](assets/vpconly/image3.png#zoom#shadow)
 
-### **Networking**
+### Networking
 
-DATAHUB static sites are deployed on an AWS internal application load
+data.all static sites are deployed on an AWS internal application load
 balancer (ALB) deployed on the VPC's private subnet. This ALB is
 reachable only from Amazon VPCs and not from the internet.
 
-### **Security**
+### Security
 
-#### **Third party libraries**
+#### Third party libraries
 
-DATAHUB static sites libraries are stored on AWS CodeArtifact which
+data.all static sites libraries are stored on AWS CodeArtifact which
 ensures third party libraries availability, encryption using AWS KMS and
 auditability through AWS CloudTrail.
 
-#### **Docker images**
+#### Docker images
 
-DATAHUB base image for static sites is an AWS approved Amazon Linux base
+data.all base image for static sites is an AWS approved Amazon Linux base
 image, and does not rely on Dockerhub. Docker images are built with AWS
 CodePipeline and stored on Amazon ECR which ensures image availability,
 and vulnerabilities scanning.
 
-## **Backend Networking & Security**
-### **Overview**
+## Backend Networking & Security
+### Overview
 
-DATAHUB backend main entry point is an AWS API Gateway that exposes
+data.all backend main entry point is an AWS API Gateway that exposes
 GraphQL operations and stores data to an Amazon Aurora Serverless DB and
 Amazon ElasticSearch cluster.
 
 ![](assets/vpconly/image4.png#zoom#shadow)
 
-### **GraphQL API Gateway**
-#### **Networking**
+### GraphQL API Gateway
+#### Networking
 
 API Gateway is private and not exposed to the internet, it's linked to
 shared VPC endpoint provided by the Cloud Foundations. There is also a
 resource policy denying any traffic with a source different than the VPC
 endpoint.
 
-#### **Security**
+#### Security
 
 API Gateway is protected by AWS Web Application Firewall (WAF) against
 malicious attacks.
 
-### **Lambda Functions**
+### Lambda Functions
 
-DATAHUB relies on lambda functions for API Authorization, and business
+data.all relies on lambda functions for API Authorization, and business
 logic.
 
-#### **Networking**
+#### Networking
 
-All DATAHUB lambda functions are running inside a VPC and private
+All data.all lambda functions are running inside a VPC and private
 subnets.
 
-#### **Security**
 
-#### **Third party libraries**
+#### Third party libraries
 
-DATAHUB Lambda functions are stored on AWS CodeArtifact which ensures
+data.all Lambda functions are stored on AWS CodeArtifact which ensures
 third party libraries availability, encryption using AWS KMS and
 auditability through AWS CloudTrail.
 
-#### **Docker images**
+#### Docker images
 
-DATAHUB base image for Lambda functions is an AWS approved Amazon Linux
+data.all base image for Lambda functions is an AWS approved Amazon Linux
 base image, and does not rely on Dockerhub. Docker images are built with
 AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
-### **ECS services**
+### ECS services
 
-DATAHUB uses ECS tasks as microservices to do long running taks or
+data.all uses ECS tasks as microservices to do long running taks or
 scheduled tasks.
 
-#### **Networking**
+#### Networking
 
 All ECS tasks are running inside a VPC and private subnets.
 
-#### **Security**
+#### Security**
 
-#### **Third party libraries**
+#### Third party libraries
 
-DATAHUB ECS backend service docker images are built with AWS
+data.all ECS backend service docker images are built with AWS
 CodePipeline and stored on AWS CodeArtifact which ensures third party
 libraries availability, encryption using AWS KMS and auditability
 through AWS CloudTrail.
 
-#### **Docker images**
+#### Docker images
 
-DATAHUB base image for ECS backend service is an AWS approved Amazon
+data.all base image for ECS backend service is an AWS approved Amazon
 Linux base image, and does not rely on Dockerhub. Docker images are
 built with AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
-### **Aurora Serverless Database**
+### Aurora Serverless Database
 
-DATAHUB uses Aurora serverless database to store model information like
+data.all uses Aurora serverless database to store model information like
 datasets, environments...
 
-#### **Networking**
+#### Networking
 
 Aurora database is running inside a VPC and private subnets, and is
-accessible only by DATAHUB resources like Lambda functions and ECS tasks
+accessible only by data.all resources like Lambda functions and ECS tasks
 through security groups inbound rules.
 
-#### **Security**
+#### Security
 
 Aurora database is encrypted with AWS KMS key with enabled rotation.
 
-### **Amazon ElasticSearch cluster**
+### Amazon ElasticSearch cluster
 
-DATAHUB uses Amazon ElasticSearch cluster to index datasets information
+data.all uses Amazon ElasticSearch cluster to index datasets information
 for optimal search experience on the catalog.
 
-#### **Networking**
+#### Networking
 
 Amazon ElasticSearch cluster is running inside a VPC and private
-subnets, and is accessible only by DATAHUB resources like Lambda
+subnets, and is accessible only by data.all resources like Lambda
 functions and ECS tasks through security groups inbound rules.
 
-#### **Security**
+#### Security
 
 Amazon ElasticSearch cluster is encrypted with AWS KMS key with enabled
 rotation.
 
-### **Amazon SQS FIFO Queue**
+### Amazon SQS FIFO Queue
 
-DATAHUB uses Amazon SQS FIFO queue as a messaging mechanism between
+data.all uses Amazon SQS FIFO queue as a messaging mechanism between
 backend API Lambda functions and the short running AWS tasks Lambda
 function.
 
-#### **Networking**
+#### Networking
 
 Amazon SQS queue is running outside of the VPC.
 
-#### **Security**
+#### Security
 
 Amazon SQS queue is encrypted with AWS KMS key with enabled
 rotation.
 
-## **CI/CD Pipeline Networking & Security**
+## CI/CD Pipeline Networking & Security
 
-### **Overview**
+### Overview
 
-DATAHUB infrastructure is deployed using AWS CodePipeline. DATAHUB CI/CD
+data.all infrastructure is deployed using AWS CodePipeline. data.all CI/CD
 was built with cross accounts deployments in mind using AWS CDK
 pipelines.
 
 ![](assets/vpconly/image5.png#zoom#shadow)
 
-#### **Networking**
+#### Networking
 
 AWS CodeBuild projects part of the CI/CD pipeline are running inside a
 VPC and private subnets.
 
-#### **Security**
+#### Security
 
-#### **Third party libraries**
+#### Third party libraries
 
-DATAHUB dependencies are stored on AWS CodeArtifact which ensures third
+data.all dependencies are stored on AWS CodeArtifact which ensures third
 party libraries availability, encryption using AWS KMS and auditability
 through AWS CloudTrail.
 
 The quality gate stage of the CI/CD pipeline scans third party libraries
 for vulnerabilities using safety and bandit python libraries.
 
-#### **Docker images**
+#### Docker images
 
-DATAHUB base image for all components is AWS approved Amazon Linux base
+data.all base image for all components is AWS approved Amazon Linux base
 image, and does not rely on Dockerhub. Docker images are built with AWS
 CodePipeline and stored on Amazon ECR which ensures image availability,
 and vulnerabilities scanning.
 
-#### **Aurora serverless database**
+#### Aurora serverless database
 
 Integration tests Aurora serverless database is encrypted with KMS and
 has rotation enabled. Security groups of the database is allowing
 Codebuild projects only to access the database.
 
-## **DATAHUB Environments security**
+## data.all Environments security
 
-### **Overview**
+### Overview
 
-An environment on DATAHUB is an AWS account that verifies two
+An environment on data.all is an AWS account that verifies two
 conditions:
 
-1.  datahubPivotRole IAM role is created on the AWS account and trusts DATAHUB deployment account.
-2.  AWS account is bootstrapped with CDK and is trusting DATAHUB deployment account.
+1.  data.allPivotRole IAM role is created on the AWS account and trusts data.all deployment account.
+2.  AWS account is bootstrapped with CDK and is trusting data.all deployment account.
 
-### **DATAHUB Pivot Role ExternalId**
+### data.all Pivot Role ExternalId
 
-Each DATAHUB environment must have an AWS IAM role named
-**datahubPivotRole** that trusts DATAHUB's deployment account, so that
+Each data.all environment must have an AWS IAM role named
+**data.allPivotRole** that trusts data.all's deployment account, so that
 it could assume that role and do AWS operations like list AWS Glue
 database tables etc\...
 
-The **datahubPivotRole** is secured with an **externalId** that the
+The **data.allPivotRole** is secured with an **externalId** that the
 pivot role must be created with otherwise the STS AssumeRole operation
 will fail. This is a recommended pattern from AWS
 see [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) to
 grant access to external AWS accounts.
 
-The **externalId** is created with the DATAHUB infrastructure and is
+The **externalId** is created with the data.all infrastructure and is
 stored on AWS Secretsmanager encryted with a KMS key. Only users with
-access to DATAHUB can see and use the externalId.
+access to data.all can see and use the externalId.
 
 ![](assets/vpconly/image6.png#zoom#shadow)
 
-### **DATAHUB Pivot Role Template**
+### data.all Pivot Role Template
 `````yaml
 AWSTemplateFormatVersion: 2010-09-09
-Description: IAM Role used by datahub platform to run AWS short running tasks
+Description: IAM Role used by data.all platform to run AWS short running tasks
 Parameters:
-  DatahubAwsAccountId:
-    Description: AWS AccountId of the datahub environment
+  data.allAwsAccountId:
+    Description: AWS AccountId of the data.all environment
     Type: String
-  DatahubExternalId:
-    Description: ExternalId to secure datahub assume role
+  data.allExternalId:
+    Description: ExternalId to secure data.all assume role
     Type: String
 Resources:
-  DatahubPrivotRole:
+  data.allPrivotRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -285,20 +284,20 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !Ref DatahubAwsAccountId
+                - !Ref data.allAwsAccountId
             Action:
               - 'sts:AssumeRole'
             Condition:
               StringEquals:
-                'sts:ExternalId': !Ref DatahubExternalId
-      RoleName: datahubPivotRole
+                'sts:ExternalId': !Ref data.allExternalId
+      RoleName: data.allPivotRole
       Path: /
       Policies:
-        - PolicyName: DatahubInlinePolicy
+        - PolicyName: data.allInlinePolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Sid: DatahubFullPermissions
+              - Sid: data.allFullPermissions
                 Action:
                   - 'sns:*'
                   - 'states:*'
@@ -327,31 +326,31 @@ Resources:
                 Effect: Allow
                 Resource: '*'
 Outputs:
-  DatahubPivotRoleOutput:
-    Description: Datahub Platform Pivot Role
-    Value: DatahubPivotRole
+  data.allPivotRoleOutput:
+    Description: data.all Platform Pivot Role
+    Value: data.allPivotRole
     Export:
-      Name: !Sub '${AWS::StackName}-DatahubPivotRole'
+      Name: !Sub '${AWS::StackName}-data.allPivotRole'
 
 `````
 
-## **DATAHUB Resources Security**
+## data.all Resources Security
 
-### **Overview**
+### Overview
 
-DATAHUB resources are the objects created by the users through DATAHUB
+data.all resources are the objects created by the users through data.all
 UI or API like datasets, notebooks, dashboards... We will discuss below
-the security of the most critical DATAHUB resources.
+the security of the most critical data.all resources.
 
-### **Datasets**
+### Datasets
 
-DATAHUB stack deploys the AWS resources on the figures below:
+data.all stack deploys the AWS resources on the figures below:
 
 ![](assets/vpconly/image7.png#zoom#shadow)
 
 ![](assets/vpconly/image8.png#zoom#shadow)
 
-#### **Security Configuration**
+#### Security Configuration
 
 Following security means are configured automatically for each dataset:
 
@@ -361,11 +360,11 @@ Following security means are configured automatically for each dataset:
 
 -   Traceability: All SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation
 
-#### **Networking Configuration**
+#### Networking Configuration
 
 -   Glue jobs related to the dataset are by default running outside the VPC.
 
-#### **Data sharing**
+#### Data sharing
 
 All data sharing is READ ONLY. When a dataset owner decides to share a
 table, or a prefix with another Team, this will automatically update the
@@ -379,9 +378,9 @@ For unstructured data:
 
 -   The underlying S3 Bucket will be updated with an additional Policy granting read only access to the remote account on the underlying S3 Prefix
 
-#### **Traceability & Forensic**
+#### Traceability & Forensic
 
-All (federated) users of a DATAHUB Environment (AWS Account) can access
+All (federated) users of a data.all Environment (AWS Account) can access
 the dataset resource below:
 
 -   S3 data hosted on this account
@@ -392,22 +391,22 @@ the dataset resource below:
 
 -   tables managed by Lake Formation shared with the Environment
 
-#### **Extensibility**
+#### Extensibility
 
 Any security requirement can be fully automated through adding resources
 to the stacks that define the dataset resources. This provides security
 team with simple ways to add any security mechanism at the scale of the
 data lake, as opposed to applying security on a project basics.
 
-### **Warehouses**
+### Warehouses
 
-Warehouse are Amazon Redshift Clusters created or imported by DATAHUB
+Warehouse are Amazon Redshift Clusters created or imported by data.all
 that allows data teams to implement secure, automated, data warehousing
 including loading data from S3 through Spectrum
 
-#### **AWS Resources**
+#### AWS Resources
 
-A warehouse in DATAHUB is mapped to
+A warehouse in data.all is mapped to
 
   |Service|           Resource|   Description|
   |-----------------| ---------- |----------------------------------------------|
@@ -430,14 +429,14 @@ cluster:
 -   Networking Configuration: Redshift cluster is deployed only within a
     private subnet
 
-### **Notebooks**
+### Notebooks
 
-Notebooks in DATAHUB are a concept that allows Data Scientists to build
+Notebooks in data.all are a concept that allows Data Scientists to build
 machine learning models using Amazon Sagemaker Studio:
 
-#### **AWS Resources**
+#### AWS Resources
 
-A notebook in DATAHUB is mapped to
+A notebook in data.all is mapped to
 
   |Service|     Resource|   Description|
   |----------- |---------- |-------------------------------|
@@ -456,12 +455,12 @@ Following security means are configured automatically for each dataset:
 
 Sagemaker studio is running on the VPC and subnets provided by the user.
 
-## **Application Security Model**
+## Application Security Model
 
-DATAHUB permission model is based on group membership inherited from the
+data.all permission model is based on group membership inherited from the
 corporate IDP.
 
-Each object in DATAHUB will have
+Each object in data.all will have
 
 -   A **Creator** with full permissions on the object
 
@@ -471,7 +470,7 @@ Each object in DATAHUB will have
 **Organizations**
 
 Organizations are created by a team, and other teams (IDP groups) can be
-invited on an organization to link their AWS accounts as DATAHUB
+invited on an organization to link their AWS accounts as data.all
 environments.
 
 Only the users belonging to the administrator's team and the invited

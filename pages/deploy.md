@@ -5,7 +5,7 @@ title: Deployment
 permalink: /deploy/
 ---
 
-# **Pre-requisites**
+## Pre-requisites
 You need to have the tools below up and running to proceed with the deployment:
 
 * python 3.8
@@ -18,9 +18,6 @@ You need to have the tools below up and running to proceed with the deployment:
 * Admin AWS Credentials in the default profile
 * Linux Box recommended
 * Docker
-
-!!!success "Pro Tip"
-    Use **AWS CloudShell** has all the requirements ready to use !
 
 
 **Install Python PyGreSQL**
@@ -66,10 +63,10 @@ If you are not deploying Data.All in production mode, you could use the same AWS
 
 ![Screenshot](assets/toolingdeployment.png#zoom#shadow)
 
-!!!abstract "Multi-environment deployments"
+Multi-environment deployments:
     You can deploy Data.All to multiple environments on the same or multiple AWS accounts (e.g DEV, QA, PROD) with approval steps by customizing the cdk.json file. 
 
-!!!danger "Credentials for AWS Administrator"
+Credentials for AWS Administrator
     This guide assumes that you have **AWS Administrator credentials** ready to use on your terminal,
     to be able to run the different commands described below. Do not proceed if you are not administrator of the tooling
     account, and the deployment account(s).
@@ -170,9 +167,9 @@ With this command, CDK will create a **cdk.context.json** file that has differen
 Below an example of a generated cdk.context.json file:
 ````json
 {
-  "vpc-provider:account=ACCOUNT:filter.vpc-id=vpc-XXXX:region=eu-west-1:returnAsymmetricSubnets=true": {
-    "vpcId": "vpc-XXXXXXX",
-    "vpcCidrBlock": "10.XXXXXXXX/22",
+  "vpc-provider:account=XXX:filter.vpc-id=vpc-XXX:region=eu-west-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-XXX",
+    "vpcCidrBlock": "XX.XXX.XXX.X/22",
     "availabilityZones": [],
     "subnetGroups": [
       {
@@ -180,20 +177,20 @@ Below an example of a generated cdk.context.json file:
         "type": "Private",
         "subnets": [
           {
-            "subnetId": "subnet-XXXXX",
-            "cidr": "XX/23",
+            "subnetId": "subnet-XXX",
+            "cidr": "XX.XXX.XXX.X//23",
             "availabilityZone": "eu-west-1a",
             "routeTableId": "rtb-XXX"
           },
           {
             "subnetId": "subnet-XXX",
-            "cidr": "XX/24",
+            "cidr": "XX.XXX.XXX.X//24",
             "availabilityZone": "eu-west-1b",
             "routeTableId": "rtb-XXX"
           },
           {
             "subnetId": "subnet-XXX",
-            "cidr": "XXXX/24",
+            "cidr": "XX.XXX.XXX.X//24",
             "availabilityZone": "eu-west-1c",
             "routeTableId": "rtb-XXX"
           }
@@ -266,10 +263,10 @@ Replace the `resource_prefix` and `git_branch` by their values in the cdk.json f
 8. Commit and push your changes.
 
 
-!!!success "🎉 Congratulations"
+"🎉 Congratulations"
     You've successfully completed all Data.All on AWS deployment steps.
 
-## **Additional resources**
+## Additional resources
 
 **How does the `prod_sizing` field in `cdk.json` affect the architecture ?**
 

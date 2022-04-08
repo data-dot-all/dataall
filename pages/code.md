@@ -4,7 +4,6 @@ homePage: false
 title: Code Walkthrough
 permalink: /code/
 ---
-
 # Code Walkthrough
 
 ## Backend
