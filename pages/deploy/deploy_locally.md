@@ -4,264 +4,188 @@ title: Deploy to AWS
 permalink: /deploy-locally/
 ---
 
-# **Getting Started**
-You can deploy data.all in your AWS accounts by following the steps in the "Deploy to AWS" section. If you are a developer
-and want to have a look and run the code locally check out the "Deploy locally" section.
+# **Getting Started: Deploy locally**
 
-## Pre-requisites
-You need to have the tools below up and running to proceed with the deployment:
+**We** ❤️‍🔥 **Dev teams**. data.all provides a local developer experience, allowing the data.all backend
+to run locally. Local development experience allows teams to implement,
+test and release new features quickly and easily.
 
-* python 3.8
-* virtualenv `pip install virtualenv`
-* node
-* npm
-* aws-cdk: installed globally `npm install -g aws-cdk`
-* aws-cdk credentials plugin: installed globally `npm install -g cdk-assume-role-credential-plugin`
-* aws-cli (v2)
-* git client
+## Option 1: Docker compose
+### Prerequisites
 
+Depending on your OS, you will need the following:
 
-
-
-In addition, you will need at least two AWS accounts. For each of these accounts you will need **AWS Administrator credentials** 
-ready to use on your terminal. Do not proceed if you are not administrator in the tooling
-account, and in the deployment account(s).
-
-1. **Tooling account**: hosts the code repository, and the CI/CD pipeline.
-2. **Deployment account(s)**: hosts data.all's backend, and frontend AWS infrastructure. You can deploy 
-data.all to multiple environments on the same or multiple AWS accounts (e.g DEV, TEST, QA, PROD). 
-
-**Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
-and the Deployment account.
-
-
-![Screenshot](pages/img/architecture_tooling.drawio.png#zoom#shadow)
-
-
-## 1. Setup Python virtualenv
-From your personal computer or from Cloud9 in the AWS Console, create a python virtual environment from the code using python 3.8, then add CodeCommit git plugin with the following commands:
-
+- Python >= 3.7
+- Docker
+- Yarn
+- AWS credentials as environment variables:
 ```bash
-virtualenv venv -p python3.8
-source venv/bin/activate
-pip install git-remote-codecommit
+export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
+export AWS_SESSION_TOKEN=<YOUR_AWS_SESSION_TOKEN>
 ```
 
-Then, install Python requirements:
-```bash
-pip install -r requirements.txt
-pip install -r backend/requirements.txt
-pip install -r backend/data.all/cdkproxy/requirements.txt
-```
-## 2. Clone data.all code
+### 1. Clone data.all code
+data.all is fully dockerized with docker-compose, and can be started in a minute running the commands below:
 
-Clone the GitHub repository from:
 ```bash
 git clone https://github.com/awslabs/aws-dataall.git
 cd aws-dataall
 ```
-Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
-and push your changes:
+
+### 2. Run Docker compose
 
 ```bash
-aws codecommit create-repository --repository-name aws-dataall
-git init
-git add .
-git commit -m "First commit"
-git remote add origin codecommit::<AWS_REGION>://aws-dataall
-git push origin main
+cd data.all
+docker-compose up
 ```
 
-## 3. Configure cdk.json
-To configure and customize your deployment environments, update the parameters of the **cdk.json** file. Check the 
-table below with the list and description of optional and mandatory parameters.
+![dockercompose](../img/docker_compose.png#zoom#shadow)
 
-**Note**: by specifying multiple environment blocks, like in the example "DEV" and "PROD", data.all will
-deploy to 2 deployments accounts with a CodePipeline manual approval stage between them. 
+### 🎉 Congratulations 🎉
+Now visit [http://localhost:8080](http://localhost:8080)
 
+## Option 2: servers + docker
 
-````json
-{
-...
-    "git_branch": "main",
-    "tooling_vpc_id": "vpc-1234567890EXAMPLE",
-    "tooling_region": "eu-weast-1",
-    "quality_gate": "TRUE",
-    "DeploymentEnvironments": [
-        {
-            "envname": "DEV",
-            "account": "000000000000",
-            "region": "eu-weast-1",
-            "with_approval": false,
-            "internet_facing": true,
-            "enable_cw_rum": true,
-            "enable_cw_canaries": true
-        },
-        {
-            "envname": "PROD",
-            "account": "111111111111",
-            "region": "eu-weast-1",
-            "with_approval": true,
-            "internet_facing": false,
-            "vpc_id": "vpc-0987654321EXAMPLE",
-            "cf_alternate_domain_config": {
-		      "data.all_custom_domain":"example.com",
-		      "data.all_domain_hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID"
-		    },
-            "ip_ranges": ["IP_RANGE1", "IP_RANGE2"],
-            "apig_vpce": "vpc-xxxxxxxxxxxxxx"
-        }
-    ]
-}
-````
+data.all can also be started locally, with a mix of pure python servers and docker. It's obviously harder but it's easier to debug your code this way.
+### Prerequisites
 
-| Parameter             |Optional/Required| Definition                                                                                                                                                                                                                                
-|-----------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|tooling_vpc_id|Optional| The VPC ID for the **tooling** account. If not provided, **a new VPC** will be created.                                                                                                                                                   |
-|tooling_region|Optional| The AWS region for the **tooling** account where the AWS CodePipeline pipeline will be created. If not provided, **eu-west-1** will be used as default region.                                                                            |
-|git_branch|Optional| The git branch name can be leveraged **to deploy multiple AWS CodePipeline pipelines** to the same tooling account. If not provided, **main** will be used as default branch.                                                             |
-|envname|Required| The name of the deployment environment (e.g dev, qa, prod,...)                                                                                                                                                                            |
-|resource_prefix|Required| The prefix used for AWS created resources. Default is dataall. It must be in lower case without any special character.                                                                                                                    |
-|account|Required| The AWS deployment account (deployment account N)                                                                                                                                                                                         |
-|region|Required| The AWS deployment region                                                                                                                                                                                                                 |
-|with_approval|Optional| If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment.                                                                                                                |
-|internet_facing|Optional| If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private.                                                                             |
-|vpc_id|Optional| The VPC ID for the **deployment** account. If not provided, **a new VPC** will be created.                                                                                                                                                |
-|vpc_endpoints_sg|Optional| The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                      |
-|cf_alternate_domain_config|Optional| If internet_facing parameter is **false** then cf_alternate_domain_config is mandatory for ECS ALB integration with ACM and HTTPS. It is not required when internet_facing is false, but it will be used for CloudFront if it's provided. 
-|ip_ranges|Optional| Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                 
-|apig_vpce|Optional| Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                 
-|prod_sizing|Optional| If set to **true**, infrastructure sizing is adapted to prod environments (default: true). Check additional resources section for more details.                                                                                           |
-|quality_gate|Optional| If set to **true**, CI/CD pipeline quality gate stage is enabled (default: true)                                                                                                                                                          |
-|enable_cw_rum|Optional| If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                       |
-|enable_cw_canaries|Optional| If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                         |
+Depending on your OS, you will need the following:
 
-
-## 4. Run CDK synth and configure cdk.context.json
-Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
-With this command, CDK will create a **cdk.context.json** file that has different information retrieved from your AWS account.
-
-Below an example of a generated cdk.context.json file:
-````json
-{
-  "vpc-provider:account=XXX:filter.vpc-id=vpc-XXX:region=eu-west-1:returnAsymmetricSubnets=true": {
-    "vpcId": "vpc-1234567890EXAMPLE",
-    "vpcCidrBlock": "xxx.xxx.xxx.xxx/22",
-    "availabilityZones": [],
-    "subnetGroups": [
-      {
-        "name": "Private",
-        "type": "Private",
-        "subnets": [
-          {
-            "subnetId": "subnet-XXX",
-            "cidr": "xxx.xxx.xxx.xxx/23",
-            "availabilityZone": "eu-west-1a",
-            "routeTableId": "rtb-XXX"
-          },
-          {
-            "subnetId": "subnet-XXX",
-            "cidr": "xxx.xxx.xxx.xxx/24",
-            "availabilityZone": "eu-west-1b",
-            "routeTableId": "rtb-XXX"
-          },
-          {
-            "subnetId": "subnet-XXX",
-            "cidr": "xxx.xxx.xxx.xxx/24",
-            "availabilityZone": "eu-west-1c",
-            "routeTableId": "rtb-XXX"
-          }
-        ]
-      }
-    ]
-  }
-}
-````
-
-## 5. Add CDK context file
-The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
-repository running the commands below (remember, with the tooling account credentials):
+- Python >= 3.7
+- Docker
+- Yarn
+- AWS credentials as environment variables:
 ```bash
-git add cdk.json
-git add cdk.context.json
-git commit -m "CDK configuration"
-git push
-```
-
-## 6. Bootstrap the Tooling account
-The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
-It needs to be bootstrapped with CDK in 2 regions, run the commands below with the AWS credentials of the tooling account:
-
-**Your region (can be any supported region)**
-```bash
-cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/YOUR_REGION
-```
-**North Virginia region (needed to be able to deploy cross region to us-east-1)**
-```bash
-cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/us-east-1
-```
-## 7. Bootstrap the Deployment account(s)
-The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
-Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, run the commands below with the AWS credentials of the deployment account:
-
-Your region (can be any supported region)
-```bash
-cdk bootstrap --trust YOUR_TOOLING_ACCOUNT_ID -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_DEPLOYMENT_ACCOUNT_ID/YOUR_REGION
-```
-North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
-```bash
-cdk bootstrap --trust YOUR_TOOLING_ACCOUNT_ID -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_DEPLOYMENT_ACCOUNT_ID/us-east
+export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
+export AWS_SESSION_TOKEN=<YOUR_AWS_SESSION_TOKEN>
 ```
 
 
-## 8. Run CDK deploy
-You are all set to start the deployment, run the command below. 
-Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file.
+### 1. Launch Docker containers
+Launch a postgres database, an Elasticsearch cluster and Kibana on your local computer with Docker:
 
 ```bash
-cdk deploy {resource_prefix}-{git_branch}-cicd-stack
+docker run -d  --name pg -p 5432:5432 -e POSTGRES_PASSWORD=docker -e POSTGRES_USER=postgres -e POSTGRES_DB=data.all -t postgres:10
+docker run -d --name elasticsearch   -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:7.9.3
+docker run --link elasticsearch:elasticsearch -p 5601:5601 docker.elastic.co/kibana/kibana:7.9.3
+```
+The PostgreSQL instance has the following characteristics:
+- user : `postgres`
+- password: `docker`
+- database:  `data.all`
+
+Note: Kibana UI can be accessed at http://localhost:5601/app/home
+
+### 2. Create Postgres schemas
+
+You now have to create two schemas (`local` and `pytest`) in the `data.all` database running on your computer. To do so, open a new terminal window and run:
+```bash
+docker exec -it pg bash
+```
+Once connected to the container run:
+```bash
+psql -U postgres
+```
+Then connect to the data.all database:
+```bash
+\connect data.all # there should be only one backslash !
+```
+Finally create the schemas in exit the container
+```sql
+create schema local;
+create schema pytest;
+```
+You may now close the terminal window.
+
+### 3. Create secret in Secrets Manager
+
+The next step is to create a new secret in Secrets Manager. data.all gets the value of this secret to access the local database instance. Connect to the AWS console and create a new secret named **data.all-externalId-local**. Store the value **docker** in a plaintext format. **docker** is the password set for the local postgres instance deployed earlier.
+
+
+
+### 4. Add data.all backend repository into the python path
+
+Open backend/data.all/cdkproxy/stacks/cdk_cli_wrapper.py file and locate the following line of code:
+```python
+python_path = '/:'.join(sys.path)[1:] + ':/code'
 ```
 
+To import all data.all modules, you need to add the backend absolute path to the python path. So if your absolute path is */local/home/name/Desktop/data.all/backend*, edit the line in the cdk_cli_wrapper.py as follows:
+```python
+python_path = '/:'.join(sys.path)[1:] + ':/code' + ':/local/home/name/Desktop/data.all/backend'
+```
 
-## 9. Configure Cloudwatch RUM
+### 5. Run Python scripts
 
-1. Open AWS Console
-2. Go to CloudWatch service on the left panel under Application monitoring open RUM
-3. Select your environment (data.all-envname-monitor) and click on edit button like the figure below:
-![Screenshot](pages/assets/rum_list.png#zoom#shadow)
-4. Update the domain with your Route53 domain name or your CloudFront distribution domain (omit https://), and check include subdomains.
-![Screenshot](pages/assets/rum_update.png#zoom#shadow)
-5. Copy to clipboard the javascript code suggested on the console.
-![Screenshot](pages/assets/rum_clipboard.png#zoom#shadow)
-6. Open data.all codebase on an IDE and open the file `data.all/frontend/public/index.html`
-7. Paste the code on the clipboard like below:
-![Screenshot](pages/assets/rum_code_update.png#zoom#shadow)
-8. Commit and push your changes.
+First, open file data.all-backend-dev/src/local.graphql.server.py and uncomment the following line of code:
+```python
+- #create_schema_and_tables(engine, envname=ENVNAME)
++ create_schema_and_tables(engine, envname=ENVNAME)
+```
+⚠️ This line of code deletes everything in the local postgres database, and creates all the data.all tables in the local schema. So make sure that you uncomment this line only during the first execution of the python script. Otherwise, it will delete all the data.all metadata you already have locally.
 
-
-## 🎉 Congratulations 🎉
-You've successfully deployed data.all on your AWS accounts! Check out the User Guide to start working on your data 
-marketplace or the other sections of this guide, Architecture/Code/Security, to develop your platform further.
-
-## Additional resources
-
-**How does the `prod_sizing` field in `cdk.json` affect the architecture ?**
-
-This field defines the size of the backend resource. It is recommended to set it to `true` when deploying into a production environment, and `false` otherwise.
-By setting the value to `true`, data.all backend resources are more available and scale faster.
-When setting the value to `false`, backend resources become smaller but you save up on cost.
-
-These are the resources affected:
-
-| Backend Service |prod_sizing| Configuration
-|----|----|----|
-|Aurora |true| - Deletion protection enabled <br /> - Backup retention of 30 days <br /> - Paused after 1 day of inactivity <br /> - Max capacity unit of 16 ACU <br /> - Min capacity unit of 4 ACU |
-|Aurora |false| - Deletion protection disabled <br /> - No backup retention <br /> - Paused after 10 mintes of inactivity <br /> - Max capacity unit of 8 ACU <br /> - Min capacity unit of 2 ACU |
-|OpenSearch |true| - The KMS key of the OpenSearch cluster is kept when the CloudFormation stack is deleted <br /> - Cluster configured with 3 master node and 2 data nodes <br /> - Each data node has an EBS volume of 30GiB attached to it |
-|OpenSearch |false| - The KMS key of the OpenSearch cluster gets deleted when the CloudFormation stack is deleted <br /> - Cluster configured with 0 master node and 2 data nodes <br /> - Each data node has an EBS volume of 20GiB attached to it |
-|Lambda function |true| - Lambda functions are configured with more memory|
-|Lambda function |false| - Lambda functions are configured with less memory|
+Then run the following commands:
+```bash
+cd data.all
+python3.7 -m virtualenv .venvdh
+source .venvdh/bin/activate
+```
+At this point you should be inside your virtual environment.
 
 
+**PyGreSQL** library is used to manage the connection pool to PostgreSQL database.
+It requires **postgresql** tool to be installed on your machine.
+
+Depending on your OS, choose the relevant command to install **postgresql**:
+
+AmazonLinux-CentOS
+```bash
+yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel python38-devel gcc unzip tar gzip
+```
+
+Ubuntu
+```bash
+apt-get install -yq libpq-dev postgresql postgresql-contrib
+```
+
+MacOS
+```bash
+brew install postgresql
+```
+
+### 6. Install Python requirements
+```
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+pip install -r backend/data.all/cdkproxy/requirements.txt
+python backend/local.graphql.server.py
+python backend/local.cdkapi.server.py
+```
+You should see the following if you have successfully running local.graphql.server.py:
+![Screenshot](../assets/successfully_running_graphql_server.png#zoom#shadow)
 
 
+
+You should see the following if you have successfully running local.cdkapi.server.py:
+![Screenshot](../assets/successfully_running_cdkapi_server.png#zoom#shadow)
+
+
+You can check that this has been successful by clicking on this link: **[http://localhost:2805](http://localhost:2805)**
+You should see a 'Service is up' message.
+
+
+data.all's backend is now deployed on your computer!
+
+### 7. Deploy the frontend
+
+To deploy data.all's frontend without docker:
+```bash
+cd data.all/frontend
+npm install
+npm run start
+```
+### 🎉 Congratulations 🎉
+data.all's backend and frontend is now deployed on your computer.
+Now visit [http://localhost:8080](http://localhost:8080)

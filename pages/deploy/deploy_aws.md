@@ -4,9 +4,8 @@ title: Deploy to AWS
 permalink: /deploy-aws/
 ---
 
-# **Getting Started**
-You can deploy data.all in your AWS accounts by following the steps in the "Deploy to AWS" section. If you are a developer
-and want to have a look and run the code locally check out the "Deploy locally" section.
+# **Getting Started: Deploy to AWS**
+You can deploy data.all in your AWS accounts by following these steps:
 
 ## Pre-requisites
 You need to have the tools below up and running to proceed with the deployment:
