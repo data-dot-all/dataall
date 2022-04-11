@@ -195,7 +195,7 @@ data.all infrastructure is deployed using AWS CodePipeline. data.all CI/CD
 was built with cross accounts deployments in mind using AWS CDK
 pipelines.
 
-![](assets/vpconly/image5.png#zoom#shadow)
+![Screenshot](img/architecture_tooling.drawio.png#zoom#shadow)
 
 #### Networking
 

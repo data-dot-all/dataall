@@ -42,12 +42,20 @@ $color-hover-text: $color-anchor;
 $color-secondary: $color-smile;
 
 // general
+.main-content h1 {
+  color: $color-secondary;
+}
+
 .main-content h2 {
   color: $color-secondary;
 }
 
-.main-content h1 {
-  color: $color-secondary;
+.main-content h3 {
+  color: $color-background;
+}
+
+.main-content h4 {
+  color: $color-hover-text;
 }
 
 body {
@@ -120,7 +128,7 @@ nav li:hover a {
 }
 
 nav ul li:hover ul li a {
-  color: $color-squidink;
+  color: $color-text-dark;
   transition-duration: 0.5s;
   text-decoration: none;
 }
@@ -132,7 +140,7 @@ nav ul li:hover ul li:hover a {
 }
 
 nav ul li ul {
-  background: $color-plum;
+  background: $color-text-dark;
   visibility: hidden;
   opacity: 0;
   min-width: 5rem;
@@ -261,15 +269,24 @@ a.box-link {
   margin-right: 1rem;
 }
 
-
-.box h3 {
+.box h2 {
   margin-top: 0;
   color: $color-secondary;
 }
 
+.box h3 {
+  margin-top: 0;
+  color: $color-background;
+}
+
+.box h4 {
+  margin-top: 0;
+  color: $color-background;
+}
+
 .box h5 {
   margin-top: 1rem;
-  color: $color-secondary;
+  color: $color-text-dark;
 }
 
 .box-content {

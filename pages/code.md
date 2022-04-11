@@ -4,7 +4,7 @@ homePage: false
 title: Code Walkthrough
 permalink: /code/
 ---
-# Code Walkthrough
+# **Code Walkthrough**
 
 ## Backend
 The Data.All package is a mono-repo comprising of
