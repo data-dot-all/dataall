@@ -1,14 +1,12 @@
 ---
-layout: home
-homePage: true
-title: About
-order: 1
+layout: default_sublevel
+title: Deploy to AWS
+permalink: /deploy-locally/
 ---
 
 # **Getting Started**
 You can deploy data.all in your AWS accounts by following the steps in the "Deploy to AWS" section. If you are a developer
 and want to have a look and run the code locally check out the "Deploy locally" section.
-{% include how-to-index.html %}
 
 ## Pre-requisites
 You need to have the tools below up and running to proceed with the deployment:
