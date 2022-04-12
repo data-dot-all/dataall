@@ -46,12 +46,6 @@ source venv/bin/activate
 pip install git-remote-codecommit
 ```
 
-Then, install Python requirements:
-```bash
-pip install -r requirements.txt
-pip install -r backend/requirements.txt
-pip install -r backend/data.all/cdkproxy/requirements.txt
-```
 ## 2. Clone data.all code
 
 Clone the GitHub repository from:
