@@ -28,8 +28,8 @@ data.all CI/CD was built with cross accounts deployments in mind using AWS CDK p
 ![archi](img/architecture_tooling.drawio.png#zoom#shadow)
 
 
-- Networking: AWS CodeBuild projects which are part of the CI/CD pipeline are running inside a
-VPC and private subnets.
+- As appears in the diagram, AWS CodeBuild projects which are part of the CI/CD pipeline are running inside a
+VPC and private subnets. 
 
 
 - data.all dependencies are stored on AWS CodeArtifact which ensures third
@@ -44,16 +44,16 @@ image, and does not rely on Dockerhub. Docker images are built with AWS
 CodePipeline and stored on Amazon ECR which ensures image availability,
 and vulnerabilities scanning.
 
-- Integration tests Aurora serverless database is encrypted with KMS and
-has rotation enabled. Security groups of the database is allowing
-Codebuild projects only to access the database.
+- For the integration test stage we use an Aurora serverless database which is encrypted with KMS and
+has rotation enabled. The database security groups allow access to the database to
+Codebuild projects only.
 
 
 ## Infrastructure in deployment account(s) <a name="infrastructure"></a>
 data.all infrastructure can be best understood when compared to 
 a <span style="color:#2074d5">**classical 3-tier application**</span>,
 implemented using mostly AWS serverless services.
-As in classical web application the three layers of data.all are:
+As in classical web application, the three layers of data.all are:
 
 1. Presentation layer (Amazon Cloudfront OR Amazon Application Load Balancer)
 2. API layer:
@@ -61,7 +61,7 @@ As in classical web application the three layers of data.all are:
     - Server (AWS Lambda)
 3. Persistence layer (Amazon Aurora serverless -- Postgres version)
 
-The code and the architecture <span style="color:#2074d5">**decouples**</span> the data.all business logic (CRUD)
+The architecture <span style="color:#2074d5">**decouples**</span> data.all business logic (CRUD)
 from the AWS logic and processing. To achieve this decoupling, the web application delegates any AWS related tasks to two components:
 
 4. Long Running Background Tasks Processor (Amazon ECS Fargate)
@@ -76,15 +76,17 @@ the remaining 10% are for the OpenSearch cluster that is not serverless... yet!
 
 To fit the requirements of enterprise grade customers, data.all architecture has two variants. Both 
 architectures are part of data.all code base and can be configured with in the deployment with the 
-`internet_facing` parameter of the configuration cdk.json file.
+`internet_facing` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
 - Internet facing architecture
 - VPC facing architecture
 
 ### Internet facing architecture
-This architecture relies on AWS services living outside the VPC like S3 and CloudFront for data.all UI and documentation hosting.
+This architecture relies on AWS services living outside the VPC like S3 and CloudFront for data.all UI and 
+user guide documentation hosting.
 Backend APIs are public and can be reached from the internet. 
 Internet facing services are protected with AWS Wep Application Firewall (WAF).
+
 
 ![](img/architecture_frontend_internet.drawio.png#zoom#shadow)
 
@@ -92,33 +94,36 @@ Internet facing services are protected with AWS Wep Application Firewall (WAF).
 
 Users in data.all are authenticated against AWS Cognito. 
 In a typical step of data.all, Cognito is federated with a corporate Identity Provider, such
-as Okta or Active Directory (including Azure AD 365) in which case Cognito acts as a simple proxy,
+as Okta or Active Directory (including Azure AD 365). In this case Cognito acts as a simple proxy,
 abstracting the different IdP providers protocols.
 
-data.all doesn't have a user store and does not create or manage groups.
+**Note**: data.all doesn't have a user store and does not create or manage groups.
 It relies only on information provided by the IdP; such as username, email, groups, etc...
 
 
 #### User Interface and User Guide
-data.all UI and user guide follow static websites pattern on AWS with CloudFront used as the 
+data.all UI and user guide website follow static websites pattern on AWS with CloudFront used as the 
 Content Delivery Network (CDN).
 CloudFront is protected  by Web Application Firewall (WAF) on top of S3 encrypted buckets hosting the sites assets.
 
 
-data.all UI frontend code is a **React application**. Its code is bundled using React 
+- data.all UI frontend code is a <span style="color:#2074d5">**React application**</span>. Its code is bundled using React 
 create-react-app utility, and saved to S3 as the Cloudfront distribution origin.
 
-data.all user guide consists of static HTML documents generated from markdown
+- data.all user guide consists of static HTML documents generated from markdown
 files using Mkdocs library available to all users having access to
 the server hosting the documentation.
 
 
 ### VPC facing architecture
-In this architecture, regarding networking, data.all static sites are deployed on an AWS internal application load
+In this architecture, data.all static sites are deployed on an AWS internal application load
 balancer (ALB) deployed on the VPC's private subnet. 
-This ALB is reachable only from Amazon VPCs and not from the internet. As for the hosting, 
-data.all static sites are hosted on Amazon ECS using docker containers
+This ALB is reachable only from Amazon VPCs and not from the internet. 
 Also, APIs are private and accessible only through VPC endpoints.
+
+
+Finally, data.all static sites are hosted on Amazon ECS using docker containers.
+
 
 
 - Third party libraries: data.all static sites libraries are stored on AWS CodeArtifact which
@@ -143,9 +148,9 @@ and vulnerabilities scanning.
 data.all creates its own VPC in the account where it is set up, with usual configuration.
 All compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
 
-All data.all lambda functions are running inside this VPC and in private
-subnets.
-All ECS tasks are running inside this VPC and in private subnets.
+All data.all Lambda functions and ECS tasks are running inside this VPC and in private
+subnets. 
+
 
 
 ![Screenshot](img/architecture_vpc.drawio.png#zoom#shadow)
@@ -154,12 +159,11 @@ All ECS tasks are running inside this VPC and in private subnets.
 data.all backend main entry point is an AWS API Gateway that exposes a
 GraphQL API.
 
-API Gateway is private and not exposed to the internet, it's linked to
-shared VPC endpoint provided by the Cloud Foundations. A
-resource policy on the API Gateway denys any traffic with a source different than the VPC
+- API Gateway is private and not exposed to the internet, it's linked to a
+shared VPC endpoint. 
+- A resource policy on the API Gateway denys any traffic with a source different than the VPC
 endpoint.
-
-API Gateway is protected by AWS Web Application Firewall (WAF) against
+- API Gateway is protected by AWS Web Application Firewall (WAF) against
 malicious attacks.
 
 ### Amazon Cognito Authorizer
@@ -167,93 +171,88 @@ As explained in the frontend section, Amazon Cognito is used for Authentication 
 In Amazon API Gateway we again use [Cognito for Authorization](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html). 
 With an Amazon Cognito user pool, we control who can access our GraphQL API. 
 
-### AWS Lambda - API Handler
-This is the backend Lambda function that implements the business logic.
-It does not perform AWS API calls, but process incoming GraphQL queries and delegates AWS SDK calls to:
-
-1. **AWS Worker** lambda function
-2. **CDK Service** running on AWS Fargate service (see below).
+### AWS Lambda - Backend or "API Handler" Lambda
+This is the backend Lambda function that implements the business logic by processing the incoming GraphQL queries.
+More information on GraphQL can be found in their [site](https://graphql.org/).
 
 
-### AWS Lambda - Short Running Asynchronous Tasks Processor or "Worker"
-
-The **AWS Worker** lambda function that performs AWS SDK calls for short running tasks.
-Backend and worker functions communicate through a **message queue** using **SQS queue**.
-The worker function is the background worker process explained in the eagle-eye view section, and is the one performing short and / or long running tasks against the AWS API.
-
-### Security of Lambda functions
-
-data.all Lambda functions are stored on AWS CodeArtifact which ensures
+- It is written in Python 3.8.
+- It is stored on AWS CodeArtifact which ensures
 third party libraries availability, encryption using AWS KMS and
 auditability through AWS CloudTrail.
-
-
-data.all base image for Lambda functions is an AWS approved Amazon Linux
+- data.all base image for Lambda functions is an AWS approved Amazon Linux
 base image, and does not rely on Dockerhub. Docker images are built with
 AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
-**Note:** All Lambda functions are coded in Python 3.8.
+The GraphQL, backend or API Handler Lambda delegates AWS SDK calls and CDK deployment operations to:
+
+1. Short Running Asynchronous Tasks Processor or "Worker"  to AWS Lambda
+2. Long Running Background Tasks Processor to ECS Fargate
+
+### AWS Lambda - Short Running Asynchronous Tasks Processor or "Worker" Lambda
+
+The Worker Lambda function performs AWS SDK calls for short running tasks.
+The API Handler Lambda and this Worker Lambda functions communicate through a message queue using a SQS queue.
+
+- It is written in Python 3.8.
+- It is stored on AWS CodeArtifact which ensures
+third party libraries availability, encryption using AWS KMS and
+auditability through AWS CloudTrail.
+- data.all base image for Lambda functions is an AWS approved Amazon Linux
+base image, and does not rely on Dockerhub. Docker images are built with
+AWS CodePipeline and stored on Amazon ECR which ensures image
+availability, and vulnerabilities scanning.
 
 ### Amazon SQS FIFO Queue
 
 data.all uses Amazon SQS FIFO queue as a messaging mechanism between
-backend API Lambda functions and the short running AWS tasks Lambda
+"API Handler" Lambda function and the short running AWS tasks Worker Lambda
 function.
-
 
 - Amazon SQS queue is running outside of the VPC. 
 - Amazon SQS queue is encrypted with AWS KMS key with enabled
 rotation.
 
 ### ECS Fargate - Long Running Background Tasks Processor
-data.all uses ECS tasks as microservices to do long running taks or
+data.all uses ECS tasks to perform long running tasks or
 scheduled tasks. 
 
-ECS Fargate is used to host a **web service only accessible from the private VPC subnets**
-that exposes an API to create Cloudformation stacks using the **AWS CDK (Cloud Development Kit)** framework.
+One of the tasks performed by ECS is the creation of CDK stacks in the linked environments' accounts.
 
-Most of the resources created on AWS by data.all are created through this service and are instantiated using **CloudFormation stacks generated by CDK**.
-
-data.all ECS backend service docker images are built with AWS
+- data.all ECS backend service docker images are built with AWS
 CodePipeline and stored on AWS CodeArtifact which ensures third party
 libraries availability, encryption using AWS KMS and auditability
 through AWS CloudTrail.
 
-#### Docker images
-
-data.all base image for ECS backend service is an AWS approved Amazon
+- Docker images: data.all base image for ECS backend service is an AWS approved Amazon
 Linux base image, and does not rely on Dockerhub. Docker images are
 built with AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
 ### Amazon Aurora
-data.all uses Amazon Aurora (serverless – PostgreSQL version) to persist the application data
-to store model information like
-datasets, environments...
+data.all uses Amazon Aurora serverless – PostgreSQL version to persist the application metadata. For example, for
+each data.all concept (data.all environments, datasets...) there is a table in the Aurora database. Additional tables
+support the application business logic.
 
-
-
-Aurora database is encrypted with AWS KMS key with enabled rotation.
-
-Aurora database is running inside a VPC and private subnets, and is
-accessible only by data.all resources like Lambda functions and ECS tasks
+- Aurora database is encrypted with AWS KMS key with enabled rotation.
+- Aurora database is running inside a VPC and private subnets.
+- It is accessible only by data.all resources like Lambda functions and ECS tasks
 through security groups inbound rules.
 
-
-
-
+  
 ### Amazon OpenSearch
 data.all uses Amazon OpenSearch to index datasets information
 for optimal search experience on the catalog.
 
-Amazon OpenSearch cluster is running inside a VPC and private
-subnets, and is accessible only by data.all resources like Lambda
+- Amazon OpenSearch cluster is running inside a VPC and private
+subnets.
+- It is accessible only by data.all resources like Lambda
 functions and ECS tasks through security groups inbound rules.
-
-The OpenSearch cluster is encrypted at rest with AWS KMS customer managed key (CMK).
+- It is encrypted at rest with AWS KMS customer managed key (CMK).
 
 ### AWS Lambda OpenSearch Handler
+
 
 ### Monitoring
 Operation teams can subscribe to a topic on Amazon SNS to receive near
@@ -314,7 +313,7 @@ Resources:
               Service:
                 - glue.amazonaws.com
                 - lakeformation.amazonaws.com
-                - lambda.amazonaws.com
+                - Lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
           - Effect: Allow
@@ -350,7 +349,7 @@ Resources:
                   - 'secretsmanager:*'
                   - 'kms:*'
                   - 'ssm:*'
-                  - 'lambda:*'
+                  - 'Lambda:*'
                   - 'ec2:*'
                   - 'quicksight:*'
                   - 'kinesis:*'
