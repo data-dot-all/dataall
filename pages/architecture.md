@@ -19,18 +19,39 @@ permalink: /architecture/
 
 ## CICD in tooling account <a name="tooling"></a>
 
-data.all infrastructure is fully automated using AWS (Cloud Development
-Kit), and it comes with a CI/CD pipeline for integrating and deployment
-data.all code base when changes are introduced.
+data.all infrastructure (in the deployment account(s)) is deployed from the tooling account using AWS CodePipeline.
+Cloud resources in 
+data.all are defined using the [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK).
+data.all CI/CD was built with cross accounts deployments in mind using AWS CDK pipelines. 
 
-Deployment task can be achieved running 3 commands and the
-infrastructure can take 3 hours to be up and running on AWS.
 
 ![archi](img/architecture_tooling.drawio.png#zoom#shadow)
 
+
+- Networking: AWS CodeBuild projects which are part of the CI/CD pipeline are running inside a
+VPC and private subnets.
+
+
+- data.all dependencies are stored on AWS CodeArtifact which ensures third
+party libraries availability, encryption using AWS KMS and auditability
+through AWS CloudTrail.
+
+- The quality gate stage of the CI/CD pipeline scans third party libraries
+for vulnerabilities using safety and bandit python libraries.
+
+- Docker images: data.all base image for all components is AWS approved Amazon Linux base
+image, and does not rely on Dockerhub. Docker images are built with AWS
+CodePipeline and stored on Amazon ECR which ensures image availability,
+and vulnerabilities scanning.
+
+- Integration tests Aurora serverless database is encrypted with KMS and
+has rotation enabled. Security groups of the database is allowing
+Codebuild projects only to access the database.
+
+
 ## Infrastructure in deployment account(s) <a name="infrastructure"></a>
-Infrastructure is deployed by the 
-data.all can be best understood when compared to a <span style="color:#2074d5">**classical 3-tier application**</span>,
+data.all infrastructure can be best understood when compared to 
+a <span style="color:#2074d5">**classical 3-tier application**</span>,
 implemented using mostly AWS serverless services.
 As in classical web application the three layers of data.all are:
 
@@ -49,7 +70,7 @@ from the AWS logic and processing. To achieve this decoupling, the web applicati
 data.all infrastructure runs <span style="color:#2074d5">**90% on serverless**</span> services in a private VPC, 
 the remaining 10% are for the OpenSearch cluster that is not serverless... yet!
 
-![archi](img/architecture_deployment.drawio.png#zoom#shadow)
+![archi](img/architecture_infrastructure.drawio.png#zoom#shadow)
 
 ## Frontend Components <a name="frontend"></a>
 
@@ -68,102 +89,478 @@ Internet facing services are protected with AWS Wep Application Firewall (WAF).
 ![](img/architecture_frontend_internet.drawio.png#zoom#shadow)
 
 #### Users Authentication
-Amazon Cognito is used to manage user authentication. It can be configured to be **federated with an external IDP**, in which case Cognito acts as a simple proxy,
-abstracting the different Idp providers protocols.
+
+Users in data.all are authenticated against AWS Cognito. 
+In a typical step of data.all, Cognito is federated with a corporate Identity Provider, such
+as Okta or Active Directory (including Azure AD 365) in which case Cognito acts as a simple proxy,
+abstracting the different IdP providers protocols.
+
+data.all doesn't have a user store and does not create or manage groups.
+It relies only on information provided by the IdP; such as username, email, groups, etc...
 
 
-#### User Interface and Documentation
-data.all UI and documentation follow static websites pattern on AWS with CloudFront used as the 
+#### User Interface and User Guide
+data.all UI and user guide follow static websites pattern on AWS with CloudFront used as the 
 Content Delivery Network (CDN).
 CloudFront is protected  by Web Application Firewall (WAF) on top of S3 encrypted buckets hosting the sites assets.
 
 
-The frontend code is a **React application**, its code is bundled using React 
+data.all UI frontend code is a **React application**. Its code is bundled using React 
 create-react-app utility, and saved to S3 as the Cloudfront distribution origin.
+
+data.all user guide consists of static HTML documents generated from markdown
+files using Mkdocs library available to all users having access to
+the server hosting the documentation.
 
 
 ### VPC facing architecture
-In this architecture, data.all static sites are deployed on an AWS internal application load
-balancer (ALB) deployed on the VPC's private subnet. This ALB is
-reachable only from Amazon VPCs and not from the internet.
+In this architecture, regarding networking, data.all static sites are deployed on an AWS internal application load
+balancer (ALB) deployed on the VPC's private subnet. 
+This ALB is reachable only from Amazon VPCs and not from the internet. As for the hosting, 
+data.all static sites are hosted on Amazon ECS using docker containers
 Also, APIs are private and accessible only through VPC endpoints.
+
+
+- Third party libraries: data.all static sites libraries are stored on AWS CodeArtifact which
+ensures third party libraries availability, encryption using AWS KMS and
+auditability through AWS CloudTrail.
+
+- Docker images: data.all base image for static sites is an AWS approved Amazon Linux base
+image, and does not rely on Dockerhub. Docker images are built with AWS
+CodePipeline and stored on Amazon ECR which ensures image availability,
+and vulnerabilities scanning.
+
 
 ![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
 
 
 ## Backend Components <a name="backend"></a>
 
+![Screenshot](img/architecture_backend.drawio.png#zoom#shadow)
+
 ### VPC
 
 data.all creates its own VPC in the account where it is set up, with usual configuration.
 All compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
 
+All data.all lambda functions are running inside this VPC and in private
+subnets.
+All ECS tasks are running inside this VPC and in private subnets.
+
+
 ![Screenshot](img/architecture_vpc.drawio.png#zoom#shadow)
 
-### Backend API Gateway
-API Gateway is used to host the data.all backend API, and exposes a **GraphQL API**.
-This API is authenticated using **JWT Tokens** from **Cognito** service.
-![Screenshot](assets/apigw.png#zoom#shadow)
+### Backend AWS API Gateway
+data.all backend main entry point is an AWS API Gateway that exposes a
+GraphQL API.
 
+API Gateway is private and not exposed to the internet, it's linked to
+shared VPC endpoint provided by the Cloud Foundations. A
+resource policy on the API Gateway denys any traffic with a source different than the VPC
+endpoint.
 
-### Lambda Functions
+API Gateway is protected by AWS Web Application Firewall (WAF) against
+malicious attacks.
 
-data.all is using three AWS Lambda functions for the application logic:
+### Amazon Cognito Authorizer
+As explained in the frontend section, Amazon Cognito is used for Authentication of users. 
+In Amazon API Gateway we again use [Cognito for Authorization](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html). 
+With an Amazon Cognito user pool, we control who can access our GraphQL API. 
 
-1. The **Backend** Lambda function that implements the business logic.
-2. The **AWS Worker** lambda function that performs AWS SDK calls for short running tasks.
-3. The  **Authorizer** lambda function that performs authorization checks.
-4. The  **Metadata** lambda that exposes api to update datasets metadata.
-
-#### Backend and Metadata Lambda Functions
-
-!!!abstract "API and AWS SDK call decoupling"
-    The **Backend** and **Metadata** functions does not perform AWS API calls, but process incoming GraphQL queries and delegates AWS SDK calls to:
+### AWS Lambda - API Handler
+This is the backend Lambda function that implements the business logic.
+It does not perform AWS API calls, but process incoming GraphQL queries and delegates AWS SDK calls to:
 
 1. **AWS Worker** lambda function
 2. **CDK Service** running on AWS Fargate service (see below).
 
-![Screenshot](assets/graphql-lambda.png#zoom#shadow)
 
+### AWS Lambda - Short Running Asynchronous Tasks Processor or "Worker"
+
+The **AWS Worker** lambda function that performs AWS SDK calls for short running tasks.
 Backend and worker functions communicate through a **message queue** using **SQS queue**.
-
-![Screenshot](assets/worker-lambda.png#zoom#shadow)
-
-#### AWS Worker Lambda Function
 The worker function is the background worker process explained in the eagle-eye view section, and is the one performing short and / or long running tasks against the AWS API.
 
-#### AWS Authorizer Lambda Function
-The last Lambda function is the authorizer, that is in charge of authentications:
-1.	Validating JWT Token received by the UI
-2.	Validating API keys received through programmatic requests to the service
+### Security of Lambda functions
 
-!!!abstract "Everything Python"
-    All Lambda functions are coded in **Python 3.8**.
+data.all Lambda functions are stored on AWS CodeArtifact which ensures
+third party libraries availability, encryption using AWS KMS and
+auditability through AWS CloudTrail.
 
-### ECS Fargate (Serverless)
+
+data.all base image for Lambda functions is an AWS approved Amazon Linux
+base image, and does not rely on Dockerhub. Docker images are built with
+AWS CodePipeline and stored on Amazon ECR which ensures image
+availability, and vulnerabilities scanning.
+
+**Note:** All Lambda functions are coded in Python 3.8.
+
+### Amazon SQS FIFO Queue
+
+data.all uses Amazon SQS FIFO queue as a messaging mechanism between
+backend API Lambda functions and the short running AWS tasks Lambda
+function.
+
+
+- Amazon SQS queue is running outside of the VPC. 
+- Amazon SQS queue is encrypted with AWS KMS key with enabled
+rotation.
+
+### ECS Fargate - Long Running Background Tasks Processor
+data.all uses ECS tasks as microservices to do long running taks or
+scheduled tasks. 
 
 ECS Fargate is used to host a **web service only accessible from the private VPC subnets**
 that exposes an API to create Cloudformation stacks using the **AWS CDK (Cloud Development Kit)** framework.
 
-!!!abstract "CDK superpowers"
-    Most of the resources created on AWS by data.all are created through this service and are instantiated using **CloudFormation stacks generated by CDK**.
+Most of the resources created on AWS by data.all are created through this service and are instantiated using **CloudFormation stacks generated by CDK**.
 
-![Screenshot](assets/fargate.png#zoom#shadow)
+data.all ECS backend service docker images are built with AWS
+CodePipeline and stored on AWS CodeArtifact which ensures third party
+libraries availability, encryption using AWS KMS and auditability
+through AWS CloudTrail.
 
-### Aurora
-data.all uses **Amazon Aurora (serverless – PostgreSQL version)** to persist the application data
-that is encrypted at rest with **AWS KMS customer managed key (CMK)**.
+#### Docker images
 
-![Screenshot](assets/db.png#zoom#shadow)
+data.all base image for ECS backend service is an AWS approved Amazon
+Linux base image, and does not rely on Dockerhub. Docker images are
+built with AWS CodePipeline and stored on Amazon ECR which ensures image
+availability, and vulnerabilities scanning.
+
+### Amazon Aurora
+data.all uses Amazon Aurora (serverless – PostgreSQL version) to persist the application data
+to store model information like
+datasets, environments...
 
 
-### Amazon ElasticSearch
-data.all uses **Amazon Elastic Search (ES)** to index the datasets metadata for a better search experience.
-The ES cluster is encrypted at rest with **AWS KMS customer managed key (CMK)**.
+
+Aurora database is encrypted with AWS KMS key with enabled rotation.
+
+Aurora database is running inside a VPC and private subnets, and is
+accessible only by data.all resources like Lambda functions and ECS tasks
+through security groups inbound rules.
 
 
 
 
-## Operation teams can subscribe to a topic on Amazon SNS to receive near
+### Amazon OpenSearch
+data.all uses Amazon OpenSearch to index datasets information
+for optimal search experience on the catalog.
+
+Amazon OpenSearch cluster is running inside a VPC and private
+subnets, and is accessible only by data.all resources like Lambda
+functions and ECS tasks through security groups inbound rules.
+
+The OpenSearch cluster is encrypted at rest with AWS KMS customer managed key (CMK).
+
+### AWS Lambda OpenSearch Handler
+
+### Monitoring
+Operation teams can subscribe to a topic on Amazon SNS to receive near
 real time alarms notifications when issues are occurring on the
 infrastructure (DDoS attack, Database session limits...)
+
+## Linked Environments <a name="environment"></a>
+
+## data.all Environments security
+
+### Overview
+
+An environment on data.all is an AWS account that verifies two
+conditions:
+
+1.  data.allPivotRole IAM role is created on the AWS account and trusts data.all deployment account.
+2.  AWS account is bootstrapped with CDK and is trusting data.all deployment account.
+
+### data.all Pivot Role ExternalId
+
+Each data.all environment must have an AWS IAM role named
+**data.allPivotRole** that trusts data.all's deployment account, so that
+it could assume that role and do AWS operations like list AWS Glue
+database tables etc\...
+
+The **data.allPivotRole** is secured with an **externalId** that the
+pivot role must be created with otherwise the STS AssumeRole operation
+will fail. This is a recommended pattern from AWS
+see [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) to
+grant access to external AWS accounts.
+
+The **externalId** is created with the data.all infrastructure and is
+stored on AWS Secretsmanager encryted with a KMS key. Only users with
+access to data.all can see and use the externalId.
+
+![](assets/vpconly/image6.png#zoom#shadow)
+
+### data.all Pivot Role Template
+`````yaml
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Role used by data.all platform to run AWS short running tasks
+Parameters:
+  data.allAwsAccountId:
+    Description: AWS AccountId of the data.all environment
+    Type: String
+  data.allExternalId:
+    Description: ExternalId to secure data.all assume role
+    Type: String
+Resources:
+  data.allPrivotRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Ref data.allAwsAccountId
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref data.allExternalId
+      RoleName: data.allPivotRole
+      Path: /
+      Policies:
+        - PolicyName: data.allInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: data.allFullPermissions
+                Action:
+                  - 'sns:*'
+                  - 'states:*'
+                  - 's3:*'
+                  - 'redshift-data:*'
+                  - 'redshift:*'
+                  - 'logs:*'
+                  - 'cloudformation:*'
+                  - 'sqs:*'
+                  - 'athena:*'
+                  - 'glue:*'
+                  - 'iam:Get*'
+                  - 'iam:List*'
+                  - 'secretsmanager:*'
+                  - 'kms:*'
+                  - 'ssm:*'
+                  - 'lambda:*'
+                  - 'ec2:*'
+                  - 'quicksight:*'
+                  - 'kinesis:*'
+                  - 'lakeformation:*'
+                  - 'ram:*'
+                  - 'sts:*'
+                  - 'cloudwatch:*'
+                  - 'sagemaker:*'
+                Effect: Allow
+                Resource: '*'
+Outputs:
+  data.allPivotRoleOutput:
+    Description: data.all Platform Pivot Role
+    Value: data.allPivotRole
+    Export:
+      Name: !Sub '${AWS::StackName}-data.allPivotRole'
+
+`````
+
+## data.all Resources Security
+
+### Overview
+
+data.all resources are the objects created by the users through data.all
+UI or API like datasets, notebooks, dashboards... We will discuss below
+the security of the most critical data.all resources.
+
+### Datasets
+
+data.all stack deploys the AWS resources on the figures below:
+
+![](assets/vpconly/image7.png#zoom#shadow)
+
+![](assets/vpconly/image8.png#zoom#shadow)
+
+#### Security Configuration
+
+Following security means are configured automatically for each dataset:
+
+-   Encryption: Datasets are protected by AWS Managed KMS Keys, one key is generated for each Dataset.
+
+-   Traceability: All access to data is logged through AWS CloudTrail logs
+
+-   Traceability: All SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation
+
+#### Networking Configuration
+
+-   Glue jobs related to the dataset are by default running outside the VPC.
+
+#### Data sharing
+
+All data sharing is READ ONLY. When a dataset owner decides to share a
+table, or a prefix with another Team, this will automatically update the
+stack (infrastructure as code) of the dataset.
+
+For structured data:
+
+-   The underlying Lake Formation tables will have an additional Readonly Grant, allowing the remote account to Select and List the data for the shared table
+
+For unstructured data:
+
+-   The underlying S3 Bucket will be updated with an additional Policy granting read only access to the remote account on the underlying S3 Prefix
+
+#### Traceability & Forensic
+
+All (federated) users of a data.all Environment (AWS Account) can access
+the dataset resource below:
+
+-   S3 data hosted on this account
+
+-   S3 Data (prefixes) shared by other accounts
+
+-   data managed by Lake Formation created on this Environment
+
+-   tables managed by Lake Formation shared with the Environment
+
+#### Extensibility
+
+Any security requirement can be fully automated through adding resources
+to the stacks that define the dataset resources. This provides security
+team with simple ways to add any security mechanism at the scale of the
+data lake, as opposed to applying security on a project basics.
+
+### Warehouses
+
+Warehouse are Amazon Redshift Clusters created or imported by data.all
+that allows data teams to implement secure, automated, data warehousing
+including loading data from S3 through Spectrum
+
+#### AWS Resources
+
+A warehouse in data.all is mapped to
+
+  |Service|           Resource|   Description|
+  |-----------------| ---------- |----------------------------------------------|
+  |Redshift |         Cluster  |  Amazon Redshift cluster for data warehousing|
+  |KMS|               Key |       Key encryption used by the Redshift cluster|
+  |Secrets Manager|   Secret|     Stores Redshift cluster user credentials|
+
+All resources are created automatically on an AWS Account/Region
+
+**Security Configuration**
+
+Following security means are configured automatically for each Redshift
+cluster:
+
+-   Encryption: Amazon Redshift Cluster is encrypted with KMS.
+
+-   Traceability: All access to data is logged through AWS CloudTrail
+    logs
+
+-   Networking Configuration: Redshift cluster is deployed only within a
+    private subnet
+
+### Notebooks
+
+Notebooks in data.all are a concept that allows Data Scientists to build
+machine learning models using Amazon Sagemaker Studio:
+
+#### AWS Resources
+
+A notebook in data.all is mapped to
+
+  |Service|     Resource|   Description|
+  |----------- |---------- |-------------------------------|
+  |SageMaker|   Instance|   SageMaker Studio user profile|
+
+All resources are created automatically on an AWS Account/Region
+
+**Security Configuration**
+
+Following security means are configured automatically for each dataset:
+
+-   Traceability: All access to data is logged through AWS CloudTrail
+    logs
+
+**Networking Configuration**
+
+Sagemaker studio is running on the VPC and subnets provided by the user.
+
+## Application Security Model
+
+data.all permission model is based on group membership inherited from the
+corporate IDP.
+
+Each object in data.all will have
+
+-   A **Creator** with full permissions on the object
+
+-   A **Team** with full permissions on the object, the group is being
+    federated with the Corporate IDP
+
+**Organizations**
+
+Organizations are created by a team, and other teams (IDP groups) can be
+invited on an organization to link their AWS accounts as data.all
+environments.
+
+Only the users belonging to the administrator's team and the invited
+teams are allowed to see the organization.
+
+**Environments**
+
+An environment is created by a user and associated with a Team. The team
+members are administrators of the environment and they can invite other
+teams.
+
+Administrators of the environment can invite other IDP groups to
+collaborate on the same environment. Administrators are able to grant
+fine grained permissions which will create an IAM role with the same
+permissions to access the AWS account.
+
+Only the users belonging to the administrator's team and the invited
+teams are allowed to access the underlying AWS account.
+
+**Datasets**
+
+A dataset had one creator with technical permissions on the Dataset
+metadata and underlying access to the data in AWS.
+
+One technical admin team with same permissions as the dataset creator
+
+Each Dataset must have a team of stewards (IDP group), granting or
+denying access to the dataset items (tables/folders).
+
+Finally, Dataset items can be shared with other environments and teams,
+i.e. an another account and an IAM role, federated through corporate
+IDP.
+
+when a Table is shared, its shared across AWS account using AWS Lake
+Formation cross account table sharing, allowing READ ONLY Access to the
+shared table
+
+when a folder is shared, the Bucket Policy of the Dataset is allowing
+READ ONLY to the other account, in READ ONLY mode
+
+**Pipelines**
+
+A Pipeline has one creator with technical permissions on the Pipeline
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Pipeline creator
+that can run the Pipeline from the User Interface or API.
+
+**Dashboards**
+
+A Dashboard has one creator with technical permissions on the Dashboard
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Dashboard Creator.
+
+
+
