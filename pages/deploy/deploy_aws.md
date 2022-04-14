@@ -56,43 +56,19 @@ pip install -r ./deploy/requirements.txt
 
 ## 3. Mirror the code to a CodeCommit repository
 Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
-and push your changes.
-
-### Option a) With deploy shell script
-You can use the `deploy.sh` script at the root of the repository.
-Run the following to get the available options:
-```bash
- ./deploy.sh -h
-    -h -- Opens up this help message
-    -t -- Name of the AWS profile to use for the Tooling Account
-    -i -- Name of the AWS profile to use for the Infrastructure Account
-    -r -- AWS Region to deploy to (e.g. eu-west-1)
-    -e -- Environment to deploy to (dev, test or prod)
-    -f -- First Deployment step: Mirror the code to a CodeCommit repository
-    -s -- Second Deployment step: 
-````
-Set your AWS CLI to work with named AWS profiles to quickly switch your credentials. If none are set it
-uses the default credentials. 
-You can check your credentials by running:
-```bash
-aws sts get-caller-identity --profile <tooling-account-aws-profile>
-```
-We start by running the "First Deployment step: Mirror the code to a CodeCommit repository":
-```bash
-./deploy.sh -t <tooling-account-aws-profile> -r <aws-region> -f
-```
-### Option b) Manually
-Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
 and push your changes:
-
+Run the following to check your credentials:
+```bash
+aws sts get-caller-identity
+```
 ```bash
 aws codecommit create-repository --repository-name aws-dataall
 git remote rm origin
+git remote add origin codecommit::<aws-region>://aws-dataall
 git init
 git add .
 git commit -m "First commit"
-git remote add origin codecommit::<aws-region>://aws-dataall
-git push origin main
+git push --set-upstream origin main
 ```
 
 ## 4. Configure cdk.json
@@ -203,27 +179,10 @@ Here is an example of a generated cdk.context.json file:
 }
 ````
 
-## 6. Add CDK context file and bootstrap tooling and deployment account(s)
+## 6. Add CDK context file
 The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
-repository. 
-
-The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
-It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
-
-The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
-Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
-
-### Option a) With deploy shell script
-You can use the `deploy.sh` script. Substitute -t and -i for the AWS named profiles for the credentials
-in your tooling and in your development account.
-```bash
-./deploy.sh -t <tooling-account-aws-profile> -r <aws-region> -i <deployment-account-aws-profile> -s
-```
-
-### Option b) Manually
-**Add context file**
-
-Add the generated context file to the repo by running the commands below (remember, with the tooling account credentials):
+repository. Add the generated context file to the repo by running the commands below 
+(remember, with the tooling account credentials):
 ```bash
 git add cdk.json
 git add cdk.context.json
@@ -231,7 +190,13 @@ git commit -m "CDK configuration"
 git push
 ```
 
-**Bootstrap the Tooling account**
+# 7. Bootstrap tooling account
+The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
+It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
+
+The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
+Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
+
 
 Run the commands below with the AWS credentials of the tooling account:
 
@@ -243,6 +208,7 @@ North Virginia region (needed to be able to deploy cross region to us-east-1)
 ```bash
 cdk bootstrap aws://<tooling-account-id>/us-east-1
 ```
+# 8. Bootstrap deployment account(s)
 **Bootstrap the Deployment account(s)** 
 
 Run the commands below with the AWS credentials of the deployment account:
