@@ -20,8 +20,6 @@ You need to have the tools below up and running to proceed with the deployment:
 * git client
 
 
-
-
 In addition, you will need at least two AWS accounts. For each of these accounts you will need **AWS Administrator credentials** 
 ready to use on your terminal. Do not proceed if you are not administrator in the tooling
 account, and in the deployment account(s).
@@ -34,30 +32,51 @@ data.all to multiple environments on the same or multiple AWS accounts (e.g DEV,
 and the Deployment account.
 
 
-![Screenshot](pages/img/architecture_tooling.drawio.png#zoom#shadow)
-
-
-## 1. Setup Python virtualenv
-From your personal computer or from Cloud9 in the AWS Console, create a python virtual environment from the code using python 3.8, then add CodeCommit git plugin with the following commands:
-
-```bash
-virtualenv venv -p python3.8
-source venv/bin/activate
-pip install git-remote-codecommit
-```
-
-## 2. Clone data.all code
+## 1. Clone data.all code
 
 Clone the GitHub repository from:
 ```bash
 git clone https://github.com/awslabs/aws-dataall.git
 cd aws-dataall
 ```
+## 2. Setup Python virtualenv
+From your personal computer or from Cloud9 in the AWS Console, create a python virtual environment 
+from the code using python 3.8, then install the necessary deploy requirements with the following commands:
+
+```bash
+virtualenv venv -p python3.8
+source venv/bin/activate
+pip install -r ./deploy/requirements.txt
+```
+
+## 3. Mirror the code to a CodeCommit repository
+Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
+and push your changes.
+
+### Option a) With deploy shell script
+You can use the `deploy.sh` script at the root of the repository.
+Run the following to get the available options:
+```bash
+ ./deploy.sh -h
+    -h -- Opens up this help message
+    -t -- Name of the AWS profile to use for the Tooling Account
+    -i -- Name of the AWS profile to use for the Infrastructure Account
+    -r -- AWS Region to deploy to (e.g. eu-west-1)
+    -e -- Environment to deploy to (dev, test or prod)
+    -f -- First Deployment step: Mirror the code to a CodeCommit repository
+    -s -- Second Deployment step: 
+````
+We start by running the "First Deployment step: Mirror the code to a CodeCommit repository":
+```bash
+./deploy.sh -t <tooling-account-aws-profile> -r <aws-region> -f
+```
+### Option b) Manually
 Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
 and push your changes:
 
 ```bash
 aws codecommit create-repository --repository-name aws-dataall
+git remote rm origin
 git init
 git add .
 git commit -m "First commit"
@@ -65,7 +84,7 @@ git remote add origin codecommit::<AWS_REGION>://aws-dataall
 git push origin main
 ```
 
-## 3. Configure cdk.json
+## 4. Configure cdk.json
 To configure and customize your deployment environments, update the parameters of the **cdk.json** file. Check the 
 table below with the list and description of optional and mandatory parameters.
 
@@ -130,11 +149,13 @@ deploy to 2 deployments accounts with a CodePipeline manual approval stage betwe
 |enable_cw_canaries|Optional| If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                         |
 
 
-## 4. Run CDK synth and configure cdk.context.json
+## 5. Run CDK synth and check cdk.context.json
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
+```bash
+cdk synth
+```
 With this command, CDK will create a **cdk.context.json** file that has different information retrieved from your AWS account.
-
-Below an example of a generated cdk.context.json file:
+Here is an example of a generated cdk.context.json file:
 ````json
 {
   "vpc-provider:account=XXX:filter.vpc-id=vpc-XXX:region=eu-west-1:returnAsymmetricSubnets=true": {
@@ -171,9 +192,27 @@ Below an example of a generated cdk.context.json file:
 }
 ````
 
-## 5. Add CDK context file
+## 6. Add CDK context file and bootstrap tooling and deployment account(s)
 The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
-repository running the commands below (remember, with the tooling account credentials):
+repository. 
+
+The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
+It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
+
+The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
+Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
+
+### Option a) With deploy shell script
+You can use the `deploy.sh` script. Substitute -t and -i for the AWS named profiles for the credentials
+in your tooling and in your development account.
+```bash
+./deploy.sh -t <tooling-account-aws-profile> -r <aws-region> -i <deployment-account-aws-profile> -s
+```
+
+### Option b) Manually
+**Add context file**
+
+Add the generated context file to the repo by running the commands below (remember, with the tooling account credentials):
 ```bash
 git add cdk.json
 git add cdk.context.json
@@ -181,21 +220,21 @@ git commit -m "CDK configuration"
 git push
 ```
 
-## 6. Bootstrap the Tooling account
-The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
-It needs to be bootstrapped with CDK in 2 regions, run the commands below with the AWS credentials of the tooling account:
+**Bootstrap the Tooling account**
 
-**Your region (can be any supported region)**
+Run the commands below with the AWS credentials of the tooling account:
+
+Your region (can be any supported region)
 ```bash
 cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/YOUR_REGION
 ```
-**North Virginia region (needed to be able to deploy cross region to us-east-1)**
+North Virginia region (needed to be able to deploy cross region to us-east-1)
 ```bash
 cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/us-east-1
 ```
-## 7. Bootstrap the Deployment account(s)
-The **Deployment** account(s) is where the data.all application infrastructure will be deployed.
-Each of the deployment account(s) needs to be bootstrapped with CDK in 2 regions, run the commands below with the AWS credentials of the deployment account:
+**Bootstrap the Deployment account(s)** 
+
+Run the commands below with the AWS credentials of the deployment account:
 
 Your region (can be any supported region)
 ```bash
@@ -207,34 +246,38 @@ cdk bootstrap --trust YOUR_TOOLING_ACCOUNT_ID -c @aws-cdk/core:newStyleStackSynt
 ```
 
 
-## 8. Run CDK deploy
+## 7. Run CDK deploy
 You are all set to start the deployment, run the command below. 
-Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file.
+Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
 ```bash
 cdk deploy {resource_prefix}-{git_branch}-cicd-stack
 ```
-
-
-## 9. Configure Cloudwatch RUM
+In case you used the default values, this is how the command would look like:
+```bash
+cdk deploy dataall-main-cicd-stack
+```
+## 8. Configure Cloudwatch RUM
 
 1. Open AWS Console
 2. Go to CloudWatch service on the left panel under Application monitoring open RUM
 3. Select your environment (data.all-envname-monitor) and click on edit button like the figure below:
-![Screenshot](pages/assets/rum_list.png#zoom#shadow)
+![Screenshot](../img/rum_list.png#zoom#shadow)
 4. Update the domain with your Route53 domain name or your CloudFront distribution domain (omit https://), and check include subdomains.
-![Screenshot](pages/assets/rum_update.png#zoom#shadow)
+![Screenshot](../img/rum_update.png#zoom#shadow)
 5. Copy to clipboard the javascript code suggested on the console.
-![Screenshot](pages/assets/rum_clipboard.png#zoom#shadow)
+![Screenshot](../img/rum_clipboard.png#zoom#shadow)
 6. Open data.all codebase on an IDE and open the file `data.all/frontend/public/index.html`
 7. Paste the code on the clipboard like below:
-![Screenshot](pages/assets/rum_code_update.png#zoom#shadow)
+![Screenshot](../img/rum_code_update.png#zoom#shadow)
 8. Commit and push your changes.
 
 
-## 🎉 Congratulations 🎉
-You've successfully deployed data.all on your AWS accounts! Check out the User Guide to start working on your data 
-marketplace or the other sections of this guide, Architecture/Code/Security, to develop your platform further.
+## 🎉 Congratulations - What I have just done? 🎉
+You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
+diagram. This pipeline will deploy the infrastructure to the deployment account(s). 
+
+![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
 
 ## Additional resources
 
