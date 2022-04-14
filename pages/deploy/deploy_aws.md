@@ -24,8 +24,8 @@ In addition, you will need at least two AWS accounts. For each of these accounts
 ready to use on your terminal. Do not proceed if you are not administrator in the tooling
 account, and in the deployment account(s).
 
-1. **Tooling account**: hosts the code repository, and the CI/CD pipeline.
-2. **Deployment account(s)**: hosts data.all's backend, and frontend AWS infrastructure. You can deploy 
+- Tooling account: hosts the code repository, and the CI/CD pipeline.
+- Deployment account(s): hosts data.all's backend, and frontend AWS infrastructure. You can deploy 
 data.all to multiple environments on the same or multiple AWS accounts (e.g DEV, TEST, QA, PROD). 
 
 **Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
@@ -80,7 +80,7 @@ git remote rm origin
 git init
 git add .
 git commit -m "First commit"
-git remote add origin codecommit::<AWS_REGION>://aws-dataall
+git remote add origin codecommit::<aws-region>://aws-dataall
 git push origin main
 ```
 
@@ -226,11 +226,11 @@ Run the commands below with the AWS credentials of the tooling account:
 
 Your region (can be any supported region)
 ```bash
-cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/YOUR_REGION
+cdk bootstrap aws://<tooling-account-id>/<aws-region>
 ```
 North Virginia region (needed to be able to deploy cross region to us-east-1)
 ```bash
-cdk bootstrap aws://YOUR_TOOLING_ACCOUNT_ID/us-east-1
+cdk bootstrap aws://<tooling-account-id>/us-east-1
 ```
 **Bootstrap the Deployment account(s)** 
 
@@ -238,11 +238,11 @@ Run the commands below with the AWS credentials of the deployment account:
 
 Your region (can be any supported region)
 ```bash
-cdk bootstrap --trust YOUR_TOOLING_ACCOUNT_ID -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_DEPLOYMENT_ACCOUNT_ID/YOUR_REGION
+cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
 ```
 North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
 ```bash
-cdk bootstrap --trust YOUR_TOOLING_ACCOUNT_ID -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_DEPLOYMENT_ACCOUNT_ID/us-east
+cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east
 ```
 
 
@@ -251,7 +251,7 @@ You are all set to start the deployment, run the command below.
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
 ```bash
-cdk deploy {resource_prefix}-{git_branch}-cicd-stack
+cdk deploy <resource_prefix>-<git_branch>-cicd-stack
 ```
 In case you used the default values, this is how the command would look like:
 ```bash
