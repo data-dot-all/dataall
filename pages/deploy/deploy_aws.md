@@ -19,6 +19,11 @@ You need to have the tools below up and running to proceed with the deployment:
 * aws-cli (v2)
 * git client
 
+Run the below command to verify that you have git cli installed. It should list your `user.name` and `user.email` at a minimum.
+```bash
+git config --list
+```
+
 
 In addition, you will need at least two AWS accounts. For each of these accounts you will need **AWS Administrator credentials** 
 ready to use on your terminal. Do not proceed if you are not administrator in the tooling
@@ -66,6 +71,12 @@ Run the following to get the available options:
     -f -- First Deployment step: Mirror the code to a CodeCommit repository
     -s -- Second Deployment step: 
 ````
+Set your AWS CLI to work with named AWS profiles to quickly switch your credentials. If none are set it
+uses the default credentials. 
+You can check your credentials by running:
+```bash
+aws sts get-caller-identity --profile <tooling-account-aws-profile>
+```
 We start by running the "First Deployment step: Mirror the code to a CodeCommit repository":
 ```bash
 ./deploy.sh -t <tooling-account-aws-profile> -r <aws-region> -f
