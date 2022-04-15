@@ -13,6 +13,10 @@ def patch_methods(mocker, db, dataset, env, org):
         'dataall.cdkproxy.stacks.dataset.Dataset.get_target', return_value=dataset
     )
     mocker.patch(
+        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        return_value="dataall-pivot-role-name-pytest",
+    )
+    mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=dataset,
     )
