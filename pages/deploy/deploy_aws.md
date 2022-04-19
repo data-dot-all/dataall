@@ -253,13 +253,16 @@ If you enabled CloudWatch RUM in the **cdk.json** file:
 
 ## 🎉 Congratulations - What I have just done? 🎉
 You've successfully deployed data.all CI/CD to your tooling account, namely, the resources that you see in the
-diagram. This pipeline will deploy the infrastructure to the deployment account(s). 
+diagram.
 
 ![archi](../img/architecture_tooling.drawio.png#zoom#shadow)
 
-## Additional resources
+With this pipeline we can now deploy the infrastructure to the deployment account(s). Navigate to AWS CodePipeline
+in the tooling account and check the status of your pipeline.
 
-**How does the `prod_sizing` field in `cdk.json` affect the architecture ?**
+## Additional resources - FAQs
+
+### How does the `prod_sizing` field in `cdk.json` affect the architecture ?
 
 This field defines the size of the backend resource. It is recommended to set it to `true` when deploying into a production environment, and `false` otherwise.
 By setting the value to `true`, data.all backend resources are more available and scale faster.
@@ -276,6 +279,20 @@ These are the resources affected:
 |Lambda function |true| - Lambda functions are configured with more memory|
 |Lambda function |false| - Lambda functions are configured with less memory|
 
+### I used the wrong accounts or made another mistake in the deployment. How do I un-deploy data.all?
+In the above steps we are only deploying data.all tooling resources. Hence, if the CI/CD CodePipeline pipeline has not 
+been entirely run, nothing has been deployed to the infrastructure account(s).
 
+To clean-up the tooling account we have to simply delete the 2 AWS CloudFormation stacks deployed in the account:
+- In your selected region: `<resource_prefix>-<git_branch>-cicd-stack`
+- In us-east-1: `<resource_prefix>-<git_branch>-cicd-stack-support-us-east-1`
 
+Some AWS resources have deletion particularities:
+- Aurora Database for integration testing: deletion protection is enabled by default and will result in `DELETE_FAILED`
+in AWS CloudFormation. Enable deletion in RDS before deleting `<resource_prefix>-<git_branch>-cicd-stack`. 
+- KMS keys are marked as `pending deletion` and once the waiting period is over they are effectively deleted. This is
+their default behavior explained in the [documentation](https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html).
 
+### Troubleshooting - The CodePipeline Pipeline fails with CodeBuild Error Code "AccountLimitExceededException"
+Sometimes, we run into the following error *"Error calling startBuild: Cannot have more than 1 builds in queue for the account"*.
+Nothing is wrong with the code itself, CodeBuild quotas have been hit. Just click on **Retry**.
