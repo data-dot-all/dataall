@@ -9,9 +9,12 @@ permalink: /architecture/
 1. [End-to-end architecture](#end)
 2. [CICD in tooling account](#tooling)
 3. [Infrastructure in deployment account(s)](#infrastructure)
-   1. [Frontend Components](#frontend)
-   2. [Backend Components](#backend)
+   - [Frontend Components](#frontend)
+   - [Backend Components](#backend)
 4. [Linked Environments](#environment)
+   - [CDK bootstrap](#cdk)
+   - [pivotRole SDKs](#pivotrole)
+5. [Permission Model](#permisisons)
 
 ## End-to-end architecture <a name="end"></a>
 
@@ -280,59 +283,85 @@ performance from actual user sessions in near real time.
 
 ## Linked Environments <a name="environment"></a>
 
-Environments are workspaces where one or multiple teams can work. In other words, an environment contains the AWS
-resources for teams to work with data. They are the door between our users in data.all and AWS, that is
-why we say that we "link" environments. We link environments with **ONE** AWS account, then we add Teams to the 
-environment. Members of these teams (AD groups) get granular access and permissions to resources and data in the
-linked AWS account.
+Environments are workspaces where one or multiple teams can work. They are the door between our users in data.all and AWS, that is
+why we say that we "link" environments because we link each environment with **ONE** AWS account as appears in the below diagram.
+Under each environment we create other data.all resources, such as datasets, pipelines and notebooks. 
 
-### Environment AWS Account
+For the deployment of 
+CloudFormation stacks we call upon a CDK trust policy between the Deployment account and the Environment account. 
+As for the SDK calls, from the deployment account we assume a certain IAM role in the environment accounts, the pivotRole.
 
-To link one AWS account with an environment, it must verify two
+Consequently, to link one AWS account with an environment, the account must verify two
 conditions:
 
 1. AWS account is bootstrapped with CDK and is trusting data.all deployment account.
-2. pivotRole IAM role is created on the AWS account and trusts data.all deployment account (check next section).
+2. pivotRole IAM role is created on the AWS account and trusts data.all deployment account.
 
-### pivotRole ExternalId
+
+![archi](img/architecture_linked_env.drawio.png#zoom#shadow)
+
+
+#### CDK bootstrap <a name="cdk"></a>
+We need to bootstrap the environment account to provision resources the AWS CDK needs to perform the deployment of
+environments, datasets, pipelines and other data.all resources. 
+
+Run the following command with AWS credentials of the environment account: 
+```bash
+cdk bootstrap --trust <deployment-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<environment-account-id>/<environment-account-region>
+```
+
+Note that we added some parameters to the bootstraping command, as appears in the 
+[documentation](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html):
+- `--trust`: lists the AWS accounts that may deploy into the environment being bootstrapped. Use this flag when bootstrapping an environment that a CDK Pipeline in another environment will deploy into. The account doing the bootstrapping is always trusted.
+- `--cloudformation-execution-policies`: specifies the ARNs of managed policies that should be attached to the 
+deployment role assumed by AWS CloudFormation during deployment of your stacks. 
+
+
+
+
+
+#### pivotRole <a name="pivotrole"></a>
 
 Each data.all environment must have an AWS IAM role named
 **pivotRole** that trusts data.all's deployment account, so that
 it could assume that role and do AWS operations like list AWS Glue
 database tables etc...
 
-The **pivotRole** is secured with an **externalId** that the
+The pivotRole is secured with an **externalId** that the
 pivot role must be created with otherwise the STS AssumeRole operation
-will fail. This is a recommended pattern from AWS
-see [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) to
+will fail. This is a recommended pattern from 
+[AWS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) to
 grant access to external AWS accounts.
 
-The **externalId** is created with the data.all infrastructure and is
-stored on AWS Secretsmanager encryted with a KMS key. Only users with
+The externalId is created with the data.all infrastructure and is
+stored on **AWS Secrets Manager** encrypted with a KMS key. Only users with
 access to data.all can see and use the externalId.
 
-![](assets/vpconly/image6.png#zoom#shadow)
+From the data.all UI we can download a CloudFormation template of the pivotRole and deploy it in our business account. 
+Alternatively, you can access this template directly from the 
+[Github repository/deploy](https://github.com/awslabs/aws-dataall/blob/main/deploy/pivot_role/pivotRole.yaml). 
 
 
-## data.all Resources Security
-
-### Overview
+## data.all Resources
 
 data.all resources are the objects created by the users through data.all
 UI or API like datasets, notebooks, dashboards... We will discuss below
-the security of the most critical data.all resources.
+the security of those data.all resources that include a CloudFormation stack.
 
 ### Datasets
 
-data.all stack deploys the AWS resources on the figures below:
+They are created inside a data.all environment, thus the dataset stack is deployed in the environment linked AWS
+account and region.
 
-![](assets/vpconly/image7.png#zoom#shadow)
+  | Service         |           Resource|   Description|
+-----------------|-----------------| ---------- |----------------------------------------------|
+  | S3               |         Cluster  |  Amazon Redshift cluster for data warehousing|
+  | KMS             |               Key |       Key encryption used by the Redshift cluster|
+  | Glue |   Secret|     Stores Redshift cluster user credentials|
 
-![](assets/vpconly/image8.png#zoom#shadow)
 
-#### Security Configuration
 
-Following security means are configured automatically for each dataset:
+**Security and Networking configuration**:
 
 -   Encryption: Datasets are protected by AWS Managed KMS Keys, one key is generated for each Dataset.
 
@@ -340,11 +369,125 @@ Following security means are configured automatically for each dataset:
 
 -   Traceability: All SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation
 
-#### Networking Configuration
-
 -   Glue jobs related to the dataset are by default running outside the VPC.
 
-#### Data sharing
+
+### Warehouses
+
+Warehouse are Amazon Redshift Clusters created or imported by data.all
+that allows data teams to implement secure, automated, data warehousing
+including loading data from S3 through Spectrum. A warehouse in data.all is mapped to
+
+  |Service|           Resource|   Description|
+  |-----------------| ---------- |----------------------------------------------|
+  |Redshift |         Cluster  |  Amazon Redshift cluster for data warehousing|
+  |KMS|               Key |       Key encryption used by the Redshift cluster|
+  |Secrets Manager|   Secret|     Stores Redshift cluster user credentials|
+
+
+**Security and Networking configuration**:
+
+-   Encryption: Amazon Redshift Cluster is encrypted with KMS.
+
+-   Traceability: All access to data is logged through AWS CloudTrail
+    logs
+
+-   Networking Configuration: Redshift cluster is deployed only within a
+    private subnet
+
+### Notebooks
+
+Notebooks in data.all are a concept that allows Data Scientists to build
+machine learning models using Amazon Sagemaker Studio. They are created inside a data.all environment, 
+thus the notebook stack is deployed in the environment linked AWS
+account and region. It includes:
+
+  |Service|     Resource|   Description|
+  |----------- |---------- |-------------------------------|
+  |SageMaker|   Instance|   SageMaker Studio user profile|
+
+
+**Security and Networking configuration**:
+
+- Traceability: All access to data is logged through AWS CloudTrail
+    logs
+
+- Sagemaker studio is running on the VPC and subnets provided by the user.
+
+## Permission Model
+
+data.all permission model is based on group membership inherited from the
+corporate IdP.
+
+Each object in data.all will have
+
+-   A **Creator** with full permissions on the object
+
+-   A **Team** with full permissions on the object, the group is being
+    federated with the Corporate IdP
+
+**Organizations**
+
+Organizations are created by a team, and other teams (IdP groups) can be
+invited on an organization to link their AWS accounts as data.all
+environments.
+
+Only the users belonging to the administrator's team and the invited
+teams are allowed to see the organization.
+
+**Environments**
+
+An environment is created by a user and associated with a Team. The team
+members are administrators of the environment and they can invite other
+teams.
+
+Administrators of the environment can invite other IdP groups to
+collaborate on the same environment. Administrators are able to grant
+fine grained permissions which will create an IAM role with the same
+permissions to access the AWS account.
+
+Only the users belonging to the administrator's team and the invited
+teams are allowed to access the underlying AWS account.
+
+**Datasets**
+
+A dataset had one creator with technical permissions on the Dataset
+metadata and underlying access to the data in AWS.
+
+One technical admin team with same permissions as the dataset creator
+
+Each Dataset must have a team of stewards (IdP group), granting or
+denying access to the dataset items (tables/folders).
+
+Finally, Dataset items can be shared with other environments and teams,
+i.e. an another account and an IAM role, federated through corporate
+IDP.
+
+when a Table is shared, its shared across AWS account using AWS Lake
+Formation cross account table sharing, allowing READ ONLY Access to the
+shared table
+
+when a folder is shared, the Bucket Policy of the Dataset is allowing
+READ ONLY to the other account, in READ ONLY mode
+
+**Pipelines**
+
+A Pipeline has one creator with technical permissions on the Pipeline
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Pipeline creator
+that can run the Pipeline from the User Interface or API.
+
+**Dashboards**
+
+A Dashboard has one creator with technical permissions on the Dashboard
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Dashboard Creator.
+
+
+
+### Data sharing
 
 All data sharing is READ ONLY. When a dataset owner decides to share a
 table, or a prefix with another Team, this will automatically update the
@@ -377,134 +520,3 @@ Any security requirement can be fully automated through adding resources
 to the stacks that define the dataset resources. This provides security
 team with simple ways to add any security mechanism at the scale of the
 data lake, as opposed to applying security on a project basics.
-
-### Warehouses
-
-Warehouse are Amazon Redshift Clusters created or imported by data.all
-that allows data teams to implement secure, automated, data warehousing
-including loading data from S3 through Spectrum
-
-#### AWS Resources
-
-A warehouse in data.all is mapped to
-
-  |Service|           Resource|   Description|
-  |-----------------| ---------- |----------------------------------------------|
-  |Redshift |         Cluster  |  Amazon Redshift cluster for data warehousing|
-  |KMS|               Key |       Key encryption used by the Redshift cluster|
-  |Secrets Manager|   Secret|     Stores Redshift cluster user credentials|
-
-All resources are created automatically on an AWS Account/Region
-
-**Security Configuration**
-
-Following security means are configured automatically for each Redshift
-cluster:
-
--   Encryption: Amazon Redshift Cluster is encrypted with KMS.
-
--   Traceability: All access to data is logged through AWS CloudTrail
-    logs
-
--   Networking Configuration: Redshift cluster is deployed only within a
-    private subnet
-
-### Notebooks
-
-Notebooks in data.all are a concept that allows Data Scientists to build
-machine learning models using Amazon Sagemaker Studio:
-
-#### AWS Resources
-
-A notebook in data.all is mapped to
-
-  |Service|     Resource|   Description|
-  |----------- |---------- |-------------------------------|
-  |SageMaker|   Instance|   SageMaker Studio user profile|
-
-All resources are created automatically on an AWS Account/Region
-
-**Security Configuration**
-
-Following security means are configured automatically for each dataset:
-
--   Traceability: All access to data is logged through AWS CloudTrail
-    logs
-
-**Networking Configuration**
-
-Sagemaker studio is running on the VPC and subnets provided by the user.
-
-## Application Security Model
-
-data.all permission model is based on group membership inherited from the
-corporate IDP.
-
-Each object in data.all will have
-
--   A **Creator** with full permissions on the object
-
--   A **Team** with full permissions on the object, the group is being
-    federated with the Corporate IDP
-
-**Organizations**
-
-Organizations are created by a team, and other teams (IDP groups) can be
-invited on an organization to link their AWS accounts as data.all
-environments.
-
-Only the users belonging to the administrator's team and the invited
-teams are allowed to see the organization.
-
-**Environments**
-
-An environment is created by a user and associated with a Team. The team
-members are administrators of the environment and they can invite other
-teams.
-
-Administrators of the environment can invite other IDP groups to
-collaborate on the same environment. Administrators are able to grant
-fine grained permissions which will create an IAM role with the same
-permissions to access the AWS account.
-
-Only the users belonging to the administrator's team and the invited
-teams are allowed to access the underlying AWS account.
-
-**Datasets**
-
-A dataset had one creator with technical permissions on the Dataset
-metadata and underlying access to the data in AWS.
-
-One technical admin team with same permissions as the dataset creator
-
-Each Dataset must have a team of stewards (IDP group), granting or
-denying access to the dataset items (tables/folders).
-
-Finally, Dataset items can be shared with other environments and teams,
-i.e. an another account and an IAM role, federated through corporate
-IDP.
-
-when a Table is shared, its shared across AWS account using AWS Lake
-Formation cross account table sharing, allowing READ ONLY Access to the
-shared table
-
-when a folder is shared, the Bucket Policy of the Dataset is allowing
-READ ONLY to the other account, in READ ONLY mode
-
-**Pipelines**
-
-A Pipeline has one creator with technical permissions on the Pipeline
-and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Pipeline creator
-that can run the Pipeline from the User Interface or API.
-
-**Dashboards**
-
-A Dashboard has one creator with technical permissions on the Dashboard
-and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Dashboard Creator.
-
-
-

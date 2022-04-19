@@ -31,7 +31,7 @@ account, and in the deployment account(s).
 
 - Tooling account: hosts the code repository, and the CI/CD pipeline.
 - Deployment account(s): hosts data.all's backend, and frontend AWS infrastructure. You can deploy 
-data.all to multiple environments on the same or multiple AWS accounts (e.g DEV, TEST, QA, PROD). 
+data.all to multiple environments on the same or multiple AWS accounts (e.g dev, test, qa, prod). 
 
 **Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
 and the Deployment account.
