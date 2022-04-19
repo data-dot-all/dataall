@@ -62,9 +62,9 @@ Run the following to check your credentials:
 aws sts get-caller-identity
 ```
 ```bash
-aws codecommit create-repository --repository-name aws-dataall
+aws codecommit create-repository --repository-name dataall
 git remote rm origin
-git remote add origin codecommit::<aws-region>://aws-dataall
+git remote add origin codecommit::<aws-region>://dataall
 git init
 git add .
 git commit -m "First commit"
@@ -75,7 +75,7 @@ git push --set-upstream origin main
 To configure and customize your deployment environments, update the parameters of the **cdk.json** file. Check the 
 table below with the list and description of optional and mandatory parameters.
 
-**Note**: by specifying multiple environment blocks, like in the example "DEV" and "PROD", data.all will
+**Note**: by specifying multiple environment blocks, like in the example "dev" and "prod", data.all will
 deploy to 2 deployments accounts with a CodePipeline manual approval stage between them. 
 
 
@@ -84,22 +84,22 @@ deploy to 2 deployments accounts with a CodePipeline manual approval stage betwe
 ...
     "git_branch": "main",
     "tooling_vpc_id": "vpc-1234567890EXAMPLE",
-    "tooling_region": "eu-weast-1",
+    "tooling_region": "eu-west-1",
     "quality_gate": "TRUE",
     "DeploymentEnvironments": [
         {
-            "envname": "DEV",
+            "envname": "dev",
             "account": "000000000000",
-            "region": "eu-weast-1",
+            "region": "eu-west-1",
             "with_approval": false,
             "internet_facing": true,
             "enable_cw_rum": true,
             "enable_cw_canaries": true
         },
         {
-            "envname": "PROD",
+            "envname": "prod",
             "account": "111111111111",
-            "region": "eu-weast-1",
+            "region": "eu-west-1",
             "with_approval": true,
             "internet_facing": false,
             "vpc_id": "vpc-0987654321EXAMPLE",
@@ -119,7 +119,7 @@ deploy to 2 deployments accounts with a CodePipeline manual approval stage betwe
 |tooling_vpc_id|Optional| The VPC ID for the **tooling** account. If not provided, **a new VPC** will be created.                                                                                                                                                   |
 |tooling_region|Optional| The AWS region for the **tooling** account where the AWS CodePipeline pipeline will be created. If not provided, **eu-west-1** will be used as default region.                                                                            |
 |git_branch|Optional| The git branch name can be leveraged **to deploy multiple AWS CodePipeline pipelines** to the same tooling account. If not provided, **main** will be used as default branch.                                                             |
-|envname|Required| The name of the deployment environment (e.g dev, qa, prod,...)                                                                                                                                                                            |
+|envname|Required| The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                   |
 |resource_prefix|Required| The prefix used for AWS created resources. Default is dataall. It must be in lower case without any special character.                                                                                                                    |
 |account|Required| The AWS deployment account (deployment account N)                                                                                                                                                                                         |
 |region|Required| The AWS deployment region                                                                                                                                                                                                                 |
@@ -209,7 +209,6 @@ North Virginia region (needed to be able to deploy cross region to us-east-1)
 cdk bootstrap aws://<tooling-account-id>/us-east-1
 ```
 # 8. Bootstrap deployment account(s)
-**Bootstrap the Deployment account(s)** 
 
 Run the commands below with the AWS credentials of the deployment account:
 
@@ -224,7 +223,7 @@ cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthes
 
 
 ## 7. Run CDK deploy
-You are all set to start the deployment, run the command below. 
+You are all set to start the deployment, with the AWS credentials for the tooling account, run the command below. 
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
 ```bash
@@ -234,7 +233,9 @@ In case you used the default values, this is how the command would look like:
 ```bash
 cdk deploy dataall-main-cicd-stack
 ```
-## 8. Configure Cloudwatch RUM
+## 8. Configure Cloudwatch RUM (enable_cw_rum=true)
+
+If you enabled CloudWatch RUM in the **cdk.json** file: 
 
 1. Open AWS Console
 2. Go to CloudWatch service on the left panel under Application monitoring open RUM
