@@ -251,56 +251,81 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     [.....]
 ```
 #### WorkerHandler
-In addition, in `service_handlers.py` we defined the `WorkerHandler` class that does
-not implement general interactions with AWS services. The Worker Lambda processes requests based on this class as you 
-see in its code in `backend/aws_handler.py`. 
+In addition, in `service_handlers.py` we defined the `WorkerHandler`  Python class. 
+The `WorkerHandler`  is in charge of
+routing tasks to the Worker AWS Lambda. 
 
-
-The `WorkerHandler` python class is in charge of
-routing tasks to python functions.
 This class has a singleton instance called `Worker` that has two apis:
 
 1. `Worker.queue(engine, task_ids: [str]))` : an interface to send a list of task ids to the worker
 2.  `Worker.process(engine, task_ids: [str])`: the actual work to process a list of tasks
 
 
-Additionally, the `Worker` singleton exposes a decorator function to register handler functions.
-For example, suppose you want to implement a handler for tasks with `{"action": "foo"}`.
-The following code will register the `handle_foo` function as the handler for `foo` actions:
-```python
-from dataall.aws import Worker
-from data.all import models
-
-@Worker.handler(path="foo")
-def handle_foo(engine, task: models.Task):
-    pass
+The `Worker` singleton exposes a decorator function to register handler functions that can 
+be run by the worker. For example, for the Glue handlers (in `handlers/glue.py`), we want to define that the function 
+`start_crawler` is run by the Worker Lambda. Then we need to use the decorator and define its path:
 
 ```
-
-Any handler needs to have the same signature:
-```python
-from dataall import models
-def handler(engine, task:models.Task):
-    """ handler signature """
-    pass
+    @staticmethod
+    @Worker.handler(path='glue.crawler.start')
+    def start_crawler(engine, task: models.Task):
+        with engine.scoped_session() as session:
+            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+                session, task.targetUri
+            )
+            location = task.payload.get('location')
+            return Glue.start_glue_crawler(
+                {
+                    'crawler_name': dataset.GlueCrawlerName,
+                    'region': dataset.region,
+                    'accountid': dataset.AwsAccountId,
+                    'database': dataset.GlueDatabaseName,
+                    'location': location,
+                }
+            )
 ```
-Any handler will receive two parameters:
 
-1. `engine` :  an instance of `db.Engine`
-2. `task` : an instance of a `models.Task`  record
 
-The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**.
-The handler code in `dataall.aws` will receive tasks, read task data from the Database,
-and assume a role in the AWS Account Id where the action needs to be performed
+The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
+defined first in the Aurora database and then we pass their unique identifier to the queue. In the example
+below, taken from the dataset resolvers, we are queueing a `glue.crawler.start` action.
 
-The AWS Lambda hosting this code receives JSON objects sent by the api layer.
-The JSON object received represents a task, and has three keys:
+```
+def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
+    [...]
 
-1. `action`: the name of the action to be performed
-2. `taskid` : the identified of the task as found in the `task` table
-3. `payload` : any additional information associated with the task
+        task = models.Task(
+            targetUri=datasetUri,
+            action='glue.crawler.start',
+            payload={'location': location},
+        )
+        session.add(task)
+        session.commit()
 
-### dataall/tasks
+        Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+    [...]
+```
+
+
+The Worker AWS Lambda receives JSON objects with the task fields. Below is the code of the Worker Lambda defined in
+`backend/aws_handler.py`.
+
+```
+def handler(event, context=None):
+    """Processes  messages received from sqs"""
+    log.info(f'Received Event: {event}')
+    for record in event['Records']:
+        log.info('Consumed record from queue: %s' % record)
+        message = json.loads(record['body'])
+        log.info(f'Extracted Message: {message}')
+        Worker.process(engine=engine, task_ids=message)
+```
+
+
+The `WorkerHandler` in `dataall.aws` will then `process` the tasks: it reads task data from the Database, routes to 
+the decorated handler function 
+and assumes a role in the AWS Account where the action needs to be performed.
+
 
 ### dataall/cdkproxy
 
@@ -316,28 +341,29 @@ The API itself consists of 4 actions/paths :
 - DELETE /stack/{stackid} : deletes the stack
 - GET /stack/{stackid] : returns stack status
 
-The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
+The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
+web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
-When a data.all resource is created, the api sends an HTTP request to the docker service and the code runs the appropriate stack using cdk the cli.
-
-!!! note
-    Why  not Lambda ?
-    The `cdk` cli  offers no programmatic interface at the moment, and stacks can take
-    long minutes to run. Also, spawning subprocess in lambda is doable but not idea.
-
-
+When a data.all resource is created, the api sends an HTTP request 
+to the docker service and the code runs the appropriate stack using cdk the cli.
 
 cdkproxy currently supports the following stacks defined as cdk stacks in the `cdkproxy.stacks` sub-package:
 
-1. environment :  the environment stack bootstrap an AWS Account/ Region with resources and settings needed by data.all to operate on the account
-2. dataset: the dataset stack creates and updates all resources associated with the dataset, especially resources related to data sharing
-3. gluepipeline : the glue pipeline stack creates a CI/CD pipeline for data processing
-4. shareobject :  the share object stack is handling the import of remote shared tables in an environment using Lakeformation cross account data sharing
+1. environment :  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
+2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
+4. notebook: SageMaker Notebook resources
+5. pipeline : CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
+6. redshift_cluster: Redshift stack
+7. sagemakerstudio: SageMaker Studio user profile
 
 
 
+### dataall/tasks
 
-
+### dataall/searchproxy
+The `dataall/searchproxy` package manages all operations with the OpenSearch cluster. Similarly to `dataall/db`, this
+package implements the connection with the OpenSearch cluster for all compute components: API handler Lambda, Worker Lambda
+and ECS tasks.
 
 ## frontend/ <a name="frontend"></a>
 
