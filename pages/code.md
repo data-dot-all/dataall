@@ -403,19 +403,19 @@ def test_get_dataset_as_owner(dataset, graphql_client):
 ```
 
 ## compose/ <a name="compose"></a>
-Contains the elements used by docker compose that make possible to deploy data.all locally. 
-Check [Deploy to AWS](./deploy-aws/) to see how.
+It contains the elements used by docker compose to deploy data.all locally. 
+Check [Deploy to AWS](./deploy-aws/) for more details.
 
 ## documentation/ <a name="userguide"></a>
 This folder contains information for developers to add content to the user guide documentation accessible from the UI.
-Here you can customize the documentation that is linked to the user guide domain. 
-
-We are using MkDocs to generate the site, here is a [link](https://www.mkdocs.org/) to their official documentation.
+Here you can customize the documentation that is linked to the user guide domain. We are using [MkDocs](https://www.mkdocs.org/)
+package to generate the site.
 
 **Work locally** 
 
 If you already have a virtualenv for the data.all project and
-you have activated the virtualenv shell, simply cd into the documentation/userguide folder and run:
+you have activated the virtualenv shell, simply cd into the documentation/userguide folder and run the following. 
+The last command will run a local mkdocs server running on port 8000.
 
 ```bash
 > cd documentation/userguide
@@ -424,4 +424,4 @@ you have activated the virtualenv shell, simply cd into the documentation/usergu
 
 ```
 
-The last command will run a local mkdocs server running on port 8000.
+
