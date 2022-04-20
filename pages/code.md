@@ -6,7 +6,7 @@ permalink: /code/
 ---
 # **Code Walkthrough**
 
-The data.all package is a mono-repo comprising several sub-sections:
+The data.all package is a mono-repo comprising several sections:
 
 - [deploy/](#deploy)
 - [backend/](#backend)
@@ -18,12 +18,12 @@ The data.all package is a mono-repo comprising several sub-sections:
 We deploy the data.all tooling, backend and frontend using AWS Cloud Development Kit, which offers
 high level abstractions to create AWS resources.
 
-The deploy folder is a CDK application, with an `app.py` deploying a CICD stack. In the final deploy step of the
-[Deploy to AWS](./deploy-aws/) guide, we are deploying the CICD pipeline stack defined in this section.
+The deploy folder is a CDK application, with an `app.py` deploying a CI/CD stack. In the final deploy step of the
+[Deploy to AWS](./deploy-aws/) guide, we are deploying the CI/CD pipeline stack defined in this section.
 
 
 ### stacks
-As explained above, here is the code that defines the CICD pipeline in the tooling account. More specifically,
+As explained above, here is the code that defines the CI/CD pipeline in the tooling account. More specifically,
 the `PipelineStack` is defined in `stacks/pipeline.py` 
 
 
@@ -35,23 +35,23 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
 - `AlbFrontStage`
   - `AlbFrontStack`: Application Load Balancer for the UI applications
 - `CloudfrontStage`
-  - `Cloud`
+  - `CloudFrontStack`:
 - `BackendStage`
   - `BackendStack`: 
     - `AuroraServerlessStack`: Aurora RDS Database and associated resources - data.all objects metadata
-    - `IdpStack`
-    - `ContainerStack` 
+    - `IdpStack`: Cognito and IdP stack
+    - `ContainerStack`: ECS stack
     - `CloudWatchCanariesStack` if enable_cw_canaries=true
     - `CloudWatchRumStack` if enable_cw_run=true
-    - `DBMigrationStack` 
-    - `LambdaApiStack` 
-    - `MonitoringStack` 
+    - `DBMigrationStack`: tool to migrate between Aurora versions of the database
+    - `LambdaApiStack` : Lambda Function stack
+    - `MonitoringStack` : CloudWatch alarms and monitoring resources
     - `OpenSearchStack`: OpenSearch cluster - data.all central catalog
-    - `ParamStoreStack` 
-    - `S3ResourcesStack` 
-    - `SecretsManagerStack` 
-    - `SqsStack` 
-    - `VpcStack`
+    - `ParamStoreStack` : AWS SSM parameters
+    - `S3ResourcesStack` : S3 resources
+    - `SecretsManagerStack` : AWS SSM Secrets
+    - `SqsStack` : SQS
+    - `VpcStack`: VPC
 - `AuroraServerlessStack`: Aurora RDS Database and associated resources - for integration testing
 - `CodeArtifactStack`
 - `ECRStage`
@@ -59,38 +59,37 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
 
 
 
-Finally, there are other elements in the `stacks` folder:
+There are other elements in the `deploy` folder:
 ```
-deploy/stacks/
-├── cdk_nag_exclusions.py: define NAG exclusions in albfront and ....
-├── aurora.py : the API GW
-├── cognito.py : the use rpool
-├── container.py : the ECS
-├── container_standalone.py : the standalone ECS stack
-├── data.all_standalone_stack.py : the webapp standalone stack
-├── sqs.py: the sqs stack
-├── lambdas.py : the lambda fx stack
-├── pipeline.py : the data.all ci/cd pipeline stack
-├── pyNestedStack.py : a nested stack interface
-└── vpc.py  : the VPC Stack
+deploy/
+├── pivot_role/  : with the template for the data.all IAM Pivot Role 
+├── configs/ : scripts that create configuration files for Cognito, CloudFront and CloudWatch RUM
+├── custom_resources/ : resources or actions not included in CloudFormation
+└── canaries/: scripts for canary used in Canary stack if CloudWatch canary is enabled
 ```
-
-
-### canaries
-
-### configs
-
-### custom_resources
-
-### pivot_role
 
 ## backend/ <a name="backend"></a>
+In this section we will touch upon the main components of the backend code. That is, the code run in the 
+API Handler Lambda, the Worker Lambda, the ECS Fargate Cluster and the OpenSearch Lambda. In addition, this section
+introduces the modelling and business logic of data.all concepts: e.g. Environments, Datasets, Teams...
 
-### dataall.api
 
-The data.all `api` package is where the GraphQL API is defined.
+### dataall/api
+
+
+
+The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
+The overall flow of GraphQL resolution is  found in the `app.py` module using
+the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
+
+The data.all `api` package is where the GraphQL API is defined. This is the Lambda that processes all API calls
+made from the frontend. This folder contains 2 packages: 
+- `gql`: package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
+- `Objects`: contains the business logic of our application
+
+
 Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
-and each defines the following modules
+and each defines the following modules:
 
 1. `schema.py` :  the definition of the schema
 2. `mutations.py` : the definition of mutations for the GraphQL type
@@ -98,36 +97,20 @@ and each defines the following modules
 3. `input_types.py` : the definition on input types for the GraphQL type
 4. `resolvers.py` : the actual code that *resolves* the fields
 
+**Let's take an example** 
 
-The `dataall.gql` package is used to programmatically define GraphQL constructs.
-Every resolver has the same signature:
-```python
-def resolve(context,source, **kwargs):
-    pass
+We perform one type (GraphQL type) of API calls referent to data.all environments. Hence,
+we created an Object called "Environment" by adding a sub-directory with the above listed modules. 
+In `schema.py` we defined the schema of the Environment, note that the results of
+a subquery can be part of the schema. 
 
-```
-
-The parameters are defined as follows:
-
-1. The `context` is provided by the GraphQL engine as an object with two properties
-    - `context.engine` : a db.Engine instance (the database connection)
-    - `context.username` : the username performing the api call
-2. The `source` parameter is optional. If  provided, it holds the result of the parent field
-3. `**kwargs` are the named field parameters
+Now let's see how to add an API call for the creation of Environments. Since 
+creating an environment is a mutation (it modifies the object), we added a MutationField in the `mutations.py` script with the 
+`createEnvironment` API call and its expected input and output type. Here, we also referenced the "resolver" that we 
+defined in the `resolvers.py` as the function `create_environment`.
 
 
-Adding fields, types to the API simply consists in defining the GraphQL type using `dataall.gql`.
-For example, this is how you would implement the following GraphQL specification:
-```graphql
-type Foo{
-    fooId : ID!
-    bar(upper:Boolean) : String
-}
-type Query{
-    getFooById(fooId:String!)
-}
-
-```
+You can directly check any of the Objects in the code, they follow this structure:
 
 - `dataall.api.Objects.Foo.schema.py`
 
@@ -171,6 +154,9 @@ getFoo = gql.Field(
 ```
 
 - `dataall.api.Objects.Foo.resolvers.py`
+
+
+
 ```python
 def resolve_bar(context, source,upper:bool=False):
     tmp = f"hello {context.username}"
@@ -183,39 +169,36 @@ def get_foo(context, source, fooId:str=None):
 
 ```
 
+The parameters are defined as follows:
 
-The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/).
-
-The overall flow of GraphQL resolution is  found in the `app.py` module using
-the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_sync)  from `ariadne`.
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant A as API Gateway
-    participant AZ as Authorizer
-    participant L as Lambda
-    participant G as GraphQL Engine (ariadne)
-    participant R as resolvers
-    participant D as Database
-    C->>A : post GraphQL Query
-    A->>AZ : check JWT token or API Key
-    AZ-xA : Unauthorized
-    AZ->>L : forwards the validated query
-    L->>G : process the GraphQL query
-    G->>R : invoke resolvers
-    R->>D : r/w from/to database
-    D->>R : data
-    R ->>G : query resolution fragments
-    G->>L : GraphQL response
-    L->>A : GraphQL response
-    A->>C : GraphQL response
+1. The `context` is provided by the GraphQL engine as an object with two properties
+    - `context.engine` : a db.Engine instance (the database connection)
+    - `context.username` : the username performing the api call
+2. The `source` parameter is optional. If  provided, it holds the result of the parent field
+3. `**kwargs` are the named field parameters
 
 
-```
-#### `dataall.cdkproxy`
 
-This package contains the code associated with the ECS component.
+
+
+### dataall.db
+
+The `dataall.db` package implements the database connection.
+This all relies on the popular Python's `sqlalchemy` ORM package.
+It can work with a local postgresql instance or with an Aurora database instance.
+The exports from this package are
+
+1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `aws.db.Base` : a SQL alchemy Base metadata class
+3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+
+
+### dataall/tasks
+
+### dataall/cdkproxy
+
+This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
 The code in this package consists of wrapping the `cdk` cli through a REST API interface.
 in this package, you'll find a package called `stacks` that holds the
 definition  of AWS resources associated with data.all high level abstractions (e.g. : Dataset).
@@ -237,7 +220,6 @@ When a data.all resource is created, the api sends an HTTP request to the docker
     long minutes to run. Also, spawning subprocess in lambda is doable but not idea.
 
 
-**cdkproxy.stacks**
 
 cdkproxy currently supports the following stacks defined as cdk stacks in the `cdkproxy.stacks` sub-package:
 
@@ -247,7 +229,7 @@ cdkproxy currently supports the following stacks defined as cdk stacks in the `c
 4. shareobject :  the share object stack is handling the import of remote shared tables in an environment using Lakeformation cross account data sharing
 
 
-### `dataall.aws`
+### dataall/aws
 
 The `dataall.aws` package is where all the AWS logic is implemented.
 The AWS Lambda hosting this code receives JSON objects sent by the api layer.
@@ -296,6 +278,8 @@ The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO
 The handler code in `dataall.aws` will receive tasks, read task data from the Database,
 and assume a role in the AWS Account Id where the action needs to be performed
 
+
+### Diagram
 ```mermaid
 sequenceDiagram
     participant A as data.all λ
@@ -319,139 +303,60 @@ sequenceDiagram
 
 
 
-
-### `dataall.authorizer`
-
-### `dataall.db`
-
-The `dataall.db` package implements the database connection.
-This all relies on the popular Python's `sqlalchemy` ORM package.
-It can work with a local postgresql instance or with an Aurora database instance.
-The exports from this package are
-
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
-
-
-### `dataall.envman`
-
-`envman` (aka environment manager) is a simple wrapper on top of
-AWS **Parameter store**  and AWS **Secrets Manager**.
-It is used to retrieve configurations for an environment, aka database host, account id, and more.
-Environment variables are stored in Parameter Store when the application is deployed.
-Each environment have the following pattern :
-`dataall.{env}/{path}`
-
-The env parameter is associated with each lambda function as an enviroonment variable called
-`envname`.
-
-`envman.Parameter` is the main export from this package.
-Other modules use the `Parameter` class to  retrieve parameters as follows:
-
-```python
-import os
-from data.all import envman
-env=os.environ.get("envname","local")
-host= envman.Parameter.get_parameter(env=env, path="db/host")
-```
-
-If parameter is not found, the method returns `None`.
-
-
-
-### `dataall.gql`
-
-`gql` is a **code-first** graphql schema definition package.
-
-It helps programmatically define GraphQL constructs (types, inputs, unions, enums, schema etc.)
-and generate GraphQL schema string definition. It is different from a **schema-first** approach
-where the schema is defined as a pure string,  which is error-prone and hard to maintain.
-
-
-
-Other modules use `gql` to define GraphQL constructs and associate python code to the Fields to be resolved.
-Most, if not all GraphQL grammar can be defined using `gql`:
-
-```python
-
-from dataall.api import gql
-
-# Defines a GraphQL object type
-gql.ObjectType(
-    name="MyType",
-    fields=[
-        # list of fields
-        gql.Field(
-            name="foo",
-            type=gql.ID,
-            args=[
-                gql.Argument(name="param", type=gql.String)
-            ],
-            resolver=lambda *_, **__: "xxx"
-        )
-    ]
-)
-
-```
-
-Each class defined in `gql` has a `gql` method returning the GraphQL representation of the object:
-
-```python
-
-from dataall.api import gql
-
-foo = gql.Field(name="foo", type=gql.String, args=[gql.Argument(name="bar", type=gql.String)])
-print(foo.gql())
-"""
-will return :
-foo(bar:String) : String
-"""
-```
-
-
-- `gql` implement the following Scalar types:
-    - `gql.ID` :
-    - `gql.Integer` :
-    - `gql.String`
-    - `gql.Number`
-    - `gql.Boolean`
-    - `gql.Date`
-
-- GraphQL Types are defined using the following classes:
-    - `gql.ObjectType(name, fields)`: represents a GraphQL `type`
-    - `gql.Field(name, fields, args, resolvers)` : represents a GraphQL `field`
-    - `gql.Union(types)` : represents a GraphQL union type
-    - `gql.Enum` : represents an GraphQL Enum
-    - `gql.Schema(types, input_types, enums, unions)` : represents a Graphql `schema`
-- GraphQL Arguments are defined using the following classes:
-    - `gql.InputType(name, arguments)`: represents a GraphQL `input`
-    - `gql.Argument (name,args)`
-- GraphQL Type Modifiers are supported through type modifier classes:
-    - `gql.NonNullableType(type)` : specifies the type is non nullable (e.g. `String!`)
-    - `gql.ArrayType(type)` : represents an array of the provided type (e.g. `[String]`)
-- Other exports from gql include:
-    - `gql.Ref(name)` : a reference to a GraphQL construct, used as a work around to avoid circular references
-
-
-
-### `dataall.models`
-
-The `models` package defines all tables defined in the  data.all data model.
-Classes defined as SQLAlchemy classes can inherit from :
-
-- `dataall.db.Base` :  a table with custom fields
-- `dataall.db.Resource` a table with fields inherited from the Resource class and additional custom fields
-
-
-Models that inherit from `Resource` are used to map high level constructs like datasets, projects, environments, organizations.
-Other models that inherits from `Base` are used to model internal data like many to many relations.
-
-
-
-
-
 ## frontend/ <a name="frontend"></a>
+
+
 ## tests/ <a name="tests"></a>
+`pytest` is the testing framework used by data.all.
+Developers can actually test the GraphQL API directly, as datahub can run as a local Flask app. 
+API tests are found in the tests/api package.
+
+The pytest fixtures found inconftest.py starts a local development Flask server that exposes the 
+GraphQL API. Tests can use the graphql_client fixture as a parameter to run queries 
+and mutations against the local web server.
+
+```
+def test_get_dataset_as_owner(dataset, graphql_client):
+    duri = dataset.datasetUri
+    res = graphql_client.query(
+        """
+        getDataset(datasetUri:"%(duri)s"){
+            datasetUri
+            label
+            description
+            tags
+            userRoleForDataset
+        }
+    """
+        % vars()
+    )
+    print (res)
+    assert res.data.getDataset.datasetUri == duri
+    assert res.data.getDataset.userRoleForDataset == DatasetRole.Owner.name
+
+
+```
+
+## compose/ <a name="compose"></a>
+Contains the elements used by docker compose that make possible to deploy data.all locally. 
+Check [Deploy to AWS](./deploy-aws/) to see how.
+
 ## documentation/ <a name="userguide"></a>
+This folder contains information for developers to add content to the user guide documentation accessible from the UI.
+Here you can customize the documentation that is linked to the user guide domain. 
+
+We are using MkDocs to generate the site, here is a [link](https://www.mkdocs.org/) to their official documentation.
+
+**Work locally** 
+
+If you already have a virtualenv for the data.all project and
+you have activated the virtualenv shell, simply cd into the documentation/userguide folder and run:
+
+```bash
+> cd documentation/userguide
+> pip install -r requirements.txt
+> mkdocs serve
+
+```
+
+The last command will run a local mkdocs server running on port 8000.
