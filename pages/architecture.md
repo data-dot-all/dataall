@@ -496,7 +496,7 @@ additional Policy granting READ ONLY access to the remote account on the underly
 ![archi](img/architecture_sharing.drawio.png#zoom#shadow)
 
 **Sharing remarks**
-- sharing actions, either Lake Formation grants or CDK updated of the S3 bucket policy, are performed by data.all backend. 
+- sharing actions, either Lake Formation grants or CDK updates of the S3 bucket policy, are performed by data.all backend. 
 Users of data.all don't have access to the code that performs the share.
 - Data is shared, it is not copied between accounts.
 - Since table sharing is based on Lake Formation, it is subtle to Lake Formation service limitations. e.g. cross-region sharing.
