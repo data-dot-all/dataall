@@ -457,8 +457,7 @@ the IAM role with the fine-grained permissions set by the environment-Team.
 ### Datasets and data access
 
 A dataset is created by a user and associated to an environment and team, which becomes the dataset-Team.
-
-Members of this team have technical permissions on the Dataset
+Members of this team have UI permissions on the Dataset
 metadata and underlying access to the data in AWS, that is:
 - access to dataset metadata (e.g. AWS information) from the data.all UI
 - direct link access to the dataset S3 Bucket from the data.all UI
@@ -476,7 +475,7 @@ data lake, as opposed to applying security on a project basics.
 
 ### Data sharing
 Each Dataset must have at least one Team of stewards (IdP group), handling sharing requests
-to the dataset items (tables/folders). We can define our dataset-Team as steward and on top add additional
+to the dataset items (tables/folders). We can define our dataset-Team as steward and on top, add additional
 Teams that will support us in the granting/revoking of data access.
 
 Users request access on behalf of an environment and team, then a member of the Stewards teams can either
@@ -494,7 +493,18 @@ additional READ ONLY Grant, allowing the remote account to Select and List the d
 - Folders, for unstructured data: The underlying S3 Bucket will be updated with an 
 additional Policy granting READ ONLY access to the remote account on the underlying S3 Prefix.
 
+![archi](img/architecture_sharing.drawio.png#zoom#shadow)
 
+**Sharing remarks**
+- sharing actions, either Lake Formation grants or CDK updated of the S3 bucket policy, are performed by data.all backend. 
+Users of data.all don't have access to the code that performs the share.
+- Data is shared, it is not copied between accounts.
+- Since table sharing is based on Lake Formation, it is subtle to Lake Formation service limitations. e.g. cross-region sharing.
+
+### Notebooks
+
+A Notebook has a notebook-Team with UI permissions on the Notebook
+and underlying access to the data in AWS.
 
 ### Pipelines
 
@@ -503,6 +513,6 @@ and underlying access to the data in AWS.
 
 ### Dashboards
 
-A Dashboard has a dashboards-Team with UI permissions on the Pipeline
+A Dashboard has a dashboards-Team with UI permissions on the Dashboard
 and underlying access to the data in AWS.
 
