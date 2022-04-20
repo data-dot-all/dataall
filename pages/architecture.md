@@ -14,7 +14,8 @@ permalink: /architecture/
 4. [Linked Environments](#environment)
    - [CDK bootstrap](#cdk)
    - [pivotRole SDKs](#pivotrole)
-5. [Permission Model](#permisisons)
+5. [data.all Resources](#resources)
+6. [Permission Model](#permission)
 
 ## End-to-end architecture <a name="end"></a>
 
@@ -300,7 +301,7 @@ conditions:
 ![archi](img/architecture_linked_env.drawio.png#zoom#shadow)
 
 
-#### CDK bootstrap <a name="cdk"></a>
+### CDK bootstrap <a name="cdk"></a>
 We need to bootstrap the environment account to provision resources the AWS CDK needs to perform the deployment of
 environments, datasets, pipelines and other data.all resources. 
 
@@ -315,11 +316,8 @@ Note that we added some parameters to the bootstraping command, as appears in th
 - `--cloudformation-execution-policies`: specifies the ARNs of managed policies that should be attached to the 
 deployment role assumed by AWS CloudFormation during deployment of your stacks. 
 
-
-
-
-
-#### pivotRole <a name="pivotrole"></a>
+  
+### pivotRole <a name="pivotrole"></a>
 
 Each data.all environment must have an AWS IAM role named
 **pivotRole** that trusts data.all's deployment account, so that
@@ -341,7 +339,7 @@ Alternatively, you can access this template directly from the
 [Github repository/deploy](https://github.com/awslabs/aws-dataall/blob/main/deploy/pivot_role/pivotRole.yaml). 
 
 
-## data.all Resources
+## data.all Resources <a name="resources"></a>
 
 data.all resources are the objects created by the users through data.all
 UI or API like datasets, notebooks, dashboards... We will discuss below
@@ -350,15 +348,17 @@ the security of those data.all resources that have a CloudFormation stack associ
 ### Datasets
 
 They are created inside a data.all environment, thus the dataset stack is deployed in the environment linked AWS
-account and region. When we create a data.all dataset we are deploying the following resources:
+account and region. When we create a data.all dataset we are deploying the following resources (not only):
 
 
   | Service         |           Resource|   Description|
 -----------------|-----------------| ---------- |----------------------------------------------|
-  | S3               |         Bucket  |  Amazon Redshift cluster for data warehousing|
-  | KMS             |               Key |       Key encryption used by the Redshift cluster|
-  | Glue |   Database|     Stores Redshift cluster user credentials|
+  | S3               |         Bucket  |  Amazon S3 Bucket where the data is stored|
+  | KMS             |               Key |       Key encryption used to encrypt the dataset S3 Bucket|
+  | IAM             |               Role |       Role for direct link access to the dataset S3 Bucket|
+  | Glue |   Database|     Glue database that holds the dataset tables|
 
+We also have the option to **import** a dataset, in such case we can reuse an existing S3 Bucket and Glue database.
 
 
 **Security and Networking configuration**:
@@ -373,7 +373,8 @@ account and region. When we create a data.all dataset we are deploying the follo
 
 Warehouse are Amazon Redshift Clusters created or imported by data.all
 that allows data teams to implement secure, automated, data warehousing
-including loading data from S3 through Spectrum. A warehouse in data.all is mapped to
+including loading data from S3 through Spectrum. A warehouse in data.all is created
+inside an environment (in its linked AWS account) and it is mapped to:
 
   |Service|           Resource|   Description|
   |-----------------| ---------- |----------------------------------------------|
@@ -408,102 +409,100 @@ account and region. It includes:
     logs.
 - Sagemaker studio is running on the VPC and subnets provided by the user.
 
-## Permission Model
+## Permission Model <a name="permission"></a>
 
-data.all permission model is based on group membership inherited from the
-corporate IdP.
+data.all permission model is based on group membership inherited from Cognito groups or from the
+corporate IdP. 
 
-Each object in data.all will have
+Each object in data.all will have an **object-Team** with full permissions on the object, 
+it corresponds to a Cognito group that is typically
+federated with the Corporate IdP. 
 
--   A **Creator** with full permissions on the object.
--   A **Team** with full permissions on the object, the group is being
-    federated with the Corporate IdP.
+
+### Tenant groups
+data.all has tenant groups which correspond to a group from Cognito or from your
+IdP that has the right to manage high level application (tenant)
+permissions for all IdP groups integrated with data.all.
+
+This super user's group maps to a group from your IdP that's by default
+named "dataall", but we can add additional tenant groups in our Aurora database. 
+Any user member of this group will be
+able to:
+
+- create organizations
+- manage tenant permissions on onboarded groups (IdP groups).
 
 ### Organizations
 
-Organizations are created by a team, and other teams (IdP groups) can be
-invited on an organization to link their AWS accounts as data.all
+Organizations are created by a tenant group or by a group granted "create-organization" permissions. An organization
+is linked to a group, this is the organization-Team. 
+Other Teams (IdP groups) can be
+invited to an existing organization to link their AWS accounts as data.all
 environments.
 
-Only the users belonging to the administrator's team and the invited
-teams are allowed to see the organization.
+Only the users belonging to the organization-Team and the invited
+Teams are allowed to see the organization.
 
 ### Environments
 
-An environment is created by a user and associated with a Team. The team
-members are administrators of the environment and they can invite other
-teams.
-
-Administrators of the environment can invite other IdP groups to
-collaborate on the same environment. Administrators are able to grant
-fine grained permissions which will create an IAM role with the same
+An environment is created by a user and associated with a Team. Members of this environment-Team can invite other
+Teams, other IdP groups. Members of the environment-Team are able to grant
+fine-grained permissions to the invited teams, which will create an IAM role with the corresponding
 permissions to access the AWS account.
 
-Only the users belonging to the administrator's team and the invited
-teams are allowed to access the underlying AWS account.
+Only the users belonging to the environment-Team and the invited
+Teams are allowed to access the underlying AWS account. For the latest, they access the AWS Account assuming
+the IAM role with the fine-grained permissions set by the environment-Team.
 
 ### Datasets and data access
 
-A dataset had one creator with technical permissions on the Dataset
-metadata and underlying access to the data in AWS.
+A dataset is created by a user and associated to an environment and team, which becomes the dataset-Team.
 
-One technical admin team with same permissions as the dataset creator
+Members of this team have technical permissions on the Dataset
+metadata and underlying access to the data in AWS, that is:
+- access to dataset metadata (e.g. AWS information) from the data.all UI
+- direct link access to the dataset S3 Bucket from the data.all UI
+- assuming their environment created IAM role, they can access the dataset S3 Bucket
+- assuming their environment created IAM role, they can access the data with all AWS Services integrated with Glue Catalog/Lake Formation
 
-Each Dataset must have a team of stewards (IdP group), granting or
-denying access to the dataset items (tables/folders).
 
-Finally, Dataset items can be shared with other environments and teams,
-i.e. an another account and an IAM role, federated through corporate
-IDP.
-
-when a Table is shared, its shared across AWS account using AWS Lake
-Formation cross account table sharing, allowing READ ONLY Access to the
-shared table
-
-when a folder is shared, the Bucket Policy of the Dataset is allowing
-READ ONLY to the other account, in READ ONLY mode
+Users that are NOT members of the dataset-Team CANNOT perform the above listed actions on the dataset data.
 
 **Note**: Any security requirement can be fully automated through adding resources
 to the stacks that define the dataset resources. This provides security
 team with simple ways to add any security mechanism at the scale of the
 data lake, as opposed to applying security on a project basics.
 
+
 ### Data sharing
+Each Dataset must have at least one Team of stewards (IdP group), handling sharing requests
+to the dataset items (tables/folders). We can define our dataset-Team as steward and on top add additional
+Teams that will support us in the granting/revoking of data access.
 
-All data sharing is READ ONLY. When a dataset owner decides to share a
-table, or a prefix with another Team, this will automatically update the
-stack (infrastructure as code) of the dataset.
+Users request access on behalf of an environment and team, then a member of the Stewards teams can either
+accept or deny the request. Dataset items can be shared with other environments and teams,
+i.e. an another account and an IAM role, federated through corporate
+IdP. 
 
-- For structured data: The underlying Lake Formation tables will have an 
-additional Readonly Grant, allowing the remote account to Select and List the data for the shared table.
+**Note**: Once the share request is accepted and processed, the specified Team members get access to the requested items.
+That means that data is granted for a Team, not for a user.
 
-- For unstructured data: The underlying S3 Bucket will be updated with an 
-additional Policy granting read only access to the remote account on the underlying S3 Prefix.
+Dataset items are Tables and Folders:
+- Tables, for structured data: The underlying Glue tables secured by Lake Formation will have an 
+additional READ ONLY Grant, allowing the remote account to Select and List the data for the shared table.
 
-
-All (federated) users of a data.all Environment (AWS Account) can access
-the dataset resource below:
-
--   S3 data hosted on this account
--   S3 Data (prefixes) shared by other accounts
--   data managed by Lake Formation created on this Environment
--   tables managed by Lake Formation shared with the Environment
-
+- Folders, for unstructured data: The underlying S3 Bucket will be updated with an 
+additional Policy granting READ ONLY access to the remote account on the underlying S3 Prefix.
 
 
 
 ### Pipelines
 
-A Pipeline has one creator with technical permissions on the Pipeline
+A Pipeline has a pipeline-Team with UI permissions on the Pipeline
 and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Pipeline creator
-that can run the Pipeline from the User Interface or API.
 
 ### Dashboards
 
-A Dashboard has one creator with technical permissions on the Dashboard
+A Dashboard has a dashboards-Team with UI permissions on the Pipeline
 and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Dashboard Creator.
 
