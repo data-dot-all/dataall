@@ -164,7 +164,7 @@ GraphQL API.
 
 - API Gateway is private and not exposed to the internet, it's linked to a
 shared VPC endpoint. 
-- A resource policy on the API Gateway denys any traffic with a source different than the VPC
+- A resource policy on the API Gateway denies any traffic with a source different than the VPC
 endpoint.
 - API Gateway is protected by AWS Web Application Firewall (WAF) against
 malicious attacks.
@@ -209,8 +209,8 @@ availability, and vulnerabilities scanning.
 
 ### Amazon SQS FIFO Queue
 
-data.all uses Amazon SQS FIFO queue as a messaging mechanism between
-"API Handler" Lambda function and the short running AWS tasks Worker Lambda
+data.all uses Amazon SQS FIFO queue as a messaging mechanism between the
+API Handler Lambda function and the Worker Lambda
 function.
 
 - Amazon SQS queue is running outside of the VPC. 
@@ -219,9 +219,8 @@ rotation.
 
 ### ECS Fargate - Long Running Background Tasks Processor
 data.all uses ECS tasks to perform long running tasks or
-scheduled tasks. 
-
-One of the tasks performed by ECS is the creation of CDK stacks in the linked environments' accounts.
+scheduled tasks. One of the tasks performed by ECS is the 
+creation of CDK stacks in the linked environments' accounts.
 
 - data.all ECS backend service docker images are built with AWS
 CodePipeline and stored on AWS CodeArtifact which ensures third party
@@ -246,12 +245,12 @@ through security groups inbound rules.
   
 ### Amazon OpenSearch
 data.all uses Amazon OpenSearch to index datasets information
-for optimal search experience on the catalog.
+for optimal search experience on the catalog. 
 
 - Amazon OpenSearch cluster is running inside a VPC and private
 subnets.
 - It is accessible only by data.all resources like Lambda
-functions and ECS tasks through security groups inbound rules.
+functions and ECS tasks thanks to enforced security groups inbound rules.
 - It is encrypted at rest with AWS KMS customer managed key (CMK).
 
 ### AWS Lambda OpenSearch Handler
@@ -284,7 +283,7 @@ performance from actual user sessions in near real time.
 ## Linked Environments <a name="environment"></a>
 
 Environments are workspaces where one or multiple teams can work. They are the door between our users in data.all and AWS, that is
-why we say that we "link" environments because we link each environment with **ONE** AWS account as appears in the below diagram.
+why we say that we "link" environments because we link each environment to **ONE** AWS account.
 Under each environment we create other data.all resources, such as datasets, pipelines and notebooks. 
 
 For the deployment of 
@@ -327,8 +326,8 @@ Each data.all environment must have an AWS IAM role named
 it could assume that role and do AWS operations like list AWS Glue
 database tables etc...
 
-The pivotRole is secured with an **externalId** that the
-pivot role must be created with otherwise the STS AssumeRole operation
+The pivotRole is secured with an **externalId** with whom it must be created. 
+Otherwise, the STS AssumeRole operation
 will fail. This is a recommended pattern from 
 [AWS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) to
 grant access to external AWS accounts.
@@ -346,29 +345,27 @@ Alternatively, you can access this template directly from the
 
 data.all resources are the objects created by the users through data.all
 UI or API like datasets, notebooks, dashboards... We will discuss below
-the security of those data.all resources that include a CloudFormation stack.
+the security of those data.all resources that have a CloudFormation stack associated.
 
 ### Datasets
 
 They are created inside a data.all environment, thus the dataset stack is deployed in the environment linked AWS
-account and region.
+account and region. When we create a data.all dataset we are deploying the following resources:
+
 
   | Service         |           Resource|   Description|
 -----------------|-----------------| ---------- |----------------------------------------------|
-  | S3               |         Cluster  |  Amazon Redshift cluster for data warehousing|
+  | S3               |         Bucket  |  Amazon Redshift cluster for data warehousing|
   | KMS             |               Key |       Key encryption used by the Redshift cluster|
-  | Glue |   Secret|     Stores Redshift cluster user credentials|
+  | Glue |   Database|     Stores Redshift cluster user credentials|
 
 
 
 **Security and Networking configuration**:
 
 -   Encryption: Datasets are protected by AWS Managed KMS Keys, one key is generated for each Dataset.
-
 -   Traceability: All access to data is logged through AWS CloudTrail logs
-
--   Traceability: All SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation
-
+-   Traceability: On our structured data, all SQL queries from EMR, Redshift, Glue Jobs, Athena is automatically captured through Lake Formation.
 -   Glue jobs related to the dataset are by default running outside the VPC.
 
 
@@ -388,12 +385,10 @@ including loading data from S3 through Spectrum. A warehouse in data.all is mapp
 **Security and Networking configuration**:
 
 -   Encryption: Amazon Redshift Cluster is encrypted with KMS.
-
 -   Traceability: All access to data is logged through AWS CloudTrail
-    logs
-
+    logs.
 -   Networking Configuration: Redshift cluster is deployed only within a
-    private subnet
+    private subnet.
 
 ### Notebooks
 
@@ -410,8 +405,7 @@ account and region. It includes:
 **Security and Networking configuration**:
 
 - Traceability: All access to data is logged through AWS CloudTrail
-    logs
-
+    logs.
 - Sagemaker studio is running on the VPC and subnets provided by the user.
 
 ## Permission Model
@@ -421,12 +415,11 @@ corporate IdP.
 
 Each object in data.all will have
 
--   A **Creator** with full permissions on the object
-
+-   A **Creator** with full permissions on the object.
 -   A **Team** with full permissions on the object, the group is being
-    federated with the Corporate IdP
+    federated with the Corporate IdP.
 
-**Organizations**
+### Organizations
 
 Organizations are created by a team, and other teams (IdP groups) can be
 invited on an organization to link their AWS accounts as data.all
@@ -435,7 +428,7 @@ environments.
 Only the users belonging to the administrator's team and the invited
 teams are allowed to see the organization.
 
-**Environments**
+### Environments
 
 An environment is created by a user and associated with a Team. The team
 members are administrators of the environment and they can invite other
@@ -449,7 +442,7 @@ permissions to access the AWS account.
 Only the users belonging to the administrator's team and the invited
 teams are allowed to access the underlying AWS account.
 
-**Datasets**
+### Datasets and data access
 
 A dataset had one creator with technical permissions on the Dataset
 metadata and underlying access to the data in AWS.
@@ -470,22 +463,10 @@ shared table
 when a folder is shared, the Bucket Policy of the Dataset is allowing
 READ ONLY to the other account, in READ ONLY mode
 
-**Pipelines**
-
-A Pipeline has one creator with technical permissions on the Pipeline
-and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Pipeline creator
-that can run the Pipeline from the User Interface or API.
-
-**Dashboards**
-
-A Dashboard has one creator with technical permissions on the Dashboard
-and underlying access to the data in AWS.
-
-one technical admin team with same permissions as the Dashboard Creator.
-
-
+**Note**: Any security requirement can be fully automated through adding resources
+to the stacks that define the dataset resources. This provides security
+team with simple ways to add any security mechanism at the scale of the
+data lake, as opposed to applying security on a project basics.
 
 ### Data sharing
 
@@ -493,30 +474,36 @@ All data sharing is READ ONLY. When a dataset owner decides to share a
 table, or a prefix with another Team, this will automatically update the
 stack (infrastructure as code) of the dataset.
 
-For structured data:
+- For structured data: The underlying Lake Formation tables will have an 
+additional Readonly Grant, allowing the remote account to Select and List the data for the shared table.
 
--   The underlying Lake Formation tables will have an additional Readonly Grant, allowing the remote account to Select and List the data for the shared table
+- For unstructured data: The underlying S3 Bucket will be updated with an 
+additional Policy granting read only access to the remote account on the underlying S3 Prefix.
 
-For unstructured data:
-
--   The underlying S3 Bucket will be updated with an additional Policy granting read only access to the remote account on the underlying S3 Prefix
-
-#### Traceability & Forensic
 
 All (federated) users of a data.all Environment (AWS Account) can access
 the dataset resource below:
 
 -   S3 data hosted on this account
-
 -   S3 Data (prefixes) shared by other accounts
-
 -   data managed by Lake Formation created on this Environment
-
 -   tables managed by Lake Formation shared with the Environment
 
-#### Extensibility
 
-Any security requirement can be fully automated through adding resources
-to the stacks that define the dataset resources. This provides security
-team with simple ways to add any security mechanism at the scale of the
-data lake, as opposed to applying security on a project basics.
+
+
+### Pipelines
+
+A Pipeline has one creator with technical permissions on the Pipeline
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Pipeline creator
+that can run the Pipeline from the User Interface or API.
+
+### Dashboards
+
+A Dashboard has one creator with technical permissions on the Dashboard
+and underlying access to the data in AWS.
+
+one technical admin team with same permissions as the Dashboard Creator.
+
