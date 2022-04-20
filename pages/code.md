@@ -251,8 +251,11 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     [.....]
 ```
 #### WorkerHandler
-In addition, in `service_handlers.py` we defined the `WorkerHandler`  Python class. 
-The `WorkerHandler`  is in charge of
+In addition, in `service_handlers.py` we defined the `WorkerHandler`  Python class.
+Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
+asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed 
+by the Worker Lambda function.
+The `WorkerHandler`  is the one in charge of
 routing tasks to the Worker AWS Lambda. 
 
 This class has a singleton instance called `Worker` that has two apis:
@@ -349,10 +352,10 @@ to the docker service and the code runs the appropriate stack using cdk the cli.
 
 cdkproxy currently supports the following stacks defined as cdk stacks in the `cdkproxy.stacks` sub-package:
 
-1. environment :  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
+1. environment:  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
 2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
 4. notebook: SageMaker Notebook resources
-5. pipeline : CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
+5. pipeline: CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
 6. redshift_cluster: Redshift stack
 7. sagemakerstudio: SageMaker Studio user profile
 
