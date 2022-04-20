@@ -419,14 +419,13 @@ it corresponds to a Cognito group that is typically
 federated with the Corporate IdP. 
 
 
-### Tenant groups
-data.all has tenant groups which correspond to a group from Cognito or from your
+### Tenant group
+data.all has a tenant group which correspond to a group from Cognito or from your
 IdP that has the right to manage high level application (tenant)
 permissions for all IdP groups integrated with data.all.
 
 This super user's group maps to a group from your IdP that's by default
-named "dataall", but we can add additional tenant groups in our Aurora database. 
-Any user member of this group will be
+named "DAAdministrators". Any user member of this group will be
 able to:
 
 - create organizations
@@ -434,7 +433,7 @@ able to:
 
 ### Organizations
 
-Organizations are created by a tenant group or by a group granted "create-organization" permissions. An organization
+Organizations are created by the tenant group or by a group granted "create-organization" permissions. An organization
 is linked to a group, this is the organization-Team. 
 Other Teams (IdP groups) can be
 invited to an existing organization to link their AWS accounts as data.all

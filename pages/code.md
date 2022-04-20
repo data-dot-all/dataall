@@ -69,14 +69,46 @@ deploy/
 ```
 
 ## backend/ <a name="backend"></a>
-In this section we will touch upon the main components of the backend code. That is, the code run in the 
-API Handler Lambda, the Worker Lambda, the ECS Fargate Cluster and the OpenSearch Lambda. In addition, this section
-introduces the modelling and business logic of data.all concepts: e.g. Environments, Datasets, Teams...
+In this section we will touch upon the main components of the backend code. We will start with how do we communicate
+with the Aurora database, then we will focus on the code run by each of the compute components:
+API Handler Lambda, the Worker Lambda, the ECS Fargate Cluster and the OpenSearch Lambda. 
+
+### dataall.db
+
+The `dataall.db` package implements the database connection with our persistence layer.
+It can work with a local postgresql instance or with an Aurora database instance.
+
+The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
+or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
+The exports from this package are:
+
+1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `aws.db.Base` : a SQL alchemy Base metadata class
+3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+
+The package has two modules:
+- `models`: it defines the tables and their schemas in our Aurora RDS database.
+- `api`: api calls against the RDS Aurora database.
+
+API code relies on the popular Python's `sqlalchemy` ORM package. Here is an example of a query to count the tables
+of an specific data.all dataset.
+```
+    @staticmethod
+    def count_dataset_tables(session, dataset_uri):
+        return (
+            session.query(models.DatasetTable)
+            .filter(models.DatasetTable.datasetUri == dataset_uri)
+            .count()
+        )
+```
+
+
+**Note**: Granular permissions specified from the UI are stored in the permission table. Check the permission model and
+apis to dig deeper into the logic.
 
 
 ### dataall/api
-
-
 
 The api is exposed using the [`ariadne` GraphQL package](https://ariadnegraphql.org/). 
 The overall flow of GraphQL resolution is  found in the `app.py` module using
@@ -178,21 +210,95 @@ The parameters are defined as follows:
 3. `**kwargs` are the named field parameters
 
 
+### dataall/aws
+
+The `dataall.aws` package is where all the AWS logic is implemented. In other words, the code in the handlers serves 
+as an interface with AWS services. 
+
+```
+handlers/:
+├── cloudformation.py
+├── cloudwatch.py
+├── codecommit.py 
+├── codepipeline.py
+├── ecs.py
+├── glue.py
+├── parameter_store.py
+├── quicksight.py
+├── redshift.py
+├── s3.py
+├── sagemaker.py
+├── sagemaker_studio.py
+├── sns.py
+├── sqs.py
+├── stepfunction.py
+└── sts.py ---> used to assume roles on different AWS accounts
+```
+
+These scripts define Python classes that can imported, for example by the API resolvers. Here is an example of
+the Dataset resolvers `backend/dataall/api/Objects/Dataset/resolvers.py` where we import
+and use the class `Glue` to interact with AWS Glue:
+```
+def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
+    [.....]
+        crawler = Glue.get_glue_crawler(
+            {
+                'crawler_name': dataset.GlueCrawlerName,
+                'region': dataset.region,
+                'accountid': dataset.AwsAccountId,
+            }
+        )
+    [.....]
+```
+#### WorkerHandler
+In addition, in `service_handlers.py` we defined the `WorkerHandler` class that does
+not implement general interactions with AWS services. The Worker Lambda processes requests based on this class as you 
+see in its code in `backend/aws_handler.py`. 
 
 
+The `WorkerHandler` python class is in charge of
+routing tasks to python functions.
+This class has a singleton instance called `Worker` that has two apis:
 
-### dataall.db
+1. `Worker.queue(engine, task_ids: [str]))` : an interface to send a list of task ids to the worker
+2.  `Worker.process(engine, task_ids: [str])`: the actual work to process a list of tasks
 
-The `dataall.db` package implements the database connection.
-This all relies on the popular Python's `sqlalchemy` ORM package.
-It can work with a local postgresql instance or with an Aurora database instance.
-The exports from this package are
 
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
+Additionally, the `Worker` singleton exposes a decorator function to register handler functions.
+For example, suppose you want to implement a handler for tasks with `{"action": "foo"}`.
+The following code will register the `handle_foo` function as the handler for `foo` actions:
+```python
+from dataall.aws import Worker
+from data.all import models
 
+@Worker.handler(path="foo")
+def handle_foo(engine, task: models.Task):
+    pass
+
+```
+
+Any handler needs to have the same signature:
+```python
+from dataall import models
+def handler(engine, task:models.Task):
+    """ handler signature """
+    pass
+```
+Any handler will receive two parameters:
+
+1. `engine` :  an instance of `db.Engine`
+2. `task` : an instance of a `models.Task`  record
+
+The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**.
+The handler code in `dataall.aws` will receive tasks, read task data from the Database,
+and assume a role in the AWS Account Id where the action needs to be performed
+
+The AWS Lambda hosting this code receives JSON objects sent by the api layer.
+The JSON object received represents a task, and has three keys:
+
+1. `action`: the name of the action to be performed
+2. `taskid` : the identified of the task as found in the `task` table
+3. `payload` : any additional information associated with the task
 
 ### dataall/tasks
 
@@ -229,55 +335,6 @@ cdkproxy currently supports the following stacks defined as cdk stacks in the `c
 4. shareobject :  the share object stack is handling the import of remote shared tables in an environment using Lakeformation cross account data sharing
 
 
-### dataall/aws
-
-The `dataall.aws` package is where all the AWS logic is implemented.
-The AWS Lambda hosting this code receives JSON objects sent by the api layer.
-The JSON object received represents a task, and has three keys:
-
-1. `action`: the name of the action to be performed
-2. `taskid` : the identified of the task as found in the `task` table
-3. `payload` : any additional information associated with the task
-
-The `WorkerHandler` python class in `dataall.aws.handlers.service_handlers` is in charge of
-routing tasks to python functions.
-This class has a singleton instance called `Worker` that has two apis:
-
-1. `Worker.queue(engine, task_ids: [str]))` : an interface to send a list of task ids to the worker
-2.  `Worker.process(engine, task_ids: [str])`: the actual work to process a list of tasks
-
-
-Additionally, the `Worker` singleton exposes a decorator function to register handler functions.
-For example, suppose you want to implement a handler for tasks with `{"action": "foo"}`.
-The following code will register the `handle_foo` function as the handler for `foo` actions:
-```python
-from dataall.aws import Worker
-from data.all import models
-
-@Worker.handler(path="foo")
-def handle_foo(engine, task: models.Task):
-    pass
-
-```
-
-Any handler needs to have the same signature:
-```python
-from dataall import models
-def handler(engine, task:models.Task):
-    """ handler signature """
-    pass
-```
-Any handler will receive two parameters:
-
-1. `engine` :  an instance of `db.Engine`
-2. `task` : an instance of a `models.Task`  record
-
-
-
-The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**.
-The handler code in `dataall.aws` will receive tasks, read task data from the Database,
-and assume a role in the AWS Account Id where the action needs to be performed
-
 
 ### Diagram
 ```mermaid
@@ -308,10 +365,10 @@ sequenceDiagram
 
 ## tests/ <a name="tests"></a>
 `pytest` is the testing framework used by data.all.
-Developers can actually test the GraphQL API directly, as datahub can run as a local Flask app. 
+Developers can actually test the GraphQL API directly, as data.all can run as a local Flask app. 
 API tests are found in the tests/api package.
 
-The pytest fixtures found inconftest.py starts a local development Flask server that exposes the 
+The pytest fixtures found in conftest.py starts a local development Flask server that exposes the 
 GraphQL API. Tests can use the graphql_client fixture as a parameter to run queries 
 and mutations against the local web server.
 
