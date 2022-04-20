@@ -336,27 +336,6 @@ cdkproxy currently supports the following stacks defined as cdk stacks in the `c
 
 
 
-### Diagram
-```mermaid
-sequenceDiagram
-    participant A as data.all λ
-    participant D as DB
-    participant W as worker λ
-    participant H as handler
-    participant C as Target AWS Account
-    A->>D : (1) write tasks to db
-    D-->>A : (2)saved tasks
-    A->>W: (3) send task messages through SQS
-    W-->>D : (4)read tasks data from database
-    W-->>H :(5) Routes task to handler
-    H-->>C : (6) Assume role
-    H-->>W : (7) STS Token
-    H->>C :(8) performs AWS API Calls
-    H->>W :(9) returns response
-    W->>D: (10) updates task status
-
-
-```
 
 
 
