@@ -369,7 +369,6 @@ The API itself consists of 4 actions/paths :
 The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
 web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
-
 The sub-package  `stacks` holds the
 definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
 
@@ -400,10 +399,37 @@ class MyPredefinedStack(core.Stack):
 
 ```
 
-**Let's take an example** 
+**Let's take an end-to-end example** 
 
+In `data.api` dataset resolvers we have the GraphQL call to create a dataset:
+```
+def create_dataset(context: Context, source, input=None):
+[...]
+    stack_helper.deploy_dataset_stack(context, dataset)
+    return dataset
+```
 
-### dataall/tasks
+Which uses the stack_helper from `Stack` GraphQL Type (`backend/dataall/api/Objects/Stack/stack_helper.py`) to queue or 
+run the ECS task.
+```
+def deploy_stack(context, targetUri):
+    [.....]
+            if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
+                stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
+            else:
+                task: models.Task = models.Task(
+                    action='ecs.cdkproxy.deploy', targetUri=stack.stackUri
+                )
+                session.add(task)
+                session.commit()
+                Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+
+        return stack
+```
+Remember, in the `dataall.aws` package is where we defined the interface with ECS and the `run_cdkproxy_task` function.
+We are passing the task definition and the docker container to ECS which will use then the `dataall/cdkproxy` package
+deployed in a docker container. The docker image is stored in ECR in the tooling account.
+
 
 ### dataall/searchproxy
 The `dataall/searchproxy` package manages all operations with the OpenSearch cluster. Similarly to `dataall/db`, this
@@ -411,6 +437,51 @@ package implements the connection with the OpenSearch cluster for all compute co
 and ECS tasks.
 
 ## frontend/ <a name="frontend"></a>
+The frontend code is a React App. In this section we will focus on the components that are particular to data.all, 
+which are the ones in the `src` folder.
+
+### hooks
+We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
+fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
+Inside `hooks`, in `useClient` we initialize `ApolloClient`.
+
+
+### api
+This folder contains the GraphQL API definitions for each of our GraphQL Types.
+
+
+## TO DO
+https://www.apollographql.com/docs/react/get-started
+
+Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
+in the frontend code we use the gql 
+```
+import { gql } from 'apollo-boost';
+
+const createDataset = (input) => {
+  console.log('rcv', input);
+  return {
+    variables: {
+      input
+    },
+    mutation: gql`
+      mutation CreateDataset($input: NewDatasetInput) {
+        createDataset(input: $input) {
+          datasetUri
+          label
+          userRoleForDataset
+        }
+      }
+    `
+  };
+};
+
+export default createDataset;
+
+```
+
+### views
+
 
 
 ## tests/ <a name="tests"></a>
