@@ -80,12 +80,7 @@ It can work with a local postgresql instance or with an Aurora database instance
 
 The idea is that this package processes all requests to our database, it can be from the Lambda API Handler, Lambda Worker
 or the ECS tasks. This is the package that handles all database operations regardless of the compute component.
-The exports from this package are:
 
-1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
-2. `aws.db.Base` : a SQL alchemy Base metadata class
-3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
-4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
 
 The package has two modules:
 - `models`: it defines the tables and their schemas in our Aurora RDS database.
@@ -103,6 +98,12 @@ of an specific data.all dataset.
         )
 ```
 
+The exports from this package are:
+
+1. `aws.db.get_engine(envname='local')` : returns a wrapper for a SQLAlchemy  engine instance
+2. `aws.db.Base` : a SQL alchemy Base metadata class
+3. `aws.db.Resource` :  a SQL alchemy class that holds common fields (label, created,...) found in data.all models
+4. `aws.db.create_schema_and_tables` :  a method that will create schema and tables
 
 **Note**: Granular permissions specified from the UI are stored in the permission table. Check the permission model and
 apis to dig deeper into the logic.
@@ -117,7 +118,7 @@ the [`graphqlsync`](https://ariadnegraphql.org/docs/0.4.0/api-reference#graphql_
 The data.all `api` package is where the GraphQL API is defined. This is the Lambda that processes all API calls
 made from the frontend. This folder contains 2 packages: 
 - `gql`: package to support GraphQL schemas. It is used to programmatically define GraphQL constructs.
-- `Objects`: contains the business logic of our application
+- `Objects`: containing the business logic of our application.
 
 
 Each GraphQL Type defined in the data.all GraphQL API has one package in the `api.Objects` package,
@@ -132,9 +133,8 @@ and each defines the following modules:
 **Let's take an example** 
 
 We perform one type (GraphQL type) of API calls referent to data.all environments. Hence,
-we created an Object called "Environment" by adding a sub-directory with the above listed modules. 
-In `schema.py` we defined the schema of the Environment, note that the results of
-a subquery can be part of the schema. 
+we created an Object called "Environment" by adding a GraphQL Type with the above listed modules. 
+In `schema.py` we defined the schema of the Environment. The schema can define fields from subqueries.
 
 Now let's see how to add an API call for the creation of Environments. Since 
 creating an environment is a mutation (it modifies the object), we added a MutationField in the `mutations.py` script with the 
@@ -209,11 +209,13 @@ The parameters are defined as follows:
 2. The `source` parameter is optional. If  provided, it holds the result of the parent field
 3. `**kwargs` are the named field parameters
 
+**Note**: If you are adding a new Object/GraphQL type, 
+don't forget to add it in`backend/dataall/api/Objects/__init__.py`
 
 ### dataall/aws
 
-The `dataall.aws` package is where all the AWS logic is implemented. In other words, the code in the handlers serves 
-as an interface with AWS services. 
+The `dataall.aws` package is where all the AWS logic is implemented. It serves 
+as an interface that performs API calls to AWS services. It has a unique folder containing:
 
 ```
 handlers/:
@@ -235,7 +237,7 @@ handlers/:
 └── sts.py ---> used to assume roles on different AWS accounts
 ```
 
-These scripts define Python classes that can imported, for example by the API resolvers. Here is an example of
+These scripts define Python classes that can imported (e.g. by the API resolvers in `dataall.api`). Here is an example of
 the Dataset resolvers `backend/dataall/api/Objects/Dataset/resolvers.py` where we import
 and use the class `Glue` to interact with AWS Glue:
 ```
@@ -253,20 +255,20 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
 #### WorkerHandler
 In addition, in `service_handlers.py` we defined the `WorkerHandler`  Python class.
 Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
-asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed 
-by the Worker Lambda function.
-The `WorkerHandler`  is the one in charge of
+asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
+asynchronously by the Worker Lambda function.
+The `WorkerHandler`  is in charge of
 routing tasks to the Worker AWS Lambda. 
 
 This class has a singleton instance called `Worker` that has two apis:
 
-1. `Worker.queue(engine, task_ids: [str]))` : an interface to send a list of task ids to the worker
-2.  `Worker.process(engine, task_ids: [str])`: the actual work to process a list of tasks
+1. `Worker.queue(engine, task_ids: [str]))`: an interface to send a list of task ids to the worker
+2.  `Worker.process(engine, task_ids: [str])`: an interface to pick up and process a list of tasks
 
 
 The `Worker` singleton exposes a decorator function to register handler functions that can 
 be run by the worker. For example, for the Glue handlers (in `handlers/glue.py`), we want to define that the function 
-`start_crawler` is run by the Worker Lambda. Then we need to use the decorator and define its path:
+`start_crawler` is run by the Worker Lambda. Therefore we use the decorator and define its path:
 
 ```
     @staticmethod
@@ -291,7 +293,7 @@ be run by the worker. For example, for the Glue handlers (in `handlers/glue.py`)
 
 The code in `dataall.api` will use the `Worker.queue` to queue tasks in the FIFO SQS queue **in order**. Tasks are 
 defined first in the Aurora database and then we pass their unique identifier to the queue. In the example
-below, taken from the dataset resolvers, we are queueing a `glue.crawler.start` action.
+below, taken from the same dataset resolver, we are queueing a `glue.crawler.start` action.
 
 ```
 def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
@@ -329,36 +331,69 @@ The `WorkerHandler` in `dataall.aws` will then `process` the tasks: it reads tas
 the decorated handler function 
 and assumes a role in the AWS Account where the action needs to be performed.
 
+#### ECS
+You might have overlooked the ECS interface. In the `dataall.aws` package we also define the connection to the
+ECS Fargate cluster that performs long-running tasks. ECS `run_ecs_task` function connects with our cluster and
+runs one of the tasks declared in the `dataall.tasks` package.
+
+### dataall/tasks
+
+
 
 ### dataall/cdkproxy
 
 This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
-The code in this package consists of wrapping the `cdk` cli through a REST API interface.
-in this package, you'll find a package called `stacks` that holds the
-definition  of AWS resources associated with data.all high level abstractions (e.g. : Dataset).
+`cdkproxy` is a package that exposes a REST API to run pre-defined
+cloudformation stacks using AWS CDK.
 
+**It is deployed as a docker container running on AWS ECS.**
+
+When a data.all resource is created, the API sends an HTTP request 
+to the docker service and the code runs the appropriate stack using `cdk` cli.
+
+These stacks are deployed with the `cdk` cli wrapper
 The API itself consists of 4 actions/paths :
 
-- GET / : is the server up ?
-- POST /stack/{stackid} : create /update the stack
+- GET / : checks if the server is running
+- POST /stack/{stackid} : creates or updates the stack
 - DELETE /stack/{stackid} : deletes the stack
 - GET /stack/{stackid] : returns stack status
 
 The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
 web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
 
-When a data.all resource is created, the api sends an HTTP request 
-to the docker service and the code runs the appropriate stack using cdk the cli.
 
-cdkproxy currently supports the following stacks defined as cdk stacks in the `cdkproxy.stacks` sub-package:
+The sub-package  `stacks` holds the
+definition  of AWS resources associated with data.all high level abstractions. Currently, there are stacks for:
 
 1. environment:  the environment stack with resources and settings needed for data.all teams to work on the linked AWS account.
 2. dataset: the dataset stack creates and updates all resources associated with the dataset, included folder sharing bucket policies.
-4. notebook: SageMaker Notebook resources
-5. pipeline: CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
-6. redshift_cluster: Redshift stack
-7. sagemakerstudio: SageMaker Studio user profile
+3. notebook: SageMaker Notebook resources
+4. pipeline: CI/CD pipeline + AWS StepFunction based on blueprint in `backend/blueprints`
+5. redshift_cluster: Redshift stack
+6. sagemakerstudio: SageMaker Studio user profile
 
+
+To register a new type of stack, use the `@stack` decorator as in the example below  :
+
+```python
+
+from aws_cdk import (
+    aws_s3 as s3,
+    aws_sqs as sqs,
+    core
+)
+from dataall.cdkproxy.stacks import stack
+
+@stack(stack="mypredefinedstack")
+class MyPredefinedStack(core.Stack):
+    def __init__(self, scope, id, **kwargs):
+        super().__init__(scope, id, **kwargs)
+        #constructs goes here
+
+```
+
+**Let's take an example** 
 
 
 ### dataall/tasks
