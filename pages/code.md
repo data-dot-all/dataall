@@ -223,7 +223,7 @@ handlers/:
 ├── cloudwatch.py
 ├── codecommit.py 
 ├── codepipeline.py
-├── ecs.py
+├── ecs.py ---------------------> Interface with ECS Fargate cluster
 ├── glue.py
 ├── parameter_store.py
 ├── quicksight.py
@@ -231,6 +231,7 @@ handlers/:
 ├── s3.py
 ├── sagemaker.py
 ├── sagemaker_studio.py
+├── service_handlers.py ---------> Interface with Worker Lambda
 ├── sns.py
 ├── sqs.py
 ├── stepfunction.py
@@ -253,7 +254,7 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
     [.....]
 ```
 #### WorkerHandler
-In addition, in `service_handlers.py` we defined the `WorkerHandler`  Python class.
+In `service_handlers.py` we defined the `WorkerHandler`  Python class.
 Some resolvers might need to perform calls against AWS APIs. Most of the time, these API calls can be performed 
 asynchronously, in which case, developers can use the `WorkerHandler` to send tasks that will be processed
 asynchronously by the Worker Lambda function.
@@ -338,7 +339,13 @@ runs one of the tasks declared in the `dataall.tasks` package.
 
 ### dataall/tasks
 
-
+In this package we define the long-running tasks executed by the ECS Fargate cluster:
+- `bucket_policy_updater`: folder sharing by updating S3 bucket policies
+- `catalog_indexer`: full indexing of all items from our persistence layer in the OpenSearch cluster
+- `cdkproxy`: deployment of CDK stacks with `dataall/cdkproxy` package
+- `share_manager`: table sharing operations
+- `stacks_updater`: updates CDK stacks (support of cdkproxy)
+- `tables_syncer`: syncs the tables between the Glue Catalog and the Aurora RDS database for our datasets.
 
 ### dataall/cdkproxy
 
