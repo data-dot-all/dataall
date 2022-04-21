@@ -585,6 +585,7 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
+                install_commands=["n 14.18.3"],
                 commands=[
                     f'export REACT_APP_STAGE={target_env["envname"]}',
                     f'export envname={target_env["envname"]}',

@@ -20,6 +20,6 @@ to create data driven applications faster.
 
 
 ## **Want to know more?**
-Visit our [GitHub pages](https://stunning-guacamole-b97079d1.pages.github.io/deploy-aws/) 
+Visit our [GitHub pages](https://awslabs.github.io/aws-dataall/) 
 to get started and learn more about the architecture and the code of **data.all**
 
