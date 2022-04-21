@@ -640,13 +640,6 @@ class PipelineStack(Stack):
                     '. ./.env.assumed_role',
                     'aws sts get-caller-identity',
                     'export AWS_DEFAULT_REGION=us-east-1',
-                    f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/dev/CloudfrontDistributionId --output text --query 'Parameter.Value')",
-                    f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/dev/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                    'cd documentation/devguide',
-                    'pip install -r requirements.txt',
-                    'mkdocs build',
-                    'aws s3 sync site/ s3://$bucket',
-                    "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                     f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
                     f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
                     'cd ../userguide',
@@ -765,32 +758,6 @@ class PipelineStack(Stack):
                         'unset AWS_PROFILE',
                         'cd frontend',
                         f'docker build -f docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
-                        f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
-                        'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
-                        'docker push $REPOSITORY_URI:$IMAGE_TAG',
-                    ],
-                    role_policy_statements=self.codebuild_policy,
-                    vpc=self.vpc,
-                ),
-                pipelines.CodeBuildStep(
-                    id='DevGuideImage',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
-                        compute_type=codebuild.ComputeType.LARGE,
-                        privileged=True,
-                        environment_variables={
-                            'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                                value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
-                            ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                value=f'devguide-{self.image_tag}'
-                            ),
-                        },
-                    ),
-                    commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        'cd documentation/devguide',
-                        'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',

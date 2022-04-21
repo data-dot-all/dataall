@@ -35,7 +35,6 @@ class AlbFrontStack(Stack):
             image_tag = self.node.try_get_context('image_tag')
 
         frontend_image_tag = f'frontend-{image_tag}'
-        devguide_image_tag = f'devguide-{image_tag}'
         userguide_image_tag = f'userguide-{image_tag}'
 
         vpc = ec2.Vpc.from_vpc_attributes(
@@ -133,7 +132,6 @@ class AlbFrontStack(Stack):
         logs_bucket.grant_read(iam.ServicePrincipal('delivery.logs.amazonaws.com'))
 
         frontend_alternate_domain = custom_domain['hosted_zone_name']
-        devguide_alternate_domain = 'devguide.' + custom_domain['hosted_zone_name']
         userguide_alternate_domain = 'userguide.' + custom_domain['hosted_zone_name']
 
         hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
@@ -210,66 +208,6 @@ class AlbFrontStack(Stack):
             s3_bucket_prefix='frontend',
         )
         self.allow_alb_access(frontend_alb, ip_ranges, vpc)
-
-        devguide_sg = ec2.SecurityGroup(
-            self,
-            'FargateTaskDevGuideSG',
-            security_group_name=f'{resource_prefix}-{envname}-devguide-service-sg',
-            vpc=vpc,
-            allow_all_outbound=True,
-        )
-        devguide_alb = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self,
-            f'DevGuideService{envname}',
-            cluster=cluster,
-            cpu=1024,
-            memory_limit_mib=2048,
-            service_name=f'devguide-{envname}',
-            desired_count=1,
-            certificate=certificate,
-            domain_name=devguide_alternate_domain,
-            domain_zone=hosted_zone,
-            task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                container_port=80,
-                environment={
-                    'AWS_REGION': self.region,
-                    'envname': envname,
-                    'LOGLEVEL': 'DEBUG',
-                },
-                task_role=task_role,
-                image=ecs.ContainerImage.from_ecr_repository(
-                    repository=ecr_repository, tag=devguide_image_tag
-                ),
-                enable_logging=True,
-                log_driver=ecs.LogDriver.aws_logs(
-                    stream_prefix='service',
-                    log_group=self.create_log_group(
-                        envname, resource_prefix, log_group_name='devguide'
-                    ),
-                ),
-            ),
-            public_load_balancer=False,
-            assign_public_ip=False,
-            open_listener=False,
-            max_healthy_percent=100,
-            min_healthy_percent=0,
-            security_groups=[devguide_sg],
-        )
-        dlb: elb.CfnLoadBalancer = devguide_alb.load_balancer.node.default_child
-        dlb.access_logging_policy = elb.CfnLoadBalancer.AccessLoggingPolicyProperty(
-            enabled=True,
-            s3_bucket_name=logs_bucket.bucket_name,
-            s3_bucket_prefix='devguide',
-        )
-        devguide_alb.target_group.configure_health_check(
-            port='80',
-            path='/',
-            timeout=Duration.seconds(10),
-            healthy_threshold_count=2,
-            unhealthy_threshold_count=2,
-            interval=Duration.seconds(15),
-        )
-        self.allow_alb_access(devguide_alb, ip_ranges, vpc)
 
         userguide_sg = ec2.SecurityGroup(
             self,

@@ -35,9 +35,6 @@ def setup_cognito(
         user_guide_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
         )['Parameter']['Value']
-        dev_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/cloudfront/docs/dev/CloudfrontDistributionDomainName'
-        )['Parameter']['Value']
     else:
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/frontend/custom_domain_name'
@@ -45,12 +42,8 @@ def setup_cognito(
         user_guide_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/userguide/custom_domain_name'
         )['Parameter']['Value']
-        dev_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/devguide/custom_domain_name'
-        )['Parameter']['Value']
 
     print(f'UI: {signin_singout_link}')
-    print(f'DEVGUIDE: {dev_guide_link}')
     print(f'USERGUIDE: {user_guide_link}')
 
     cognito = boto3.client('cognito-idp', region_name=region)
@@ -64,7 +57,6 @@ def setup_cognito(
 
         config_callbacks = [
             f'https://{signin_singout_link}',
-            f'https://{dev_guide_link}/parseauth',
             f'https://{user_guide_link}/parseauth',
         ]
         existing_callbacks = user_pool['UserPoolClient'].get('CallbackURLs', [])

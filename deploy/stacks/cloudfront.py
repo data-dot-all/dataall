@@ -161,10 +161,8 @@ class CloudfrontDistro(pyNestedClass):
         )
 
         frontend_alternate_domain = None
-        devdocs_alternate_domain = None
         userguide_alternate_domain = None
         frontend_alias_configuration = None
-        devdocs_alias_configuration = None
         userguide_alias_configuration = None
 
         cloudfront_bucket = s3.Bucket(
@@ -187,7 +185,6 @@ class CloudfrontDistro(pyNestedClass):
             hosted_zone_id = custom_domain['hosted_zone_id']
 
             frontend_alternate_domain = custom_domain_name
-            devdocs_alternate_domain = 'devguide.' + custom_domain_name
             userguide_alternate_domain = 'userguide.' + custom_domain_name
 
             ssm.StringParameter(
@@ -204,12 +201,6 @@ class CloudfrontDistro(pyNestedClass):
                 string_value=userguide_alternate_domain,
             )
 
-            ssm.StringParameter(
-                self,
-                f'DevGuideCustomDomain{envname}',
-                parameter_name=f'/dataall/{envname}/devguide/custom_domain_name',
-                string_value=devdocs_alternate_domain,
-            )
 
             hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
                 self,
@@ -292,15 +283,6 @@ class CloudfrontDistro(pyNestedClass):
             parameter_name=f'/dataall/{envname}/CloudfrontDistributionBucket',
             string_value=cloudfront_bucket.bucket_name,
         )
-        if devdocs_alternate_domain:
-            devdocs_alias_configuration = (
-                cloudfront.ViewerCertificate.from_acm_certificate(
-                    aliases=[devdocs_alternate_domain],
-                    certificate=certificate,
-                    ssl_method=cloudfront.SSLMethod.SNI,
-                    security_policy=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2019,
-                )
-            )
 
         # Lambda@edge for http_header_redirection
         docs_http_headers = os.path.realpath(
@@ -316,15 +298,7 @@ class CloudfrontDistro(pyNestedClass):
             self.http_header_func_version,
         ) = self.build_docs_http_headers(docs_http_headers, envname, resource_prefix)
 
-        dev_docs_distribution, dev_docs_bucket = self.build_static_site(
-            f'devguide',
-            acl,
-            auth_at_edge,
-            envname,
-            resource_prefix,
-            devdocs_alias_configuration,
-            logging_bucket,
-        )
+        
         if userguide_alternate_domain:
             userguide_alias_configuration = (
                 cloudfront.ViewerCertificate.from_acm_certificate(
@@ -354,16 +328,6 @@ class CloudfrontDistro(pyNestedClass):
                     route53_targets.CloudFrontTarget(cloudfront_distribution)
                 ),
             )
-        if devdocs_alternate_domain:
-            devdocs_record = route53.ARecord(
-                self,
-                'CloudFrontDevdocsDomain',
-                record_name=devdocs_alternate_domain,
-                zone=hosted_zone,
-                target=route53.RecordTarget.from_alias(
-                    route53_targets.CloudFrontTarget(dev_docs_distribution)
-                ),
-            )
         if userguide_alternate_domain:
             userguide_record = route53.ARecord(
                 self,
@@ -390,7 +354,6 @@ class CloudfrontDistro(pyNestedClass):
                     ],
                     resources=[
                         f'{cloudfront_bucket.bucket_arn}/*',
-                        f'{dev_docs_bucket.bucket_arn}/*',
                         f'{user_docs_bucket.bucket_arn}/*',
                     ],
                 )
@@ -447,8 +410,6 @@ class CloudfrontDistro(pyNestedClass):
 
         self.frontend_distribution = cloudfront_distribution
         self.frontend_bucket = cloudfront_bucket
-        self.dev_docs_bucket = dev_docs_bucket
-        self.dev_docs_distribution = dev_docs_distribution
         self.user_docs_bucket = user_docs_bucket
         self.user_docs_distribution = userguide_docs_distribution
         self.cross_account_deployment_role = (
@@ -653,10 +614,7 @@ class CloudfrontDistro(pyNestedClass):
             ),
         )
 
-        if 'devguide' in construct_id:
-            param_path = f'/dataall/{envname}/cloudfront/docs/dev'
-        else:
-            param_path = f'/dataall/{envname}/cloudfront/docs/user'
+        param_path = f'/dataall/{envname}/cloudfront/docs/user'
 
         self.store_distribution_params(
             cloudfront_bucket, construct_id, cloudfront_distribution, param_path
