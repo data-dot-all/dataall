@@ -44,9 +44,6 @@ def create_react_env_file(
         user_guide_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
         )['Parameter']['Value']
-        dev_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/cloudfront/docs/dev/CloudfrontDistributionDomainName'
-        )['Parameter']['Value']
     else:
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/frontend/custom_domain_name'
@@ -54,12 +51,8 @@ def create_react_env_file(
         user_guide_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/userguide/custom_domain_name'
         )['Parameter']['Value']
-        dev_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/devguide/custom_domain_name'
-        )['Parameter']['Value']
 
     print(f'UI: {signin_singout_link}')
-    print(f'DEVGUIDE: {dev_guide_link}')
     print(f'USERGUIDE: {user_guide_link}')
 
     with open('frontend/.env', 'w') as f:
@@ -71,7 +64,6 @@ REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
 REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
-REACT_APP_DEVGUIDE_LINK=https://{dev_guide_link}
 REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
 """
         print('.env content: \n', file_content)

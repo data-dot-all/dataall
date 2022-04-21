@@ -28,7 +28,6 @@ class ParamStoreStack(pyNestedClass):
         if custom_domain:
             custom_domain = custom_domain['hosted_zone_name']
             frontend_alternate_domain = custom_domain
-            devguide_alternate_domain = 'devguide.' + custom_domain
             userguide_alternate_domain = 'userguide.' + custom_domain
 
             aws_ssm.StringParameter(
@@ -45,12 +44,6 @@ class ParamStoreStack(pyNestedClass):
                 string_value=userguide_alternate_domain,
             )
 
-            aws_ssm.StringParameter(
-                self,
-                f'DevGuideCustomDomain{envname}',
-                parameter_name=f'/dataall/{envname}/devguide/custom_domain_name',
-                string_value=devguide_alternate_domain,
-            )
         if enable_cw_canaries:
             aws_ssm.StringParameter(
                 self,
