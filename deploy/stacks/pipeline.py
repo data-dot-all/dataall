@@ -649,7 +649,7 @@ class PipelineStack(Stack):
                     "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                     f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
                     f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                    'cd ../userguide',
+                    'cd documentation/userguide',
                     'pip install -r requirements.txt',
                     'mkdocs build',
                     'aws s3 sync site/ s3://$bucket',
