@@ -454,7 +454,7 @@ This folder contains the GraphQL API definitions for each of our GraphQL Types.
 https://www.apollographql.com/docs/react/get-started
 
 Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
-in the frontend code we use the gql 
+in the frontend code we use the gql   
 ```
 import { gql } from 'apollo-boost';
 
