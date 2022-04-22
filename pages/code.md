@@ -6,7 +6,7 @@ permalink: /code/
 ---
 # **Code Walkthrough**
 
-The data.all package is a mono-repo comprising several sections:
+The data.all package is a mono-repo comprising several modules:
 
 - [deploy/](#deploy)
 - [backend/](#backend)
@@ -18,12 +18,12 @@ The data.all package is a mono-repo comprising several sections:
 We deploy the data.all tooling, backend and frontend using AWS Cloud Development Kit, which offers
 high level abstractions to create AWS resources.
 
-The deploy folder is a CDK application, with an `app.py` deploying a CI/CD stack. In the final deploy step of the
-[Deploy to AWS](./deploy-aws/) guide, we are deploying the CI/CD pipeline stack defined in this section.
+The `deploy` package is a CDK application, with an `app.py` deploying a CICD stack. In the final deploy step of the
+[Deploy to AWS](./deploy-aws/) guide, we are deploying the CICD pipeline stack defined in this section.
 
 
 ### stacks
-As explained above, here is the code that defines the CI/CD pipeline in the tooling account. More specifically,
+As explained above, here is the code that defines the CICD pipeline in the tooling account. More specifically,
 the `PipelineStack` is defined in `stacks/pipeline.py` 
 
 
@@ -35,7 +35,7 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
 - `AlbFrontStage`
   - `AlbFrontStack`: Application Load Balancer for the UI applications
 - `CloudfrontStage`
-  - `CloudFrontStack`:
+  - `CloudFrontStack`: CloudFront UI
 - `BackendStage`
   - `BackendStack`: 
     - `AuroraServerlessStack`: Aurora RDS Database and associated resources - data.all objects metadata
@@ -53,8 +53,8 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
     - `SqsStack` : SQS
     - `VpcStack`: VPC
 - `AuroraServerlessStack`: Aurora RDS Database and associated resources - for integration testing
-- `CodeArtifactStack`
-- `ECRStage`
+- `CodeArtifactStack`: for our Docker Images
+- `ECRStage`: for our Docker Images
 - `VpcStack`
 
 
@@ -437,24 +437,41 @@ package implements the connection with the OpenSearch cluster for all compute co
 and ECS tasks.
 
 ## frontend/ <a name="frontend"></a>
-The frontend code is a React App. In this section we will focus on the components that are particular to data.all, 
-which are the ones in the `src` folder.
+The frontend code is a React App. In this section we will focus on the components specific to data.all, particularly
+the `src` folder.
+
+### contexts
+- Amplify Context:
+- Local Context:
+- Settings Context:
 
 ### hooks
 We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
 fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
 Inside `hooks`, in `useClient` we initialize `ApolloClient`.
 
+In the `hooks`
+```
+hooks/:
+├── useAuth
+├── useCardStyle
+├── useClient
+├── useGroups
+├── useScrollReset
+├── useSettings
+└── useToken
+```
+
+### store
 
 ### api
 This folder contains the GraphQL API definitions for each of our GraphQL Types.
 
 
-## TO DO
-https://www.apollographql.com/docs/react/get-started
-
 Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
-in the frontend code we use the gql   
+in the frontend code we use Apollo Client and its gql package to parse GraphQL queries and mutations. Here, the
+mutation requires an input of the form `NewDatasetInput` as defined in the dataset `input_types` script in the 
+backend `dataall.api` package. The mutation will return the `datasetUri`, `label` and `userRoleForDataset`.
 ```
 import { gql } from 'apollo-boost';
 
@@ -481,7 +498,17 @@ export default createDataset;
 ```
 
 ### views
+Contains each of the UI views. Each data.all component (e.g. Dataset, Environment) has its own subfolder 
+of views. There are views that apply to multiple components. For example, we use the Stack views
+in several tabs of our components. 
 
+Inside the views we use hooks from `hooks` and call the GraphQL APIs defined in `api`. 
+
+### components, theme and icons
+Auxiliary UI resources used in views:
+- components: default values (e.g. for filters), layouts, popovers...
+- theme: dark or light theme
+- icons
 
 
 ## tests/ <a name="tests"></a>
