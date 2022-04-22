@@ -585,6 +585,7 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
+                install_commands=["n 14.18.3"],
                 commands=[
                     f'export REACT_APP_STAGE={target_env["envname"]}',
                     f'export envname={target_env["envname"]}',
@@ -642,7 +643,7 @@ class PipelineStack(Stack):
                     'export AWS_DEFAULT_REGION=us-east-1',
                     f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
                     f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                    'cd ../userguide',
+                    'cd documentation/userguide',
                     'pip install -r requirements.txt',
                     'mkdocs build',
                     'aws s3 sync site/ s3://$bucket',
