@@ -441,28 +441,37 @@ The frontend code is a React App. In this section we will focus on the component
 the `src` folder.
 
 ### contexts
-- Amplify Context:
-- Local Context:
-- Settings Context:
+We define React Contexts to define "global" props that affect many child components in the application. 
+For example, we set the initial Theme as "dark". We also use Contexts to define Authorization parameters which
+
+- Amplify Context
+- Local Context
+- Settings Context
 
 ### hooks
+Hooks are an addition to React 16.8. As they say in the docs: 
+*"Hooks are functions that let you “hook into” React state and lifecycle features 
+from function components."* Hooks are a way to reuse stateful logic but not the state itself, so we can share
+the same logic across different components.
+
+
+We use some React hooks such as useState, useEffect and useCallback in our UI views. In addition, we also define
+some custom hooks in the `hooks` folder:
+
+```
+hooks/:
+├── useAuth: useContext on the context defined in contexts
+├── useCardStyle
+├── useClient: initialize Apollo Client (see below)
+├── useGroups: obtain Cognito or SAML groups for the user
+├── useScrollReset
+├── useSettings
+└── useToken: for Searches in Catalog
+```
+
 We use Apollo Client library to manage GraphQL data. Apollo Client's built-in React support allows you to 
 fetch data from your GraphQL server and use it in building complex and reactive UIs using the React framework. 
 Inside `hooks`, in `useClient` we initialize `ApolloClient`.
-
-In the `hooks`
-```
-hooks/:
-├── useAuth
-├── useCardStyle
-├── useClient
-├── useGroups
-├── useScrollReset
-├── useSettings
-└── useToken
-```
-
-### store
 
 ### api
 This folder contains the GraphQL API definitions for each of our GraphQL Types.
