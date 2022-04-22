@@ -443,6 +443,7 @@ the `src` folder.
 ### contexts
 We define React Contexts to define "global" props that affect many child components in the application. 
 For example, we set the initial Theme as "dark". We also use Contexts to define Authorization parameters which
+might come from Amplify or from our local setting. 
 
 - Amplify Context
 - Local Context
@@ -450,9 +451,10 @@ For example, we set the initial Theme as "dark". We also use Contexts to define 
 
 ### hooks
 Hooks are an addition to React 16.8. As they say in the docs: 
-*"Hooks are functions that let you “hook into” React state and lifecycle features 
-from function components."* Hooks are a way to reuse stateful logic but not the state itself, so we can share
-the same logic across different components.
+*"Hooks are functions that let you hook into React state and lifecycle features 
+from function components."*  With hooks we can share
+the same stateful logic across different components. 
+Careful, Hooks are a way to reuse stateful logic but not the state itself.
 
 
 We use some React hooks such as useState, useEffect and useCallback in our UI views. In addition, we also define
@@ -478,7 +480,7 @@ This folder contains the GraphQL API definitions for each of our GraphQL Types.
 
 
 Taking the example of the `createDataset` mutation defined in the backend `data.api` package, now
-in the frontend code we use Apollo Client and its gql package to parse GraphQL queries and mutations. Here, the
+in the frontend code we use Apollo Client and its `gql` package to parse GraphQL queries and mutations. Here, the
 mutation requires an input of the form `NewDatasetInput` as defined in the dataset `input_types` script in the 
 backend `dataall.api` package. The mutation will return the `datasetUri`, `label` and `userRoleForDataset`.
 ```
