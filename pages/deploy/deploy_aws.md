@@ -52,6 +52,7 @@ from the code using python 3.8, then install the necessary deploy requirements w
 virtualenv venv -p python3.8
 source venv/bin/activate
 pip install -r ./deploy/requirements.txt
+pip install git-remote-codecommit
 ```
 
 ## 3. Mirror the code to a CodeCommit repository
@@ -194,7 +195,7 @@ git commit -m "CDK configuration"
 git push
 ```
 
-# 7. Bootstrap tooling account
+## 7. Bootstrap tooling account
 The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
 It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
 
@@ -212,7 +213,7 @@ North Virginia region (needed to be able to deploy cross region to us-east-1)
 ```bash
 cdk bootstrap aws://<tooling-account-id>/us-east-1
 ```
-# 8. Bootstrap deployment account(s)
+## 8. Bootstrap deployment account(s)
 
 Run the commands below with the AWS credentials of the deployment account:
 
@@ -226,7 +227,7 @@ cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthes
 ```
 
 
-## 7. Run CDK deploy
+## 9. Run CDK deploy
 You are all set to start the deployment, with the AWS credentials for the tooling account, run the command below. 
 Replace the `resource_prefix` and `git_branch` by their values in the cdk.json file. 
 
@@ -237,7 +238,7 @@ In case you used the default values, this is how the command would look like:
 ```bash
 cdk deploy dataall-main-cicd-stack
 ```
-## 8. Configure Cloudwatch RUM (enable_cw_rum=true)
+## 10. Configure Cloudwatch RUM (enable_cw_rum=true)
 
 If you enabled CloudWatch RUM in the **cdk.json** file: 
 
