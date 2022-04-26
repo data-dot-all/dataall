@@ -145,10 +145,19 @@ Deployment account parameters
 
 ## 5. Run CDK synth and check cdk.context.json
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
+With this command, CDK will create a **cdk.context.json** file with key-value pairs that are checked at 
+synthesis time. Think of them as environment variables for the synthesis of CloudFormation stacks. 
+`cdk synth` retrieves information from the AWS account that the AWS CLI has access to. For this reason
+we will run `cdk synth` as many times as AWS accounts we are using, with the corresponding credentials:
+
+- With tooling account AWS credentials:
 ```bash
 cdk synth
 ```
-With this command, CDK will create a **cdk.context.json** file that has different information retrieved from your AWS account.
+- With deployment account N AWS credentials:
+```bash
+cdk synth
+```
 Here is an example of a generated cdk.context.json file:
 ````json
 {
