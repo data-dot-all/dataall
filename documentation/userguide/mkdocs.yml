@@ -20,12 +20,12 @@ nav:
     - Security: security.md
     - Labs:
       - Data access management: lab1.md
-      - Data ingestion and transformation with pipelines: lab1.md
-      - Data exploration and profiling: lab1.md
-      - Exploration with Notebooks and Worksheets: lab1.md
-      - Creating and sharing dashboards: lab1.md
-      - Using ML Studio: lab1.md
-      - Using Redshift clusters: lab1.md
+      #- Data ingestion and transformation with pipelines: lab_template.md
+      #- Data exploration and profiling: lab_template.md
+      #- Exploration with Notebooks and Worksheets: lab_template.md
+      #- Creating and sharing dashboards: lab_template.md
+      #- Using ML Studio: lab_template.md
+      #- Using Redshift clusters: lab_template.md
 
 use_directory_urls: false
 
