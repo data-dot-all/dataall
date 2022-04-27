@@ -64,7 +64,7 @@ aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.co
 
 !!! danger "Service link creation error"
     If you receive: An error occurred (InvalidInput) when calling the CreateServiceLinkedRole operation: Service
-role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
+    role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
     <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
 
 ### 4. (Optional) Amazon Quicksight
@@ -94,8 +94,8 @@ to enable Dashboard Embedding on <span style="color:grey">*data.all*</span> UI. 
     the by default Organization Administrator team, but users of this group can now invite other teams and grant them
     permission to manage organization teams, and link environment to the organization.
 
-Managing organization teams can be done through the UI or APIs. In our example, Maria created the AnyCompany Global
-organization and now she
+Managing organization teams can be done through the UI or APIs. From the UI, navigate to your organizations and
+click on the **Teams** tab.
 
 ![](pictures/environments/org_invite_group_1.png#zoom#shadow)
 
@@ -118,7 +118,6 @@ Navigate to your organization, click on the **Link Environment** button, and fil
 
 ![](pictures/environments/env_link_1.png#zoom#shadow)
 
-![](pictures/environments/env_link_2.png#zoom#shadow)
 
 | Field             | Description                                                                                                                               | Required | Editable |Example
 |-------------------|-------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|-------------
@@ -181,7 +180,7 @@ can manually trigger the update in case of change sets of the CloudFormation sta
     No need to navigate to the AWS console to find your logs!
 
 After being processed (not in `PENDING`), the status of the CloudFormation stack is directly read from
- <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html">CloudFormation</a>
+ <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html">CloudFormation</a>.
 
 ## :material-pencil-outline: **Edit and update an environment**
 Find your environment in the Environments list or by navigating to the corresponding organization. Once in your selected
@@ -209,12 +208,14 @@ Environment creators have all permissions on the environment,
 and can invite other teams to the onboarded environment. To add an IdP group to an environment, navigate to the
 **Teams** tab of the environment and click on the **Invite** button.
 
+![](pictures/environments/env_teams_1.png#zoom#shadow)
 
 A display will allow you to customize the
 AWS permissions that the onboarded group will have, adapting to different types of users
 (data scientists, data engineers, data analysts, management). The customizable permissions can be enabled or
 disabled as appears in the following picture.
 
+![](pictures/environments/env_teams_2.png#zoom#shadow)
 
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
 new IAM role for the new team. The IAM role policies mapped to the permissions granted to the invited team
@@ -228,9 +229,9 @@ redshift permissions on the associated IAM role).To remove a group, in the *Acti
     onboarding process.
 
 Users will only be able to see the environments where a team that they belong to has been onboarded (either as
-creator of the environment or invited to the environment). In the following picture, Maria belongs to the
-*DataAnalyticsTeam* that owns the *Data Analysis* environment, but on top of that she can access the
-*Data Science* environment because her team has been invited by John.
+creator of the environment or invited to the environment). In the following picture, John belongs to the
+*DataScienceTeam* that owns the *Data Science* environment, but on top of that he can access the
+*Data Analysis* environment because her team has been invited by Maria.
 
 !!! success "Pro tip!"
     You know whether you are `OWNER` or `INVITED` in an environment by checking **your Role** in that
