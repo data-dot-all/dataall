@@ -26,7 +26,8 @@ permalink: /architecture/
 data.all infrastructure (in the deployment account(s)) is deployed from the tooling account using AWS CodePipeline.
 Cloud resources in 
 data.all are defined using the [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK).
-data.all CI/CD was built with cross accounts deployments in mind using AWS CDK pipelines. 
+data.all CI/CD was built with cross accounts deployments in mind using AWS CDK pipelines 
+[version 2.14.0](https://pypi.org/project/aws-cdk-lib/2.14.0/). 
 
 
 ![archi](img/architecture_tooling.drawio.png#zoom#shadow)
@@ -126,7 +127,7 @@ This ALB is reachable only from Amazon VPCs and not from the internet.
 Also, APIs are private and accessible only through VPC endpoints.
 
 
-Finally, data.all static sites are hosted on Amazon ECS using docker containers.
+Finally, data.all static sites are hosted on Amazon ECS using docker containers through nginx server.
 
 
 
@@ -267,8 +268,8 @@ AWS CodePipeline and stored on Amazon ECR which ensures image
 availability, and vulnerabilities scanning.
 
 
-### Monitoring with CloudWatch and CloudWatch RUM
-As part of the deployment, data.all deploys monitoring AWS resources with CDK and ultimately in CloudFormation. These include
+### Observability with CloudWatch and CloudWatch RUM
+As part of the deployment, data.all deploys observability AWS resources with CDK and ultimately in CloudFormation. These include
 AWS CloudWatch Alarms on the infrastructure: on Aurora DB, on the OpenSearch cluster, on API errors...
 Operation teams can subscribe to a topic on Amazon SNS to receive near
 real time alarms notifications when issues are occurring on the
@@ -284,7 +285,7 @@ performance from actual user sessions in near real time.
 ## Linked Environments <a name="environment"></a>
 
 Environments are workspaces where one or multiple teams can work. They are the door between our users in data.all and AWS, that is
-why we say that we "link" environments because we link each environment to **ONE** AWS account.
+why we say that we "link" environments because we link each environment to **ONE** AWS account, in one specific region.
 Under each environment we create other data.all resources, such as datasets, pipelines and notebooks. 
 
 For the deployment of 
@@ -411,8 +412,9 @@ account and region. It includes:
 
 ## Permission Model <a name="permission"></a>
 
-data.all permission model is based on group membership inherited from Cognito groups or from the
-corporate IdP. 
+data.all permission model is defined at group level not at user level.
+We define permissions for a group, this can be a Cognito group or a group coming from your IdP.
+The permissions defined by data.all on the group affect all of its members.
 
 Each object in data.all will have an **object-Team** with full permissions on the object, 
 it corresponds to a Cognito group that is typically
@@ -478,9 +480,8 @@ to the dataset items (tables/folders). We can define our dataset-Team as steward
 Teams that will support us in the granting/revoking of data access.
 
 Users request access on behalf of an environment and team, then a member of the Stewards teams can either
-accept or deny the request. Dataset items can be shared with other environments and teams,
-i.e. an another account and an IAM role, federated through corporate
-IdP. 
+accept or deny the request. Dataset items can be shared with other environments and teams. This effectively means
+that we perform cross-account data sharing to a chosen IAM role.
 
 **Note**: Once the share request is accepted and processed, the specified Team members get access to the requested items.
 That means that data is granted for a Team, not for a user.
