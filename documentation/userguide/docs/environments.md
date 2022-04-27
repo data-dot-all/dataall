@@ -18,7 +18,6 @@ steps on that AWS account in each region you want to use.
 the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
 organization and click on link an environment to see this form)
 
-![organization_form](pictures/environments/boot_pivotrole.png#zoom#shadow)
 
 ### 2. Setup AWS CDK
 
@@ -148,7 +147,6 @@ fourth step explained in the previous chapter "Bootstrap your AWS account".
 
 Click on Save, the new Environment should be displayed in the Environments section of the left side pane.
 
-![](pictures/environments/env_link_3.png#zoom#shadow)
 
 ## :material-card-search-outline: **Navigate Environment tabs**
 Go to the environment you want to check. You can find your environment in the Environments list clicking on the left
@@ -211,7 +209,6 @@ Environment creators have all permissions on the environment,
 and can invite other teams to the onboarded environment. To add an IdP group to an environment, navigate to the
 **Teams** tab of the environment and click on the **Invite** button.
 
-![](pictures/environments/env_teams_1.png#zoom#shadow)
 
 A display will allow you to customize the
 AWS permissions that the onboarded group will have, adapting to different types of users
@@ -219,14 +216,11 @@ AWS permissions that the onboarded group will have, adapting to different types 
 disabled as appears in the following picture.
 
 
-![](pictures/environments/env_teams_2.png#zoom#shadow)
-
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
 new IAM role for the new team. The IAM role policies mapped to the permissions granted to the invited team
 (e.g., a team  invited without "Create Redshift clusters" permission will not have
 redshift permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
 
-![](pictures/environments/env_teams_3.png#zoom#shadow)
 
 !!! warning "Automated permission assignment"
     Groups retrieved from the IdP are automatically granted all
@@ -268,41 +262,9 @@ Networks are VPCs created from <span style="color:grey">*data.all*</span> and be
 ![](pictures/environments/env_networks.png#zoom#shadow)
 
 
-## :material-database-plus-outline: **Import/create Redshift clusters**
-
-
-## :material-bell-outline: **Enable and disable SNS subscriptions**
-When we enable Subscriptions we allow:
-
-- Data owners to subscribe to the **Data producers topic** and publish the latest datasets updates to data consumers.
-- Data consumers to subscribe to the **Data consumers topic** and receive the latest datasets updates from data owners.
-
-How do we enable Subscriptions? any user belonging to a team onboarded to the environment can click on the
-**Subscriptions** tab in the environment window and select **enable subscriptions** button.
-
-![](pictures/environments/env_tabs_3.png#zoom#shadow)
-
-Users can optionally bring their own SNS topic; otherwise, <span style="color:grey">*data.all*</span> will
-create 2 SNS topics of the form:
-
-    - arn:aws:sns:REGION:AWS-ACCOUNT:PREFIX-ENVIRONMENTNAME-producers-topic-ENVIRONMENTURI
-    - arn:aws:sns:REGION:AWS-ACCOUNT:PREFIX-ENVIRONMENTNAME-producers-topic-ENVIRONMENTURI
-
-In the tab that Subscriptions were enabled we can click on **disable subscriptions** to disable them.
-
-![](pictures/environments/env_tabs_4.png#zoom#shadow)
-
-As we explained in the Manage teams section, only environment owners can manage the enablement of Subscriptions
-in their environment. When for example Maria tries to disable subscriptions in the *Data Science* team where
-her team was invited, she gets the following message:
-
-
-![](pictures/environments/env_subs_1.png#zoom#shadow)
-
 ## :material-tag-remove-outline: **Create Key-value tags**
 In the **Tags** tab of the environment window, we can create key-value tags. These tags are not <span style="color:grey">*data.all*</span> tags
 that are used to tag datasets and find them in the catalog. In this case we are creating AWS tags as part of the
 environment CloudFormation stack. There are multiple tagging strategies as explained in the
 <a href="https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html">documentation</a>.
 
-![](pictures/environments/env_tabs_2.png#zoom#shadow)
