@@ -53,7 +53,6 @@ To delete a Notebook, simply select it and click on the **Delete** button in the
 keep the CloudFormation stack associated with the Notebook by selecting this option in the confirmation
 delete window that appears after clicking on delete.
 
-![buttons](pictures/notebooks/nb_buttons.png#zoom#shadow)
 
 ## :material-file-code-outline: **Open JupyterLab**
 Click on the **Open JupyterLab** button of the Notebook window to start writing code on Jupyter Notebooks.
