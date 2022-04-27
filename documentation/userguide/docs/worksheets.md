@@ -33,19 +33,17 @@ To create a new worksheet click on the **Create** button in the top right corner
 Select a worksheet and click on the pencil icon to edit the metadata of the worksheet. This includes worksheet name,
 description and tags. The ownership of the worksheet, its team, is not editable.
 
-![worksheets](pictures/worksheets/ws_buttons.png#zoom#shadow)
-
 ## :material-trash-can-outline: **Delete a worksheet**
 Next to the edit button, there are 2 other buttons. To delete a worksheet click on the trash icon one. Worksheets
-are not AWS resources, they are a data.all construct whose information is stored in the data.all database.
-
+are not AWS resources, they are a data.all construct whose information is stored in the data.all database. Thus,
+when we delete a worksheet we are not deleting AWS resources or CloudFormation stacks.
 
 ## :material-database-search: **Write and save your queries**
 Select your worksheet and choose any of the environments, datasets and tables of your team to list column information.
 In the query editor write your SQL statements and click on **Run Query** to get your query results. Error messages
 coming from Athena will pop-up automatically.
 
-![worksheets](pictures/worksheets/ws_query_editor.png#zoom#shadow)
+![worksheets](pictures/worksheets/ws_joins.png#zoom#shadow)
 
 If you want to save the current query for later or for other users, click on the **save** icon (between the edit and the
 delete buttons).
@@ -57,4 +55,4 @@ delete buttons).
     for more information on AWS Athena SQL syntax.
 
 
-![worksheets](pictures/worksheets/ws_joins.png#zoom#shadow)
+

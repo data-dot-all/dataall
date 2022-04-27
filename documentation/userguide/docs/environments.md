@@ -2,19 +2,16 @@
 
 An environment is a **workplace** where a team can bring, process, analyze data and build data driven applications.
 Environments comprise AWS resources, thus when we create an environment, we deploy a CDK/CloudFormation stack
-to an AWS account and region. In other words, **an environment is mapped to an AWS account in one region.**
+to an AWS account and region. In other words, **an environment is mapped to an AWS account in one region, where
+users store data and work with data.**
 
 !!! danger "One AWS account, One environment"
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
     Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
 
-
-Teams correspond to IdP groups. Once added to an environment, these groups can access and work in <span style="color:grey">*data.all*</span>.
-
 ## :material-hammer-screwdriver: **Bootstrap your AWS account**
-!!! warning
-    <span style="color:grey">*data.all*</span> does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-    steps on that AWS account in each region you want to use.
+*data.all*does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
+steps on that AWS account in each region you want to use.
 
 ### 1. Create AWS IAM role
 <span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
