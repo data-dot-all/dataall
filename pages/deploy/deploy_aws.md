@@ -268,7 +268,7 @@ Here is an example of a generated cdk.context.json file:
 ## 6. Add CDK context file
 The generated cdk.context.json file **must** be added to your source code and pushed into the previously created CodeCommit
 repository. Add the generated context file to the repo by running the commands below 
-(remember, with the tooling account credentials):
+(remember, with the tooling account credentials).
 ```bash
 git add cdk.json
 git add cdk.context.json
