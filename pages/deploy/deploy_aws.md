@@ -73,20 +73,115 @@ git push --set-upstream origin main
 ```
 
 ## 4. Configure cdk.json
-To configure and customize your deployment environments, update the parameters of the **cdk.json** file. Check the 
-table below with the list and description of optional and mandatory parameters.
-
-**Note**: by specifying multiple environment blocks, like in the example "dev" and "prod", data.all will
-deploy to 2 deployments accounts with a CodePipeline manual approval stage between them. 
-
-
-````json
+We use a parameters cdk.json file to configure and customize your deployment of data.all. This file is at the root level
+of our repository. Open it, you should be seen something like:
+```json
 {
-...
-    "git_branch": "main",
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
+    "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
+    "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
+    "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
+    "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
+    "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
+    "DeploymentEnvironments": [
+      {
+        "envname": "string_ENVIRONMENT_NAME|REQUIRED",
+        "account": "string_DEPLOYMENT_ACCOUNT|REQUIRED",
+        "region": "string_DEPLOYMENT_REGION|REQUIRED",
+        "with_approval": "boolean_ADD_CODEPIPELINE_APPROVAL_STEP|DEFAULT=false",
+        "vpc_id": "string_DEPLOY_WITHIN_AN_EXISTING_VPC|DEFAULT=None",
+        "vpc_endpoints_sg": "string_DEPLOY_WITHIN_EXISTING_VPC_SG|DEFAULT=None",
+        "internet_facing": "boolean_CLOUDFRONT_IF_TRUE_ELSE_ECS_BEHIND_INTERNAL_ALB|DEFAULT=true",
+        "custom_domain": {
+          "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
+          "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false"
+        },
+        "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
+        "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
+        "prod_sizing": "boolean_SET_INFRA_SIZING_TO_PROD_VALUES_IF_TRUE|DEFAULT=true",
+        "enable_cw_rum":  "boolean_SET_CLOUDWATCH_RUM_APP_MONITOR|DEFAULT=false",
+        "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false"
+      }
+    ]
+  }
+}
+```
+Some parameters are required while others are optional. Below, we
+have listed and defined all the parameters of the cdk.json file. If you still have questions, scroll down 
+and find 2 examples of cdk.json files.
+
+
+| **General Parameters**                 | **Optional/Required** | **Definition**                                                                                                                                                                                                                              |   
+|----------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tooling_vpc_id                         | Optional              | The VPC ID for the tooling account. If not provided, **a new VPC** will be created.                                                                                                                                                         |
+| tooling_region                         | Optional              | The AWS region for the tooling account where the AWS CodePipeline pipeline will be created. (default: eu-west-1)                                                                                                                            |
+| git_branch                             | Optional              | The git branch name can be leveraged to deploy multiple AWS CodePipeline pipelines to the same tooling account. (default: main)                                                                                                             |
+| git_release                            | Optional              | If set to **true**, CI/CD pipeline RELEASE stage is enabled. This stage releases a version out of the current branch. (default: false)                                                                                                      |
+| quality_gate                           | Optional              | If set to **true**, CI/CD pipeline quality gate stage is enabled. (default: true)                                                                                                                                                           |
+| resource_prefix                        | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                       |
+| **Deployment environments Parameters** | **Optional/Required** | **Definition**                                                                                                                                                                                                                              |
+| ----------------------------           | ---------             | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| envname                                | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                     |
+| account                                | REQUIRED              | The AWS deployment account (deployment account N)                                                                                                                                                                                           |
+| region                                 | REQUIRED              | The AWS deployment region                                                                                                                                                                                                                   |
+| with_approval                          | Optional              | If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment. (default: false)                                                                                                 |
+| vpc_id                                 | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                      |
+| vpc_endpoints_sg                       | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                        |
+| internet_facing                        | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                               |
+| custom_domain                          | Optional*             | Custom domain configuration: hosted_zone_name and hosted_zone_id. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.         |
+| ip_ranges                              | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                   |
+| apig_vpce                              | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                   |
+| prod_sizing                            | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                            |
+| enable_cw_rum                          | Optional              | If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                         |
+| enable_cw_canaries                     | Optional              | If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                           |
+
+
+**Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
+
+```json
+{
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
+    "DeploymentEnvironments": [
+        {
+            "envname": "sandbox",
+            "account": "000000000000",
+            "region": "eu-west-1"
+        }
+    ]
+  }
+}
+```
+
+**Example 2**: Customized deployment: here we are customizing the cdk.json with all 
+parameters using their non-default values in at least one of the 
+deployments. By specifying multiple environment blocks, "dev" and "prod", data.all will
+deploy to 2 deployments accounts. 
+
+```json
+{
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
     "tooling_vpc_id": "vpc-1234567890EXAMPLE",
-    "tooling_region": "eu-west-1",
-    "quality_gate": "TRUE",
+    "tooling_region": "eu-west-2",
+    "git_branch": "master",
+    "git_release": true,
+    "quality_gate": false,
+    "resource_prefix": "da",
     "DeploymentEnvironments": [
         {
             "envname": "dev",
@@ -94,6 +189,7 @@ deploy to 2 deployments accounts with a CodePipeline manual approval stage betwe
             "region": "eu-west-1",
             "with_approval": false,
             "internet_facing": true,
+            "prod_sizing": false,
             "enable_cw_rum": true,
             "enable_cw_canaries": true
         },
@@ -104,44 +200,18 @@ deploy to 2 deployments accounts with a CodePipeline manual approval stage betwe
             "with_approval": true,
             "internet_facing": false,
             "vpc_id": "vpc-0987654321EXAMPLE",
-            "cf_alternate_domain_config": {
-		      "data.all_custom_domain":"example.com",
-		      "data.all_domain_hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID"
-		    },
+            "vpc_endpoints_sg": "sg-xxxxxxxxxxxxxx",
+            "custom_domain": {
+              "hosted_zone_name":"example.com",
+              "hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID"
+            },
             "ip_ranges": ["IP_RANGE1", "IP_RANGE2"],
             "apig_vpce": "vpc-xxxxxxxxxxxxxx"
         }
     ]
+  }
 }
-````
-General Parameters
-
-| Parameter |Optional/Required| Definition                                                                                                                                                                                                                                
-|-------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tooling_vpc_id    |Optional| The VPC ID for the **tooling** account. If not provided, **a new VPC** will be created.                                                                                                                                                   |
-| tooling_region    |Optional| The AWS region for the **tooling** account where the AWS CodePipeline pipeline will be created. If not provided, **eu-west-1** will be used as default region.                                                                            |
-| git_branch        |Optional| The git branch name can be leveraged **to deploy multiple AWS CodePipeline pipelines** to the same tooling account. If not provided, **main** will be used as default branch.                                                             |
-| resource_prefix   |Required| The prefix used for AWS created resources. Default is dataall. It must be in lower case without any special character.                                                                                                                    |
-
-Deployment account parameters
-
-| Parameter     |Optional/Required| Definition                                                                                                                                                                                                                                
-|----------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| envname                    |Required| The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                   |
-| account                    |Required| The AWS deployment account (deployment account N)                                                                                                                                                                                         |
-| region                     |Required| The AWS deployment region                                                                                                                                                                                                                 |
-| with_approval              |Optional| If set to **true**  an additional step on AWS CodePipeline to require user approval before proceeding with the deployment.                                                                                                                |
-| internet_facing            |Optional| If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private.                                                                             |
-| vpc_id                     |Optional| The VPC ID for the **deployment** account. If not provided, **a new VPC** will be created.                                                                                                                                                |
-| vpc_endpoints_sg           |Optional| The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                      |
-| cf_alternate_domain_config |Optional| If internet_facing parameter is **false** then cf_alternate_domain_config is mandatory for ECS ALB integration with ACM and HTTPS. It is not required when internet_facing is false, but it will be used for CloudFront if it's provided. 
-| ip_ranges                  |Optional| Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                 
-| apig_vpce                  |Optional| Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                 
-| prod_sizing                |Optional| If set to **true**, infrastructure sizing is adapted to prod environments (default: true). Check additional resources section for more details.                                                                                           |
-| quality_gate               |Optional| If set to **true**, CI/CD pipeline quality gate stage is enabled (default: true)                                                                                                                                                          |
-| enable_cw_rum              |Optional| If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                       |
-| enable_cw_canaries         |Optional| If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                         |
-
+```
 
 ## 5. Run CDK synth and check cdk.context.json
 Run `cdk synth` to create the template that will be later deployed to CloudFormation. 
