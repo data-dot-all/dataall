@@ -68,7 +68,7 @@ const EnvironmentList = () => {
   const client = useClient();
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments(filter));
+    const response = await client.query(listEnvironments({filter}));
     if (!response.errors) {
       setItems(response.data.listEnvironments);
     } else {
