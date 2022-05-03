@@ -26,10 +26,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install isort
-      - name: Lint
-        run: make lint
-      - name: Black style
-        run: black --check .
-      - name: mypy check
-        run: |
-          mypy --install-types --non-interactive backend
+      - name: Static check
+        run: make check-static
