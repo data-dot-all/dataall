@@ -315,7 +315,7 @@ def resolve_user_role(context: Context, source: models.Environment):
             )
             if env_group:
                 return EnvironmentPermission.Invited.value
-    return EnvironmentPermission.NoPermission.value
+    return EnvironmentPermission.NotInvited.value
 
 
 def list_environment_group_permissions(
