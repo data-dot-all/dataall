@@ -11,3 +11,5 @@ and want to have a look and run the code locally check out the "Deploy locally" 
 
 - [Deploy to AWS](./deploy-aws/)
 - [Deploy locally](./deploy-locally/)
+
+![ui-gif](/img/ui-gif.gif)
