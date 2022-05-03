@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: stelligent/cfn_nag@master
         with:
-          input_path: deploy/pivot_role/pivotRole.yaml
+          input_path: deploy/pivot_role
           extra_args: --ignore-fatal
       - name: Fail if cfn_nag scan contains failures
         run: |
