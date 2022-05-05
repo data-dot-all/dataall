@@ -23,5 +23,9 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
-      - name: Security check
-        run: make check-security
+          python -m pip install bandit
+          python -m pip install safety
+      - name: Bandit check
+        run: bandit -lll -r backend
+      - name: Safety check
+        run: safety check
