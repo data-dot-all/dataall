@@ -3,7 +3,8 @@ import logging
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
+from ...utils.naming_convention import (NamingConventionPattern,
+                                        NamingConventionService)
 from ...utils.slugify import slugify
 from .. import exceptions, models, paginate, permissions
 from . import Environment, ResourcePolicy, has_resource_perm, has_tenant_perm

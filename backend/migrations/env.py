@@ -3,7 +3,6 @@ from __future__ import with_statement
 from logging.config import fileConfig
 
 from alembic import context
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 from dataall.db.base import Base

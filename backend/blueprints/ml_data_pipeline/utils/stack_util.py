@@ -9,20 +9,12 @@ import uuid
 
 import boto3
 from aws_cdk import aws_events, aws_events_targets, core
-from engine import (
-    make_api_gateway,
-    make_athena_prepared_statement,
-    make_athena_workgroup,
-    make_batch_compute_environment,
-    make_batch_job_definition,
-    make_batch_job_queue,
-    make_dynamodb_table,
-    make_lambda_function_trigger,
-    make_lambda_layer_version,
-    make_lambda_python_function,
-    make_sagemaker_model_package_group,
-    make_sns_topic,
-)
+from engine import (make_api_gateway, make_athena_prepared_statement,
+                    make_athena_workgroup, make_batch_compute_environment,
+                    make_batch_job_definition, make_batch_job_queue,
+                    make_dynamodb_table, make_lambda_function_trigger,
+                    make_lambda_layer_version, make_lambda_python_function,
+                    make_sagemaker_model_package_group, make_sns_topic)
 
 from .task_group_reader import Stages
 

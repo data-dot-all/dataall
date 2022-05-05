@@ -9,21 +9,14 @@ from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from aws_cdk.aws_lambda import Code
 from aws_cdk.aws_stepfunctions import Choice, Condition, Pass
-from engine import (
-    SageMakerImageBuilder,
-    make_athena_query_task,
-    make_batch_task,
-    make_glue_job_task,
-    make_lambda_function_task,
-    make_publish_to_sns_task,
-    make_sagemaker_batch_transform_task,
-    make_sagemaker_endpoint_config_task,
-    make_sagemaker_endpoint_task,
-    make_sagemaker_hpo_task,
-    make_sagemaker_model_task,
-    make_sagemaker_processing_task,
-    make_sagemaker_training_task,
-)
+from engine import (SageMakerImageBuilder, make_athena_query_task,
+                    make_batch_task, make_glue_job_task,
+                    make_lambda_function_task, make_publish_to_sns_task,
+                    make_sagemaker_batch_transform_task,
+                    make_sagemaker_endpoint_config_task,
+                    make_sagemaker_endpoint_task, make_sagemaker_hpo_task,
+                    make_sagemaker_model_task, make_sagemaker_processing_task,
+                    make_sagemaker_training_task)
 
 
 class PipelineTaskException(Exception):

@@ -6,7 +6,8 @@ from aws_cdk import aws_lambda
 from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from aws_cdk.aws_lambda import Code
-from engine.sagemaker.mappers.sm_hyperparameter_tuning_mapper import SageMakerHyperparameterTuningPropsMapper
+from engine.sagemaker.mappers.sm_hyperparameter_tuning_mapper import \
+    SageMakerHyperparameterTuningPropsMapper
 from engine.sagemaker.model_task import make_sagemaker_model_task
 
 

@@ -1,9 +1,6 @@
-from .input_types import (
-    EnableDataSubscriptionsInput,
-    InviteGroupOnEnvironmentInput,
-    ModifyEnvironmentInput,
-    NewEnvironmentInput,
-)
+from .input_types import (EnableDataSubscriptionsInput,
+                          InviteGroupOnEnvironmentInput,
+                          ModifyEnvironmentInput, NewEnvironmentInput)
 from .resolvers import *
 
 createEnvironment = gql.MutationField(

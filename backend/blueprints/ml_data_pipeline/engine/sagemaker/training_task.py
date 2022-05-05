@@ -1,7 +1,8 @@
 import copy
 
 from aws_cdk import aws_stepfunctions as stepfunctions
-from engine.sagemaker.mappers.sm_training_mapper import SageMakerTrainingJobPropsMapper
+from engine.sagemaker.mappers.sm_training_mapper import \
+    SageMakerTrainingJobPropsMapper
 from engine.sagemaker.model_task import make_sagemaker_model_task
 
 

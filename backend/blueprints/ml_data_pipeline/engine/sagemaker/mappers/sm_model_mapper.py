@@ -3,8 +3,10 @@ import uuid
 import sagemaker
 from aws_cdk import aws_ec2, aws_iam, aws_s3, aws_stepfunctions, core
 from aws_cdk.aws_stepfunctions import TaskInput
-from aws_cdk.aws_stepfunctions_tasks import ContainerDefinition, DockerImage, Mode, S3Location
-from engine.sagemaker.prebuilt_extension_image_builder import PrebuiltExtensionImageBuilder
+from aws_cdk.aws_stepfunctions_tasks import (ContainerDefinition, DockerImage,
+                                             Mode, S3Location)
+from engine.sagemaker.prebuilt_extension_image_builder import \
+    PrebuiltExtensionImageBuilder
 
 
 class SageMakerModelPropsMapper:

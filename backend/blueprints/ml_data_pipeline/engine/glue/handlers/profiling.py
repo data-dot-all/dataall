@@ -2,7 +2,8 @@ import json
 
 from engine.glue.pydeequ.profiler import ColumnProfilerRunner
 from pyspark.sql.functions import current_timestamp, lit
-from pyspark.sql.types import BooleanType, DoubleType, IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import (BooleanType, DoubleType, IntegerType,
+                               StringType, StructField, StructType)
 
 from .base_step import Step
 

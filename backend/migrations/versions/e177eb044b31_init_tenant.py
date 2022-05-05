@@ -8,7 +8,6 @@ Create Date: 2021-08-07 16:47:19.443969
 from alembic import op
 from dataall import db
 from dataall.db import api
-
 # revision identifiers, used by Alembic.
 from sqlalchemy import orm
 

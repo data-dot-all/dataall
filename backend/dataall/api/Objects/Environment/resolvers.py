@@ -10,7 +10,8 @@ from sqlalchemy import and_
 from ....aws.handlers.sts import SessionHelper
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
-from ....utils.naming_convention import NamingConventionPattern, NamingConventionService
+from ....utils.naming_convention import (NamingConventionPattern,
+                                         NamingConventionService)
 from ...constants import *
 from ..AthenaQueryResult import helpers as athena_helpers
 from ..Organization.resolvers import *

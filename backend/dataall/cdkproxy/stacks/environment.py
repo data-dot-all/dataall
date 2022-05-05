@@ -3,7 +3,8 @@ import os
 import pathlib
 import shutil
 
-from aws_cdk import CustomResource, Duration, RemovalPolicy, Stack, Tags, aws_athena
+from aws_cdk import (CustomResource, Duration, RemovalPolicy, Stack, Tags,
+                     aws_athena)
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_lambda as _lambda

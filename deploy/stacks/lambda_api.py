@@ -13,7 +13,8 @@ from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_wafv2 as wafv2
-from aws_cdk.aws_ec2 import InterfaceVpcEndpoint, InterfaceVpcEndpointAwsService, Peer, Port
+from aws_cdk.aws_ec2 import (InterfaceVpcEndpoint,
+                             InterfaceVpcEndpointAwsService, Peer, Port)
 
 from .pyNestedStack import pyNestedClass
 
