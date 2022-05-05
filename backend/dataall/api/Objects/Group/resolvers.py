@@ -12,7 +12,7 @@ def resolve_group_environment_permissions(context, source, environmentUri):
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': source.groupUri},
+            data={"groupUri": source.groupUri},
             check_perm=True,
         )
 
@@ -33,5 +33,5 @@ def resolve_group_tenant_permissions(context, source):
 
 def get_group(context, source, groupUri):
     if not groupUri:
-        exceptions.RequiredParameter('groupUri')
+        exceptions.RequiredParameter("groupUri")
     return Group(groupUri=groupUri, name=groupUri, label=groupUri)

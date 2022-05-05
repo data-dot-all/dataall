@@ -37,8 +37,8 @@ def run_migrations_offline():
     script output.
 
     """
-    if ENVNAME in ['local', 'pytest', 'dkrcompose']:
-        url = config.get_main_option('sqlalchemy.url')
+    if ENVNAME in ["local", "pytest", "dkrcompose"]:
+        url = config.get_main_option("sqlalchemy.url")
     else:
         url = get_engine(ENVNAME).dbconfig.url
 

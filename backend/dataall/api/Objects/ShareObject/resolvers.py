@@ -17,9 +17,7 @@ def get_share_object_dataset(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        share: models.ShareObject = session.query(models.ShareObject).get(
-            source.shareUri
-        )
+        share: models.ShareObject = session.query(models.ShareObject).get(source.shareUri)
         return session.query(models.Dataset).get(share.datasetUri)
 
 
@@ -34,14 +32,12 @@ def create_share_object(
 
     with context.engine.scoped_session() as session:
         dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, datasetUri)
-        environment: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, input['environmentUri']
-        )
-        input['dataset'] = dataset
-        input['environment'] = environment
-        input['itemUri'] = itemUri
-        input['itemType'] = itemType
-        input['datasetUri'] = datasetUri
+        environment: models.Environment = db.api.Environment.get_environment_by_uri(session, input["environmentUri"])
+        input["dataset"] = dataset
+        input["environment"] = environment
+        input["itemUri"] = itemUri
+        input["itemType"] = itemType
+        input["datasetUri"] = datasetUri
         return db.api.ShareObject.create_share_object(
             session=session,
             username=context.username,
@@ -77,9 +73,9 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 
         # Create task for lake formation updates
         approve_share_task: models.Task = models.Task(
-            action='ecs.share.approve',
+            action="ecs.share.approve",
             targetUri=shareUri,
-            payload={'environmentUri': share.environmentUri},
+            payload={"environmentUri": share.environmentUri},
         )
         session.add(approve_share_task)
 
@@ -103,9 +99,9 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         )
         # Create task for lake formation updates
         reject_share_task: models.Task = models.Task(
-            action='ecs.share.reject',
+            action="ecs.share.reject",
             targetUri=shareUri,
-            payload={'environmentUri': share.environmentUri},
+            payload={"environmentUri": share.environmentUri},
         )
         session.add(reject_share_task)
 
@@ -131,11 +127,9 @@ def add_shared_item(context, source, shareUri: str = None, input: dict = None):
 
 def remove_shared_item(context, source, shareItemUri: str = None):
     with context.engine.scoped_session() as session:
-        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
-            shareItemUri
-        )
+        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(shareItemUri)
         if not share_item:
-            raise db.exceptions.ObjectNotFound('ShareObjectItem', shareItemUri)
+            raise db.exceptions.ObjectNotFound("ShareObjectItem", shareItemUri)
         share = db.api.ShareObject.get_share_by_uri(session, share_item.shareUri)
         db.api.ShareObject.remove_share_object_item(
             session=session,
@@ -143,18 +137,16 @@ def remove_shared_item(context, source, shareItemUri: str = None):
             groups=context.groups,
             uri=share.shareUri,
             data={
-                'shareItemUri': shareItemUri,
-                'share_item': share_item,
-                'share': share,
+                "shareItemUri": shareItemUri,
+                "share_item": share_item,
+                "share": share,
             },
             check_perm=True,
         )
     return True
 
 
-def list_shared_items(
-    context: Context, source: models.ShareObject, filter: dict = None
-):
+def list_shared_items(context: Context, source: models.ShareObject, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -179,7 +171,7 @@ def resolve_shared_item(context, source: models.ShareObjectItem, **kwargs):
             username=context.username,
             groups=context.groups,
             uri=source.shareUri,
-            data={'share_item': source},
+            data={"share_item": source},
             check_perm=True,
         )
 
@@ -220,24 +212,22 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         ds: models.Dataset = session.query(models.Dataset).get(source.datasetUri)
         if ds:
-            org: models.Organization = session.query(models.Organization).get(
-                ds.organizationUri
-            )
+            org: models.Organization = session.query(models.Organization).get(ds.organizationUri)
             return {
-                'datasetUri': source.datasetUri,
-                'datasetName': ds.name if ds else 'NotFound',
-                'datasetOrganizationUri': ds.organizationUri if ds else 'NotFound',
-                'businessOwnerEmail': ds.businessOwnerEmail,
-                'datasetOrganizationName': org.name if org else 'NotFound',
-                'exists': True if ds else False,
+                "datasetUri": source.datasetUri,
+                "datasetName": ds.name if ds else "NotFound",
+                "datasetOrganizationUri": ds.organizationUri if ds else "NotFound",
+                "businessOwnerEmail": ds.businessOwnerEmail,
+                "datasetOrganizationName": org.name if org else "NotFound",
+                "exists": True if ds else False,
             }
 
 
 def union_resolver(object, *_):
     if isinstance(object, models.DatasetTable):
-        return 'DatasetTable'
+        return "DatasetTable"
     elif isinstance(object, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
+        return "DatasetStorageLocation"
 
 
 def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
@@ -246,18 +236,14 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
     from ..Principal.resolvers import get_principal
 
     with context.engine.scoped_session() as session:
-        return get_principal(
-            session, source.principalId, source.principalType, source.environmentUri
-        )
+        return get_principal(session, source.principalId, source.principalType, source.environmentUri)
 
 
 def resolve_environment(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        environment = db.api.Environment.get_environment_by_uri(
-            session, source.environmentUri
-        )
+        environment = db.api.Environment.get_environment_by_uri(session, source.environmentUri)
         return environment
 
 
@@ -270,7 +256,7 @@ def get_share_object_statistics(context: Context, source: models.ShareObject, **
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetTable',
+                    models.ShareObjectItem.itemType == "DatasetTable",
                 )
             )
             .count()
@@ -280,21 +266,19 @@ def get_share_object_statistics(context: Context, source: models.ShareObject, **
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetStorageLocation',
+                    models.ShareObjectItem.itemType == "DatasetStorageLocation",
                 )
             )
             .count()
         )
-    return {'tables': tables, 'locations': locations}
+    return {"tables": tables, "locations": locations}
 
 
-def list_shareable_objects(
-    context: Context, source: models.ShareObject, filter: dict = None
-):
+def list_shareable_objects(context: Context, source: models.ShareObject, filter: dict = None):
     if not source:
         return None
     if not filter:
-        filter = {'page': 1, 'pageSize': 5}
+        filter = {"page": 1, "pageSize": 5}
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.list_shareable_items(
             session=session,

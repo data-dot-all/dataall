@@ -33,13 +33,11 @@ class DataPipeline(core.Stack):
     """
 
     def __init__(self, scope, id, pipeline, **kwargs):
-        account = os.environ.get('AWSACCOUNTID')
+        account = os.environ.get("AWSACCOUNTID")
         super().__init__(
             scope,
             id,
-            env=core.Environment(
-                account=account, region=os.environ.get('AWS_DEFAULT_REGION')
-            ),
+            env=core.Environment(account=account, region=os.environ.get("AWS_DEFAULT_REGION")),
             **kwargs,
         )
 
@@ -82,9 +80,7 @@ class DataPipeline(core.Stack):
     # Triggers
     def create_step_function_triggers(self, pipeline, state_machine_arn):
         """Creates step function triggers"""
-        return stack_util.create_step_function_triggers(
-            self, pipeline.definition, state_machine_arn
-        )
+        return stack_util.create_step_function_triggers(self, pipeline.definition, state_machine_arn)
 
     # Resources
     def create_aws_resources(self, pipeline):
@@ -135,9 +131,7 @@ class DataPipeline(core.Stack):
         Parameters
             job: the configuration of the job.
         """
-        return stack_task_util.make_step_function_task(
-            self, job, group_index, job_index
-        )
+        return stack_task_util.make_step_function_task(self, job, group_index, job_index)
 
     def build_sagemaker_training_processing_job_image(self, groups):
         """Builds sagemaker processing job images.
@@ -146,9 +140,7 @@ class DataPipeline(core.Stack):
         Parameters
             groups: the definition of the groups from configuration file.
         """
-        return stack_task_util.build_sagemaker_training_processing_job_image(
-            self, groups
-        )
+        return stack_task_util.build_sagemaker_training_processing_job_image(self, groups)
 
     def create_glue_job_names_with_execution_id(self, pipeline, job_names):
         """Creates the glue jobs with execution ID
@@ -156,9 +148,7 @@ class DataPipeline(core.Stack):
             pipeline: pipeline configured in config_dpc.yaml
             job_names: names of the jobs defined in the config_dpc.yaml
         """
-        return stack_task_util.create_glue_job_names_with_execution_id(
-            self, pipeline, job_names
-        )
+        return stack_task_util.create_glue_job_names_with_execution_id(self, pipeline, job_names)
 
     # Local methods
     def set_resource_tags(self, resource):
@@ -174,46 +164,38 @@ class DataPipeline(core.Stack):
         """
 
         # Check if there is any step function to build.
-        if not pipeline.definition.get('groups'):
-            print('No step functions to build.')
+        if not pipeline.definition.get("groups"):
+            print("No step functions to build.")
             return
 
         # Sanity check of job types.
-        for group in pipeline.definition.get('groups'):
-            for job in group.get('jobs'):
-                if not job.get('name'):
-                    raise stack_task_util.PipelineTaskException(
-                        'Missing name for job {}'.format(str(job))
-                    )
-                if job.get('type') not in {
-                    'glue_job',
-                    'sagemaker_training',
-                    'sagemaker_hpo',
-                    'sagemaker_processing',
-                    'sagemaker_model',
-                    'sagemaker_batch_transform',
-                    'sagemaker_endpoint_config',
-                    'sagemaker_endpoint',
-                    'lambda_function',
-                    'choice',
-                    'athena_query',
-                    'sns_publish',
-                    'batch',
+        for group in pipeline.definition.get("groups"):
+            for job in group.get("jobs"):
+                if not job.get("name"):
+                    raise stack_task_util.PipelineTaskException("Missing name for job {}".format(str(job)))
+                if job.get("type") not in {
+                    "glue_job",
+                    "sagemaker_training",
+                    "sagemaker_hpo",
+                    "sagemaker_processing",
+                    "sagemaker_model",
+                    "sagemaker_batch_transform",
+                    "sagemaker_endpoint_config",
+                    "sagemaker_endpoint",
+                    "lambda_function",
+                    "choice",
+                    "athena_query",
+                    "sns_publish",
+                    "batch",
                 }:
-                    raise stack_task_util.PipelineTaskException(
-                        'Unknown job type {}'.format(job.get('type'))
-                    )
+                    raise stack_task_util.PipelineTaskException("Unknown job type {}".format(job.get("type")))
 
         # Builds sagemaker job images for sagemaker_processing or sagemaker_training.
-        self.build_sagemaker_training_processing_job_image(
-            pipeline.definition['groups']
-        )
+        self.build_sagemaker_training_processing_job_image(pipeline.definition["groups"])
 
         # Create Glue job names with execution id if there are glue_jobs
         job_names = []
-        job_name_generator_task = self.create_glue_job_names_with_execution_id(
-            pipeline, job_names
-        )
+        job_name_generator_task = self.create_glue_job_names_with_execution_id(pipeline, job_names)
 
         # Make sequence of parallels from groups.
         definition, _, _ = stack_task_util.build_step_function_definition(
@@ -222,57 +204,45 @@ class DataPipeline(core.Stack):
 
         # Check for presence of global retry/catch.
         # Create parallel container if relevant and add failure chain on catch
-        retry_definition = pipeline.definition.get('retry', None)
-        catch_definition = pipeline.definition.get('catch', None)
+        retry_definition = pipeline.definition.get("retry", None)
+        catch_definition = pipeline.definition.get("catch", None)
         if retry_definition is not None or catch_definition is not None:
-            definition = definition.to_single_state('RetryAndErrorHandler')
+            definition = definition.to_single_state("RetryAndErrorHandler")
             if retry_definition is not None:
                 definition = definition.add_retry(
-                    backoff_rate=retry_definition.get('backoff_rate', 2),
-                    errors=retry_definition.get('error_equals', ['States.ALL']),
-                    interval=core.Duration.seconds(
-                        retry_definition.get('interval_seconds', 1)
-                    ),
-                    max_attempts=retry_definition.get('retry_attempts', 3),
+                    backoff_rate=retry_definition.get("backoff_rate", 2),
+                    errors=retry_definition.get("error_equals", ["States.ALL"]),
+                    interval=core.Duration.seconds(retry_definition.get("interval_seconds", 1)),
+                    max_attempts=retry_definition.get("retry_attempts", 3),
                 )
             if catch_definition is not None:
-                catch_chain, _, _ = stack_task_util.build_step_function_definition(
-                    self, catch_definition, None, False
-                )
+                catch_chain, _, _ = stack_task_util.build_step_function_definition(self, catch_definition, None, False)
                 definition = definition.add_catch(
                     catch_chain,
-                    errors=catch_definition.get('error_equals', ['States.ALL']),
-                    result_path=catch_definition.get('result_path', '$'),
+                    errors=catch_definition.get("error_equals", ["States.ALL"]),
+                    result_path=catch_definition.get("result_path", "$"),
                 )
 
         # Create the actual state machine. Use environment role as the default role.
-        state_machine_arn = job.get('state_machine_arn', self.pipeline_iam_role_arn)
+        state_machine_arn = job.get("state_machine_arn", self.pipeline_iam_role_arn)
         sfn = stepfunctions.StateMachine(
             self,
-            f'{self.pipeline_name}',
-            state_machine_name=f'{self.pipeline_name}',
+            f"{self.pipeline_name}",
+            state_machine_name=f"{self.pipeline_name}",
             definition=definition,
-            timeout=core.Duration.seconds(
-                job.get('properties', {}).get('timeout', 3600)
-            ),
-            role=iam.Role.from_role_arn(
-                self, 'DefaultPipelineRoleArn', state_machine_arn, mutable=False
-            ),
+            timeout=core.Duration.seconds(job.get("properties", {}).get("timeout", 3600)),
+            role=iam.Role.from_role_arn(self, "DefaultPipelineRoleArn", state_machine_arn, mutable=False),
         )
 
         # Make the state machine reference available by putting its ARN to the parameter store.
-        parameter_name = f'/dataall/{self.pipeline_name}/{self.stage}/step_function_arn'
+        parameter_name = f"/dataall/{self.pipeline_name}/{self.stage}/step_function_arn"
         param = aws_ssm.StringParameter(
             self,
-            f'stepfunction_arn_{self.pipeline_name}',
+            f"stepfunction_arn_{self.pipeline_name}",
             parameter_name=parameter_name,
             string_value=sfn.state_machine_arn,
         )
-        param.grant_read(
-            iam.Role.from_role_arn(
-                self, 'dataall_state_machine_arn_param', self.pipeline_iam_role_arn
-            )
-        )
+        param.grant_read(iam.Role.from_role_arn(self, "dataall_state_machine_arn_param", self.pipeline_iam_role_arn))
 
         # Read the cron schedule configurations
         self.schedules = self.create_step_function_scheduler(pipeline.definition, sfn)
@@ -289,8 +259,5 @@ class DataPipeline(core.Stack):
 
     def make_tag_str(self):
         """Gets stringified resource tags"""
-        tag_array = [
-            f"{{ 'Key': '{key}', 'Value': '{value}' }}"
-            for key, value in self.resource_tags.items()
-        ]
-        return ','.join(tag_array)
+        tag_array = [f"{{ 'Key': '{key}', 'Value': '{value}' }}" for key, value in self.resource_tags.items()]
+        return ",".join(tag_array)

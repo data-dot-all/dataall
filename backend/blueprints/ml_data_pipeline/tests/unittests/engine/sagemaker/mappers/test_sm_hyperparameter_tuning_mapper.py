@@ -20,7 +20,7 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
 

@@ -2,6 +2,7 @@ import yaml
 from engine.athena import athena_task
 from aws_cdk import core
 
+
 class ATestStack(core.Stack):
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
@@ -19,13 +20,14 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
-def test_make_athena_task():
-   stack = ATestStack()
 
-   config = """              
+def test_make_athena_task():
+    stack = ATestStack()
+
+    config = """              
        name: MyAthenaFunction
        type: athena_query
        comment: "describe me please"
@@ -42,10 +44,6 @@ def test_make_athena_task():
                dimension: classification
                model_name: example
             """
-   job_config = yaml.safe_load(config)
-   task = athena_task.make_athena_query_task(stack, job_config)
-   assert task
-
-
-
-
+    job_config = yaml.safe_load(config)
+    task = athena_task.make_athena_query_task(stack, job_config)
+    assert task

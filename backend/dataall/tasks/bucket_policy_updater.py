@@ -36,50 +36,34 @@ class BucketPoliciesUpdater:
                 )
                 .all()
             )
-            log.info(f'Found {len(imported_datasets)} imported datasets')
+            log.info(f"Found {len(imported_datasets)} imported datasets")
 
             for dataset in imported_datasets:
                 account_prefixes = {}
 
                 shared_tables = self.get_shared_tables(dataset)
-                log.info(
-                    f'Found {len(shared_tables)} shared tables with dataset {dataset.S3BucketName}'
-                )
+                log.info(f"Found {len(shared_tables)} shared tables with dataset {dataset.S3BucketName}")
 
                 shared_folders = self.get_shared_folders(dataset)
-                log.info(
-                    f'Found {len(shared_folders)} shared folders with dataset {dataset.S3BucketName}'
-                )
+                log.info(f"Found {len(shared_folders)} shared folders with dataset {dataset.S3BucketName}")
 
                 for table in shared_tables:
                     data_prefix = self.clear_table_location_from_delta_path(table)
-                    prefix = data_prefix.rstrip('/') + '/*'
+                    prefix = data_prefix.rstrip("/") + "/*"
                     accountid = table.TargetAwsAccountId
 
                     prefix = f"arn:aws:s3:::{prefix.split('s3://')[1]}"
-                    self.group_prefixes_by_accountid(
-                        accountid, prefix, account_prefixes
-                    )
+                    self.group_prefixes_by_accountid(accountid, prefix, account_prefixes)
 
-                    bucket = (
-                        f"arn:aws:s3:::{prefix.split('arn:aws:s3:::')[1].split('/')[0]}"
-                    )
-                    self.group_prefixes_by_accountid(
-                        accountid, bucket, account_prefixes
-                    )
+                    bucket = f"arn:aws:s3:::{prefix.split('arn:aws:s3:::')[1].split('/')[0]}"
+                    self.group_prefixes_by_accountid(accountid, bucket, account_prefixes)
 
                 for folder in shared_folders:
-                    prefix = f'arn:aws:s3:::{folder.S3Prefix}' + '/*'
+                    prefix = f"arn:aws:s3:::{folder.S3Prefix}" + "/*"
                     accountid = folder.AwsAccountId
-                    self.group_prefixes_by_accountid(
-                        accountid, prefix, account_prefixes
-                    )
-                    bucket = (
-                        f"arn:aws:s3:::{prefix.split('arn:aws:s3:::')[1].split('/')[0]}"
-                    )
-                    self.group_prefixes_by_accountid(
-                        accountid, bucket, account_prefixes
-                    )
+                    self.group_prefixes_by_accountid(accountid, prefix, account_prefixes)
+                    bucket = f"arn:aws:s3:::{prefix.split('arn:aws:s3:::')[1].split('/')[0]}"
+                    self.group_prefixes_by_accountid(accountid, bucket, account_prefixes)
 
                 client = self.init_s3_client(dataset)
 
@@ -91,65 +75,55 @@ class BucketPoliciesUpdater:
 
                 self.reports.append(report)
 
-            if any(r['status'] == 'FAILED' for r in self.reports):
-                raise Exception(
-                    'Failed to update one or more bucket policies'
-                    f'Check the reports: {self.reports}'
-                )
+            if any(r["status"] == "FAILED" for r in self.reports):
+                raise Exception("Failed to update one or more bucket policies" f"Check the reports: {self.reports}")
             return self.reports
 
     @staticmethod
     def clear_table_location_from_delta_path(table):
         data_prefix = (
-            table.S3Prefix
-            if '/packages.delta' not in table.S3Prefix
-            else table.S3Prefix.replace('/packages.delta', '')
+            table.S3Prefix if "/packages.delta" not in table.S3Prefix else table.S3Prefix.replace("/packages.delta", "")
         )
         data_prefix = (
             data_prefix
-            if '/_symlink_format_manifest' not in data_prefix
-            else data_prefix.replace('/_symlink_format_manifest', '')
+            if "/_symlink_format_manifest" not in data_prefix
+            else data_prefix.replace("/_symlink_format_manifest", "")
         )
         return data_prefix
 
     @staticmethod
     def update_policy(account_prefixes, policy):
-        log.info('Updating Policy')
-        statements = policy['Statement']
+        log.info("Updating Policy")
+        statements = policy["Statement"]
         for key, value in account_prefixes.items():
             added = False
             for s in statements:
-                if key in s.get('Principal').get('AWS') and 'DA' in s.get('Sid'):
-                    log.info(f'Principal already on the policy {key}')
+                if key in s.get("Principal").get("AWS") and "DA" in s.get("Sid"):
+                    log.info(f"Principal already on the policy {key}")
                     added = True
                     for v in value:
-                        if v not in s.get('Resource'):
+                        if v not in s.get("Resource"):
                             existing_resources = (
-                                list(s.get('Resource'))
-                                if not isinstance(s.get('Resource'), list)
-                                else s.get('Resource')
+                                list(s.get("Resource"))
+                                if not isinstance(s.get("Resource"), list)
+                                else s.get("Resource")
                             )
                             existing_resources.append(v)
-                            s['Resource'] = existing_resources
+                            s["Resource"] = existing_resources
                     break
             if not added:
-                log.info(
-                    f'Principal {key} with permissions {value} '
-                    f'Not on the policy adding it'
-                )
+                log.info(f"Principal {key} with permissions {value} " f"Not on the policy adding it")
                 statements.append(
                     {
-                        'Sid': f'DA{key}',
-                        'Effect': 'Allow',
-                        'Action': ['s3:Get*', 's3:List*'],
-                        'Resource': value
-                        if isinstance(value, list) and len(value) > 1
-                        else value,
-                        'Principal': {'AWS': key},
+                        "Sid": f"DA{key}",
+                        "Effect": "Allow",
+                        "Action": ["s3:Get*", "s3:List*"],
+                        "Resource": value if isinstance(value, list) and len(value) > 1 else value,
+                        "Principal": {"AWS": key},
                     }
                 )
-        policy.update({'Statement': statements})
-        log.info(f'Final Policy --> {policy}')
+        policy.update({"Statement": statements})
+        log.info(f"Final Policy --> {policy}")
         return policy
 
     @classmethod
@@ -167,19 +141,17 @@ class BucketPoliciesUpdater:
         with self.engine.scoped_session() as session:
             tables = (
                 session.query(
-                    models.DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
-                    models.DatasetTable.GlueTableName.label('GlueTableName'),
-                    models.DatasetTable.S3Prefix.label('S3Prefix'),
-                    models.DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
-                    models.DatasetTable.region.label('SourceRegion'),
-                    models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                    models.Environment.region.label('TargetRegion'),
+                    models.DatasetTable.GlueDatabaseName.label("GlueDatabaseName"),
+                    models.DatasetTable.GlueTableName.label("GlueTableName"),
+                    models.DatasetTable.S3Prefix.label("S3Prefix"),
+                    models.DatasetTable.AWSAccountId.label("SourceAwsAccountId"),
+                    models.DatasetTable.region.label("SourceRegion"),
+                    models.Environment.AwsAccountId.label("TargetAwsAccountId"),
+                    models.Environment.region.label("TargetRegion"),
                 )
                 .join(
                     models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri == models.DatasetTable.tableUri
-                    ),
+                    and_(models.ShareObjectItem.itemUri == models.DatasetTable.tableUri),
                 )
                 .join(
                     models.ShareObject,
@@ -187,15 +159,13 @@ class BucketPoliciesUpdater:
                 )
                 .join(
                     models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
+                    models.Environment.environmentUri == models.ShareObject.environmentUri,
                 )
                 .filter(
                     and_(
                         models.DatasetTable.datasetUri == dataset.datasetUri,
                         models.DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        models.ShareObjectItem.status == models.Enums.ShareObjectStatus.Approved.value,
                     )
                 )
             ).all()
@@ -205,18 +175,15 @@ class BucketPoliciesUpdater:
         with self.engine.scoped_session() as session:
             locations = (
                 session.query(
-                    models.DatasetStorageLocation.locationUri.label('locationUri'),
-                    models.DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    models.DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                    models.Environment.AwsAccountId.label('AwsAccountId'),
-                    models.Environment.region.label('region'),
+                    models.DatasetStorageLocation.locationUri.label("locationUri"),
+                    models.DatasetStorageLocation.S3BucketName.label("S3BucketName"),
+                    models.DatasetStorageLocation.S3Prefix.label("S3Prefix"),
+                    models.Environment.AwsAccountId.label("AwsAccountId"),
+                    models.Environment.region.label("region"),
                 )
                 .join(
                     models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri
-                        == models.DatasetStorageLocation.locationUri
-                    ),
+                    and_(models.ShareObjectItem.itemUri == models.DatasetStorageLocation.locationUri),
                 )
                 .join(
                     models.ShareObject,
@@ -224,15 +191,13 @@ class BucketPoliciesUpdater:
                 )
                 .join(
                     models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
+                    models.Environment.environmentUri == models.ShareObject.environmentUri,
                 )
                 .filter(
                     and_(
                         models.DatasetStorageLocation.datasetUri == dataset.datasetUri,
                         models.DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        models.ShareObjectItem.status == models.Enums.ShareObjectStatus.Approved.value,
                     )
                 )
             ).all()
@@ -241,46 +206,42 @@ class BucketPoliciesUpdater:
     @classmethod
     def init_s3_client(cls, dataset):
         session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        client = session.client('s3')
+        client = session.client("s3")
         return client
 
     @classmethod
     def get_bucket_policy(cls, client, dataset):
         try:
-            policy = client.get_bucket_policy(Bucket=dataset.S3BucketName)['Policy']
-            log.info(f'Current bucket policy---->:{policy}')
+            policy = client.get_bucket_policy(Bucket=dataset.S3BucketName)["Policy"]
+            log.info(f"Current bucket policy---->:{policy}")
             policy = json.loads(policy)
         except ClientError as err:
-            if err.response['Error']['Code'] == 'NoSuchBucketPolicy':
+            if err.response["Error"]["Code"] == "NoSuchBucketPolicy":
                 log.info(f"No policy attached to '{dataset.S3BucketName}'")
 
-            elif err.response['Error']['Code'] == 'NoSuchBucket':
-                log.error(f'Bucket deleted {dataset.S3BucketName}')
+            elif err.response["Error"]["Code"] == "NoSuchBucket":
+                log.error(f"Bucket deleted {dataset.S3BucketName}")
 
-            elif err.response['Error']['Code'] == 'AccessDenied':
+            elif err.response["Error"]["Code"] == "AccessDenied":
                 log.error(
-                    f'Access denied in {dataset.AwsAccountId} '
-                    f'(s3:{err.operation_name}, '
+                    f"Access denied in {dataset.AwsAccountId} "
+                    f"(s3:{err.operation_name}, "
                     f"resource='{dataset.S3BucketName}')"
                 )
             else:
-                log.exception(
-                    f"Failed to get '{dataset.S3BucketName}' policy in {dataset.AwsAccountId}"
-                )
+                log.exception(f"Failed to get '{dataset.S3BucketName}' policy in {dataset.AwsAccountId}")
             policy = {
-                'Version': '2012-10-17',
-                'Statement': [
+                "Version": "2012-10-17",
+                "Statement": [
                     {
-                        'Sid': 'OwnerAccount',
-                        'Effect': 'Allow',
-                        'Action': ['s3:*'],
-                        'Resource': [
-                            f'arn:aws:s3:::{dataset.S3BucketName}',
-                            f'arn:aws:s3:::{dataset.S3BucketName}/*',
+                        "Sid": "OwnerAccount",
+                        "Effect": "Allow",
+                        "Action": ["s3:*"],
+                        "Resource": [
+                            f"arn:aws:s3:::{dataset.S3BucketName}",
+                            f"arn:aws:s3:::{dataset.S3BucketName}/*",
                         ],
-                        'Principal': {
-                            'AWS': f'arn:aws:iam::{dataset.AwsAccountId}:root'
-                        },
+                        "Principal": {"AWS": f"arn:aws:iam::{dataset.AwsAccountId}:root"},
                     }
                 ],
             }
@@ -290,35 +251,27 @@ class BucketPoliciesUpdater:
     @staticmethod
     def put_bucket_policy(s3_client, dataset, policy):
         update_policy_report = {
-            'datasetUri': dataset.datasetUri,
-            'bucketName': dataset.S3BucketName,
-            'accountId': dataset.AwsAccountId,
+            "datasetUri": dataset.datasetUri,
+            "bucketName": dataset.S3BucketName,
+            "accountId": dataset.AwsAccountId,
         }
         try:
             policy_json = json.dumps(policy) if isinstance(policy, dict) else policy
-            log.info(
-                f"Putting new bucket policy on '{dataset.S3BucketName}' policy {policy_json}"
-            )
-            response = s3_client.put_bucket_policy(
-                Bucket=dataset.S3BucketName, Policy=policy_json
-            )
-            log.info(f'Bucket Policy updated: {response}')
-            update_policy_report.update({'status': 'SUCCEEDED'})
+            log.info(f"Putting new bucket policy on '{dataset.S3BucketName}' policy {policy_json}")
+            response = s3_client.put_bucket_policy(Bucket=dataset.S3BucketName, Policy=policy_json)
+            log.info(f"Bucket Policy updated: {response}")
+            update_policy_report.update({"status": "SUCCEEDED"})
         except ClientError as e:
-            log.error(
-                f'Failed to update bucket policy '
-                f"on '{dataset.S3BucketName}' policy {policy} "
-                f'due to {e} '
-            )
-            update_policy_report.update({'status': 'FAILED'})
+            log.error(f"Failed to update bucket policy " f"on '{dataset.S3BucketName}' policy {policy} " f"due to {e} ")
+            update_policy_report.update({"status": "FAILED"})
 
         return update_policy_report
 
 
-if __name__ == '__main__':
-    ENVNAME = os.environ.get('envname', 'local')
+if __name__ == "__main__":
+    ENVNAME = os.environ.get("envname", "local")
     ENGINE = get_engine(envname=ENVNAME)
-    log.info('Updating bucket policies for shared datasets...')
+    log.info("Updating bucket policies for shared datasets...")
     service = BucketPoliciesUpdater(engine=ENGINE)
     service.sync_imported_datasets_bucket_policies()
-    log.info('Bucket policies for shared datasets update successfully...')
+    log.info("Bucket policies for shared datasets update successfully...")

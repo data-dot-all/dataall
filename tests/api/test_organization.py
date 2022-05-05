@@ -2,9 +2,9 @@ import dataall
 import pytest
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
@@ -26,15 +26,15 @@ def test_get_org(client, org1, group):
             }
         }
         """,
-        username='alice',
+        username="alice",
         organizationUri=org1.organizationUri,
         groups=[group.name],
     )
 
     assert response.data.getOrganization.organizationUri == org1.organizationUri
-    assert response.data.getOrganization.owner == 'alice'
+    assert response.data.getOrganization.owner == "alice"
     assert response.data.getOrganization.SamlGroupName == group.name
-    assert response.data.getOrganization.userRoleInOrganization == 'Owner'
+    assert response.data.getOrganization.userRoleInOrganization == "Owner"
     assert response.data.getOrganization.stats.groups == 0
 
 
@@ -49,15 +49,15 @@ def test_update_org(client, org1, group):
                 }
             }
         """,
-        username='alice',
+        username="alice",
         groups=[group.name],
         organizationUri=org1.organizationUri,
-        input={'label': 'newlabel'},
+        input={"label": "newlabel"},
     )
 
-    assert response.data.updateOrganization.owner == 'alice'
+    assert response.data.updateOrganization.owner == "alice"
     assert response.data.updateOrganization.SamlGroupName == group.name
-    assert response.data.updateOrganization.label == 'newlabel'
+    assert response.data.updateOrganization.label == "newlabel"
 
 
 def test_update_org_unauthorized(client, org1, group2):
@@ -71,13 +71,13 @@ def test_update_org_unauthorized(client, org1, group2):
                 }
             }
         """,
-        username='bob',
+        username="bob",
         groups=[group2.name],
         organizationUri=org1.organizationUri,
-        input={'label': 'newlabel'},
+        input={"label": "newlabel"},
     )
 
-    assert 'Unauthorized' in response.errors[0].message
+    assert "Unauthorized" in response.errors[0].message
 
 
 def test_update_org_authorized_admins(client, org1, group):
@@ -91,13 +91,13 @@ def test_update_org_authorized_admins(client, org1, group):
                 }
             }
         """,
-        username='steve',
+        username="steve",
         groups=[group.name],
         organizationUri=org1.organizationUri,
-        input={'label': 'otherlabel'},
+        input={"label": "otherlabel"},
     )
 
-    assert response.data.updateOrganization.label == 'otherlabel'
+    assert response.data.updateOrganization.label == "otherlabel"
 
 
 def test_list_organizations_alice(client, org1, group):
@@ -111,14 +111,12 @@ def test_list_organizations_alice(client, org1, group):
                 }
             }
         }""",
-        'alice',
+        "alice",
         [group.name],
     )
 
     assert response.data.listOrganizations.count == 1
-    assert (
-        response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
-    )
+    assert response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
 
 
 def test_list_organizations_admin(client, org1, group):
@@ -133,14 +131,12 @@ def test_list_organizations_admin(client, org1, group):
                 }
             }
         }""",
-        'steve',
+        "steve",
         [group.name],
     )
     print(response)
     assert response.data.listOrganizations.count == 1
-    assert (
-        response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
-    )
+    assert response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
 
 
 def test_list_organizations_anyone(client, org1):
@@ -154,17 +150,15 @@ def test_list_organizations_anyone(client, org1):
                 }
             }
         }""",
-        'tom',
-        ['all'],
-        filter={'roles': [dataall.api.constants.OrganisationUserRole.Member.name]},
+        "tom",
+        ["all"],
+        filter={"roles": [dataall.api.constants.OrganisationUserRole.Member.name]},
     )
     print(response)
     assert response.data.listOrganizations.count == 0
 
 
-def test_group_invitation(
-    db, client, org1, group2, user, group3, group, dataset, env, module_mocker
-):
+def test_group_invitation(db, client, org1, group2, user, group3, group, dataset, env, module_mocker):
     response = client.query(
         """
         mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
@@ -173,7 +167,7 @@ def test_group_invitation(
             }
         }
         """,
-        username='alice',
+        username="alice",
         input=dict(
             organizationUri=org1.organizationUri,
             groupUri=group2.name,
@@ -195,11 +189,11 @@ def test_group_invitation(
             }
         }
         """,
-        username='bob',
+        username="bob",
         organizationUri=org1.organizationUri,
         groups=[group2.name],
     )
-    assert response.data.getOrganization.userRoleInOrganization == 'Invited'
+    assert response.data.getOrganization.userRoleInOrganization == "Invited"
     assert response.data.getOrganization.stats.groups == 1
 
     response = client.query(
@@ -262,11 +256,9 @@ def test_group_invitation(
 
     assert response.data.listOrganizationGroups.count == 2
 
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env2 = env(org1, 'devg2', user.userName, group2.name, '111111111112', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env2 = env(org1, "devg2", user.userName, group2.name, "111111111112", "eu-west-1")
     assert env2.environmentUri
 
     response = client.query(
@@ -277,14 +269,14 @@ def test_group_invitation(
             }
         }
         """,
-        username='alice',
+        username="alice",
         organizationUri=org1.organizationUri,
         groupUri=group2.name,
         groups=[group.name, group2.name],
     )
     print(response)
 
-    assert 'OrganizationResourcesFound' in response.errors[0].message
+    assert "OrganizationResourcesFound" in response.errors[0].message
     with db.scoped_session() as session:
         dataset = session.query(dataall.db.models.Environment).get(env2.environmentUri)
         session.delete(dataset)
@@ -298,7 +290,7 @@ def test_group_invitation(
             }
         }
         """,
-        username='alice',
+        username="alice",
         organizationUri=org1.organizationUri,
         groupUri=group2.name,
         groups=[group.name, group2.name],
@@ -374,7 +366,7 @@ def test_archive_org(client, org1, group, group2):
             archiveOrganization(organizationUri:$organizationUri)
         }
         """,
-        username='alice',
+        username="alice",
         groups=[group.name, group2.name],
         organizationUri=org1.organizationUri,
     )

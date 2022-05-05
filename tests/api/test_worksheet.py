@@ -2,7 +2,7 @@ import pytest
 from dataall.api.constants import WorksheetRole
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def worksheet(client, tenant, group):
     response = client.query(
         """
@@ -18,11 +18,11 @@ def worksheet(client, tenant, group):
         }
         """,
         input={
-            'label': 'my worksheet',
-            'SamlAdminGroupName': group.name,
-            'tags': [group.name],
+            "label": "my worksheet",
+            "SamlAdminGroupName": group.name,
+            "tags": [group.name],
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
         tags=[group.name],
     )
@@ -30,8 +30,8 @@ def worksheet(client, tenant, group):
 
 
 def test_create_worksheet(client, worksheet):
-    assert worksheet.label == 'my worksheet'
-    assert worksheet.owner == 'alice'
+    assert worksheet.label == "my worksheet"
+    assert worksheet.owner == "alice"
     assert worksheet.userRoleForWorksheet == WorksheetRole.Creator.name
 
 
@@ -54,8 +54,8 @@ def test_list_worksheets_as_creator(client, group):
             }
         }
         """,
-        filter={'page': 1},
-        username='alice',
+        filter={"page": 1},
+        username="alice",
         groups=[group.name],
     )
 
@@ -81,8 +81,8 @@ def test_list_worksheets_as_anonymous(client, group):
             }
         }
         """,
-        filter={'page': 1},
-        username='anonymous',
+        filter={"page": 1},
+        username="anonymous",
     )
 
     print(response)
@@ -101,7 +101,7 @@ def test_get_worksheet(client, worksheet, group):
             }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
 
@@ -118,10 +118,10 @@ def test_get_worksheet(client, worksheet, group):
             }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='anonymous',
+        username="anonymous",
     )
 
-    assert 'Unauthorized' in response.errors[0].message
+    assert "Unauthorized" in response.errors[0].message
 
 
 def test_update_worksheet(client, worksheet, group):
@@ -138,12 +138,12 @@ def test_update_worksheet(client, worksheet, group):
         }
         """,
         worksheetUri=worksheet.worksheetUri,
-        input={'label': 'change label'},
-        username='alice',
+        input={"label": "change label"},
+        username="alice",
         groups=[group.name],
     )
 
-    assert response.data.updateWorksheet.label == 'change label'
+    assert response.data.updateWorksheet.label == "change label"
 
 
 def test_share_with_individual(client, worksheet, group2, group):
@@ -160,8 +160,8 @@ def test_share_with_individual(client, worksheet, group2, group):
         }
         """,
         worksheetUri=worksheet.worksheetUri,
-        input={'principalId': group2.name, 'principalType': 'Group', 'canEdit': False},
-        username='alice',
+        input={"principalId": group2.name, "principalType": "Group", "canEdit": False},
+        username="alice",
         groups=[group.name],
     )
     share_uri = response.data.shareWorksheet.worksheetShareUri
@@ -182,7 +182,7 @@ def test_share_with_individual(client, worksheet, group2, group):
         """,
         worksheetShareUri=share_uri,
         canEdit=True,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     share_uri = response.data.updateShareWorksheet.worksheetShareUri
@@ -200,11 +200,11 @@ def test_share_with_individual(client, worksheet, group2, group):
             }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='bob',
+        username="bob",
         groups=[group2.name],
     )
 
-    assert response.data.getWorksheet.label == 'change label'
+    assert response.data.getWorksheet.label == "change label"
 
     response = client.query(
         """
@@ -225,11 +225,11 @@ def test_share_with_individual(client, worksheet, group2, group):
             }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='bob',
+        username="bob",
         groups=[group2.name],
     )
 
-    assert response.data.getWorksheet.label == 'change label'
+    assert response.data.getWorksheet.label == "change label"
 
     response = client.query(
         """
@@ -240,7 +240,7 @@ def test_share_with_individual(client, worksheet, group2, group):
         }
         """,
         worksheetShareUri=share_uri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert response.data.deleteShareWorksheet
@@ -256,11 +256,11 @@ def test_share_with_individual(client, worksheet, group2, group):
             }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='bob',
+        username="bob",
         groups=[group2.name],
     )
 
-    assert 'UnauthorizedOperation' in response.errors[0].message
+    assert "UnauthorizedOperation" in response.errors[0].message
 
     response = client.query(
         """
@@ -271,7 +271,7 @@ def test_share_with_individual(client, worksheet, group2, group):
         }
         """,
         worksheetUri=worksheet.worksheetUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert response.data.deleteWorksheet

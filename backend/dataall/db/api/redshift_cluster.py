@@ -29,7 +29,7 @@ class RedshiftCluster:
             username=username,
             groups=groups,
             uri=uri,
-            group=data['SamlGroupName'],
+            group=data["SamlGroupName"],
             permission_name=permissions.CREATE_REDSHIFT_CLUSTER,
         )
 
@@ -38,44 +38,38 @@ class RedshiftCluster:
         if not environment.warehousesEnabled:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_REDSHIFT_CLUSTER,
-                message=f'Warehouses feature is disabled for the environment {environment.label}',
+                message=f"Warehouses feature is disabled for the environment {environment.label}",
             )
 
-        data['clusterName'] = slugify(data['label'], separator='')
+        data["clusterName"] = slugify(data["label"], separator="")
 
-        RedshiftCluster.validate_none_existing_cluster(
-            session, data['clusterName'], environment
-        )
-        redshift_cluster = RedshiftCluster.create_redshift_cluster(
-            session, username, data, environment
-        )
+        RedshiftCluster.validate_none_existing_cluster(session, data["clusterName"], environment)
+        redshift_cluster = RedshiftCluster.create_redshift_cluster(session, username, data, environment)
         return redshift_cluster
 
     @staticmethod
-    def create_redshift_cluster(
-        session, username, cluster_input, environment: models.Environment
-    ):
+    def create_redshift_cluster(session, username, cluster_input, environment: models.Environment):
         redshift_cluster = models.RedshiftCluster(
             environmentUri=environment.environmentUri,
             organizationUri=environment.organizationUri,
-            owner=cluster_input.get('owner', username),
-            label=cluster_input['label'],
-            description=cluster_input.get('description'),
-            masterDatabaseName=cluster_input['masterDatabaseName'],
-            masterUsername=cluster_input['masterUsername'],
-            databaseName=cluster_input.get('databaseName', 'datahubdb'),
-            nodeType=cluster_input['nodeType'],
-            numberOfNodes=cluster_input['numberOfNodes'],
-            port=cluster_input.get('port') or 5432,
+            owner=cluster_input.get("owner", username),
+            label=cluster_input["label"],
+            description=cluster_input.get("description"),
+            masterDatabaseName=cluster_input["masterDatabaseName"],
+            masterUsername=cluster_input["masterUsername"],
+            databaseName=cluster_input.get("databaseName", "datahubdb"),
+            nodeType=cluster_input["nodeType"],
+            numberOfNodes=cluster_input["numberOfNodes"],
+            port=cluster_input.get("port") or 5432,
             region=environment.region,
             AwsAccountId=environment.AwsAccountId,
-            status='CREATING',
-            vpc=cluster_input['vpc'],
-            subnetIds=cluster_input.get('subnetIds'),
-            securityGroupIds=cluster_input.get('securityGroupIds'),
+            status="CREATING",
+            vpc=cluster_input["vpc"],
+            subnetIds=cluster_input.get("subnetIds"),
+            securityGroupIds=cluster_input.get("securityGroupIds"),
             IAMRoles=[environment.EnvironmentDefaultIAMRoleArn],
-            tags=cluster_input.get('tags', []),
-            SamlGroupName=cluster_input['SamlGroupName'],
+            tags=cluster_input.get("tags", []),
+            SamlGroupName=cluster_input["SamlGroupName"],
             imported=False,
         )
         session.add(redshift_cluster)
@@ -90,21 +84,21 @@ class RedshiftCluster:
 
         redshift_cluster.name = name
         redshift_cluster.clusterName = name
-        redshift_cluster.CFNStackName = f'{name}-stack'
-        redshift_cluster.CFNStackStatus = 'CREATING'
+        redshift_cluster.CFNStackName = f"{name}-stack"
+        redshift_cluster.CFNStackStatus = "CREATING"
         redshift_cluster.kmsAlias = redshift_cluster.clusterName
-        redshift_cluster.datahubSecret = f'{redshift_cluster.name}-redshift-dhuser'
-        redshift_cluster.masterSecret = f'{redshift_cluster.name}-redshift-masteruser'
+        redshift_cluster.datahubSecret = f"{redshift_cluster.name}-redshift-dhuser"
+        redshift_cluster.masterSecret = f"{redshift_cluster.name}-redshift-masteruser"
 
         activity = models.Activity(
-            action='redshiftcluster:user:create',
-            label='redshiftcluster:user:create',
+            action="redshiftcluster:user:create",
+            label="redshiftcluster:user:create",
             owner=username,
-            summary=f'{username} '
-            f'Created Redshift cluster {redshift_cluster.name} '
-            f'on Environment {environment.name}|{environment.AwsAccountId}',
+            summary=f"{username} "
+            f"Created Redshift cluster {redshift_cluster.name} "
+            f"on Environment {environment.name}|{environment.AwsAccountId}",
             targetUri=redshift_cluster.clusterUri,
-            targetType='redshiftcluster',
+            targetType="redshiftcluster",
         )
         session.add(activity)
         session.commit()
@@ -129,13 +123,13 @@ class RedshiftCluster:
     @staticmethod
     def __validate_cluster_data(data, uri):
         if not data:
-            raise exceptions.RequiredParameter('input')
-        if not data.get('SamlGroupName'):
-            raise exceptions.RequiredParameter('SamlGroupName')
+            raise exceptions.RequiredParameter("input")
+        if not data.get("SamlGroupName"):
+            raise exceptions.RequiredParameter("SamlGroupName")
         if not uri:
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('name')
+            raise exceptions.RequiredParameter("environmentUri")
+        if not data.get("label"):
+            raise exceptions.RequiredParameter("name")
 
     @staticmethod
     def validate_none_existing_cluster(session, cluster_name, environment):
@@ -151,48 +145,42 @@ class RedshiftCluster:
         )
         if existing_cluster:
             raise exceptions.ResourceAlreadyExists(
-                'Create Redshift cluster',
-                f'Redshift Cluster {cluster_name} '
-                f'is already assigned to this environment {environment.name}',
+                "Create Redshift cluster",
+                f"Redshift Cluster {cluster_name} " f"is already assigned to this environment {environment.name}",
             )
 
     @staticmethod
     def update(session, context, cluster_input, clusterUri):
         cluster = session.query(models.RedshiftCluster).get(clusterUri)
         if not cluster:
-            raise exceptions.ObjectNotFound('RedshiftCluster', clusterUri)
-        if 'name' in cluster_input.keys():
-            cluster.name = cluster_input.get('name')
-        if 'description' in cluster_input.keys():
-            cluster.description = cluster_input.get('description')
+            raise exceptions.ObjectNotFound("RedshiftCluster", clusterUri)
+        if "name" in cluster_input.keys():
+            cluster.name = cluster_input.get("name")
+        if "description" in cluster_input.keys():
+            cluster.description = cluster_input.get("description")
         return cluster
 
     @staticmethod
     def get_redshift_cluster_by_uri(session, uri) -> models.RedshiftCluster:
         if not uri:
-            raise exceptions.RequiredParameter('ClusterUri')
+            raise exceptions.RequiredParameter("ClusterUri")
         cluster = session.query(models.RedshiftCluster).get(uri)
         if not cluster:
-            raise exceptions.ObjectNotFound('RedshiftCluster', uri)
+            raise exceptions.ObjectNotFound("RedshiftCluster", uri)
         return cluster
 
     @staticmethod
     @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
-    def list_available_datasets(
-        session, username, groups, uri: str, data: dict = None, check_perm=None
-    ):
-        cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
-            session, uri
-        )
+    def list_available_datasets(session, username, groups, uri: str, data: dict = None, check_perm=None):
+        cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
-                literal(cluster.clusterUri).label('clusterUri'),
+                models.ShareObject.datasetUri.label("datasetUri"),
+                literal(cluster.clusterUri).label("clusterUri"),
             )
             .join(
                 models.RedshiftCluster,
-                models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                models.RedshiftCluster.environmentUri == models.ShareObject.environmentUri,
             )
             .filter(
                 and_(
@@ -208,8 +196,8 @@ class RedshiftCluster:
         )
         created = (
             session.query(
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.RedshiftCluster.clusterUri.label('clusterUri'),
+                models.Dataset.datasetUri.label("datasetUri"),
+                models.RedshiftCluster.clusterUri.label("clusterUri"),
             )
             .filter(
                 and_(
@@ -218,15 +206,12 @@ class RedshiftCluster:
                         models.Dataset.SamlAdminGroupName.in_(groups),
                     ),
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.Dataset.environmentUri
-                    == models.RedshiftCluster.environmentUri,
+                    models.Dataset.environmentUri == models.RedshiftCluster.environmentUri,
                 )
             )
             .group_by(models.Dataset.datasetUri, models.RedshiftCluster.clusterUri)
         )
-        all_group_datasets_sub_query = shared.union(created).subquery(
-            'all_group_datasets_sub_query'
-        )
+        all_group_datasets_sub_query = shared.union(created).subquery("all_group_datasets_sub_query")
         query = (
             session.query(models.Dataset)
             .join(
@@ -236,8 +221,7 @@ class RedshiftCluster:
             .outerjoin(
                 models.RedshiftClusterDataset,
                 and_(
-                    models.RedshiftClusterDataset.datasetUri
-                    == models.Dataset.datasetUri,
+                    models.RedshiftClusterDataset.datasetUri == models.Dataset.datasetUri,
                     models.RedshiftClusterDataset.clusterUri == cluster.clusterUri,
                 ),
             )
@@ -249,24 +233,20 @@ class RedshiftCluster:
                 )
             )
         )
-        if data.get('term'):
-            term = data.get('term')
+        if data.get("term"):
+            term = data.get("term")
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
+                    models.Dataset.label.ilike("%" + term + "%"),
                     models.Dataset.tags.any(term),
                     models.Dataset.topics.any(term),
                 )
             )
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(query, page=data.get("page", 1), page_size=data.get("pageSize", 10)).to_dict()
 
     @staticmethod
     @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
-    def list_cluster_datasets(
-        session, username, groups, uri: str, data: dict = None, check_perm=None
-    ):
+    def list_cluster_datasets(session, username, groups, uri: str, data: dict = None, check_perm=None):
         query = (
             session.query(models.Dataset)
             .join(
@@ -277,33 +257,27 @@ class RedshiftCluster:
                 models.RedshiftClusterDataset.clusterUri == uri,
             )
         )
-        if data.get('term'):
-            term = data.get('term')
+        if data.get("term"):
+            term = data.get("term")
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
+                    models.Dataset.label.ilike("%" + term + "%"),
                     models.Dataset.tags.any(term),
                     models.Dataset.topics.any(term),
                 )
             )
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(query, page=data.get("page", 1), page_size=data.get("pageSize", 10)).to_dict()
 
     @staticmethod
     @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
-    def list_available_cluster_tables(
-        session, username, groups, uri: str, data: dict = None, check_perm=None
-    ):
-        cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
-            session, uri
-        )
+    def list_available_cluster_tables(session, username, groups, uri: str, data: dict = None, check_perm=None):
+        cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
-                models.ShareObjectItem.itemUri.label('tableUri'),
-                literal(cluster.clusterUri).label('clusterUri'),
+                models.ShareObject.datasetUri.label("datasetUri"),
+                models.ShareObjectItem.itemUri.label("tableUri"),
+                literal(cluster.clusterUri).label("clusterUri"),
             )
             .join(
                 models.ShareObject,
@@ -311,8 +285,7 @@ class RedshiftCluster:
             )
             .join(
                 models.RedshiftCluster,
-                models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                models.RedshiftCluster.environmentUri == models.ShareObject.environmentUri,
             )
             .filter(
                 and_(
@@ -332,9 +305,9 @@ class RedshiftCluster:
         )
         created = (
             session.query(
-                models.DatasetTable.datasetUri.label('datasetUri'),
-                models.DatasetTable.tableUri.label('tableUri'),
-                models.RedshiftCluster.clusterUri.label('clusterUri'),
+                models.DatasetTable.datasetUri.label("datasetUri"),
+                models.DatasetTable.tableUri.label("tableUri"),
+                models.RedshiftCluster.clusterUri.label("clusterUri"),
             )
             .join(
                 models.Dataset,
@@ -347,8 +320,7 @@ class RedshiftCluster:
                         models.Dataset.SamlAdminGroupName.in_(groups),
                     ),
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.Dataset.environmentUri
-                    == models.RedshiftCluster.environmentUri,
+                    models.Dataset.environmentUri == models.RedshiftCluster.environmentUri,
                 )
             )
             .group_by(
@@ -357,9 +329,7 @@ class RedshiftCluster:
                 models.RedshiftCluster.clusterUri,
             )
         )
-        all_group_tables_sub_query = shared.union(created).subquery(
-            'all_group_tables_sub_query'
-        )
+        all_group_tables_sub_query = shared.union(created).subquery("all_group_tables_sub_query")
         query = (
             session.query(models.DatasetTable)
             .join(
@@ -370,9 +340,7 @@ class RedshiftCluster:
                 models.RedshiftCluster.clusterUri == cluster.clusterUri,
             )
         )
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 20)
-        ).to_dict()
+        return paginate(query, page=data.get("page", 1), page_size=data.get("pageSize", 20)).to_dict()
 
     @staticmethod
     @has_resource_perm(permissions.GET_REDSHIFT_CLUSTER)
@@ -385,53 +353,45 @@ class RedshiftCluster:
     def add_dataset(session, username, groups, uri, data=None, check_perm=True):
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
-        if cluster.status != 'available':
+        if cluster.status != "available":
             raise exceptions.AWSResourceNotAvailable(
-                action='ADD DATASET TO REDSHIFT CLUSTER',
-                message=f'Cluster {cluster.name} is not on available state ({cluster.status})',
+                action="ADD DATASET TO REDSHIFT CLUSTER",
+                message=f"Cluster {cluster.name} is not on available state ({cluster.status})",
             )
 
-        dataset = Dataset.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
+        dataset = Dataset.get_dataset_by_uri(session, dataset_uri=data["datasetUri"])
 
-        exists = session.query(models.RedshiftClusterDataset).get(
-            (uri, data['datasetUri'])
-        )
+        exists = session.query(models.RedshiftClusterDataset).get((uri, data["datasetUri"]))
         if exists:
             raise exceptions.ResourceAlreadyExists(
-                action='ADD DATASET TO REDSHIFT CLUSTER',
-                message=f'Dataset {dataset.name} is already loaded to cluster {cluster.name}',
+                action="ADD DATASET TO REDSHIFT CLUSTER",
+                message=f"Dataset {dataset.name} is already loaded to cluster {cluster.name}",
             )
 
-        linked_dataset = models.RedshiftClusterDataset(
-            clusterUri=uri, datasetUri=data['datasetUri']
-        )
+        linked_dataset = models.RedshiftClusterDataset(clusterUri=uri, datasetUri=data["datasetUri"])
         session.add(linked_dataset)
 
         return cluster, dataset
 
     @staticmethod
     @has_resource_perm(permissions.REMOVE_DATASET_FROM_REDSHIFT_CLUSTER)
-    def remove_dataset_from_cluster(
-        session, username, groups, uri, data=None, check_perm=True
-    ):
+    def remove_dataset_from_cluster(session, username, groups, uri, data=None, check_perm=True):
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
         session.query(models.RedshiftClusterDatasetTable).filter(
             and_(
                 models.RedshiftClusterDatasetTable.clusterUri == uri,
-                models.RedshiftClusterDatasetTable.datasetUri == data['datasetUri'],
+                models.RedshiftClusterDatasetTable.datasetUri == data["datasetUri"],
             )
         ).delete()
         session.commit()
 
         dataset = None
-        exists = session.query(models.RedshiftClusterDataset).get(
-            (uri, data['datasetUri'])
-        )
+        exists = session.query(models.RedshiftClusterDataset).get((uri, data["datasetUri"]))
         if exists:
             session.delete(exists)
-            dataset = session.query(models.Dataset).get(data['datasetUri'])
+            dataset = session.query(models.Dataset).get(data["datasetUri"])
             if not dataset:
-                raise exceptions.ObjectNotFound('Dataset', data['datasetUri'])
+                raise exceptions.ObjectNotFound("Dataset", data["datasetUri"])
 
         return cluster, dataset
 
@@ -448,9 +408,7 @@ class RedshiftCluster:
         return cluster_datasets
 
     @staticmethod
-    def get_cluster_dataset(
-        session, clusterUri, datasetUri
-    ) -> models.RedshiftClusterDataset:
+    def get_cluster_dataset(session, clusterUri, datasetUri) -> models.RedshiftClusterDataset:
         cluster_dataset = (
             session.query(models.RedshiftClusterDataset)
             .filter(
@@ -462,15 +420,11 @@ class RedshiftCluster:
             .first()
         )
         if not cluster_dataset:
-            raise Exception(
-                f'Cluster {clusterUri} is not associated to dataset {datasetUri}'
-            )
+            raise Exception(f"Cluster {clusterUri} is not associated to dataset {datasetUri}")
         return cluster_dataset
 
     @staticmethod
-    def get_cluster_dataset_table(
-        session, clusterUri, datasetUri, tableUri
-    ) -> models.RedshiftClusterDatasetTable:
+    def get_cluster_dataset_table(session, clusterUri, datasetUri, tableUri) -> models.RedshiftClusterDatasetTable:
         cluster_dataset_table = (
             session.query(models.RedshiftClusterDatasetTable)
             .filter(
@@ -483,7 +437,7 @@ class RedshiftCluster:
             .first()
         )
         if not cluster_dataset_table:
-            log.error(f'Table {tableUri} copy is not enabled on cluster')
+            log.error(f"Table {tableUri} copy is not enabled on cluster")
         return cluster_dataset_table
 
     @staticmethod
@@ -492,16 +446,16 @@ class RedshiftCluster:
         session, username, groups, uri, data=None, check_perm=True
     ) -> models.RedshiftClusterDatasetTable:
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
-        table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        table = DatasetTable.get_dataset_table_by_uri(session, data["tableUri"])
         table = models.RedshiftClusterDatasetTable(
             clusterUri=uri,
-            datasetUri=data['datasetUri'],
-            tableUri=data['tableUri'],
+            datasetUri=data["datasetUri"],
+            tableUri=data["tableUri"],
             enabled=True,
-            schema=data['schema'] or f'datahub_{cluster.clusterUri}',
+            schema=data["schema"] or f"datahub_{cluster.clusterUri}",
             databaseName=cluster.databaseName,
             dataLocation=f's3://{table.S3BucketName}/{data.get("dataLocation")}'
-            if data.get('dataLocation')
+            if data.get("dataLocation")
             else table.S3Prefix,
         )
         session.add(table)
@@ -510,16 +464,14 @@ class RedshiftCluster:
 
     @staticmethod
     @has_resource_perm(permissions.DISABLE_REDSHIFT_TABLE_COPY)
-    def disable_copy_table(
-        session, username, groups, uri, data=None, check_perm=True
-    ) -> bool:
+    def disable_copy_table(session, username, groups, uri, data=None, check_perm=True) -> bool:
         table = (
             session.query(models.RedshiftClusterDatasetTable)
             .filter(
                 and_(
                     models.RedshiftClusterDatasetTable.clusterUri == uri,
-                    models.RedshiftClusterDatasetTable.datasetUri == data['datasetUri'],
-                    models.RedshiftClusterDatasetTable.tableUri == data['tableUri'],
+                    models.RedshiftClusterDatasetTable.datasetUri == data["datasetUri"],
+                    models.RedshiftClusterDatasetTable.tableUri == data["tableUri"],
                 )
             )
             .first()
@@ -537,19 +489,16 @@ class RedshiftCluster:
             session.query(models.DatasetTable)
             .join(
                 models.RedshiftClusterDatasetTable,
-                models.RedshiftClusterDatasetTable.tableUri
-                == models.DatasetTable.tableUri,
+                models.RedshiftClusterDatasetTable.tableUri == models.DatasetTable.tableUri,
             )
             .filter(models.RedshiftClusterDatasetTable.clusterUri == uri)
         )
-        if data.get('term'):
-            term = data.get('term')
+        if data.get("term"):
+            term = data.get("term")
             q = q.filter(
-                models.DatasetTable.label.ilike('%' + term + '%'),
+                models.DatasetTable.label.ilike("%" + term + "%"),
             )
-        return paginate(
-            q, page=data.get('page', 1), page_size=data.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=data.get("page", 1), page_size=data.get("pageSize", 20)).to_dict()
 
     @staticmethod
     def delete_all_cluster_linked_objects(session, clusterUri):

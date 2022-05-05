@@ -30,19 +30,19 @@ def make_config(bucket, is_first_run):
 def handler(event, context):
     sfn_client = boto3.client("stepfunctions")
 
-    #parse event
+    # parse event
     print(str(event))
-    if ('"state":"SUCCEEDED","stage":"DeployTestStage"' in str(event)):
+    if '"state":"SUCCEEDED","stage":"DeployTestStage"' in str(event):
         is_first_run = True
     else:
         is_first_run = False
     print(is_first_run)
 
-    #Make step function configuration
+    # Make step function configuration
     config = make_config(PIPELINE_BUCKET, is_first_run)
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-    #Start Step function
+    # Start Step function
     response = sfn_client.start_execution(
         stateMachineArn=STATE_MACHINE_ARN,
         name=f"AthenaModel-{timestamp}",

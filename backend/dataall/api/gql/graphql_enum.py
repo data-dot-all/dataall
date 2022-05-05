@@ -10,17 +10,17 @@ class GraphqlEnum:
         self.values = values
 
     def gql(self, with_directives=True):
-        n = '\n'
+        n = "\n"
         # return f"enum {self.name}{{{n}{n.join(self.values)}{n}}}"
-        return f'enum {self.name}{{{n}{n.join([v.name for v in self.values])}{n}}}'
+        return f"enum {self.name}{{{n}{n.join([v.name for v in self.values])}{n}}}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     class Day(PythonEnum):
-        monday = '01'
-        tuesday = '02'
+        monday = "01"
+        tuesday = "02"
 
-    episode = GraphqlEnum(name='Episode', values=Day)
+    episode = GraphqlEnum(name="Episode", values=Day)
 
     print(episode.gql())

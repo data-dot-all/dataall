@@ -11,19 +11,17 @@ from ....searchproxy.indexers import upsert_folder, upsert_dashboard
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
-    if obj.nodeType == 'G':
-        return 'Glossary'
-    elif obj.nodeType == 'C':
-        return 'Category'
-    elif obj.nodeType == 'T':
-        return 'Term'
+    if obj.nodeType == "G":
+        return "Glossary"
+    elif obj.nodeType == "C":
+        return "Category"
+    elif obj.nodeType == "T":
+        return "Term"
     else:
         return None
 
 
-def create_glossary(
-    context: Context, source, input: dict = None
-) -> models.GlossaryNode:
+def create_glossary(context: Context, source, input: dict = None) -> models.GlossaryNode:
     with context.engine.scoped_session() as session:
         return db.api.Glossary.create_glossary(
             session=session,
@@ -40,9 +38,7 @@ def tree(context: Context, source: models.GlossaryNode):
         return None
     adjency_list = {}
     with context.engine.scoped_session() as session:
-        q = session.query(models.GlossaryNode).filter(
-            models.GlossaryNode.path.startswith(f'{source.path}/')
-        )
+        q = session.query(models.GlossaryNode).filter(models.GlossaryNode.path.startswith(f"{source.path}/"))
         for node in q:
             if not adjency_list.get(node.parentUri):
                 adjency_list[node.parentUri] = []
@@ -60,8 +56,8 @@ def node_tree(context: Context, source: models.GlossaryNode, filter: dict = None
             .filter(models.GlossaryNode.deleted.is_(None))
             .order_by(asc(models.GlossaryNode.path))
         )
-        term = filter.get('term')
-        nodeType = filter.get('nodeType')
+        term = filter.get("term")
+        nodeType = filter.get("nodeType")
         if term:
             q = q.filter(
                 or_(
@@ -72,23 +68,17 @@ def node_tree(context: Context, source: models.GlossaryNode, filter: dict = None
         if nodeType:
             q = q.filter(models.GlossaryNode.nodeType == nodeType)
 
-    return paginate(
-        q, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
-    ).to_dict()
+    return paginate(q, page_size=filter.get("pageSize", 10), page=filter.get("page", 1)).to_dict()
 
 
-def list_node_children(
-    context: Context, source: models.GlossaryNode, filter: dict = None
-):
+def list_node_children(context: Context, source: models.GlossaryNode, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
         return db.api.Glossary.list_node_children(session, source, filter)
 
 
-def create_category(
-    context: Context, source, parentUri: str = None, input: dict = None
-):
+def create_category(context: Context, source, parentUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         return db.api.Glossary.create_category(
             session=session,
@@ -126,9 +116,7 @@ def list_glossaries(context: Context, source, filter: dict = None):
         )
 
 
-def resolve_categories(
-    context: Context, source: models.GlossaryNode, filter: dict = None
-):
+def resolve_categories(context: Context, source: models.GlossaryNode, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -160,9 +148,7 @@ def resolve_terms(context: Context, source: models.GlossaryNode, filter: dict = 
         )
 
 
-def update_node(
-    context: Context, source, nodeUri: str = None, input: dict = None
-) -> models.GlossaryNode:
+def update_node(context: Context, source, nodeUri: str = None, input: dict = None) -> models.GlossaryNode:
     with context.engine.scoped_session() as session:
         return db.api.Glossary.update_node(
             session,
@@ -178,7 +164,7 @@ def get_node(context: Context, source, nodeUri: str = None):
     with context.engine.scoped_session() as session:
         node: models.GlossaryNode = session.query(models.GlossaryNode).get(nodeUri)
         if not node:
-            raise exceptions.ObjectNotFound('Node', nodeUri)
+            raise exceptions.ObjectNotFound("Node", nodeUri)
     return node
 
 
@@ -225,12 +211,12 @@ def resolve_link(context, source, targetUri: str = None):
         )
         if not link:
             link = {
-                'nodeUri': source.nodeUri,
-                'targetUri': targetUri,
-                'created': datetime.now().isoformat(),
-                'owner': context.username,
-                'approvedByOwner': False,
-                'approvedBySteward': False,
+                "nodeUri": source.nodeUri,
+                "targetUri": targetUri,
+                "created": datetime.now().isoformat(),
+                "owner": context.username,
+                "approvedByOwner": False,
+                "approvedBySteward": False,
             }
 
     return link
@@ -264,10 +250,10 @@ def request_link(
             groups=context.groups,
             uri=nodeUri,
             data={
-                'targetUri': targetUri,
-                'targetType': targetType,
-                'approvedByOwner': True,
-                'approvedBySteward': False,
+                "targetUri": targetUri,
+                "targetType": targetType,
+                "approvedByOwner": True,
+                "approvedBySteward": False,
             },
             check_perm=True,
         )
@@ -287,10 +273,10 @@ def link_term(
             groups=context.groups,
             uri=nodeUri,
             data={
-                'targetUri': targetUri,
-                'targetType': targetType,
-                'approvedByOwner': True,
-                'approvedBySteward': True,
+                "targetUri": targetUri,
+                "targetType": targetType,
+                "approvedByOwner": True,
+                "approvedBySteward": True,
             },
             check_perm=True,
         )
@@ -298,7 +284,7 @@ def link_term(
 
 def resolve_term_glossary(context, source: models.GlossaryNode, **kwargs):
     with context.engine.scoped_session() as session:
-        parentUri = source.path.split('/')[1]
+        parentUri = source.path.split("/")[1]
         return session.query(models.GlossaryNode).get(parentUri)
 
 
@@ -306,21 +292,21 @@ def get_link(context: Context, source, linkUri: str = None):
     with context.engine.scoped_session() as session:
         link = session.query(models.TermLink).get(linkUri)
         if not link:
-            raise exceptions.ObjectNotFound('Link', linkUri)
+            raise exceptions.ObjectNotFound("Link", linkUri)
     return link
 
 
 def target_union_resolver(obj, *_):
     if isinstance(obj, models.DatasetTableColumn):
-        return 'DatasetTableColumn'
+        return "DatasetTableColumn"
     elif isinstance(obj, models.DatasetTable):
-        return 'DatasetTable'
+        return "DatasetTable"
     elif isinstance(obj, models.Dataset):
-        return 'Dataset'
+        return "Dataset"
     elif isinstance(obj, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
+        return "DatasetStorageLocation"
     elif isinstance(obj, models.Dashboard):
-        return 'Dashboard'
+        return "Dashboard"
     else:
         return None
 
@@ -328,19 +314,17 @@ def target_union_resolver(obj, *_):
 def resolve_link_target(context, source, **kwargs):
     with context.engine.scoped_session() as session:
         model = {
-            'Dataset': models.Dataset,
-            'DatasetTable': models.DatasetTable,
-            'Column': models.DatasetTableColumn,
-            'DatasetStorageLocation': models.DatasetStorageLocation,
-            'Dashboard': models.Dashboard,
+            "Dataset": models.Dataset,
+            "DatasetTable": models.DatasetTable,
+            "Column": models.DatasetTableColumn,
+            "DatasetStorageLocation": models.DatasetStorageLocation,
+            "Dashboard": models.Dashboard,
         }[source.targetType]
         target = session.query(model).get(source.targetUri)
     return target
 
 
-def resolve_term_associations(
-    context, source: models.GlossaryNode, filter: dict = None
-):
+def resolve_term_associations(context, source: models.GlossaryNode, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -349,7 +333,7 @@ def resolve_term_associations(
             username=context.username,
             groups=context.groups,
             uri=None,
-            data={'source': source, 'filter': filter},
+            data={"source": source, "filter": filter},
             check_perm=True,
         )
 
@@ -362,7 +346,7 @@ def resolve_stats(context, source: models.GlossaryNode, **kwargs):
             .filter(
                 and_(
                     models.GlossaryNode.path.startswith(source.path),
-                    models.GlossaryNode.nodeType == 'C',
+                    models.GlossaryNode.nodeType == "C",
                     models.GlossaryNode.deleted.is_(None),
                 )
             )
@@ -373,7 +357,7 @@ def resolve_stats(context, source: models.GlossaryNode, **kwargs):
             .filter(
                 and_(
                     models.GlossaryNode.path.startswith(source.path),
-                    models.GlossaryNode.nodeType == 'T',
+                    models.GlossaryNode.nodeType == "T",
                     models.GlossaryNode.deleted.is_(None),
                 )
             )
@@ -390,12 +374,10 @@ def resolve_stats(context, source: models.GlossaryNode, **kwargs):
             .count()
         )
 
-    return {'categories': categories, 'terms': terms, 'associations': associations}
+    return {"categories": categories, "terms": terms, "associations": associations}
 
 
-def list_asset_linked_terms(
-    context: Context, source, uri: str = None, filter: dict = None
-):
+def list_asset_linked_terms(context: Context, source, uri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -407,7 +389,7 @@ def list_asset_linked_terms(
             )
             .filter(models.TermLink.targetUri == uri)
         )
-        term = filter.get('term')
+        term = filter.get("term")
         if term:
             q = q.filter(
                 or_(
@@ -415,9 +397,7 @@ def list_asset_linked_terms(
                     models.GlossaryNode.readme.ilike(term),
                 )
             )
-    return paginate(
-        q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)
-    ).to_dict()
+    return paginate(q, page=filter.get("page", 1), page_size=filter.get("pageSize", 10)).to_dict()
 
 
 def resolve_link_node(context: Context, source: models.TermLink, **kwargs):
@@ -431,10 +411,8 @@ def approve_term_association(context: Context, source, linkUri: str = None):
     with context.engine.scoped_session() as session:
         link: models.TermLink = session.query(models.TermLink).get(linkUri)
         if not link:
-            raise exceptions.ObjectNotFound('Link', linkUri)
-        verify_term_association_approver_role(
-            session, context.username, context.groups, link
-        )
+            raise exceptions.ObjectNotFound("Link", linkUri)
+        verify_term_association_approver_role(session, context.username, context.groups, link)
         if not link.approvedBySteward:
             link.approvedBySteward = True
             updated = True
@@ -447,10 +425,8 @@ def dismiss_term_association(context: Context, source, linkUri: str = None):
     with context.engine.scoped_session() as session:
         link: models.TermLink = session.query(models.TermLink).get(linkUri)
         if not link:
-            raise exceptions.ObjectNotFound('Link', linkUri)
-        verify_term_association_approver_role(
-            session, context.username, context.groups, link
-        )
+            raise exceptions.ObjectNotFound("Link", linkUri)
+        verify_term_association_approver_role(session, context.username, context.groups, link)
         if link.approvedBySteward:
             link.approvedBySteward = False
             updated = True
@@ -462,8 +438,8 @@ def verify_term_association_approver_role(session, username, groups, link):
     glossary_node = session.query(models.GlossaryNode).get(link.nodeUri)
     if glossary_node.owner != username and glossary_node.admin not in groups:
         raise exceptions.UnauthorizedOperation(
-            'ASSOCIATE_GLOSSARY_TERM',
-            f'User: {username} is not allowed to manage glossary term associations',
+            "ASSOCIATE_GLOSSARY_TERM",
+            f"User: {username} is not allowed to manage glossary term associations",
         )
 
 

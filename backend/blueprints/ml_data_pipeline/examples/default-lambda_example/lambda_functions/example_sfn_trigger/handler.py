@@ -25,7 +25,7 @@ def make_config(timestamp, stage, bucket):
     # Build lambda event input
     config["bucketName"] = bucket
     config["key"] = "examples/data/cannes/cannes_winner.csv"
-    #insert your value, it can come from several places such as SSM, Databases, it depends on the use case
+    # insert your value, it can come from several places such as SSM, Databases, it depends on the use case
 
     return config
 

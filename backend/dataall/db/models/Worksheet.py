@@ -10,13 +10,13 @@ from .. import Resource, utils
 
 
 class QueryType(enum.Enum):
-    chart = 'chart'
-    data = 'data'
+    chart = "chart"
+    data = "data"
 
 
 class Worksheet(Resource, Base):
-    __tablename__ = 'worksheet'
-    worksheetUri = Column(String, primary_key=True, default=utils.uuid('_'))
+    __tablename__ = "worksheet"
+    worksheetUri = Column(String, primary_key=True, default=utils.uuid("_"))
     SamlAdminGroupName = Column(String, nullable=False)
     sqlBody = Column(String, nullable=True)
     chartConfig = Column(postgresql.JSON, nullable=True)
@@ -26,7 +26,7 @@ class Worksheet(Resource, Base):
 
 
 class WorksheetQueryResult(Base):
-    __tablename__ = 'worksheet_query_result'
+    __tablename__ = "worksheet_query_result"
     worksheetUri = Column(String, nullable=False)
     AthenaQueryId = Column(String, primary_key=True)
     status = Column(String, nullable=False)
@@ -42,8 +42,8 @@ class WorksheetQueryResult(Base):
 
 
 class WorksheetShare(Base):
-    __tablename__ = 'worksheet_share'
-    worksheetShareUri = Column(String, primary_key=True, default=utils.uuid('_'))
+    __tablename__ = "worksheet_share"
+    worksheetShareUri = Column(String, primary_key=True, default=utils.uuid("_"))
     worksheetUri = Column(String, nullable=False)
     principalId = Column(String, nullable=False)
     principalType = Column(String, nullable=False)

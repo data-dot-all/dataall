@@ -7,9 +7,9 @@ from .. import Resource, utils
 
 
 class DatasetTable(Resource, Base):
-    __tablename__ = 'dataset_table'
+    __tablename__ = "dataset_table"
     datasetUri = Column(String, nullable=False)
-    tableUri = Column(String, primary_key=True, default=utils.uuid('table'))
+    tableUri = Column(String, primary_key=True, default=utils.uuid("table"))
     AWSAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
     S3Prefix = Column(String, nullable=False)
@@ -17,13 +17,13 @@ class DatasetTable(Resource, Base):
     GlueTableName = Column(String, nullable=False)
     GlueTableConfig = Column(Text)
     GlueTableProperties = Column(postgresql.JSON, default={})
-    LastGlueTableStatus = Column(String, default='InSync')
-    region = Column(String, default='eu-west-1')
+    LastGlueTableStatus = Column(String, default="InSync")
+    region = Column(String, default="eu-west-1")
     # LastGeneratedPreviewDate= Column(DateTime, default=None)
     confidentiality = Column(String, nullable=True)
     userRoleForTable = query_expression()
     projectPermission = query_expression()
     redshiftClusterPermission = query_expression()
-    stage = Column(String, default='RAW')
+    stage = Column(String, default="RAW")
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='C1')
+    confidentiality = Column(String, nullable=False, default="C1")

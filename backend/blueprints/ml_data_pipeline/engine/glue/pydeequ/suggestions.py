@@ -13,42 +13,30 @@ class Rules:
 
     @classmethod
     def CompleteIfCompleteRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.CompleteIfCompleteRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.CompleteIfCompleteRule
         return cls(spark, _jvmRule)
 
     @classmethod
     def RetainCompletenessRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.RetainCompletenessRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.RetainCompletenessRule
         return cls(spark, _jvmRule)
 
     @classmethod
     def RetainTypeRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.RetainTypeRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.RetainTypeRule
         return cls(spark, _jvmRule)
 
     @classmethod
     def CategoricalRangeRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.CategoricalRangeRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.CategoricalRangeRule
         return cls(spark, _jvmRule)
 
     @classmethod
     def FractionalCategoricalRangeRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.FractionalCategoricalRangeRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.FractionalCategoricalRangeRule
         return cls(spark, _jvmRule)
 
     @classmethod
     def NonNegativeNumbersRule(cls, spark):
-        _jvmRule = (
-            spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.NonNegativeNumbersRule
-        )
+        _jvmRule = spark.sparkContext._jvm.com.amazon.deequ.suggestions.rules.NonNegativeNumbersRule
         return cls(spark, _jvmRule)

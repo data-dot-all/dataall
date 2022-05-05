@@ -31,6 +31,4 @@ def make_sagemaker_batch_transform_task(stack, job):
             }
         ]
 
-    return stepfunctions.CustomState(
-        stack, f'SageMaker Batch: {job["name"]}', state_json=definition
-    )
+    return stepfunctions.CustomState(stack, f'SageMaker Batch: {job["name"]}', state_json=definition)

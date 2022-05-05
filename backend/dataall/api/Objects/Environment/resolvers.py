@@ -24,40 +24,38 @@ log = logging.getLogger()
 
 def get_trust_account(context: Context, source, **kwargs):
     current_account = SessionHelper.get_account()
-    print('current_account  = ', current_account)
+    print("current_account  = ", current_account)
     return current_account
 
 
 def check_environment(context: Context, source, input=None):
-    ENVNAME = os.environ.get('envname', 'local')
-    if ENVNAME == 'pytest':
-        return 'CdkRoleName'
-    account = input.get('AwsAccountId')
-    region = input.get('region')
+    ENVNAME = os.environ.get("envname", "local")
+    if ENVNAME == "pytest":
+        return "CdkRoleName"
+    account = input.get("AwsAccountId")
+    region = input.get("region")
     aws = SessionHelper.remote_session(accountid=account)
-    cfn = aws.client('cloudformation', region_name=region)
+    cfn = aws.client("cloudformation", region_name=region)
     try:
-        response = cfn.describe_stacks(StackName='CDKToolkit')
+        response = cfn.describe_stacks(StackName="CDKToolkit")
     except cfn.exceptions.ClientError as e:
         print(e)
-        raise Exception('CDKToolkitNotFound')
+        raise Exception("CDKToolkitNotFound")
 
-    stacks = response['Stacks']
+    stacks = response["Stacks"]
     if not len(stacks):
-        raise Exception('CDKToolkitNotFound')
+        raise Exception("CDKToolkitNotFound")
 
     try:
-        response = cfn.describe_stack_resource(
-            StackName='CDKToolkit', LogicalResourceId='CloudFormationExecutionRole'
-        )
-        cdk_role_name = response['StackResourceDetail']['PhysicalResourceId']
+        response = cfn.describe_stack_resource(StackName="CDKToolkit", LogicalResourceId="CloudFormationExecutionRole")
+        cdk_role_name = response["StackResourceDetail"]["PhysicalResourceId"]
         return cdk_role_name
     except cfn.exceptions.ClientError as e:
-        raise Exception('CDKToolkitDeploymentActionRoleNotFound')
+        raise Exception("CDKToolkitDeploymentActionRoleNotFound")
 
 
 def create_environment(context: Context, source, input=None):
-    if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
+    if input.get("SamlGroupName") and input.get("SamlGroupName") not in context.groups:
         raise exceptions.UnauthorizedOperation(
             action=permissions.LINK_ENVIRONMENT,
             message=f'User: {context.username} is not a member of the group {input["SamlGroupName"]}',
@@ -65,19 +63,19 @@ def create_environment(context: Context, source, input=None):
 
     with context.engine.scoped_session() as session:
         cdk_role_name = check_environment(context, source, input=input)
-        input['cdk_role_name'] = cdk_role_name
+        input["cdk_role_name"] = cdk_role_name
         env = Environment.create_environment(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input.get('organizationUri'),
+            uri=input.get("organizationUri"),
             data=input,
             check_perm=True,
         )
         Stack.create_stack(
             session=session,
             environment_uri=env.environmentUri,
-            target_type='environment',
+            target_type="environment",
             target_uri=env.environmentUri,
             target_label=env.label,
         )
@@ -86,10 +84,8 @@ def create_environment(context: Context, source, input=None):
     return env
 
 
-def update_environment(
-    context: Context, source, environmentUri: str = None, input: dict = None
-):
-    if input.get('SamlGroupName') and input.get('SamlGroupName') not in context.groups:
+def update_environment(context: Context, source, environmentUri: str = None, input: dict = None):
+    if input.get("SamlGroupName") and input.get("SamlGroupName") not in context.groups:
         raise exceptions.UnauthorizedOperation(
             action=permissions.LINK_ENVIRONMENT,
             message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
@@ -108,12 +104,8 @@ def update_environment(
             data=input,
             check_perm=True,
         )
-        if input.get('dashboardsEnabled') or (
-            environment.resourcePrefix != previous_resource_prefix
-        ):
-            stack_helper.deploy_stack(
-                context=context, targetUri=environment.environmentUri
-            )
+        if input.get("dashboardsEnabled") or (environment.resourcePrefix != previous_resource_prefix):
+            stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
     return environment
 
 
@@ -123,7 +115,7 @@ def invite_group(context: Context, source, input):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
+            uri=input["environmentUri"],
             data=input,
             check_perm=True,
         )
@@ -139,7 +131,7 @@ def update_group_permissions(context, source, input):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
+            uri=input["environmentUri"],
             data=input,
             check_perm=True,
         )
@@ -156,7 +148,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': groupUri},
+            data={"groupUri": groupUri},
             check_perm=True,
         )
 
@@ -165,9 +157,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     return environment
 
 
-def list_environment_invited_groups(
-    context: Context, source, environmentUri=None, filter=None
-):
+def list_environment_invited_groups(context: Context, source, environmentUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -181,9 +171,7 @@ def list_environment_invited_groups(
         )
 
 
-def list_environment_not_invited_groups(
-    context: Context, source, environmentUri=None, filter=None
-):
+def list_environment_not_invited_groups(context: Context, source, environmentUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -211,9 +199,7 @@ def list_environment_groups(context: Context, source, environmentUri=None, filte
         )
 
 
-def list_all_environment_groups(
-    context: Context, source, environmentUri=None, filter=None
-):
+def list_all_environment_groups(context: Context, source, environmentUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -255,9 +241,7 @@ def list_environments(context: Context, source, filter=None):
         )
 
 
-def list_environment_networks(
-    context: Context, source, environmentUri=None, filter=None
-):
+def list_environment_networks(context: Context, source, environmentUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -278,9 +262,7 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 def resolve_vpc_list(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
-        return db.api.Vpc.get_environment_vpc_list(
-            session=session, environment_uri=source.environmentUri
-        )
+        return db.api.Vpc.get_environment_vpc_list(session=session, environment_uri=source.environmentUri)
 
 
 def get_environment(context: Context, source, environmentUri: str = None):
@@ -318,23 +300,19 @@ def resolve_user_role(context: Context, source: models.Environment):
     return EnvironmentPermission.NotInvited.value
 
 
-def list_environment_group_permissions(
-    context, source, environmentUri: str = None, groupUri: str = None
-):
+def list_environment_group_permissions(context, source, environmentUri: str = None, groupUri: str = None):
     with context.engine.scoped_session() as session:
         return db.api.Environment.list_group_permissions(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'groupUri': groupUri},
+            data={"groupUri": groupUri},
             check_perm=True,
         )
 
 
-def list_datasets_created_in_environment(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
+def list_datasets_created_in_environment(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -348,9 +326,7 @@ def list_datasets_created_in_environment(
         )
 
 
-def list_shared_with_environment_data_items(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
+def list_shared_with_environment_data_items(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -364,13 +340,11 @@ def list_shared_with_environment_data_items(
         )
 
 
-def _get_environment_group_aws_session(
-    session, username, groups, environment, groupUri=None
-):
+def _get_environment_group_aws_session(session, username, groups, environment, groupUri=None):
     if groupUri and groupUri not in groups:
         raise exceptions.UnauthorizedOperation(
-            action='ENVIRONMENT_AWS_ACCESS',
-            message=f'User: {username} is not member of the team {groupUri}',
+            action="ENVIRONMENT_AWS_ACCESS",
+            message=f"User: {username} is not member of the team {groupUri}",
         )
     pivot_session = SessionHelper.remote_session(environment.AwsAccountId)
     if not groupUri:
@@ -381,8 +355,8 @@ def _get_environment_group_aws_session(
             )
         else:
             raise exceptions.UnauthorizedOperation(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
+                action="ENVIRONMENT_AWS_ACCESS",
+                message=f"User: {username} is not member of the environment admins team {environment.SamlGroupName}",
             )
     else:
         env_group: models.EnvironmentGroup = (
@@ -395,8 +369,8 @@ def _get_environment_group_aws_session(
         )
         if not env_group:
             raise exceptions.UnauthorizedOperation(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'Team {groupUri} is not invited to the environment {environment.name}',
+                action="ENVIRONMENT_AWS_ACCESS",
+                message=f"Team {groupUri} is not invited to the environment {environment.name}",
             )
         else:
             aws_session = SessionHelper.get_session(
@@ -405,8 +379,8 @@ def _get_environment_group_aws_session(
             )
         if not aws_session:
             raise exceptions.AWSResourceNotFound(
-                action='ENVIRONMENT_AWS_ACCESS',
-                message=f'Failed to start an AWS session on environment {environment.AwsAccountId}',
+                action="ENVIRONMENT_AWS_ACCESS",
+                message=f"Failed to start an AWS session on environment {environment.AwsAccountId}",
             )
     return aws_session
 
@@ -439,9 +413,7 @@ def get_environment_assume_role_url(
     return url
 
 
-def generate_environment_access_token(
-    context, source, environmentUri: str = None, groupUri: str = None
-):
+def generate_environment_access_token(context, source, environmentUri: str = None, groupUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -459,9 +431,9 @@ def generate_environment_access_token(
             groupUri=groupUri,
         ).get_credentials()
         credentials = {
-            'AccessKey': c.access_key,
-            'SessionKey': c.secret_key,
-            'sessionToken': c.token,
+            "AccessKey": c.access_key,
+            "SessionKey": c.secret_key,
+            "sessionToken": c.token,
         }
     return json.dumps(credentials)
 
@@ -474,9 +446,7 @@ def get_environment_stack(context: Context, source: models.Environment, **kwargs
     )
 
 
-def delete_environment(
-    context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
-):
+def delete_environment(context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -492,7 +462,7 @@ def delete_environment(
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'environment': environment},
+            data={"environment": environment},
             check_perm=True,
         )
 
@@ -503,15 +473,13 @@ def delete_environment(
             accountid=environment.AwsAccountId,
             cdk_role_arn=environment.CDKRoleArn,
             region=environment.region,
-            target_type='environment',
+            target_type="environment",
         )
 
     return True
 
 
-def list_environment_redshift_clusters(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
+def list_environment_redshift_clusters(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = dict()
     with context.engine.scoped_session() as session:
@@ -525,9 +493,7 @@ def list_environment_redshift_clusters(
         )
 
 
-def run_sql_query(
-    context: Context, source, environmentUri: str = None, sqlQuery: str = None
-):
+def run_sql_query(context: Context, source, environmentUri: str = None, sqlQuery: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -536,14 +502,10 @@ def run_sql_query(
             resource_uri=environmentUri,
             permission_name=permissions.RUN_ATHENA_QUERY,
         )
-    return athena_helpers.run_query(
-        context=context, environmentUri=environmentUri, sql=sqlQuery
-    )
+    return athena_helpers.run_query(context=context, environmentUri=environmentUri, sql=sqlQuery)
 
 
-def enable_subscriptions(
-    context: Context, source, environmentUri: str = None, input: dict = None
-):
+def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -553,20 +515,20 @@ def enable_subscriptions(
             permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
-        if input.get('producersTopicArn'):
-            environment.subscriptionsProducersTopicName = input.get('producersTopicArn')
+        if input.get("producersTopicArn"):
+            environment.subscriptionsProducersTopicName = input.get("producersTopicArn")
             environment.subscriptionsProducersTopicImported = True
 
         else:
             environment.subscriptionsProducersTopicName = NamingConventionService(
-                target_label=f'{environment.label}-producers-topic',
+                target_label=f"{environment.label}-producers-topic",
                 target_uri=environment.environmentUri,
                 pattern=NamingConventionPattern.DEFAULT,
                 resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
 
         environment.subscriptionsConsumersTopicName = NamingConventionService(
-            target_label=f'{environment.label}-consumers-topic',
+            target_label=f"{environment.label}-consumers-topic",
             target_uri=environment.environmentUri,
             pattern=NamingConventionPattern.DEFAULT,
             resource_prefix=environment.resourcePrefix,
@@ -611,26 +573,24 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
             permission_name=permissions.GET_ORGANIZATION,
         )
         pivot_role_bucket = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/resources_bucket_name'
+            env=os.getenv("envname", "local"), path="s3/resources_bucket_name"
         )
         pivot_role_bucket_key = Parameter().get_parameter(
-            env=os.getenv('envname', 'local'), path='s3/pivot_role_prefix'
+            env=os.getenv("envname", "local"), path="s3/pivot_role_prefix"
         )
         if not pivot_role_bucket or not pivot_role_bucket_key:
             raise exceptions.AWSResourceNotFound(
-                action='GET_PIVOT_ROLE_TEMPLATE',
-                message='Pivot Yaml template file could not be found on Amazon S3 bucket',
+                action="GET_PIVOT_ROLE_TEMPLATE",
+                message="Pivot Yaml template file could not be found on Amazon S3 bucket",
             )
         try:
             s3_client = boto3.client(
-                's3',
-                region_name=os.getenv('AWS_REGION', 'eu-central-1'),
-                config=Config(
-                    signature_version='s3v4', s3={'addressing_style': 'virtual'}
-                ),
+                "s3",
+                region_name=os.getenv("AWS_REGION", "eu-central-1"),
+                config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
             )
             presigned_url = s3_client.generate_presigned_url(
-                'get_object',
+                "get_object",
                 Params=dict(
                     Bucket=pivot_role_bucket,
                     Key=pivot_role_bucket_key,
@@ -639,9 +599,7 @@ def get_pivot_role_template(context: Context, source, organizationUri=None):
             )
             return presigned_url
         except ClientError as e:
-            log.error(
-                f'Failed to get presigned URL for pivot role template due to: {e}'
-            )
+            log.error(f"Failed to get presigned URL for pivot role template due to: {e}")
             raise e
 
 
@@ -657,8 +615,8 @@ def get_external_id(context: Context, source, organizationUri=None):
         external_id = SessionHelper.get_external_id_secret()
         if not external_id:
             raise exceptions.AWSResourceNotFound(
-                action='GET_EXTERNAL_ID',
-                message='External Id could not be found on AWS Secretsmanager',
+                action="GET_EXTERNAL_ID",
+                message="External Id could not be found on AWS Secretsmanager",
             )
         return external_id
 
@@ -675,7 +633,7 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
         pivot_role_name = SessionHelper.get_delegation_role_name()
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
-                action='GET_PIVOT_ROLE_NAME',
-                message='Pivot role name could not be found on AWS Secretsmanager',
+                action="GET_PIVOT_ROLE_NAME",
+                message="Pivot role name could not be found on AWS Secretsmanager",
             )
         return pivot_role_name

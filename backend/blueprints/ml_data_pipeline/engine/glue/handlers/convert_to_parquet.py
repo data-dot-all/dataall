@@ -23,24 +23,24 @@ from pyspark.sql.functions import to_date, to_timestamp
 
 
 @Step(
-    type='convert_to_parquet',
+    type="convert_to_parquet",
     props_schema={
-        'type': 'object',
-        'required': [
-            'input_format',
-            'input_bucket',
-            'input_key',
-            'output_bucket',
-            'output_key',
-            'partitions',
+        "type": "object",
+        "required": [
+            "input_format",
+            "input_bucket",
+            "input_key",
+            "output_bucket",
+            "output_key",
+            "partitions",
         ],
-        'properties': {
-            'input_format': {'type': 'string'},
-            'input_bucket': {'type': 'string'},
-            'input_key': {'type': 'string'},
-            'output_bucket': {'type': 'string'},
-            'output_key': {'type': 'string'},
-            'partitions': {'type': 'int'},
+        "properties": {
+            "input_format": {"type": "string"},
+            "input_bucket": {"type": "string"},
+            "input_key": {"type": "string"},
+            "output_bucket": {"type": "string"},
+            "output_key": {"type": "string"},
+            "partitions": {"type": "int"},
         },
     },
 )
@@ -48,7 +48,7 @@ class ConvertToParquet:
     # Utilities
 
     def get_size(bucket, path):
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource("s3")
         my_bucket = s3.Bucket(bucket)
         total_size = 0
 
@@ -65,25 +65,25 @@ class ConvertToParquet:
         return False
 
     def is_double(cell):
-        if re.match(r'^-?\d+\.\d+$', cell):
+        if re.match(r"^-?\d+\.\d+$", cell):
             return True
         return False
 
     def is_int(cell):
-        if re.match(r'^(?:-?[1-9][0-9]*|0)$', cell):
+        if re.match(r"^(?:-?[1-9][0-9]*|0)$", cell):
             return True
         return False
 
     date_patterns = [
-        (1, '%Y-%m-%d', 'yyyy-MM-dd'),
-        (2, '%Y/%m/%d', 'yyyy/MM/dd'),
-        (3, '%d-%m-%Y', 'dd-MM-yyyy'),
-        (4, '%d/%m/%Y', 'dd/MM/yyyy'),
-        (5, '%m/%d/%Y', 'MM/dd/yyyy'),
-        (6, '%Y%m%d', 'yyyyMMdd'),
-        (-1, '%Y-%m-%dT%H:%M:%S', 'yyyy-MM-ddTHH:mm:ss'),
-        (-2, '%d%b%Y:%H:%M:%S', 'ddMMMyyyy:HH:mm:ss'),
-        (-3, '%Y-%m-%d %H:%M:%S', 'yyyy-MM-dd HH:mm:ss'),
+        (1, "%Y-%m-%d", "yyyy-MM-dd"),
+        (2, "%Y/%m/%d", "yyyy/MM/dd"),
+        (3, "%d-%m-%Y", "dd-MM-yyyy"),
+        (4, "%d/%m/%Y", "dd/MM/yyyy"),
+        (5, "%m/%d/%Y", "MM/dd/yyyy"),
+        (6, "%Y%m%d", "yyyyMMdd"),
+        (-1, "%Y-%m-%dT%H:%M:%S", "yyyy-MM-ddTHH:mm:ss"),
+        (-2, "%d%b%Y:%H:%M:%S", "ddMMMyyyy:HH:mm:ss"),
+        (-3, "%Y-%m-%d %H:%M:%S", "yyyy-MM-dd HH:mm:ss"),
     ]
 
     def parse_dt(cell):
@@ -94,12 +94,12 @@ class ConvertToParquet:
             except:
                 pass
 
-        return 'string', str(cell)
+        return "string", str(cell)
 
     def parse_cell(cell):
         cell = cell.strip()
-        if cell == '':
-            return '', cell
+        if cell == "":
+            return "", cell
 
         if is_dt(cell):
             dt = parse_dt(cell)
@@ -107,32 +107,28 @@ class ConvertToParquet:
                 return dt
 
         if is_int(cell):
-            return 'bigint', cell
+            return "bigint", cell
         if is_double(cell):
-            return 'double', cell
+            return "double", cell
 
-        return 'string', str(cell)
+        return "string", str(cell)
 
     def pycsv_reader(dialect, csv_rows):
         sep = dialect.delimiter
         qc = dialect.quotechar
 
         for row in csv_rows:
-            if re.match(f'^{sep}', row) is not None:
+            if re.match(f"^{sep}", row) is not None:
                 row = '""' + row
             cells = re.findall(
-                f'(?:{sep}|\r?\n|^)({qc}(?:(?:{qc}{qc})*[^{qc}]*)*{qc}|[^{qc}{sep}\r?\n]*|(?:\r?\n|$))',
+                f"(?:{sep}|\r?\n|^)({qc}(?:(?:{qc}{qc})*[^{qc}]*)*{qc}|[^{qc}{sep}\r?\n]*|(?:\r?\n|$))",
                 row,
             )
-            yield [
-                parse_cell(re.sub(f'^{qc}|{qc}$', '', cell).strip()) for cell in cells
-            ]
+            yield [parse_cell(re.sub(f"^{qc}|{qc}$", "", cell).strip()) for cell in cells]
 
     def multimode(lst):
         counts = [(x, lst.count(x)) for x in set(lst)]
-        return [
-            j[0] for i, j in enumerate(counts) if j[1] == max([x[1] for x in counts])
-        ]
+        return [j[0] for i, j in enumerate(counts) if j[1] == max([x[1] for x in counts])]
 
     def majority_selector(options, csv_rows):
 
@@ -157,9 +153,7 @@ class ConvertToParquet:
         )
 
     def detect_quoting(sep, sep_count, quotechars, csv_rows):
-        quotechar, quotechar_count, quotechar_stdev = majority_selector(
-            [sep + q for q in quotechars], csv_rows
-        )
+        quotechar, quotechar_count, quotechar_stdev = majority_selector([sep + q for q in quotechars], csv_rows)
         quoting = csv.QUOTE_NONE
         if quotechar_count == 0:
             quoting = csv.QUOTE_NONE
@@ -177,7 +171,7 @@ class ConvertToParquet:
     def pycsv_spark_reader(path, slstep, minPartitions=100):
         sl = StructuredLogger(slstep)
 
-        separators = [',', r'\|', r'\t', r'\t+', ' +']
+        separators = [",", r"\|", r"\t", r"\t+", " +"]
         quotechars = ['"']
 
         rdd = sc.textFile(path, int(minPartitions))
@@ -187,7 +181,7 @@ class ConvertToParquet:
         sl.next_step()
         if has_header == True:
             header = rdd.first()
-            sl.info('Header: %s', str(header))
+            sl.info("Header: %s", str(header))
             rdd = rdd.filter(lambda row: row != header)
 
         # Determine CSV dialect
@@ -203,7 +197,7 @@ class ConvertToParquet:
             if sample_rows > sample_max_rows:
                 sample_rows = sample_max_rows
 
-        sl.info('Sampling %s rows to detect delimiter and column types.', sample_rows)
+        sl.info("Sampling %s rows to detect delimiter and column types.", sample_rows)
         rdd_sample = rdd.takeSample(False, sample_rows)
 
         sl.next_step()
@@ -223,22 +217,20 @@ class ConvertToParquet:
         ncol = len(rdd2.first())
         rdd2_count_before = rdd2.count()
         rdd2.filter(lambda row: len(row) != ncol).repartition(1).saveAsTextFile(
-            input_args['TempDir'] + '/spark-read-errorlines.txt'
+            input_args["TempDir"] + "/spark-read-errorlines.txt"
         )
         rdd2 = rdd2.filter(lambda row: len(row) == ncol)
         rdd2_count_after = rdd2.count()
         sl.info(
-            'Removed %s lines with different number of columns than expected: %s',
+            "Removed %s lines with different number of columns than expected: %s",
             str(rdd2_count_before - rdd2_count_after),
             ncol,
         )
-        rdd2_types = rdd2.map(lambda x: [c[0] for c in x]).takeSample(
-            False, sample_rows
-        )
+        rdd2_types = rdd2.map(lambda x: [c[0] for c in x]).takeSample(False, sample_rows)
         rdd2_data = rdd2.map(lambda x: [c[1] for c in x])
-        sl.info('Parsed CSV data:')
+        sl.info("Parsed CSV data:")
         sl.info(rdd2_data.take(5))
-        sl.info('Detected column types:')
+        sl.info("Detected column types:")
         sl.info(rdd2_types[:5])
 
         # RDD to DF
@@ -246,12 +238,8 @@ class ConvertToParquet:
         if has_header == True:
             # preserve header
             column_names = re.split(sep, header)
-            column_names_clean = [
-                re.sub(r'[ ,;{}\(\)\n\t=]', '_', x) for x in column_names
-            ]
-            df = spark.createDataFrame(
-                rdd2_data, [c.strip().lower() for c in column_names_clean]
-            )
+            column_names_clean = [re.sub(r"[ ,;{}\(\)\n\t=]", "_", x) for x in column_names]
+            df = spark.createDataFrame(rdd2_data, [c.strip().lower() for c in column_names_clean])
         else:
             df = spark.createDataFrame(rdd2_data)
 
@@ -263,30 +251,30 @@ class ConvertToParquet:
 
             if len(dt_list_set) == 1:
                 ct = dt_list[0]
-            elif 'string' in dt_list_set:
-                ct = 'string'
-            elif all(x == 6 or x == 'bigint' for x in dt_list_set):
-                ct = 'bigint'
-            elif all(x in dt_list_set for x in ['bigint', 'double']):
-                ct = 'double'
+            elif "string" in dt_list_set:
+                ct = "string"
+            elif all(x == 6 or x == "bigint" for x in dt_list_set):
+                ct = "bigint"
+            elif all(x in dt_list_set for x in ["bigint", "double"]):
+                ct = "double"
             elif all(type(x) == int for x in dt_list_set):
                 # Choose the most frequent date fromat, this is especially useful with dates since it is not possible to tell the difference between ddmm and mmdd for 1 <= dd <= 12.
                 df_list = multimode(dt_list)
                 if len(df_list) > 1:
                     sl.info(
-                        'Could not detect date format for column %s, the following formats were equally frequent: %s',
+                        "Could not detect date format for column %s, the following formats were equally frequent: %s",
                         col_name,
                         str(df_list),
                     )
-                    ct = 'string'
+                    ct = "string"
                 elif len(df_list) == 1:
                     ct = df_list[0]
                 else:
-                    ct = 'string'
+                    ct = "string"
             else:
-                ct = 'string'
+                ct = "string"
 
-            sl.info('Chose type %s for column %s.', str(ct), col_name)
+            sl.info("Chose type %s for column %s.", str(ct), col_name)
 
             if type(ct) == str:
                 # short forms: https://stackoverflow.com/a/32286450
@@ -323,28 +311,24 @@ class ConvertToParquet:
         sl = StructuredLogger(slstep)
 
         # Start job bookmark
-        job.init(input_args['JOB_NAME'], input_args)
-        loadoptions = dict(map(lambda x: x.split('='), raw_format.split(' ')))
+        job.init(input_args["JOB_NAME"], input_args)
+        loadoptions = dict(map(lambda x: x.split("="), raw_format.split(" ")))
 
-        if loadoptions['format'] == 'csv':
-            df = pycsv_spark_reader(
-                s3_source, slstep, minPartitions=input_args['PARTITIONS']
-            )
+        if loadoptions["format"] == "csv":
+            df = pycsv_spark_reader(s3_source, slstep, minPartitions=input_args["PARTITIONS"])
             npartitions = math.ceil(s3_source_size * 0.03 / 128e6)
         else:
             df = spark.read.load(s3_source, **loadoptions)
             npartitions = math.ceil(s3_source_size / 128e6)
 
-        sl.info('Making %s partitions', str(npartitions))
+        sl.info("Making %s partitions", str(npartitions))
 
-        df.repartition(npartitions).write.format('parquet').mode('overwrite').save(
-            's3://' + s3_dest_bucket + '/' + s3_dest_folder
+        df.repartition(npartitions).write.format("parquet").mode("overwrite").save(
+            "s3://" + s3_dest_bucket + "/" + s3_dest_folder
         )
 
-        s3 = boto3.resource('s3')
-        s3.Object(s3_dest_bucket, s3_dest_folder + '/' + '_READY_TO_PERFORM_QC').put(
-            Body=''
-        )
+        s3 = boto3.resource("s3")
+        s3.Object(s3_dest_bucket, s3_dest_folder + "/" + "_READY_TO_PERFORM_QC").put(Body="")
 
         # Submit job bookmark to store job progress
         job.commit()
@@ -352,15 +336,15 @@ class ConvertToParquet:
     def run_step(self, spark, config, context=None, glueContext=None):
 
         input_args = {
-            'JOB_NAME': config.args.get('JOB_NAME'),
-            'OUTPUT_BUCKET': self.props.get('output_bucket'),
-            'OUTPUT_PREFIX': self.props.get('output_prefix'),
-            'INPUT_BUCKET': self.props.get('input_bucket'),
-            'INPUT_KEY': self.props.get('input_key'),
-            'INPUT_FORMAT': self.props.get('input_format'),
-            'PARTITIONS': self.props.get('partitions'),
+            "JOB_NAME": config.args.get("JOB_NAME"),
+            "OUTPUT_BUCKET": self.props.get("output_bucket"),
+            "OUTPUT_PREFIX": self.props.get("output_prefix"),
+            "INPUT_BUCKET": self.props.get("input_bucket"),
+            "INPUT_KEY": self.props.get("input_key"),
+            "INPUT_FORMAT": self.props.get("input_format"),
+            "PARTITIONS": self.props.get("partitions"),
         }
-        sl.info('Input arguments: %s', str(input_args))
+        sl.info("Input arguments: %s", str(input_args))
         """
         # @params: [JOB_NAME]
         input_args = getResolvedOptions(
@@ -399,35 +383,33 @@ class ConvertToParquet:
         """
 
         # Parse input
-        input_key_parts = input_args['INPUT_KEY'].split('/')
+        input_key_parts = input_args["INPUT_KEY"].split("/")
         if len(input_key_parts) < 4:
-            sl.s3_skip_wrong_key(
-                input_args['INPUT_KEY'], 'tonnedl/raw/truven/*', input_args
-            )
+            sl.s3_skip_wrong_key(input_args["INPUT_KEY"], "tonnedl/raw/truven/*", input_args)
             quit()
 
-        input_table_key = '/'.join(input_key_parts[0:-1])
-        output_table_key = '/'.join(input_key_parts[3:-1])
+        input_table_key = "/".join(input_key_parts[0:-1])
+        output_table_key = "/".join(input_key_parts[3:-1])
 
         sl.next_step()
         sl.function_start(
-            'The bucket and key are OK.',
-            'Transformation done',
+            "The bucket and key are OK.",
+            "Transformation done",
             glue_job,
             input_args=input_args,
-            raw_format=input_args['INPUT_FORMAT'],
-            s3_source='s3://' + input_args['INPUT_BUCKET'] + '/' + input_table_key,
-            s3_source_size=get_size(input_args['INPUT_BUCKET'], input_table_key),
-            s3_dest_bucket=input_args['OUTPUT_BUCKET'],
-            s3_dest_folder=input_args['OUTPUT_PREFIX'] + '/' + output_table_key,
+            raw_format=input_args["INPUT_FORMAT"],
+            s3_source="s3://" + input_args["INPUT_BUCKET"] + "/" + input_table_key,
+            s3_source_size=get_size(input_args["INPUT_BUCKET"], input_table_key),
+            s3_dest_bucket=input_args["OUTPUT_BUCKET"],
+            s3_dest_folder=input_args["OUTPUT_PREFIX"] + "/" + output_table_key,
             slstep=sl.step,
             eventMessage=input_args,
         )
 
         self.emit_metric(
             StepMetric(
-                name=f'{job_name}/{self.name}/count',
-                unit='NbRecord',
+                name=f"{job_name}/{self.name}/count",
+                unit="NbRecord",
                 value=df.rdd.countApprox(timeout=800, confidence=0.5),
             )
         )
@@ -448,29 +430,25 @@ def glue_job(
     sl = StructuredLogger(slstep)
 
     # Start job bookmark
-    job.init(input_args['JOB_NAME'], input_args)
+    job.init(input_args["JOB_NAME"], input_args)
 
-    loadoptions = dict(map(lambda x: x.split('='), raw_format.split(' ')))
+    loadoptions = dict(map(lambda x: x.split("="), raw_format.split(" ")))
 
-    if loadoptions['format'] == 'csv':
-        df = pycsv_spark_reader(
-            s3_source, slstep, minPartitions=input_args['PARTITIONS']
-        )
+    if loadoptions["format"] == "csv":
+        df = pycsv_spark_reader(s3_source, slstep, minPartitions=input_args["PARTITIONS"])
         npartitions = math.ceil(s3_source_size * 0.03 / 128e6)
     else:
         df = spark.read.load(s3_source, **loadoptions)
         npartitions = math.ceil(s3_source_size / 128e6)
 
-    sl.info('Making %s partitions', str(npartitions))
+    sl.info("Making %s partitions", str(npartitions))
 
-    df.repartition(npartitions).write.format('parquet').mode('overwrite').save(
-        's3://' + s3_dest_bucket + '/' + s3_dest_folder
+    df.repartition(npartitions).write.format("parquet").mode("overwrite").save(
+        "s3://" + s3_dest_bucket + "/" + s3_dest_folder
     )
 
-    s3 = boto3.resource('s3')
-    s3.Object(s3_dest_bucket, s3_dest_folder + '/' + '_READY_TO_PERFORM_QC').put(
-        Body=''
-    )
+    s3 = boto3.resource("s3")
+    s3.Object(s3_dest_bucket, s3_dest_folder + "/" + "_READY_TO_PERFORM_QC").put(Body="")
 
     # Submit job bookmark to store job progress
     job.commit()
@@ -482,49 +460,49 @@ sl = StructuredLogger()
 input_args = getResolvedOptions(
     sys.argv,
     [
-        'JOB_NAME',
-        'OUTPUT_BUCKET',
-        'OUTPUT_PREFIX',
-        'INPUT_BUCKET',
-        'INPUT_KEY',
-        'INPUT_FORMAT',
-        'PARTITIONS',
+        "JOB_NAME",
+        "OUTPUT_BUCKET",
+        "OUTPUT_PREFIX",
+        "INPUT_BUCKET",
+        "INPUT_KEY",
+        "INPUT_FORMAT",
+        "PARTITIONS",
     ],
 )
-sl.info('Input arguments: %s', str(input_args))
+sl.info("Input arguments: %s", str(input_args))
 
-spark_conf = SparkConf().setAll([('spark.hadoop.fs.s3.canned.acl', 'BucketOwnerRead')])
+spark_conf = SparkConf().setAll([("spark.hadoop.fs.s3.canned.acl", "BucketOwnerRead")])
 sc = SparkContext(conf=spark_conf)
 hc = sc._jsc.hadoopConfiguration()
 # https://aws.amazon.com/premiumsupport/knowledge-center/emr-timeout-connection-wait/
-hc.setInt('fs.s3.maxConnections', 5000)
+hc.setInt("fs.s3.maxConnections", 5000)
 # java.lang.ClassNotFoundException: Class org.apache.hadoop.mapred.DirectOutputCommitter not found
-hc.set('mapred.output.committer.class', 'org.apache.hadoop.mapred.FileOutputCommitter')
+hc.set("mapred.output.committer.class", "org.apache.hadoop.mapred.FileOutputCommitter")
 glue_context = GlueContext(sc)
 
 spark = glue_context.spark_session
 job = Job(glue_context)
 
 # Parse input
-input_key_parts = input_args['INPUT_KEY'].split('/')
+input_key_parts = input_args["INPUT_KEY"].split("/")
 if len(input_key_parts) < 4:
-    sl.s3_skip_wrong_key(input_args['INPUT_KEY'], 'tonnedl/raw/truven/*', input_args)
+    sl.s3_skip_wrong_key(input_args["INPUT_KEY"], "tonnedl/raw/truven/*", input_args)
     quit()
 
-input_table_key = '/'.join(input_key_parts[0:-1])
-output_table_key = '/'.join(input_key_parts[3:-1])
+input_table_key = "/".join(input_key_parts[0:-1])
+output_table_key = "/".join(input_key_parts[3:-1])
 
 sl.next_step()
 sl.function_start(
-    'The bucket and key are OK.',
-    'Transformation done',
+    "The bucket and key are OK.",
+    "Transformation done",
     glue_job,
     input_args=input_args,
-    raw_format=input_args['INPUT_FORMAT'],
-    s3_source='s3://' + input_args['INPUT_BUCKET'] + '/' + input_table_key,
-    s3_source_size=get_size(input_args['INPUT_BUCKET'], input_table_key),
-    s3_dest_bucket=input_args['OUTPUT_BUCKET'],
-    s3_dest_folder=input_args['OUTPUT_PREFIX'] + '/' + output_table_key,
+    raw_format=input_args["INPUT_FORMAT"],
+    s3_source="s3://" + input_args["INPUT_BUCKET"] + "/" + input_table_key,
+    s3_source_size=get_size(input_args["INPUT_BUCKET"], input_table_key),
+    s3_dest_bucket=input_args["OUTPUT_BUCKET"],
+    s3_dest_folder=input_args["OUTPUT_PREFIX"] + "/" + output_table_key,
     slstep=sl.step,
     eventMessage=input_args,
 )

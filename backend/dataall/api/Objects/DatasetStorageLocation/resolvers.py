@@ -12,9 +12,7 @@ from ....db.api import (
 from ....searchproxy import indexers
 
 
-def create_storage_location(
-    context, source, datasetUri: str = None, input: dict = None
-):
+def create_storage_location(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         location = DatasetStorageLocation.create_dataset_location(
             session=session,
@@ -27,9 +25,7 @@ def create_storage_location(
 
         S3.create_bucket_prefix(location)
 
-        indexers.upsert_folder(
-            session=session, es=context.es, locationUri=location.locationUri
-        )
+        indexers.upsert_folder(session=session, es=context.es, locationUri=location.locationUri)
     return location
 
 
@@ -52,18 +48,16 @@ def get_storage_location(context, source, locationUri=None):
             username=context.username,
             groups=context.groups,
             uri=location.datasetUri,
-            data={'locationUri': location.locationUri},
+            data={"locationUri": location.locationUri},
             check_perm=True,
         )
 
 
-def update_storage_location(
-    context, source, locationUri: str = None, input: dict = None
-):
+def update_storage_location(context, source, locationUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         location = DatasetStorageLocation.get_location_by_uri(session, locationUri)
-        input['location'] = location
-        input['locationUri'] = location.locationUri
+        input["location"] = location
+        input["locationUri"] = location.locationUri
         DatasetStorageLocation.update_dataset_location(
             session=session,
             username=context.username,
@@ -85,7 +79,7 @@ def remove_storage_location(context, source, locationUri: str = None):
             username=context.username,
             groups=context.groups,
             uri=location.datasetUri,
-            data={'locationUri': location.locationUri},
+            data={"locationUri": location.locationUri},
             check_perm=True,
         )
         indexers.delete_doc(es=context.es, doc_id=location.locationUri)
@@ -114,13 +108,12 @@ def publish_location_update(context: Context, source, locationUri: str = None):
         env = Environment.get_environment_by_uri(session, dataset.environmentUri)
         if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
             raise Exception(
-                'Subscriptions are disabled. '
-                "First enable subscriptions for this dataset's environment then retry."
+                "Subscriptions are disabled. " "First enable subscriptions for this dataset's environment then retry."
             )
         task = models.Task(
             targetUri=location.datasetUri,
-            action='sns.dataset.publish_update',
-            payload={'s3Prefix': location.S3Prefix},
+            action="sns.dataset.publish_update",
+            payload={"s3Prefix": location.S3Prefix},
         )
         session.add(task)
 
@@ -128,12 +121,8 @@ def publish_location_update(context: Context, source, locationUri: str = None):
     return True
 
 
-def resolve_glossary_terms(
-    context: Context, source: models.DatasetStorageLocation, **kwargs
-):
+def resolve_glossary_terms(context: Context, source: models.DatasetStorageLocation, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
-            session, source.locationUri, 'DatasetStorageLocation'
-        )
+        return Glossary.get_glossary_terms_links(session, source.locationUri, "DatasetStorageLocation")

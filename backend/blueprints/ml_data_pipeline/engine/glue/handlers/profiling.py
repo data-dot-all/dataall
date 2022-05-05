@@ -115,10 +115,7 @@ class Profiler:
         for column_profile in profiling_result.get("columns"):
             for bucket_info in column_profile.get("histogram", []):
 
-                if (
-                    column_profile.get("dataType") == "Integral"
-                    or column_profile.get("dataType") == "Fractional"
-                ):
+                if column_profile.get("dataType") == "Integral" or column_profile.get("dataType") == "Fractional":
                     if bucket_info.get("value") == "NullValue":
                         bucket = [
                             column_profile.get("column"),
@@ -160,9 +157,7 @@ class Profiler:
                     buckets.append(bucket)
 
         for column_profile in profiling_result.get("columns"):
-            for percentile, value in enumerate(
-                column_profile.get("approxPercentiles", [])
-            ):
+            for percentile, value in enumerate(column_profile.get("approxPercentiles", [])):
                 bucket = [
                     column_profile.get("column"),
                     "approxPercentile",

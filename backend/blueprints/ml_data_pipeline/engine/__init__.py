@@ -19,7 +19,7 @@ from .resource_task import (
     make_batch_compute_environment,
     make_sns_topic,
     make_glue_connection,
-    make_sagemaker_model_package_group
+    make_sagemaker_model_package_group,
 )
 from .sagemaker.endpoint_task import make_sagemaker_endpoint_task
 from .sagemaker.endpointconfig_task import make_sagemaker_endpoint_config_task

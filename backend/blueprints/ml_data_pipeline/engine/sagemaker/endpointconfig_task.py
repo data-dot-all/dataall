@@ -54,9 +54,7 @@ def make_sagemaker_endpoint_config_task(stack, job, group_index, job_index):
         stack,
         f"Lambda: Delete Endpoint Config {job['name']} If exists",
         lambda_function=delete_endpoint_config,
-        payload=stepfunctions.TaskInput.from_object(
-            {"endpoint_config_name.$": job["endpoint"] + ".config_name"}
-        ),
+        payload=stepfunctions.TaskInput.from_object({"endpoint_config_name.$": job["endpoint"] + ".config_name"}),
         payload_response_only=True,
         result_path="$.endpointconfig",
     )
@@ -65,13 +63,9 @@ def make_sagemaker_endpoint_config_task(stack, job, group_index, job_index):
         "SageMaker: Create Endpoint Config " + job["name"],
         **SageMakerEndpointConfigPropsMapper.map_props(
             stack,
-            stepfunctions.TaskInput.from_data_at(
-                job["endpoint"] + ".config_name"
-            ).value,
+            stepfunctions.TaskInput.from_data_at(job["endpoint"] + ".config_name").value,
             job["config"],
-            stepfunctions.TaskInput.from_data_at(
-                job["config"]["model_name_path"]
-            ).value,
+            stepfunctions.TaskInput.from_data_at(job["config"]["model_name_path"]).value,
         ),
     )
     tags_str = stack.make_tag_str()
@@ -115,9 +109,7 @@ def make_sagemaker_endpoint_config_task(stack, job, group_index, job_index):
         stack,
         f"Lambda: Tag Endpoint Config {job['name']}",
         lambda_function=tag_endpoint_config,
-        payload=stepfunctions.TaskInput.from_object(
-            {"endpoint_config_name.$": job["endpoint"] + ".config_name"}
-        ),
+        payload=stepfunctions.TaskInput.from_object({"endpoint_config_name.$": job["endpoint"] + ".config_name"}),
         payload_response_only=True,
         result_path="$.endpointconfig",
     )

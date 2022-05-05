@@ -20,7 +20,7 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
 
@@ -156,26 +156,18 @@ def test_make_hpo_task():
     validation_channel = training_job_definition.get("InputDataConfig")[1]
     test_channel = training_job_definition.get("InputDataConfig")[2]
 
-    assert "training_input.train_s3_bucket" in train_channel.get("DataSource").get("S3DataSource").get(
+    assert "training_input.train_s3_bucket" in train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert "training_input.train_s3_prefix_key" in train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+
+    assert "training_input.validation_s3_bucket" in validation_channel.get("DataSource").get("S3DataSource").get(
         "S3Uri.$"
     )
-    assert "training_input.train_s3_prefix_key" in train_channel.get("DataSource").get("S3DataSource").get(
+    assert "training_input.validation_s3_prefix_key" in validation_channel.get("DataSource").get("S3DataSource").get(
         "S3Uri.$"
     )
 
-    assert "training_input.validation_s3_bucket" in validation_channel.get("DataSource").get(
-        "S3DataSource"
-    ).get("S3Uri.$")
-    assert "training_input.validation_s3_prefix_key" in validation_channel.get("DataSource").get(
-        "S3DataSource"
-    ).get("S3Uri.$")
-
-    assert "training_input.test_s3_bucket" in test_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
-    assert "training_input.test_s3_prefix_key" in test_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
+    assert "training_input.test_s3_bucket" in test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert "training_input.test_s3_prefix_key" in test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
 
 
 def test_make_hpo_task_input_from_path():
@@ -296,12 +288,9 @@ def test_make_hpo_task_hardcoded_input():
 
     assert train_channel["ChannelName"] == "train"
     assert train_channel["ContentType"] == "text/csv"
+    assert train_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/train.csv"
     assert (
-        train_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/train.csv"
-    )
-    assert (
-        validation_channel["DataSource"]["S3DataSource"]["S3Uri"]
-        == "s3://dhirisymsndfk/prepared/iris/validation.csv"
+        validation_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/validation.csv"
     )
 
 
@@ -373,9 +362,7 @@ def test_make_hpo_task_train_test_novalidation():
     train_channel = training_job_definition.get("InputDataConfig")[0]
     test_channel = training_job_definition.get("InputDataConfig")[1]
 
-    assert (
-        train_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/train.csv"
-    )
+    assert train_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/train.csv"
     assert test_channel["DataSource"]["S3DataSource"]["S3Uri"] == "s3://dhirisymsndfk/prepared/iris/test.csv"
     assert training_job_definition["OutputDataConfig"]["S3OutputPath"] == "s3://dhirisymsndfk/training_output"
 
@@ -459,19 +446,11 @@ def test_make_hpo_task_train_and_test_from_ref():
 
     assert len(training_job_definition.get("InputDataConfig")) == 2
 
-    assert "training_input.train_s3_bucket" in train_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
-    assert "training_input.train_s3_prefix_key" in train_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
+    assert "training_input.train_s3_bucket" in train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert "training_input.train_s3_prefix_key" in train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
 
-    assert "training_input.test_s3_bucket" in test_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
-    assert "training_input.test_s3_prefix_key" in test_channel.get("DataSource").get("S3DataSource").get(
-        "S3Uri.$"
-    )
+    assert "training_input.test_s3_bucket" in test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert "training_input.test_s3_prefix_key" in test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
 
 
 def test_make_hpo_task_invalid_parameter():

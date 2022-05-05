@@ -33,124 +33,124 @@ class GraphQLEnumMapper(Enum):
 
 
 class OrganisationUserRole(GraphQLEnumMapper):
-    Owner = '999'
-    Admin = '900'
-    Member = '100'
-    NotMember = '000'
-    Invited = '800'
+    Owner = "999"
+    Admin = "900"
+    Member = "100"
+    NotMember = "000"
+    Invited = "800"
 
 
 class GroupMemberRole(GraphQLEnumMapper):
-    Owner = 'Owner'
-    Admin = 'Admin'
-    Member = 'Member'
-    NotMember = 'NotMember'
+    Owner = "Owner"
+    Admin = "Admin"
+    Member = "Member"
+    NotMember = "NotMember"
 
 
 class EnvironmentPermission(GraphQLEnumMapper):
-    Owner = '999'
-    Admin = '900'
-    DatasetCreator = '800'
-    Invited = '200'
-    ProjectAccess = '050'
-    NotInvited = '000'
+    Owner = "999"
+    Admin = "900"
+    DatasetCreator = "800"
+    Invited = "200"
+    ProjectAccess = "050"
+    NotInvited = "000"
 
 
 class EnvironmentType(GraphQLEnumMapper):
-    Data = 'Data'
-    Compute = 'Compute'
+    Data = "Data"
+    Compute = "Compute"
 
 
 class ProjectMemberRole(GraphQLEnumMapper):
-    ProjectCreator = '999'
-    Admin = '900'
-    NotContributor = '000'
+    ProjectCreator = "999"
+    Admin = "900"
+    NotContributor = "000"
 
 
 class DashboardRole(GraphQLEnumMapper):
-    Creator = '999'
-    Admin = '900'
-    Shared = '800'
-    NoPermission = '000'
+    Creator = "999"
+    Admin = "900"
+    Shared = "800"
+    NoPermission = "000"
 
 
 class DataPipelineRole(GraphQLEnumMapper):
-    Creator = '999'
-    Admin = '900'
-    NoPermission = '000'
+    Creator = "999"
+    Admin = "900"
+    NoPermission = "000"
 
 
 class DatasetRole(GraphQLEnumMapper):
     # Permissions on a dataset
-    BusinessOwner = '999'
-    DataSteward = '998'
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    BusinessOwner = "999"
+    DataSteward = "998"
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class RedshiftClusterRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class ScheduledQueryRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class SagemakerNotebookRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class SagemakerStudioRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class AirflowClusterRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    Shared = "300"
+    NoPermission = "000"
 
 
 class SortDirection(GraphQLEnumMapper):
-    asc = 'asc'
-    desc = 'desc'
+    asc = "asc"
+    desc = "desc"
 
 
 class ShareableType(GraphQLEnumMapper):
-    Table = 'DatasetTable'
-    StorageLocation = 'DatasetStorageLocation'
-    View = 'View'
+    Table = "DatasetTable"
+    StorageLocation = "DatasetStorageLocation"
+    View = "View"
 
 
 class PrincipalType(GraphQLEnumMapper):
-    Any = 'Any'
-    Organization = 'Organization'
-    Environment = 'Environment'
-    User = 'User'
-    Project = 'Project'
-    Public = 'Public'
-    Group = 'Group'
+    Any = "Any"
+    Organization = "Organization"
+    Environment = "Environment"
+    User = "User"
+    Project = "Project"
+    Public = "Public"
+    Group = "Group"
 
 
 class ShareObjectPermission(GraphQLEnumMapper):
-    Approvers = '999'
-    Requesters = '800'
-    DatasetAdmins = '700'
-    NoPermission = '000'
+    Approvers = "999"
+    Requesters = "800"
+    DatasetAdmins = "700"
+    NoPermission = "000"
 
 
 """
@@ -165,56 +165,56 @@ class ShareObjectPermission(GraphQLEnumMapper):
 
 
 class ShareObjectStatus(GraphQLEnumMapper):
-    Approved = 'Approved'
-    Rejected = 'Rejected'
-    PendingApproval = 'PendingApproval'
-    Draft = 'Draft'
-    Share_In_Progress = 'Share_In_Progress'
-    Share_Failed = 'Share_Failed'
-    Share_Succeeded = 'Share_Succeeded'
-    Revoke_In_Progress = 'Revoke_In_Progress'
-    Revoke_Share_Failed = 'Revoke_Share_Failed'
-    Revoke_Share_Succeeded = 'Revoke_Share_Succeeded'
+    Approved = "Approved"
+    Rejected = "Rejected"
+    PendingApproval = "PendingApproval"
+    Draft = "Draft"
+    Share_In_Progress = "Share_In_Progress"
+    Share_Failed = "Share_Failed"
+    Share_Succeeded = "Share_Succeeded"
+    Revoke_In_Progress = "Revoke_In_Progress"
+    Revoke_Share_Failed = "Revoke_Share_Failed"
+    Revoke_Share_Succeeded = "Revoke_Share_Succeeded"
 
 
 class ShareObjectItemAction(GraphQLEnumMapper):
-    New = 'New'
-    Removed = 'Removed'
+    New = "New"
+    Removed = "Removed"
 
 
 class ConfidentialityClassification(GraphQLEnumMapper):
-    Unclassified = 'Unclassified'
-    Official = 'Official'
-    Secret = 'Secret'
+    Unclassified = "Unclassified"
+    Official = "Official"
+    Secret = "Secret"
 
 
 class Language(GraphQLEnumMapper):
-    English = 'English'
-    French = 'French'
-    German = 'German'
+    English = "English"
+    French = "French"
+    German = "German"
 
 
 class Topic(GraphQLEnumMapper):
-    Finances = 'Finances'
-    HumanResources = 'HumanResources'
-    Products = 'Products'
-    Services = 'Services'
-    Operations = 'Operations'
-    Research = 'Research'
-    Sales = 'Sales'
-    Orders = 'Orders'
-    Sites = 'Sites'
-    Energy = 'Energy'
-    Customers = 'Customers'
-    Misc = 'Misc'
+    Finances = "Finances"
+    HumanResources = "HumanResources"
+    Products = "Products"
+    Services = "Services"
+    Operations = "Operations"
+    Research = "Research"
+    Sales = "Sales"
+    Orders = "Orders"
+    Sites = "Sites"
+    Energy = "Energy"
+    Customers = "Customers"
+    Misc = "Misc"
 
 
 class WorksheetRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    SharedWithWritePermission = '500'
-    SharedWithReadPermission = '400'
-    NoPermission = '000'
+    Creator = "950"
+    Admin = "900"
+    SharedWithWritePermission = "500"
+    SharedWithReadPermission = "400"
+    NoPermission = "000"
 
 
-GLUEBUSINESSPROPERTIES = ['EXAMPLE_GLUE_PROPERTY_TO_BE_ADDED_ON_ES']
+GLUEBUSINESSPROPERTIES = ["EXAMPLE_GLUE_PROPERTY_TO_BE_ADDED_ON_ES"]

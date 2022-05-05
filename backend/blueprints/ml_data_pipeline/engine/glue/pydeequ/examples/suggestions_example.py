@@ -19,12 +19,7 @@ def main():
     df = spark.createDataFrame(test_data)
 
     # Constrain verification
-    r = (
-        ConstraintSuggestionRunner(spark)
-        .onData(df)
-        .addConstraintRule(Rules.CategoricalRangeRule(spark))
-        .run()
-    )
+    r = ConstraintSuggestionRunner(spark).onData(df).addConstraintRule(Rules.CategoricalRangeRule(spark)).run()
 
     parsed = json.loads(r)
     print(json.dumps(parsed, indent=4))

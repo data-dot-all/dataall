@@ -13,8 +13,8 @@ class ECRRepositoryStack(Stack):
         scope,
         id,
         target_envs: [str] = None,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         repository_name=None,
         **kwargs,
     ):
@@ -22,7 +22,7 @@ class ECRRepositoryStack(Stack):
 
         repo = ecr.Repository(
             self,
-            'ECRRepository',
+            "ECRRepository",
             repository_name=repository_name,
             image_scan_on_push=True,
             removal_policy=RemovalPolicy.DESTROY,
@@ -30,25 +30,23 @@ class ECRRepositoryStack(Stack):
 
         repo.add_lifecycle_rule(max_image_count=200)
         if target_envs:
-            principals: [iam.AccountPrincipal] = [
-                iam.AccountPrincipal(account['account']) for account in target_envs
-            ]
+            principals: [iam.AccountPrincipal] = [iam.AccountPrincipal(account["account"]) for account in target_envs]
             repo.add_to_resource_policy(
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:ListImages',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:GetAuthorizationToken',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:ListImages",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:GetAuthorizationToken",
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:PutImage",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:UploadLayerPart",
+                        "ecr:CompleteLayerUpload",
                     ],
                     principals=principals,
                 )
@@ -58,16 +56,16 @@ class ECRRepositoryStack(Stack):
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:GetAuthorizationToken',
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:GetAuthorizationToken",
                     ],
                     principals=[
-                        iam.ServicePrincipal(service='ecs.amazonaws.com'),
-                        iam.ServicePrincipal(service='ecs-tasks.amazonaws.com'),
-                        iam.ServicePrincipal(service='codebuild.amazonaws.com'),
-                        iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        iam.ServicePrincipal(service="ecs.amazonaws.com"),
+                        iam.ServicePrincipal(service="ecs-tasks.amazonaws.com"),
+                        iam.ServicePrincipal(service="codebuild.amazonaws.com"),
+                        iam.ServicePrincipal(service="lambda.amazonaws.com"),
                     ],
                 )
             )
@@ -76,13 +74,13 @@ class ECRRepositoryStack(Stack):
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:PutImage",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:UploadLayerPart",
+                        "ecr:CompleteLayerUpload",
                     ],
                     principals=[iam.AccountPrincipal(account_id=self.account)],
                 )
@@ -90,21 +88,21 @@ class ECRRepositoryStack(Stack):
 
         ssm.StringParameter(
             self,
-            'ECRRepoUriParam',
-            parameter_name=f'/dataall/{envname}/ecr/repository_uri',
+            "ECRRepoUriParam",
+            parameter_name=f"/dataall/{envname}/ecr/repository_uri",
             string_value=repo.repository_uri,
         )
 
         ssm.StringParameter(
             self,
-            'ECRRepoNameParam',
-            parameter_name=f'/dataall/{envname}/ecr/repository_name',
+            "ECRRepoNameParam",
+            parameter_name=f"/dataall/{envname}/ecr/repository_name",
             string_value=repo.repository_name,
         )
 
         self.ecr_repo = repo
 
-        regions = [env['region'] for env in target_envs]
+        regions = [env["region"] for env in target_envs]
         regions.append(self.region)
 
         regions = list(set(regions))
@@ -118,7 +116,7 @@ class ECRRepositoryStack(Stack):
                 )
             ecr.CfnReplicationConfiguration(
                 self,
-                'MyCfnReplicationConfiguration',
+                "MyCfnReplicationConfiguration",
                 replication_configuration=ecr.CfnReplicationConfiguration.ReplicationConfigurationProperty(
                     rules=[
                         ecr.CfnReplicationConfiguration.ReplicationRuleProperty(

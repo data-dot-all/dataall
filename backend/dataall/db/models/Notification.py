@@ -8,19 +8,17 @@ from .. import utils
 
 
 class NotificationType(enum.Enum):
-    SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
-    SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
-    SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
-    SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
-    SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
-    DATASET_VERSION = 'DATASET_VERSION'
+    SHARE_OBJECT_SUBMITTED = "SHARE_OBJECT_SUBMITTED"
+    SHARE_ITEM_REQUEST = "SHARE_ITEM_REQUEST"
+    SHARE_OBJECT_APPROVED = "SHARE_OBJECT_APPROVED"
+    SHARE_OBJECT_REJECTED = "SHARE_OBJECT_REJECTED"
+    SHARE_OBJECT_PENDING_APPROVAL = "SHARE_OBJECT_PENDING_APPROVAL"
+    DATASET_VERSION = "DATASET_VERSION"
 
 
 class Notification(Base):
-    __tablename__ = 'notification'
-    notificationUri = Column(
-        String, primary_key=True, default=utils.uuid('notificationtype')
-    )
+    __tablename__ = "notification"
+    notificationUri = Column(String, primary_key=True, default=utils.uuid("notificationtype"))
     type = Column(Enum(NotificationType), nullable=True)
     message = Column(String, nullable=False)
     username = Column(String, nullable=False)

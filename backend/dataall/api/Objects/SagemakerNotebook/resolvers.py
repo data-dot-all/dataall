@@ -14,7 +14,7 @@ def create_notebook(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
+            uri=input["environmentUri"],
             data=input,
             check_perm=True,
         )
@@ -22,7 +22,7 @@ def create_notebook(context: Context, source, input: dict = None):
         Stack.create_stack(
             session=session,
             environment_uri=notebook.environmentUri,
-            target_type='notebook',
+            target_type="notebook",
             target_uri=notebook.notebookUri,
             target_label=notebook.label,
         )
@@ -85,10 +85,8 @@ def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str =
             data=None,
             check_perm=True,
         )
-        Sagemaker.start_instance(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
-    return 'Starting'
+        Sagemaker.start_instance(notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName)
+    return "Starting"
 
 
 def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
@@ -108,15 +106,11 @@ def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = 
             data=None,
             check_perm=True,
         )
-        Sagemaker.stop_instance(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
-    return 'Stopping'
+        Sagemaker.stop_instance(notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName)
+    return "Stopping"
 
 
-def get_notebook_presigned_url(
-    context, source: models.SagemakerNotebook, notebookUri: str = None
-):
+def get_notebook_presigned_url(context, source: models.SagemakerNotebook, notebookUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -133,9 +127,7 @@ def get_notebook_presigned_url(
             data=None,
             check_perm=True,
         )
-        url = Sagemaker.presigned_url(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
+        url = Sagemaker.presigned_url(notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName)
         return url
 
 
@@ -154,11 +146,9 @@ def delete_notebook(
             username=context.username,
         )
         notebook = Notebook.get_notebook_by_uri(session, notebookUri)
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, notebook.environmentUri
-        )
+        env: models.Environment = db.api.Environment.get_environment_by_uri(session, notebook.environmentUri)
 
-        KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+        KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, "notebook")
 
         session.delete(notebook)
 
@@ -175,7 +165,7 @@ def delete_notebook(
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
-            target_type='notebook',
+            target_type="notebook",
         )
 
     return True
@@ -192,9 +182,7 @@ def resolve_organization(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
+        env: models.Environment = session.query(models.Environment).get(source.environmentUri)
         return session.query(models.Organization).get(env.organizationUri)
 
 

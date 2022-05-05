@@ -24,14 +24,11 @@ class SageMakerModelPropsMapper:
             integration_pattern=config_props.get("integration_pattern")
             or aws_stepfunctions.IntegrationPattern.REQUEST_RESPONSE,
             output_path=config_props.get("output_path"),
-            result_path=config_props.get(
-                "result_path", aws_stepfunctions.JsonPath.DISCARD
-            ),
+            result_path=config_props.get("result_path", aws_stepfunctions.JsonPath.DISCARD),
             timeout=core.Duration.seconds(config_props.get("timeout", 8200)),
             model_name=model_name,
             primary_container=cls.map_primary_container(stack, config_props),
-            enable_network_isolation=config_props.get("enable_network_isolation")
-            or False,
+            enable_network_isolation=config_props.get("enable_network_isolation") or False,
             role=cls.map_role(stack, config_props),
         )
         return model
@@ -43,9 +40,7 @@ class SageMakerModelPropsMapper:
             container_uri = sagemaker.image_uris.retrieve(
                 framework=config_props["primary_container"]["algorithm"]["name"],
                 region=stack.pipeline_region,
-                version=config_props["primary_container"]["algorithm"].get(
-                    "version", "latest"
-                ),
+                version=config_props["primary_container"]["algorithm"].get("version", "latest"),
             )
         elif config_props["primary_container"]["algorithm"].get("pre_built"):
             container_uri = PrebuiltExtensionImageBuilder.image_uri_from_main_module(
@@ -56,23 +51,17 @@ class SageMakerModelPropsMapper:
             container_uri = config_props["primary_container"]["algorithm"]["image"]
 
         if config_props["primary_container"].get("model_path"):
-            s3_location = S3Location.from_json_expression(
-                config_props["primary_container"]["model_path"]
-            )
+            s3_location = S3Location.from_json_expression(config_props["primary_container"]["model_path"])
         else:
             bucket = aws_s3.Bucket.from_bucket_name(
                 stack,
                 id=f"primarybucket-{str(uuid.uuid4())[:8]}",
-                bucket_name=config_props["primary_container"]["model_path_from_bucket"][
-                    "bucket"
-                ],
+                bucket_name=config_props["primary_container"]["model_path_from_bucket"]["bucket"],
             )
 
             s3_location = S3Location.from_bucket(
                 bucket,
-                config_props["primary_container"]["model_path_from_bucket"][
-                    "prefix_key"
-                ],
+                config_props["primary_container"]["model_path_from_bucket"]["prefix_key"],
             )
 
         primary_container = ContainerDefinition(

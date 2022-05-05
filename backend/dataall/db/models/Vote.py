@@ -6,8 +6,8 @@ from .. import Base, utils
 
 
 class Vote(Base):
-    __tablename__ = 'vote'
-    voteUri = Column(String, primary_key=True, default=utils.uuid('vote'))
+    __tablename__ = "vote"
+    voteUri = Column(String, primary_key=True, default=utils.uuid("vote"))
     username = Column(String, nullable=False)
     targetUri = Column(String, nullable=False)
     targetType = Column(String, nullable=False)
@@ -17,7 +17,7 @@ class Vote(Base):
 
     def __repr__(self):
         if self.upvote:
-            vote = 'Up'
+            vote = "Up"
         else:
-            vote = 'Down'
-        return f'<Vote - {vote}, from {self.username} for {self.targetType}//{self.targetUri}>'
+            vote = "Down"
+        return f"<Vote - {vote}, from {self.username} for {self.targetType}//{self.targetUri}>"

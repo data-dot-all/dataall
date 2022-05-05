@@ -12,11 +12,11 @@ class ATestStack(core.Stack):
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
         self.env = {
-            'CDK_DEFAULT_ACCOUNT': '012345678912',
-            'CDK_DEFAULT_REGION': 'eu-west-1',
+            "CDK_DEFAULT_ACCOUNT": "012345678912",
+            "CDK_DEFAULT_REGION": "eu-west-1",
         }
-        self.pipeline_iam_role_arn = 'arn:aws:iam::12345678901:role/dataallPivotRole'
-        self.ecr_repository_uri = 'dkr.012345678912.eu-west-1'
+        self.pipeline_iam_role_arn = "arn:aws:iam::12345678901:role/dataallPivotRole"
+        self.ecr_repository_uri = "dkr.012345678912.eu-west-1"
 
 
 config = """
@@ -132,40 +132,38 @@ def test_map_props():
     endpoint = None
     groups = TaskGroupReader(config=config)
 
-    print('==>', groups.definition.get('jobdir', 'xxx'))
-    for group in groups.definition.get('groups', []):
-        for j in group.get('glue_jobs', []):
-            if j.get('type') == 'model':
+    print("==>", groups.definition.get("jobdir", "xxx"))
+    for group in groups.definition.get("groups", []):
+        for j in group.get("glue_jobs", []):
+            if j.get("type") == "model":
                 model = j
-            elif j.get('type') == 'endpoint_config':
+            elif j.get("type") == "endpoint_config":
                 endpoint_config = j
-            elif j.get('type') == 'endpoint':
+            elif j.get("type") == "endpoint":
                 endpoint = j
 
     assert model
-    assert model.get('type') == 'model'
+    assert model.get("type") == "model"
 
     stack = ATestStack()
-    model_props = SageMakerModelPropsMapper.map_props(stack, 'mymodel', model['config'])
-    assert model_props['primary_container']
-    assert model_props['model_name']
-    assert model_props['role']
+    model_props = SageMakerModelPropsMapper.map_props(stack, "mymodel", model["config"])
+    assert model_props["primary_container"]
+    assert model_props["model_name"]
+    assert model_props["role"]
 
     assert endpoint_config
-    assert endpoint_config.get('type') == 'endpoint_config'
+    assert endpoint_config.get("type") == "endpoint_config"
 
     endpoint_config_props = SageMakerEndpointConfigPropsMapper.map_props(
-        stack, 'endpoint_config_name', endpoint_config['config'], None
+        stack, "endpoint_config_name", endpoint_config["config"], None
     )
-    assert endpoint_config_props['endpoint_config_name']
-    assert endpoint_config_props['production_variants']
-    assert endpoint_config_props['kms_key']
+    assert endpoint_config_props["endpoint_config_name"]
+    assert endpoint_config_props["production_variants"]
+    assert endpoint_config_props["kms_key"]
 
     assert endpoint
-    assert endpoint.get('type') == 'endpoint'
+    assert endpoint.get("type") == "endpoint"
 
-    endpoint_props = SageMakerEndpointPropsMapper.map_props(
-        'endpoint', 'endpoint_config', endpoint['config']
-    )
-    assert endpoint_props['endpoint_config_name']
-    assert endpoint_props['endpoint_name']
+    endpoint_props = SageMakerEndpointPropsMapper.map_props("endpoint", "endpoint_config", endpoint["config"])
+    assert endpoint_props["endpoint_config_name"]
+    assert endpoint_props["endpoint_name"]

@@ -4,248 +4,248 @@ from aws_cdk import (
 
 
 class CDKDashboard:
-    def build_aurora_writer_rep_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_rep_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer ReplicaLag',
+            title="Writer ReplicaLag",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='RDSToAuroraPostgreSQLReplicaLag',
+                    namespace="AWS/RDS",
+                    metric_name="RDSToAuroraPostgreSQLReplicaLag",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_mem_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_mem_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Buffer',
+            title="Writer Buffer",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='BufferCacheHitRatio',
+                    namespace="AWS/RDS",
+                    metric_name="BufferCacheHitRatio",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='FreeableMemory',
+                    namespace="AWS/RDS",
+                    metric_name="FreeableMemory",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_bq_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_bq_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Transactions',
+            title="Writer Transactions",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='MaximumUsedTransactionIDs',
+                    namespace="AWS/RDS",
+                    metric_name="MaximumUsedTransactionIDs",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_nw_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_nw_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Network',
+            title="Writer Network",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkReceiveThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkReceiveThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkTransmitThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkTransmitThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_io_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_io_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Latency',
+            title="Writer Latency",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='DiskQueueDepth',
+                    namespace="AWS/RDS",
+                    metric_name="DiskQueueDepth",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadIOPS',
+                    namespace="AWS/RDS",
+                    metric_name="ReadIOPS",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadLatency',
+                    namespace="AWS/RDS",
+                    metric_name="ReadLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="ReadThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteIOPS',
+                    namespace="AWS/RDS",
+                    metric_name="WriteIOPS",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteLatency',
+                    namespace="AWS/RDS",
+                    metric_name="WriteLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="WriteThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='DatabaseConnections',
+                    namespace="AWS/RDS",
+                    metric_name="DatabaseConnections",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_disk_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_disk_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Storage',
+            title="Writer Storage",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='FreeLocalStorage',
+                    namespace="AWS/RDS",
+                    metric_name="FreeLocalStorage",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='SwapUsage',
+                    namespace="AWS/RDS",
+                    metric_name="SwapUsage",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_queue_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_queue_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer Commit',
+            title="Writer Commit",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CommitLatency',
+                    namespace="AWS/RDS",
+                    metric_name="CommitLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CommitThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="CommitThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='Deadlocks',
+                    namespace="AWS/RDS",
+                    metric_name="Deadlocks",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_instance_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_instance_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer EngineUptime',
+            title="Writer EngineUptime",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='EngineUptime',
+                    namespace="AWS/RDS",
+                    metric_name="EngineUptime",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_writer_cpu_widget(cls, DBClusterIdentifier, Role='WRITER'):
+    def build_aurora_writer_cpu_widget(cls, DBClusterIdentifier, Role="WRITER"):
         wid = cw.GraphWidget(
-            title='Writer CPUUtilization',
+            title="Writer CPUUtilization",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CPUUtilization',
+                    namespace="AWS/RDS",
+                    metric_name="CPUUtilization",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
@@ -254,248 +254,248 @@ class CDKDashboard:
 
     # ---------------------------------------------------------------------------
 
-    def build_aurora_reader_rep_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_rep_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader ReplicaLag',
+            title="Reader ReplicaLag",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='RDSToAuroraPostgreSQLReplicaLag',
+                    namespace="AWS/RDS",
+                    metric_name="RDSToAuroraPostgreSQLReplicaLag",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_mem_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_mem_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader Buffer',
+            title="Reader Buffer",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='BufferCacheHitRatio',
+                    namespace="AWS/RDS",
+                    metric_name="BufferCacheHitRatio",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='FreeableMemory',
+                    namespace="AWS/RDS",
+                    metric_name="FreeableMemory",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_bq_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_bq_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader Transactions',
+            title="Reader Transactions",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='MaximumUsedTransactionIDs',
+                    namespace="AWS/RDS",
+                    metric_name="MaximumUsedTransactionIDs",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_nw_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_nw_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader Network',
+            title="Reader Network",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkReceiveThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkReceiveThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='NetworkTransmitThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="NetworkTransmitThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_io_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_io_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader Latency',
+            title="Reader Latency",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='DiskQueueDepth',
+                    namespace="AWS/RDS",
+                    metric_name="DiskQueueDepth",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadIOPS',
+                    namespace="AWS/RDS",
+                    metric_name="ReadIOPS",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadLatency',
+                    namespace="AWS/RDS",
+                    metric_name="ReadLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='ReadThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="ReadThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteIOPS',
+                    namespace="AWS/RDS",
+                    metric_name="WriteIOPS",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteLatency',
+                    namespace="AWS/RDS",
+                    metric_name="WriteLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='WriteThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="WriteThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='DatabaseConnections',
+                    namespace="AWS/RDS",
+                    metric_name="DatabaseConnections",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_disk_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_disk_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader Storage',
+            title="Reader Storage",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='FreeLocalStorage',
+                    namespace="AWS/RDS",
+                    metric_name="FreeLocalStorage",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='SwapUsage',
+                    namespace="AWS/RDS",
+                    metric_name="SwapUsage",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_queue_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_queue_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader EngineUptime',
+            title="Reader EngineUptime",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CommitLatency',
+                    namespace="AWS/RDS",
+                    metric_name="CommitLatency",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CommitThroughput',
+                    namespace="AWS/RDS",
+                    metric_name="CommitThroughput",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='Deadlocks',
+                    namespace="AWS/RDS",
+                    metric_name="Deadlocks",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_instance_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_instance_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader EngineUptime',
+            title="Reader EngineUptime",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='EngineUptime',
+                    namespace="AWS/RDS",
+                    metric_name="EngineUptime",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
         )
         return wid
 
-    def build_aurora_reader_cpu_widget(cls, DBClusterIdentifier, Role='READER'):
+    def build_aurora_reader_cpu_widget(cls, DBClusterIdentifier, Role="READER"):
         wid = cw.GraphWidget(
-            title='Reader CPUUtilization',
+            title="Reader CPUUtilization",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='CPUUtilization',
+                    namespace="AWS/RDS",
+                    metric_name="CPUUtilization",
                     dimensions_map={
-                        'DBClusterIdentifier': DBClusterIdentifier,
-                        'Role': Role,
+                        "DBClusterIdentifier": DBClusterIdentifier,
+                        "Role": Role,
                     },
                 ),
             ],
@@ -506,22 +506,22 @@ class CDKDashboard:
 
     def build_aurora_rep_widget(cls, DBClusterIdentifier):
         wid = cw.GraphWidget(
-            title='ReplicaLag',
+            title="ReplicaLag",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='AuroraReplicaLag',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="AuroraReplicaLag",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='AuroraReplicaLagMaximum',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="AuroraReplicaLagMaximum",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='AuroraReplicaLagMinimum',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="AuroraReplicaLagMinimum",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
             ],
         )
@@ -529,17 +529,17 @@ class CDKDashboard:
 
     def build_aurora_bk_widget(cls, DBClusterIdentifier):
         wid = cw.GraphWidget(
-            title='Retention',
+            title="Retention",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='BackupRetentionPeriodStorageUsed',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="BackupRetentionPeriodStorageUsed",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='SnapshotStorageUsed',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="SnapshotStorageUsed",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
             ],
         )
@@ -547,17 +547,17 @@ class CDKDashboard:
 
     def build_aurora_disk_widget(cls, DBClusterIdentifier):
         wid = cw.GraphWidget(
-            title='DiskUsage',
+            title="DiskUsage",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='TransactionLogsDiskUsage',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="TransactionLogsDiskUsage",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='VolumeBytesUsed',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="VolumeBytesUsed",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
             ],
         )
@@ -565,12 +565,12 @@ class CDKDashboard:
 
     def build_aurora_io_widget(cls, DBClusterIdentifier):
         wid = cw.GraphWidget(
-            title='VolumeWriteIOPs',
+            title="VolumeWriteIOPs",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='VolumeWriteIOPs',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="VolumeWriteIOPs",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
             ],
         )
@@ -578,17 +578,17 @@ class CDKDashboard:
 
     def build_aurora_bill_widget(cls, DBClusterIdentifier):
         wid = cw.GraphWidget(
-            title='Backup',
+            title="Backup",
             left=[
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='TotalBackupStorageBilled',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="TotalBackupStorageBilled",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
                 cw.Metric(
-                    namespace='AWS/RDS',
-                    metric_name='VolumeReadIOPs',
-                    dimensions_map={'DBClusterIdentifier': DBClusterIdentifier},
+                    namespace="AWS/RDS",
+                    metric_name="VolumeReadIOPs",
+                    dimensions_map={"DBClusterIdentifier": DBClusterIdentifier},
                 ),
             ],
         )

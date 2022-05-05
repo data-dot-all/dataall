@@ -10,21 +10,19 @@ from .. import utils
 
 
 class GlossaryNodeStatus(enum.Enum):
-    draft = 'draft'
-    approved = 'approved'
-    expired = 'expired'
-    alert = 'alert'
-    archived = 'archived'
+    draft = "draft"
+    approved = "approved"
+    expired = "expired"
+    alert = "alert"
+    archived = "archived"
 
 
 class GlossaryNode(Base):
-    __tablename__ = 'glossary_node'
-    nodeUri = Column(String, primary_key=True, default=utils.uuid('glossary_node'))
+    __tablename__ = "glossary_node"
+    nodeUri = Column(String, primary_key=True, default=utils.uuid("glossary_node"))
     parentUri = Column(String, nullable=True)
-    nodeType = Column(String, default='G')
-    status = Column(
-        String, Enum(GlossaryNodeStatus), default=GlossaryNodeStatus.draft.value
-    )
+    nodeType = Column(String, default="G")
+    status = Column(String, Enum(GlossaryNodeStatus), default=GlossaryNodeStatus.draft.value)
     path = Column(String, nullable=False)
     label = Column(String, nullable=False)
     readme = Column(String, nullable=False)
@@ -38,21 +36,21 @@ class GlossaryNode(Base):
 
 
 class GlossarySchemaDefinition:
-    __tablename__ = 'glossary_schema'
-    schemaUri = Column(String, primary_key=True, default=utils.uuid('glossary_schema'))
+    __tablename__ = "glossary_schema"
+    schemaUri = Column(String, primary_key=True, default=utils.uuid("glossary_schema"))
     json_schema = Column(postgresql.JSON, nullable=False)
 
 
 class GlossarySchemaMap:
-    __tablename__ = 'glossary_schema_map'
+    __tablename__ = "glossary_schema_map"
     schemaUri = Column(String, primary_key=True, nullable=False)
     nodeUri = Column(String, primary_key=True, nullable=False)
     schema = Column(postgresql.JSON, nullable=False)
 
 
 class TermLink(Base):
-    __tablename__ = 'term_link'
-    linkUri = Column(String, primary_key=True, default=utils.uuid('term_link'))
+    __tablename__ = "term_link"
+    linkUri = Column(String, primary_key=True, default=utils.uuid("term_link"))
     nodeUri = Column(String, nullable=False)
     targetUri = Column(String, nullable=False)
     targetType = Column(String, nullable=False)

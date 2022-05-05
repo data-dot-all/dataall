@@ -6,7 +6,7 @@ from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def permissions(db):
     with db.scoped_session() as session:
         permissions = []
@@ -37,34 +37,30 @@ def permissions(db):
         yield permissions
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def tenant(db):
     with db.scoped_session() as session:
-        tenant = dataall.db.api.Tenant.save_tenant(
-            session, name='dataall', description='Tenant dataall'
-        )
+        tenant = dataall.db.api.Tenant.save_tenant(session, name="dataall", description="Tenant dataall")
         yield tenant
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def user(db):
     with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='alice@test.com', userName='alice')
+        user = dataall.db.models.User(userId="alice@test.com", userName="alice")
         session.add(user)
         yield user
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def group(db, user):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
-            name='testadmins', label='testadmins', owner='alice'
-        )
+        group = dataall.db.models.Group(name="testadmins", label="testadmins", owner="alice")
         session.add(group)
         yield group
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def group_user(db, group, user):
     with db.scoped_session() as session:
         member = dataall.db.models.GroupMember(
@@ -75,14 +71,14 @@ def group_user(db, group, user):
         yield member
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org(db, group):
     with db.scoped_session() as session:
         org = dataall.db.models.Organization(
-            label='org',
-            owner='alice',
+            label="org",
+            owner="alice",
             tags=[],
-            description='desc',
+            description="desc",
             SamlGroupName=group.name,
             userRoleInOrganization=OrganisationUserRole.Owner.value,
         )
@@ -90,46 +86,46 @@ def org(db, group):
     yield org
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def env(org, db, group):
     with db.scoped_session() as session:
         env = dataall.db.models.Environment(
             organizationUri=org.organizationUri,
-            AwsAccountId='12345678901',
-            region='eu-west-1',
-            label='org',
-            owner='alice',
+            AwsAccountId="12345678901",
+            region="eu-west-1",
+            label="org",
+            owner="alice",
             tags=[],
-            description='desc',
+            description="desc",
             SamlGroupName=group.name,
-            EnvironmentDefaultIAMRoleName='EnvRole',
-            EnvironmentDefaultIAMRoleArn='arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner',
-            CDKRoleArn='arn:aws::123456789012:role/EnvRole',
-            userRoleInEnvironment='999',
+            EnvironmentDefaultIAMRoleName="EnvRole",
+            EnvironmentDefaultIAMRoleArn="arn:aws::123456789012:role/EnvRole/GlueJobSessionRunner",
+            CDKRoleArn="arn:aws::123456789012:role/EnvRole",
+            userRoleInEnvironment="999",
         )
         session.add(env)
     yield env
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:
         dataset = dataall.db.models.Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
-            label='label',
-            owner='foo',
+            label="label",
+            owner="foo",
             SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
+            businessOwnerDelegationEmails=["foo@amazon.com"],
+            businessOwnerEmail=["bar@amazon.com"],
+            name="name",
+            S3BucketName="S3BucketName",
+            GlueDatabaseName="GlueDatabaseName",
+            KmsAlias="kmsalias",
+            AwsAccountId="123456789012",
+            region="eu-west-1",
+            IAMDatasetAdminUserArn=f"arn:aws:iam::123456789012:user/dataset",
+            IAMDatasetAdminRoleArn=f"arn:aws:iam::123456789012:role/dataset",
         )
         session.add(dataset)
     yield dataset
@@ -154,16 +150,14 @@ def test_attach_resource_policy(db, user, group, group_user, dataset, permission
         )
 
 
-def test_attach_tenant_policy(
-    db, user, group, group_user, dataset, permissions, tenant
-):
+def test_attach_tenant_policy(db, user, group, group_user, dataset, permissions, tenant):
     with db.scoped_session() as session:
 
         dataall.db.api.TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=[dataall.db.permissions.MANAGE_DATASETS],
-            tenant_name='dataall',
+            tenant_name="dataall",
         )
 
         assert dataall.db.api.TenantPolicy.check_user_tenant_permission(
@@ -171,35 +165,31 @@ def test_attach_tenant_policy(
             username=user.userName,
             groups=[group.name],
             permission_name=dataall.db.permissions.MANAGE_DATASETS,
-            tenant_name='dataall',
+            tenant_name="dataall",
         )
 
 
-def test_unauthorized_resource_policy(
-    db, user, group_user, group, dataset, permissions
-):
+def test_unauthorized_resource_policy(db, user, group_user, group, dataset, permissions):
     with pytest.raises(exceptions.ResourceUnauthorized):
         with db.scoped_session() as session:
             assert dataall.db.api.ResourcePolicy.check_user_resource_permission(
                 session=session,
                 username=user.userName,
                 groups=[group.name],
-                permission_name='UNKNOW_PERMISSION',
+                permission_name="UNKNOW_PERMISSION",
                 resource_uri=dataset.datasetUri,
             )
 
 
-def test_unauthorized_tenant_policy(
-    db, user, group, group_user, dataset, permissions, tenant
-):
+def test_unauthorized_tenant_policy(db, user, group, group_user, dataset, permissions, tenant):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
             assert dataall.db.api.TenantPolicy.check_user_tenant_permission(
                 session=session,
                 username=user.userName,
                 groups=[group.name],
-                permission_name='UNKNOW_PERMISSION',
-                tenant_name='dataall',
+                permission_name="UNKNOW_PERMISSION",
+                tenant_name="dataall",
             )
 
 
@@ -209,7 +199,7 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             session=session,
             group=group.name,
             permissions=dataall.db.permissions.TENANT_ALL,
-            tenant_name='dataall',
+            tenant_name="dataall",
         )
         org_with_perm = dataall.db.api.Organization.create_organization(
             session=session,
@@ -217,10 +207,10 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             groups=[group.name],
             uri=None,
             data={
-                'label': 'OrgWithPerm',
-                'SamlGroupName': group.name,
-                'description': 'desc',
-                'tags': [],
+                "label": "OrgWithPerm",
+                "SamlGroupName": group.name,
+                "description": "desc",
+                "tags": [],
             },
             check_perm=True,
         )
@@ -230,31 +220,31 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             groups=[group.name],
             uri=org_with_perm.organizationUri,
             data={
-                'label': 'EnvWithPerm',
-                'organizationUri': org_with_perm.organizationUri,
-                'SamlGroupName': group.name,
-                'description': 'desc',
-                'AwsAccountId': '123456789012',
-                'region': 'eu-west-1',
-                'cdk_role_name': 'cdkrole',
+                "label": "EnvWithPerm",
+                "organizationUri": org_with_perm.organizationUri,
+                "SamlGroupName": group.name,
+                "description": "desc",
+                "AwsAccountId": "123456789012",
+                "region": "eu-west-1",
+                "cdk_role_name": "cdkrole",
             },
             check_perm=True,
         )
 
         data = dict(
-            label='label',
-            owner='foo',
+            label="label",
+            owner="foo",
             SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
+            businessOwnerDelegationEmails=["foo@amazon.com"],
+            businessOwnerEmail=["bar@amazon.com"],
+            name="name",
+            S3BucketName="S3BucketName",
+            GlueDatabaseName="GlueDatabaseName",
+            KmsAlias="kmsalias",
+            AwsAccountId="123456789012",
+            region="eu-west-1",
+            IAMDatasetAdminUserArn=f"arn:aws:iam::123456789012:user/dataset",
+            IAMDatasetAdminRoleArn=f"arn:aws:iam::123456789012:role/dataset",
         )
         dataset = dataall.db.api.Dataset.create_dataset(
             session=session,

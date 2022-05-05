@@ -15,8 +15,8 @@ class SecretsManagerStack(pyNestedClass):
         self,
         scope,
         id,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         enable_cw_canaries=False,
         **kwargs,
     ):
@@ -24,42 +24,42 @@ class SecretsManagerStack(pyNestedClass):
 
         self.external_id_key = kms.Key(
             self,
-            f'ExternalIdSecretKey{envname}',
-            alias=f'{resource_prefix}-{envname}-externalId-key',
+            f"ExternalIdSecretKey{envname}",
+            alias=f"{resource_prefix}-{envname}-externalId-key",
             enable_key_rotation=True,
             removal_policy=RemovalPolicy.DESTROY,
         )
 
         self.external_id_secret = sm.Secret(
             self,
-            f'ExternalIdSecret{envname}',
-            secret_name=f'dataall-externalId-{envname}',
+            f"ExternalIdSecret{envname}",
+            secret_name=f"dataall-externalId-{envname}",
             generate_secret_string=sm.SecretStringGenerator(exclude_punctuation=True),
             encryption_key=self.external_id_key,
-            description=f'Stores dataall external id for environment {envname}',
+            description=f"Stores dataall external id for environment {envname}",
             removal_policy=RemovalPolicy.DESTROY,
         )
 
         self.pivot_role_name_key = kms.Key(
             self,
-            f'PivotRoleNameSecretKey{envname}',
-            alias=f'{resource_prefix}-{envname}-pivotrolename-key',
+            f"PivotRoleNameSecretKey{envname}",
+            alias=f"{resource_prefix}-{envname}-pivotrolename-key",
             enable_key_rotation=True,
         )
 
         self.pivot_role_name_secret = sm.CfnSecret(
             self,
-            f'PivotRoleNameSecret{envname}',
-            name=f'dataall-pivot-role-name-{envname}',
-            secret_string='dataallPivotRole',
+            f"PivotRoleNameSecret{envname}",
+            name=f"dataall-pivot-role-name-{envname}",
+            secret_string="dataallPivotRole",
             kms_key_id=self.pivot_role_name_key.key_id,
-            description=f'Stores dataall pivot role name for environment {envname}',
+            description=f"Stores dataall pivot role name for environment {envname}",
         )
 
         self.cognito_default_user = kms.Key(
             self,
-            f'{resource_prefix}-{envname}-cognito-defaultuser-key',
-            alias=f'{resource_prefix}-{envname}-cognito-defaultuser-key',
+            f"{resource_prefix}-{envname}-cognito-defaultuser-key",
+            alias=f"{resource_prefix}-{envname}-cognito-defaultuser-key",
             enable_key_rotation=True,
             removal_policy=RemovalPolicy.DESTROY,
         )
@@ -67,18 +67,16 @@ class SecretsManagerStack(pyNestedClass):
         if enable_cw_canaries:
             self.canary_user = sm.Secret(
                 self,
-                f'canary-user',
-                secret_name=f'{resource_prefix}-{envname}-cognito-canary-user',
+                f"canary-user",
+                secret_name=f"{resource_prefix}-{envname}-cognito-canary-user",
                 generate_secret_string=sm.SecretStringGenerator(
-                    secret_string_template=json.dumps(
-                        {'username': f'cwcanary-{self.account}'}
-                    ),
-                    generate_string_key='password',
+                    secret_string_template=json.dumps({"username": f"cwcanary-{self.account}"}),
+                    generate_string_key="password",
                     include_space=False,
                     password_length=12,
                 ),
                 encryption_key=self.external_id_key,
-                description=f'Stores dataall Cognito canary user',
+                description=f"Stores dataall Cognito canary user",
                 removal_policy=RemovalPolicy.DESTROY,
             )
             self.canary_user.add_rotation_schedule(

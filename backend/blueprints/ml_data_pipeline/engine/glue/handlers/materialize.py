@@ -39,9 +39,7 @@ class Save:
         prefix = f"{self.name} [{self.type}]"
         job_name = config.args.get("JOB_NAME")
 
-        self.logger.info(
-            f"{prefix} SAVE TO {self.props.get('database')}.{self.props.get('table')}"
-        )
+        self.logger.info(f"{prefix} SAVE TO {self.props.get('database')}.{self.props.get('table')}")
 
         multiprefix = self.props.get("multiprefix") == True
 
@@ -95,9 +93,7 @@ class Save:
                 if partitions:
                     partitions_of_table = partitions.get(df_name)
                     if multiprefix and partitions_of_table:
-                        self.logger.info(
-                            "Partitions by {}".format(str(partitions_of_table))
-                        )
+                        self.logger.info("Partitions by {}".format(str(partitions_of_table)))
                         writer = writer.partitionBy(partitions_of_table)
                     else:
                         self.logger.info("Partitions by {}".format(str(partitions)))
@@ -111,9 +107,7 @@ class Save:
             else:
                 context.register_df(self.name, df)
 
-            self.update_table_description(
-                dbname, df_name, config, self.props.get("description")
-            )
+            self.update_table_description(dbname, df_name, config, self.props.get("description"))
             self.emit_metric(
                 StepMetric(
                     name=f"{job_name}/{self.name}/count",
@@ -151,7 +145,4 @@ class Save:
 
             glue.update_table(DatabaseName=dbname, TableInput=update_info)
         else:
-            self.logger.info(
-                f"update table description {dbname}, {table_name}, {description}"
-            )
-
+            self.logger.info(f"update table description {dbname}, {table_name}, {description}")

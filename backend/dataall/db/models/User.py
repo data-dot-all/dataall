@@ -5,6 +5,6 @@ from .. import utils
 
 
 class User(Base):
-    __tablename__ = 'user'
-    userId = Column(String, primary_key=True, default=utils.uuid('user'))
+    __tablename__ = "user"
+    userId = Column(String, primary_key=True, default=utils.uuid("user"))
     userName = Column(String, nullable=False)

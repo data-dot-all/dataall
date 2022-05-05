@@ -4,4 +4,4 @@ from .wrapper import (
     AthenaQueryResultStatus,
 )
 
-__all__ = ['schema', 'helpers', 'AthenaQueryResult', 'AthenaQueryResultStatus']
+__all__ = ["schema", "helpers", "AthenaQueryResult", "AthenaQueryResultStatus"]

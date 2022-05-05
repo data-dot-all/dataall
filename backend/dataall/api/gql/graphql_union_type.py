@@ -16,12 +16,12 @@ class Union:
         return f"union {self.name} = {'|'.join([get_named_type(t).name for t in self.types])}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from .. import gql
 
-    User = gql.ObjectType(name='User', fields=[])
+    User = gql.ObjectType(name="User", fields=[])
 
-    Group = gql.ObjectType(name='Group', fields=[])
-    userorgroup = Union(name='userorgroup', types=[gql.Thunk(lambda: User), Group])
+    Group = gql.ObjectType(name="Group", fields=[])
+    userorgroup = Union(name="userorgroup", types=[gql.Thunk(lambda: User), Group])
 
     print(userorgroup.gql())

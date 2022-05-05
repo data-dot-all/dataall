@@ -24,9 +24,7 @@ def definition_from_config(stack, job, hpo_path, group_index, job_index):
         "Parameters": SageMakerHyperparameterTuningPropsMapper.map_props(
             stack,
             job["config"],
-            stepfunctions.TaskInput.from_data_at(
-                f"$.job_names.{group_index}|{job_index}"
-            ).value,
+            stepfunctions.TaskInput.from_data_at(f"$.job_names.{group_index}|{job_index}").value,
             tokens,
             tags=tags,
         ),
@@ -78,9 +76,7 @@ def make_sagemaker_hpo_task(stack, job, group_index, job_index):
         ),
         handler="index.handler",
         runtime=aws_lambda.Runtime.PYTHON_3_7,
-        role=iam.Role.from_role_arn(
-            stack, "GetBestModel", stack.pipeline_iam_role_arn, mutable=False
-        ),
+        role=iam.Role.from_role_arn(stack, "GetBestModel", stack.pipeline_iam_role_arn, mutable=False),
     )
     stack.set_resource_tags(get_best_model_fn)
 
@@ -96,9 +92,7 @@ def make_sagemaker_hpo_task(stack, job, group_index, job_index):
     # Read inputs that are defined in the step function input path
     definition = definition_from_config(stack, job, hpo_path, group_index, job_index)
 
-    task = stepfunctions.CustomState(
-        stack, "SageMaker HPO: " + job["name"], state_json=definition
-    )
+    task = stepfunctions.CustomState(stack, "SageMaker HPO: " + job["name"], state_json=definition)
 
     chain = task.next(get_model_task)
 
@@ -109,10 +103,7 @@ def make_sagemaker_hpo_task(stack, job, group_index, job_index):
         model["config"] = {
             "primary_container": {
                 "algorithm": job["config"]["algorithm"],
-                "model_path": job["config"].get(
-                    "best_model_path", hpo_path + ".best_model"
-                )
-                + ".path",
+                "model_path": job["config"].get("best_model_path", hpo_path + ".best_model") + ".path",
             }
         }
         cmodel_task = make_sagemaker_model_task(stack, model, group_index, job_index)
@@ -133,55 +124,35 @@ def read_training_params_from_paths(job):
     cfg = job.get("config")
     tokens = {}
     if cfg.get("input_paths_from_input"):
-        tokens["input_paths_from_input"] = stepfunctions.TaskInput.from_data_at(
-            cfg["input_paths_from_input"]
-        ).value
+        tokens["input_paths_from_input"] = stepfunctions.TaskInput.from_data_at(cfg["input_paths_from_input"]).value
     elif cfg.get("training_input_from_path"):
         training_input_dict = {}
         tokens["training_input_from_path"] = training_input_dict
         tifp = cfg.get("training_input_from_path")
 
-        training_input_dict["content_type"] = stepfunctions.TaskInput.from_data_at(
-            tifp["content_type"]
-        ).value
+        training_input_dict["content_type"] = stepfunctions.TaskInput.from_data_at(tifp["content_type"]).value
 
         training_input_dict["train_s3_uri"] = {
-            "bucket": stepfunctions.TaskInput.from_data_at(
-                tifp["train_s3_uri"]["bucket"]
-            ).value,
-            "prefix_key": stepfunctions.TaskInput.from_data_at(
-                tifp["train_s3_uri"]["prefix_key"]
-            ).value,
+            "bucket": stepfunctions.TaskInput.from_data_at(tifp["train_s3_uri"]["bucket"]).value,
+            "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["train_s3_uri"]["prefix_key"]).value,
         }
 
         if tifp.get("validation_s3_uri"):
             training_input_dict["validation_s3_uri"] = {
-                "bucket": stepfunctions.TaskInput.from_data_at(
-                    tifp["validation_s3_uri"]["bucket"]
-                ).value,
-                "prefix_key": stepfunctions.TaskInput.from_data_at(
-                    tifp["validation_s3_uri"]["prefix_key"]
-                ).value,
+                "bucket": stepfunctions.TaskInput.from_data_at(tifp["validation_s3_uri"]["bucket"]).value,
+                "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["validation_s3_uri"]["prefix_key"]).value,
             }
 
         if tifp.get("test_s3_uri"):
             training_input_dict["test_s3_uri"] = {
-                "bucket": stepfunctions.TaskInput.from_data_at(
-                    tifp["test_s3_uri"]["bucket"]
-                ).value,
-                "prefix_key": stepfunctions.TaskInput.from_data_at(
-                    tifp["test_s3_uri"]["prefix_key"]
-                ).value,
+                "bucket": stepfunctions.TaskInput.from_data_at(tifp["test_s3_uri"]["bucket"]).value,
+                "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["test_s3_uri"]["prefix_key"]).value,
             }
 
     if cfg.get("output_path_from_input"):
-        tokens["output_path_from_input"] = stepfunctions.TaskInput.from_data_at(
-            cfg["output_path_from_input"]
-        ).value
+        tokens["output_path_from_input"] = stepfunctions.TaskInput.from_data_at(cfg["output_path_from_input"]).value
 
     if job.get("ext_job_name"):
-        tokens["ext_job_name"] = stepfunctions.TaskInput.from_data_at(
-            job["ext_job_name"]
-        ).value
+        tokens["ext_job_name"] = stepfunctions.TaskInput.from_data_at(job["ext_job_name"]).value
 
     return tokens

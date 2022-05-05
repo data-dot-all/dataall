@@ -2,10 +2,10 @@ import os
 import pytest
 import dataall
 
-ENVNAME = os.environ.get('envname', 'pytest')
+ENVNAME = os.environ.get("envname", "pytest")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def db() -> dataall.db.Engine:
     engine = dataall.db.get_engine(envname=ENVNAME)
     dataall.db.create_schema_and_tables(engine, envname=ENVNAME)
@@ -14,6 +14,6 @@ def db() -> dataall.db.Engine:
     engine.engine.dispose()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def es():
     yield True

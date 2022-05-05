@@ -23,10 +23,7 @@ def test_config_reader():
 
     query = re.sub(r"\n\s+", "", config_reader.get_query("unittest.sql")).lower()
 
-    assert (
-        query
-        == "select passengerid,pclass,sex,age,sibsp,parch,ticket,fare,cabin,embarked from titanic_train_raw"
-    )
+    assert query == "select passengerid,pclass,sex,age,sibsp,parch,ticket,fare,cabin,embarked from titanic_train_raw"
 
 
 def test_config_reader_err():

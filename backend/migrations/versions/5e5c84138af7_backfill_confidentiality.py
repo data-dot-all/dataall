@@ -14,8 +14,8 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.db import utils, Resource
 
-revision = '5e5c84138af7'
-down_revision = '94697ee46c0c'
+revision = "5e5c84138af7"
+down_revision = "94697ee46c0c"
 branch_labels = None
 depends_on = None
 
@@ -23,11 +23,11 @@ Base = declarative_base()
 
 
 class Dataset(Resource, Base):
-    __tablename__ = 'dataset'
+    __tablename__ = "dataset"
     environmentUri = Column(String, nullable=False)
     organizationUri = Column(String, nullable=False)
-    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
-    region = Column(String, default='eu-west-1')
+    datasetUri = Column(String, primary_key=True, default=utils.uuid("dataset"))
+    region = Column(String, default="eu-west-1")
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
@@ -40,9 +40,9 @@ class Dataset(Resource, Base):
     IAMDatasetAdminRoleArn = Column(String, nullable=False)
     IAMDatasetAdminUserArn = Column(String, nullable=False)
     KmsAlias = Column(String, nullable=False)
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default="English")
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default="Unclassified")
     tags = Column(postgresql.ARRAY(String))
 
     bucketCreated = Column(Boolean, default=False)
@@ -71,15 +71,15 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Updating datasets...')
+        print("Updating datasets...")
         datasets: [Dataset] = session.query(Dataset).all()
         for dataset in datasets:
-            if dataset.confidentiality not in ['Unclassified', 'Official', 'Secret']:
-                dataset.confidentiality = 'Unclassified'
+            if dataset.confidentiality not in ["Unclassified", "Official", "Secret"]:
+                dataset.confidentiality = "Unclassified"
                 session.commit()
-        print('Datasets updated successfully')
+        print("Datasets updated successfully")
     except Exception as e:
-        print(f'Failed to init permissions due to: {e}')
+        print(f"Failed to init permissions due to: {e}")
     # ### end Alembic commands ###
 
 

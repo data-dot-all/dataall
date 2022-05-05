@@ -5,23 +5,23 @@ from .. import utils, Resource, Base
 
 
 class RedshiftCluster(Resource, Base):
-    __tablename__ = 'redshiftcluster'
+    __tablename__ = "redshiftcluster"
     environmentUri = Column(String, nullable=False)
     organizationUri = Column(String, nullable=False)
-    clusterUri = Column(String, primary_key=True, default=utils.uuid('cluster'))
+    clusterUri = Column(String, primary_key=True, default=utils.uuid("cluster"))
     clusterArn = Column(String)
     clusterName = Column(String)
     description = Column(String)
-    databaseName = Column(String, default='datahubdb')
-    databaseUser = Column(String, default='datahubuser')
+    databaseName = Column(String, default="datahubdb")
+    databaseUser = Column(String, default="datahubuser")
     masterUsername = Column(String)
     masterDatabaseName = Column(String)
     nodeType = Column(String)
     numberOfNodes = Column(Integer)
-    region = Column(String, default='eu-west-1')
+    region = Column(String, default="eu-west-1")
     AwsAccountId = Column(String)
     kmsAlias = Column(String)
-    status = Column(String, default='CREATING')
+    status = Column(String, default="CREATING")
     vpc = Column(String)
     subnetGroupName = Column(String)
     subnetIds = Column(ARRAY(String), default=[])

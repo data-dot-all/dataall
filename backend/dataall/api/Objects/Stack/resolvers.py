@@ -14,9 +14,7 @@ from ....utils import Parameter
 log = logging.getLogger(__name__)
 
 
-def get_stack(
-    context: Context, source, environmentUri: str = None, stackUri: str = None
-):
+def get_stack(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
         env: models.Environment = session.query(models.Environment).get(environmentUri)
         stack: models.Stack = session.query(models.Stack).get(stackUri)
@@ -27,7 +25,7 @@ def get_stack(
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'stackUri': stackUri},
+            data={"stackUri": stackUri},
             check_perm=True,
         )
 
@@ -35,7 +33,7 @@ def get_stack(
 def resolve_link(context, source, **kwargs):
     if not source:
         return None
-    return f'https://{source.region}.console.aws.amazon.com/cloudformation/home?region={source.region}#/stacks/stackinfo?stackId={source.stackid}'
+    return f"https://{source.region}.console.aws.amazon.com/cloudformation/home?region={source.region}#/stacks/stackinfo?stackId={source.stackid}"
 
 
 def resolve_outputs(context, source: models.Stack, **kwargs):
@@ -66,51 +64,47 @@ def resolve_task_id(context, source: models.Stack, **kwargs):
     if not source:
         return None
     if source.EcsTaskArn:
-        return source.EcsTaskArn.split('/')[-1]
+        return source.EcsTaskArn.split("/")[-1]
 
 
-def get_stack_logs(
-    context: Context, source, environmentUri: str = None, stackUri: str = None
-):
+def get_stack_logs(context: Context, source, environmentUri: str = None, stackUri: str = None):
     with context.engine.scoped_session() as session:
         stack = db.api.Environment.get_stack(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'stackUri': stackUri},
+            data={"stackUri": stackUri},
             check_perm=True,
         )
         if not stack.EcsTaskArn:
             raise exceptions.AWSResourceNotFound(
-                action='GET_STACK_LOGS',
-                message='Logs could not be found for this stack',
+                action="GET_STACK_LOGS",
+                message="Logs could not be found for this stack",
             )
 
         query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
                 | sort @timestamp asc
                 | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                 """
-        envname = os.getenv('envname', 'local')
+        envname = os.getenv("envname", "local")
         results = CloudWatch.run_query(
             query=query,
             log_group_name=f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy",
             days=1,
         )
-        log.info(f'Running Logs query {query}')
+        log.info(f"Running Logs query {query}")
         return results
 
 
-def update_stack(
-    context: Context, source, targetUri: str = None, targetType: str = None
-):
+def update_stack(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
         stack = db.api.Stack.update_stack(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=targetUri,
-            data={'targetType': targetType},
+            data={"targetType": targetType},
             check_perm=True,
         )
     stack_helper.deploy_stack(context, stack.targetUri)

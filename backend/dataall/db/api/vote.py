@@ -19,32 +19,32 @@ class Vote:
     ) -> [models.Vote]:
 
         if not uri:
-            raise exceptions.RequiredParameter('targetUri')
+            raise exceptions.RequiredParameter("targetUri")
         if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('targetType'):
-            raise exceptions.RequiredParameter('targetType')
-        if 'upvote' not in data:
-            raise exceptions.RequiredParameter('upvote')
+            raise exceptions.RequiredParameter("data")
+        if not data.get("targetType"):
+            raise exceptions.RequiredParameter("targetType")
+        if "upvote" not in data:
+            raise exceptions.RequiredParameter("upvote")
 
         vote: models.Vote = (
             session.query(models.Vote)
             .filter(
                 models.Vote.targetUri == uri,
-                models.Vote.targetType == data['targetType'],
+                models.Vote.targetType == data["targetType"],
             )
             .first()
         )
         if vote:
-            vote.upvote = data['upvote']
+            vote.upvote = data["upvote"]
             vote.updated = datetime.now()
 
         else:
             vote: models.Vote = models.Vote(
                 username=username,
                 targetUri=uri,
-                targetType=data['targetType'],
-                upvote=data['upvote'],
+                targetType=data["targetType"],
+                upvote=data["upvote"],
             )
             session.add(vote)
 
@@ -52,14 +52,12 @@ class Vote:
         return vote
 
     @staticmethod
-    def count_upvotes(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def count_upvotes(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return (
             session.query(models.Vote)
             .filter(
                 models.Vote.targetUri == uri,
-                models.Vote.targetType == data['targetType'],
+                models.Vote.targetType == data["targetType"],
                 models.Vote.upvote == True,
             )
             .count()
@@ -67,7 +65,7 @@ class Vote:
 
     @staticmethod
     def get_vote(session, username, groups, uri, data=None, check_perm=None) -> dict:
-        return Vote.find_vote(session, uri, data['targetType'])
+        return Vote.find_vote(session, uri, data["targetType"])
 
     @staticmethod
     def find_vote(session, target_uri, target_type) -> [models.Vote]:

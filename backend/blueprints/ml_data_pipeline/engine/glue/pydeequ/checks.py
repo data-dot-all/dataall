@@ -74,9 +74,7 @@ class Check(object):
             checks.Check object including this constraint
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasSize(
-            function, getattr(self.jvmCheck, "hasSize$default$2")()
-        )
+        jvmConstraint = self.jvmCheck.hasSize(function, getattr(self.jvmCheck, "hasSize$default$2")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def isUnique(self, column):
@@ -87,9 +85,7 @@ class Check(object):
         Returns:
             checks.Check object including this constraint
         """
-        jvmConstraint = self.jvmCheck.isUnique(
-            column, getattr(self.jvmCheck, "isUnique$default$2")()
-        )
+        jvmConstraint = self.jvmCheck.isUnique(column, getattr(self.jvmCheck, "isUnique$default$2")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasCompleteness(self, column, assertion):
@@ -121,9 +117,7 @@ class Check(object):
             # Single column is provided
             columns = [columns]
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasUniqueness(
-            jc.iterable_to_scala_seq(self._jvm, columns), function
-        )
+        jvmConstraint = self.jvmCheck.hasUniqueness(jc.iterable_to_scala_seq(self._jvm, columns), function)
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasDistinctness(self, columns, assertion):
@@ -166,9 +160,7 @@ class Check(object):
         )
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
-    def hasNumberOfDistinctValues(
-        self, column, assertion, binningUdf=None, maxBins=None
-    ):
+    def hasNumberOfDistinctValues(self, column, assertion, binningUdf=None, maxBins=None):
         """
         Creates a constraint that asserts on the number of distinct values a column has.
 
@@ -223,9 +215,7 @@ class Check(object):
         @param hint      A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasEntropy(
-            column, function, getattr(self.jvmCheck, "hasEntropy$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasEntropy(column, function, getattr(self.jvmCheck, "hasEntropy$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasMutualInformation(self, columnA, columnB, assertion):
@@ -274,9 +264,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasMinLength(
-            column, function, getattr(self.jvmCheck, "hasMinLength$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasMinLength(column, function, getattr(self.jvmCheck, "hasMinLength$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasMaxLength(self, column, assertion):
@@ -288,9 +276,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasMaxLength(
-            column, function, getattr(self.jvmCheck, "hasMaxLength$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasMaxLength(column, function, getattr(self.jvmCheck, "hasMaxLength$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasMin(self, column, assertion):
@@ -302,9 +288,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasMin(
-            column, function, getattr(self.jvmCheck, "hasMin$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasMin(column, function, getattr(self.jvmCheck, "hasMin$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasMax(self, column, assertion):
@@ -316,9 +300,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasMax(
-            column, function, getattr(self.jvmCheck, "hasMax$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasMax(column, function, getattr(self.jvmCheck, "hasMax$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasMean(self, column, assertion):
@@ -330,9 +312,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasMean(
-            column, function, getattr(self.jvmCheck, "hasMean$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasMean(column, function, getattr(self.jvmCheck, "hasMean$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasSum(self, column, assertion):
@@ -344,9 +324,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.hasSum(
-            column, function, getattr(self.jvmCheck, "hasSum$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.hasSum(column, function, getattr(self.jvmCheck, "hasSum$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def hasStandardDeviation(self, column, assertion):
@@ -483,9 +461,7 @@ class Check(object):
         @param hint A hint to provide additional context why a constraint could have failed
         """
         function = jc.scala_function1(self.spark.sparkContext._gateway, assertion)
-        jvmConstraint = self.jvmCheck.isPositive(
-            column, function, getattr(self.jvmCheck, "isPositive$default$3")()
-        )
+        jvmConstraint = self.jvmCheck.isPositive(column, function, getattr(self.jvmCheck, "isPositive$default$3")())
         return Check(self.spark, self.level, self.description, jvmConstraint)
 
     def isNonNegative(self, column, assertion=is_one):

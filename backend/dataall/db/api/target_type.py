@@ -37,18 +37,18 @@ class TargetType:
     @staticmethod
     def is_supported_target_type(target_type):
         supported_types = [
-            'dataset',
-            'environment',
-            'notebook',
-            'mlstudio',
-            'pipeline',
-            'redshift',
+            "dataset",
+            "environment",
+            "notebook",
+            "mlstudio",
+            "pipeline",
+            "redshift",
         ]
         if target_type not in supported_types:
             raise exceptions.InvalidInput(
-                'targetType',
+                "targetType",
                 target_type,
-                ' or '.join(supported_types),
+                " or ".join(supported_types),
             )
 
     @staticmethod

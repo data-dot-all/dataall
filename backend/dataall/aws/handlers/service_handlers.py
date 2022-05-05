@@ -7,7 +7,7 @@ from ...db.models import Task
 from ...utils.json_utils import to_json
 
 log = logging.getLogger(__name__)
-ENVNAME = os.getenv('envname', 'local')
+ENVNAME = os.getenv("envname", "local")
 
 
 class WorkerHandler:
@@ -24,7 +24,7 @@ class WorkerHandler:
         self.enabled = True
 
     def queue(self, engine, task_ids: [str]):
-        log.info(f'Queuing Task Ids: {task_ids}')
+        log.info(f"Queuing Task Ids: {task_ids}")
 
     def handler(self, path):
         def decorator(fn):
@@ -38,47 +38,41 @@ class WorkerHandler:
         if self.enabled:
             for taskid in task_ids:
                 try:
-                    log.info(f'Processing Task: {taskid}')
+                    log.info(f"Processing Task: {taskid}")
                     handler, task = self.get_task_handler(engine, taskid)
 
                     error, response, status = self.handle_task(engine, task, handler)
                     if save_response:
-                        WorkerHandler.update_task(
-                            engine, taskid, error, to_json(response), status
-                        )
+                        WorkerHandler.update_task(engine, taskid, error, to_json(response), status)
 
                     else:
                         WorkerHandler.update_task(engine, taskid, error, {}, status)
                     tasks_responses.append(
                         {
-                            'taskUri': taskid,
-                            'response': response,
-                            'error': error,
-                            'status': status,
+                            "taskUri": taskid,
+                            "response": response,
+                            "error": error,
+                            "status": status,
                         }
                     )
                     return tasks_responses
                 except Exception as e:
-                    print('==================>', e)
-                    log.exception('Error in process')
-                    log.error(f'Task processing failed {e} : {taskid}')
+                    print("==================>", e)
+                    log.exception("Error in process")
+                    log.error(f"Task processing failed {e} : {taskid}")
         else:
-            log.info(f'Worker disabled, tasks {task_ids} wont be processed')
+            log.info(f"Worker disabled, tasks {task_ids} wont be processed")
 
     def get_task_handler(self, engine, taskid):
         with engine.scoped_session() as session:
             task = session.query(Task).get(taskid)
             handler = self.handlers.get(task.action)
-            log.info(
-                f' found handler {handler} for task action {task.action}|{task.taskUri}'
-            )
-            if task.status != 'pending':
-                raise Exception(
-                    f'Could not start task {task.taskUri} as its status is {task.status}'
-                )
+            log.info(f" found handler {handler} for task action {task.action}|{task.taskUri}")
+            if task.status != "pending":
+                raise Exception(f"Could not start task {task.taskUri} as its status is {task.status}")
             if not handler:
-                raise Exception(f'No handler defined for {task.action}')
-            task.status = 'started'
+                raise Exception(f"No handler defined for {task.action}")
+            task.status = "started"
             session.commit()
         return handler, task
 
@@ -88,13 +82,11 @@ class WorkerHandler:
         response = {}
         try:
             response = handler(engine, task)
-            status = 'completed'
+            status = "completed"
         except Exception as e:
-            log.error(
-                f'Failed to execute Task {task.taskUri} due to {e}', exc_info=True
-            )
-            error = {'message': str(e)}
-            status = 'failed'
+            log.error(f"Failed to execute Task {task.taskUri} due to {e}", exc_info=True)
+            error = {"message": str(e)}
+            status = "failed"
         return error, response, status
 
     @staticmethod
@@ -133,7 +125,7 @@ class WorkerHandler:
                     try:
                         return f(*args, **kwargs)
                     except exception:
-                        msg = f'Exception {str(exception)} was raised. Retrying in {mdelay} seconds...'
+                        msg = f"Exception {str(exception)} was raised. Retrying in {mdelay} seconds..."
                         if logger:
                             logger.warning(msg)
                         else:

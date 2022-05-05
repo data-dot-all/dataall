@@ -49,9 +49,7 @@ class SageMakerBatchTransformJobPropsMapper:
         s3_ds = {}
         s3_ds["S3DataType"] = s3_data_source.get("s3_data_type", "S3Prefix").strip()
 
-        if (not s3_data_source.get("s3_uri_from_path")) and (
-            not s3_data_source.get("s3_uri")
-        ):
+        if (not s3_data_source.get("s3_uri_from_path")) and (not s3_data_source.get("s3_uri")):
             raise SageMakerBatchTransformJobPropsMappingException(
                 "Incomplete s3_data_source. Check s3_uri_from_path or s3_uri",
                 "s3_data_source",
@@ -67,9 +65,7 @@ class SageMakerBatchTransformJobPropsMapper:
         return ti
 
     @classmethod
-    def map_transform_output(
-        cls, config_props: dict, transform_input: dict, data_processing: dict
-    ) -> dict:
+    def map_transform_output(cls, config_props: dict, transform_input: dict, data_processing: dict) -> dict:
         transform_output = config_props.get("transform_output")
         if not transform_output:
             raise SageMakerBatchTransformJobPropsMappingException(
@@ -86,28 +82,20 @@ class SageMakerBatchTransformJobPropsMapper:
         if transform_output.get("kms_key_id"):
             tout["KmsKeyId"] = transform_output.get("kms_key_id").strip()
 
-        if (not transform_output.get("s3_output_path_from_path")) and (
-            not transform_output.get("s3_output_path")
-        ):
+        if (not transform_output.get("s3_output_path_from_path")) and (not transform_output.get("s3_output_path")):
             raise SageMakerBatchTransformJobPropsMappingException(
                 "Incomplete s3_output_path. Check s3_output_path_from_path or s3_output_path",
                 "s3_data_source",
             )
 
         if transform_output.get("s3_output_path_from_path"):
-            tout["S3OutputPath.$"] = transform_output.get(
-                "s3_output_path_from_path"
-            ).strip()
+            tout["S3OutputPath.$"] = transform_output.get("s3_output_path_from_path").strip()
         else:
             tout["S3OutputPath"] = transform_output.get("s3_output_path").strip()
 
         if transform_output.get("assemble_with"):
             tout["AssembleWith"] = transform_output.get("assemble_with")
-        elif (
-            data_processing
-            and data_processing.get("JoinSource") == "Input"
-            and transform_input.get("SplitType")
-        ):
+        elif data_processing and data_processing.get("JoinSource") == "Input" and transform_input.get("SplitType"):
             tout["AssembleWith"] = transform_input.get("SplitType")
         return tout
 
@@ -148,9 +136,7 @@ class SageMakerBatchTransformJobPropsMapper:
 
         if config_props.get("max_concurrent_transforms"):
             try:
-                dp["MaxConcurrentTransforms"] = int(
-                    config_props.get("max_concurrent_transforms")
-                )
+                dp["MaxConcurrentTransforms"] = int(config_props.get("max_concurrent_transforms"))
             except ValueError:
                 raise SageMakerBatchTransformJobPropsMappingException(
                     "Invalid value for max_concurrent_transforms {}".format(
@@ -166,9 +152,7 @@ class SageMakerBatchTransformJobPropsMapper:
         elif config_props.get("model_name_path"):
             result["ModelName.$"] = config_props.get("model_name_path")
         else:
-            raise SageMakerBatchTransformJobPropsMappingException(
-                "Need model name ", "model_name"
-            )
+            raise SageMakerBatchTransformJobPropsMappingException("Need model name ", "model_name")
 
         result["TransformInput"] = cls.map_transform_input(config_props)
 

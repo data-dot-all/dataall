@@ -9,38 +9,32 @@ class DatasetProfilingRun:
         pass
 
     @staticmethod
-    def start_profiling(
-        session, datasetUri, tableUri=None, GlueTableName=None, GlueJobRunId=None
-    ):
+    def start_profiling(session, datasetUri, tableUri=None, GlueTableName=None, GlueJobRunId=None):
         dataset: models.Dataset = session.query(models.Dataset).get(datasetUri)
         if not dataset:
-            raise ObjectNotFound('Dataset', datasetUri)
+            raise ObjectNotFound("Dataset", datasetUri)
 
         if tableUri and not GlueTableName:
-            table: models.DatasetTable = session.query(models.DatasetTable).get(
-                tableUri
-            )
+            table: models.DatasetTable = session.query(models.DatasetTable).get(tableUri)
             if not table:
-                raise ObjectNotFound('DatasetTable', tableUri)
+                raise ObjectNotFound("DatasetTable", tableUri)
             GlueTableName = table.GlueTableName
 
-        environment: models.Environment = session.query(models.Environment).get(
-            dataset.environmentUri
-        )
+        environment: models.Environment = session.query(models.Environment).get(dataset.environmentUri)
         if not environment:
-            raise ObjectNotFound('Environment', dataset.environmentUri)
+            raise ObjectNotFound("Environment", dataset.environmentUri)
 
         run = models.DatasetProfilingRun(
             datasetUri=dataset.datasetUri,
-            status='RUNNING',
+            status="RUNNING",
             AwsAccountId=environment.AwsAccountId,
-            GlueJobName=dataset.GlueProfilingJobName or 'Unknown',
+            GlueJobName=dataset.GlueProfilingJobName or "Unknown",
             GlueTriggerSchedule=dataset.GlueProfilingTriggerSchedule,
             GlueTriggerName=dataset.GlueProfilingTriggerName,
             GlueTableName=GlueTableName,
             GlueJobRunId=GlueJobRunId,
             owner=dataset.owner,
-            label=dataset.GlueProfilingJobName or 'Unknown',
+            label=dataset.GlueProfilingJobName or "Unknown",
         )
 
         session.add(run)
@@ -55,9 +49,7 @@ class DatasetProfilingRun:
         GlueJobRunState=None,
         results=None,
     ):
-        run = DatasetProfilingRun.get_profiling_run(
-            session, profilingRunUri=profilingRunUri, GlueJobRunId=GlueJobRunId
-        )
+        run = DatasetProfilingRun.get_profiling_run(session, profilingRunUri=profilingRunUri, GlueJobRunId=GlueJobRunId)
         if GlueJobRunId:
             run.GlueJobRunId = GlueJobRunId
         if GlueJobRunState:
@@ -68,13 +60,9 @@ class DatasetProfilingRun:
         return run
 
     @staticmethod
-    def get_profiling_run(
-        session, profilingRunUri=None, GlueJobRunId=None, GlueTableName=None
-    ):
+    def get_profiling_run(session, profilingRunUri=None, GlueJobRunId=None, GlueTableName=None):
         if profilingRunUri:
-            run: models.DatasetProfilingRun = session.query(
-                models.DatasetProfilingRun
-            ).get(profilingRunUri)
+            run: models.DatasetProfilingRun = session.query(models.DatasetProfilingRun).get(profilingRunUri)
         else:
             run: models.DatasetProfilingRun = (
                 session.query(models.DatasetProfilingRun)
@@ -93,9 +81,7 @@ class DatasetProfilingRun:
             .filter(models.DatasetProfilingRun.datasetUri == datasetUri)
             .order_by(models.DatasetProfilingRun.created.desc())
         )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=filter.get("page", 1), page_size=filter.get("pageSize", 20)).to_dict()
 
     @staticmethod
     def list_table_profiling_runs(session, tableUri, filter):
@@ -110,15 +96,12 @@ class DatasetProfilingRun:
             .filter(
                 and_(
                     models.DatasetTable.tableUri == tableUri,
-                    models.DatasetTable.GlueTableName
-                    == models.DatasetProfilingRun.GlueTableName,
+                    models.DatasetTable.GlueTableName == models.DatasetProfilingRun.GlueTableName,
                 )
             )
             .order_by(models.DatasetProfilingRun.created.desc())
         )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
+        return paginate(q, page=filter.get("page", 1), page_size=filter.get("pageSize", 20)).to_dict()
 
     @staticmethod
     def get_table_last_profiling_run(session, tableUri):
@@ -129,10 +112,7 @@ class DatasetProfilingRun:
                 models.DatasetTable.datasetUri == models.DatasetProfilingRun.datasetUri,
             )
             .filter(models.DatasetTable.tableUri == tableUri)
-            .filter(
-                models.DatasetTable.GlueTableName
-                == models.DatasetProfilingRun.GlueTableName
-            )
+            .filter(models.DatasetTable.GlueTableName == models.DatasetProfilingRun.GlueTableName)
             .order_by(models.DatasetProfilingRun.created.desc())
             .first()
         )
@@ -146,10 +126,7 @@ class DatasetProfilingRun:
                 models.DatasetTable.datasetUri == models.DatasetProfilingRun.datasetUri,
             )
             .filter(models.DatasetTable.tableUri == tableUri)
-            .filter(
-                models.DatasetTable.GlueTableName
-                == models.DatasetProfilingRun.GlueTableName
-            )
+            .filter(models.DatasetTable.GlueTableName == models.DatasetProfilingRun.GlueTableName)
             .filter(models.DatasetProfilingRun.results.isnot(None))
             .order_by(models.DatasetProfilingRun.created.desc())
             .first()

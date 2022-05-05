@@ -71,9 +71,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
     stack.set_resource_tags(verify_endpoint)
 
     if job.get("endpoint"):
-        payload = stepfunctions.TaskInput.from_object(
-            {"endpoint_name.$": job["endpoint"] + ".name"}
-        )
+        payload = stepfunctions.TaskInput.from_object({"endpoint_name.$": job["endpoint"] + ".name"})
     else:
         payload = stepfunctions.TaskInput.from_text(job["name"])
 
@@ -87,9 +85,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
     )
 
     endpoint_ref = (
-        stepfunctions.TaskInput.from_data_at(job["endpoint"] + ".name").value
-        if job.get("endpoint")
-        else job["name"]
+        stepfunctions.TaskInput.from_data_at(job["endpoint"] + ".name").value if job.get("endpoint") else job["name"]
     )
     endpoint_cfg_ref = (
         stepfunctions.TaskInput.from_data_at(job["endpoint"] + ".config_name").value
@@ -187,9 +183,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
             )
         ),
         handler="index.handler",
-        role=iam.Role.from_role_arn(
-            stack, f"tagendpoint{index}", stack.pipeline_iam_role_arn, mutable=False
-        ),
+        role=iam.Role.from_role_arn(stack, f"tagendpoint{index}", stack.pipeline_iam_role_arn, mutable=False),
         runtime=aws_lambda.Runtime.PYTHON_3_7,
     )
     tag_model_task = tasks.LambdaInvoke(
@@ -201,9 +195,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
         result_path=stepfunctions.JsonPath.DISCARD,
     )
 
-    if job.get("config") and job.get("config").get(
-        "wait_for_completion", ""
-    ).lower() in ["y", "true"]:
+    if job.get("config") and job.get("config").get("wait_for_completion", "").lower() in ["y", "true"]:
         endpoint_status_path = "$.endpoint_creation_status"
         cfg = job.get("config")
 
@@ -261,14 +253,8 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
             )
             .when(
                 Condition.and_(
-                    Condition.number_greater_than_equals(
-                        endpoint_status_path + ".retry_count", 1
-                    ),
-                    Condition.not_(
-                        Condition.string_equals(
-                            endpoint_status_path + ".status", "InService"
-                        )
-                    ),
+                    Condition.number_greater_than_equals(endpoint_status_path + ".retry_count", 1),
+                    Condition.not_(Condition.string_equals(endpoint_status_path + ".status", "InService")),
                 ),
                 wait_task,
             )
@@ -287,9 +273,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
             )
             .when(
                 Condition.string_equals("$.endpoint_exists", "None"),
-                stepfunctions.Pass(
-                    stack, f"Pass: Endpoint {job['name']} Inconsistent Status"
-                ),
+                stepfunctions.Pass(stack, f"Pass: Endpoint {job['name']} Inconsistent Status"),
             )
         )
     else:
@@ -305,9 +289,7 @@ def make_sagemaker_endpoint_task(stack, job, group_index, job_index):
             )
             .when(
                 Condition.string_equals("$.endpoint_exists", "None"),
-                stepfunctions.Pass(
-                    stack, f"Pass: Endpoint {job['name']} Inconsistent Status"
-                ),
+                stepfunctions.Pass(stack, f"Pass: Endpoint {job['name']} Inconsistent Status"),
             )
         )
     return [task, [tag_model_task]]

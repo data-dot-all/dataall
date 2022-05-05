@@ -1,6 +1,6 @@
-
 from customcode.lambda_functions.example_sfn_trigger import handler
 from datetime import datetime
+
 """ For example for the iris pipeline:
 def test_make_config():
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

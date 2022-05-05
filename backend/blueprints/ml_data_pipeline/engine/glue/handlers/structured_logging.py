@@ -9,9 +9,7 @@ import boto3
 
 class StructuredLogger:
     def __init__(self, step=1):
-        logging.basicConfig(
-            level=logging.INFO, format="%(levelname)s: %(asctime)s: %(message)s"
-        )
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(asctime)s: %(message)s")
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.step = step
@@ -79,9 +77,7 @@ class StructuredLogger:
             eventMessage,
         )
 
-    def function_start(
-        self, reason, completeStatus, function, *args, eventMessage={}, **kwargs
-    ):
+    def function_start(self, reason, completeStatus, function, *args, eventMessage={}, **kwargs):
         callerIdentity = boto3.client("sts").get_caller_identity()
         startTime = time.time()
 
@@ -121,7 +117,7 @@ class StructuredLogger:
                 callerIdentity,
                 *args,
                 **kwargs,
-                eventMessage=eventMessage
+                eventMessage=eventMessage,
             )
             return retval
         except Exception as error:
@@ -133,7 +129,7 @@ class StructuredLogger:
                 callerIdentity,
                 *args,
                 eventMessage=eventMessage,
-                **kwargs
+                **kwargs,
             )
             raise error
         return retval
@@ -148,7 +144,7 @@ class StructuredLogger:
         callerIdentity,
         *args,
         eventMessage={},
-        **kwargs
+        **kwargs,
     ):
         self.logger.info(
             "Completing function. %s",
@@ -177,15 +173,7 @@ class StructuredLogger:
         )
 
     def function_fail(
-        self,
-        functionName,
-        errorMessage,
-        traceback,
-        startTime,
-        callerIdentity,
-        *args,
-        eventMessage={},
-        **kwargs
+        self, functionName, errorMessage, traceback, startTime, callerIdentity, *args, eventMessage={}, **kwargs
     ):
         self.logger.error(
             "Failing function. %s",

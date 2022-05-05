@@ -52,45 +52,43 @@ class ServicePolicy(object):
             aws_iam.ManagedPolicy(
                 self.stack,
                 self.id,
-                managed_policy_name=f'{self.id}-0',
+                managed_policy_name=f"{self.id}-0",
                 statements=[
                     aws_iam.PolicyStatement(
                         actions=[
-                            'athena:ListEngineVersions',
-                            'athena:ListDataCatalogs',
-                            'athena:ListWorkGroups',
-                            'kms:Decrypt',
-                            'kms:DescribeKey',
-                            'kms:Encrypt',
-                            'kms:ReEncrypt*',
-                            'kms:GenerateDataKey*',
-                            'secretsmanager:GetSecretValue',
-                            'secretsmanager:DescribeSecret',
-                            'secretsmanager:ListSecrets',
-                            'ssm:GetParametersByPath',
-                            'ssm:GetParameters',
-                            'ssm:GetParameter',
-                            'ec2:Describe*',
-                            'logs:Describe*',
-                            'logs:Get*',
-                            'logs:List*',
-                            'iam:list*',
-                            'iam:Get*',
-                            'tag:GetResources',
-                            'tag:TagResources',
-                            'tag:UntagResources',
-                            'tag:GetTagValues',
-                            'tag:GetTagKeys',
+                            "athena:ListEngineVersions",
+                            "athena:ListDataCatalogs",
+                            "athena:ListWorkGroups",
+                            "kms:Decrypt",
+                            "kms:DescribeKey",
+                            "kms:Encrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "secretsmanager:GetSecretValue",
+                            "secretsmanager:DescribeSecret",
+                            "secretsmanager:ListSecrets",
+                            "ssm:GetParametersByPath",
+                            "ssm:GetParameters",
+                            "ssm:GetParameter",
+                            "ec2:Describe*",
+                            "logs:Describe*",
+                            "logs:Get*",
+                            "logs:List*",
+                            "iam:list*",
+                            "iam:Get*",
+                            "tag:GetResources",
+                            "tag:TagResources",
+                            "tag:UntagResources",
+                            "tag:GetTagValues",
+                            "tag:GetTagKeys",
                         ],
-                        resources=['*'],
+                        resources=["*"],
                     ),
                     aws_iam.PolicyStatement(
                         actions=[
-                            'iam:PassRole',
+                            "iam:PassRole",
                         ],
-                        resources=[
-                            f'arn:aws:iam::{self.account}:role/{self.role_name}'
-                        ],
+                        resources=[f"arn:aws:iam::{self.account}:role/{self.role_name}"],
                     ),
                 ],
             )
@@ -120,16 +118,14 @@ class ServicePolicy(object):
         for service in services:
             statements.extend(service.get_statements(self))
 
-        statements_chunks: list = [
-            statements[i : i + 8] for i in range(0, len(statements), 8)
-        ]
+        statements_chunks: list = [statements[i : i + 8] for i in range(0, len(statements), 8)]
 
         for index, chunk in enumerate(statements_chunks):
             policies.append(
                 aws_iam.ManagedPolicy(
                     self.stack,
-                    f'{self.id}-{index+1}',
-                    managed_policy_name=f'{self.id}-{index+1}',
+                    f"{self.id}-{index+1}",
+                    managed_policy_name=f"{self.id}-{index+1}",
                     statements=chunk,
                 )
             )
@@ -140,6 +136,4 @@ class ServicePolicy(object):
         This method implements a policy based on a tag key and optionally a resource prefix
         :return: list
         """
-        raise NotImplementedError(
-            'Policy subclasses need to implement the get_statements class method'
-        )
+        raise NotImplementedError("Policy subclasses need to implement the get_statements class method")

@@ -4,11 +4,11 @@ from smjobs.helpers.printer import print_message
 
 
 def process_data(data: pd.DataFrame) -> pd.DataFrame:
-    print('DataFrame', data)
+    print("DataFrame", data)
     return data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example read data from S3 into a dataframe
     # df = pd.read_csv(S3_PREFIX)
 
@@ -20,4 +20,4 @@ if __name__ == '__main__':
     df = pd.DataFrame()
     process_data(df)
     print_message()
-    print('Processing Data Job Completed Successfully')
+    print("Processing Data Job Completed Successfully")

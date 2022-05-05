@@ -57,11 +57,7 @@ class BusinessMetric:
         if self.props.get("sql"):
             query = self.props.get("sql")
         elif self.props.get("file"):
-            p = (
-                pathlib.PosixPath(config.query_dir, self.props.get("file"))
-                .resolve()
-                .as_posix()
-            )
+            p = pathlib.PosixPath(config.query_dir, self.props.get("file")).resolve().as_posix()
             with open(p, "r") as file:
                 query = "\n".join(file.readlines())
 
@@ -70,11 +66,5 @@ class BusinessMetric:
         df = spark.sql(processed)
 
         self.success()
-        self.emit_metric(
-            StepMetric(name=f"{self.name}:count", value=df.rdd.countApprox())
-        )
-        self.emit_metric(
-            StepMetric(
-                name="f{self.name}:elasped", value=self.elapsed, unit="Milliseconds"
-            )
-        )
+        self.emit_metric(StepMetric(name=f"{self.name}:count", value=df.rdd.countApprox()))
+        self.emit_metric(StepMetric(name="f{self.name}:elasped", value=self.elapsed, unit="Milliseconds"))

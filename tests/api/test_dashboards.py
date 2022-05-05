@@ -4,37 +4,33 @@ import pytest
 import dataall
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(org1, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset1(
     org1: dataall.db.models.Organization,
     env1: dataall.db.models.Environment,
     dataset: typing.Callable,
 ) -> dataall.db.models.Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group='dataset1admins'
-    )
+    yield dataset(org=org1, env=env1, name="dataset1", owner=env1.owner, group="dataset1admins")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dashboard(client, env1, org1, group, module_mocker, patch_es):
     module_mocker.patch(
-        'dataall.aws.handlers.quicksight.Quicksight.can_import_dashboard',
+        "dataall.aws.handlers.quicksight.Quicksight.can_import_dashboard",
         return_value=True,
     )
     response = client.query(
@@ -56,25 +52,23 @@ def dashboard(client, env1, org1, group, module_mocker, patch_es):
             }
         """,
         input={
-            'dashboardId': f'1234',
-            'label': f'1234',
-            'environmentUri': env1.environmentUri,
-            'SamlGroupName': group.name,
-            'terms': ['term'],
+            "dashboardId": f"1234",
+            "label": f"1234",
+            "environmentUri": env1.environmentUri,
+            "SamlGroupName": group.name,
+            "terms": ["term"],
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
-    assert response.data.importDashboard.owner == 'alice'
+    assert response.data.importDashboard.owner == "alice"
     assert response.data.importDashboard.SamlGroupName == group.name
     yield response.data.importDashboard
 
 
-def test_update_dashboard(
-    client, env1, org1, group, module_mocker, patch_es, dashboard
-):
+def test_update_dashboard(client, env1, org1, group, module_mocker, patch_es, dashboard):
     module_mocker.patch(
-        'dataall.aws.handlers.quicksight.Quicksight.can_import_dashboard',
+        "dataall.aws.handlers.quicksight.Quicksight.can_import_dashboard",
         return_value=True,
     )
     response = client.query(
@@ -94,14 +88,14 @@ def test_update_dashboard(
             }
         """,
         input={
-            'dashboardUri': dashboard.dashboardUri,
-            'label': f'1234',
-            'terms': ['term2'],
+            "dashboardUri": dashboard.dashboardUri,
+            "label": f"1234",
+            "terms": ["term2"],
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
-    assert response.data.updateDashboard.owner == 'alice'
+    assert response.data.updateDashboard.owner == "alice"
     assert response.data.updateDashboard.SamlGroupName == group.name
 
 
@@ -118,9 +112,9 @@ def test_list_dashboards(client, env1, db, org1, dashboard):
         }
         """,
         filter={},
-        username='alice',
+        username="alice",
     )
-    assert len(response.data.searchDashboards['nodes']) == 1
+    assert len(response.data.searchDashboards["nodes"]) == 1
 
 
 def test_nopermissions_list_dashboards(client, env1, db, org1, dashboard):
@@ -136,9 +130,9 @@ def test_nopermissions_list_dashboards(client, env1, db, org1, dashboard):
         }
         """,
         filter={},
-        username='bob',
+        username="bob",
     )
-    assert len(response.data.searchDashboards['nodes']) == 0
+    assert len(response.data.searchDashboards["nodes"]) == 0
 
 
 def test_get_dashboard(client, env1, db, org1, dashboard, group):
@@ -167,10 +161,10 @@ def test_get_dashboard(client, env1, db, org1, dashboard, group):
             }
         """,
         dashboardUri=dashboard.dashboardUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
-    assert response.data.getDashboard.owner == 'alice'
+    assert response.data.getDashboard.owner == "alice"
     assert response.data.getDashboard.SamlGroupName == group.name
 
 
@@ -187,9 +181,7 @@ def test_request_dashboard_share(
     group2,
     user2,
 ):
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
-    )
+    module_mocker.patch("dataall.aws.handlers.service_handlers.Worker.queue", return_value=True)
     response = client.query(
         """
         mutation requestDashboardShare($dashboardUri:String!, $principalId:String!){
@@ -206,7 +198,7 @@ def test_request_dashboard_share(
     )
     share = response.data.requestDashboardShare
     assert share.shareUri
-    assert share.status == 'REQUESTED'
+    assert share.status == "REQUESTED"
 
     response = client.query(
         """
@@ -224,7 +216,7 @@ def test_request_dashboard_share(
         username=user2.userName,
         groups=[group2.name],
     )
-    assert len(response.data.searchDashboards['nodes']) == 0
+    assert len(response.data.searchDashboards["nodes"]) == 0
 
     response = client.query(
         """
@@ -239,7 +231,7 @@ def test_request_dashboard_share(
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.approveDashboardShare.status == 'APPROVED'
+    assert response.data.approveDashboardShare.status == "APPROVED"
 
     response = client.query(
         """
@@ -257,7 +249,7 @@ def test_request_dashboard_share(
         username=user2.userName,
         groups=[group2.name],
     )
-    assert len(response.data.searchDashboards['nodes']) == 1
+    assert len(response.data.searchDashboards["nodes"]) == 1
 
     response = client.query(
         """
@@ -276,7 +268,7 @@ def test_request_dashboard_share(
         username=user.userName,
         groups=[group.name],
     )
-    assert len(response.data.listDashboardShares['nodes']) == 1
+    assert len(response.data.listDashboardShares["nodes"]) == 1
 
     response = client.query(
         """
@@ -306,7 +298,7 @@ def test_request_dashboard_share(
         username=user2.userName,
         groups=[group2.name],
     )
-    assert response.data.getDashboard.owner == 'alice'
+    assert response.data.getDashboard.owner == "alice"
     assert response.data.getDashboard.SamlGroupName == group.name
 
     response = client.query(
@@ -322,7 +314,7 @@ def test_request_dashboard_share(
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.rejectDashboardShare.status == 'REJECTED'
+    assert response.data.rejectDashboardShare.status == "REJECTED"
 
     response = client.query(
         """
@@ -340,7 +332,7 @@ def test_request_dashboard_share(
         username=user2.userName,
         groups=[group2.name],
     )
-    assert len(response.data.searchDashboards['nodes']) == 0
+    assert len(response.data.searchDashboards["nodes"]) == 0
 
     response = client.query(
         """
@@ -374,15 +366,11 @@ def test_request_dashboard_share(
         username=user2.userName,
         groups=[group2.name],
     )
-    assert len(response.data.searchDashboards['nodes']) == 1
+    assert len(response.data.searchDashboards["nodes"]) == 1
 
 
-def test_delete_dashboard(
-    client, env1, db, org1, user, group, module_mocker, dashboard, patch_es
-):
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
-    )
+def test_delete_dashboard(client, env1, db, org1, user, group, module_mocker, dashboard, patch_es):
+    module_mocker.patch("dataall.aws.handlers.service_handlers.Worker.queue", return_value=True)
     response = client.query(
         """
         mutation deleteDashboard($dashboardUri:String!){
@@ -406,6 +394,6 @@ def test_delete_dashboard(
         }
         """,
         filter={},
-        username='alice',
+        username="alice",
     )
-    assert len(response.data.searchDashboards['nodes']) == 0
+    assert len(response.data.searchDashboards["nodes"]) == 0

@@ -8,7 +8,7 @@ class ObjectNotFound(Exception):
         """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class TenantUnauthorized(Exception):
@@ -41,12 +41,10 @@ class ResourceUnauthorized(Exception):
 class RequiredParameter(Exception):
     def __init__(self, param_name):
         self.param_name = param_name
-        self.message = (
-            f'An error occurred (RequiredParameter): {param_name} is required'
-        )
+        self.message = f"An error occurred (RequiredParameter): {param_name} is required"
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class InvalidInput(Exception):
@@ -58,7 +56,7 @@ class InvalidInput(Exception):
         """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class PermissionUnauthorized(Exception):
@@ -72,7 +70,7 @@ class PermissionUnauthorized(Exception):
         """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class TenantPermissionUnauthorized(Exception):
@@ -86,7 +84,7 @@ class TenantPermissionUnauthorized(Exception):
         """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class UnauthorizedOperation(Exception):
@@ -98,7 +96,7 @@ class UnauthorizedOperation(Exception):
         """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class ResourceAlreadyExists(Exception):
@@ -110,7 +108,7 @@ class ResourceAlreadyExists(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class ResourceShared(Exception):
@@ -122,7 +120,7 @@ class ResourceShared(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class AWSResourceNotFound(Exception):
@@ -134,7 +132,7 @@ class AWSResourceNotFound(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class AWSResourceNotAvailable(Exception):
@@ -146,7 +144,7 @@ class AWSResourceNotAvailable(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class EnvironmentResourcesFound(Exception):
@@ -158,7 +156,7 @@ class EnvironmentResourcesFound(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"
 
 
 class OrganizationResourcesFound(Exception):
@@ -170,4 +168,4 @@ class OrganizationResourcesFound(Exception):
                 """
 
     def __str__(self):
-        return f'{self.message}'
+        return f"{self.message}"

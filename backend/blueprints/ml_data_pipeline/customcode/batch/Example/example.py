@@ -12,5 +12,5 @@ def execute_whatever():
     """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     execute_whatever()

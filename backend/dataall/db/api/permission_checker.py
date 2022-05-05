@@ -61,12 +61,10 @@ def has_tenant_perm(permission):
                     session=session,
                     username=username,
                     groups=groups,
-                    tenant_name='dataall',
+                    tenant_name="dataall",
                     permission_name=permission,
                 )
-            return fn(
-                session, username, groups, uri=uri, data=data, check_perm=check_perm
-            )
+            return fn(session, username, groups, uri=uri, data=data, check_perm=check_perm)
 
         if static_func:
             return staticmethod(decorated)

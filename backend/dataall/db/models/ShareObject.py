@@ -17,14 +17,12 @@ def _uuid4():
 
 
 class ShareObject(Base):
-    __tablename__ = 'share_object'
-    shareUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('share')
-    )
+    __tablename__ = "share_object"
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid("share"))
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
     principalId = Column(String, nullable=True)
-    principalType = Column(String, nullable=True, default='GROUP')
+    principalType = Column(String, nullable=True, default="GROUP")
     status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
     owner = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.now)

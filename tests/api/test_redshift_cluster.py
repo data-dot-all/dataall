@@ -6,39 +6,37 @@ import dataall
 from dataall.api.constants import RedshiftClusterRole
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(org1, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.Dataset:
     with db.scoped_session() as session:
         data = dict(
-            label='label',
+            label="label",
             owner=user.userName,
             SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
+            businessOwnerDelegationEmails=["foo@amazon.com"],
+            businessOwnerEmail=["bar@amazon.com"],
+            name="name",
+            S3BucketName="S3BucketName",
+            GlueDatabaseName="GlueDatabaseName",
+            KmsAlias="kmsalias",
+            AwsAccountId="123456789012",
+            region="eu-west-1",
+            IAMDatasetAdminUserArn=f"arn:aws:iam::123456789012:user/dataset",
+            IAMDatasetAdminRoleArn=f"arn:aws:iam::123456789012:role/dataset",
             stewards=group3.name,
         )
         dataset = dataall.db.api.Dataset.create_dataset(
@@ -52,24 +50,24 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.
         yield dataset
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def table1(table, dataset1):
-    yield table(dataset1, name='table1', username=dataset1.owner)
+    yield table(dataset1, name="table1", username=dataset1.owner)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
-    yield org('org2', user2.userName, group2.name)
+    yield org("org2", user2.userName, group2.name)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env2(
     env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
 ) -> dataall.db.models.Environment:
-    yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-1')
+    yield env(org2, "dev", user2.userName, group2.name, "2" * 12, "eu-west-1")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset2(env2, org2, dataset, group2, user2) -> dataall.db.models.Dataset:
     yield dataset(
         org=org2,
@@ -80,15 +78,13 @@ def dataset2(env2, org2, dataset, group2, user2) -> dataall.db.models.Dataset:
     )
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def table2(table, dataset2):
-    yield table(dataset2, name='table2', username=dataset2.owner)
+    yield table(dataset2, name="table2", username=dataset2.owner)
 
 
-@pytest.fixture(scope='module', autouse=True)
-def share(
-    client, dataset1, env2, db, user2, group2, env1, user, group, dataset2, table2
-):
+@pytest.fixture(scope="module", autouse=True)
+def share(client, dataset1, env2, db, user2, group2, env1, user, group, dataset2, table2):
     q = """
     mutation CreateShareObject(
         $datasetUri:String!,
@@ -113,18 +109,15 @@ def share(
         groups=[group.name],
         datasetUri=dataset2.datasetUri,
         input={
-            'environmentUri': env1.environmentUri,
-            'principalId': group.name,
-            'principalType': dataall.api.constants.PrincipalType.Group.name,
+            "environmentUri": env1.environmentUri,
+            "principalId": group.name,
+            "principalType": dataall.api.constants.PrincipalType.Group.name,
         },
     )
     print(response)
 
     assert response.data.createShareObject.dataset.datasetUri == dataset2.datasetUri
-    assert (
-        response.data.createShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
+    assert response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.name
     assert response.data.createShareObject.owner == user.userName
     query = """
         mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
@@ -142,8 +135,8 @@ def share(
         shareUri=shareUri,
         groups=[group.name],
         input={
-            'itemUri': table2.tableUri,
-            'itemType': dataall.api.constants.ShareableType.Table.name,
+            "itemUri": table2.tableUri,
+            "itemType": dataall.api.constants.ShareableType.Table.name,
         },
     )
     query = """
@@ -155,10 +148,8 @@ def share(
             }
             """
 
-    response = client.query(
-        query, username=user.userName, shareUri=shareUri, groups=[group.name]
-    )
-    assert response.data.submitShareObject.status == 'PendingApproval'
+    response = client.query(query, username=user.userName, shareUri=shareUri, groups=[group.name])
+    assert response.data.submitShareObject.status == "PendingApproval"
 
     query = """
                 mutation approveShareObject($shareUri:String!,$filter:ShareableObjectFilter){
@@ -190,12 +181,12 @@ def share(
         shareUri=shareUri,
         groups=[group2.name],
     )
-    assert response.data.approveShareObject.status == 'Approved'
+    assert response.data.approveShareObject.status == "Approved"
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def cluster(env1, org1, client, module_mocker, group):
-    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch("requests.post", return_value=True)
     ouri = org1.organizationUri
     euri = env1.environmentUri
     group_name = group.name
@@ -238,7 +229,7 @@ def cluster(env1, org1, client, module_mocker, group):
         }
     """
         % vars(),
-        'alice',
+        "alice",
         groups=[group_name],
     )
     print(res)
@@ -247,16 +238,16 @@ def cluster(env1, org1, client, module_mocker, group):
 
 def test_create(cluster):
     assert cluster.clusterUri is not None
-    assert cluster.label == 'mycluster'
-    assert cluster.description == 'a test cluster'
-    assert cluster.tags[0] == 'test'
-    assert cluster.databaseName == 'mydb'
-    assert cluster.masterDatabaseName == 'masterDatabaseName'
-    assert cluster.masterUsername == 'masterUsername'
-    assert cluster.nodeType == 'multi-node'
+    assert cluster.label == "mycluster"
+    assert cluster.description == "a test cluster"
+    assert cluster.tags[0] == "test"
+    assert cluster.databaseName == "mydb"
+    assert cluster.masterDatabaseName == "masterDatabaseName"
+    assert cluster.masterUsername == "masterUsername"
+    assert cluster.nodeType == "multi-node"
     assert cluster.numberOfNodes == 2
-    assert cluster.subnetIds[0] == 'subnet-1'
-    assert cluster.securityGroupIds[0] == 'sg-1'
+    assert cluster.subnetIds[0] == "subnet-1"
+    assert cluster.securityGroupIds[0] == "sg-1"
     assert cluster.userRoleForCluster == RedshiftClusterRole.Creator.name
 
 
@@ -283,7 +274,7 @@ def test_get_cluster_as_owner(cluster, client, group):
         }
     """
         % vars(),
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -291,7 +282,7 @@ def test_get_cluster_as_owner(cluster, client, group):
 
 
 def test_get_cluster_anonymous(cluster, client):
-    print(' [¨] ' * 10)
+    print(" [¨] " * 10)
     duri = cluster.clusterUri
     res = client.query(
         """
@@ -313,7 +304,7 @@ def test_get_cluster_anonymous(cluster, client):
         }
     """
         % vars(),
-        username='bob',
+        username="bob",
     )
     print(res)
     assert not res.data.getRedshiftCluster
@@ -335,7 +326,7 @@ def test_list_env_clusters_no_filter(env1, cluster, client, group):
             }
     """
         % vars(),
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -362,7 +353,7 @@ def test_list_env_clusters_filter_term(env1, cluster, client, group):
          }
          """
         % vars(),
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert res.data.listEnvironmentClusters.count == 1
@@ -408,7 +399,7 @@ def test_list_cluster_available_datasets(env1, cluster, dataset1, client, group)
                 }
             }""",
         clusterUri=cluster.clusterUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -417,10 +408,8 @@ def test_list_cluster_available_datasets(env1, cluster, dataset1, client, group)
 
 def test_add_dataset_to_cluster(env1, cluster, dataset1, client, db, group):
     with db.scoped_session() as session:
-        cluster = session.query(dataall.db.models.RedshiftCluster).get(
-            cluster.clusterUri
-        )
-        cluster.status = 'available'
+        cluster = session.query(dataall.db.models.RedshiftCluster).get(cluster.clusterUri)
+        cluster.status = "available"
         session.commit()
     res = client.query(
         """
@@ -436,7 +425,7 @@ def test_add_dataset_to_cluster(env1, cluster, dataset1, client, db, group):
         """,
         clusterUri=cluster.clusterUri,
         datasetUri=dataset1.datasetUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -464,7 +453,7 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
                 }
             }""",
         clusterUri=cluster.clusterUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -493,10 +482,10 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
         clusterUri=cluster.clusterUri,
         datasetUri=dataset1.datasetUri,
         tableUri=table.tableUri,
-        schema='myschema',
-        username='alice',
+        schema="myschema",
+        username="alice",
         groups=[group.name],
-        dataLocation='yes',
+        dataLocation="yes",
     )
     print(res)
     assert res.data.enableRedshiftClusterDatasetTableCopy
@@ -524,7 +513,7 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
                 }
             }""",
         clusterUri=cluster.clusterUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -547,7 +536,7 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
         clusterUri=cluster.clusterUri,
         datasetUri=dataset1.datasetUri,
         tableUri=table.tableUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -574,7 +563,7 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
                 }
             }""",
         clusterUri=cluster.clusterUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(res)
@@ -582,9 +571,7 @@ def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
 
 
 def test_delete_cluster(client, cluster, env1, org1, db, module_mocker, group, user):
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
-    )
+    module_mocker.patch("dataall.aws.handlers.service_handlers.Worker.queue", return_value=True)
     response = client.query(
         """
         mutation deleteRedshiftCluster($clusterUri:String!,$deleteFromAWS:Boolean){

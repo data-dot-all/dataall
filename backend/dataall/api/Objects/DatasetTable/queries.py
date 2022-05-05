@@ -7,32 +7,32 @@ from .schema import (
 )
 
 getDatasetTable = gql.QueryField(
-    name='getDatasetTable',
-    args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
+    name="getDatasetTable",
+    args=[gql.Argument(name="tableUri", type=gql.NonNullableType(gql.String))],
     type=gql.Thunk(lambda: DatasetTable),
     resolver=get_table,
 )
 
 
 listDatasetTables = gql.QueryField(
-    name='listDatasetTables',
-    args=[gql.Argument('filter', DatasetTableFilter)],
+    name="listDatasetTables",
+    args=[gql.Argument("filter", DatasetTableFilter)],
     type=DatasetTableSearchResult,
     resolver=lambda *_, **__: None,
 )
 
 
 QueryPreviewResult = gql.ObjectType(
-    name='QueryPreviewResult',
+    name="QueryPreviewResult",
     fields=[
-        gql.Field(name='fields', type=gql.ArrayType(gql.String)),
-        gql.Field(name='rows', type=gql.ArrayType(gql.String)),
+        gql.Field(name="fields", type=gql.ArrayType(gql.String)),
+        gql.Field(name="rows", type=gql.ArrayType(gql.String)),
     ],
 )
 
 previewTable2 = gql.QueryField(
-    name='previewTable2',
-    args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
+    name="previewTable2",
+    args=[gql.Argument(name="tableUri", type=gql.NonNullableType(gql.String))],
     resolver=preview,
-    type=gql.Ref('QueryPreviewResult'),
+    type=gql.Ref("QueryPreviewResult"),
 )

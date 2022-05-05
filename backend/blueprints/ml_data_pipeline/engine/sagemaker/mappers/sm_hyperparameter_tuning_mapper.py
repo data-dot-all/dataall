@@ -12,9 +12,7 @@ class SageMakerHyperparameterTuningPropsMapper:
             job_name the job name. Possibly taken from a step function path.
             tokens the list of values taken from step function paths.
         """
-        return cls.map_hp_tuning_parameters(
-            stack, config_props, job_name, tokens, stack.pipeline_iam_role_arn, tags
-        )
+        return cls.map_hp_tuning_parameters(stack, config_props, job_name, tokens, stack.pipeline_iam_role_arn, tags)
 
     @classmethod
     def map_resource_limits(cls, res_config):
@@ -26,9 +24,7 @@ class SageMakerHyperparameterTuningPropsMapper:
         dict_result = {}
 
         dict_result["MaxNumberOfTrainingJobs"] = res_config.get("nb_of_training_jobs")
-        dict_result["MaxParallelTrainingJobs"] = res_config.get(
-            "max_parallel_training_jobs", 1
-        )
+        dict_result["MaxParallelTrainingJobs"] = res_config.get("max_parallel_training_jobs", 1)
 
         return dict_result
 
@@ -43,10 +39,7 @@ class SageMakerHyperparameterTuningPropsMapper:
         categorical_parameters = []
 
         for parameter_range in parameter_ranges:
-            if (
-                parameter_range["type"] == "continuous"
-                or parameter_range["type"] == "integer"
-            ):
+            if parameter_range["type"] == "continuous" or parameter_range["type"] == "integer":
 
                 parameter = {}
                 parameter["Name"] = parameter_range["name"]
@@ -61,9 +54,7 @@ class SageMakerHyperparameterTuningPropsMapper:
             elif parameter_range["type"] == "category":
                 categorical_parameters.append(parameter_range["values"])
             else:
-                raise Exception(
-                    "Unknown parameter type {}".format(parameter_range["type"])
-                )
+                raise Exception("Unknown parameter type {}".format(parameter_range["type"]))
 
         result = {}
         if continuous_parameters:
@@ -97,9 +88,7 @@ class SageMakerHyperparameterTuningPropsMapper:
     @classmethod
     def map_hp_tuning_parameters(cls, stack, config, job_name, tokens, roleARN, tags):
         result_dict = {}
-        resource_dict = {
-            resource["name"]: resource for resource in config.get("resources")
-        }
+        resource_dict = {resource["name"]: resource for resource in config.get("resources")}
 
         resource_limits = cls.map_resource_limits(config.get("resource_limits", {}))
 
@@ -125,28 +114,18 @@ class SageMakerHyperparameterTuningPropsMapper:
         result_dict["TrainingJobDefinition"] = {
             "AlgorithmSpecification": algorithm_specification,
             "OutputDataConfig": s3OutputPath,
-            "StoppingCondition": {
-                "MaxRuntimeInSeconds": config.get("max_runtime", "108000")
-            },
+            "StoppingCondition": {"MaxRuntimeInSeconds": config.get("max_runtime", "108000")},
             "ResourceConfig": cls.map_resources(config, resource_dict),
             "RoleArn": roleARN,
-            "StaticHyperParameters": cls.map_static_hyperparameters(
-                config.get("static_hyperparameters", {})
-            ),
+            "StaticHyperParameters": cls.map_static_hyperparameters(config.get("static_hyperparameters", {})),
         }
         if config.get("training_input_from_path"):
-            result_dict["TrainingJobDefinition"][
-                "InputDataConfig"
-            ] = cls.map_input_data_tokens(config, tokens)
+            result_dict["TrainingJobDefinition"]["InputDataConfig"] = cls.map_input_data_tokens(config, tokens)
         elif tokens.get("input_paths_from_input"):
-            result_dict["TrainingJobDefinition"]["InputDataConfig.$"] = tokens[
-                "input_paths_from_input"
-            ]
+            result_dict["TrainingJobDefinition"]["InputDataConfig.$"] = tokens["input_paths_from_input"]
 
         else:
-            result_dict["TrainingJobDefinition"][
-                "InputDataConfig"
-            ] = cls.map_input_data_config(config)
+            result_dict["TrainingJobDefinition"]["InputDataConfig"] = cls.map_input_data_config(config)
 
         result_dict["HyperParameterTuningJobName.$"] = (
             tokens.get("ext_job_name") if tokens.get("ext_job_name") else job_name

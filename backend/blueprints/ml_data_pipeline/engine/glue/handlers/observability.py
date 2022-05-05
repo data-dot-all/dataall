@@ -10,6 +10,4 @@ class StepMetric:
         self._ts = datetime.now()
 
     def __str__(self):
-        return "type=StepMetric,name={}, value={}, unit={}, ts={}".format(
-            self.name, self.value, self.unit, self._ts
-        )
+        return "type=StepMetric,name={}, value={}, unit={}, ts={}".format(self.name, self.value, self.unit, self._ts)

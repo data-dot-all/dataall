@@ -7,7 +7,7 @@ from .. import Base
 
 
 class RedshiftClusterDataset(Base):
-    __tablename__ = 'redshiftcluster_dataset'
+    __tablename__ = "redshiftcluster_dataset"
     clusterUri = Column(String, nullable=False, primary_key=True)
     datasetUri = Column(String, nullable=False, primary_key=True)
     datasetCopyEnabled = Column(Boolean, default=True)

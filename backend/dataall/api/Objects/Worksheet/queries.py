@@ -3,18 +3,18 @@ from .resolvers import *
 
 
 getWorksheet = gql.QueryField(
-    name='getWorksheet',
-    type=gql.Ref('Worksheet'),
+    name="getWorksheet",
+    type=gql.Ref("Worksheet"),
     resolver=get_worksheet,
-    args=[gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String))],
+    args=[gql.Argument(name="worksheetUri", type=gql.NonNullableType(gql.String))],
 )
 
 
 listWorksheets = gql.QueryField(
-    name='listWorksheets',
+    name="listWorksheets",
     resolver=list_worksheets,
-    args=[gql.Argument(name='filter', type=gql.Ref('WorksheetFilter'))],
-    type=gql.Ref('Worksheets'),
+    args=[gql.Argument(name="filter", type=gql.Ref("WorksheetFilter"))],
+    type=gql.Ref("Worksheets"),
 )
 
 
@@ -40,11 +40,11 @@ getWorksheetQuery= gql.QueryField(
 """
 
 pollWorksheetQuery = gql.QueryField(
-    name='pollWorksheetQuery',
+    name="pollWorksheetQuery",
     resolver=poll_query,
     args=[
-        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='AthenaQueryId', type=gql.String),
+        gql.Argument(name="worksheetUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="AthenaQueryId", type=gql.String),
     ],
-    type=gql.Ref('AthenaQueryResult'),
+    type=gql.Ref("AthenaQueryResult"),
 )

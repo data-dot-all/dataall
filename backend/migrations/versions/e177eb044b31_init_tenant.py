@@ -13,8 +13,8 @@ from sqlalchemy import orm
 from dataall import db
 from dataall.db import api
 
-revision = 'e177eb044b31'
-down_revision = '033c3d6c1849'
+revision = "e177eb044b31"
+down_revision = "033c3d6c1849"
 branch_labels = None
 depends_on = None
 
@@ -23,19 +23,19 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Initializing permissions...')
-        db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        print('Tenant initialized successfully')
-        print('Attaching superusers group DHAdmins...')
+        print("Initializing permissions...")
+        db.api.Tenant.save_tenant(session, name="dataall", description="Tenant dataall")
+        print("Tenant initialized successfully")
+        print("Attaching superusers group DHAdmins...")
         api.TenantPolicy.attach_group_tenant_policy(
             session=session,
-            group='DHAdmins',
+            group="DHAdmins",
             permissions=db.permissions.TENANT_ALL,
-            tenant_name='dataall',
+            tenant_name="dataall",
         )
-        print('Attaching superusers groups DHAdmins')
+        print("Attaching superusers groups DHAdmins")
     except Exception as e:
-        print(f'Failed to init permissions due to: {e}')
+        print(f"Failed to init permissions due to: {e}")
 
 
 def downgrade():

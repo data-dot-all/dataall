@@ -20,8 +20,9 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
+
     def make_tag_str(slef):
         pass
 
@@ -102,11 +103,12 @@ def test_make_training_task():
     assert parameters.get("TrainingJobName.$")
 
     assert len(definition.get("Retry")) == 1
-    assert definition["Retry"][0] == {'ErrorEquals': ['SageMaker.AmazonSageMakerException'], 
-                                        'IntervalSeconds': 1,
-                                        'MaxAttempts': 3,
-                                        'BackoffRate': 1.1}
-
+    assert definition["Retry"][0] == {
+        "ErrorEquals": ["SageMaker.AmazonSageMakerException"],
+        "IntervalSeconds": 1,
+        "MaxAttempts": 3,
+        "BackoffRate": 1.1,
+    }
 
 
 def test_make_train_task_input_from_path():
@@ -145,7 +147,7 @@ def test_make_train_task_input_from_path():
 
 
 def test_make_training_task_input_from_sfn_path():
-   train_config = """
+    train_config = """
         name: Training
         type: training
         config:
@@ -175,18 +177,17 @@ def test_make_training_task_input_from_sfn_path():
                 volume_size: 35
             resource_ref: "training-resource"
     """
-   stack = ATestStack()
-   config = yaml.safe_load(train_config)
-   definition = training_task.definition_from_config(stack, config, "train_path", 1, 2)
-   parameters = definition.get("Parameters")
-   train_channel = parameters.get("InputDataConfig")[0]
-   validation_channel = parameters.get("InputDataConfig")[1]
-   test_channel = parameters.get("InputDataConfig")[2]
+    stack = ATestStack()
+    config = yaml.safe_load(train_config)
+    definition = training_task.definition_from_config(stack, config, "train_path", 1, 2)
+    parameters = definition.get("Parameters")
+    train_channel = parameters.get("InputDataConfig")[0]
+    validation_channel = parameters.get("InputDataConfig")[1]
+    test_channel = parameters.get("InputDataConfig")[2]
 
-   assert train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
-   assert validation_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
-   assert test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
-
+    assert train_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert validation_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
+    assert test_channel.get("DataSource").get("S3DataSource").get("S3Uri.$")
 
 
 def test_make_test_task_train_test_novalidation():
@@ -224,14 +225,15 @@ def test_make_test_task_train_test_novalidation():
     stack = ATestStack()
     config = yaml.safe_load(train_config)
     definition = training_task.definition_from_config(stack, config, "train_path", 1, 2)
-    
+
     parameters = definition.get("Parameters")
     train_channel = parameters.get("InputDataConfig")[0]
     test_channel = parameters.get("InputDataConfig")[1]
 
     assert test_channel["ChannelName"] == "test"
     assert train_channel["ChannelName"] == "train"
-    assert parameters.get('TrainingJobName.$')
+    assert parameters.get("TrainingJobName.$")
+
 
 def test_make_test_trask_train_validation_notest():
     train_config = """
@@ -266,13 +268,14 @@ def test_make_test_trask_train_validation_notest():
     stack = ATestStack()
     config = yaml.safe_load(train_config)
     definition = training_task.definition_from_config(stack, config, "train_path", 1, 2)
-    
+
     parameters = definition.get("Parameters")
     train_channel = parameters.get("InputDataConfig")[0]
     validation_channel = parameters.get("InputDataConfig")[1]
 
     assert validation_channel["ChannelName"] == "validation"
     assert train_channel["ChannelName"] == "train"
+
 
 def test_make_test_trask_with_model():
     train_config = """
@@ -309,6 +312,6 @@ def test_make_test_trask_with_model():
     """
     stack = ATestStack()
     config = yaml.safe_load(train_config)
-    task = training_task.make_sagemaker_training_task(stack, config,  1, 2)
+    task = training_task.make_sagemaker_training_task(stack, config, 1, 2)
 
     assert isinstance(task, stepfunctions.Chain)

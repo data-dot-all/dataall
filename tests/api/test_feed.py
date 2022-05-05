@@ -3,13 +3,13 @@ import pytest
 from dataall.db import models
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def worksheet(db):
     with db.scoped_session() as session:
         w = models.Worksheet(
-            owner='me',
-            label='xxx',
-            SamlAdminGroupName='g',
+            owner="me",
+            label="xxx",
+            SamlAdminGroupName="g",
         )
         session.add(w)
     return w
@@ -31,14 +31,14 @@ def test_post_message(client, worksheet):
                 }
             }
         """,
-        username='me',
+        username="me",
         targetUri=worksheet.worksheetUri,
-        targetType='Worksheet',
-        input={'content': 'hello'},
+        targetType="Worksheet",
+        input={"content": "hello"},
     )
 
-    assert response.data.postFeedMessage.content == 'hello'
-    assert response.data.postFeedMessage.creator == 'me'
+    assert response.data.postFeedMessage.content == "hello"
+    assert response.data.postFeedMessage.creator == "me"
 
 
 def test_list_messages(client, worksheet):
@@ -68,14 +68,14 @@ def test_list_messages(client, worksheet):
             }
         }
         """,
-        username='me',
+        username="me",
         targetUri=worksheet.worksheetUri,
-        targetType='Worksheet',
+        targetType="Worksheet",
         filter={},
     )
 
     assert response.data.getFeed.messages.count == 1
-    assert response.data.getFeed.messages.nodes[0].content == 'hello'
+    assert response.data.getFeed.messages.nodes[0].content == "hello"
 
 
 def test_get_target(client, worksheet):
@@ -100,7 +100,7 @@ def test_get_target(client, worksheet):
         }
         """,
         targetUri=worksheet.worksheetUri,
-        targetType='Worksheet',
-        username='me',
+        targetType="Worksheet",
+        username="me",
     )
     print(response)

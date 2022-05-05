@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 
 class AlarmService:
     def __init__(self):
-        self.envname = os.getenv('envname', 'local')
-        self.region = os.environ.get('AWS_REGION', 'eu-west-1')
+        self.envname = os.getenv("envname", "local")
+        self.region = os.environ.get("AWS_REGION", "eu-west-1")
 
     def trigger_stack_deployment_failure_alarm(self, stack: models.Stack):
-        logger.info('Triggering deployment failure alarm...')
-        subject = f'ALARM: DATAALL Stack {stack.name} Deployment Failure Notification'
+        logger.info("Triggering deployment failure alarm...")
+        subject = f"ALARM: DATAALL Stack {stack.name} Deployment Failure Notification"
         message = f"""
 You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to deploy one of its resource CloudFormation stacks {stack.name}
 
@@ -46,10 +46,8 @@ Alarm Details:
         share: models.ShareObject,
         target_environment: models.Environment,
     ):
-        logger.info('Triggering share failure alarm...')
-        subject = (
-            f'ALARM: DATAALL Table {table.GlueTableName} Sharing Failure Notification'
-        )
+        logger.info("Triggering share failure alarm...")
+        subject = f"ALARM: DATAALL Table {table.GlueTableName} Sharing Failure Notification"
         message = f"""
 You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the table {table.GlueTableName} with Lake Formation.
 
@@ -78,8 +76,8 @@ Alarm Details:
         share: models.ShareObject,
         target_environment: models.Environment,
     ):
-        logger.info('Triggering share failure alarm...')
-        subject = f'ALARM: DATAALL Table {table.GlueTableName} Revoking LF permissions Failure Notification'
+        logger.info("Triggering share failure alarm...")
+        subject = f"ALARM: DATAALL Table {table.GlueTableName} Revoking LF permissions Failure Notification"
         message = f"""
 You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to revoke Lake Formation permissions for table {table.GlueTableName} with Lake Formation.
 
@@ -103,8 +101,8 @@ Alarm Details:
         return self.publish_message_to_alarms_topic(subject, message)
 
     def trigger_catalog_indexing_failure_alarm(self, error: str):
-        logger.info('Triggering catalog indexing failure alarm...')
-        subject = 'ALARM: DATAALL Catalog Indexing Failure Notification'
+        logger.info("Triggering catalog indexing failure alarm...")
+        subject = "ALARM: DATAALL Catalog Indexing Failure Notification"
         message = f"""
 You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to index new items into OpenSearch.
 
@@ -116,10 +114,8 @@ Alarm Details:
         return self.publish_message_to_alarms_topic(subject, message)
 
     def trigger_dataset_sync_failure_alarm(self, dataset: models.Dataset, error: str):
-        logger.info(f'Triggering dataset {dataset.name} tables sync failure alarm...')
-        subject = (
-            f'ALARM: DATAALL Dataset {dataset.name} Tables Sync Failure Notification'
-        )
+        logger.info(f"Triggering dataset {dataset.name} tables sync failure alarm...")
+        subject = f"ALARM: DATAALL Dataset {dataset.name} Tables Sync Failure Notification"
         message = f"""
 You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to synchronize Dataset {dataset.name} tables from AWS Glue to the Search Catalog.
 
@@ -136,18 +132,16 @@ Alarm Details:
         return self.publish_message_to_alarms_topic(subject, message)
 
     def publish_message_to_alarms_topic(self, subject, message):
-        if self.envname in ['local', 'pytest', 'dkrcompose']:
-            logger.debug('Running in local mode...SNS topic not available')
+        if self.envname in ["local", "pytest", "dkrcompose"]:
+            logger.debug("Running in local mode...SNS topic not available")
         else:
-            region = os.getenv('AWS_REGION', 'eu-west-1')
+            region = os.getenv("AWS_REGION", "eu-west-1")
             session = SessionHelper.get_session()
-            ssm = session.client('ssm', region_name=region)
-            sns = session.client('sns', region_name=region)
-            alarms_topic_arn = ssm.get_parameter(
-                Name=f'/dataall/{self.envname}/sns/alarmsTopic'
-            )['Parameter']['Value']
+            ssm = session.client("ssm", region_name=region)
+            sns = session.client("sns", region_name=region)
+            alarms_topic_arn = ssm.get_parameter(Name=f"/dataall/{self.envname}/sns/alarmsTopic")["Parameter"]["Value"]
             try:
-                logger.info('Sending deployment failure notification')
+                logger.info("Sending deployment failure notification")
                 response = sns.publish(
                     TopicArn=alarms_topic_arn,
                     Subject=subject,
@@ -155,5 +149,5 @@ Alarm Details:
                 )
                 return response
             except ClientError as e:
-                logger.error(f'Failed to deliver message due to: {e} ')
+                logger.error(f"Failed to deliver message due to: {e} ")
                 raise e

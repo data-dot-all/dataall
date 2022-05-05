@@ -14,6 +14,7 @@ class Stages:
     INT = "int"
     DEV = "dev"
 
+
 def environment_variable(name):
     return os.environ.get(name)
 
@@ -31,8 +32,9 @@ def s3_ls(bucket, prefix):
         prefixes.append(prefix.get("Prefix"))
     return prefixes
 
+
 class TaskGroupReader:
-    """ Configuration file (e.g. config.yaml) parser"""
+    """Configuration file (e.g. config.yaml) parser"""
 
     def __init__(self, path="config.yaml", config: str = None, template_vars=None):
         if config is None and path is None:
@@ -60,7 +62,7 @@ class TaskGroupReader:
         return definition
 
     def parse(self, variables):
-        """ Parses the yaml file of the configuration file. adds vars for config """
+        """Parses the yaml file of the configuration file. adds vars for config"""
         if not variables:
             variables = {}
             variables["stage"] = os.environ.get("STAGE", "TEST")
@@ -68,7 +70,7 @@ class TaskGroupReader:
                 variables["pipeline_bucket"] = os.environ.get("BUCKET_NAME")
             if "ENVROLEARN" in os.environ:
                 variables["environment_role_arn"] = os.environ.get("ENVROLEARN")
-            if "ORIGIN_PIPELINE_NAME"  in os.environ:
+            if "ORIGIN_PIPELINE_NAME" in os.environ:
                 variables["pipeline_name"] = os.environ.get("ORIGIN_PIPELINE_NAME")
             if "SAML_GROUP" in os.environ:
                 variables["saml_group"] = os.environ.get("saml_group")
@@ -79,7 +81,7 @@ class TaskGroupReader:
             if "SNS_TOPIC_ARN" in os.environ:
                 variables["sns_topic_arn"] = os.environ.get("SNS_TOPIC_ARN")
             if "BATCH_INSTANCE_ROLE" in os.environ:
-                 variables["batch_instance_role"] = os.environ.get("BATCH_INSTANCE_ROLE")
+                variables["batch_instance_role"] = os.environ.get("BATCH_INSTANCE_ROLE")
             if "ENVIRONMENT_URI" in os.environ:
                 variables["environment_uri"] = os.environ.get("ENVIRONMENT_URI")
             if "PIPELINE_URI" in os.environ:
@@ -89,20 +91,14 @@ class TaskGroupReader:
             if "ECR_REPOSITORY" in os.environ:
                 variables["ecr_repository"] = os.environ.get("ECR_REPOSITORY")
 
-
-
         definition = self.parse_definition(variables)
         if ("variables" in definition) and ("file" in definition.get("variables")):
             with open(definition["variables"]["file"], "r") as f:
                 var_templatized = Template(f.read())
                 external_variables = yaml.safe_load(var_templatized.render(variables))
                 variables.update(external_variables)
-                definition_with_vars = self.parse_definition(variables )
+                definition_with_vars = self.parse_definition(variables)
 
         else:
             definition_with_vars = definition
         return definition_with_vars
-
-
-
-
