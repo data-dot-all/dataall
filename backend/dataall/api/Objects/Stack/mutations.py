@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 updateStack = gql.MutationField(
     name="updateStack",
     type=gql.Ref("Stack"),

@@ -3,8 +3,9 @@ import os
 
 import boto3
 import yaml
-from engine.glue.handlers import StepInterface
+
 from jinja2 import Template
+from engine.glue.handlers import StepInterface
 
 logger = logging.getLogger()
 

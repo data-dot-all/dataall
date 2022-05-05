@@ -4,7 +4,7 @@ import logging
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....db import api, models, permissions
+from ....db import api, permissions, models
 from ....db.api import ResourcePolicy
 
 log = logging.getLogger(__name__)

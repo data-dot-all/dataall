@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String
 
-from .. import Base, Resource, utils
+from .. import Base
+from .. import Resource, utils
 
 
 class Activity(Resource, Base):

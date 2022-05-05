@@ -3,12 +3,12 @@ import os
 
 from sqlalchemy import and_, or_
 
+from ..Stack import stack_helper
 from .... import db
 from ....api.constants import *
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....db import models
-from ..Stack import stack_helper
 
 log = logging.getLogger(__name__)
 

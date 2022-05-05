@@ -1,7 +1,7 @@
 from sqlalchemy import or_
 
 from ....api.context import Context
-from ....db import models, paginate
+from ....db import paginate, models
 
 
 class Feed:

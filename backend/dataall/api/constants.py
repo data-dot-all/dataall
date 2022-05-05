@@ -9,7 +9,6 @@
 
 
 from enum import Enum
-
 from . import gql
 
 

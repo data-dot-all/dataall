@@ -4,12 +4,15 @@ import os
 from argparse import Namespace
 from time import perf_counter
 
-from ariadne import gql, graphql_sync
-from dataall.api.Objects import bootstrap as bootstrap_schema
-from dataall.api.Objects import get_executable_schema
+from ariadne import (
+    gql,
+    graphql_sync,
+)
+
+from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
-from dataall.db import api, get_engine, init_permissions, permissions
+from dataall.db import init_permissions, get_engine, api, permissions
 from dataall.searchproxy import connect
 
 logger = logging.getLogger()

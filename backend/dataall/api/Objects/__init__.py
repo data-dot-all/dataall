@@ -1,18 +1,47 @@
 from argparse import Namespace
 
-from ariadne import EnumType, MutationType, ObjectType, QueryType, UnionType
-from ariadne import gql as GQL
-from ariadne import make_executable_schema
+from ariadne import (
+    EnumType,
+    MutationType,
+    ObjectType,
+    UnionType,
+    QueryType,
+    gql as GQL,
+    make_executable_schema,
+)
 
-from ...api.constants import GraphQLEnumMapper
 from .. import gql
-from . import (Activity, AthenaQueryResult, Dashboard, Dataset,
-               DatasetProfiling, DatasetStorageLocation, DatasetTable,
-               DatasetTableColumn, Environment, Feed, Glossary, Group,
-               KeyValueTag, Notification, Organization, Permission, Principal,
-               RedshiftCluster, SagemakerNotebook, SagemakerStudio,
-               ShareObject, SqlPipeline, Stack, Tenant, Test, Vote, Vpc,
-               Worksheet)
+from ...api.constants import GraphQLEnumMapper
+from . import (
+    Permission,
+    SqlPipeline,
+    Environment,
+    Activity,
+    DatasetTable,
+    DatasetTableColumn,
+    Dataset,
+    Group,
+    Principal,
+    Dashboard,
+    ShareObject,
+    Organization,
+    DatasetStorageLocation,
+    Stack,
+    Test,
+    SagemakerStudio,
+    RedshiftCluster,
+    DatasetProfiling,
+    Glossary,
+    AthenaQueryResult,
+    Worksheet,
+    Feed,
+    Notification,
+    Vpc,
+    Tenant,
+    SagemakerNotebook,
+    KeyValueTag,
+    Vote,
+)
 
 
 def bootstrap():

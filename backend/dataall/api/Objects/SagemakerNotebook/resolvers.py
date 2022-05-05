@@ -1,10 +1,10 @@
 from .... import db
+from ..Stack import stack_helper
 from ....api.constants import SagemakerNotebookRole
 from ....api.context import Context
 from ....aws.handlers.sagemaker import Sagemaker
-from ....db import models, permissions
-from ....db.api import KeyValueTag, Notebook, ResourcePolicy, Stack
-from ..Stack import stack_helper
+from ....db import permissions, models
+from ....db.api import ResourcePolicy, Notebook, KeyValueTag, Stack
 
 
 def create_notebook(context: Context, source, input: dict = None):

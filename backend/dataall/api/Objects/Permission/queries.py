@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 listTenantPermissions = gql.QueryField(
     name="listTenantPermissions",
     args=[

@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 upVote = gql.MutationField(
     name="upVote",
     type=gql.Ref("Vote"),

@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 importDashboard = gql.MutationField(
     name="importDashboard",
     type=gql.Ref("Dashboard"),

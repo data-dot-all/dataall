@@ -1,10 +1,11 @@
 import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
+from . import Permission
+from . import TenantPolicy
 from .. import Base
-from . import Permission, TenantPolicy
 
 
 class TenantPolicyPermission(Base):

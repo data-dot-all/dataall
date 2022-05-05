@@ -3,8 +3,9 @@ import sys
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
-from engine.glue.glue_utils import ConfigReader, Runner
 from pyspark import SparkContext
+
+from engine.glue.glue_utils import Runner, ConfigReader
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 spark = glueContext.spark_session

@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 DatasetTableColumn = gql.ObjectType(
     name="DatasetTableColumn",
     fields=[

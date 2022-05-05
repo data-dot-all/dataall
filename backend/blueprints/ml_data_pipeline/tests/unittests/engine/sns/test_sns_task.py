@@ -1,6 +1,6 @@
 import yaml
-from aws_cdk import core
 from engine.sns import sns_task
+from aws_cdk import core
 
 
 class ATestStack(core.Stack):

@@ -8,13 +8,17 @@ Create Date: 2021-12-08 12:54:33.828838
 import datetime
 
 from alembic import op
-from dataall.db import Resource, utils
-# revision identifiers, used by Alembic.
-from dataall.utils.naming_convention import (NamingConventionPattern,
-                                             NamingConventionService)
-from sqlalchemy import Boolean, Column, DateTime, String, orm
+from sqlalchemy import Boolean, Column, String, DateTime, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
+
+from dataall.db import utils, Resource
+
+# revision identifiers, used by Alembic.
+from dataall.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 # revision identifiers, used by Alembic.
 revision = "97050ec09354"

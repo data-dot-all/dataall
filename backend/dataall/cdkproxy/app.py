@@ -3,9 +3,10 @@ import json
 import logging
 import sys
 
-from aws_cdk import App, Environment
-from dataall.cdkproxy.stacks import instanciate_stack
+from aws_cdk import Environment, App
 from tabulate import tabulate
+
+from dataall.cdkproxy.stacks import instanciate_stack
 
 print(sys.version)
 logger = logging.getLogger("cdkapp process")

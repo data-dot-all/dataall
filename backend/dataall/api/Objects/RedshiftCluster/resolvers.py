@@ -4,14 +4,14 @@ import logging
 from botocore.exceptions import ClientError
 
 from .... import db
+from ...constants import RedshiftClusterRole
+from ..Stack import stack_helper
 from ....api.context import Context
 from ....aws.handlers.redshift import Redshift
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....db import models, permissions
-from ....db.api import KeyValueTag, ResourcePolicy, Stack
-from ...constants import RedshiftClusterRole
-from ..Stack import stack_helper
+from ....db import permissions, models
+from ....db.api import ResourcePolicy, KeyValueTag, Stack
 
 log = logging.getLogger(__name__)
 

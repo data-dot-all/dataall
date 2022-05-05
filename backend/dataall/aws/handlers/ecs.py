@@ -5,11 +5,11 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
+from .service_handlers import Worker
 from ... import db
 from ...db import models
-from ...tasks.share_manager import ShareManager
 from ...utils import Parameter
-from .service_handlers import Worker
+from ...tasks.share_manager import ShareManager
 
 log = logging.getLogger("aws:ecs")
 

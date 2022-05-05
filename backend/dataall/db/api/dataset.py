@@ -4,12 +4,22 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
-from .. import exceptions, models, paginate, permissions
-from ..models.Enums import ConfidentialityClassification, Language
-from . import (Environment, KeyValueTag, Organization, ResourcePolicy, Stack,
-               Vote, has_resource_perm, has_tenant_perm)
+from . import (
+    Environment,
+    has_tenant_perm,
+    has_resource_perm,
+    ResourcePolicy,
+    KeyValueTag,
+    Vote,
+    Stack,
+)
+from . import Organization
+from .. import models, exceptions, permissions, paginate
+from ..models.Enums import Language, ConfidentialityClassification
+from ...utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 logger = logging.getLogger(__name__)
 

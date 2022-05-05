@@ -2,14 +2,13 @@ import json
 import logging
 import pprint
 import sys
-
 import boto3
+from botocore.exceptions import ClientError
 from awsglue.context import GlueContext
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
-from botocore.exceptions import ClientError
-from pydeequ.profiles import *
 from pyspark.context import SparkContext
+from pydeequ.profiles import *
 
 sc = SparkContext.getOrCreate()
 sc._jsc.hadoopConfiguration().set("fs.s3.canned.acl", "BucketOwnerFullControl")

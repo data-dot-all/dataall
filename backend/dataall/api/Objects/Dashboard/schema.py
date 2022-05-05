@@ -1,6 +1,6 @@
 from ... import gql
-from ...constants import DashboardRole
 from .resolvers import *
+from ...constants import DashboardRole
 
 Dashboard = gql.ObjectType(
     name="Dashboard",

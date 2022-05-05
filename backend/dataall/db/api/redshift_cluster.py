@@ -1,14 +1,15 @@
 import logging
 
-from sqlalchemy import and_, literal, or_
+from sqlalchemy import and_, or_, literal
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
-from ...utils.slugify import slugify
-from .. import exceptions, models, paginate, permissions
+from .. import models, exceptions, paginate, permissions
+from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset
 from ..models.Enums import ShareObjectStatus
-from . import (Dataset, DatasetTable, Environment, ResourcePolicy,
-               has_resource_perm)
+from ...utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
+from ...utils.slugify import slugify
 
 log = logging.getLogger(__name__)
 

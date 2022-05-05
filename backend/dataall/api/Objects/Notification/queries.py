@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 listNotifications = gql.QueryField(
     name="listNotifications",
     args=[

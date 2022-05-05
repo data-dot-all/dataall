@@ -2,10 +2,10 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from ... import db
-from ...db import models
 from .service_handlers import Worker
 from .sts import SessionHelper
+from ... import db
+from ...db import models
 
 log = logging.getLogger("aws:glue")
 

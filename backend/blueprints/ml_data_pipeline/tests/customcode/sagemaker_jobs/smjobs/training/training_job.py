@@ -1,4 +1,5 @@
 import pandas as pd
+
 from smjobs.helpers.printer import print_message
 
 

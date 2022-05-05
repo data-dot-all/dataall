@@ -3,7 +3,7 @@ import logging
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
-from ...db import Engine, models
+from ...db import models, Engine
 from .service_handlers import Worker
 from .sts import SessionHelper
 

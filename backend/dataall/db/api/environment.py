@@ -1,21 +1,32 @@
 import logging
 import re
 
-from sqlalchemy import case, func, or_
+from sqlalchemy import or_, case, func
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
-from .. import exceptions, models, permissions
+from .. import exceptions, permissions, models
+from . import (
+    has_resource_perm,
+    has_tenant_perm,
+    ResourcePolicy,
+    Permission,
+    KeyValueTag,
+)
 from ..api.organization import Organization
 from ..models import EnvironmentGroup
-from ..models.Enums import (EnvironmentPermission, EnvironmentType,
-                            ShareableType, ShareObjectStatus)
+from ..models.Enums import (
+    ShareObjectStatus,
+    ShareableType,
+    EnvironmentType,
+    EnvironmentPermission,
+)
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
-from . import (KeyValueTag, Permission, ResourcePolicy, has_resource_perm,
-               has_tenant_perm)
+from ...utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 

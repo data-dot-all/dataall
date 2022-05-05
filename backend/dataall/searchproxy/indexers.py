@@ -3,9 +3,9 @@ import logging
 from sqlalchemy import and_
 from sqlalchemy.orm import with_expression
 
+from .upsert import upsert
 from .. import db
 from ..db import models
-from .upsert import upsert
 
 log = logging.getLogger(__name__)
 

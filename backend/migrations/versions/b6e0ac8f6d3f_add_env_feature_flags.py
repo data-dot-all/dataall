@@ -7,10 +7,12 @@ Create Date: 2021-10-25 09:00:40.925964
 """
 import sqlalchemy as sa
 from alembic import op
-from dataall.db import Resource, utils
-from sqlalchemy import Boolean, Column, String, orm
+from sqlalchemy import Boolean, Column, String
+from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
+
+from dataall.db import Resource, utils
 
 revision = "b6e0ac8f6d3f"
 down_revision = "967fa9c0a147"

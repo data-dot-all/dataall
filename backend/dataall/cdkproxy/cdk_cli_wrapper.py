@@ -12,7 +12,8 @@ import boto3
 from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
-from ..db import Engine, models
+from ..db import Engine
+from ..db import models
 from ..utils.alarm_service import AlarmService
 
 logger = logging.getLogger("cdksass")

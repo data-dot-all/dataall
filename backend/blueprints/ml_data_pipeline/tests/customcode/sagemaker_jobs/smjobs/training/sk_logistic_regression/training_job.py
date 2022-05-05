@@ -1,14 +1,13 @@
 import argparse
+import joblib
 import os
 import time
-from os import listdir
 
-import joblib
 import numpy as np
 import pandas as pd
-from sklearn import metrics
 from sklearn.linear_model import LogisticRegression
-
+from sklearn import metrics
+from os import listdir
 
 # inference functions ---------------
 def model_fn(model_dir):

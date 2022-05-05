@@ -1,8 +1,8 @@
+from datetime import date, datetime
 import json
 import logging
 import time
 import traceback
-from datetime import date, datetime
 
 import boto3
 

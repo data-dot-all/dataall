@@ -3,9 +3,12 @@ import os
 import sys
 
 from .. import db
-from ..db import exceptions, get_engine, models
+from ..db import get_engine, exceptions
+from ..db import models
 from ..searchproxy import indexers
-from ..searchproxy.connect import connect
+from ..searchproxy.connect import (
+    connect,
+)
 from ..utils.alarm_service import AlarmService
 
 root = logging.getLogger()

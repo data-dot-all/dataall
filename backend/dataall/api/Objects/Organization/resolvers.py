@@ -1,8 +1,8 @@
 from .... import db
 from ....api.constants import OrganisationUserRole
 from ....api.context import Context
-from ....db import models
 from ....db.api.organization import Organization
+from ....db import models
 
 
 def create_organization(context: Context, source, input=None):

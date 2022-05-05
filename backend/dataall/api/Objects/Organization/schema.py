@@ -1,6 +1,6 @@
-from ...constants import OrganisationUserRole
 from .input_types import *
 from .resolvers import *
+from ...constants import OrganisationUserRole
 
 OrganizationStats = gql.ObjectType(
     name="OrganizationStats",

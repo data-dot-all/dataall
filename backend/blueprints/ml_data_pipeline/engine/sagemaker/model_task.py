@@ -1,6 +1,5 @@
-import re
 import textwrap
-
+import re
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda
 from aws_cdk import aws_stepfunctions as stepfunctions

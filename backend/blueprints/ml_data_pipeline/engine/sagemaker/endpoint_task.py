@@ -7,8 +7,8 @@ from aws_cdk import aws_stepfunctions_tasks as tasks
 from aws_cdk import core
 from aws_cdk.aws_lambda import Code
 from aws_cdk.aws_stepfunctions import Choice, Condition, Pass, Wait, WaitTime
-from engine.sagemaker.mappers.sm_endpoint_mapper import \
-    SageMakerEndpointPropsMapper
+
+from engine.sagemaker.mappers.sm_endpoint_mapper import SageMakerEndpointPropsMapper
 
 
 def make_sagemaker_endpoint_task(stack, job, group_index, job_index):

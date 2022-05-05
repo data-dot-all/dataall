@@ -1,12 +1,14 @@
 import argparse
-import os
+
 import pickle
 from io import StringIO
 
 import boto3
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+
+import os
 
 
 def create_serialized_label_encoder(le, output_bucket, output_prefix, label_encoder_path):

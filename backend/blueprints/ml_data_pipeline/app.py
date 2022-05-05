@@ -4,11 +4,12 @@ It creates one or more stacks.
 """
 
 import os
-import re
-
 from aws_cdk import core
+
 from stack import DataPipeline
 from utils.task_group_reader import TaskGroupReader
+import re
+
 
 app = core.App()
 

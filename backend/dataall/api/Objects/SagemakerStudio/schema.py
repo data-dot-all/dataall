@@ -1,6 +1,6 @@
-from ....api.constants import SagemakerStudioRole
 from ... import gql
 from .resolvers import *
+from ....api.constants import SagemakerStudioRole
 
 SagemakerStudio = gql.ObjectType(
     name="SagemakerStudio",

@@ -1,6 +1,5 @@
 import os
 import re
-
 from engine.athena import AthenaConfigReader
 
 

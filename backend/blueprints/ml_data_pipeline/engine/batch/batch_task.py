@@ -1,9 +1,11 @@
+from aws_cdk import aws_stepfunctions
+from aws_cdk import aws_iam
+from aws_cdk import aws_ssm
+
+import uuid
 import logging
 import re
-import uuid
-
 import structlog
-from aws_cdk import aws_iam, aws_ssm, aws_stepfunctions
 
 lg = logging.getLogger()
 lg.setLevel(logging.INFO)

@@ -1,5 +1,5 @@
-from ....db import models
 from ... import gql
+from ....db import models
 
 
 def resolve_enum(context, source: models.Notification):

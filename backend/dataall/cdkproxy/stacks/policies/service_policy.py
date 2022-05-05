@@ -37,16 +37,16 @@ class ServicePolicy(object):
         """
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
-        from ._lambda import Lambda
-        from .cloudformation import Cloudformation
-        from .codestar import CodeStar
-        from .databrew import Databrew
-        from .glue import Glue
-        from .lakeformation import LakeFormation
-        from .quicksight import QuickSight
         from .redshift import Redshift
+        from .databrew import Databrew
+        from .lakeformation import LakeFormation
         from .sagemaker import Sagemaker
+        from ._lambda import Lambda
+        from .codestar import CodeStar
+        from .glue import Glue
         from .stepfunctions import StepFunctions
+        from .quicksight import QuickSight
+        from .cloudformation import Cloudformation
 
         policies: [aws_iam.ManagedPolicy] = [
             aws_iam.ManagedPolicy(

@@ -2,8 +2,8 @@ from .... import db
 from ....api.constants import DashboardRole
 from ....api.context import Context
 from ....aws.handlers.quicksight import Quicksight
-from ....db import models, permissions
-from ....db.api import Glossary, ResourcePolicy, Vote
+from ....db import permissions, models
+from ....db.api import ResourcePolicy, Glossary, Vote
 from ....searchproxy import indexers
 
 

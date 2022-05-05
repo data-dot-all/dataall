@@ -1,6 +1,7 @@
-import engine.glue.pydeequ.jvm_conversions as jc
 import py4j.java_gateway as jg
+
 from engine.glue.pydeequ.exceptions import JavaClassNotFoundException
+import engine.glue.pydeequ.jvm_conversions as jc
 
 
 def is_one(x):

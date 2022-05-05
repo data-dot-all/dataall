@@ -3,11 +3,18 @@ import logging
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
+from . import (
+    has_tenant_perm,
+    has_resource_perm,
+    ResourcePolicy,
+    Environment,
+)
+from .. import models, exceptions, permissions, paginate
+from ...utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 from ...utils.slugify import slugify
-from .. import exceptions, models, paginate, permissions
-from . import Environment, ResourcePolicy, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,12 @@
 import datetime
 import enum
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
+from sqlalchemy import Column, Boolean, DateTime, Integer, Enum, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
-from .. import Base, Resource, utils
+from .. import Base
+from .. import Resource, utils
 
 
 class QueryType(enum.Enum):

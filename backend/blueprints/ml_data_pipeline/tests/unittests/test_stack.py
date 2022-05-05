@@ -1,11 +1,12 @@
-import os
-
 import aws_cdk.aws_dynamodb
 import aws_cdk.aws_lambda
 from aws_cdk import core
+
 from engine.lambdafx.lambda_mapper import LambdaFxMappingException
 from stack import DataPipeline
 from utils.task_group_reader import TaskGroupReader
+
+import os
 
 os.environ["BUCKET_NAME"] = "iris-spec"
 os.environ["AWSACCOUNTID"] = "012345678901"

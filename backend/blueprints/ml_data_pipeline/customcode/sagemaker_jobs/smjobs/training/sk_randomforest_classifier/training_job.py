@@ -1,14 +1,14 @@
 import argparse
-import os
-import time
-from os import listdir
-
-import great_expectations as ge
 import joblib
+import os
+
 import numpy as np
 import pandas as pd
-from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
+from os import listdir
+import time
+import great_expectations as ge
 
 
 # inference functions ---------------

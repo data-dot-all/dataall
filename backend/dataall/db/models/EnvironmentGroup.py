@@ -1,9 +1,9 @@
 import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import Column, DateTime, String, Boolean
 
-from .. import Base
 from .Enums import EnvironmentPermission as EnvironmentPermissionEnum
+from .. import Base
 
 
 class EnvironmentGroup(Base):

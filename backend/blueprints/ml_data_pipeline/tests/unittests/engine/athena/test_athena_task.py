@@ -1,6 +1,6 @@
 import yaml
-from aws_cdk import core
 from engine.athena import athena_task
+from aws_cdk import core
 
 
 class ATestStack(core.Stack):

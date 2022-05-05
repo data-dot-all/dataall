@@ -1,8 +1,7 @@
-import boto3
-from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import aws_stepfunctions_tasks as tasks
-
 from .athena_config_reader import AthenaConfigReader
+from aws_cdk import aws_stepfunctions as stepfunctions
+import boto3
 
 s3 = boto3.client("s3")
 

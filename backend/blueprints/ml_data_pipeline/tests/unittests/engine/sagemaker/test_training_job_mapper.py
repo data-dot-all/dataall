@@ -1,4 +1,5 @@
 from aws_cdk import core
+
 from engine import SageMakerTrainingJobPropsMapper
 from utils.task_group_reader import TaskGroupReader
 

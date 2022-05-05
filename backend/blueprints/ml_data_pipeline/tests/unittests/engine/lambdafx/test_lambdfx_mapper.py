@@ -1,4 +1,5 @@
 from aws_cdk import core
+
 from engine import LambdaFxPropsMapper
 from utils.task_group_reader import TaskGroupReader
 

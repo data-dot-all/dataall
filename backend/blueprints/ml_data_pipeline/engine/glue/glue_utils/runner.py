@@ -2,7 +2,8 @@ import json
 import logging
 
 import boto3
-from engine.glue.handlers.base_step import StepInterface, StepStatus
+
+from engine.glue.handlers.base_step import StepStatus, StepInterface
 from engine.glue.templating import render
 
 

@@ -2,13 +2,14 @@ import json
 import logging
 import os
 
+from . import stack_helper
+from ...context import Context
 from .... import db
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.cloudwatch import CloudWatch
-from ....db import exceptions, models
+from ....db import exceptions
+from ....db import models
 from ....utils import Parameter
-from ...context import Context
-from . import stack_helper
 
 log = logging.getLogger(__name__)
 

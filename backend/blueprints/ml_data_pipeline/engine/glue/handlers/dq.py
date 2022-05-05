@@ -1,9 +1,10 @@
 import copy
 
-from engine.glue.pydeequ.base import VerificationSuite
-from engine.glue.pydeequ.checks import Check, is_one
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import current_timestamp
+
+from engine.glue.pydeequ.base import VerificationSuite
+from engine.glue.pydeequ.checks import Check, is_one
 
 from .base_step import Step
 

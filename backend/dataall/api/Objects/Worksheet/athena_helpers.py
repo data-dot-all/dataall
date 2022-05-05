@@ -1,8 +1,8 @@
 import nanoid
 
+from ..AthenaQueryResult import AthenaQueryResult
 from ....aws.handlers.sts import SessionHelper
 from ....db import models
-from ..AthenaQueryResult import AthenaQueryResult
 
 
 def connect(aws, region):

@@ -3,8 +3,9 @@ import os
 import sys
 
 from .. import db
+from ..db import models
 from ..aws.handlers.ecs import Ecs
-from ..db import get_engine, models
+from ..db import get_engine
 from ..utils import Parameter
 
 root = logging.getLogger()

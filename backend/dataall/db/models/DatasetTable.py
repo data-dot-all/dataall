@@ -2,7 +2,8 @@ from sqlalchemy import Column, String, Text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
-from .. import Base, Resource, utils
+from .. import Base
+from .. import Resource, utils
 
 
 class DatasetTable(Resource, Base):

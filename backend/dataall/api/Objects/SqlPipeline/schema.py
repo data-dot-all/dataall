@@ -1,6 +1,6 @@
 from ... import gql
-from ...constants import DataPipelineRole
 from .resolvers import *
+from ...constants import DataPipelineRole
 
 SqlPipeline = gql.ObjectType(
     name="SqlPipeline",

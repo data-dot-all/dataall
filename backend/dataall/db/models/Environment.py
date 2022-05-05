@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy.orm import query_expression
 
-from .. import Base, Resource, utils
+from .. import Base
+from .. import Resource, utils
 
 
 class Environment(Resource, Base):

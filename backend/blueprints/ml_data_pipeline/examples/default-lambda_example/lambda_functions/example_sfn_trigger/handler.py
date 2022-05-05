@@ -1,11 +1,11 @@
 """ The lambdafx that triggers the execution of state machine of NNQ pipeline.
     The lambdafx builds the configuration of the state machine.
 """
+import boto3
+from datetime import datetime
 import json
 import os
-from datetime import datetime
 
-import boto3
 
 # The state machine ARN. The ARN is provided in the environment variable
 STATE_MACHINE_ARN = os.environ.get("PIPELINE_STATE_MACHINE_ARN")

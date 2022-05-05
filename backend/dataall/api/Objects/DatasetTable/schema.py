@@ -1,7 +1,7 @@
-from ... import gql
-from ...constants import GraphQLEnumMapper
 from ..DatasetTableColumn.resolvers import list_table_columns
+from ... import gql
 from .resolvers import *
+from ...constants import GraphQLEnumMapper
 
 TablePermission = gql.ObjectType(
     name="TablePermission",

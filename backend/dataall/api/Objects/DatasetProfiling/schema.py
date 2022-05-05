@@ -1,6 +1,9 @@
 from ... import gql
-from .resolvers import (get_profiling_results, get_profiling_run_status,
-                        resolve_dataset)
+from .resolvers import (
+    resolve_dataset,
+    get_profiling_run_status,
+    get_profiling_results,
+)
 
 DatasetProfilingRun = gql.ObjectType(
     name="DatasetProfilingRun",

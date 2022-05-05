@@ -1,7 +1,6 @@
-from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import core
-from engine.sagemaker.mappers.sm_endpointconfig_mapper import \
-    SageMakerEndpointConfigPropsMapper
+from engine.sagemaker.mappers.sm_endpointconfig_mapper import SageMakerEndpointConfigPropsMapper
+from aws_cdk import aws_stepfunctions as stepfunctions
 
 
 class ATestStack(core.Stack):

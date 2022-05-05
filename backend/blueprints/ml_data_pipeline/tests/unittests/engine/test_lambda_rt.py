@@ -1,5 +1,5 @@
-from aws_cdk import aws_lambda as lambda_
 from engine import resource_task
+from aws_cdk import aws_lambda as lambda_
 
 
 def test_to_runtime():

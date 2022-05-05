@@ -2,17 +2,24 @@ import logging
 import os
 import typing
 
-from aws_cdk import CfnResource, CustomResource, Duration, Stack, Tags
-from aws_cdk import aws_glue as glue
-from aws_cdk import aws_iam as iam
-from aws_cdk import aws_kms as kms
-from aws_cdk import aws_lambda as _lambda
-from aws_cdk import aws_s3 as s3
-from aws_cdk import aws_ssm as ssm
-from aws_cdk import custom_resources as cr
+from aws_cdk import (
+    custom_resources as cr,
+    aws_s3 as s3,
+    aws_kms as kms,
+    aws_lambda as _lambda,
+    aws_iam as iam,
+    aws_ssm as ssm,
+    aws_glue as glue,
+    Stack,
+    Duration,
+    CfnResource,
+    CustomResource,
+    Tags,
+)
 from aws_cdk.aws_glue import CfnCrawler
 from sqlalchemy import and_
 
+from .manager import stack
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
 from ...aws.handlers.sts import SessionHelper
@@ -20,7 +27,6 @@ from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
-from .manager import stack
 
 logger = logging.getLogger(__name__)
 

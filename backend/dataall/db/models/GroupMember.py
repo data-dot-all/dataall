@@ -2,8 +2,8 @@ import datetime
 
 from sqlalchemy import Column, DateTime, String
 
-from .. import Base
 from .Enums import GroupMemberRole
+from .. import Base
 
 
 class GroupMember(Base):

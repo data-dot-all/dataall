@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 GlossaryNode = gql.Union(
     name="GlossaryNode",
     types=[

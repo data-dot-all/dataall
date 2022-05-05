@@ -3,30 +3,38 @@ import os
 import pathlib
 import shutil
 
-from aws_cdk import (CustomResource, Duration, RemovalPolicy, Stack, Tags,
-                     aws_athena)
-from aws_cdk import aws_iam as iam
-from aws_cdk import aws_kms as kms
-from aws_cdk import aws_lambda as _lambda
-from aws_cdk import aws_lambda_destinations as lambda_destination
-from aws_cdk import aws_s3 as s3
-from aws_cdk import aws_s3_deployment
-from aws_cdk import aws_sns as sns
-from aws_cdk import aws_sns_subscriptions as sns_subs
-from aws_cdk import aws_sqs as sqs
-from aws_cdk import aws_ssm as ssm
-from aws_cdk import custom_resources as cr
+from aws_cdk import (
+    custom_resources as cr,
+    aws_s3 as s3,
+    aws_s3_deployment,
+    aws_iam as iam,
+    aws_lambda as _lambda,
+    aws_lambda_destinations as lambda_destination,
+    aws_ssm as ssm,
+    aws_sns as sns,
+    aws_sqs as sqs,
+    aws_sns_subscriptions as sns_subs,
+    aws_kms as kms,
+    aws_athena,
+    RemovalPolicy,
+    Stack,
+    Duration,
+    CustomResource,
+    Tags,
+)
 
+from .manager import stack
+from .policies.data_policy import DataPolicy
+from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
-from ...aws.handlers.sagemaker_studio import SagemakerStudio
+from ...aws.handlers.sagemaker_studio import (
+    SagemakerStudio,
+)
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
-from .manager import stack
-from .policies.data_policy import DataPolicy
-from .policies.service_policy import ServicePolicy
 
 logger = logging.getLogger(__name__)
 

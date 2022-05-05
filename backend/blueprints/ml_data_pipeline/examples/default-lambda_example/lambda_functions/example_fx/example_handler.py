@@ -1,5 +1,5 @@
-import boto3
 import pandas as pd
+import boto3
 
 s3 = boto3.client("s3")
 

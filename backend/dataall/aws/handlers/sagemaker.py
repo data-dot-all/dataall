@@ -1,8 +1,7 @@
 import logging
 
-from botocore.exceptions import ClientError
-
 from .sts import SessionHelper
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 

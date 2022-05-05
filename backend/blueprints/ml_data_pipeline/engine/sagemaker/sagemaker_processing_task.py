@@ -1,6 +1,8 @@
 from aws_cdk import aws_stepfunctions as stepfunctions
-from engine.sagemaker.mappers.sm_processing_mapper import \
-    SageMakerProcessingJobPropsMapper
+
+from engine.sagemaker.mappers.sm_processing_mapper import (
+    SageMakerProcessingJobPropsMapper,
+)
 
 
 def make_sagemaker_processing_task(stack, job, group_index, job_index):

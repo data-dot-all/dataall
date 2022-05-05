@@ -1,5 +1,5 @@
-from aws_cdk import core
 from engine import resource_task
+from aws_cdk import core
 
 
 class ATestStack(core.Stack):

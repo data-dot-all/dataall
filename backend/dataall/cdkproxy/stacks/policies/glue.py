@@ -1,6 +1,5 @@
-from aws_cdk import aws_iam as iam
-
 from .service_policy import ServicePolicy
+from aws_cdk import aws_iam as iam
 
 
 class Glue(ServicePolicy):

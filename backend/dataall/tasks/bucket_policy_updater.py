@@ -8,7 +8,8 @@ from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
 from ..aws.handlers.sts import SessionHelper
-from ..db import api, get_engine, models
+from ..db import get_engine
+from ..db import models, api
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

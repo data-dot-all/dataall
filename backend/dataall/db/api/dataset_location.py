@@ -2,10 +2,10 @@ import logging
 
 from sqlalchemy import and_
 
-from .. import exceptions, models, paginate, permissions
-from ..models.Enums import ShareObjectStatus
-from . import Glossary, has_resource_perm, has_tenant_perm
+from . import has_tenant_perm, has_resource_perm, Glossary
+from .. import models, paginate, permissions, exceptions
 from .dataset import Dataset
+from ..models.Enums import ShareObjectStatus
 
 logger = logging.getLogger(__name__)
 

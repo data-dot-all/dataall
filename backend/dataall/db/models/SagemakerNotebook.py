@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import query_expression
 
-from .. import Base, Resource, utils
+from .. import Base
+from .. import Resource, utils
 
 
 class SagemakerNotebook(Resource, Base):

@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 
+
 FeedTarget = gql.Union(
     name="FeedTarget",
     types=[
