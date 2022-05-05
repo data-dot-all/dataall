@@ -1,9 +1,9 @@
 from ... import gql
 
 UpdateGroupTenantPermissionsInput = gql.InputType(
-    name='UpdateGroupTenantPermissionsInput',
+    name="UpdateGroupTenantPermissionsInput",
     arguments=[
-        gql.Argument('permissions', gql.ArrayType(gql.String)),
-        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument("permissions", gql.ArrayType(gql.String)),
+        gql.Argument("groupUri", gql.NonNullableType(gql.String)),
     ],
 )

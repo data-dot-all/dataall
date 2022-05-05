@@ -7,10 +7,10 @@ class NamingConventionPattern(Enum):
     def __str__(self):
         return self.value
 
-    S3 = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
-    IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
-    GLUE = {'regex': '[^a-zA-Z0-9_]', 'separator': '_', 'max_length': 63}
-    DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
+    S3 = {"regex": "[^a-zA-Z0-9-]", "separator": "-", "max_length": 63}
+    IAM = {"regex": "[^a-zA-Z0-9-_]", "separator": "-", "max_length": 63}
+    GLUE = {"regex": "[^a-zA-Z0-9_]", "separator": "_", "max_length": 63}
+    DEFAULT = {"regex": "[^a-zA-Z0-9-_]", "separator": "-", "max_length": 63}
 
 
 class NamingConventionService:
@@ -31,16 +31,16 @@ class NamingConventionService:
         Builds a compliant AWS resource name
         """
         if self.service == NamingConventionPattern.S3:
-            regex = self.service.S3.value['regex']
+            regex = self.service.S3.value["regex"]
             return self.build_s3_compliant_name(regex)
         elif self.service == NamingConventionPattern.IAM:
-            regex = self.service.IAM.value['regex']
+            regex = self.service.IAM.value["regex"]
             return self.build_iam_compliant_name(regex)
         elif self.service == NamingConventionPattern.GLUE:
-            regex = self.service.GLUE.value['regex']
+            regex = self.service.GLUE.value["regex"]
             return self.build_glue_compliant_name(regex)
         else:
-            regex = self.service.DEFAULT.value['regex']
+            regex = self.service.DEFAULT.value["regex"]
             return self.build_default_compliant_name(regex)
 
     def build_s3_compliant_name(self, regex) -> str:

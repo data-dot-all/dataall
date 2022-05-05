@@ -23,23 +23,21 @@ class ShareObject:
     ) -> models.ShareObject:
         if not data:
             raise exceptions.RequiredParameter(data)
-        if not data.get('principalId'):
-            raise exceptions.RequiredParameter('principalId')
-        if not data.get('datasetUri'):
-            raise exceptions.RequiredParameter('datasetUri')
+        if not data.get("principalId"):
+            raise exceptions.RequiredParameter("principalId")
+        if not data.get("datasetUri"):
+            raise exceptions.RequiredParameter("datasetUri")
 
-        principalId = data['principalId']
-        principalType = data['principalType']
-        datasetUri = data['datasetUri']
+        principalId = data["principalId"]
+        principalType = data["principalType"]
+        datasetUri = data["datasetUri"]
         environmentUri = uri
-        itemUri = data.get('itemUri')
-        itemType = data.get('itemType')
+        itemUri = data.get("itemUri")
+        itemType = data.get("itemType")
 
-        dataset: models.Dataset = data.get(
-            'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
-        )
+        dataset: models.Dataset = data.get("dataset", api.Dataset.get_dataset_by_uri(session, datasetUri))
         environment: models.Environment = data.get(
-            'environment',
+            "environment",
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
 
@@ -48,7 +46,7 @@ class ShareObject:
         ) and environment.environmentUri == dataset.environmentUri:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
-                message=f'Team: {principalId} is managing the dataset {dataset.name}',
+                message=f"Team: {principalId} is managing the dataset {dataset.name}",
             )
 
         ShareObject.validate_group_membership(
@@ -108,25 +106,21 @@ class ShareObject:
                     itemName=item.name,
                     status=ShareObjectStatus.Draft.value,
                     owner=username,
-                    GlueDatabaseName=dataset.GlueDatabaseName
-                    if itemType == ShareableType.Table.value
-                    else '',
-                    GlueTableName=item.GlueTableName
-                    if itemType == ShareableType.Table.value
-                    else '',
-                    S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.principalId}'.lower()
+                    GlueDatabaseName=dataset.GlueDatabaseName if itemType == ShareableType.Table.value else "",
+                    GlueTableName=item.GlueTableName if itemType == ShareableType.Table.value else "",
+                    S3AccessPointName=f"{share.datasetUri}{item.locationUri}{share.principalId}".lower()
                     if itemType == ShareableType.StorageLocation.value
-                    else '',
+                    else "",
                 )
                 session.add(new_share_item)
 
         activity = models.Activity(
-            action='SHARE_OBJECT:CREATE',
-            label='SHARE_OBJECT:CREATE',
+            action="SHARE_OBJECT:CREATE",
+            label="SHARE_OBJECT:CREATE",
             owner=username,
-            summary=f'{username} created a share object for the {dataset.name} in {environment.name} for the group {principalId}',
+            summary=f"{username} created a share object for the {dataset.name} in {environment.name} for the group {principalId}",
             targetUri=dataset.datasetUri,
-            targetType='dataset',
+            targetType="dataset",
         )
         session.add(activity)
 
@@ -162,13 +156,11 @@ class ShareObject:
         return share
 
     @staticmethod
-    def validate_group_membership(
-        session, environment_uri, share_object_group, username, groups
-    ):
+    def validate_group_membership(session, environment_uri, share_object_group, username, groups):
         if share_object_group and share_object_group not in groups:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
-                message=f'User: {username} is not a member of the team {share_object_group}',
+                message=f"User: {username} is not a member of the team {share_object_group}",
             )
         if share_object_group not in Environment.list_environment_groups(
             session=session,
@@ -180,7 +172,7 @@ class ShareObject:
         ):
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
-                message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
+                message=f"Team: {share_object_group} is not a member of the environment {environment_uri}",
             )
 
     @staticmethod
@@ -198,7 +190,7 @@ class ShareObject:
         if share.status == ShareObjectStatus.PendingApproval.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.SUBMIT_SHARE_OBJECT,
-                message='ShareObject is in PendingApproval state',
+                message="ShareObject is in PendingApproval state",
             )
         (
             session.query(models.ShareObjectItem)
@@ -208,14 +200,10 @@ class ShareObject:
                     models.ShareObjectItem.status != ShareObjectStatus.Approved.value,
                 )
             )
-            .update(
-                {models.ShareObjectItem.status: ShareObjectStatus.PendingApproval.value}
-            )
+            .update({models.ShareObjectItem.status: ShareObjectStatus.PendingApproval.value})
         )
         share.status = ShareObjectStatus.PendingApproval.value
-        api.Notification.notify_share_object_submission(
-            session, username, dataset, share
-        )
+        api.Notification.notify_share_object_submission(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -235,7 +223,7 @@ class ShareObject:
         if share.status != ShareObjectStatus.PendingApproval.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.APPROVE_SHARE_OBJECT,
-                message='ShareObject is not in PendingApproval state',
+                message="ShareObject is not in PendingApproval state",
             )
 
         (
@@ -283,7 +271,7 @@ class ShareObject:
         if share.status == ShareObjectStatus.Rejected.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.REJECT_SHARE_OBJECT,
-                message='ShareObject is not in Rejected state',
+                message="ShareObject is not in Rejected state",
             )
         (
             session.query(models.ShareObjectItem)
@@ -319,7 +307,7 @@ class ShareObject:
     ):
         share = session.query(models.ShareObject).get(uri)
         if not share:
-            raise exceptions.ObjectNotFound('Share', uri)
+            raise exceptions.ObjectNotFound("Share", uri)
 
         return share
 
@@ -334,8 +322,8 @@ class ShareObject:
         check_perm: bool = False,
     ):
         share_item: models.ShareObjectItem = data.get(
-            'share_item',
-            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
+            "share_item",
+            ShareObject.get_share_item_by_uri(session, data["shareItemUri"]),
         )
         if share_item.itemType == ShareableType.Table.value:
             return session.query(models.DatasetTable).get(share_item.itemUri)
@@ -346,7 +334,7 @@ class ShareObject:
     def get_share_by_uri(session, uri):
         share = session.query(models.ShareObject).get(uri)
         if not share:
-            raise exceptions.ObjectNotFound('Share', uri)
+            raise exceptions.ObjectNotFound("Share", uri)
         return share
 
     @staticmethod
@@ -359,30 +347,28 @@ class ShareObject:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObjectItem:
-        itemType = data.get('itemType')
-        itemUri = data.get('itemUri')
+        itemType = data.get("itemType")
+        itemUri = data.get("itemUri")
         item = None
         share: models.ShareObject = session.query(models.ShareObject).get(uri)
         dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
-        target_environment: models.Environment = session.query(models.Environment).get(
-            share.environmentUri
-        )
+        target_environment: models.Environment = session.query(models.Environment).get(share.environmentUri)
 
         if itemType == ShareableType.Table.value:
             item: models.DatasetTable = session.query(models.DatasetTable).get(itemUri)
             if item and item.region != target_environment.region:
                 raise exceptions.UnauthorizedOperation(
                     action=permissions.ADD_ITEM,
-                    message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.GlueTableName} is in {item.region} and target environment '
-                    f'{target_environment.name} is in {target_environment.region} ',
+                    message=f"Lake Formation cross region sharing is not supported. "
+                    f"Table {item.GlueTableName} is in {item.region} and target environment "
+                    f"{target_environment.name} is in {target_environment.region} ",
                 )
 
         elif itemType == ShareableType.StorageLocation.value:
             item = session.query(models.DatasetStorageLocation).get(itemUri)
 
         if not item:
-            raise exceptions.ObjectNotFound('ShareObjectItem', itemUri)
+            raise exceptions.ObjectNotFound("ShareObjectItem", itemUri)
 
         shareItem: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
@@ -403,15 +389,11 @@ class ShareObject:
                 itemName=item.name,
                 status=ShareObjectStatus.Draft.value,
                 owner=username,
-                GlueDatabaseName=dataset.GlueDatabaseName
-                if itemType == ShareableType.Table.value
-                else '',
-                GlueTableName=item.GlueTableName
-                if itemType == ShareableType.Table.value
-                else '',
-                S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.environmentUri}'.lower()
+                GlueDatabaseName=dataset.GlueDatabaseName if itemType == ShareableType.Table.value else "",
+                GlueTableName=item.GlueTableName if itemType == ShareableType.Table.value else "",
+                S3AccessPointName=f"{share.datasetUri}{item.locationUri}{share.environmentUri}".lower()
                 if itemType == ShareableType.StorageLocation.value
-                else '',
+                else "",
             )
             session.add(shareItem)
             share.status = ShareObjectStatus.Draft.value
@@ -429,11 +411,11 @@ class ShareObject:
         check_perm: bool = False,
     ) -> bool:
         share_item: models.ShareObjectItem = data.get(
-            'share_item',
-            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
+            "share_item",
+            ShareObject.get_share_item_by_uri(session, data["shareItemUri"]),
         )
         share: models.ShareObject = data.get(
-            'share',
+            "share",
             ShareObject.get_share_by_uri(session, uri),
         )
         session.delete(share_item)
@@ -446,9 +428,9 @@ class ShareObject:
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         history = models.ShareObjectHistory(
             owner=username,
-            label=f'{username} has cancelled share object',
+            label=f"{username} has cancelled share object",
             shareUri=uri,
-            actionName='CANCEL',
+            actionName="CANCEL",
         )
         session.add(history)
         share.deleted = datetime.now()
@@ -456,11 +438,9 @@ class ShareObject:
 
     @staticmethod
     def get_share_item_by_uri(session, uri):
-        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
-            uri
-        )
+        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(uri)
         if not share_item:
-            raise exceptions.ObjectNotFound('ShareObjectItem', uri)
+            raise exceptions.ObjectNotFound("ShareObjectItem", uri)
 
     @staticmethod
     @has_resource_perm(permissions.LIST_SHARED_ITEMS)
@@ -469,34 +449,28 @@ class ShareObject:
         query = session.query(models.ShareObjectItem).filter(
             models.ShareObjectItem.shareUri == share.shareUri,
         )
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
-        ).to_dict()
+        return paginate(query, page=data.get("page", 1), page_size=data.get("pageSize", 5)).to_dict()
 
     @staticmethod
-    def list_shareable_items(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_shareable_items(session, username, groups, uri, data=None, check_perm=None):
 
-        share: models.ShareObject = data.get(
-            'share', ShareObject.get_share_by_uri(session, uri)
-        )
+        share: models.ShareObject = data.get("share", ShareObject.get_share_by_uri(session, uri))
         datasetUri = share.datasetUri
 
         # All tables from dataset with a column isShared
         # marking the table as part of the shareObject
         tables = (
             session.query(
-                models.DatasetTable.tableUri.label('itemUri'),
-                func.coalesce('DatasetTable').label('itemType'),
-                models.DatasetTable.GlueTableName.label('itemName'),
-                models.DatasetTable.description.label('description'),
-                models.ShareObjectItem.shareItemUri.label('shareItemUri'),
-                models.ShareObjectItem.status.label('status'),
+                models.DatasetTable.tableUri.label("itemUri"),
+                func.coalesce("DatasetTable").label("itemType"),
+                models.DatasetTable.GlueTableName.label("itemName"),
+                models.DatasetTable.description.label("description"),
+                models.ShareObjectItem.shareItemUri.label("shareItemUri"),
+                models.ShareObjectItem.status.label("status"),
                 case(
                     [(models.ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
-                ).label('isShared'),
+                ).label("isShared"),
             )
             .outerjoin(
                 models.ShareObjectItem,
@@ -512,50 +486,47 @@ class ShareObject:
         # marking the folder as part of the shareObject
         locations = (
             session.query(
-                models.DatasetStorageLocation.locationUri.label('itemUri'),
-                func.coalesce('DatasetStorageLocation').label('itemType'),
-                models.DatasetStorageLocation.S3Prefix.label('itemName'),
-                models.DatasetStorageLocation.description.label('description'),
-                models.ShareObjectItem.shareItemUri.label('shareItemUri'),
-                models.ShareObjectItem.status.label('status'),
+                models.DatasetStorageLocation.locationUri.label("itemUri"),
+                func.coalesce("DatasetStorageLocation").label("itemType"),
+                models.DatasetStorageLocation.S3Prefix.label("itemName"),
+                models.DatasetStorageLocation.description.label("description"),
+                models.ShareObjectItem.shareItemUri.label("shareItemUri"),
+                models.ShareObjectItem.status.label("status"),
                 case(
                     [(models.ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
-                ).label('isShared'),
+                ).label("isShared"),
             )
             .outerjoin(
                 models.ShareObjectItem,
                 and_(
                     models.ShareObjectItem.shareUri == share.shareUri,
-                    models.DatasetStorageLocation.locationUri
-                    == models.ShareObjectItem.itemUri,
+                    models.DatasetStorageLocation.locationUri == models.ShareObjectItem.itemUri,
                 ),
             )
             .filter(models.DatasetStorageLocation.datasetUri == datasetUri)
         )
 
-        shareable_objects = tables.union(locations).subquery('shareable_objects')
+        shareable_objects = tables.union(locations).subquery("shareable_objects")
         query = session.query(shareable_objects)
 
         if data:
-            if data.get('term'):
-                term = data.get('term')
+            if data.get("term"):
+                term = data.get("term")
                 query = query.filter(
                     or_(
-                        shareable_objects.c.itemName.ilike(term + '%'),
-                        shareable_objects.c.description.ilike(term + '%'),
+                        shareable_objects.c.itemName.ilike(term + "%"),
+                        shareable_objects.c.description.ilike(term + "%"),
                     )
                 )
-            if 'isShared' in data.keys():
-                isShared = data.get('isShared')
+            if "isShared" in data.keys():
+                isShared = data.get("isShared")
                 query = query.filter(shareable_objects.c.isShared == isShared)
 
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query, data.get("page", 1), data.get("pageSize", 10)).to_dict()
 
     @staticmethod
-    def list_user_received_share_requests(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_user_received_share_requests(session, username, groups, uri, data=None, check_perm=None):
         query = (
             session.query(models.ShareObject)
             .join(
@@ -565,19 +536,15 @@ class ShareObject:
             .filter(
                 or_(
                     models.Dataset.businessOwnerEmail == username,
-                    models.Dataset.businessOwnerDelegationEmails.contains(
-                        f'{{{username}}}'
-                    ),
+                    models.Dataset.businessOwnerDelegationEmails.contains(f"{{{username}}}"),
                     models.Dataset.stewards.in_(groups),
                 )
             )
         )
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query, data.get("page", 1), data.get("pageSize", 10)).to_dict()
 
     @staticmethod
-    def list_user_sent_share_requests(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_user_sent_share_requests(session, username, groups, uri, data=None, check_perm=None):
         query = (
             session.query(models.ShareObject)
             .join(
@@ -594,4 +561,4 @@ class ShareObject:
                 )
             )
         )
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+        return paginate(query, data.get("page", 1), data.get("pageSize", 10)).to_dict()

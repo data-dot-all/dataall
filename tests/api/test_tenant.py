@@ -11,7 +11,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
         }
         """,
         username=user.userName,
-        groups=[group.name, 'DAAdministrators'],
+        groups=[group.name, "DAAdministrators"],
     )
     assert len(response.data.listTenantPermissions) >= 1
 
@@ -26,7 +26,7 @@ def test_list_tenant_permissions(client, user, group, tenant):
         username=user.userName,
         groups=[group.name],
     )
-    assert 'UnauthorizedOperation' in response.errors[0].message
+    assert "UnauthorizedOperation" in response.errors[0].message
 
     response = client.query(
         """
@@ -42,12 +42,10 @@ def test_list_tenant_permissions(client, user, group, tenant):
         }
         """,
         username=user.userName,
-        groups=[group.name, 'DAAdministrators'],
+        groups=[group.name, "DAAdministrators"],
     )
 
-    assert group.name in [
-        node.groupUri for node in response.data.listTenantGroups.nodes
-    ]
+    assert group.name in [node.groupUri for node in response.data.listTenantGroups.nodes]
 
 
 def test_update_permissions(client, user, group, tenant):
@@ -57,12 +55,12 @@ def test_update_permissions(client, user, group, tenant):
             updateGroupTenantPermissions(input:$input)
         }
         """,
-        username='alice',
+        username="alice",
         input=dict(
             groupUri=group.name,
             permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_DATASETS],
         ),
-        groups=[group.name, 'DAAdministrators'],
+        groups=[group.name, "DAAdministrators"],
     )
     print(response)
     assert response.data.updateGroupTenantPermissions
@@ -78,7 +76,7 @@ def test_update_permissions(client, user, group, tenant):
         }
         """,
         username=user.userName,
-        groups=[group.name, 'DAAdministrators'],
+        groups=[group.name, "DAAdministrators"],
         groupUri=group.name,
     )
     assert len(response.data.getGroup.tenantPermissions) == 2
@@ -89,12 +87,12 @@ def test_update_permissions(client, user, group, tenant):
             updateGroupTenantPermissions(input:$input)
         }
         """,
-        username='alice',
+        username="alice",
         input=dict(
             groupUri=group.name,
             permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_DATASETS],
         ),
-        groups=[group.name, 'DAAdministrators'],
+        groups=[group.name, "DAAdministrators"],
     )
     print(response)
     assert response.data.updateGroupTenantPermissions

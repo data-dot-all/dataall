@@ -22,8 +22,9 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
+
 
 def test_function_name():
     stack = ATestStack()
@@ -36,7 +37,7 @@ def test_function_name():
                   timeout: 300
                   memory_size : 2056
             """
-    
+
     name_too_long = False
     try:
         job_config = yaml.safe_load(config)
@@ -61,10 +62,11 @@ def test_function_name():
     stack.pipeline_name = "very-very-very-very-long-pipelne-namedslkfjqsdlkjfklsdjfkqsjdfkjqsdkfjsqdkmlfj"
     assert lambda_task.get_function_name(stack, job_config_2) == "very-very-very-very--mlfj-prepare function"
 
+
 def test_make_lambdafx_task():
 
-   stack = ATestStack()
-   config = """
+    stack = ATestStack()
+    config = """
                name: prepare_function
                description: "Preparing training and test data for iris dataset."
                type: lambda_function
@@ -73,10 +75,6 @@ def test_make_lambdafx_task():
                   timeout: 300
                   memory_size : 2056
             """
-   job_config = yaml.safe_load(config)
-   task = lambda_task.make_lambda_function_task(stack, job_config)
-   assert task
-
-
-
-
+    job_config = yaml.safe_load(config)
+    task = lambda_task.make_lambda_function_task(stack, job_config)
+    assert task

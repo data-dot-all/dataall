@@ -3,23 +3,23 @@ from typing import List
 
 
 class AthenaQueryResultStatus(Enum):
-    CANCELLED = 'CANCELLED'
-    FAILED = 'FAILED'
-    QUEUED = 'QUEUED'
-    RUNNING = 'RUNNING'
-    SUCCEEDED = 'SUCCEEDED'
+    CANCELLED = "CANCELLED"
+    FAILED = "FAILED"
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
 
 
 class AthenaQueryResult:
     props = [
-        'Status',
-        'Error',
-        'AthenaQueryId',
-        'ElapsedTimeInMs',
-        'DataScannedInBytes',
-        'OutputLocation',
-        'rows',
-        'columns',
+        "Status",
+        "Error",
+        "AthenaQueryId",
+        "ElapsedTimeInMs",
+        "DataScannedInBytes",
+        "OutputLocation",
+        "rows",
+        "columns",
     ]
 
     def __init__(
@@ -32,7 +32,7 @@ class AthenaQueryResult:
         OutputLocation: str = None,
         rows: List = None,
         columns: List = None,
-        **kwargs
+        **kwargs,
     ):
         self._error = Error
         self._status = Status

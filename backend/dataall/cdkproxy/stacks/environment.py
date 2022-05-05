@@ -3,8 +3,7 @@ import os
 import pathlib
 import shutil
 
-from aws_cdk import (CustomResource, Duration, RemovalPolicy, Stack, Tags,
-                     aws_athena)
+from aws_cdk import CustomResource, Duration, RemovalPolicy, Stack, Tags, aws_athena
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_lambda as _lambda
@@ -31,12 +30,12 @@ from .policies.service_policy import ServicePolicy
 logger = logging.getLogger(__name__)
 
 
-@stack(stack='environment')
+@stack(stack="environment")
 class EnvironmentSetup(Stack):
     module_name = __file__
 
     def get_engine(self):
-        envname = os.environ.get('envname', 'local')
+        envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         return engine
 
@@ -45,7 +44,7 @@ class EnvironmentSetup(Stack):
         with engine.scoped_session() as session:
             target = session.query(models.Environment).get(target_uri)
             if not target:
-                raise Exception('ObjectNotFound')
+                raise Exception("ObjectNotFound")
         return target
 
     def get_environment_defautl_vpc(self, engine, environmentUri) -> models.Vpc:
@@ -56,17 +55,15 @@ class EnvironmentSetup(Stack):
         Quicksight.create_quicksight_default_group(environment.AwsAccountId)
 
     def check_sagemaker_studio(self, engine, environment: models.Environment):
-        logger.info('check sagemaker studio domain creation')
-        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-            environment.AwsAccountId, environment.region
-        )
-        existing_domain_id = existing_domain.get('DomainId', False)
+        logger.info("check sagemaker studio domain creation")
+        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(environment.AwsAccountId, environment.region)
+        existing_domain_id = existing_domain.get("DomainId", False)
         if existing_domain_id:
             ssm.StringParameter(
                 self,
-                'SagemakeStudioDomainId',
+                "SagemakeStudioDomainId",
                 string_value=existing_domain_id,
-                parameter_name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
+                parameter_name=f"/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id",
             )
 
     @staticmethod
@@ -74,23 +71,21 @@ class EnvironmentSetup(Stack):
         with engine.scoped_session() as session:
             group_permissions = db.api.Environment.list_group_permissions(
                 session=session,
-                username='cdk',
+                username="cdk",
                 groups=None,
                 uri=environmentUri,
-                data={'groupUri': group},
+                data={"groupUri": group},
                 check_perm=False,
             )
             permission_names = [permission.name for permission in group_permissions]
             return permission_names
 
     @staticmethod
-    def get_environment_groups(
-        engine, environment: models.Environment
-    ) -> [models.EnvironmentGroup]:
+    def get_environment_groups(engine, environment: models.Environment) -> [models.EnvironmentGroup]:
         with engine.scoped_session() as session:
             return db.api.Environment.list_environment_invited_groups(
                 session,
-                username='cdk',
+                username="cdk",
                 groups=[],
                 uri=environment.environmentUri,
                 data=None,
@@ -98,9 +93,7 @@ class EnvironmentSetup(Stack):
             )
 
     @staticmethod
-    def get_environment_admins_group(
-        engine, environment: models.Environment
-    ) -> [models.EnvironmentGroup]:
+    def get_environment_admins_group(engine, environment: models.Environment) -> [models.EnvironmentGroup]:
         with engine.scoped_session() as session:
             return db.api.Environment.get_environment_group(
                 session,
@@ -109,23 +102,19 @@ class EnvironmentSetup(Stack):
             )
 
     @staticmethod
-    def get_environment_group_datasets(
-        engine, environment: models.Environment, group: str
-    ) -> [models.Dataset]:
+    def get_environment_group_datasets(engine, environment: models.Environment, group: str) -> [models.Dataset]:
         with engine.scoped_session() as session:
             return db.api.Environment.list_group_datasets(
                 session,
-                username='cdk',
+                username="cdk",
                 groups=[],
                 uri=environment.environmentUri,
-                data={'groupUri': group},
+                data={"groupUri": group},
                 check_perm=False,
             )
 
     @staticmethod
-    def get_all_environment_datasets(
-        engine, environment: models.Environment
-    ) -> [models.Dataset]:
+    def get_all_environment_datasets(engine, environment: models.Environment) -> [models.Dataset]:
         with engine.scoped_session() as session:
             return (
                 session.query(models.Dataset)
@@ -147,22 +136,20 @@ class EnvironmentSetup(Stack):
 
         self._environment = self.get_target(target_uri=target_uri)
 
-        self.environment_groups: [
-            models.EnvironmentGroup
-        ] = self.get_environment_groups(self.engine, environment=self._environment)
+        self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(
+            self.engine, environment=self._environment
+        )
 
-        self.environment_admins_group: [
-            models.EnvironmentGroup
-        ] = self.get_environment_admins_group(self.engine, self._environment)
-
-        self.all_environment_datasets = self.get_all_environment_datasets(
+        self.environment_admins_group: [models.EnvironmentGroup] = self.get_environment_admins_group(
             self.engine, self._environment
         )
+
+        self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
 
         self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
 
         if self._environment.dashboardsEnabled:
-            logger.warning('ensure_quicksight_default_group')
+            logger.warning("ensure_quicksight_default_group")
             self.init_quicksight(environment=self._environment)
 
         self.create_or_import_environment_groups_roles()
@@ -171,7 +158,7 @@ class EnvironmentSetup(Stack):
 
         default_environment_bucket = s3.Bucket(
             self,
-            'EnvironmentDefaultBucket',
+            "EnvironmentDefaultBucket",
             bucket_name=self._environment.EnvironmentDefaultBucketName,
             encryption=s3.BucketEncryption.S3_MANAGED,
             removal_policy=RemovalPolicy.RETAIN,
@@ -181,23 +168,23 @@ class EnvironmentSetup(Stack):
         )
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
-                sid='RedshiftLogging',
-                actions=['s3:PutObject', 's3:GetBucketAcl'],
+                sid="RedshiftLogging",
+                actions=["s3:PutObject", "s3:GetBucketAcl"],
                 resources=[
-                    f'{default_environment_bucket.bucket_arn}/*',
+                    f"{default_environment_bucket.bucket_arn}/*",
                     default_environment_bucket.bucket_arn,
                 ],
-                principals=[iam.ServicePrincipal('redshift.amazonaws.com')],
+                principals=[iam.ServicePrincipal("redshift.amazonaws.com")],
             )
         )
 
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
-                sid='AWSLogDeliveryWrite',
+                sid="AWSLogDeliveryWrite",
                 effect=iam.Effect.ALLOW,
-                principals=[iam.ServicePrincipal('logging.s3.amazonaws.com')],
-                actions=['s3:PutObject', 's3:PutObjectAcl'],
-                resources=[f'{default_environment_bucket.bucket_arn}/*'],
+                principals=[iam.ServicePrincipal("logging.s3.amazonaws.com")],
+                actions=["s3:PutObject", "s3:PutObjectAcl"],
+                resources=[f"{default_environment_bucket.bucket_arn}/*"],
             )
         )
 
@@ -227,19 +214,15 @@ class EnvironmentSetup(Stack):
         )
 
         profiling_assetspath = self.zip_code(
-            os.path.realpath(
-                os.path.abspath(
-                    os.path.join(__file__, '..', '..', 'assets', 'glueprofilingjob')
-                )
-            )
+            os.path.realpath(os.path.abspath(os.path.join(__file__, "..", "..", "assets", "glueprofilingjob")))
         )
 
         aws_s3_deployment.BucketDeployment(
             self,
-            f'{self._environment.resourcePrefix}GlueProflingJobDeployment',
+            f"{self._environment.resourcePrefix}GlueProflingJobDeployment",
             sources=[aws_s3_deployment.Source.asset(profiling_assetspath)],
             destination_bucket=default_environment_bucket,
-            destination_key_prefix='profiling/code',
+            destination_key_prefix="profiling/code",
         )
 
         self.create_or_import_environment_default_role()
@@ -251,36 +234,34 @@ class EnvironmentSetup(Stack):
 
         pivot_role = iam.Role.from_role_arn(
             self,
-            f'PivotRole{self._environment.environmentUri}',
-            f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
+            f"PivotRole{self._environment.environmentUri}",
+            f"arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}",
         )
 
         # Lakeformation default settings
         entry_point = str(
-            pathlib.PosixPath(
-                os.path.dirname(__file__), '../assets/lakeformationdefaultsettings'
-            ).resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), "../assets/lakeformationdefaultsettings").resolve()
         )
 
         lakeformation_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-lfcr-{self._environment.environmentUri}'
+            f"{self._environment.resourcePrefix}-lfcr-{self._environment.environmentUri}"
         )
         lf_default_settings_custom_resource = _lambda.Function(
             self,
-            'LakeformationDefaultSettingsHandler',
-            function_name=f'{self._environment.resourcePrefix}-lf-settings-handler-{self._environment.environmentUri}',
+            "LakeformationDefaultSettingsHandler",
+            function_name=f"{self._environment.resourcePrefix}-lf-settings-handler-{self._environment.environmentUri}",
             role=pivot_role,
-            handler='index.on_event',
+            handler="index.on_event",
             code=_lambda.Code.from_asset(entry_point),
             memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Lakeformation default settings',
+            description="This Lambda function is a cloudformation custom resource provider for Lakeformation default settings",
             timeout=Duration.seconds(5 * 60),
             environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
+                "envname": self._environment.name,
+                "LOG_LEVEL": "DEBUG",
+                "AWS_ACCOUNT": self._environment.AwsAccountId,
+                "DEFAULT_ENV_ROLE_ARN": self._environment.EnvironmentDefaultIAMRoleArn,
+                "DEFAULT_CDK_ROLE_ARN": self._environment.CDKRoleArn,
             },
             dead_letter_queue_enabled=True,
             dead_letter_queue=lakeformation_cr_dlq,
@@ -290,46 +271,42 @@ class EnvironmentSetup(Stack):
 
         ssm.StringParameter(
             self,
-            'LakeformationDefaultSettingsCustomeResourceFunctionArn',
+            "LakeformationDefaultSettingsCustomeResourceFunctionArn",
             string_value=lf_default_settings_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/arn',
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/arn",
         )
 
         ssm.StringParameter(
             self,
-            'LakeformationDefaultSettingsCustomeResourceFunctionName',
+            "LakeformationDefaultSettingsCustomeResourceFunctionName",
             string_value=lf_default_settings_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/name',
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/name",
         )
 
         # Glue database custom resource
 
         entry_point = str(
-            pathlib.PosixPath(
-                os.path.dirname(__file__), '../assets/gluedatabasecustomresource'
-            ).resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), "../assets/gluedatabasecustomresource").resolve()
         )
 
-        gluedb_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-gluedbcr-{self._environment.environmentUri}'
-        )
+        gluedb_cr_dlq = self.set_dlq(f"{self._environment.resourcePrefix}-gluedbcr-{self._environment.environmentUri}")
         gluedb_custom_resource = _lambda.Function(
             self,
-            'GlueDatabaseCustomResourceHandler',
-            function_name=f'{self._environment.resourcePrefix}-gluedb-handler-{self._environment.environmentUri}',
+            "GlueDatabaseCustomResourceHandler",
+            function_name=f"{self._environment.resourcePrefix}-gluedb-handler-{self._environment.environmentUri}",
             role=pivot_role,
-            handler='index.on_event',
+            handler="index.on_event",
             code=_lambda.Code.from_asset(entry_point),
             memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Glue database '
-            'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
+            description="This Lambda function is a cloudformation custom resource provider for Glue database "
+            "as Cfn currently does not support the CreateTableDefaultPermissions parameter",
             timeout=Duration.seconds(5 * 60),
             environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
+                "envname": self._environment.name,
+                "LOG_LEVEL": "DEBUG",
+                "AWS_ACCOUNT": self._environment.AwsAccountId,
+                "DEFAULT_ENV_ROLE_ARN": self._environment.EnvironmentDefaultIAMRoleArn,
+                "DEFAULT_CDK_ROLE_ARN": self._environment.CDKRoleArn,
             },
             dead_letter_queue_enabled=True,
             dead_letter_queue=gluedb_cr_dlq,
@@ -340,77 +317,75 @@ class EnvironmentSetup(Stack):
 
         ssm.StringParameter(
             self,
-            'GlueCustomResourceFunctionArn',
+            "GlueCustomResourceFunctionArn",
             string_value=gluedb_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/arn',
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/arn",
         )
 
         ssm.StringParameter(
             self,
-            'GlueCustomResourceFunctionName',
+            "GlueCustomResourceFunctionName",
             string_value=gluedb_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name",
         )
 
         LakeformationDefaultSettingsProvider = cr.Provider(
             self,
-            f'{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider',
+            f"{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider",
             on_event_handler=lf_default_settings_custom_resource,
         )
 
         default_lf_settings = CustomResource(
             self,
-            f'{self._environment.resourcePrefix}DefaultLakeFormationSettings',
+            f"{self._environment.resourcePrefix}DefaultLakeFormationSettings",
             service_token=LakeformationDefaultSettingsProvider.service_token,
-            resource_type='Custom::LakeformationDefaultSettings',
+            resource_type="Custom::LakeformationDefaultSettings",
             properties={
-                'DataLakeAdmins': [
-                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
+                "DataLakeAdmins": [
+                    f"arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}",
                 ]
             },
         )
 
-        self.create_athena_workgroups(
-            self.environment_groups, default_environment_bucket
-        )
+        self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
 
         if self._environment.subscriptionsEnabled:
             queue_key = kms.Key(
                 self,
-                f'{self._environment.resourcePrefix}-producers-queue-key',
+                f"{self._environment.resourcePrefix}-producers-queue-key",
                 removal_policy=RemovalPolicy.DESTROY,
-                alias=f'{self._environment.resourcePrefix}-producers-queue-key',
+                alias=f"{self._environment.resourcePrefix}-producers-queue-key",
                 enable_key_rotation=True,
             )
             dlq_queue = sqs.Queue(
                 self,
-                f'ProducersSubscriptionsQueue-{self._environment.environmentUri}-dlq',
-                queue_name=f'{self._environment.resourcePrefix}-producers-dlq-{self._environment.environmentUri}',
+                f"ProducersSubscriptionsQueue-{self._environment.environmentUri}-dlq",
+                queue_name=f"{self._environment.resourcePrefix}-producers-dlq-{self._environment.environmentUri}",
                 retention_period=Duration.days(14),
                 encryption=sqs.QueueEncryption.KMS,
                 encryption_master_key=queue_key,
             )
             dlq_queue.add_to_resource_policy(
                 iam.PolicyStatement(
-                    sid='Enforce TLS for all principals',
+                    sid="Enforce TLS for all principals",
                     effect=iam.Effect.DENY,
                     principals=[
                         iam.AnyPrincipal(),
                     ],
                     actions=[
-                        'sqs:*',
+                        "sqs:*",
                     ],
                     resources=[dlq_queue.queue_arn],
                     conditions={
-                        'Bool': {'aws:SecureTransport': 'false'},
+                        "Bool": {"aws:SecureTransport": "false"},
                     },
                 )
             )
             self.dlq = sqs.DeadLetterQueue(max_receive_count=2, queue=dlq_queue)
             queue = sqs.Queue(
                 self,
-                f'ProducersSubscriptionsQueue-{self._environment.environmentUri}',
-                queue_name=f'{self._environment.resourcePrefix}-producers-queue-{self._environment.environmentUri}',
+                f"ProducersSubscriptionsQueue-{self._environment.environmentUri}",
+                queue_name=f"{self._environment.resourcePrefix}-producers-queue-{self._environment.environmentUri}",
                 dead_letter_queue=self.dlq,
                 encryption=sqs.QueueEncryption.KMS,
                 encryption_master_key=queue_key,
@@ -419,8 +394,8 @@ class EnvironmentSetup(Stack):
             if self._environment.subscriptionsProducersTopicImported:
                 topic = sns.Topic.from_topic_arn(
                     self,
-                    'ProducersTopicImported',
-                    f'arn:aws:sns:{self._environment.region}:{self._environment.AwsAccountId}:{self._environment.subscriptionsProducersTopicName}',
+                    "ProducersTopicImported",
+                    f"arn:aws:sns:{self._environment.region}:{self._environment.AwsAccountId}:{self._environment.subscriptionsProducersTopicName}",
                 )
             else:
                 topic = self.create_topic(
@@ -433,7 +408,7 @@ class EnvironmentSetup(Stack):
 
             policy = sqs.QueuePolicy(
                 self,
-                f'{self._environment.resourcePrefix}ProducersSubscriptionsQueuePolicy',
+                f"{self._environment.resourcePrefix}ProducersSubscriptionsQueuePolicy",
                 queues=[queue],
             )
 
@@ -442,33 +417,33 @@ class EnvironmentSetup(Stack):
                     principals=[iam.AccountPrincipal(central_account)],
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'sqs:ReceiveMessage',
-                        'sqs:DeleteMessage',
-                        'sqs:ChangeMessageVisibility',
-                        'sqs:GetQueueUrl',
-                        'sqs:GetQueueAttributes',
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:ChangeMessageVisibility",
+                        "sqs:GetQueueUrl",
+                        "sqs:GetQueueAttributes",
                     ],
                     resources=[queue.queue_arn],
                 ),
                 iam.PolicyStatement(
-                    principals=[iam.ServicePrincipal('sns.amazonaws.com')],
+                    principals=[iam.ServicePrincipal("sns.amazonaws.com")],
                     effect=iam.Effect.ALLOW,
-                    actions=['sqs:SendMessage'],
+                    actions=["sqs:SendMessage"],
                     resources=[queue.queue_arn],
-                    conditions={'ArnEquals': {'aws:SourceArn': topic.topic_arn}},
+                    conditions={"ArnEquals": {"aws:SourceArn": topic.topic_arn}},
                 ),
                 iam.PolicyStatement(
-                    sid='Enforce TLS for all principals',
+                    sid="Enforce TLS for all principals",
                     effect=iam.Effect.DENY,
                     principals=[
                         iam.AnyPrincipal(),
                     ],
                     actions=[
-                        'sqs:*',
+                        "sqs:*",
                     ],
                     resources=[queue.queue_arn],
                     conditions={
-                        'Bool': {'aws:SecureTransport': 'false'},
+                        "Bool": {"aws:SecureTransport": "false"},
                     },
                 ),
             )
@@ -488,17 +463,17 @@ class EnvironmentSetup(Stack):
         if self._environment.EnvironmentDefaultIAMRoleImported:
             default_role = iam.Role.from_role_arn(
                 self,
-                f'EnvironmentRole{self._environment.environmentUri}Imported',
+                f"EnvironmentRole{self._environment.environmentUri}Imported",
                 self._environment.EnvironmentDefaultIAMRoleArn,
             )
         else:
             services_policies = ServicePolicy(
                 stack=self,
-                tag_key='Team',
+                tag_key="Team",
                 tag_value=self._environment.SamlGroupName,
                 resource_prefix=self._environment.resourcePrefix,
-                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy',
-                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy',
+                name=f"{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy",
+                id=f"{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy",
                 account=self._environment.AwsAccountId,
                 region=self._environment.region,
                 role_name=self._environment.EnvironmentDefaultIAMRoleName,
@@ -511,11 +486,11 @@ class EnvironmentSetup(Stack):
 
             data_policy = DataPolicy(
                 stack=self,
-                tag_key='Team',
+                tag_key="Team",
                 tag_value=self._environment.SamlGroupName,
                 resource_prefix=self._environment.resourcePrefix,
-                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy',
-                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy',
+                name=f"{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy",
+                id=f"{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy",
                 account=self._environment.AwsAccountId,
                 region=self._environment.region,
                 environment=self._environment,
@@ -525,21 +500,21 @@ class EnvironmentSetup(Stack):
 
             default_role = iam.Role(
                 self,
-                'DefaultEnvironmentRole',
+                "DefaultEnvironmentRole",
                 role_name=self._environment.EnvironmentDefaultIAMRoleName,
                 inline_policies={
-                    f'DataPolicy{self._environment.environmentUri}': data_policy.document,
+                    f"DataPolicy{self._environment.environmentUri}": data_policy.document,
                 },
                 managed_policies=services_policies,
                 assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('glue.amazonaws.com'),
-                    iam.ServicePrincipal('lambda.amazonaws.com'),
-                    iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                    iam.ServicePrincipal('athena.amazonaws.com'),
-                    iam.ServicePrincipal('states.amazonaws.com'),
-                    iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                    iam.ServicePrincipal('redshift.amazonaws.com'),
-                    iam.ServicePrincipal('databrew.amazonaws.com'),
+                    iam.ServicePrincipal("glue.amazonaws.com"),
+                    iam.ServicePrincipal("lambda.amazonaws.com"),
+                    iam.ServicePrincipal("lakeformation.amazonaws.com"),
+                    iam.ServicePrincipal("athena.amazonaws.com"),
+                    iam.ServicePrincipal("states.amazonaws.com"),
+                    iam.ServicePrincipal("sagemaker.amazonaws.com"),
+                    iam.ServicePrincipal("redshift.amazonaws.com"),
+                    iam.ServicePrincipal("databrew.amazonaws.com"),
                     iam.AccountPrincipal(self._environment.AwsAccountId),
                 ),
             )
@@ -553,8 +528,8 @@ class EnvironmentSetup(Stack):
             else:
                 iam.Role.from_role_arn(
                     self,
-                    f'{group.groupUri + group.environmentIAMRoleName}',
-                    role_arn=f'arn:aws:iam::{self.environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
+                    f"{group.groupUri + group.environmentIAMRoleName}",
+                    role_arn=f"arn:aws:iam::{self.environment.AwsAccountId}:role/{group.environmentIAMRoleName}",
                 )
 
     def create_group_environment_role(self, group):
@@ -564,11 +539,11 @@ class EnvironmentSetup(Stack):
         )
         services_policies = ServicePolicy(
             stack=self,
-            tag_key='Team',
+            tag_key="Team",
             tag_value=group.groupUri,
             resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-services-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-services-policy',
+            name=f"{self._environment.resourcePrefix}-{group.groupUri}-services-policy",
+            id=f"{self._environment.resourcePrefix}-{group.groupUri}-services-policy",
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
             region=self._environment.region,
@@ -577,40 +552,38 @@ class EnvironmentSetup(Stack):
 
         data_policy = DataPolicy(
             stack=self,
-            tag_key='Team',
+            tag_key="Team",
             tag_value=group.groupUri,
             resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+            name=f"{self._environment.resourcePrefix}-{group.groupUri}-data-policy",
+            id=f"{self._environment.resourcePrefix}-{group.groupUri}-data-policy",
             account=self._environment.AwsAccountId,
             region=self._environment.region,
             environment=self._environment,
             team=group,
-            datasets=self.get_environment_group_datasets(
-                self.engine, self._environment, group.groupUri
-            ),
+            datasets=self.get_environment_group_datasets(self.engine, self._environment, group.groupUri),
         ).generate_data_access_policy()
 
         group_role = iam.Role(
             self,
-            f'{group.environmentIAMRoleName}',
+            f"{group.environmentIAMRoleName}",
             role_name=group.environmentIAMRoleName,
             inline_policies={
-                f'{group.environmentIAMRoleName}DataPolicy': data_policy.document,
+                f"{group.environmentIAMRoleName}DataPolicy": data_policy.document,
             },
             managed_policies=services_policies,
             assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('glue.amazonaws.com'),
-                iam.ServicePrincipal('lambda.amazonaws.com'),
-                iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                iam.ServicePrincipal('athena.amazonaws.com'),
-                iam.ServicePrincipal('states.amazonaws.com'),
-                iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.ServicePrincipal('redshift.amazonaws.com'),
+                iam.ServicePrincipal("glue.amazonaws.com"),
+                iam.ServicePrincipal("lambda.amazonaws.com"),
+                iam.ServicePrincipal("lakeformation.amazonaws.com"),
+                iam.ServicePrincipal("athena.amazonaws.com"),
+                iam.ServicePrincipal("states.amazonaws.com"),
+                iam.ServicePrincipal("sagemaker.amazonaws.com"),
+                iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.AccountPrincipal(self._environment.AwsAccountId),
             ),
         )
-        Tags.of(group_role).add('group', group.groupUri)
+        Tags.of(group_role).add("group", group.groupUri)
         return group_role
 
     def create_default_athena_workgroup(self, output_bucket, workgroup_name):
@@ -618,32 +591,28 @@ class EnvironmentSetup(Stack):
 
     def create_athena_workgroups(self, environment_groups, default_environment_bucket):
         for group in environment_groups:
-            self.create_athena_workgroup(
-                default_environment_bucket, group.environmentAthenaWorkGroup
-            )
+            self.create_athena_workgroup(default_environment_bucket, group.environmentAthenaWorkGroup)
 
     def create_athena_workgroup(self, output_bucket, workgroup_name):
-        athena_workgroup_output_location = ''.join(
-            ['s3://', output_bucket.bucket_name, '/']
-        )
+        athena_workgroup_output_location = "".join(["s3://", output_bucket.bucket_name, "/"])
         athena_workgroup = aws_athena.CfnWorkGroup(
             self,
-            f'AthenaWorkGroup{workgroup_name}',
+            f"AthenaWorkGroup{workgroup_name}",
             name=workgroup_name,
-            state='ENABLED',
+            state="ENABLED",
             recursive_delete_option=True,
             work_group_configuration=aws_athena.CfnWorkGroup.WorkGroupConfigurationProperty(
                 enforce_work_group_configuration=True,
                 result_configuration=aws_athena.CfnWorkGroup.ResultConfigurationProperty(
                     encryption_configuration=aws_athena.CfnWorkGroup.EncryptionConfigurationProperty(
-                        encryption_option='SSE_S3',
+                        encryption_option="SSE_S3",
                     ),
                     output_location=athena_workgroup_output_location,
                 ),
                 requester_pays_enabled=False,
                 publish_cloud_watch_metrics_enabled=False,
                 engine_version=aws_athena.CfnWorkGroup.EngineVersionProperty(
-                    selected_engine_version='Athena engine version 2',
+                    selected_engine_version="Athena engine version 2",
                 ),
             ),
         )
@@ -651,26 +620,24 @@ class EnvironmentSetup(Stack):
 
     def create_topic(self, construct_id, central_account, environment):
         actions = [
-            'SNS:GetTopicAttributes',
-            'SNS:SetTopicAttributes',
-            'SNS:AddPermission',
-            'SNS:RemovePermission',
-            'SNS:DeleteTopic',
-            'SNS:Subscribe',
-            'SNS:ListSubscriptionsByTopic',
-            'SNS:Publish',
-            'SNS:Receive',
+            "SNS:GetTopicAttributes",
+            "SNS:SetTopicAttributes",
+            "SNS:AddPermission",
+            "SNS:RemovePermission",
+            "SNS:DeleteTopic",
+            "SNS:Subscribe",
+            "SNS:ListSubscriptionsByTopic",
+            "SNS:Publish",
+            "SNS:Receive",
         ]
         topic_key = kms.Key(
             self,
-            f'{construct_id}-topic-key',
+            f"{construct_id}-topic-key",
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{construct_id}-topic-key',
+            alias=f"{construct_id}-topic-key",
             enable_key_rotation=True,
         )
-        topic = sns.Topic(
-            self, f'{construct_id}', topic_name=f'{construct_id}', master_key=topic_key
-        )
+        topic = sns.Topic(self, f"{construct_id}", topic_name=f"{construct_id}", master_key=topic_key)
         topic.add_to_resource_policy(
             iam.PolicyStatement(
                 principals=[iam.AccountPrincipal(central_account)],
@@ -690,26 +657,24 @@ class EnvironmentSetup(Stack):
         return topic
 
     @staticmethod
-    def zip_code(assetspath, s3_key='profiler'):
-        logger.info('Zipping code')
-        shutil.make_archive(
-            base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}'
-        )
+    def zip_code(assetspath, s3_key="profiler"):
+        logger.info("Zipping code")
+        shutil.make_archive(base_name=f"{assetspath}/{s3_key}", format="zip", root_dir=f"{assetspath}")
         return assetspath
 
     def set_dlq(self, queue_name) -> sqs.Queue:
         queue_key = kms.Key(
             self,
-            f'{queue_name}-key',
+            f"{queue_name}-key",
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{queue_name}-key',
+            alias=f"{queue_name}-key",
             enable_key_rotation=True,
         )
 
         dlq = sqs.Queue(
             self,
-            f'{queue_name}-queue',
-            queue_name=f'{queue_name}',
+            f"{queue_name}-queue",
+            queue_name=f"{queue_name}",
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS,
             encryption_master_key=queue_key,
@@ -718,17 +683,17 @@ class EnvironmentSetup(Stack):
         )
 
         enforce_tls_statement = iam.PolicyStatement(
-            sid='Enforce TLS for all principals',
+            sid="Enforce TLS for all principals",
             effect=iam.Effect.DENY,
             principals=[
                 iam.AnyPrincipal(),
             ],
             actions=[
-                'sqs:*',
+                "sqs:*",
             ],
             resources=[dlq.queue_arn],
             conditions={
-                'Bool': {'aws:SecureTransport': 'false'},
+                "Bool": {"aws:SecureTransport": "false"},
             },
         )
 

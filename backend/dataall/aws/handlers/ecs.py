@@ -11,7 +11,7 @@ from ...tasks.share_manager import ShareManager
 from ...utils import Parameter
 from .service_handlers import Worker
 
-log = logging.getLogger('aws:ecs')
+log = logging.getLogger("aws:ecs")
 
 
 class Ecs:
@@ -19,40 +19,30 @@ class Ecs:
         pass
 
     @staticmethod
-    @Worker.handler(path='ecs.share.approve')
+    @Worker.handler(path="ecs.share.approve")
     def approve_share(engine, task: models.Task):
-        envname = os.environ.get('envname', 'local')
-        if envname in ['local', 'dkrcompose']:
+        envname = os.environ.get("envname", "local")
+        if envname in ["local", "dkrcompose"]:
             return ShareManager.approve_share(engine, task.targetUri)
         else:
-            return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'approve_share'
-            )
+            return Ecs.run_share_management_ecs_task(envname, task.targetUri, "approve_share")
 
     @staticmethod
-    @Worker.handler(path='ecs.share.reject')
+    @Worker.handler(path="ecs.share.reject")
     def reject_share(engine, task: models.Task):
-        envname = os.environ.get('envname', 'local')
-        if envname in ['local', 'dkrcompose']:
+        envname = os.environ.get("envname", "local")
+        if envname in ["local", "dkrcompose"]:
             return ShareManager.reject_share(engine, task.targetUri)
         else:
-            return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'reject_share'
-            )
+            return Ecs.run_share_management_ecs_task(envname, task.targetUri, "reject_share")
 
     @staticmethod
     def run_share_management_ecs_task(envname, share_uri, handler):
-        share_task_definition = Parameter().get_parameter(
-            env=envname, path='ecs/task_def_arn/share_management'
-        )
-        container_name = Parameter().get_parameter(
-            env=envname, path='ecs/container/share_management'
-        )
-        cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
-        subnets = Parameter().get_parameter(env=envname, path='ecs/private_subnets')
-        security_groups = Parameter().get_parameter(
-            env=envname, path='ecs/security_groups'
-        )
+        share_task_definition = Parameter().get_parameter(env=envname, path="ecs/task_def_arn/share_management")
+        container_name = Parameter().get_parameter(env=envname, path="ecs/container/share_management")
+        cluster_name = Parameter().get_parameter(env=envname, path="ecs/cluster/name")
+        subnets = Parameter().get_parameter(env=envname, path="ecs/private_subnets")
+        security_groups = Parameter().get_parameter(env=envname, path="ecs/security_groups")
 
         try:
             Ecs.run_ecs_task(
@@ -62,12 +52,12 @@ class Ecs:
                 security_groups,
                 subnets,
                 [
-                    {'name': 'shareUri', 'value': share_uri},
-                    {'name': 'envname', 'value': envname},
-                    {'name': 'handler', 'value': handler},
+                    {"name": "shareUri", "value": share_uri},
+                    {"name": "envname", "value": envname},
+                    {"name": "handler", "value": handler},
                     {
-                        'name': 'AWS_REGION',
-                        'value': os.getenv('AWS_REGION', 'eu-west-1'),
+                        "name": "AWS_REGION",
+                        "value": os.getenv("AWS_REGION", "eu-west-1"),
                     },
                 ],
             )
@@ -77,20 +67,16 @@ class Ecs:
             raise e
 
     @staticmethod
-    @Worker.handler(path='ecs.cdkproxy.deploy')
+    @Worker.handler(path="ecs.cdkproxy.deploy")
     def deploy_stack(engine, task: models.Task):
         with engine.scoped_session() as session:
-            stack: models.Stack = db.api.Stack.get_stack_by_uri(
-                session, stack_uri=task.targetUri
-            )
-            envname = os.environ.get('envname', 'local')
-            cluster_name = Parameter().get_parameter(
-                env=envname, path='ecs/cluster/name'
-            )
+            stack: models.Stack = db.api.Stack.get_stack_by_uri(session, stack_uri=task.targetUri)
+            envname = os.environ.get("envname", "local")
+            cluster_name = Parameter().get_parameter(env=envname, path="ecs/cluster/name")
 
-            while Ecs.is_task_running(cluster_name, f'awsworker-{task.targetUri}'):
+            while Ecs.is_task_running(cluster_name, f"awsworker-{task.targetUri}"):
                 log.info(
-                    f'ECS task for stack stack-{task.targetUri} is running waiting for 30 seconds before retrying...'
+                    f"ECS task for stack stack-{task.targetUri} is running waiting for 30 seconds before retrying..."
                 )
                 time.sleep(30)
 
@@ -98,18 +84,12 @@ class Ecs:
 
     @staticmethod
     def run_cdkproxy_task(stack_uri):
-        envname = os.environ.get('envname', 'local')
-        cdkproxy_task_definition = Parameter().get_parameter(
-            env=envname, path='ecs/task_def_arn/cdkproxy'
-        )
-        container_name = Parameter().get_parameter(
-            env=envname, path='ecs/container/cdkproxy'
-        )
-        cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
-        subnets = Parameter().get_parameter(env=envname, path='ecs/private_subnets')
-        security_groups = Parameter().get_parameter(
-            env=envname, path='ecs/security_groups'
-        )
+        envname = os.environ.get("envname", "local")
+        cdkproxy_task_definition = Parameter().get_parameter(env=envname, path="ecs/task_def_arn/cdkproxy")
+        container_name = Parameter().get_parameter(env=envname, path="ecs/container/cdkproxy")
+        cluster_name = Parameter().get_parameter(env=envname, path="ecs/cluster/name")
+        subnets = Parameter().get_parameter(env=envname, path="ecs/private_subnets")
+        security_groups = Parameter().get_parameter(env=envname, path="ecs/security_groups")
         try:
             task_arn = Ecs.run_ecs_task(
                 cluster_name,
@@ -118,16 +98,16 @@ class Ecs:
                 security_groups,
                 subnets,
                 [
-                    {'name': 'stackUri', 'value': stack_uri},
-                    {'name': 'envname', 'value': envname},
+                    {"name": "stackUri", "value": stack_uri},
+                    {"name": "envname", "value": envname},
                     {
-                        'name': 'AWS_REGION',
-                        'value': os.getenv('AWS_REGION', 'eu-west-1'),
+                        "name": "AWS_REGION",
+                        "value": os.getenv("AWS_REGION", "eu-west-1"),
                     },
                 ],
-                f'awsworker-{stack_uri}',
+                f"awsworker-{stack_uri}",
             )
-            log.info(f'ECS Task {task_arn} running')
+            log.info(f"ECS Task {task_arn} running")
             return task_arn
         except ClientError as e:
             log.error(e)
@@ -141,52 +121,48 @@ class Ecs:
         security_groups,
         subnets,
         environment,
-        started_by='awsworker',
+        started_by="awsworker",
     ):
-        response = boto3.client('ecs').run_task(
+        response = boto3.client("ecs").run_task(
             cluster=cluster_name,
             taskDefinition=task_definition,
             count=1,
-            launchType='FARGATE',
+            launchType="FARGATE",
             networkConfiguration={
-                'awsvpcConfiguration': {
-                    'subnets': subnets.split(','),
-                    'securityGroups': security_groups.split(','),
+                "awsvpcConfiguration": {
+                    "subnets": subnets.split(","),
+                    "securityGroups": security_groups.split(","),
                 }
             },
             overrides={
-                'containerOverrides': [
+                "containerOverrides": [
                     {
-                        'name': container_name,
-                        'environment': environment,
+                        "name": container_name,
+                        "environment": environment,
                     }
                 ]
             },
             startedBy=started_by,
         )
-        if response['failures']:
+        if response["failures"]:
             raise Exception(
-                ', '.join(
+                ", ".join(
                     [
-                        'fail to run task {0} reason: {1}'.format(
-                            failure['arn'], failure['reason']
-                        )
-                        for failure in response['failures']
+                        "fail to run task {0} reason: {1}".format(failure["arn"], failure["reason"])
+                        for failure in response["failures"]
                     ]
                 )
             )
-        task_arn = response.get('tasks', [{'taskArn': None}])[0]['taskArn']
-        log.info(f'Task started {task_arn}..')
+        task_arn = response.get("tasks", [{"taskArn": None}])[0]["taskArn"]
+        log.info(f"Task started {task_arn}..")
         return task_arn
 
     @staticmethod
     def is_task_running(cluster_name, started_by):
         try:
-            client = boto3.client('ecs')
-            running_tasks = client.list_tasks(
-                cluster=cluster_name, startedBy=started_by, desiredStatus='RUNNING'
-            )
-            if running_tasks and running_tasks.get('taskArns'):
+            client = boto3.client("ecs")
+            running_tasks = client.list_tasks(cluster=cluster_name, startedBy=started_by, desiredStatus="RUNNING")
+            if running_tasks and running_tasks.get("taskArns"):
                 return True
             return False
         except ClientError as e:

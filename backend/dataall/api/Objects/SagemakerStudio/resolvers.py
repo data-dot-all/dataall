@@ -13,12 +13,12 @@ log = logging.getLogger(__name__)
 
 def create_sagemaker_studio_user_profile(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        if not input.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not input.get('label'):
-            raise exceptions.RequiredParameter('name')
+        if not input.get("environmentUri"):
+            raise exceptions.RequiredParameter("environmentUri")
+        if not input.get("label"):
+            raise exceptions.RequiredParameter("name")
 
-        environment_uri = input.get('environmentUri')
+        environment_uri = input.get("environmentUri")
 
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -28,26 +28,22 @@ def create_sagemaker_studio_user_profile(context: Context, source, input: dict =
             permission_name=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
         )
 
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, environment_uri
-        )
+        env: models.Environment = db.api.Environment.get_environment_by_uri(session, environment_uri)
 
         if not env.mlStudiosEnabled:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
-                message=f'ML Studio feature is disabled for the environment {env.label}',
+                message=f"ML Studio feature is disabled for the environment {env.label}",
             )
 
-        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-            env.AwsAccountId, env.region
-        )
-        input['domain_id'] = existing_domain.get('DomainId', False)
+        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(env.AwsAccountId, env.region)
+        input["domain_id"] = existing_domain.get("DomainId", False)
 
-        if not input['domain_id']:
+        if not input["domain_id"]:
             raise exceptions.AWSResourceNotAvailable(
-                action='Sagemaker Studio domain',
-                message='Add a VPC to your environment and update the environment stack '
-                'or create a Sagemaker studio domain on your AWS account.',
+                action="Sagemaker Studio domain",
+                message="Add a VPC to your environment and update the environment stack "
+                "or create a Sagemaker studio domain on your AWS account.",
             )
 
         sm_user_profile = db.api.SgmStudioNotebook.create_notebook(
@@ -62,14 +58,12 @@ def create_sagemaker_studio_user_profile(context: Context, source, input: dict =
         Stack.create_stack(
             session=session,
             environment_uri=sm_user_profile.environmentUri,
-            target_type='sagemakerstudiouserprofile',
+            target_type="sagemakerstudiouserprofile",
             target_uri=sm_user_profile.sagemakerStudioUserProfileUri,
             target_label=sm_user_profile.label,
         )
 
-    stack_helper.deploy_stack(
-        context=context, targetUri=sm_user_profile.sagemakerStudioUserProfileUri
-    )
+    stack_helper.deploy_stack(context=context, targetUri=sm_user_profile.sagemakerStudioUserProfileUri)
 
     return sm_user_profile
 
@@ -121,13 +115,11 @@ def resolve_status(context, source: models.SagemakerStudioUserProfile, **kwargs)
             sagemakerStudioUserProfileNameSlugify=source.sagemakerStudioUserProfileNameSlugify,
         )
         with context.engine.scoped_session() as session:
-            sm_user_profile = session.query(models.SagemakerStudioUserProfile).get(
-                source.sagemakerStudioUserProfileUri
-            )
+            sm_user_profile = session.query(models.SagemakerStudioUserProfile).get(source.sagemakerStudioUserProfileUri)
             sm_user_profile.sagemakerStudioUserProfileStatus = user_profile_status
         return user_profile_status
     except Exception:
-        return 'NOT FOUND'
+        return "NOT FOUND"
 
 
 def get_sagemaker_studio_user_profile_presigned_url(
@@ -143,9 +135,7 @@ def get_sagemaker_studio_user_profile_presigned_url(
             groups=context.groups,
             username=context.username,
         )
-        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(
-            session, sagemakerStudioUserProfileUri
-        )
+        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(session, sagemakerStudioUserProfileUri)
 
         url = SagemakerStudio.presigned_url(
             AwsAccountId=sm_user_profile.AWSAccountId,
@@ -190,12 +180,8 @@ def delete_sagemaker_studio_user_profile(
             groups=context.groups,
             username=context.username,
         )
-        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(
-            session, sagemakerStudioUserProfileUri
-        )
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, sm_user_profile.environmentUri
-        )
+        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(session, sagemakerStudioUserProfileUri)
+        env: models.Environment = db.api.Environment.get_environment_by_uri(session, sm_user_profile.environmentUri)
 
         session.delete(sm_user_profile)
 
@@ -212,7 +198,7 @@ def delete_sagemaker_studio_user_profile(
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
-            target_type='notebook',
+            target_type="notebook",
         )
 
     return True
@@ -229,15 +215,11 @@ def resolve_organization(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
+        env: models.Environment = session.query(models.Environment).get(source.environmentUri)
         return session.query(models.Organization).get(env.organizationUri)
 
 
-def resolve_stack(
-    context: Context, source: models.SagemakerStudioUserProfile, **kwargs
-):
+def resolve_stack(context: Context, source: models.SagemakerStudioUserProfile, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(

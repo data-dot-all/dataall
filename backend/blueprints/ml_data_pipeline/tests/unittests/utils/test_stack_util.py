@@ -22,12 +22,12 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
 
 def test_template_from_string():
-    """ Tests template from configuration given in a string, instead of file."""
+    """Tests template from configuration given in a string, instead of file."""
     config = """
 name : Irispipeline
 comment: Iris pipeline from preparation to deployment
@@ -66,9 +66,11 @@ groups:
 """
     stack = ATestStack()
     failed_for_glue = False
-    try: 
-       pipeline = yaml.safe_load(config)
-       stack_util.create_step_function_triggers(stack, pipeline, "arn:aws:states:eu-west-1:0123456789012:stateMachine:short-term-pipeline")
+    try:
+        pipeline = yaml.safe_load(config)
+        stack_util.create_step_function_triggers(
+            stack, pipeline, "arn:aws:states:eu-west-1:0123456789012:stateMachine:short-term-pipeline"
+        )
     except:
         failed_for_glue = True
     assert failed_for_glue

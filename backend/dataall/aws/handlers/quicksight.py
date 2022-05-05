@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 
 from .sts import SessionHelper
 
-logger = logging.getLogger('QuicksightHandler')
+logger = logging.getLogger("QuicksightHandler")
 logger.setLevel(logging.DEBUG)
 
 
@@ -21,14 +21,12 @@ class Quicksight:
         Returns: str
             the region quicksight uses as identity region
         """
-        identity_region_rex = re.compile('Please use the (?P<region>.*) endpoint.')
+        identity_region_rex = re.compile("Please use the (?P<region>.*) endpoint.")
         session = SessionHelper.remote_session(AwsAccountId)
-        identity_region = 'us-east-1'
-        client = session.client('quicksight', region_name=identity_region)
+        identity_region = "us-east-1"
+        client = session.client("quicksight", region_name=identity_region)
         try:
-            response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
-            )
+            response = client.describe_group(AwsAccountId=AwsAccountId, GroupName="dataall", Namespace="default")
         except client.exceptions.AccessDeniedException as e:
             match = identity_region_rex.findall(str(e))
             if match:
@@ -49,10 +47,10 @@ class Quicksight:
         """
         identity_region = Quicksight.get_identity_region(AwsAccountId)
         session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('quicksight', region_name=identity_region)
+        return session.client("quicksight", region_name=identity_region)
 
     @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
+    def get_quicksight_client(AwsAccountId, region="eu-west-1"):
         """Returns a boto3 quicksight client in the provided account/region
         Args:
             AwsAccountId(str) : aws account id
@@ -61,7 +59,7 @@ class Quicksight:
         """
         identity_region = Quicksight.get_identity_region(AwsAccountId)
         session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('quicksight', region_name=region)
+        return session.client("quicksight", region_name=region)
 
     @staticmethod
     def create_quicksight_default_group(AwsAccountId):
@@ -75,35 +73,31 @@ class Quicksight:
         client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
         group = Quicksight.describe_group(client, AwsAccountId)
         if not group:
-            logger.info('Attempting to create Quicksight group `dataall...')
+            logger.info("Attempting to create Quicksight group `dataall...")
             response = client.create_group(
-                GroupName='dataall',
-                Description='Default data.all group',
+                GroupName="dataall",
+                Description="Default data.all group",
                 AwsAccountId=AwsAccountId,
-                Namespace='default',
+                Namespace="default",
             )
-            logger.info(f'Quicksight group `dataall created {response}')
-            response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
-            )
+            logger.info(f"Quicksight group `dataall created {response}")
+            response = client.describe_group(AwsAccountId=AwsAccountId, GroupName="dataall", Namespace="default")
             return response
         return group
 
     @staticmethod
     def describe_group(client, AwsAccountId):
         try:
-            response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
-            )
+            response = client.describe_group(AwsAccountId=AwsAccountId, GroupName="dataall", Namespace="default")
             logger.info(
-                f'Quicksight `dataall` group already exists in {AwsAccountId} '
-                f'(using identity region {Quicksight.get_identity_region(AwsAccountId)}): '
-                f'{response}'
+                f"Quicksight `dataall` group already exists in {AwsAccountId} "
+                f"(using identity region {Quicksight.get_identity_region(AwsAccountId)}): "
+                f"{response}"
             )
             return response
         except client.exceptions.ResourceNotFoundException:
             logger.info(
-                f'Creating Quicksight group in {AwsAccountId} (using identity region {Quicksight.get_identity_region(AwsAccountId)})'
+                f"Creating Quicksight group in {AwsAccountId} (using identity region {Quicksight.get_identity_region(AwsAccountId)})"
             )
 
     @staticmethod
@@ -115,13 +109,11 @@ class Quicksight:
         """
         client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
         try:
-            response = client.describe_user(
-                UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
-            )
+            response = client.describe_user(UserName=UserName, AwsAccountId=AwsAccountId, Namespace="default")
             exists = True
         except ClientError:
             return None
-        return response.get('User')
+        return response.get("User")
 
     @staticmethod
     def list_user_groups(AwsAccountId, UserName):
@@ -129,16 +121,12 @@ class Quicksight:
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if not user:
             return []
-        response = client.list_user_groups(
-            UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
-        )
-        return response['GroupList']
+        response = client.list_user_groups(UserName=UserName, AwsAccountId=AwsAccountId, Namespace="default")
+        return response["GroupList"]
 
     @staticmethod
-    def register_user(AwsAccountId, UserName, UserRole='READER'):
-        client = Quicksight.get_quicksight_client_in_identity_region(
-            AwsAccountId=AwsAccountId
-        )
+    def register_user(AwsAccountId, UserName, UserRole="READER"):
+        client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId=AwsAccountId)
         exists = False
         user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
         if user is not None:
@@ -148,7 +136,7 @@ class Quicksight:
             response = client.update_user(
                 UserName=UserName,
                 AwsAccountId=AwsAccountId,
-                Namespace='default',
+                Namespace="default",
                 Email=UserName,
                 Role=UserRole,
             )
@@ -157,48 +145,42 @@ class Quicksight:
                 UserName=UserName,
                 Email=UserName,
                 AwsAccountId=AwsAccountId,
-                Namespace='default',
-                IdentityType='QUICKSIGHT',
+                Namespace="default",
+                IdentityType="QUICKSIGHT",
                 UserRole=UserRole,
             )
         member = False
 
         Quicksight.create_quicksight_default_group(AwsAccountId)
-        response = client.list_user_groups(
-            UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
-        )
-        print(f'list_user_groups {UserName}')
+        response = client.list_user_groups(UserName=UserName, AwsAccountId=AwsAccountId, Namespace="default")
+        print(f"list_user_groups {UserName}")
         print(response)
-        if 'dataall' not in [g['GroupName'] for g in response['GroupList']]:
-            logger.warning(f'Adding {UserName} to Quicksight dataall on {AwsAccountId}')
+        if "dataall" not in [g["GroupName"] for g in response["GroupList"]]:
+            logger.warning(f"Adding {UserName} to Quicksight dataall on {AwsAccountId}")
             response = client.create_group_membership(
                 MemberName=UserName,
-                GroupName='dataall',
+                GroupName="dataall",
                 AwsAccountId=AwsAccountId,
-                Namespace='default',
+                Namespace="default",
             )
         return Quicksight.describe_user(AwsAccountId, UserName)
 
     @staticmethod
-    def get_reader_session(
-        AwsAccountId, region, UserName, UserRole='READER', DashboardId=None
-    ):
+    def get_reader_session(AwsAccountId, region, UserName, UserRole="READER", DashboardId=None):
 
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if user is None:
-            user = Quicksight.register_user(
-                AwsAccountId=AwsAccountId, UserName=UserName, UserRole=UserRole
-            )
+            user = Quicksight.register_user(AwsAccountId=AwsAccountId, UserName=UserName, UserRole=UserRole)
 
         response = client.get_dashboard_embed_url(
             AwsAccountId=AwsAccountId,
             DashboardId=DashboardId,
-            IdentityType='QUICKSIGHT',
+            IdentityType="QUICKSIGHT",
             SessionLifetimeInMinutes=120,
-            UserArn=user.get('Arn'),
+            UserArn=user.get("Arn"),
         )
-        return response.get('EmbedUrl')
+        return response.get("EmbedUrl")
 
     @staticmethod
     def get_anonymous_session(AwsAccountId, region, UserName, DashboardId=None):
@@ -206,19 +188,19 @@ class Quicksight:
         response = client.generate_embed_url_for_anonymous_user(
             AwsAccountId=AwsAccountId,
             SessionLifetimeInMinutes=120,
-            Namespace='default',
+            Namespace="default",
             SessionTags=[
-                {'Key': 'dataall', 'Value': UserName},
+                {"Key": "dataall", "Value": UserName},
             ],
             AuthorizedResourceArns=[
-                f'arn:aws:quicksight:{region}:{AwsAccountId}:dashboard/{DashboardId}',
+                f"arn:aws:quicksight:{region}:{AwsAccountId}:dashboard/{DashboardId}",
             ],
-            ExperienceConfiguration={'Dashboard': {'InitialDashboardId': DashboardId}},
+            ExperienceConfiguration={"Dashboard": {"InitialDashboardId": DashboardId}},
         )
-        return response.get('EmbedUrl')
+        return response.get("EmbedUrl")
 
     @staticmethod
-    def get_author_session(AwsAccountId, region, UserName, UserRole='AUTHOR'):
+    def get_author_session(AwsAccountId, region, UserName, UserRole="AUTHOR"):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
         if user is None:
@@ -229,11 +211,11 @@ class Quicksight:
 
         response = client.get_session_embed_url(
             AwsAccountId=AwsAccountId,
-            EntryPoint='/start/dashboards',
+            EntryPoint="/start/dashboards",
             SessionLifetimeInMinutes=120,
-            UserArn=user['Arn'],
+            UserArn=user["Arn"],
         )
-        return response['EmbedUrl']
+        return response["EmbedUrl"]
 
     @staticmethod
     def can_import_dashboard(AwsAccountId, region, UserName, DashboardId):
@@ -243,21 +225,19 @@ class Quicksight:
             return False
 
         groups = Quicksight.list_user_groups(AwsAccountId, UserName)
-        grouparns = [g['Arn'] for g in groups]
+        grouparns = [g["Arn"] for g in groups]
         try:
-            response = client.describe_dashboard_permissions(
-                AwsAccountId=AwsAccountId, DashboardId=DashboardId
-            )
+            response = client.describe_dashboard_permissions(AwsAccountId=AwsAccountId, DashboardId=DashboardId)
         except ClientError as e:
             raise e
 
-        permissions = response.get('Permissions', [])
+        permissions = response.get("Permissions", [])
         for p in permissions:
-            if p['Principal'] == user.get('Arn') or p['Principal'] in grouparns:
-                for a in p['Actions']:
+            if p["Principal"] == user.get("Arn") or p["Principal"] in grouparns:
+                for a in p["Actions"]:
                     if a in [
-                        'quicksight:UpdateDashboard',
-                        'UpdateDashboardPermissions',
+                        "quicksight:UpdateDashboard",
+                        "UpdateDashboardPermissions",
                     ]:
                         return True
 

@@ -1,16 +1,13 @@
 import copy
 
 import sagemaker
-from engine.sagemaker.mappers.common_training_mapper import \
-    CommonTrainingMapper
+from engine.sagemaker.mappers.common_training_mapper import CommonTrainingMapper
 
 
 class SageMakerTrainingJobPropsMapper:
     @classmethod
     def map_props(cls, stack, job_name, main_entry, config_props, tokens, tags) -> dict:
-        return cls.map_training_parameters(
-            stack, config_props, job_name, tokens, tags, stack.pipeline_iam_role_arn
-        )
+        return cls.map_training_parameters(stack, config_props, job_name, tokens, tags, stack.pipeline_iam_role_arn)
 
     @classmethod
     def map_algorithm(cls, stack, config):
@@ -43,9 +40,7 @@ class SageMakerTrainingJobPropsMapper:
     @classmethod
     def map_training_parameters(cls, stack, config, job_name, tokens, tags, roleARN):
         result_dict = {}
-        resource_dict = {
-            resource["name"]: resource for resource in config.get("resources")
-        }
+        resource_dict = {resource["name"]: resource for resource in config.get("resources")}
 
         algorithm_specification = cls.map_algorithm(stack, config["algorithm"])
 
@@ -60,10 +55,7 @@ class SageMakerTrainingJobPropsMapper:
         result_dict = {
             "AlgorithmSpecification": algorithm_specification,
             "OutputDataConfig": s3OutputPath,
-            "StoppingCondition": {
-                "MaxRuntimeInSeconds": config.get("max_runtime")
-                or config.get("timeout", 108000)
-            },
+            "StoppingCondition": {"MaxRuntimeInSeconds": config.get("max_runtime") or config.get("timeout", 108000)},
             "ResourceConfig": cls.map_resources(config, resource_dict),
             "RoleArn": roleARN,
         }
@@ -83,9 +75,7 @@ class SageMakerTrainingJobPropsMapper:
         if config.get("experiment"):
             result_dict["ExperimentConfig"] = cls.map_experiment_config(config)
 
-        result_dict["TrainingJobName.$"] = (
-            tokens.get("ext_job_name") if tokens.get("ext_job_name") else job_name
-        )
+        result_dict["TrainingJobName.$"] = tokens.get("ext_job_name") if tokens.get("ext_job_name") else job_name
 
         result_dict["Tags.$"] = tags
 

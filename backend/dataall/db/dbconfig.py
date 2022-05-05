@@ -5,19 +5,19 @@ class DbConfig:
 
     def __str__(self):
         lines = []
-        lines.append('  DbConfig >')
-        hr = ' '.join(['+', ''.ljust(10, '-'), '+', ''.ljust(65, '-'), '+'])
+        lines.append("  DbConfig >")
+        hr = " ".join(["+", "".ljust(10, "-"), "+", "".ljust(65, "-"), "+"])
         lines.append(hr)
-        header = ' '.join(['+', 'Db Param'.ljust(10), ' ', 'Value'.ljust(65), '+'])
+        header = " ".join(["+", "Db Param".ljust(10), " ", "Value".ljust(65), "+"])
         lines.append(header)
-        hr = ' '.join(['+', ''.ljust(10, '-'), '+', ''.ljust(65, '-'), '+'])
+        hr = " ".join(["+", "".ljust(10, "-"), "+", "".ljust(65, "-"), "+"])
         lines.append(hr)
         for k in self.params:
             v = self.params[k]
-            if k == 'pwd':
-                v = '*' * len(self.params[k])
-            lines.append(' '.join(['|', k.ljust(10), '|', v.ljust(65), '|']))
+            if k == "pwd":
+                v = "*" * len(self.params[k])
+            lines.append(" ".join(["|", k.ljust(10), "|", v.ljust(65), "|"]))
 
-        hr = ' '.join(['+', ''.ljust(10, '-'), '+', ''.ljust(65, '-'), '+'])
+        hr = " ".join(["+", "".ljust(10, "-"), "+", "".ljust(65, "-"), "+"])
         lines.append(hr)
-        return '\n'.join(lines)
+        return "\n".join(lines)

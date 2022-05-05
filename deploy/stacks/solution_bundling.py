@@ -13,10 +13,8 @@ class SolutionBundling:
         self.source_path = source_path
 
     def try_bundle(self, output_dir: str, options: BundlingOptions) -> bool:
-        requirements_path = Path(self.source_path, 'requirements.txt')
-        command = [
-            f'cp -a {self.source_path}/. {output_dir}/ && pip install -r {requirements_path} -t {output_dir}'
-        ]
+        requirements_path = Path(self.source_path, "requirements.txt")
+        command = [f"cp -a {self.source_path}/. {output_dir}/ && pip install -r {requirements_path} -t {output_dir}"]
         subprocess.check_output(
             command,
             stderr=subprocess.STDOUT,
@@ -24,7 +22,7 @@ class SolutionBundling:
         )
 
         ls_output = subprocess.check_output(
-            [f'ls -ll {output_dir}'],
+            [f"ls -ll {output_dir}"],
             stderr=subprocess.STDOUT,
             shell=True,
         )

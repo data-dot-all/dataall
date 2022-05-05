@@ -7,12 +7,12 @@ class ATestStack(core.Stack):
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
         self.env = {
-            'CDK_DEFAULT_ACCOUNT': '012345678912',
-            'CDK_DEFAULT_REGION': 'eu-west-1',
+            "CDK_DEFAULT_ACCOUNT": "012345678912",
+            "CDK_DEFAULT_REGION": "eu-west-1",
         }
-        self.pipeline_iam_role_arn = 'dataallPivotRole'
-        self.ecr_repository_uri = 'dkr.012345678912.eu-west-1'
-        self.pipeline_region = 'eu-west-1'
+        self.pipeline_iam_role_arn = "dataallPivotRole"
+        self.ecr_repository_uri = "dkr.012345678912.eu-west-1"
+        self.pipeline_region = "eu-west-1"
         self.resource_tags = {}
 
 
@@ -65,21 +65,21 @@ def test_map_props():
     training_job = None
     groups = TaskGroupReader(config=config)
 
-    for group in groups.definition.get('groups', []):
-        for j in group.get('glue_jobs', []):
+    for group in groups.definition.get("groups", []):
+        for j in group.get("glue_jobs", []):
             training_job = j
 
     assert training_job
-    assert training_job.get('type') == 'training'
+    assert training_job.get("type") == "training"
     stack = ATestStack()
     training_props = SageMakerTrainingJobPropsMapper.map_props(
-        stack, training_job.get('name'), {}, training_job.get('config'), {}, {}
+        stack, training_job.get("name"), {}, training_job.get("config"), {}, {}
     )
-    print('TPPPPP', training_props)
-    assert training_props['OutputDataConfig']
-    assert training_props['InputDataConfig']
-    assert training_props['HyperParameters']
-    assert training_props['StoppingCondition']
-    assert training_props['RoleArn']
-    assert training_props['AlgorithmSpecification']
-    assert training_props['TrainingJobName.$']
+    print("TPPPPP", training_props)
+    assert training_props["OutputDataConfig"]
+    assert training_props["InputDataConfig"]
+    assert training_props["HyperParameters"]
+    assert training_props["StoppingCondition"]
+    assert training_props["RoleArn"]
+    assert training_props["AlgorithmSpecification"]
+    assert training_props["TrainingJobName.$"]

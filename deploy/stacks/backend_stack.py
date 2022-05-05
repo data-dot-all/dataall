@@ -24,8 +24,8 @@ class BackendStack(Stack):
         self,
         scope,
         id,
-        envname: str = 'dev',
-        resource_prefix='dataall',
+        envname: str = "dev",
+        resource_prefix="dataall",
         tooling_account_id=None,
         ecr_repository=None,
         image_tag=None,
@@ -45,7 +45,7 @@ class BackendStack(Stack):
 
         vpc_stack = VpcStack(
             self,
-            id='Vpc',
+            id="Vpc",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc_endpoints_sg=vpc_endpoints_sg,
@@ -57,7 +57,7 @@ class BackendStack(Stack):
 
         ParamStoreStack(
             self,
-            f'ParamStore',
+            f"ParamStore",
             envname=envname,
             resource_prefix=resource_prefix,
             custom_domain=custom_domain,
@@ -67,7 +67,7 @@ class BackendStack(Stack):
 
         SecretsManagerStack(
             self,
-            f'Secrets',
+            f"Secrets",
             envname=envname,
             resource_prefix=resource_prefix,
             enable_cw_canaries=enable_cw_canaries,
@@ -76,7 +76,7 @@ class BackendStack(Stack):
 
         s3_resources_stack = S3ResourcesStack(
             self,
-            f'S3Resources',
+            f"S3Resources",
             envname=envname,
             resource_prefix=resource_prefix,
             **kwargs,
@@ -84,7 +84,7 @@ class BackendStack(Stack):
 
         cognito_stack = IdpStack(
             self,
-            f'Cognito',
+            f"Cognito",
             envname=envname,
             resource_prefix=resource_prefix,
             internet_facing=internet_facing,
@@ -95,20 +95,18 @@ class BackendStack(Stack):
 
         sqs_stack = SqsStack(
             self,
-            f'SqsStack',
+            f"SqsStack",
             envname=envname,
             resource_prefix=resource_prefix,
             prod_sizing=prod_sizing,
             **kwargs,
         )
 
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
-        )
+        repo = ecr.Repository.from_repository_arn(self, "ECRREPO", repository_arn=ecr_repository)
 
         lambda_api_stack = LambdaApiStack(
             self,
-            f'Lambdas',
+            f"Lambdas",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -125,7 +123,7 @@ class BackendStack(Stack):
 
         ecs_stack = ContainerStack(
             self,
-            f'ECS',
+            f"ECS",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -138,7 +136,7 @@ class BackendStack(Stack):
 
         dbmigration_stack = DBMigrationStack(
             self,
-            f'DbMigration',
+            f"DbMigration",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -149,7 +147,7 @@ class BackendStack(Stack):
 
         aurora_stack = AuroraServerlessStack(
             self,
-            f'Aurora',
+            f"Aurora",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -165,7 +163,7 @@ class BackendStack(Stack):
 
         opensearch_stack = OpenSearchStack(
             self,
-            f'OpenSearch',
+            f"OpenSearch",
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -181,7 +179,7 @@ class BackendStack(Stack):
 
         monitoring_stack = MonitoringStack(
             self,
-            f'CWDashboards',
+            f"CWDashboards",
             envname=envname,
             resource_prefix=resource_prefix,
             lambdas=[
@@ -201,22 +199,20 @@ class BackendStack(Stack):
         if enable_cw_rum:
             CloudWatchRumStack(
                 self,
-                'CWRumStack',
+                "CWRumStack",
                 envname=envname,
                 resource_prefix=resource_prefix,
                 tooling_account_id=tooling_account_id,
                 cw_alarm_action=monitoring_stack.cw_alarm_action,
                 cognito_identity_pool_id=cognito_stack.identity_pool.ref,
                 cognito_identity_pool_role_arn=cognito_stack.identity_pool_role.role_arn,
-                custom_domain_name=custom_domain.get('hosted_zone_name')
-                if custom_domain
-                else None,
+                custom_domain_name=custom_domain.get("hosted_zone_name") if custom_domain else None,
             )
 
         if enable_cw_canaries:
             CloudWatchCanariesStack(
                 self,
-                'CWCanariesStack',
+                "CWCanariesStack",
                 envname=envname,
                 resource_prefix=resource_prefix,
                 vpc=vpc,

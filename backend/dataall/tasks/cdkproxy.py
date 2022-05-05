@@ -11,14 +11,14 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
-    envname = os.environ.get('envname', 'local')
+if __name__ == "__main__":
+    envname = os.environ.get("envname", "local")
     engine = get_engine(envname=envname)
 
-    stack_uri = os.getenv('stackUri')
+    stack_uri = os.getenv("stackUri")
 
-    logger.info(f'Starting deployment task for stack : {stack_uri}')
+    logger.info(f"Starting deployment task for stack : {stack_uri}")
 
-    deploy_cdk_stack(engine=engine, stackid=stack_uri, app_path='../cdkproxy/app.py')
+    deploy_cdk_stack(engine=engine, stackid=stack_uri, app_path="../cdkproxy/app.py")
 
-    logger.info('Deployment task finished successfully')
+    logger.info("Deployment task finished successfully")

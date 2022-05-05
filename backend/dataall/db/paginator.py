@@ -1,6 +1,6 @@
 import math
 
-__version__ = '0.0.2'
+__version__ = "0.0.2"
 
 
 class Page(object):
@@ -22,23 +22,23 @@ class Page(object):
 
     def to_dict(self):
         return {
-            'count': self.total,
-            'pages': self.pages,
-            'page': self.page,
-            'pageSize': self.page_size,
-            'nodes': self.items,
-            'hasNext': self.has_next,
-            'hasPrevious': self.has_previous,
-            'nextPage': self.next_page,
-            'previousPage': self.previous_page,
+            "count": self.total,
+            "pages": self.pages,
+            "page": self.page,
+            "pageSize": self.page_size,
+            "nodes": self.items,
+            "hasNext": self.has_next,
+            "hasPrevious": self.has_previous,
+            "nextPage": self.next_page,
+            "previousPage": self.previous_page,
         }
 
 
 def paginate(query, page, page_size):
     if page <= 0:
-        raise AttributeError('page needs to be >= 1')
+        raise AttributeError("page needs to be >= 1")
     if page_size <= 0:
-        raise AttributeError('page_size needs to be >= 1')
+        raise AttributeError("page_size needs to be >= 1")
     items = query.limit(page_size).offset((page - 1) * page_size).all()
     total = query.order_by(None).count()
     return Page(items, page, page_size, total)

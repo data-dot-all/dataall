@@ -18,10 +18,10 @@ class MonitoringStack(pyNestedClass):
         self,
         scope,
         id: str,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         lambdas: [_lambda.Function] = None,
-        database='dataalldevdb',
+        database="dataalldevdb",
         ecs_cluster: ecs.Cluster = None,
         ecs_task_definitions: [ecs.FargateTaskDefinition] = None,
         backend_api=None,
@@ -31,9 +31,7 @@ class MonitoringStack(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
 
-        self.alarms_topic, self.cw_alarm_action = self.create_alarms_topic(
-            envname, resource_prefix
-        )
+        self.alarms_topic, self.cw_alarm_action = self.create_alarms_topic(envname, resource_prefix)
 
         self.create_cw_alarms(
             backend_api,
@@ -58,42 +56,42 @@ class MonitoringStack(pyNestedClass):
     def create_alarms_topic(self, envname, resource_prefix):
         key = kms.Key(
             self,
-            f'{resource_prefix}-{envname}-alarms-topic-key',
+            f"{resource_prefix}-{envname}-alarms-topic-key",
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{resource_prefix}-{envname}-alarms-topic-key',
+            alias=f"{resource_prefix}-{envname}-alarms-topic-key",
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
                             iam.AccountPrincipal(account_id=self.account),
                         ],
-                        actions=['kms:*'],
+                        actions=["kms:*"],
                     ),
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(service='cloudwatch.amazonaws.com'),
+                            iam.ServicePrincipal(service="cloudwatch.amazonaws.com"),
                         ],
-                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
                     ),
                 ],
             ),
         )
         alarms_topic = sns.Topic(
             self,
-            f'AlarmsTopic',
-            topic_name=f'{resource_prefix}-{envname}-alarms-topic',
+            f"AlarmsTopic",
+            topic_name=f"{resource_prefix}-{envname}-alarms-topic",
             master_key=key,
         )
         cw_alarm_action = cwa.SnsAction(alarms_topic)
         ssm.StringParameter(
             self,
-            'AlarmTopicParam',
-            parameter_name=f'/dataall/{envname}/sns/alarmsTopic',
+            "AlarmTopicParam",
+            parameter_name=f"/dataall/{envname}/sns/alarmsTopic",
             string_value=alarms_topic.topic_arn,
         )
         return alarms_topic, cw_alarm_action
@@ -111,29 +109,25 @@ class MonitoringStack(pyNestedClass):
         lambda_function: _lambda.Function
         for index, lambda_function in enumerate(lambdas):
             self.set_function_alarms(
-                f'Alarm{index}',
+                f"Alarm{index}",
                 lambda_function,
                 self.cw_alarm_action,
                 resource_prefix,
             )
         self.set_waf_alarms(
-            f'{resource_prefix}-{envname}-WafApiGatewayRateLimitBreached',
-            Fn.import_value(f'{resource_prefix}-{envname}-api-webacl'),
+            f"{resource_prefix}-{envname}-WafApiGatewayRateLimitBreached",
+            Fn.import_value(f"{resource_prefix}-{envname}-api-webacl"),
             self.cw_alarm_action,
         )
-        self.set_api_alarms(
-            f'{resource_prefix}-{envname}-api-alarm', backend_api, self.cw_alarm_action
-        )
-        self.set_aurora_alarms(
-            f'{resource_prefix}-{envname}-aurora-alarm', database, self.cw_alarm_action
-        )
+        self.set_api_alarms(f"{resource_prefix}-{envname}-api-alarm", backend_api, self.cw_alarm_action)
+        self.set_aurora_alarms(f"{resource_prefix}-{envname}-aurora-alarm", database, self.cw_alarm_action)
         self.set_es_alarms(
-            f'{resource_prefix}-{envname}-opensearch-alarm',
+            f"{resource_prefix}-{envname}-opensearch-alarm",
             openseach_domain,
             self.cw_alarm_action,
         )
         self.set_sqs_alarms(
-            f'{resource_prefix}-{envname}-sqs-alarm',
+            f"{resource_prefix}-{envname}-sqs-alarm",
             queue_name,
             self.cw_alarm_action,
         )
@@ -153,17 +147,17 @@ class MonitoringStack(pyNestedClass):
         cf_api = widget_api.CDKDashboard()
         dashboard = cw.Dashboard(
             self,
-            id='CWDashboard',
-            dashboard_name=f'{resource_prefix}-{envname}-dashboard',
+            id="CWDashboard",
+            dashboard_name=f"{resource_prefix}-{envname}-dashboard",
         )
-        dashboard.add_widgets(cw.TextWidget(width=24, markdown='# API Gateway'))
+        dashboard.add_widgets(cw.TextWidget(width=24, markdown="# API Gateway"))
         api_nickname = backend_api
         api_name = backend_api
         dashboard.add_widgets(
             cf_api.build_apig_duration(api_name, api_nickname),
             cf_api.build_apig_errors(api_name, api_nickname),
         )
-        dashboard.add_widgets(cw.TextWidget(width=24, markdown='# Lambda Functions'))
+        dashboard.add_widgets(cw.TextWidget(width=24, markdown="# Lambda Functions"))
         l: _lambda.Function
         for l in lambdas:
             dashboard.add_widgets(
@@ -172,7 +166,7 @@ class MonitoringStack(pyNestedClass):
                 cf_api.build_lambda_duration(l.function_name, l.function_name),
             )
         if ecs_cluster:
-            dashboard.add_widgets(cw.TextWidget(width=24, markdown='# ECS Cluster'))
+            dashboard.add_widgets(cw.TextWidget(width=24, markdown="# ECS Cluster"))
             cluster_name = ecs_cluster.cluster_name
             dashboard.add_widgets(
                 cf_ecs.build_ecs_cluster_cpu_widget(cluster_name),
@@ -181,24 +175,16 @@ class MonitoringStack(pyNestedClass):
             )
 
             if ecs_task_definitions:
-                dashboard.add_widgets(cw.TextWidget(width=24, markdown='# ECS Tasks'))
+                dashboard.add_widgets(cw.TextWidget(width=24, markdown="# ECS Tasks"))
                 task: ecs.FargateTaskDefinition
                 for task in ecs_task_definitions:
                     dashboard.add_widgets(
-                        cf_ecs.build_ecs_task_container_insight_cpu_widget(
-                            cluster_name, task.family
-                        ),
-                        cf_ecs.build_ecs_task_container_insight_memory_widget(
-                            cluster_name, task.family
-                        ),
-                        cf_ecs.build_ecs_task_container_insight_storage_widget(
-                            cluster_name, task.family
-                        ),
+                        cf_ecs.build_ecs_task_container_insight_cpu_widget(cluster_name, task.family),
+                        cf_ecs.build_ecs_task_container_insight_memory_widget(cluster_name, task.family),
+                        cf_ecs.build_ecs_task_container_insight_storage_widget(cluster_name, task.family),
                     )
         if database:
-            dashboard.add_widgets(
-                cw.TextWidget(width=24, markdown='# Aurora Serverless Database')
-            )
+            dashboard.add_widgets(cw.TextWidget(width=24, markdown="# Aurora Serverless Database"))
             DBClusterIdentifier = database
             dashboard.add_widgets(
                 cf_rds.build_aurora_writer_rep_widget(DBClusterIdentifier),
@@ -226,32 +212,30 @@ class MonitoringStack(pyNestedClass):
                 cf_rds.build_aurora_bill_widget(DBClusterIdentifier),
             )
 
-    def set_function_alarms(
-        self, alarm_name, lambda_function, cw_alarm_action, resource_prefix
-    ):
+    def set_function_alarms(self, alarm_name, lambda_function, cw_alarm_action, resource_prefix):
         error_metric = cw.Metric(
             namespace=resource_prefix,
-            metric_name=f'{lambda_function.function_name}-error-metric',
-            label='Function ERROR metric',
-            statistic='Sum',
+            metric_name=f"{lambda_function.function_name}-error-metric",
+            label="Function ERROR metric",
+            statistic="Sum",
             period=Duration.seconds(10),
         )
         logs.MetricFilter(
             self,
-            f'{alarm_name}-error-metric-filter',
+            f"{alarm_name}-error-metric-filter",
             log_group=lambda_function.log_group,
             metric_name=error_metric.metric_name,
-            metric_value='1',
+            metric_value="1",
             metric_namespace=error_metric.namespace,
-            filter_pattern=logs.FilterPattern.literal('ERROR'),
+            filter_pattern=logs.FilterPattern.literal("ERROR"),
         )
         error_metric_alarm = cw.Alarm(
             self,
-            f'{alarm_name}-error-metric-alarm',
+            f"{alarm_name}-error-metric-alarm",
             metric=error_metric,
             evaluation_periods=1,
             threshold=1,
-            alarm_name=f'{lambda_function.function_name}-error-metric-alarm',
+            alarm_name=f"{lambda_function.function_name}-error-metric-alarm",
             comparison_operator=cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             treat_missing_data=cw.TreatMissingData.NOT_BREACHING,
         )
@@ -260,11 +244,11 @@ class MonitoringStack(pyNestedClass):
 
         lambda_error = cw.Alarm(
             self,
-            f'{alarm_name}-invocation-errors',
+            f"{alarm_name}-invocation-errors",
             metric=lambda_function.metric_errors(),
             evaluation_periods=1,
             threshold=1,
-            alarm_name=f'{lambda_function.function_name}-invocation-errors',
+            alarm_name=f"{lambda_function.function_name}-invocation-errors",
             comparison_operator=cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             treat_missing_data=cw.TreatMissingData.NOT_BREACHING,
         )
@@ -272,11 +256,11 @@ class MonitoringStack(pyNestedClass):
         lambda_error.add_ok_action(cw_alarm_action)
         lambda_throttles = cw.Alarm(
             self,
-            f'{alarm_name}-throttles',
+            f"{alarm_name}-throttles",
             metric=lambda_function.metric_throttles(),
             evaluation_periods=1,
             threshold=1,
-            alarm_name=f'{lambda_function.function_name}-throttles',
+            alarm_name=f"{lambda_function.function_name}-throttles",
             comparison_operator=cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             treat_missing_data=cw.TreatMissingData.NOT_BREACHING,
         )
@@ -285,44 +269,34 @@ class MonitoringStack(pyNestedClass):
 
     def set_api_alarms(self, alarm_name, api_name, cw_alarm_action):
         api_count = cw.Metric(
-            namespace='AWS/ApiGateway',
-            metric_name='Count',
-            dimensions_map={'ApiName': api_name},
+            namespace="AWS/ApiGateway",
+            metric_name="Count",
+            dimensions_map={"ApiName": api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-max-calls', api_count, cw_alarm_action, threshold=100
-        )
+        self._set_alarm(f"{alarm_name}-max-calls", api_count, cw_alarm_action, threshold=100)
         api_5xx_errors = cw.Metric(
-            namespace='AWS/ApiGateway',
-            metric_name='5XXError',
-            dimensions_map={'ApiName': api_name},
+            namespace="AWS/ApiGateway",
+            metric_name="5XXError",
+            dimensions_map={"ApiName": api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-5XXErrors', api_5xx_errors, cw_alarm_action, threshold=1
-        )
+        self._set_alarm(f"{alarm_name}-5XXErrors", api_5xx_errors, cw_alarm_action, threshold=1)
         api_4xx_errors = cw.Metric(
-            namespace='AWS/ApiGateway',
-            metric_name='4XXError',
-            dimensions_map={'ApiName': api_name},
+            namespace="AWS/ApiGateway",
+            metric_name="4XXError",
+            dimensions_map={"ApiName": api_name},
         )
-        self._set_alarm(
-            f'{alarm_name}-4XXErrors', api_4xx_errors, cw_alarm_action, threshold=1
-        )
+        self._set_alarm(f"{alarm_name}-4XXErrors", api_4xx_errors, cw_alarm_action, threshold=1)
 
     def set_aurora_alarms(self, alarm_name, db_identifier, cw_alarm_action):
         cpu_alarm = cw.Metric(
-            namespace='AWS/RDS',
-            metric_name='CPUUtilization',
-            dimensions_map={'DBInstanceIdentifier': db_identifier},
-            statistic='Sum',
+            namespace="AWS/RDS",
+            metric_name="CPUUtilization",
+            dimensions_map={"DBInstanceIdentifier": db_identifier},
+            statistic="Sum",
             period=Duration.minutes(1),
         )
-        self._set_alarm(
-            f'{alarm_name}-CPUUtilization80', cpu_alarm, cw_alarm_action, threshold=80
-        )
-        self._set_alarm(
-            f'{alarm_name}-CPUUtilization90', cpu_alarm, cw_alarm_action, threshold=90
-        )
+        self._set_alarm(f"{alarm_name}-CPUUtilization80", cpu_alarm, cw_alarm_action, threshold=80)
+        self._set_alarm(f"{alarm_name}-CPUUtilization90", cpu_alarm, cw_alarm_action, threshold=90)
 
     def _set_alarm(self, alarm_name, api_count, cw_alarm_action, threshold=1):
         api_error = cw.Alarm(
@@ -340,11 +314,11 @@ class MonitoringStack(pyNestedClass):
 
     def set_waf_alarms(self, alarm_name, web_acl_id, cw_alarm_action):
         waf_metric = cw.Metric(
-            metric_name='BlockedRequests',
-            namespace='AWS/WAFV2',
-            statistic='Sum',
+            metric_name="BlockedRequests",
+            namespace="AWS/WAFV2",
+            statistic="Sum",
             dimensions_map=dict(
-                rule='waf-apigateway-ratelimit',
+                rule="waf-apigateway-ratelimit",
                 WebACL=web_acl_id,
                 Region=self.region,
             ),
@@ -366,57 +340,57 @@ class MonitoringStack(pyNestedClass):
     def set_es_alarms(self, alarm_name, domain_name, cw_alarm_action):
         self._set_es_alarm(
             domain_name,
-            f'{alarm_name}-cluster-red',
-            'ClusterStatus.red',
+            f"{alarm_name}-cluster-red",
+            "ClusterStatus.red",
             1,
             cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             1,
             1,
-            'max',
+            "max",
             cw_alarm_action,
         )
         self._set_es_alarm(
             domain_name,
-            f'{alarm_name}-cluster-yellow',
-            'ClusterStatus.yellow',
+            f"{alarm_name}-cluster-yellow",
+            "ClusterStatus.yellow",
             1,
             cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             1,
             1,
-            'max',
+            "max",
             cw_alarm_action,
         )
         self._set_es_alarm(
             domain_name,
-            f'{alarm_name}-cluster-IndexWritesBlocked',
-            'ClusterIndexWritesBlocked',
+            f"{alarm_name}-cluster-IndexWritesBlocked",
+            "ClusterIndexWritesBlocked",
             1,
             cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             5,
             1,
-            'max',
+            "max",
             cw_alarm_action,
         )
         self._set_es_alarm(
             domain_name,
-            f'{alarm_name}-cluster-CPUUtilization',
-            'CPUUtilization',
+            f"{alarm_name}-cluster-CPUUtilization",
+            "CPUUtilization",
             80,
             cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             15,
             3,
-            'avg',
+            "avg",
             cw_alarm_action,
         )
         self._set_es_alarm(
             domain_name,
-            f'{alarm_name}-cluster-JVMMemoryPressure',
-            'JVMMemoryPressure',
+            f"{alarm_name}-cluster-JVMMemoryPressure",
+            "JVMMemoryPressure",
             80,
             cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             5,
             3,
-            'max',
+            "max",
             cw_alarm_action,
         )
 
@@ -438,8 +412,8 @@ class MonitoringStack(pyNestedClass):
             alarm_name=alarm_name,
             metric=cw.Metric(
                 metric_name=metric_name,
-                namespace='AWS/ES',
-                dimensions_map={'DomainName': domain_name, 'ClientId': self.account},
+                namespace="AWS/ES",
+                dimensions_map={"DomainName": domain_name, "ClientId": self.account},
                 period=Duration.minutes(period),
                 statistic=statistic,
             ),
@@ -453,19 +427,19 @@ class MonitoringStack(pyNestedClass):
 
     def set_sqs_alarms(self, alarm_name, queue_name, cw_alarm_action):
         max_messages = cw.Metric(
-            namespace='AWS/SQS',
-            metric_name='NumberOfMessagesSent',
-            dimensions_map={'MyQueue': queue_name},
-            statistic='Sum',
+            namespace="AWS/SQS",
+            metric_name="NumberOfMessagesSent",
+            dimensions_map={"MyQueue": queue_name},
+            statistic="Sum",
             period=Duration.minutes(5),
         )
         queue_nb_msg_alarm = cw.Alarm(
             self,
-            f'{alarm_name}-NumberOfMessagesSent',
+            f"{alarm_name}-NumberOfMessagesSent",
             metric=max_messages,
             evaluation_periods=1,
             threshold=10000,
-            alarm_name=f'{alarm_name}-NumberOfMessagesSent',
+            alarm_name=f"{alarm_name}-NumberOfMessagesSent",
             comparison_operator=cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             treat_missing_data=cw.TreatMissingData.NOT_BREACHING,
         )

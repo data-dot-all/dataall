@@ -17,6 +17,4 @@ from .udf import UserDefinedFunction
 # from .convert_to_parquet import ConvertToParquet
 # from .structured_logging import StructuredLogger
 
-StepTypes = Enum(
-    'StepTypes', {k.upper(): k for k in StepHandler.get_instance().handlers.keys()}
-)
+StepTypes = Enum("StepTypes", {k.upper(): k for k in StepHandler.get_instance().handlers.keys()})

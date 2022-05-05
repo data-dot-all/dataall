@@ -4,39 +4,35 @@ import dataall
 import pytest
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(org1, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset1(env1, org1, dataset, group) -> dataall.db.models.Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
-    )
+    yield dataset(org=org1, env=env1, name="dataset1", owner=env1.owner, group=group.name)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
-    yield org('org2', user2.userName, group2.name)
+    yield org("org2", user2.userName, group2.name)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env2(
     env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
 ) -> dataall.db.models.Environment:
-    yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-2')
+    yield env(org2, "dev", user2.userName, group2.name, "2" * 12, "eu-west-2")
 
 
 def test_init(db):
@@ -63,15 +59,13 @@ def test_get_dataset(client, dataset1, env1, user, group):
     )
     assert response.data.getDataset.AwsAccountId == env1.AwsAccountId
     assert response.data.getDataset.region == env1.region
-    assert response.data.getDataset.label == 'dataset1'
+    assert response.data.getDataset.label == "dataset1"
     assert response.data.getDataset.imported is False
     assert response.data.getDataset.importedS3Bucket is False
 
 
 def test_create_location(client, dataset1, env1, user, group, patch_es, module_mocker):
-    module_mocker.patch(
-        'dataall.aws.handlers.s3.S3.create_bucket_prefix', return_value=True
-    )
+    module_mocker.patch("dataall.aws.handlers.s3.S3.create_bucket_prefix", return_value=True)
     response = client.query(
         """
         mutation createDatasetStorageLocation($datasetUri:String!, $input:NewDatasetStorageLocationInput!){
@@ -87,15 +81,15 @@ def test_create_location(client, dataset1, env1, user, group, patch_es, module_m
         username=user.userName,
         groups=[group.name],
         input={
-            'label': 'testing',
-            'prefix': 'mylocation',
-            'tags': ['test'],
-            'terms': ['term'],
+            "label": "testing",
+            "prefix": "mylocation",
+            "tags": ["test"],
+            "terms": ["term"],
         },
     )
-    assert response.data.createDatasetStorageLocation.label == 'testing'
-    assert response.data.createDatasetStorageLocation.S3Prefix == 'mylocation'
-    assert 'test' in response.data.createDatasetStorageLocation.tags
+    assert response.data.createDatasetStorageLocation.label == "testing"
+    assert response.data.createDatasetStorageLocation.S3Prefix == "mylocation"
+    assert "test" in response.data.createDatasetStorageLocation.tags
 
 
 def test_manage_dataset_location(client, dataset1, env1, user, group):
@@ -138,8 +132,8 @@ def test_manage_dataset_location(client, dataset1, env1, user, group):
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.getDatasetStorageLocation.label == 'testing'
-    assert response.data.getDatasetStorageLocation.S3Prefix == 'mylocation'
+    assert response.data.getDatasetStorageLocation.label == "testing"
+    assert response.data.getDatasetStorageLocation.S3Prefix == "mylocation"
 
     response = client.query(
         """
@@ -154,12 +148,12 @@ def test_manage_dataset_location(client, dataset1, env1, user, group):
         """,
         locationUri=response.data.getDatasetStorageLocation.locationUri,
         username=user.userName,
-        input={'label': 'testing2', 'terms': ['ert']},
+        input={"label": "testing2", "terms": ["ert"]},
         groups=[group.name],
     )
-    assert response.data.updateDatasetStorageLocation.label == 'testing2'
-    assert response.data.updateDatasetStorageLocation.S3Prefix == 'mylocation'
-    assert 'test' in response.data.updateDatasetStorageLocation.tags
+    assert response.data.updateDatasetStorageLocation.label == "testing2"
+    assert response.data.updateDatasetStorageLocation.S3Prefix == "mylocation"
+    assert "test" in response.data.updateDatasetStorageLocation.tags
 
     response = client.query(
         """

@@ -16,9 +16,7 @@ from ..Stack import stack_helper
 log = logging.getLogger(__name__)
 
 
-def create(
-    context: Context, source, environmentUri: str = None, clusterInput: dict = None
-):
+def create(context: Context, source, environmentUri: str = None, clusterInput: dict = None):
 
     with context.engine.scoped_session() as session:
 
@@ -31,12 +29,12 @@ def create(
             check_perm=True,
         )
 
-        log.debug(f'Create Redshift Cluster Stack: {cluster}')
+        log.debug(f"Create Redshift Cluster Stack: {cluster}")
 
         stack = Stack.create_stack(
             session=session,
             environment_uri=cluster.environmentUri,
-            target_type='redshift',
+            target_type="redshift",
             target_uri=cluster.clusterUri,
             target_label=cluster.label,
         )
@@ -63,41 +61,39 @@ def import_cluster(context: Context, source, environmentUri: str, clusterInput: 
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            group=clusterInput['SamlGroupName'],
+            group=clusterInput["SamlGroupName"],
             permission_name=permissions.CREATE_REDSHIFT_CLUSTER,
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
 
         aws_cluster_details = Redshift.describe_clusters(
             **{
-                'accountid': environment.AwsAccountId,
-                'region': environment.region,
-                'cluster_id': clusterInput['clusterIdentifier'],
+                "accountid": environment.AwsAccountId,
+                "region": environment.region,
+                "cluster_id": clusterInput["clusterIdentifier"],
             }
         )
 
         if not aws_cluster_details:
             raise db.exceptions.AWSResourceNotFound(
-                action='IMPORT_REDSHIFT_CLUSTER',
+                action="IMPORT_REDSHIFT_CLUSTER",
                 message=f"{clusterInput['clusterIdentifier']} "
-                f'not found on AWS {environment.AwsAccountId}//{environment.region}',
+                f"not found on AWS {environment.AwsAccountId}//{environment.region}",
             )
 
         cluster = models.RedshiftCluster(
             environmentUri=environment.environmentUri,
             organizationUri=environment.organizationUri,
             owner=context.username,
-            label=clusterInput['label'],
-            description=clusterInput.get('description'),
-            tags=clusterInput.get('tags'),
+            label=clusterInput["label"],
+            description=clusterInput.get("description"),
+            tags=clusterInput.get("tags"),
             region=environment.region,
             AwsAccountId=environment.AwsAccountId,
             imported=True,
-            SamlGroupName=clusterInput.get('SamlGroupName', environment.SamlGroupName),
+            SamlGroupName=clusterInput.get("SamlGroupName", environment.SamlGroupName),
         )
-        cluster = map_aws_details_to_model(
-            aws_cluster_details=aws_cluster_details, cluster=cluster
-        )
+        cluster = map_aws_details_to_model(aws_cluster_details=aws_cluster_details, cluster=cluster)
         session.add(cluster)
         session.commit()
 
@@ -105,20 +101,20 @@ def import_cluster(context: Context, source, environmentUri: str, clusterInput: 
             targetUri=cluster.clusterUri,
             accountid=cluster.AwsAccountId,
             region=cluster.region,
-            stack='redshift',
+            stack="redshift",
         )
         session.add(stack)
-        cluster.CFNStackName = f'stack-{stack.stackUri}' if stack else None
+        cluster.CFNStackName = f"stack-{stack.stackUri}" if stack else None
         session.commit()
 
         redshift_assign_role_task = models.Task(
             targetUri=cluster.clusterUri,
-            action='redshift.iam_roles.update',
+            action="redshift.iam_roles.update",
         )
         session.add(redshift_assign_role_task)
         session.commit()
 
-    log.info('Updating imported cluster iam_roles')
+    log.info("Updating imported cluster iam_roles")
     Worker.queue(engine=context.engine, task_ids=[redshift_assign_role_task.taskUri])
 
     stack_helper.deploy_stack(context=context, targetUri=cluster.clusterUri)
@@ -155,9 +151,9 @@ def get_cluster_status(context: Context, source: models.RedshiftCluster):
         try:
             aws_cluster = Redshift.describe_clusters(
                 **{
-                    'accountid': source.AwsAccountId,
-                    'region': source.region,
-                    'cluster_id': source.name,
+                    "accountid": source.AwsAccountId,
+                    "region": source.region,
+                    "cluster_id": source.name,
                 }
             )
             if aws_cluster:
@@ -165,7 +161,7 @@ def get_cluster_status(context: Context, source: models.RedshiftCluster):
             if not source.external_schema_created:
                 task_init_db = models.Task(
                     targetUri=source.clusterUri,
-                    action='redshift.cluster.init_database',
+                    action="redshift.cluster.init_database",
                 )
                 session.add(task_init_db)
                 session.commit()
@@ -173,44 +169,35 @@ def get_cluster_status(context: Context, source: models.RedshiftCluster):
 
             return source.status
         except ClientError as e:
-            log.error(f'Failed to retrieve cluster status due to: {e}')
+            log.error(f"Failed to retrieve cluster status due to: {e}")
 
 
 def map_aws_details_to_model(aws_cluster_details, cluster):
-    cluster.name = aws_cluster_details.get('ClusterIdentifier')
-    cluster.status = aws_cluster_details.get('ClusterStatus')
-    cluster.numberOfNodes = aws_cluster_details.get('NumberOfNodes')
-    cluster.masterUsername = aws_cluster_details.get('MasterUsername')
-    cluster.masterDatabaseName = aws_cluster_details.get('DBName')
+    cluster.name = aws_cluster_details.get("ClusterIdentifier")
+    cluster.status = aws_cluster_details.get("ClusterStatus")
+    cluster.numberOfNodes = aws_cluster_details.get("NumberOfNodes")
+    cluster.masterUsername = aws_cluster_details.get("MasterUsername")
+    cluster.masterDatabaseName = aws_cluster_details.get("DBName")
     cluster.endpoint = (
-        aws_cluster_details.get('Endpoint').get('Address')
-        if aws_cluster_details.get('Endpoint')
-        else None
+        aws_cluster_details.get("Endpoint").get("Address") if aws_cluster_details.get("Endpoint") else None
     )
-    cluster.port = (
-        aws_cluster_details.get('Endpoint').get('Port')
-        if aws_cluster_details.get('Endpoint')
-        else None
-    )
-    cluster.subnetGroupName = aws_cluster_details.get('ClusterSubnetGroupName')
+    cluster.port = aws_cluster_details.get("Endpoint").get("Port") if aws_cluster_details.get("Endpoint") else None
+    cluster.subnetGroupName = aws_cluster_details.get("ClusterSubnetGroupName")
     cluster.IAMRoles = (
-        [role.get('IamRoleArn') for role in aws_cluster_details.get('IamRoles')]
-        if aws_cluster_details.get('IamRoles')
+        [role.get("IamRoleArn") for role in aws_cluster_details.get("IamRoles")]
+        if aws_cluster_details.get("IamRoles")
         else None
     )
-    cluster.nodeType = aws_cluster_details.get('NodeType')
+    cluster.nodeType = aws_cluster_details.get("NodeType")
     cluster.securityGroupIds = (
-        [
-            vpc.get('VpcSecurityGroupId')
-            for vpc in aws_cluster_details.get('VpcSecurityGroups')
-        ]
-        if aws_cluster_details.get('VpcSecurityGroups')
+        [vpc.get("VpcSecurityGroupId") for vpc in aws_cluster_details.get("VpcSecurityGroups")]
+        if aws_cluster_details.get("VpcSecurityGroups")
         else None
     )
-    cluster.vpc = aws_cluster_details.get('VpcId')
+    cluster.vpc = aws_cluster_details.get("VpcId")
     cluster.tags = (
-        [{tag.get('Key'), tag.get('Value')} for tag in aws_cluster_details.get('tags')]
-        if aws_cluster_details.get('tags')
+        [{tag.get("Key"), tag.get("Value")} for tag in aws_cluster_details.get("tags")]
+        if aws_cluster_details.get("tags")
         else None
     )
     return cluster
@@ -231,9 +218,7 @@ def get_cluster_environment(context: Context, source: models.RedshiftCluster):
         return db.api.Environment.get_environment_by_uri(session, source.environmentUri)
 
 
-def delete(
-    context: Context, source, clusterUri: str = None, deleteFromAWS: bool = False
-):
+def delete(context: Context, source, clusterUri: str = None, deleteFromAWS: bool = False):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -242,15 +227,11 @@ def delete(
             groups=context.groups,
             permission_name=permissions.DELETE_REDSHIFT_CLUSTER,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, cluster.environmentUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
+        env: models.Environment = db.api.Environment.get_environment_by_uri(session, cluster.environmentUri)
         db.api.RedshiftCluster.delete_all_cluster_linked_objects(session, clusterUri)
 
-        KeyValueTag.delete_key_value_tags(session, cluster.clusterUri, 'redshift')
+        KeyValueTag.delete_key_value_tags(session, cluster.clusterUri, "redshift")
 
         session.delete(cluster)
 
@@ -267,7 +248,7 @@ def delete(
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
-            target_type='redshiftcluster',
+            target_type="redshiftcluster",
         )
 
     return True
@@ -282,14 +263,12 @@ def pause_cluster(context: Context, source, clusterUri: str = None):
             groups=context.groups,
             permission_name=permissions.PAUSE_REDSHIFT_CLUSTER,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         Redshift.pause_cluster(
             **{
-                'accountid': cluster.AwsAccountId,
-                'region': cluster.region,
-                'cluster_id': cluster.name,
+                "accountid": cluster.AwsAccountId,
+                "region": cluster.region,
+                "cluster_id": cluster.name,
             }
         )
         return True
@@ -304,14 +283,12 @@ def resume_cluster(context: Context, source, clusterUri: str = None):
             groups=context.groups,
             permission_name=permissions.RESUME_REDSHIFT_CLUSTER,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         Redshift.resume_cluster(
             **{
-                'accountid': cluster.AwsAccountId,
-                'region': cluster.region,
-                'cluster_id': cluster.name,
+                "accountid": cluster.AwsAccountId,
+                "region": cluster.region,
+                "cluster_id": cluster.name,
             }
         )
         return True
@@ -326,14 +303,12 @@ def reboot_cluster(context: Context, source, clusterUri: str = None):
             groups=context.groups,
             permission_name=permissions.REBOOT_REDSHIFT_CLUSTER,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         Redshift.reboot_cluster(
             **{
-                'accountid': cluster.AwsAccountId,
-                'region': cluster.region,
-                'cluster_id': cluster.name,
+                "accountid": cluster.AwsAccountId,
+                "region": cluster.region,
+                "cluster_id": cluster.name,
             }
         )
         return True
@@ -348,35 +323,25 @@ def get_console_access(context: Context, source, clusterUri: str = None):
             groups=context.groups,
             permission_name=permissions.GET_REDSHIFT_CLUSTER_CREDENTIALS,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
-        environment = db.api.Environment.get_environment_by_uri(
-            session, cluster.environmentUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
+        environment = db.api.Environment.get_environment_by_uri(session, cluster.environmentUri)
         pivot_session = SessionHelper.remote_session(environment.AwsAccountId)
         aws_session = SessionHelper.get_session(
             base_session=pivot_session,
             role_arn=environment.EnvironmentDefaultIAMRoleArn,
         )
-        url = SessionHelper.get_console_access_url(
-            aws_session, region=cluster.region, redshiftcluster=cluster.name
-        )
+        url = SessionHelper.get_console_access_url(aws_session, region=cluster.region, redshiftcluster=cluster.name)
         return url
 
 
-def add_dataset_to_cluster(
-    context: Context, source, clusterUri: str = None, datasetUri: str = None
-):
+def add_dataset_to_cluster(context: Context, source, clusterUri: str = None, datasetUri: str = None):
     with context.engine.scoped_session() as session:
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         aws_cluster = Redshift.describe_clusters(
             **{
-                'accountid': cluster.AwsAccountId,
-                'region': cluster.region,
-                'cluster_id': cluster.name,
+                "accountid": cluster.AwsAccountId,
+                "region": cluster.region,
+                "cluster_id": cluster.name,
             }
         )
         if aws_cluster:
@@ -386,12 +351,12 @@ def add_dataset_to_cluster(
             username=context.username,
             groups=context.groups,
             uri=clusterUri,
-            data={'datasetUri': datasetUri},
+            data={"datasetUri": datasetUri},
             check_perm=True,
         )
         task = models.Task(
             targetUri=cluster.clusterUri,
-            action='redshift.cluster.create_external_schema',
+            action="redshift.cluster.create_external_schema",
         )
         session.add(task)
         session.commit()
@@ -400,26 +365,24 @@ def add_dataset_to_cluster(
     return True
 
 
-def remove_dataset_from_cluster(
-    context: Context, source, clusterUri: str = None, datasetUri: str = None
-):
+def remove_dataset_from_cluster(context: Context, source, clusterUri: str = None, datasetUri: str = None):
     with context.engine.scoped_session() as session:
         cluster, dataset = db.api.RedshiftCluster.remove_dataset_from_cluster(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=clusterUri,
-            data={'datasetUri': datasetUri},
+            data={"datasetUri": datasetUri},
             check_perm=True,
         )
         if dataset.environmentUri != cluster.environmentUri:
-            database = f'{dataset.GlueDatabaseName}shared'
+            database = f"{dataset.GlueDatabaseName}shared"
         else:
             database = dataset.GlueDatabaseName
         task = models.Task(
             targetUri=cluster.clusterUri,
-            action='redshift.cluster.drop_external_schema',
-            payload={'database': database},
+            action="redshift.cluster.drop_external_schema",
+            payload={"database": database},
         )
         session.add(task)
         session.commit()
@@ -428,9 +391,7 @@ def remove_dataset_from_cluster(
     return True
 
 
-def list_cluster_available_datasets(
-    context: Context, source, clusterUri: str = None, filter: dict = None
-):
+def list_cluster_available_datasets(context: Context, source, clusterUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -444,9 +405,7 @@ def list_cluster_available_datasets(
         )
 
 
-def list_cluster_datasets(
-    context: Context, source, clusterUri: str = None, filter: dict = None
-):
+def list_cluster_datasets(context: Context, source, clusterUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -460,9 +419,7 @@ def list_cluster_datasets(
         )
 
 
-def list_available_cluster_dataset_tables(
-    context: Context, source, clusterUri: str = None, filter: dict = None
-):
+def list_available_cluster_dataset_tables(context: Context, source, clusterUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -476,9 +433,7 @@ def list_available_cluster_dataset_tables(
         )
 
 
-def list_copy_enabled_dataset_tables(
-    context: Context, source, clusterUri: str = None, filter: dict = None
-):
+def list_copy_enabled_dataset_tables(context: Context, source, clusterUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -501,24 +456,22 @@ def get_datahubdb_credentials(context: Context, source, clusterUri: str = None):
             groups=context.groups,
             permission_name=permissions.GET_REDSHIFT_CLUSTER_CREDENTIALS,
         )
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         creds = Redshift.get_cluster_credentials(
             **{
-                'accountid': cluster.AwsAccountId,
-                'region': cluster.region,
-                'cluster_id': cluster.name,
-                'secret_name': cluster.datahubSecret,
+                "accountid": cluster.AwsAccountId,
+                "region": cluster.region,
+                "cluster_id": cluster.name,
+                "secret_name": cluster.datahubSecret,
             }
         )
         return {
-            'clusterUri': clusterUri,
-            'endpoint': cluster.endpoint,
-            'port': cluster.port,
-            'database': cluster.databaseName,
-            'user': cluster.databaseUser,
-            'password': creds,
+            "clusterUri": clusterUri,
+            "endpoint": cluster.endpoint,
+            "port": cluster.port,
+            "database": cluster.databaseName,
+            "user": cluster.databaseUser,
+            "password": creds,
         }
 
 
@@ -542,33 +495,31 @@ def enable_dataset_table_copy(
     dataLocation: str = None,
 ):
     with context.engine.scoped_session() as session:
-        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-            session, clusterUri
-        )
+        cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, clusterUri)
         db.api.RedshiftCluster.enable_copy_table(
             session,
             username=context.username,
             groups=context.groups,
             uri=clusterUri,
             data={
-                'datasetUri': datasetUri,
-                'tableUri': tableUri,
-                'schema': schema,
-                'dataLocation': dataLocation,
+                "datasetUri": datasetUri,
+                "tableUri": tableUri,
+                "schema": schema,
+                "dataLocation": dataLocation,
             },
             check_perm=True,
         )
         log.info(
-            f'Redshift copy tableUri {tableUri} starting for cluster'
-            f'{cluster.name} in account {cluster.AwsAccountId}'
+            f"Redshift copy tableUri {tableUri} starting for cluster"
+            f"{cluster.name} in account {cluster.AwsAccountId}"
         )
         task = models.Task(
-            action='redshift.subscriptions.copy',
+            action="redshift.subscriptions.copy",
             targetUri=cluster.environmentUri,
             payload={
-                'datasetUri': datasetUri,
-                'message': json.dumps({'clusterUri': clusterUri}),
-                'tableUri': tableUri,
+                "datasetUri": datasetUri,
+                "message": json.dumps({"clusterUri": clusterUri}),
+                "tableUri": tableUri,
             },
         )
         session.add(task)
@@ -591,6 +542,6 @@ def disable_dataset_table_copy(
             username=context.username,
             groups=context.groups,
             uri=clusterUri,
-            data={'datasetUri': datasetUri, 'tableUri': tableUri},
+            data={"datasetUri": datasetUri, "tableUri": tableUri},
             check_perm=True,
         )

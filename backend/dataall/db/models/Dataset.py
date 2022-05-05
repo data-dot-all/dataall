@@ -6,11 +6,11 @@ from .. import Base, Resource, utils
 
 
 class Dataset(Resource, Base):
-    __tablename__ = 'dataset'
+    __tablename__ = "dataset"
     environmentUri = Column(String, nullable=False)
     organizationUri = Column(String, nullable=False)
-    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
-    region = Column(String, default='eu-west-1')
+    datasetUri = Column(String, primary_key=True, default=utils.uuid("dataset"))
+    region = Column(String, default="eu-west-1")
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
@@ -29,9 +29,9 @@ class Dataset(Resource, Base):
     userRoleInEnvironment = query_expression()
     isPublishedInEnvironment = query_expression()
     projectPermission = query_expression()
-    language = Column(String, nullable=False, default='English')
+    language = Column(String, nullable=False, default="English")
     topics = Column(postgresql.ARRAY(String), nullable=True)
-    confidentiality = Column(String, nullable=False, default='Unclassified')
+    confidentiality = Column(String, nullable=False, default="Unclassified")
     tags = Column(postgresql.ARRAY(String))
     inProject = query_expression()
 

@@ -56,9 +56,7 @@ def make_sagemaker_model_task(stack, job, group_index, job_index):
     stack.set_resource_tags(delete_model)
 
     if job.get("model_name_path"):
-        delete_payload = stepfunctions.TaskInput.from_object(
-            {"model_name.$": job["model_name_path"]}
-        )
+        delete_payload = stepfunctions.TaskInput.from_object({"model_name.$": job["model_name_path"]})
     else:
         delete_payload = stepfunctions.TaskInput.from_object(
             {"model_name": re.sub(r"[^a-zA-Z0-9-]", "", job["name"]).lower()}

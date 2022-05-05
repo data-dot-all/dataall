@@ -1,66 +1,61 @@
-from .input_types import (EnableDataSubscriptionsInput,
-                          InviteGroupOnEnvironmentInput,
-                          ModifyEnvironmentInput, NewEnvironmentInput)
+from .input_types import (
+    EnableDataSubscriptionsInput,
+    InviteGroupOnEnvironmentInput,
+    ModifyEnvironmentInput,
+    NewEnvironmentInput,
+)
 from .resolvers import *
 
 createEnvironment = gql.MutationField(
-    name='createEnvironment',
-    args=[gql.Argument(name='input', type=gql.NonNullableType(NewEnvironmentInput))],
-    type=gql.Ref('Environment'),
+    name="createEnvironment",
+    args=[gql.Argument(name="input", type=gql.NonNullableType(NewEnvironmentInput))],
+    type=gql.Ref("Environment"),
     resolver=create_environment,
-    test_scope='Environment',
+    test_scope="Environment",
 )
 
 updateEnvironment = gql.MutationField(
-    name='updateEnvironment',
+    name="updateEnvironment",
     args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='input', type=gql.NonNullableType(ModifyEnvironmentInput)),
+        gql.Argument(name="environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="input", type=gql.NonNullableType(ModifyEnvironmentInput)),
     ],
-    type=gql.Ref('Environment'),
+    type=gql.Ref("Environment"),
     resolver=update_environment,
-    test_scope='Environment',
+    test_scope="Environment",
 )
 
 inviteGroupOnEnvironment = gql.MutationField(
-    name='inviteGroupOnEnvironment',
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(InviteGroupOnEnvironmentInput)
-        )
-    ],
-    type=gql.Ref('Environment'),
+    name="inviteGroupOnEnvironment",
+    args=[gql.Argument(name="input", type=gql.NonNullableType(InviteGroupOnEnvironmentInput))],
+    type=gql.Ref("Environment"),
     resolver=invite_group,
 )
 
 
 updateGroupPermission = gql.MutationField(
-    name='updateGroupEnvironmentPermissions',
-    args=[
-        gql.Argument(
-            name='input', type=gql.NonNullableType(InviteGroupOnEnvironmentInput)
-        )
-    ],
-    type=gql.Ref('Environment'),
+    name="updateGroupEnvironmentPermissions",
+    args=[gql.Argument(name="input", type=gql.NonNullableType(InviteGroupOnEnvironmentInput))],
+    type=gql.Ref("Environment"),
     resolver=update_group_permissions,
 )
 
 removeGroupFromEnvironment = gql.MutationField(
-    name='removeGroupFromEnvironment',
+    name="removeGroupFromEnvironment",
     args=[
-        gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument("environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument("groupUri", type=gql.NonNullableType(gql.String)),
     ],
-    type=gql.Ref('Environment'),
+    type=gql.Ref("Environment"),
     resolver=remove_group,
 )
 
 
 deleteEnvironment = gql.MutationField(
-    name='deleteEnvironment',
+    name="deleteEnvironment",
     args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='deleteFromAWS', type=gql.Boolean),
+        gql.Argument(name="environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="deleteFromAWS", type=gql.Boolean),
     ],
     resolver=delete_environment,
     type=gql.Boolean,
@@ -68,19 +63,19 @@ deleteEnvironment = gql.MutationField(
 
 
 EnableDataSubscriptions = gql.MutationField(
-    name='enableDataSubscriptions',
+    name="enableDataSubscriptions",
     args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='input', type=EnableDataSubscriptionsInput),
+        gql.Argument(name="environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="input", type=EnableDataSubscriptionsInput),
     ],
     resolver=enable_subscriptions,
     type=gql.Boolean,
 )
 
 DisableDataSubscriptions = gql.MutationField(
-    name='DisableDataSubscriptions',
+    name="DisableDataSubscriptions",
     args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="environmentUri", type=gql.NonNullableType(gql.String)),
     ],
     resolver=disable_subscriptions,
     type=gql.Boolean,

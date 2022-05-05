@@ -12,8 +12,8 @@ class CloudWatchRumStack(pyNestedClass):
         self,
         scope,
         id: str,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         cw_alarm_action=None,
         cognito_identity_pool_id: str = None,
         cognito_identity_pool_role_arn: str = None,
@@ -43,69 +43,67 @@ class CloudWatchRumStack(pyNestedClass):
         tooling_account_id,
         cw_alarm_action,
     ):
-        monitor_name = f'{resource_prefix}-{envname}-monitor'
+        monitor_name = f"{resource_prefix}-{envname}-monitor"
         rum.CfnAppMonitor(
             self,
-            f'{resource_prefix}RumAppMonitor',
-            domain=custom_domain_name or f'{resource_prefix}.{envname}.change.me',
+            f"{resource_prefix}RumAppMonitor",
+            domain=custom_domain_name or f"{resource_prefix}.{envname}.change.me",
             name=monitor_name,
             cw_log_enabled=True,
             app_monitor_configuration=rum.CfnAppMonitor.AppMonitorConfigurationProperty(
                 allow_cookies=True,
                 enable_x_ray=True,
                 session_sample_rate=1,
-                telemetries=['errors', 'performance', 'http'],
+                telemetries=["errors", "performance", "http"],
                 identity_pool_id=cognito_identity_pool_id,
                 guest_role_arn=cognito_identity_pool_role_arn,
             ),
-            tags=[CfnTag(key='Application', value='dataall')],
+            tags=[CfnTag(key="Application", value="dataall")],
         )
         self.set_rum_alarms(
-            f'{resource_prefix}-{envname}-rum-jserrors-alarm',
+            f"{resource_prefix}-{envname}-rum-jserrors-alarm",
             monitor_name,
             cw_alarm_action,
         )
         cross_account_rum_config_role = iam.Role(
             self,
-            f'{resource_prefix}-{envname}-rum-config-role',
-            role_name=f'{resource_prefix}-{envname}-rum-config-role',
+            f"{resource_prefix}-{envname}-rum-config-role",
+            role_name=f"{resource_prefix}-{envname}-rum-config-role",
             assumed_by=iam.AccountPrincipal(tooling_account_id),
         )
         cross_account_rum_config_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
-                    'ssm:GetParameterHistory',
-                    'ssm:GetParametersByPath',
-                    'ssm:GetParameters',
-                    'ssm:GetParameter',
+                    "ssm:GetParameterHistory",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
                 ],
                 resources=[
-                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    f"arn:aws:ssm:*:{self.account}:parameter/*dataall*",
+                    f"arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*",
                 ],
             )
         )
         cross_account_rum_config_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['rum:GetAppMonitor', 'rum:UpdateAppMonitor'],
-                resources=[
-                    f'arn:aws:rum:{self.region}:{self.account}:appmonitor/{monitor_name}'
-                ],
+                actions=["rum:GetAppMonitor", "rum:UpdateAppMonitor"],
+                resources=[f"arn:aws:rum:{self.region}:{self.account}:appmonitor/{monitor_name}"],
             ),
         )
         ssm.StringParameter(
             self,
-            'RumConfigRoleName',
-            parameter_name=f'/dataall/{envname}/rum/crossAccountRole',
+            "RumConfigRoleName",
+            parameter_name=f"/dataall/{envname}/rum/crossAccountRole",
             string_value=cross_account_rum_config_role.role_name,
         )
 
     def set_rum_alarms(self, alarm_name, app_monitor, cw_alarm_action):
         js_errors_metric = cw.Metric(
-            namespace='AWS/RUM',
-            metric_name='JsErrorCount',
-            dimensions_map={'application_name': app_monitor},
-            statistic='Sum',
+            namespace="AWS/RUM",
+            metric_name="JsErrorCount",
+            dimensions_map={"application_name": app_monitor},
+            statistic="Sum",
             period=Duration.minutes(1),
         )
         rum_js_errors_alarm = cw.Alarm(

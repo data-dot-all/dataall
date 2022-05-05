@@ -13,8 +13,8 @@ from dataall.db import api, get_engine, has_table
 from sqlalchemy import orm
 
 # revision identifiers, used by Alembic.
-revision = '033c3d6c1849'
-down_revision = 'bc77fef9d0b2'
+revision = "033c3d6c1849"
+down_revision = "bc77fef9d0b2"
 branch_labels = None
 depends_on = None
 
@@ -24,11 +24,11 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Initializing permissions...')
+        print("Initializing permissions...")
         api.Permission.init_permissions(session)
-        print('Permissions initialized successfully')
+        print("Permissions initialized successfully")
     except Exception as e:
-        print(f'Failed to init permissions due to: {e}')
+        print(f"Failed to init permissions due to: {e}")
     # ### end Alembic commands ###
 
 

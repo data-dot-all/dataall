@@ -1,19 +1,13 @@
 def iterable_to_scala_list(jvm, iterable):
-    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(
-        iterable
-    ).toList()
+    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(iterable).toList()
 
 
 def iterable_to_scala_set(jvm, iterable):
-    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(
-        iterable
-    ).toSet()
+    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(iterable).toSet()
 
 
 def iterable_to_scala_seq(jvm, iterable):
-    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(
-        iterable
-    ).toSeq()
+    return jvm.scala.collection.JavaConversions.iterableAsScalaIterable(iterable).toSeq()
 
 
 def simple_date_format(jvm, s):

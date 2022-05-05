@@ -122,9 +122,7 @@ class Verification:
 
             for col_name in col_names:
 
-                constraint = "{} >= {} AND {} <= {}".format(
-                    col_name, lower_bound, col_name, upper_bound
-                )
+                constraint = "{} >= {} AND {} <= {}".format(col_name, lower_bound, col_name, upper_bound)
 
                 if null_value == "discard":
                     constraint = "({} IS NULL) OR ({})".format(col_name, constraint)

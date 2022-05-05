@@ -61,20 +61,20 @@ class Runner:
         self.glueContext = glueContext
 
     def get_step_by_name(self, name):
-        candidates = [s for s in self.config.steps if s.name == 'name']
+        candidates = [s for s in self.config.steps if s.name == "name"]
         if len(candidates):
             return candidates[0]
         return None
 
     def run(self):
         logger = self.logger
-        logger.info('Starting Runner')
+        logger.info("Starting Runner")
         spark = self.spark
 
         success = True
         step: StepInterface
         for step in self.config.steps:
-            logger.info(f'{step.name} [{step.type}] STARTING')
+            logger.info(f"{step.name} [{step.type}] STARTING")
             step.run(
                 spark=spark,
                 config=self.config,
@@ -84,85 +84,83 @@ class Runner:
             )
 
             if step.status == StepStatus.FAIL:
-                logger.info(f'{step.name} [{step.type}] FAILED ')
+                logger.info(f"{step.name} [{step.type}] FAILED ")
                 success = False
                 break
             else:
-                logger.info(f'{step.name} [{step.type}] SUCCESS')
-                logger.info(f'{step.name} [{step.type}] WRITE  METRICS')
+                logger.info(f"{step.name} [{step.type}] SUCCESS")
+                logger.info(f"{step.name} [{step.type}] WRITE  METRICS")
                 for metric in step.metrics:
-                    logger.info('Metrics: {}'.format(metric))
+                    logger.info("Metrics: {}".format(metric))
                     logger.info(
                         str(
                             {
-                                'namespace': 'dataall',
-                                'JOB_RUN_ID': self.config.args.get('JOB_RUN_ID', ''),
-                                'JOB_NAME': self.config.args.get('JOB_NAME', ''),
-                                'metric': metric.name,
-                                'value': metric.value,
-                                'unit_of_measurement': metric.unit,
+                                "namespace": "dataall",
+                                "JOB_RUN_ID": self.config.args.get("JOB_RUN_ID", ""),
+                                "JOB_NAME": self.config.args.get("JOB_NAME", ""),
+                                "metric": metric.name,
+                                "value": metric.value,
+                                "unit_of_measurement": metric.unit,
                             }
                         )
                     )
-            logger.info(f'{step.name} [{step.type}] DONE')
+            logger.info(f"{step.name} [{step.type}] DONE")
 
         spark.sparkContext._gateway.close()
 
         if success:
-            logger.info('Running the sql_queries completed')
+            logger.info("Running the sql_queries completed")
         else:
-            raise Exception(
-                f'Execution failed because of failure in step {step.name} [{step.type}]'
-            )
+            raise Exception(f"Execution failed because of failure in step {step.name} [{step.type}]")
 
     def report(self):
         steps = self.dag()
         nodes = {}
         for s in steps:
-            nodes[s['name']] = s
+            nodes[s["name"]] = s
         body = render(nodes)
         return body
 
     def save_report(self, bucket: str = None, key: str = None, path=None):
         body = self.report()
         if not bucket and not path:
-            raise Exception('InvalidParameters')
+            raise Exception("InvalidParameters")
         if path:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 f.write(body)
         else:
-            s3 = boto3.client('s3', self.config.region)
-            bucket = self.config.args.get('BUCKET_NAME')
-            job_id = self.config.args.get('JOB_RUN_ID')
-            s3.put_object(Bucket=bucket, Key=f'reports/{job_id}/report.html', Body=body)
+            s3 = boto3.client("s3", self.config.region)
+            bucket = self.config.args.get("BUCKET_NAME")
+            job_id = self.config.args.get("JOB_RUN_ID")
+            s3.put_object(Bucket=bucket, Key=f"reports/{job_id}/report.html", Body=body)
 
     def save_dag(self, bucket: str = None, key: str = None, path: str = None):
         body = json.dumps(self.dag())
 
         if not bucket and not path:
-            raise Exception('InvalidParameters')
+            raise Exception("InvalidParameters")
         if path:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 f.write(body)
         else:
-            s3 = boto3.client('s3', self.config.region)
-            bucket = self.config.args.get('BUCKET_NAME')
-            job_id = self.config.args.get('JOB_RUN_ID')
-            s3.put_object(Bucket=bucket, Key=f'reports/{job_id}/report.html', Body=body)
+            s3 = boto3.client("s3", self.config.region)
+            bucket = self.config.args.get("BUCKET_NAME")
+            job_id = self.config.args.get("JOB_RUN_ID")
+            s3.put_object(Bucket=bucket, Key=f"reports/{job_id}/report.html", Body=body)
 
     def dag(self):
         nodes = []
         for i, step in enumerate(self.config.steps):
             data = step.json(self.context)
             if i > 0:
-                data['parents'] = set([self.config.steps[i - 1].name])
+                data["parents"] = set([self.config.steps[i - 1].name])
             else:
-                data['parents'] = set([])
+                data["parents"] = set([])
 
             parents = self.context._relations.get(step.name, [])
             if len(parents):
-                data['parents'] = data['parents'].union(set(parents))
+                data["parents"] = data["parents"].union(set(parents))
 
-            data['parents'] = list(data['parents'])
+            data["parents"] = list(data["parents"])
             nodes.append(data)
         return nodes

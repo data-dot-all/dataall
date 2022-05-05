@@ -20,25 +20,21 @@ class Redshift:
     @staticmethod
     def get_cluster_from_task(engine, task: models.Task):
         with engine.scoped_session() as session:
-            cluster: models.RedshiftCluster = (
-                db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-                    session=session, uri=task.targetUri
-                )
+            cluster: models.RedshiftCluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
+                session=session, uri=task.targetUri
             )
             return cluster
 
     @staticmethod
     def describe_clusters(**data):
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
-        client_redshift = session.client('redshift', region_name=region)
-        if data.get('cluster_id'):
+        client_redshift = session.client("redshift", region_name=region)
+        if data.get("cluster_id"):
             try:
-                response = client_redshift.describe_clusters(
-                    ClusterIdentifier=data.get('cluster_id'), MaxRecords=21
-                )
-                return response.get('Clusters')[0]
+                response = client_redshift.describe_clusters(ClusterIdentifier=data.get("cluster_id"), MaxRecords=21)
+                return response.get("Clusters")[0]
             except ClientError as e:
                 log.error(e, exc_info=True)
                 raise e
@@ -48,16 +44,14 @@ class Redshift:
                 marker = None
                 is_pagination_available = True
                 while is_pagination_available:
-                    paginator = client_redshift.get_paginator('describe_clusters')
-                    response_iterator = paginator.paginate(
-                        PaginationConfig={'PageSize': 50, 'StartingToken': marker}
-                    )
+                    paginator = client_redshift.get_paginator("describe_clusters")
+                    response_iterator = paginator.paginate(PaginationConfig={"PageSize": 50, "StartingToken": marker})
                     for page in response_iterator:
-                        if 'Clusters' in page.keys():
-                            for cluster in page.get('Clusters'):
+                        if "Clusters" in page.keys():
+                            for cluster in page.get("Clusters"):
                                 clusters.append(cluster)
                             try:
-                                marker = page['Marker']
+                                marker = page["Marker"]
                             except KeyError:
                                 is_pagination_available = False
                 return clusters
@@ -67,14 +61,12 @@ class Redshift:
 
     @staticmethod
     def pause_cluster(**data):
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
-        client_redshift = session.client('redshift', region_name=region)
+        client_redshift = session.client("redshift", region_name=region)
         try:
-            response = client_redshift.pause_cluster(
-                ClusterIdentifier=data['cluster_id']
-            )
+            response = client_redshift.pause_cluster(ClusterIdentifier=data["cluster_id"])
             return response
         except ClientError as e:
             log.error(e, exc_info=True)
@@ -82,14 +74,12 @@ class Redshift:
 
     @staticmethod
     def reboot_cluster(**data):
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
-        client_redshift = session.client('redshift', region_name=region)
+        client_redshift = session.client("redshift", region_name=region)
         try:
-            response = client_redshift.reboot_cluster(
-                ClusterIdentifier=data['cluster_id']
-            )
+            response = client_redshift.reboot_cluster(ClusterIdentifier=data["cluster_id"])
             return response
         except ClientError as e:
             log.error(e, exc_info=True)
@@ -97,14 +87,12 @@ class Redshift:
 
     @staticmethod
     def resume_cluster(**data):
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
-        client_redshift = session.client('redshift', region_name=region)
+        client_redshift = session.client("redshift", region_name=region)
         try:
-            response = client_redshift.resume_cluster(
-                ClusterIdentifier=data['cluster_id']
-            )
+            response = client_redshift.resume_cluster(ClusterIdentifier=data["cluster_id"])
             return response
         except ClientError as e:
             log.error(e, exc_info=True)
@@ -113,12 +101,12 @@ class Redshift:
     @staticmethod
     def get_cluster_credentials(**data):
         try:
-            secretsmanager = SessionHelper.remote_session(data['accountid']).client(
-                'secretsmanager', region_name=data['region']
+            secretsmanager = SessionHelper.remote_session(data["accountid"]).client(
+                "secretsmanager", region_name=data["region"]
             )
-            dh_secret = secretsmanager.get_secret_value(SecretId=data['secret_name'])
-            credentials = json.loads(dh_secret['SecretString'])
-            password = credentials['password']
+            dh_secret = secretsmanager.get_secret_value(SecretId=data["secret_name"])
+            credentials = json.loads(dh_secret["SecretString"])
+            password = credentials["password"]
             return password
         except ClientError as e:
             log.error(e, exc_info=True)
@@ -129,81 +117,71 @@ class Redshift:
 
         log.info(f"Starting query run: {data.get('sql_query')}")
 
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
-        client_redshift = session.client('redshift', region_name=region)
-        client_redshift_data = session.client('redshift-data', region_name=region)
+        client_redshift = session.client("redshift", region_name=region)
+        client_redshift_data = session.client("redshift-data", region_name=region)
         try:
-            response = client_redshift.describe_clusters(
-                ClusterIdentifier=data['cluster_id'], MaxRecords=100
-            )
-            cluster = response.get('Clusters')[0]
-            database = data.get('database', cluster.get('DBName'))
+            response = client_redshift.describe_clusters(ClusterIdentifier=data["cluster_id"], MaxRecords=100)
+            cluster = response.get("Clusters")[0]
+            database = data.get("database", cluster.get("DBName"))
             statement = dict(
-                ClusterIdentifier=data['cluster_id'],
+                ClusterIdentifier=data["cluster_id"],
                 Database=database,
-                Sql=data.get('sql_query'),
-                WithEvent=data.get('with_event', False),
+                Sql=data.get("sql_query"),
+                WithEvent=data.get("with_event", False),
             )
-            if data.get('dbuser'):
-                statement['DbUser'] = data.get('dbuser')
+            if data.get("dbuser"):
+                statement["DbUser"] = data.get("dbuser")
             else:
-                statement['SecretArn'] = data['secret_arn']
+                statement["SecretArn"] = data["secret_arn"]
             response = client_redshift_data.execute_statement(**statement)
-            log.info(f'Ran query successfully {response}')
+            log.info(f"Ran query successfully {response}")
         except ClientError as e:
             log.error(e, exc_info=True)
             raise e
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.init_database')
+    @Worker.handler(path="redshift.cluster.init_database")
     def init_datahub_db(engine, task: models.Task):
         with engine.scoped_session() as session:
-            cluster: models.RedshiftCluster = (
-                db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-                    session=session, uri=task.targetUri
-                )
+            cluster: models.RedshiftCluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
+                session=session, uri=task.targetUri
             )
             secretsmanager = SessionHelper.remote_session(cluster.AwsAccountId).client(
-                'secretsmanager', region_name=cluster.region
+                "secretsmanager", region_name=cluster.region
             )
             dh_secret = Redshift.get_secret(cluster, secretsmanager)
-            credentials = json.loads(dh_secret['SecretString'])
-            password = credentials['password']
-            log.info(f'Starting {cluster.databaseName} name creation... ')
-            Redshift._init_database(
-                cluster, cluster.databaseName, cluster.databaseUser, password
-            )
+            credentials = json.loads(dh_secret["SecretString"])
+            password = credentials["password"]
+            log.info(f"Starting {cluster.databaseName} name creation... ")
+            Redshift._init_database(cluster, cluster.databaseName, cluster.databaseUser, password)
             session.commit()
 
     @staticmethod
     def _init_database(cluster, database_name, database_user, password):
         queries = list()
-        queries.append(f'DROP DATABASE IF EXISTS {database_name}')
-        queries.append(f'DROP USER IF EXISTS {database_user}')
-        queries.append(f'create user {database_user} password disable')
-        queries.append(f'create database {database_name} with owner {database_user}')
-        queries.append(
-            f'GRANT ALL PRIVILEGES ON database {database_name} TO {database_user}'
-        )
+        queries.append(f"DROP DATABASE IF EXISTS {database_name}")
+        queries.append(f"DROP USER IF EXISTS {database_user}")
+        queries.append(f"create user {database_user} password disable")
+        queries.append(f"create database {database_name} with owner {database_user}")
+        queries.append(f"GRANT ALL PRIVILEGES ON database {database_name} TO {database_user}")
         queries.append(
             f"ALTER USER {database_user} WITH PASSWORD '{password}' "
             f"VALID UNTIL '{(datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d %H:%M')}'"
         )
-        queries.append(
-            f'GRANT ALL PRIVILEGES ON database {database_name} TO GROUP PUBLIC'
-        )
-        log.info(f'Queries for database {cluster.databaseName} init: {queries} ')
+        queries.append(f"GRANT ALL PRIVILEGES ON database {database_name} TO GROUP PUBLIC")
+        log.info(f"Queries for database {cluster.databaseName} init: {queries} ")
         for query in queries:
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.masterDatabaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': query,
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.masterDatabaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": query,
                 }
             )
         cluster.external_schema_created = True
@@ -215,137 +193,133 @@ class Redshift:
             dh_secret = secretsmanager.get_secret_value(SecretId=cluster.datahubSecret)
             return dh_secret
         except ClientError as e:
-            log.warning(f'Failed to get secret {cluster.datahubSecret}')
+            log.warning(f"Failed to get secret {cluster.datahubSecret}")
             raise e
 
     @staticmethod
     def set_cluster_secrets(secretsmanager, cluster: models.RedshiftCluster):
         cluster_secrets = secretsmanager.list_secrets(
             MaxResults=3,
-            Filters=[{'Key': 'tag-value', 'Values': [f'{cluster.CFNStackName}']}],
+            Filters=[{"Key": "tag-value", "Values": [f"{cluster.CFNStackName}"]}],
         )
-        for s in cluster_secrets['SecretList']:
-            if f'{cluster.name}-redshift-dhuser' in s['Name']:
-                cluster.datahubSecret = s['Name']
-            if f'{cluster.name}-redshift-masteruser' in s['Name']:
-                cluster.masterSecret = s['Name']
+        for s in cluster_secrets["SecretList"]:
+            if f"{cluster.name}-redshift-dhuser" in s["Name"]:
+                cluster.datahubSecret = s["Name"]
+            if f"{cluster.name}-redshift-masteruser" in s["Name"]:
+                cluster.masterSecret = s["Name"]
         return cluster
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.create_external_schema')
+    @Worker.handler(path="redshift.cluster.create_external_schema")
     def create_external_schemas(engine, task):
         with engine.scoped_session() as session:
-            catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(
-                session, task
-            )
+            catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(session, task)
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.databaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': f'CREATE SCHEMA dataall_{cluster.clusterUri.lower()}',
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.databaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": f"CREATE SCHEMA dataall_{cluster.clusterUri.lower()}",
                 }
             )
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.databaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': f'GRANT ALL ON SCHEMA dataall_{cluster.clusterUri.lower()} TO {cluster.databaseUser} ',
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.databaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": f"GRANT ALL ON SCHEMA dataall_{cluster.clusterUri.lower()} TO {cluster.databaseUser} ",
                 }
             )
             for database in catalog_databases:
                 Redshift.run_query(
                     **{
-                        'accountid': cluster.AwsAccountId,
-                        'region': cluster.region,
-                        'cluster_id': cluster.name,
-                        'database': cluster.databaseName,
-                        'dbuser': cluster.masterUsername,
-                        'sql_query': f'drop schema if exists {database}',
+                        "accountid": cluster.AwsAccountId,
+                        "region": cluster.region,
+                        "cluster_id": cluster.name,
+                        "database": cluster.databaseName,
+                        "dbuser": cluster.masterUsername,
+                        "sql_query": f"drop schema if exists {database}",
                     }
                 )
                 Redshift.run_query(
                     **{
-                        'accountid': cluster.AwsAccountId,
-                        'region': cluster.region,
-                        'cluster_id': cluster.name,
-                        'database': cluster.databaseName,
-                        'dbuser': cluster.masterUsername,
-                        'sql_query': f'create external schema {database} '
+                        "accountid": cluster.AwsAccountId,
+                        "region": cluster.region,
+                        "cluster_id": cluster.name,
+                        "database": cluster.databaseName,
+                        "dbuser": cluster.masterUsername,
+                        "sql_query": f"create external schema {database} "
                         f"from data catalog database '{database}' iam_role "
                         f"'{env.EnvironmentDefaultIAMRoleArn}' ",
                     }
                 )
                 Redshift.run_query(
                     **{
-                        'accountid': cluster.AwsAccountId,
-                        'region': cluster.region,
-                        'cluster_id': cluster.name,
-                        'database': cluster.databaseName,
-                        'dbuser': cluster.masterUsername,
-                        'sql_query': f'GRANT ALL ON SCHEMA {database} TO {cluster.databaseUser} ',
+                        "accountid": cluster.AwsAccountId,
+                        "region": cluster.region,
+                        "cluster_id": cluster.name,
+                        "database": cluster.databaseName,
+                        "dbuser": cluster.masterUsername,
+                        "sql_query": f"GRANT ALL ON SCHEMA {database} TO {cluster.databaseUser} ",
                     }
                 )
                 Redshift.run_query(
                     **{
-                        'accountid': cluster.AwsAccountId,
-                        'region': cluster.region,
-                        'cluster_id': cluster.name,
-                        'database': cluster.databaseName,
-                        'dbuser': cluster.masterUsername,
-                        'sql_query': f'GRANT ALL ON SCHEMA {database} TO GROUP PUBLIC ',
+                        "accountid": cluster.AwsAccountId,
+                        "region": cluster.region,
+                        "cluster_id": cluster.name,
+                        "database": cluster.databaseName,
+                        "dbuser": cluster.masterUsername,
+                        "sql_query": f"GRANT ALL ON SCHEMA {database} TO GROUP PUBLIC ",
                     }
                 )
             return True
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.drop_external_schema')
+    @Worker.handler(path="redshift.cluster.drop_external_schema")
     def drop_external_schemas(engine, task):
         with engine.scoped_session() as session:
-            catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(
-                session, task
-            )
-            database = task.payload['database']
+            catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(session, task)
+            database = task.payload["database"]
             kill_sessionsquery = (
-                f'SELECT pg_terminate_backend(pg_stat_activity.procpid) '
-                f'FROM pg_stat_activity '
+                f"SELECT pg_terminate_backend(pg_stat_activity.procpid) "
+                f"FROM pg_stat_activity "
                 f"WHERE pg_stat_activity.datname = '{database}' "
                 f"AND pg_stat_activity.usename = '{cluster.databaseUser}' "
-                f'AND procpid <> pg_backend_pid();'
+                f"AND procpid <> pg_backend_pid();"
             )
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.databaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': kill_sessionsquery,
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.databaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": kill_sessionsquery,
                 }
             )
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.databaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': f'REVOKE ALL ON SCHEMA {database} TO {cluster.databaseUser} ',
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.databaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": f"REVOKE ALL ON SCHEMA {database} TO {cluster.databaseUser} ",
                 }
             )
             Redshift.run_query(
                 **{
-                    'accountid': cluster.AwsAccountId,
-                    'region': cluster.region,
-                    'cluster_id': cluster.name,
-                    'database': cluster.databaseName,
-                    'dbuser': cluster.masterUsername,
-                    'sql_query': f'drop schema {database}',
+                    "accountid": cluster.AwsAccountId,
+                    "region": cluster.region,
+                    "cluster_id": cluster.name,
+                    "database": cluster.databaseName,
+                    "dbuser": cluster.masterUsername,
+                    "sql_query": f"drop schema {database}",
                 }
             )
             return True
@@ -353,72 +327,60 @@ class Redshift:
     @staticmethod
     def get_cluster_catalog_databases(session, task):
         try:
-            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-                session, task.targetUri
-            )
-            env = db.api.Environment.get_environment_by_uri(
-                session, cluster.environmentUri
-            )
-            cluster_datasets = db.api.RedshiftCluster.list_all_cluster_datasets(
-                session, cluster.clusterUri
-            )
+            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, task.targetUri)
+            env = db.api.Environment.get_environment_by_uri(session, cluster.environmentUri)
+            cluster_datasets = db.api.RedshiftCluster.list_all_cluster_datasets(session, cluster.clusterUri)
             secretsmanager = SessionHelper.remote_session(cluster.AwsAccountId).client(
-                'secretsmanager', region_name=cluster.region
+                "secretsmanager", region_name=cluster.region
             )
             Redshift.set_cluster_secrets(secretsmanager, cluster)
             catalog_databases = []
             for d in cluster_datasets:
                 dataset = db.api.Dataset.get_dataset_by_uri(session, d.datasetUri)
                 if dataset.environmentUri != cluster.environmentUri:
-                    catalog_databases.append(f'{dataset.GlueDatabaseName}shared')
+                    catalog_databases.append(f"{dataset.GlueDatabaseName}shared")
                 else:
-                    catalog_databases.append(f'{dataset.GlueDatabaseName}')
+                    catalog_databases.append(f"{dataset.GlueDatabaseName}")
 
-            log.info(f'Found Schemas to create with Spectrum {catalog_databases}')
+            log.info(f"Found Schemas to create with Spectrum {catalog_databases}")
         except ClientError as e:
             log.error(e, exc_info=True)
             raise e
         return catalog_databases, cluster, env
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.tag')
+    @Worker.handler(path="redshift.cluster.tag")
     def tag_cluster(engine, task):
         with engine.scoped_session() as session:
-            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-                session, task.targetUri
-            )
+            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, task.targetUri)
             try:
                 accountid = cluster.AwsAccountId
                 region = cluster.region
                 session = SessionHelper.remote_session(accountid)
-                client_redshift = session.client('redshift', region_name=region)
+                client_redshift = session.client("redshift", region_name=region)
                 client_redshift.create_tags(
-                    ResourceName=f'arn:aws:redshift:{region}:{accountid}:cluster:{cluster.name}',
-                    Tags=[{'Key': 'dataall', 'Value': 'true'}],
+                    ResourceName=f"arn:aws:redshift:{region}:{accountid}:cluster:{cluster.name}",
+                    Tags=[{"Key": "dataall", "Value": "true"}],
                 )
             except ClientError as e:
                 log.error(e, exc_info=True)
                 raise e
 
     @staticmethod
-    @Worker.handler(path='redshift.iam_roles.update')
+    @Worker.handler(path="redshift.iam_roles.update")
     def update_cluster_roles(engine, task: models.Task):
         with engine.scoped_session() as session:
-            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(
-                session, task.targetUri
-            )
-            environment: models.Environment = session.query(models.Environment).get(
-                cluster.environmentUri
-            )
+            cluster = db.api.RedshiftCluster.get_redshift_cluster_by_uri(session, task.targetUri)
+            environment: models.Environment = session.query(models.Environment).get(cluster.environmentUri)
             log.info(
-                f'Updating cluster {cluster.name}|{environment.AwsAccountId} '
-                f'with environment role {environment.EnvironmentDefaultIAMRoleArn}'
+                f"Updating cluster {cluster.name}|{environment.AwsAccountId} "
+                f"with environment role {environment.EnvironmentDefaultIAMRoleArn}"
             )
             try:
                 accountid = cluster.AwsAccountId
                 region = cluster.region
                 aws_session = SessionHelper.remote_session(accountid)
-                client_redshift = aws_session.client('redshift', region_name=region)
+                client_redshift = aws_session.client("redshift", region_name=region)
                 client_redshift.modify_cluster_iam_roles(
                     ClusterIdentifier=cluster.name,
                     AddIamRoles=[
@@ -426,29 +388,23 @@ class Redshift:
                     ],
                 )
                 log.info(
-                    f'Successfully Updated cluster {cluster.name}|{environment.AwsAccountId} '
-                    f'with environment role {environment.EnvironmentDefaultIAMRoleArn}'
+                    f"Successfully Updated cluster {cluster.name}|{environment.AwsAccountId} "
+                    f"with environment role {environment.EnvironmentDefaultIAMRoleArn}"
                 )
             except ClientError as e:
                 log.error(e, exc_info=True)
                 raise e
 
     @staticmethod
-    @Worker.handler(path='redshift.subscriptions.copy')
+    @Worker.handler(path="redshift.subscriptions.copy")
     def copy_data(engine, task: models.Task):
         with engine.scoped_session() as session:
 
-            environment: models.Environment = session.query(models.Environment).get(
-                task.targetUri
-            )
+            environment: models.Environment = session.query(models.Environment).get(task.targetUri)
 
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.payload['datasetUri']
-            )
+            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, task.payload["datasetUri"])
 
-            table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
-                session, task.payload['tableUri']
-            )
+            table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(session, task.payload["tableUri"])
 
             env_clusters = (
                 session.query(models.RedshiftCluster)
@@ -460,53 +416,40 @@ class Redshift:
 
             log.info(f"Received Message {task.payload['message']}")
 
-            message = task.payload['message']
+            message = task.payload["message"]
 
             if not message:
-                raise Exception('Task message can not be found')
+                raise Exception("Task message can not be found")
 
             glue_table = Glue.table_exists(
                 **{
-                    'accountid': table.AWSAccountId,
-                    'region': table.region,
-                    'database': table.GlueDatabaseName,
-                    'tablename': table.GlueTableName,
+                    "accountid": table.AWSAccountId,
+                    "region": table.region,
+                    "database": table.GlueDatabaseName,
+                    "tablename": table.GlueTableName,
                 }
             )
-            columns = (
-                glue_table.get('Table').get('StorageDescriptor', {}).get('Columns')
-            )
-            log.info(f'Glue table columns: {columns}')
+            columns = glue_table.get("Table").get("StorageDescriptor", {}).get("Columns")
+            log.info(f"Glue table columns: {columns}")
 
-            ddl_columns = ','.join(
-                [
-                    f"{col['Name']} {Redshift.convert_to_redshift_types(col['Type'])}"
-                    for col in columns
-                ]
+            ddl_columns = ",".join(
+                [f"{col['Name']} {Redshift.convert_to_redshift_types(col['Type'])}" for col in columns]
             )
-            log.info(f'DDL Columns: {ddl_columns}')
+            log.info(f"DDL Columns: {ddl_columns}")
 
             for cluster in env_clusters:
-                cluster_dataset_table = (
-                    db.api.RedshiftCluster.get_cluster_dataset_table(
-                        session, cluster.clusterUri, dataset.datasetUri, table.tableUri
-                    )
+                cluster_dataset_table = db.api.RedshiftCluster.get_cluster_dataset_table(
+                    session, cluster.clusterUri, dataset.datasetUri, table.tableUri
                 )
                 if cluster_dataset_table:
                     log.info(
-                        f'Cluster {cluster}|{environment.AwsAccountId} '
-                        f'copy from {dataset.name} for table {table.GlueTableName} is enabled'
+                        f"Cluster {cluster}|{environment.AwsAccountId} "
+                        f"copy from {dataset.name} for table {table.GlueTableName} is enabled"
                     )
                     queries = list()
-                    queries.append(
-                        f'CREATE SCHEMA IF NOT EXISTS {cluster_dataset_table.schema}'
-                    )
-                    queries.append(
-                        f'GRANT ALL ON SCHEMA {cluster_dataset_table.schema} TO {cluster.databaseUser}'
-                    )
-                    queries.append(
-                        f'GRANT ALL ON SCHEMA {cluster_dataset_table.schema} TO GROUP PUBLIC'
-                    )
+                    queries.append(f"CREATE SCHEMA IF NOT EXISTS {cluster_dataset_table.schema}")
+                    queries.append(f"GRANT ALL ON SCHEMA {cluster_dataset_table.schema} TO {cluster.databaseUser}")
+                    queries.append(f"GRANT ALL ON SCHEMA {cluster_dataset_table.schema} TO GROUP PUBLIC")
                     queries.append(
                         Redshift.get_create_table_statement(
                             cluster_dataset_table.schema,
@@ -515,10 +458,10 @@ class Redshift:
                         )
                     )
                     queries.append(
-                        f'GRANT ALL ON TABLE {cluster_dataset_table.schema}.{table.GlueTableName} TO {cluster.databaseUser}'
+                        f"GRANT ALL ON TABLE {cluster_dataset_table.schema}.{table.GlueTableName} TO {cluster.databaseUser}"
                     )
                     queries.append(
-                        f'GRANT ALL ON TABLE {cluster_dataset_table.schema}.{table.GlueTableName} TO GROUP PUBLIC'
+                        f"GRANT ALL ON TABLE {cluster_dataset_table.schema}.{table.GlueTableName} TO GROUP PUBLIC"
                     )
                     data_prefix = Redshift.get_data_prefix(cluster_dataset_table)
                     queries.extend(
@@ -533,12 +476,12 @@ class Redshift:
                     for query in queries:
                         Redshift.run_query(
                             **{
-                                'accountid': cluster.AwsAccountId,
-                                'region': cluster.region,
-                                'cluster_id': cluster.name,
-                                'database': cluster.databaseName,
-                                'dbuser': cluster.databaseUser,
-                                'sql_query': query,
+                                "accountid": cluster.AwsAccountId,
+                                "region": cluster.region,
+                                "cluster_id": cluster.name,
+                                "database": cluster.databaseName,
+                                "dbuser": cluster.databaseUser,
+                                "sql_query": query,
                             }
                         )
         return True
@@ -547,55 +490,41 @@ class Redshift:
     def get_data_prefix(table: models.RedshiftClusterDatasetTable):
         data_prefix = (
             table.dataLocation
-            if '/packages.delta' not in table.dataLocation
-            else table.dataLocation.replace('/packages.delta', '')
+            if "/packages.delta" not in table.dataLocation
+            else table.dataLocation.replace("/packages.delta", "")
         )
         data_prefix = (
             data_prefix
-            if '/_symlink_format_manifest' not in data_prefix
-            else data_prefix.replace('/_symlink_format_manifest', '')
+            if "/_symlink_format_manifest" not in data_prefix
+            else data_prefix.replace("/_symlink_format_manifest", "")
         )
         return data_prefix
 
     @staticmethod
     def get_create_table_statement(schema, table_name, columns):
-        return f'CREATE TABLE IF NOT EXISTS {schema}.{table_name}({columns})'
+        return f"CREATE TABLE IF NOT EXISTS {schema}.{table_name}({columns})"
 
     @staticmethod
     def get_copy_table_statement(schema, table_name, data_prefix, iam_role_arn):
-        return (
-            f'COPY {schema}.{table_name} '
-            f"FROM '{data_prefix}' "
-            f"iam_role '{iam_role_arn}' "
-        )
+        return f"COPY {schema}.{table_name} " f"FROM '{data_prefix}' " f"iam_role '{iam_role_arn}' "
 
     @staticmethod
     def convert_to_redshift_types(dtypes):
         redshift_sql_map = {
-            'long': 'bigint',
-            'double': 'bigint',
-            'string': 'varchar(max)',
+            "long": "bigint",
+            "double": "bigint",
+            "string": "varchar(max)",
         }
-        return (
-            redshift_sql_map[dtypes.lower()]
-            if redshift_sql_map.get(dtypes.lower())
-            else dtypes
-        )
+        return redshift_sql_map[dtypes.lower()] if redshift_sql_map.get(dtypes.lower()) else dtypes
 
     @staticmethod
-    def get_merge_table_statements(
-        schema, table_name, data_prefix, iam_role_arn, columns
-    ):
+    def get_merge_table_statements(schema, table_name, data_prefix, iam_role_arn, columns):
         statements = list()
-        statements.append(
-            f"""CREATE TABLE "{schema}"."{table_name}_stage"({columns});"""
-        )
+        statements.append(f"""CREATE TABLE "{schema}"."{table_name}_stage"({columns});""")
         statements.append(
             f"""COPY "{schema}"."{table_name}_stage" FROM '{data_prefix}' iam_role '{iam_role_arn}' format as parquet;"""
         )
-        statements.append(
-            f"""CREATE TABLE "{schema}"."{table_name}_stage"({columns};"""
-        )
+        statements.append(f"""CREATE TABLE "{schema}"."{table_name}_stage"({columns};""")
         statements.append(
             f"""
                         -- Start a new transaction

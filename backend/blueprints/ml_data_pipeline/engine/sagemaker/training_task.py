@@ -1,8 +1,7 @@
 import copy
 
 from aws_cdk import aws_stepfunctions as stepfunctions
-from engine.sagemaker.mappers.sm_training_mapper import \
-    SageMakerTrainingJobPropsMapper
+from engine.sagemaker.mappers.sm_training_mapper import SageMakerTrainingJobPropsMapper
 from engine.sagemaker.model_task import make_sagemaker_model_task
 
 
@@ -26,9 +25,7 @@ def definition_from_config(stack, job, training_path, group_index, job_index):
         "ResultPath": training_path,
         "Parameters": SageMakerTrainingJobPropsMapper.map_props(
             stack,
-            stepfunctions.TaskInput.from_data_at(
-                f"$.job_names.{group_index}|{job_index}"
-            ).value,
+            stepfunctions.TaskInput.from_data_at(f"$.job_names.{group_index}|{job_index}").value,
             job.get("main", {}),
             job["config"],
             tokens,
@@ -63,55 +60,35 @@ def read_training_params_from_paths(job):
     cfg = job.get("config")
     tokens = {}
     if cfg.get("input_paths_from_input"):
-        tokens["input_paths_from_input"] = stepfunctions.TaskInput.from_data_at(
-            cfg["input_paths_from_input"]
-        ).value
+        tokens["input_paths_from_input"] = stepfunctions.TaskInput.from_data_at(cfg["input_paths_from_input"]).value
     elif cfg.get("training_input_from_path"):
         training_input_dict = {}
         tokens["training_input_from_path"] = training_input_dict
         tifp = cfg.get("training_input_from_path")
 
-        training_input_dict["content_type"] = stepfunctions.TaskInput.from_data_at(
-            tifp["content_type"]
-        ).value
+        training_input_dict["content_type"] = stepfunctions.TaskInput.from_data_at(tifp["content_type"]).value
 
         training_input_dict["train_s3_uri"] = {
-            "bucket": stepfunctions.TaskInput.from_data_at(
-                tifp["train_s3_uri"]["bucket"]
-            ).value,
-            "prefix_key": stepfunctions.TaskInput.from_data_at(
-                tifp["train_s3_uri"]["prefix_key"]
-            ).value,
+            "bucket": stepfunctions.TaskInput.from_data_at(tifp["train_s3_uri"]["bucket"]).value,
+            "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["train_s3_uri"]["prefix_key"]).value,
         }
 
         if tifp.get("validation_s3_uri"):
             training_input_dict["validation_s3_uri"] = {
-                "bucket": stepfunctions.TaskInput.from_data_at(
-                    tifp["validation_s3_uri"]["bucket"]
-                ).value,
-                "prefix_key": stepfunctions.TaskInput.from_data_at(
-                    tifp["validation_s3_uri"]["prefix_key"]
-                ).value,
+                "bucket": stepfunctions.TaskInput.from_data_at(tifp["validation_s3_uri"]["bucket"]).value,
+                "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["validation_s3_uri"]["prefix_key"]).value,
             }
 
         if tifp.get("test_s3_uri"):
             training_input_dict["test_s3_uri"] = {
-                "bucket": stepfunctions.TaskInput.from_data_at(
-                    tifp["test_s3_uri"]["bucket"]
-                ).value,
-                "prefix_key": stepfunctions.TaskInput.from_data_at(
-                    tifp["test_s3_uri"]["prefix_key"]
-                ).value,
+                "bucket": stepfunctions.TaskInput.from_data_at(tifp["test_s3_uri"]["bucket"]).value,
+                "prefix_key": stepfunctions.TaskInput.from_data_at(tifp["test_s3_uri"]["prefix_key"]).value,
             }
     if cfg.get("output_path_from_input"):
-        tokens["output_path_from_input"] = stepfunctions.TaskInput.from_data_at(
-            cfg["output_path_from_input"]
-        ).value
+        tokens["output_path_from_input"] = stepfunctions.TaskInput.from_data_at(cfg["output_path_from_input"]).value
 
     if job.get("ext_job_name"):
-        tokens["ext_job_name"] = stepfunctions.TaskInput.from_data_at(
-            job["ext_job_name"]
-        ).value
+        tokens["ext_job_name"] = stepfunctions.TaskInput.from_data_at(job["ext_job_name"]).value
 
     return tokens
 
@@ -128,13 +105,9 @@ def make_sagemaker_training_task(stack, job, group_index, job_index):
     """
     training_path = job.get("training_result_path", "$.training")
 
-    definition = definition_from_config(
-        stack, job, training_path, group_index, job_index
-    )
+    definition = definition_from_config(stack, job, training_path, group_index, job_index)
     print(definition)
-    task = stepfunctions.CustomState(
-        stack, "Task " + job["name"], state_json=definition
-    )
+    task = stepfunctions.CustomState(stack, "Task " + job["name"], state_json=definition)
 
     # Whether or not to go on and create model.
     if job.get("model"):

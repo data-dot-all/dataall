@@ -3,8 +3,7 @@ import logging
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
+from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
 from ...utils.slugify import slugify
 from .. import exceptions, models, paginate, permissions
 from . import Environment, ResourcePolicy, has_resource_perm, has_tenant_perm
@@ -32,7 +31,7 @@ class Pipeline:
             username=username,
             groups=groups,
             uri=uri,
-            group=data['SamlGroupName'],
+            group=data["SamlGroupName"],
             permission_name=permissions.CREATE_PIPELINE,
         )
 
@@ -41,19 +40,19 @@ class Pipeline:
         if not environment.pipelinesEnabled:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_PIPELINE,
-                message=f'Pipelines feature is disabled for the environment {environment.label}',
+                message=f"Pipelines feature is disabled for the environment {environment.label}",
             )
 
         pipeline: models.SqlPipeline = models.SqlPipeline(
             owner=username,
             environmentUri=environment.environmentUri,
-            SamlGroupName=data['SamlGroupName'],
-            label=data['label'],
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
+            SamlGroupName=data["SamlGroupName"],
+            label=data["label"],
+            description=data.get("description", "No description provided"),
+            tags=data.get("tags", []),
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
-            repo=slugify(data['label']),
+            repo=slugify(data["label"]),
         )
 
         session.add(pipeline)
@@ -70,18 +69,18 @@ class Pipeline:
         pipeline.name = aws_compliant_name
 
         activity = models.Activity(
-            action='PIPELINE:CREATE',
-            label='PIPELINE:CREATE',
+            action="PIPELINE:CREATE",
+            label="PIPELINE:CREATE",
             owner=username,
-            summary=f'{username} created dashboard {pipeline.label} in {environment.label}',
+            summary=f"{username} created dashboard {pipeline.label} in {environment.label}",
             targetUri=pipeline.sqlPipelineUri,
-            targetType='pipeline',
+            targetType="pipeline",
         )
         session.add(activity)
 
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=data['SamlGroupName'],
+            group=data["SamlGroupName"],
             permissions=permissions.PIPELINE_ALL,
             resource_uri=pipeline.sqlPipelineUri,
             resource_type=models.SqlPipeline.__name__,
@@ -102,21 +101,19 @@ class Pipeline:
     def _validate_input(data):
         if not data:
             raise exceptions.RequiredParameter(data)
-        if not data.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('SamlGroupName'):
-            raise exceptions.RequiredParameter('group')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
+        if not data.get("environmentUri"):
+            raise exceptions.RequiredParameter("environmentUri")
+        if not data.get("SamlGroupName"):
+            raise exceptions.RequiredParameter("group")
+        if not data.get("label"):
+            raise exceptions.RequiredParameter("label")
 
     @staticmethod
-    def validate_group_membership(
-        session, environment_uri, pipeline_group, username, groups
-    ):
+    def validate_group_membership(session, environment_uri, pipeline_group, username, groups):
         if pipeline_group and pipeline_group not in groups:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_PIPELINE,
-                message=f'User: {username} is not a member of the team {pipeline_group}',
+                message=f"User: {username} is not a member of the team {pipeline_group}",
             )
         if pipeline_group not in Environment.list_environment_groups(
             session=session,
@@ -128,7 +125,7 @@ class Pipeline:
         ):
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_PIPELINE,
-                message=f'Team: {pipeline_group} is not a member of the environment {environment_uri}',
+                message=f"Team: {pipeline_group} is not a member of the environment {environment_uri}",
             )
 
     @staticmethod
@@ -147,9 +144,7 @@ class Pipeline:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_PIPELINES)
     @has_resource_perm(permissions.UPDATE_PIPELINE)
-    def update_pipeline(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> models.SqlPipeline:
+    def update_pipeline(session, username, groups, uri, data=None, check_perm=None) -> models.SqlPipeline:
         pipeline: models.SqlPipeline = Pipeline.get_pipeline_by_uri(session, uri)
         if data:
             if isinstance(data, dict):
@@ -161,7 +156,7 @@ class Pipeline:
     def get_pipeline_by_uri(session, uri):
         pipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(uri)
         if not pipeline:
-            raise exceptions.ObjectNotFound('Pipeline', uri)
+            raise exceptions.ObjectNotFound("Pipeline", uri)
         return pipeline
 
     @staticmethod
@@ -172,31 +167,27 @@ class Pipeline:
                 models.SqlPipeline.SamlGroupName.in_(groups),
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.get("term"):
             query = query.filter(
                 or_(
-                    models.SqlPipeline.description.ilike(filter.get('term') + '%%'),
-                    models.SqlPipeline.label.ilike(filter.get('term') + '%%'),
+                    models.SqlPipeline.description.ilike(filter.get("term") + "%%"),
+                    models.SqlPipeline.label.ilike(filter.get("term") + "%%"),
                 )
             )
         return query
 
     @staticmethod
-    def paginated_user_pipelines(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_pipelines(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=Pipeline.query_user_pipelines(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page=data.get("page", 1),
+            page_size=data.get("pageSize", 10),
         ).to_dict()
 
     @staticmethod
     def delete(session, username, groups, uri, data=None, check_perm=None) -> bool:
         pipeline = Pipeline.get_pipeline_by_uri(session, uri)
-        ResourcePolicy.delete_resource_policy(
-            session=session, resource_uri=uri, group=pipeline.SamlGroupName
-        )
+        ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=pipeline.SamlGroupName)
         session.delete(pipeline)
         session.commit()
         return True

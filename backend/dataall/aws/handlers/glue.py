@@ -7,7 +7,7 @@ from ...db import models
 from .service_handlers import Worker
 from .sts import SessionHelper
 
-log = logging.getLogger('aws:glue')
+log = logging.getLogger("aws:glue")
 
 
 class Glue:
@@ -17,9 +17,7 @@ class Glue:
     @staticmethod
     def _create_database(accountid, database, region, location):
         try:
-            existing_database = Glue.database_exists(
-                accountid=accountid, database=database, region=region
-            )
+            existing_database = Glue.database_exists(accountid=accountid, database=database, region=region)
             if existing_database:
                 glue_database_created = True
             else:
@@ -27,172 +25,153 @@ class Glue:
                 glue_database_created = True
             return glue_database_created
         except ClientError as e:
-            log.debug(f'Failed to create database {database}', e)
+            log.debug(f"Failed to create database {database}", e)
             raise e
 
     @staticmethod
     def _create_glue_database(accountid, database, region, location):
         try:
             aws_session = SessionHelper.remote_session(accountid=accountid)
-            glue = aws_session.client('glue', region_name=region)
+            glue = aws_session.client("glue", region_name=region)
             db_input = {
-                'Name': database,
-                'Description': 'dataall database {} '.format(database),
-                'CreateTableDefaultPermissions': [],
+                "Name": database,
+                "Description": "dataall database {} ".format(database),
+                "CreateTableDefaultPermissions": [],
             }
             if location:
-                db_input['LocationUri'] = location
-            log.info(f'Creating Glue database with input: {db_input}')
+                db_input["LocationUri"] = location
+            log.info(f"Creating Glue database with input: {db_input}")
             response = glue.create_database(CatalogId=accountid, DatabaseInput=db_input)
-            log.info(f'response Create Database: {response}')
+            log.info(f"response Create Database: {response}")
             return response
         except ClientError as e:
-            log.debug(f'Failed to create database {database}', e)
+            log.debug(f"Failed to create database {database}", e)
             raise e
 
     @staticmethod
     def get_database_arn(**data):
-        return 'arn:aws:glue:{}:{}:database/{}'.format(
-            data.get('region', 'eu-west-1'), data.get('accountid'), data.get('database')
+        return "arn:aws:glue:{}:{}:database/{}".format(
+            data.get("region", "eu-west-1"), data.get("accountid"), data.get("database")
         )
 
     @staticmethod
     def database_exists(**data):
-        accountid = data['accountid']
-        database = data.get('database', 'UnknownDatabaseName')
-        region = data.get('region', 'eu-west-1')
+        accountid = data["accountid"]
+        database = data.get("database", "UnknownDatabaseName")
+        region = data.get("region", "eu-west-1")
         session = SessionHelper.remote_session(accountid)
         try:
-            glue_client = session.client('glue', region_name=region)
-            response = glue_client.get_database(
-                CatalogId=data['accountid'], Name=database
-            )
-            if response.get('Database'):
+            glue_client = session.client("glue", region_name=region)
+            response = glue_client.get_database(CatalogId=data["accountid"], Name=database)
+            if response.get("Database"):
                 return response
             else:
                 return None
         except ClientError as e:
-            log.debug(f'Database already exists in Glue{database}', e)
+            log.debug(f"Database already exists in Glue{database}", e)
 
     @staticmethod
-    @Worker.handler(path='glue.dataset.database.tables')
+    @Worker.handler(path="glue.dataset.database.tables")
     def list_tables(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
+            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, task.targetUri)
             accountid = dataset.AwsAccountId
             region = dataset.region
-            tables = Glue.list_glue_database_tables(
-                accountid, dataset.GlueDatabaseName, region
-            )
+            tables = Glue.list_glue_database_tables(accountid, dataset.GlueDatabaseName, region)
             db.api.DatasetTable.sync(session, dataset.datasetUri, glue_tables=tables)
             return tables
 
     @staticmethod
     def list_glue_database_tables(accountid, database, region):
         aws_session = SessionHelper.remote_session(accountid=accountid)
-        glue = aws_session.client('glue', region_name=region)
+        glue = aws_session.client("glue", region_name=region)
         found_tables = []
         try:
-            log.debug(f'Looking for {database} tables')
+            log.debug(f"Looking for {database} tables")
 
-            if not Glue.database_exists(
-                accountid=accountid, database=database, region=region
-            ):
+            if not Glue.database_exists(accountid=accountid, database=database, region=region):
                 return found_tables
 
-            paginator = glue.get_paginator('get_tables')
+            paginator = glue.get_paginator("get_tables")
 
             pages = paginator.paginate(
                 DatabaseName=database,
                 CatalogId=accountid,
             )
             for page in pages:
-                found_tables.extend(page['TableList'])
+                found_tables.extend(page["TableList"])
 
-            log.debug(f'Retrieved all database {database} tables: {found_tables}')
+            log.debug(f"Retrieved all database {database} tables: {found_tables}")
 
         except ClientError as e:
             log.error(
-                f'Failed to retrieve tables for database {accountid}|{database}: {e}',
+                f"Failed to retrieve tables for database {accountid}|{database}: {e}",
                 exc_info=True,
             )
         return found_tables
 
     @staticmethod
     def table_exists(**data):
-        accountid = data['accountid']
-        region = data.get('region', 'eu-west-1')
-        database = data.get('database', 'UndefinedDatabaseName')
-        table_name = data.get('tablename', 'UndefinedTableName')
+        accountid = data["accountid"]
+        region = data.get("region", "eu-west-1")
+        database = data.get("database", "UndefinedDatabaseName")
+        table_name = data.get("tablename", "UndefinedTableName")
         try:
             table = (
                 SessionHelper.remote_session(accountid)
-                .client('glue', region_name=region)
-                .get_table(
-                    CatalogId=data['accountid'], DatabaseName=database, Name=table_name
-                )
+                .client("glue", region_name=region)
+                .get_table(CatalogId=data["accountid"], DatabaseName=database, Name=table_name)
             )
-            log.info(f'Glue table found: {data}')
+            log.info(f"Glue table found: {data}")
             return table
         except ClientError:
-            log.info(f'Glue table not found: {data}')
+            log.info(f"Glue table not found: {data}")
             return None
 
     def _create_table(**data):
-        accountid = data['accountid']
+        accountid = data["accountid"]
         session = SessionHelper.remote_session(accountid=accountid)
-        region = data.get('region', 'eu-west-1')
-        database = data.get('database', 'UnknownDatabaseName')
+        region = data.get("region", "eu-west-1")
+        database = data.get("database", "UnknownDatabaseName")
 
-        glue = session.client('glue', region_name=region)
-        log.info(
-            'Creating table {} in database {}'.format(
-                data['tablename'], data['database']
-            )
-        )
-        if not Glue.database_exists(
-            database=database, region=region, accountid=accountid
-        ):
+        glue = session.client("glue", region_name=region)
+        log.info("Creating table {} in database {}".format(data["tablename"], data["database"]))
+        if not Glue.database_exists(database=database, region=region, accountid=accountid):
             Glue._create_database(accountid, database, region, None)
-        if 'table_input' not in data:
+        if "table_input" not in data:
             table_input = {
-                'Name': data['tablename'],
-                'Description': data.get('Description', 'Not available'),
-                'Parameters': {'classification': 'csv', 'skip.header.line.count': '1'},
-                'StorageDescriptor': {
-                    'Columns': [
-                        {'Name': c['Name'], 'Type': c['Type']}
-                        for c in data.get('columns')
-                    ],
-                    'Location': data.get('location'),
-                    'InputFormat': 'org.apache.hadoop.mapred.TextInputFormat',
-                    'OutputFormat': 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                    'SerdeInfo': {
-                        'SerializationLibrary': 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        'Parameters': {
-                            'serialization.format': ',',
-                            'field.delim': ',',
-                            'escape.delim': '\\',
+                "Name": data["tablename"],
+                "Description": data.get("Description", "Not available"),
+                "Parameters": {"classification": "csv", "skip.header.line.count": "1"},
+                "StorageDescriptor": {
+                    "Columns": [{"Name": c["Name"], "Type": c["Type"]} for c in data.get("columns")],
+                    "Location": data.get("location"),
+                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+                        "Parameters": {
+                            "serialization.format": ",",
+                            "field.delim": ",",
+                            "escape.delim": "\\",
                         },
                     },
                 },
-                'TableType': 'EXTERNAL_TABLE',
-                'PartitionKeys': data.get('partition_keys') or [],
+                "TableType": "EXTERNAL_TABLE",
+                "PartitionKeys": data.get("partition_keys") or [],
             }
         else:
-            table_input = data['table_input']
+            table_input = data["table_input"]
 
         found_table = Glue.table_exists(**data)
 
         if not found_table:
             response = glue.create_table(
                 CatalogId=accountid,
-                DatabaseName=data.get('database'),
+                DatabaseName=data.get("database"),
                 TableInput=table_input,
             )
-            log.info(f'Successfully Created table {table_input} on account {accountid}')
+            log.info(f"Successfully Created table {table_input} on account {accountid}")
             return response
 
         else:
@@ -200,26 +179,22 @@ class Glue:
             if Glue.is_resource_link(found_table):
 
                 log.info(
-                    f'Table is a Resource Link {found_table} '
-                    f'on account {accountid} and is managed by source account'
+                    f"Table is a Resource Link {found_table} "
+                    f"on account {accountid} and is managed by source account"
                 )
                 return found_table
 
             elif Glue.is_resource_link(table_input):
 
-                return Glue.delete_table_and_create_resourcelink(
-                    glue, database, accountid, table_input
-                )
+                return Glue.delete_table_and_create_resourcelink(glue, database, accountid, table_input)
 
             else:
                 response = glue.update_table(
                     CatalogId=accountid,
-                    DatabaseName=data.get('database'),
+                    DatabaseName=data.get("database"),
                     TableInput=table_input,
                 )
-                log.info(
-                    f'Successfully Updated table {found_table} on account {accountid}'
-                )
+                log.info(f"Successfully Updated table {found_table} on account {accountid}")
                 return response
 
     @staticmethod
@@ -231,7 +206,7 @@ class Glue:
         :param table_input:
         :return:
         """
-        if 'TargetTable' in table_input.keys():
+        if "TargetTable" in table_input.keys():
             log.info(
                 f"Table {table_input['Name']} is a resource link "
                 f"from account {table_input['TargetTable']['CatalogId']} and will not be updated"
@@ -251,136 +226,116 @@ class Glue:
         :return:
         """
         try:
-            glue.delete_table(
-                CatalogId=accountid, DatabaseName=database, Name=table_input['Name']
-            )
-            log.debug(
-                f'Successfully Deleted table {table_input} on account {accountid}'
-            )
-            response = glue.create_table(
-                CatalogId=accountid, DatabaseName=database, TableInput=table_input
-            )
-            log.info(f'Successfully Changed table to resource link {response}')
+            glue.delete_table(CatalogId=accountid, DatabaseName=database, Name=table_input["Name"])
+            log.debug(f"Successfully Deleted table {table_input} on account {accountid}")
+            response = glue.create_table(CatalogId=accountid, DatabaseName=database, TableInput=table_input)
+            log.info(f"Successfully Changed table to resource link {response}")
             return response
         except ClientError as e:
-            log.warning(
-                f'Failed to change table to resource link {table_input} due to: {e}'
-            )
+            log.warning(f"Failed to change table to resource link {table_input} due to: {e}")
             raise e
 
     @staticmethod
     def batch_delete_tables(**data):
-        accountid = data['accountid']
+        accountid = data["accountid"]
         session = SessionHelper.remote_session(accountid=accountid)
-        glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-        database = data['database']
-        tables = data['tables']
-        log.debug(f'Batch deleting tables: {tables}')
-        response = glue.batch_delete_table(
-            CatalogId=accountid, DatabaseName=database, TablesToDelete=tables
-        )
-        log.debug(
-            f'Batch deleted tables {len(tables)} from database {database} successfully'
-        )
+        glue = session.client("glue", region_name=data.get("region", "eu-west-1"))
+        database = data["database"]
+        tables = data["tables"]
+        log.debug(f"Batch deleting tables: {tables}")
+        response = glue.batch_delete_table(CatalogId=accountid, DatabaseName=database, TablesToDelete=tables)
+        log.debug(f"Batch deleted tables {len(tables)} from database {database} successfully")
         return response
 
     @staticmethod
-    @Worker.handler(path='glue.dataset.crawler.create')
+    @Worker.handler(path="glue.dataset.crawler.create")
     def create_crawler(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
+            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, task.targetUri)
+            location = task.payload.get("location")
             Glue.create_glue_crawler(
                 **{
-                    'crawler_name': f'{dataset.GlueDatabaseName}-{location}'[:52],
-                    'region': dataset.region,
-                    'accountid': dataset.AwsAccountId,
-                    'database': dataset.GlueDatabaseName,
-                    'location': location or f's3://{dataset.S3BucketName}',
+                    "crawler_name": f"{dataset.GlueDatabaseName}-{location}"[:52],
+                    "region": dataset.region,
+                    "accountid": dataset.AwsAccountId,
+                    "database": dataset.GlueDatabaseName,
+                    "location": location or f"s3://{dataset.S3BucketName}",
                 }
             )
 
     @staticmethod
     def create_glue_crawler(**data):
         try:
-            accountid = data['accountid']
-            database = data.get('database')
+            accountid = data["accountid"]
+            database = data.get("database")
             session = SessionHelper.remote_session(accountid=accountid)
-            glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-            crawler_name = data.get('crawler_name')
-            targets = {'S3Targets': [{'Path': data.get('location')}]}
+            glue = session.client("glue", region_name=data.get("region", "eu-west-1"))
+            crawler_name = data.get("crawler_name")
+            targets = {"S3Targets": [{"Path": data.get("location")}]}
             crawler = Glue._get_crawler(glue, crawler_name)
             if crawler:
-                Glue._update_existing_crawler(
-                    glue, accountid, crawler_name, targets, database
-                )
+                Glue._update_existing_crawler(glue, accountid, crawler_name, targets, database)
             else:
                 crawler = glue.create_crawler(
                     Name=crawler_name,
                     Role=SessionHelper.get_delegation_role_arn(accountid=accountid),
                     DatabaseName=database,
                     Targets=targets,
-                    Tags=data.get('tags', {'Application': 'dataall'}),
+                    Tags=data.get("tags", {"Application": "dataall"}),
                 )
 
             glue.start_crawler(Name=crawler_name)
-            log.info('Crawler %s started ', crawler_name)
+            log.info("Crawler %s started ", crawler_name)
             return crawler
         except ClientError as e:
-            log.error('Failed to create Crawler due to %s', e)
+            log.error("Failed to create Crawler due to %s", e)
 
     @staticmethod
     def get_glue_crawler(data):
         try:
-            accountid = data['accountid']
+            accountid = data["accountid"]
             session = SessionHelper.remote_session(accountid=accountid)
-            glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-            crawler_name = data.get('crawler_name')
+            glue = session.client("glue", region_name=data.get("region", "eu-west-1"))
+            crawler_name = data.get("crawler_name")
             crawler = Glue._get_crawler(glue, crawler_name)
             return crawler
         except ClientError as e:
-            log.error('Failed to find Crawler due to %s', e)
+            log.error("Failed to find Crawler due to %s", e)
             raise e
 
     @staticmethod
-    @Worker.handler(path='glue.crawler.start')
+    @Worker.handler(path="glue.crawler.start")
     def start_crawler(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
+            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, task.targetUri)
+            location = task.payload.get("location")
             return Glue.start_glue_crawler(
                 {
-                    'crawler_name': dataset.GlueCrawlerName,
-                    'region': dataset.region,
-                    'accountid': dataset.AwsAccountId,
-                    'database': dataset.GlueDatabaseName,
-                    'location': location,
+                    "crawler_name": dataset.GlueCrawlerName,
+                    "region": dataset.region,
+                    "accountid": dataset.AwsAccountId,
+                    "database": dataset.GlueDatabaseName,
+                    "location": location,
                 }
             )
 
     @staticmethod
     def start_glue_crawler(data):
         try:
-            accountid = data['accountid']
-            crawler_name = data['crawler_name']
-            database = data['database']
-            targets = {'S3Targets': [{'Path': data.get('location')}]}
+            accountid = data["accountid"]
+            crawler_name = data["crawler_name"]
+            database = data["database"]
+            targets = {"S3Targets": [{"Path": data.get("location")}]}
             session = SessionHelper.remote_session(accountid=accountid)
-            glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-            if data.get('location'):
-                Glue._update_existing_crawler(
-                    glue, accountid, crawler_name, targets, database
-                )
+            glue = session.client("glue", region_name=data.get("region", "eu-west-1"))
+            if data.get("location"):
+                Glue._update_existing_crawler(glue, accountid, crawler_name, targets, database)
             crawler = Glue._get_crawler(glue, crawler_name)
             glue.start_crawler(Name=crawler_name)
-            log.info('Crawler %s started ', crawler_name)
+            log.info("Crawler %s started ", crawler_name)
             return crawler
         except ClientError as e:
-            log.error('Failed to start Crawler due to %s', e)
+            log.error("Failed to start Crawler due to %s", e)
             raise e
 
     @staticmethod
@@ -389,11 +344,11 @@ class Glue:
         try:
             crawler = glue.get_crawler(Name=crawler_name)
         except ClientError as e:
-            if e.response['Error']['Code'] == 'EntityNotFoundException':
-                log.debug(f'Crawler does not exists {crawler_name} %s', e)
+            if e.response["Error"]["Code"] == "EntityNotFoundException":
+                log.debug(f"Crawler does not exists {crawler_name} %s", e)
             else:
                 raise e
-        return crawler.get('Crawler') if crawler else None
+        return crawler.get("Crawler") if crawler else None
 
     @staticmethod
     def _update_existing_crawler(glue, accountid, crawler_name, targets, database):
@@ -401,10 +356,10 @@ class Glue:
             glue.stop_crawler(Name=crawler_name)
         except ClientError as e:
             if (
-                e.response['Error']['Code'] == 'CrawlerStoppingException'
-                or e.response['Error']['Code'] == 'CrawlerNotRunningException'
+                e.response["Error"]["Code"] == "CrawlerStoppingException"
+                or e.response["Error"]["Code"] == "CrawlerNotRunningException"
             ):
-                log.error('Failed to stop crawler %s', e)
+                log.error("Failed to stop crawler %s", e)
         try:
             glue.update_crawler(
                 Name=crawler_name,
@@ -412,30 +367,26 @@ class Glue:
                 DatabaseName=database,
                 Targets=targets,
             )
-            log.info('Crawler %s updated ', crawler_name)
+            log.info("Crawler %s updated ", crawler_name)
         except ClientError as e:
-            log.debug('Failed to stop and update crawler %s', e)
-            if e.response['Error']['Code'] != 'CrawlerRunningException':
-                log.error('Failed to update crawler %s', e)
+            log.debug("Failed to stop and update crawler %s", e)
+            if e.response["Error"]["Code"] != "CrawlerRunningException":
+                log.error("Failed to update crawler %s", e)
             else:
                 raise e
 
     @staticmethod
-    @Worker.handler('glue.table.update_column')
+    @Worker.handler("glue.table.update_column")
     def update_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            column: models.DatasetTableColumn = session.query(
-                models.DatasetTableColumn
-            ).get(task.targetUri)
-            table: models.DatasetTable = session.query(models.DatasetTable).get(
-                column.tableUri
-            )
+            column: models.DatasetTableColumn = session.query(models.DatasetTableColumn).get(task.targetUri)
+            table: models.DatasetTable = session.query(models.DatasetTable).get(column.tableUri)
             try:
                 aws_session = SessionHelper.remote_session(table.AWSAccountId)
 
                 Glue.grant_pivot_role_all_table_permissions(aws_session, table)
 
-                glue_client = aws_session.client('glue', region_name=table.region)
+                glue_client = aws_session.client("glue", region_name=table.region)
 
                 original_table = glue_client.get_table(
                     CatalogId=table.AWSAccountId,
@@ -444,39 +395,33 @@ class Glue:
                 )
                 updated_table = {
                     k: v
-                    for k, v in original_table['Table'].items()
+                    for k, v in original_table["Table"].items()
                     if k
                     not in [
-                        'CatalogId',
-                        'DatabaseName',
-                        'CreateTime',
-                        'UpdateTime',
-                        'CreatedBy',
-                        'IsRegisteredWithLakeFormation',
+                        "CatalogId",
+                        "DatabaseName",
+                        "CreateTime",
+                        "UpdateTime",
+                        "CreatedBy",
+                        "IsRegisteredWithLakeFormation",
                     ]
                 }
-                all_columns = updated_table.get('StorageDescriptor', {}).get(
-                    'Columns', []
-                ) + updated_table.get('PartitionKeys', [])
+                all_columns = updated_table.get("StorageDescriptor", {}).get("Columns", []) + updated_table.get(
+                    "PartitionKeys", []
+                )
                 for col in all_columns:
-                    if col['Name'] == column.name:
-                        col['Comment'] = column.description
-                        log.info(
-                            f'Found column {column.name} adding description {column.description}'
-                        )
+                    if col["Name"] == column.name:
+                        col["Comment"] = column.description
+                        log.info(f"Found column {column.name} adding description {column.description}")
                         response = glue_client.update_table(
                             DatabaseName=table.GlueDatabaseName,
                             TableInput=updated_table,
                         )
-                        log.info(
-                            f'Column {column.name} updated successfully: {response}'
-                        )
+                        log.info(f"Column {column.name} updated successfully: {response}")
                 return True
 
             except ClientError as e:
-                log.error(
-                    f'Failed to update table column {column.name} description: {e}'
-                )
+                log.error(f"Failed to update table column {column.name} description: {e}")
                 raise e
 
     @staticmethod
@@ -489,44 +434,38 @@ class Glue:
         :return:
         """
         try:
-            lf_client = aws_session.client('lakeformation', region_name=table.region)
+            lf_client = aws_session.client("lakeformation", region_name=table.region)
             grant_dict = dict(
-                Principal={
-                    'DataLakePrincipalIdentifier': SessionHelper.get_delegation_role_arn(
-                        table.AWSAccountId
-                    )
-                },
+                Principal={"DataLakePrincipalIdentifier": SessionHelper.get_delegation_role_arn(table.AWSAccountId)},
                 Resource={
-                    'Table': {
-                        'DatabaseName': table.GlueDatabaseName,
-                        'Name': table.name,
+                    "Table": {
+                        "DatabaseName": table.GlueDatabaseName,
+                        "Name": table.name,
                     }
                 },
-                Permissions=['SELECT', 'ALTER', 'DROP', 'INSERT'],
+                Permissions=["SELECT", "ALTER", "DROP", "INSERT"],
             )
             response = lf_client.grant_permissions(**grant_dict)
             log.error(
-                f'Successfully granted pivot role all table '
-                f'aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} '
-                f'access: {response}'
+                f"Successfully granted pivot role all table "
+                f"aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} "
+                f"access: {response}"
             )
         except ClientError as e:
             log.error(
-                f'Failed to grant pivot role all table '
-                f'aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} '
-                f'access: {e}'
+                f"Failed to grant pivot role all table "
+                f"aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} "
+                f"access: {e}"
             )
             raise e
 
     @staticmethod
-    @Worker.handler('glue.table.columns')
+    @Worker.handler("glue.table.columns")
     def get_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(
-                task.targetUri
-            )
+            dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(task.targetUri)
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
-            glue_client = aws.client('glue', region_name=dataset_table.region)
+            glue_client = aws.client("glue", region_name=dataset_table.region)
             glue_table = {}
             try:
                 glue_table = glue_client.get_table(
@@ -536,121 +475,101 @@ class Glue:
                 )
             except glue_client.exceptions.ClientError as e:
                 log.error(
-                    f'Failed to get table aws://{dataset_table.AWSAccountId}'
-                    f'//{dataset_table.GlueDatabaseName}'
-                    f'//{dataset_table.name} due to: '
-                    f'{e}'
+                    f"Failed to get table aws://{dataset_table.AWSAccountId}"
+                    f"//{dataset_table.GlueDatabaseName}"
+                    f"//{dataset_table.name} due to: "
+                    f"{e}"
                 )
-            db.api.DatasetTable.sync_table_columns(
-                session, dataset_table, glue_table['Table']
-            )
+            db.api.DatasetTable.sync_table_columns(session, dataset_table, glue_table["Table"])
         return True
 
     @staticmethod
-    @Worker.handler(path='glue.job.runs')
+    @Worker.handler(path="glue.job.runs")
     def get_job_runs(engine, task: models.Task):
         with engine.scoped_session() as session:
-            sql_pipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(
-                task.targetUri
-            )
+            sql_pipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(task.targetUri)
             aws = SessionHelper.remote_session(sql_pipeline.AwsAccountId)
-            glue_client = aws.client('glue', region_name=sql_pipeline.region)
+            glue_client = aws.client("glue", region_name=sql_pipeline.region)
             try:
                 response = glue_client.get_job_runs(JobName=sql_pipeline.name)
                 print(response)
             except ClientError as e:
-                log.warning(f'Could not retrieve pipeline runs , {str(e)}')
+                log.warning(f"Could not retrieve pipeline runs , {str(e)}")
                 return []
-            return response['JobRuns']
+            return response["JobRuns"]
 
     @staticmethod
-    @Worker.handler('glue.job.start_profiling_run')
+    @Worker.handler("glue.job.start_profiling_run")
     def start_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
-            profiling: models.DatasetProfilingRun = (
-                db.api.DatasetProfilingRun.get_profiling_run(
-                    session, profilingRunUri=task.targetUri
-                )
+            profiling: models.DatasetProfilingRun = db.api.DatasetProfilingRun.get_profiling_run(
+                session, profilingRunUri=task.targetUri
             )
-            dataset: models.Dataset = session.query(models.Dataset).get(
-                profiling.datasetUri
-            )
+            dataset: models.Dataset = session.query(models.Dataset).get(profiling.datasetUri)
             run = Glue.run_job(
                 **{
-                    'accountid': dataset.AwsAccountId,
-                    'name': dataset.GlueProfilingJobName,
-                    'region': dataset.region,
-                    'arguments': (
-                        {'--table': profiling.GlueTableName}
-                        if profiling.GlueTableName
-                        else {}
-                    ),
+                    "accountid": dataset.AwsAccountId,
+                    "name": dataset.GlueProfilingJobName,
+                    "region": dataset.region,
+                    "arguments": ({"--table": profiling.GlueTableName} if profiling.GlueTableName else {}),
                 }
             )
             db.api.DatasetProfilingRun.update_run(
                 session,
                 profilingRunUri=profiling.profilingRunUri,
-                GlueJobRunId=run['JobRunId'],
+                GlueJobRunId=run["JobRunId"],
             )
             return run
 
     @staticmethod
     def run_job(**data):
-        accountid = data['accountid']
-        name = data['name']
+        accountid = data["accountid"]
+        name = data["name"]
         try:
             session = SessionHelper.remote_session(accountid=accountid)
-            client = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-            response = client.start_job_run(
-                JobName=name, Arguments=data.get('arguments', {})
-            )
+            client = session.client("glue", region_name=data.get("region", "eu-west-1"))
+            response = client.start_job_run(JobName=name, Arguments=data.get("arguments", {}))
             return response
         except ClientError as e:
-            log.error(f'Failed to start profiling job {name} due to: {e}')
+            log.error(f"Failed to start profiling job {name} due to: {e}")
             raise e
 
     @staticmethod
-    @Worker.handler('glue.job.profiling_run_status')
+    @Worker.handler("glue.job.profiling_run_status")
     def get_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
-            profiling: models.DatasetProfilingRun = (
-                db.api.DatasetProfilingRun.get_profiling_run(
-                    session, profilingRunUri=task.targetUri
-                )
+            profiling: models.DatasetProfilingRun = db.api.DatasetProfilingRun.get_profiling_run(
+                session, profilingRunUri=task.targetUri
             )
-            dataset: models.Dataset = session.query(models.Dataset).get(
-                profiling.datasetUri
-            )
+            dataset: models.Dataset = session.query(models.Dataset).get(profiling.datasetUri)
             glue_run = Glue.get_job_run(
                 **{
-                    'accountid': dataset.AwsAccountId,
-                    'name': dataset.GlueProfilingJobName,
-                    'region': dataset.region,
-                    'run_id': profiling.GlueJobRunId,
+                    "accountid": dataset.AwsAccountId,
+                    "name": dataset.GlueProfilingJobName,
+                    "region": dataset.region,
+                    "run_id": profiling.GlueJobRunId,
                 }
             )
-            profiling.status = glue_run['JobRun']['JobRunState']
+            profiling.status = glue_run["JobRun"]["JobRunState"]
             session.commit()
             return profiling.status
 
     @staticmethod
     def get_job_run(**data):
-        accountid = data['accountid']
-        name = data['name']
-        run_id = data['run_id']
+        accountid = data["accountid"]
+        name = data["name"]
+        run_id = data["run_id"]
         try:
             session = SessionHelper.remote_session(accountid=accountid)
-            client = session.client('glue', region_name=data.get('region', 'eu-west-1'))
+            client = session.client("glue", region_name=data.get("region", "eu-west-1"))
             response = client.get_job_run(JobName=name, RunId=run_id)
             return response
         except ClientError as e:
-            log.error(f'Failed to get job run {run_id} due to: {e}')
+            log.error(f"Failed to get job run {run_id} due to: {e}")
             raise e
 
     @staticmethod
-    def grant_principals_all_table_permissions(
-        table: models.DatasetTable, principals: [str], client=None
-    ):
+    def grant_principals_all_table_permissions(table: models.DatasetTable, principals: [str], client=None):
         """
         Update the table permissions on Lake Formation
         for tables managed by data.all
@@ -660,30 +579,28 @@ class Glue:
         :return:
         """
         if not client:
-            client = SessionHelper.remote_session(table.AWSAccountId).client(
-                'lakeformation', region_name=table.region
-            )
+            client = SessionHelper.remote_session(table.AWSAccountId).client("lakeformation", region_name=table.region)
         for principal in principals:
             try:
                 grant_dict = dict(
-                    Principal={'DataLakePrincipalIdentifier': principal},
+                    Principal={"DataLakePrincipalIdentifier": principal},
                     Resource={
-                        'Table': {
-                            'DatabaseName': table.GlueDatabaseName,
-                            'Name': table.name,
+                        "Table": {
+                            "DatabaseName": table.GlueDatabaseName,
+                            "Name": table.name,
                         }
                     },
-                    Permissions=['ALL'],
+                    Permissions=["ALL"],
                 )
                 response = client.grant_permissions(**grant_dict)
                 log.error(
-                    f'Successfully granted principals {principals} all permissions on table '
-                    f'aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} '
-                    f'access: {response}'
+                    f"Successfully granted principals {principals} all permissions on table "
+                    f"aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} "
+                    f"access: {response}"
                 )
             except ClientError as e:
                 log.error(
-                    f'Failed to grant admin roles {principals} all permissions on table '
-                    f'aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} '
-                    f'access: {e}'
+                    f"Failed to grant admin roles {principals} all permissions on table "
+                    f"aws://{table.AWSAccountId}/{table.GlueDatabaseName}/{table.name} "
+                    f"access: {e}"
                 )

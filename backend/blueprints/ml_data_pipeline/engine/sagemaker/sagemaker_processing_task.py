@@ -1,6 +1,5 @@
 from aws_cdk import aws_stepfunctions as stepfunctions
-from engine.sagemaker.mappers.sm_processing_mapper import \
-    SageMakerProcessingJobPropsMapper
+from engine.sagemaker.mappers.sm_processing_mapper import SageMakerProcessingJobPropsMapper
 
 
 def make_sagemaker_processing_task(stack, job, group_index, job_index):
@@ -11,9 +10,7 @@ def make_sagemaker_processing_task(stack, job, group_index, job_index):
         "ResultPath": None,
         "Parameters": SageMakerProcessingJobPropsMapper.map_props(
             stack,
-            stepfunctions.TaskInput.from_data_at(
-                f"$.job_names.{group_index}|{job_index}"
-            ).value,
+            stepfunctions.TaskInput.from_data_at(f"$.job_names.{group_index}|{job_index}").value,
             job["main"],
             job["config"],
             tags=tags,
@@ -29,6 +26,4 @@ def make_sagemaker_processing_task(stack, job, group_index, job_index):
                 "BackoffRate": retry_definition.get("backoff_rate", 1.1),
             }
         ]
-    return stepfunctions.CustomState(
-        stack, "SageMaker Processing: " + job["name"], state_json=definition
-    )
+    return stepfunctions.CustomState(stack, "SageMaker Processing: " + job["name"], state_json=definition)

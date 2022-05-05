@@ -20,7 +20,7 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
 
@@ -40,9 +40,7 @@ def test_map_props_image_uri():
     stack = ATestStack()
     config = {
         "primary_container": {
-            "algorithm" : {
-                "image": "141502667606.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-xgboost:1.2-1"
-            },
+            "algorithm": {"image": "141502667606.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-xgboost:1.2-1"},
             "model_path": "$.model_path",
         },
     }
@@ -56,9 +54,7 @@ def test_map_props_hardcoded_model_input():
     stack = ATestStack()
     config = {
         "primary_container": {
-            "algorithm" : {
-                "image": "141502667606.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-xgboost:1.2-1"
-            },
+            "algorithm": {"image": "141502667606.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-xgboost:1.2-1"},
             "model_path_from_bucket": {"bucket": "dhrareforecast", "prefix_key": "model.tar.gz"},
         },
     }

@@ -38,9 +38,7 @@ class LambdaFxPropsMapper:
         )
 
         if config_props.get("dead_letter_queue_enabled") is not None:
-            lambdafx["dead_letter_queue_enabled"] = config_props.get(
-                "dead_letter_queue_enabled"
-            )
+            lambdafx["dead_letter_queue_enabled"] = config_props.get("dead_letter_queue_enabled")
 
         return lambdafx
 
@@ -51,8 +49,7 @@ class LambdaFxPropsMapper:
             heartbeat=config_props.get("heartbeat"),
             input_path=config_props.get("input_path"),
             output_path=config_props.get("output_path"),
-            result_path=config_props.get("result_path")
-            or aws_stepfunctions.JsonPath.DISCARD,
+            result_path=config_props.get("result_path") or aws_stepfunctions.JsonPath.DISCARD,
             timeout=core.Duration.seconds(config_props.get("timeout", 900)),
             lambda_function=lambda_function,
             payload=aws_stepfunctions.TaskInput.from_object(config_props.get("payload"))
@@ -60,9 +57,7 @@ class LambdaFxPropsMapper:
             else None,
             qualifier=None,
             payload_response_only=config_props.get("payload_response_only", True),
-            retry_on_service_exceptions=config_props.get(
-                "retry_on_service_exceptions", True
-            ),
+            retry_on_service_exceptions=config_props.get("retry_on_service_exceptions", True),
         )
         return lambdafx
 
@@ -82,9 +77,7 @@ class LambdaFxPropsMapper:
            config_props: the configuration of the lambda_functions function in configuration file.
 
         """
-        entry_point = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), "..", "..", config_props["entry"])
-        )
+        entry_point = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", config_props["entry"]))
         return entry_point
 
     @classmethod

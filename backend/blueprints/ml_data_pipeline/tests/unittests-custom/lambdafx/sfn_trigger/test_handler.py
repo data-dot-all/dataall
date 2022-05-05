@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from customcode.lambda_functions.example_sfn_trigger import handler

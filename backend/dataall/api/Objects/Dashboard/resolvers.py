@@ -10,9 +10,7 @@ from ....searchproxy import indexers
 def get_quicksight_reader_url(context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
         dash: models.Dashboard = session.query(models.Dashboard).get(dashboardUri)
-        env: models.Environment = session.query(models.Environment).get(
-            dash.environmentUri
-        )
+        env: models.Environment = session.query(models.Environment).get(dash.environmentUri)
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
@@ -23,7 +21,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
                 action=permissions.GET_DASHBOARD,
-                message=f'Dashboards feature is disabled for the environment {env.label}',
+                message=f"Dashboards feature is disabled for the environment {env.label}",
             )
         if dash.SamlGroupName in context.groups:
             url = Quicksight.get_reader_session(
@@ -42,9 +40,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
     return url
 
 
-def get_quicksight_designer_url(
-    context, source, environmentUri: str = None, dashboardUri: str = None
-):
+def get_quicksight_designer_url(context, source, environmentUri: str = None, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -57,14 +53,14 @@ def get_quicksight_designer_url(
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
-                message=f'Dashboards feature is disabled for the environment {env.label}',
+                message=f"Dashboards feature is disabled for the environment {env.label}",
             )
 
         url = Quicksight.get_author_session(
             AwsAccountId=env.AwsAccountId,
             region=env.region,
             UserName=context.username,
-            UserRole='AUTHOR',
+            UserRole="AUTHOR",
         )
 
     return url
@@ -76,33 +72,31 @@ def import_dashboard(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=input['environmentUri'],
+            resource_uri=input["environmentUri"],
             permission_name=permissions.CREATE_DASHBOARD,
         )
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, input['environmentUri']
-        )
+        env: models.Environment = db.api.Environment.get_environment_by_uri(session, input["environmentUri"])
 
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
-                message=f'Dashboards feature is disabled for the environment {env.label}',
+                message=f"Dashboards feature is disabled for the environment {env.label}",
             )
 
         can_import = Quicksight.can_import_dashboard(
             AwsAccountId=env.AwsAccountId,
             region=env.region,
             UserName=context.username,
-            DashboardId=input.get('dashboardId'),
+            DashboardId=input.get("dashboardId"),
         )
 
         if not can_import:
             raise db.exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
-                message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
+                message=f"User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}",
             )
 
-        input['environment'] = env
+        input["environment"] = env
         dashboard = db.api.Dashboard.import_dashboard(
             session=session,
             username=context.username,
@@ -119,10 +113,8 @@ def import_dashboard(context: Context, source, input: dict = None):
 
 def update_dashboard(context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        dashboard = db.api.Dashboard.get_dashboard_by_uri(
-            session, input['dashboardUri']
-        )
-        input['dashboard'] = dashboard
+        dashboard = db.api.Dashboard.get_dashboard_by_uri(session, input["dashboardUri"])
+        input["dashboard"] = dashboard
         db.api.Dashboard.update_dashboard(
             session=session,
             username=context.username,
@@ -195,7 +187,7 @@ def request_dashboard_share(
             username=context.username,
             groups=context.groups,
             uri=dashboardUri,
-            data={'principalId': principalId},
+            data={"principalId": principalId},
             check_perm=True,
         )
 
@@ -213,7 +205,7 @@ def approve_dashboard_share(
             username=context.username,
             groups=context.groups,
             uri=dashboard.dashboardUri,
-            data={'share': share, 'shareUri': shareUri},
+            data={"share": share, "shareUri": shareUri},
             check_perm=True,
         )
 
@@ -231,7 +223,7 @@ def reject_dashboard_share(
             username=context.username,
             groups=context.groups,
             uri=dashboard.dashboardUri,
-            data={'share': share, 'shareUri': shareUri},
+            data={"share": share, "shareUri": shareUri},
             check_perm=True,
         )
 
@@ -267,7 +259,7 @@ def share_dashboard(
             username=context.username,
             groups=context.groups,
             uri=dashboardUri,
-            data={'principalId': principalId},
+            data={"principalId": principalId},
             check_perm=True,
         )
 
@@ -288,13 +280,9 @@ def delete_dashboard(context: Context, source, dashboardUri: str = None):
 
 def resolve_glossary_terms(context: Context, source: models.Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return Glossary.get_glossary_terms_links(
-            session, source.dashboardUri, 'Dashboard'
-        )
+        return Glossary.get_glossary_terms_links(session, source.dashboardUri, "Dashboard")
 
 
 def resolve_upvotes(context: Context, source: models.Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        return Vote.count_upvotes(
-            session, None, None, source.dashboardUri, data={'targetType': 'dashboard'}
-        )
+        return Vote.count_upvotes(session, None, None, source.dashboardUri, data={"targetType": "dashboard"})

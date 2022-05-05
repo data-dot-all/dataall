@@ -18,9 +18,7 @@ def make_glue_job_task(stack, job, stage, bucket_name):
 
 def create_glue_job(stack, job, stage, bucket_name):
     jobdir = stack.jobdir
-    bookmark_property = job.get("properties", {}).get(
-        "enable_bookmark", "job-bookmark-disable"
-    )
+    bookmark_property = job.get("properties", {}).get("enable_bookmark", "job-bookmark-disable")
     connection = job.get("properties", {}).get("connection", "")
     if connection:
         return glue.CfnJob(
@@ -48,7 +46,7 @@ def create_glue_job(stack, job, stage, bucket_name):
                 "--job-bookmark-option": bookmark_property,
             },
             timeout=job.get("properties", {}).get("timeout", 3600),
-            glue_version='3.0',
+            glue_version="3.0",
             role=iam.ArnPrincipal(stack.pipeline_iam_role_arn).arn,
         )
     else:

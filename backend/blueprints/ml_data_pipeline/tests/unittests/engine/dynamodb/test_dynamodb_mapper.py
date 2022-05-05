@@ -18,17 +18,19 @@ class ATestStack(core.Stack):
     def set_resource_tags(self, resource):
         pass
 
+
 def test_map_props():
     stack = ATestStack()
-    config = { "partition_key": { "name": "equipment", "type": "string"},
-                           "sort_key": {"name": "cycle", "type": "number"}}
+    config = {"partition_key": {"name": "equipment", "type": "string"}, "sort_key": {"name": "cycle", "type": "number"}}
     assert DynamoDBPropsMapper.map_props(stack, "cyclesdb", config)
+
 
 def test_map_props_no_sort_key():
     stack = ATestStack()
-    config = { "partition_key": { "name": "equipment", "type": "string"}}
+    config = {"partition_key": {"name": "equipment", "type": "string"}}
 
     assert DynamoDBPropsMapper.map_props(stack, "cyclesdb", config)
+
 
 def test_get_type():
     assert DynamoDBPropsMapper.get_type("number") == aws_dynamodb.AttributeType.NUMBER

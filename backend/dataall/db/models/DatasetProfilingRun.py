@@ -5,10 +5,8 @@ from .. import Base, Resource, utils
 
 
 class DatasetProfilingRun(Resource, Base):
-    __tablename__ = 'dataset_profiling_run'
-    profilingRunUri = Column(
-        String, primary_key=True, default=utils.uuid('profilingrun')
-    )
+    __tablename__ = "dataset_profiling_run"
+    profilingRunUri = Column(String, primary_key=True, default=utils.uuid("profilingrun"))
     datasetUri = Column(String, nullable=False)
     GlueJobName = Column(String)
     GlueJobRunId = Column(String)
@@ -17,4 +15,4 @@ class DatasetProfilingRun(Resource, Base):
     GlueTableName = Column(String)
     AwsAccountId = Column(String)
     results = Column(JSON, default={})
-    status = Column(String, default='Created')
+    status = Column(String, default="Created")

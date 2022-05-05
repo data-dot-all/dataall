@@ -1,80 +1,78 @@
 from ....api.constants import *
 
 NewOrganizationInput = gql.InputType(
-    name='NewOrganizationInput',
+    name="NewOrganizationInput",
     arguments=[
-        gql.Argument(name='label', type=gql.String),
-        gql.Argument(name='description', type=gql.String),
-        gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
-        gql.Argument(name='SamlGroupName', type=gql.String),
+        gql.Argument(name="label", type=gql.String),
+        gql.Argument(name="description", type=gql.String),
+        gql.Argument(name="tags", type=gql.ArrayType(gql.String)),
+        gql.Argument(name="SamlGroupName", type=gql.String),
     ],
 )
 
 ModifyOrganizationInput = gql.InputType(
-    name='ModifyOrganizationInput',
+    name="ModifyOrganizationInput",
     arguments=[
-        gql.Argument('label', gql.String),
-        gql.Argument(name='description', type=gql.String),
-        gql.Argument(name='SamlGroupName', type=gql.String),
-        gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Argument("label", gql.String),
+        gql.Argument(name="description", type=gql.String),
+        gql.Argument(name="SamlGroupName", type=gql.String),
+        gql.Argument(name="tags", type=gql.ArrayType(gql.String)),
     ],
 )
 
 
 class OrganizationSortField(GraphQLEnumMapper):
-    created = 'created'
-    updated = 'updated'
-    label = 'label'
+    created = "created"
+    updated = "updated"
+    label = "label"
 
 
 OrganizationSortCriteria = gql.InputType(
-    name='OrganizationSortCriteria',
+    name="OrganizationSortCriteria",
     arguments=[
         gql.Argument(
-            name='field',
+            name="field",
             type=gql.NonNullableType(OrganizationSortField.toGraphQLEnum()),
         ),
-        gql.Argument(
-            name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())
-        ),
+        gql.Argument(name="direction", type=gql.NonNullableType(SortDirection.toGraphQLEnum())),
     ],
 )
 
 OrganizationFilter = gql.InputType(
-    name='OrganizationFilter',
+    name="OrganizationFilter",
     arguments=[
-        gql.Argument('term', gql.String),
-        gql.Argument('displayArchived', gql.Boolean),
-        gql.Argument('sort', gql.ArrayType(OrganizationSortCriteria)),
-        gql.Argument('page', gql.Integer),
-        gql.Argument('pageSize', gql.Integer),
-        gql.Argument('roles', gql.ArrayType(OrganisationUserRole.toGraphQLEnum())),
-        gql.Argument('tags', gql.ArrayType(gql.String)),
+        gql.Argument("term", gql.String),
+        gql.Argument("displayArchived", gql.Boolean),
+        gql.Argument("sort", gql.ArrayType(OrganizationSortCriteria)),
+        gql.Argument("page", gql.Integer),
+        gql.Argument("pageSize", gql.Integer),
+        gql.Argument("roles", gql.ArrayType(OrganisationUserRole.toGraphQLEnum())),
+        gql.Argument("tags", gql.ArrayType(gql.String)),
     ],
 )
 
 
 OrganizationTopicFilter = gql.InputType(
-    name='OrganizationTopicFilter',
+    name="OrganizationTopicFilter",
     arguments=[
-        gql.Argument(name='term', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument(name="term", type=gql.String),
+        gql.Argument(name="page", type=gql.Integer),
+        gql.Argument(name="pageSize", type=gql.Integer),
     ],
 )
 
 OrganizationTopicInput = gql.InputType(
-    name='OrganizationTopicInput',
+    name="OrganizationTopicInput",
     arguments=[
-        gql.Argument(name='label', type=gql.String),
-        gql.Argument(name='description', type=gql.String),
+        gql.Argument(name="label", type=gql.String),
+        gql.Argument(name="description", type=gql.String),
     ],
 )
 
 InviteGroupToOrganizationInput = gql.InputType(
-    name='InviteGroupToOrganizationInput',
+    name="InviteGroupToOrganizationInput",
     arguments=[
-        gql.Argument('organizationUri', gql.NonNullableType(gql.String)),
-        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument("organizationUri", gql.NonNullableType(gql.String)),
+        gql.Argument("groupUri", gql.NonNullableType(gql.String)),
     ],
 )

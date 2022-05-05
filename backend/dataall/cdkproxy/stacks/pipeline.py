@@ -24,13 +24,13 @@ from .manager import stack
 logger = logging.getLogger(__name__)
 
 
-@stack('pipeline')
+@stack("pipeline")
 class PipelineStack(Stack):
 
     module_name = __file__
 
     def get_engine(self):
-        envname = os.environ.get('envname', 'local')
+        envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         return engine
 
@@ -39,10 +39,8 @@ class PipelineStack(Stack):
         with engine.scoped_session() as session:
             return Pipeline.get_pipeline_by_uri(session, target_uri)
 
-    def get_pipeline_environment(
-        self, pipeline: models.SqlPipeline
-    ) -> models.Environment:
-        envname = os.environ.get('envname', 'local')
+    def get_pipeline_environment(self, pipeline: models.SqlPipeline) -> models.Environment:
+        envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         with engine.scoped_session() as session:
             return Environment.get_environment_by_uri(session, pipeline.environmentUri)
@@ -50,9 +48,7 @@ class PipelineStack(Stack):
     def get_env_group(self, pipeline: models.SqlPipeline) -> models.EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = Environment.get_environment_group(
-                session, pipeline.SamlGroupName, pipeline.environmentUri
-            )
+            env = Environment.get_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
         return env
 
     def define_stage(
@@ -74,7 +70,7 @@ class PipelineStack(Stack):
         build_project = self.make_pipeline_project(
             pipeline=pipeline,
             account_id=account_id,
-            id_element=f'build{stage}',
+            id_element=f"build{stage}",
             region=region,
             environment_uri=environment_uri,
             environment_iam_role=environment_iam_role,
@@ -86,7 +82,7 @@ class PipelineStack(Stack):
         )
 
         build_project_run_tests = self.make_pipeline_project(
-            id_element=f'build-run-tests{stage}',
+            id_element=f"build-run-tests{stage}",
             pipeline=pipeline,
             account_id=account_id,
             region=region,
@@ -100,10 +96,10 @@ class PipelineStack(Stack):
         )
 
         self.codepipeline_pipeline.add_stage(
-            stage_name=f'Deploy{stage}Stage',
+            stage_name=f"Deploy{stage}Stage",
             actions=[
                 codepipeline_actions.CodeBuildAction(
-                    action_name=f'deploy{stage}',
+                    action_name=f"deploy{stage}",
                     input=self.source_artifact,
                     project=build_project,
                     outputs=[codepipeline.Artifact()],
@@ -111,12 +107,12 @@ class PipelineStack(Stack):
             ],
         )
 
-        if stage != 'prod':
+        if stage != "prod":
             self.codepipeline_pipeline.add_stage(
-                stage_name=f'RunTests{stage}',
+                stage_name=f"RunTests{stage}",
                 actions=[
                     codepipeline_actions.CodeBuildAction(
-                        action_name='runtest',
+                        action_name="runtest",
                         input=self.source_artifact,
                         project=build_project_run_tests,
                         outputs=[codepipeline.Artifact()],
@@ -125,22 +121,18 @@ class PipelineStack(Stack):
             )
 
             self.codepipeline_pipeline.add_stage(
-                stage_name=f'ManualApproval{stage}',
-                actions=[
-                    codepipeline_actions.ManualApprovalAction(
-                        action_name=f'ManualApproval{stage}'
-                    )
-                ],
+                stage_name=f"ManualApproval{stage}",
+                actions=[codepipeline_actions.ManualApprovalAction(action_name=f"ManualApproval{stage}")],
             )
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
-        kwargs.setdefault('tags', {}).update({'utility': 'dataall-data-pipeline'})
+        kwargs.setdefault("tags", {}).update({"utility": "dataall-data-pipeline"})
         super().__init__(
             scope,
             id,
-            env=kwargs.get('env'),
-            stack_name=kwargs.get('stack_name'),
-            tags=kwargs.get('tags'),
+            env=kwargs.get("env"),
+            stack_name=kwargs.get("stack_name"),
+            tags=kwargs.get("tags"),
             description="'{}' ({}) dataall code-pipeline for Datapipeline".format(
                 self.get_target(target_uri=target_uri).repo, target_uri
             ),
@@ -152,15 +144,13 @@ class PipelineStack(Stack):
         pipeline = self.get_target(target_uri=target_uri)
         pipeline_environment = self.get_pipeline_environment(pipeline=pipeline)
         env_group = self.get_env_group(pipeline=pipeline)
-        stages = ['test', 'prod']
+        stages = ["test", "prod"]
 
-        environment_role = iam.Role.from_role_arn(
-            self, 'EnvRole', env_group.environmentIAMRoleArn
-        )
+        environment_role = iam.Role.from_role_arn(self, "EnvRole", env_group.environmentIAMRoleArn)
 
         pipeline_bucket = s3.Bucket(
             self,
-            id=f'{pipeline.repo}-{pipeline_environment.region}',
+            id=f"{pipeline.repo}-{pipeline_environment.region}",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
             removal_policy=RemovalPolicy.DESTROY,
@@ -169,11 +159,7 @@ class PipelineStack(Stack):
         )
 
         code_dir_path = os.path.realpath(
-            os.path.abspath(
-                os.path.join(
-                    __file__, '..', '..', '..', '..', 'blueprints', 'ml_data_pipeline'
-                )
-            )
+            os.path.abspath(os.path.join(__file__, "..", "..", "..", "..", "blueprints", "ml_data_pipeline"))
         )
 
         PipelineStack.write_buildspec_files(path=code_dir_path, stages=stages)
@@ -182,9 +168,7 @@ class PipelineStack(Stack):
 
         PipelineStack.zip_directory(code_dir_path)
 
-        code_asset = Asset(
-            scope=self, id=f'{pipeline.name}-asset', path=f'{code_dir_path}/code.zip'
-        )
+        code_asset = Asset(scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/code.zip")
 
         code = codecommit.CfnRepository.CodeProperty(
             s3=codecommit.CfnRepository.S3Property(
@@ -196,33 +180,33 @@ class PipelineStack(Stack):
         codecommit.CfnRepository(
             scope=self,
             code=code,
-            id='gluecoderepo',
+            id="gluecoderepo",
             repository_name=pipeline.repo,
         )
 
         self.codebuild_key = kms.Key(
             self,
-            f'{pipeline.name}-codebuild-key',
+            f"{pipeline.name}-codebuild-key",
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{pipeline.name}-codebuild-key',
+            alias=f"{pipeline.name}-codebuild-key",
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
                             iam.AccountPrincipal(account_id=self.account),
                         ],
-                        actions=['kms:*'],
+                        actions=["kms:*"],
                     ),
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(service='codebuild.amazonaws.com'),
+                            iam.ServicePrincipal(service="codebuild.amazonaws.com"),
                         ],
-                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
                     ),
                 ],
             ),
@@ -230,46 +214,46 @@ class PipelineStack(Stack):
 
         role_inline_policy = iam.Policy(
             self,
-            f'{pipeline.name}-policy',
-            policy_name=f'{pipeline.name}-policy',
+            f"{pipeline.name}-policy",
+            policy_name=f"{pipeline.name}-policy",
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        'ec2:DescribeAvailabilityZones',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:GetAuthorizationToken',
-                        'kms:Decrypt',
-                        'kms:Encrypt',
-                        'kms:GenerateDataKey',
-                        'secretsmanager:GetSecretValue',
-                        'secretsmanager:DescribeSecret',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        'codebuild:CreateReportGroup',
-                        'codebuild:CreateReport',
-                        'codebuild:UpdateReport',
-                        'codebuild:BatchPutTestCases',
-                        'codebuild:BatchPutCodeCoverages',
+                        "ec2:DescribeAvailabilityZones",
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:PutImage",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:UploadLayerPart",
+                        "ecr:CompleteLayerUpload",
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:GetAuthorizationToken",
+                        "kms:Decrypt",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey",
+                        "secretsmanager:GetSecretValue",
+                        "secretsmanager:DescribeSecret",
+                        "ssm:GetParametersByPath",
+                        "ssm:GetParameters",
+                        "ssm:GetParameter",
+                        "codebuild:CreateReportGroup",
+                        "codebuild:CreateReport",
+                        "codebuild:UpdateReport",
+                        "codebuild:BatchPutTestCases",
+                        "codebuild:BatchPutCodeCoverages",
                     ],
-                    resources=['*'],
+                    resources=["*"],
                 ),
                 iam.PolicyStatement(
                     actions=[
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
+                        "s3:Get*",
+                        "s3:Put*",
+                        "s3:List*",
                     ],
                     resources=[
                         pipeline_bucket.bucket_arn,
-                        f'{pipeline_bucket.bucket_arn}/*',
+                        f"{pipeline_bucket.bucket_arn}/*",
                     ],
                 ),
             ],
@@ -277,15 +261,15 @@ class PipelineStack(Stack):
 
         build_project_role = iam.Role(
             self,
-            'PipelineRole',
+            "PipelineRole",
             role_name=pipeline.name,
-            inline_policies={f'Inline{pipeline.name}': role_inline_policy.document},
-            assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
+            inline_policies={f"Inline{pipeline.name}": role_inline_policy.document},
+            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
         )
 
         ecr_repository = ecr.Repository(
             self,
-            f'ecr-{pipeline.name}',
+            f"ecr-{pipeline.name}",
             repository_name=pipeline.name,
             image_scan_on_push=True,
             removal_policy=RemovalPolicy.DESTROY,
@@ -314,15 +298,15 @@ class PipelineStack(Stack):
         self.source_artifact = codepipeline.Artifact()
 
         codepipeline_pipeline.add_stage(
-            stage_name='Source',
+            stage_name="Source",
             actions=[
                 codepipeline_actions.CodeCommitSourceAction(
-                    action_name='CodeCommit',
-                    branch='main',
+                    action_name="CodeCommit",
+                    branch="main",
                     output=self.source_artifact,
                     trigger=codepipeline_actions.CodeCommitTrigger.POLL,
                     repository=codecommit.Repository.from_repository_name(
-                        self, 'source_blueprint_repo', repository_name=pipeline.repo
+                        self, "source_blueprint_repo", repository_name=pipeline.repo
                     ),
                 )
             ],
@@ -330,21 +314,21 @@ class PipelineStack(Stack):
         build_sagemaker_jobs = self.make_pipeline_project(
             pipeline=pipeline,
             account_id=pipeline_environment.AwsAccountId,
-            id_element='build-sagemaker-jobs',
+            id_element="build-sagemaker-jobs",
             region=pipeline_environment.region,
             environment_uri=pipeline_environment.environmentUri,
             environment_iam_role=environment_role,
             bucket_name=pipeline_bucket.bucket_name,
             repository_uri=ecr_repository,
             build_project_role=build_project_role,
-            build_spec='build_sagemaker_jobs_buildspec.yaml',
-            stage='test',
+            build_spec="build_sagemaker_jobs_buildspec.yaml",
+            stage="test",
         )
         codepipeline_pipeline.add_stage(
-            stage_name='BuildSageMakerJobs',
+            stage_name="BuildSageMakerJobs",
             actions=[
                 codepipeline_actions.CodeBuildAction(
-                    action_name='BuildSageMakerJobs',
+                    action_name="BuildSageMakerJobs",
                     input=self.source_artifact,
                     project=build_sagemaker_jobs,
                     outputs=[codepipeline.Artifact()],
@@ -355,41 +339,41 @@ class PipelineStack(Stack):
         training_images_project = self.make_pipeline_project(
             pipeline=pipeline,
             account_id=pipeline_environment.AwsAccountId,
-            id_element='build-sm-training-images',
+            id_element="build-sm-training-images",
             region=pipeline_environment.region,
             environment_uri=pipeline_environment.environmentUri,
             environment_iam_role=environment_role,
             bucket_name=pipeline_bucket.bucket_name,
             repository_uri=ecr_repository,
             build_project_role=build_project_role,
-            build_spec='training_image_buildspec.yaml',
-            stage='test',
+            build_spec="training_image_buildspec.yaml",
+            stage="test",
         )
         processing_image_project = self.make_pipeline_project(
             pipeline=pipeline,
             account_id=pipeline_environment.AwsAccountId,
-            id_element='build-sm-processing-image',
+            id_element="build-sm-processing-image",
             region=pipeline_environment.region,
             environment_uri=pipeline_environment.environmentUri,
             environment_iam_role=environment_role,
             bucket_name=pipeline_bucket.bucket_name,
             repository_uri=ecr_repository,
             build_project_role=build_project_role,
-            build_spec='processing_image_buildspec.yaml',
-            stage='test',
+            build_spec="processing_image_buildspec.yaml",
+            stage="test",
         )
 
         codepipeline_pipeline.add_stage(
-            stage_name='DeployDockerImages',
+            stage_name="DeployDockerImages",
             actions=[
                 codepipeline_actions.CodeBuildAction(
-                    action_name='DeployProcessingImages',
+                    action_name="DeployProcessingImages",
                     input=self.source_artifact,
                     project=processing_image_project,
                     outputs=[codepipeline.Artifact()],
                 ),
                 codepipeline_actions.CodeBuildAction(
-                    action_name='DeployTrainingImages',
+                    action_name="DeployTrainingImages",
                     input=self.source_artifact,
                     project=training_images_project,
                     outputs=[codepipeline.Artifact()],
@@ -414,22 +398,22 @@ class PipelineStack(Stack):
 
         CfnOutput(
             self,
-            'RepoNameOutput',
-            export_name=f'{pipeline.sqlPipelineUri}-RepositoryName',
+            "RepoNameOutput",
+            export_name=f"{pipeline.sqlPipelineUri}-RepositoryName",
             value=pipeline.repo,
         )
         CfnOutput(
             self,
-            'PipelineNameOutput',
-            export_name=f'{pipeline.sqlPipelineUri}-PipelineName',
+            "PipelineNameOutput",
+            export_name=f"{pipeline.sqlPipelineUri}-PipelineName",
             value=codepipeline_pipeline.pipeline_name,
         )
 
         for stage in stages:
             CfnOutput(
                 self,
-                f'Pipeline{stage}Instance',
-                export_name=f'{pipeline.sqlPipelineUri}-Pipeline{stage}Instance',
+                f"Pipeline{stage}Instance",
+                export_name=f"{pipeline.sqlPipelineUri}-Pipeline{stage}Instance",
                 value=pipeline.name,
             )
 
@@ -453,8 +437,8 @@ class PipelineStack(Stack):
         role = iam.ArnPrincipal(env_group.environmentIAMRoleArn)
         param = aws_ssm.StringParameter(
             self,
-            f'bucketname{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/bucket_name',
+            f"bucketname{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/bucket_name",
             string_value=bucket.bucket_name,
         )
 
@@ -463,8 +447,8 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'accountid{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/accountid',
+            f"accountid{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/accountid",
             string_value=environment.AwsAccountId,
         )
         param.grant_read(role)
@@ -472,17 +456,17 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'pipelinename{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/pipeline_name',
-            string_value=f'{pipeline.name}{stage}',
+            f"pipelinename{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/pipeline_name",
+            string_value=f"{pipeline.name}{stage}",
         )
         param.grant_read(role)
         param.grant_read(codebuild_role)
 
         param = aws_ssm.StringParameter(
             self,
-            f'pipelineiamrolearn{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/pipeline_iam_role_arn',
+            f"pipelineiamrolearn{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/pipeline_iam_role_arn",
             string_value=env_group.environmentIAMRoleArn,
         )
         param.grant_read(role)
@@ -490,8 +474,8 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'fulldevrole{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/fulldev_iam_role',
+            f"fulldevrole{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/fulldev_iam_role",
             string_value=env_group.environmentIAMRoleArn,
         )
         param.grant_read(role)
@@ -499,8 +483,8 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'adminrole{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/admin_iam_role',
+            f"adminrole{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/admin_iam_role",
             string_value=env_group.environmentIAMRoleArn,
         )
         param.grant_read(role)
@@ -508,8 +492,8 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'pipelineregion{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/pipeline_region',
+            f"pipelineregion{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/pipeline_region",
             string_value=environment.region,
         )
         param.grant_read(role)
@@ -517,8 +501,8 @@ class PipelineStack(Stack):
 
         param = aws_ssm.StringParameter(
             self,
-            f'pipelineecrrepository{stage}',
-            parameter_name=f'/{pipeline.name}/{stage}/ecr_repository_uri',
+            f"pipelineecrrepository{stage}",
+            parameter_name=f"/{pipeline.name}/{stage}/ecr_repository_uri",
             string_value=ecr_repository.repository_uri,
         )
         param.grant_read(role)
@@ -527,17 +511,17 @@ class PipelineStack(Stack):
     @staticmethod
     def zip_directory(path):
         try:
-            shutil.make_archive('code', 'zip', path)
-            shutil.move('code.zip', f'{path}/code.zip')
+            shutil.make_archive("code", "zip", path)
+            shutil.move("code.zip", f"{path}/code.zip")
         except Exception as e:
-            logger.error(f'Failed to zip repository due to: {e}')
+            logger.error(f"Failed to zip repository due to: {e}")
 
     @staticmethod
     def cleanup_zip_directory(path):
-        if os.path.isfile(f'{path}/code.zip'):
-            os.remove(f'{path}/code.zip')
+        if os.path.isfile(f"{path}/code.zip"):
+            os.remove(f"{path}/code.zip")
         else:
-            logger.info('Info: %s Zip not found' % f'{path}/code.zip')
+            logger.info("Info: %s Zip not found" % f"{path}/code.zip")
 
     @staticmethod
     def write_run_test_buildspec(path, output_file):
@@ -581,7 +565,7 @@ class PipelineStack(Stack):
             artifacts:
               files: "**/*"
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f"{path}/{output_file}", "w") as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
@@ -622,7 +606,7 @@ class PipelineStack(Stack):
               base-directory: cdk.out
               files: "**/*"
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f"{path}/{output_file}", "w") as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
@@ -640,7 +624,7 @@ class PipelineStack(Stack):
             commands:
               - aws --version
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f"{path}/{output_file}", "w") as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
@@ -659,7 +643,7 @@ class PipelineStack(Stack):
             - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             - if [ -d "smjobs" ]; then docker push $ECR_REPOSITORY; fi
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f"{path}/{output_file}", "w") as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
@@ -677,36 +661,26 @@ class PipelineStack(Stack):
               - if [ -d \"smjobs\" ]; then pip install -r requirements.txt; fi
               - if [ -d \"smjobs\" ]; then pip install -r dev-requirements.txt; fi
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f"{path}/{output_file}", "w") as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
     def buildspec_of_stage(stage):
-        return f'deploy_{stage}_stage_buildspec.yaml'
+        return f"deploy_{stage}_stage_buildspec.yaml"
 
     @staticmethod
     def run_test_buildspec_of_stage(stage):
-        return f'run_test_buildspec_{stage}.yaml'
+        return f"run_test_buildspec_{stage}.yaml"
 
     @staticmethod
     def write_buildspec_files(path, stages):
-        PipelineStack.write_deploy_training_image_buildspec(
-            path, 'build_sagemaker_jobs_buildspec.yaml'
-        )
-        PipelineStack.write_deploy_processing_image_buildspec(
-            path, 'processing_image_buildspec.yaml'
-        )
-        PipelineStack.write_deploy_training_image_buildspec(
-            path, 'training_image_buildspec.yaml'
-        )
+        PipelineStack.write_deploy_training_image_buildspec(path, "build_sagemaker_jobs_buildspec.yaml")
+        PipelineStack.write_deploy_processing_image_buildspec(path, "processing_image_buildspec.yaml")
+        PipelineStack.write_deploy_training_image_buildspec(path, "training_image_buildspec.yaml")
         for stage in stages:
-            PipelineStack.write_deploy_stage_buildspec(
-                path, PipelineStack.buildspec_of_stage(stage), stage
-            )
+            PipelineStack.write_deploy_stage_buildspec(path, PipelineStack.buildspec_of_stage(stage), stage)
 
-            PipelineStack.write_run_test_buildspec(
-                path, PipelineStack.run_test_buildspec_of_stage(stage)
-            )
+            PipelineStack.write_run_test_buildspec(path, PipelineStack.run_test_buildspec_of_stage(stage))
 
     @staticmethod
     def make_environment_variables(
@@ -721,37 +695,23 @@ class PipelineStack(Stack):
         stage,
     ):
 
-        pipeline_name = (
-            pipeline.name if stage.lower() == 'prod' else (pipeline.name + '-' + stage)
-        )
+        pipeline_name = pipeline.name if stage.lower() == "prod" else (pipeline.name + "-" + stage)
         env_vars = {
-            'AWSACCOUNTID': codebuild.BuildEnvironmentVariable(value=account_id),
-            'AWSREGION': codebuild.BuildEnvironmentVariable(value=region),
-            'ORIGIN_PIPELINE_NAME': codebuild.BuildEnvironmentVariable(
-                value=pipeline.name
+            "AWSACCOUNTID": codebuild.BuildEnvironmentVariable(value=account_id),
+            "AWSREGION": codebuild.BuildEnvironmentVariable(value=region),
+            "ORIGIN_PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
+            "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline_name),
+            "BUCKET_NAME": codebuild.BuildEnvironmentVariable(value=bucket_name),
+            "ENVROLEARN": codebuild.BuildEnvironmentVariable(value=environment_role.role_arn),
+            "BATCH_INSTANCE_ROLE": codebuild.BuildEnvironmentVariable(value=f"ecsInstanceRole-{environment_uri}"),
+            "EC2_SPOT_FLEET_ROLE": codebuild.BuildEnvironmentVariable(
+                value=f"AmazonEC2SpotFleetRole-{environment_uri}"
             ),
-            'PIPELINE_NAME': codebuild.BuildEnvironmentVariable(value=pipeline_name),
-            'BUCKET_NAME': codebuild.BuildEnvironmentVariable(value=bucket_name),
-            'ENVROLEARN': codebuild.BuildEnvironmentVariable(
-                value=environment_role.role_arn
-            ),
-            'BATCH_INSTANCE_ROLE': codebuild.BuildEnvironmentVariable(
-                value=f'ecsInstanceRole-{environment_uri}'
-            ),
-            'EC2_SPOT_FLEET_ROLE': codebuild.BuildEnvironmentVariable(
-                value=f'AmazonEC2SpotFleetRole-{environment_uri}'
-            ),
-            'ECR_REPOSITORY': codebuild.BuildEnvironmentVariable(value=repository_uri),
-            'ENVIRONMENT_URI': codebuild.BuildEnvironmentVariable(
-                value=environment_uri
-            ),
-            'PIPELINE_URI': codebuild.BuildEnvironmentVariable(
-                value=pipeline.sqlPipelineUri
-            ),
-            'SAML_GROUP': codebuild.BuildEnvironmentVariable(
-                value=pipeline.SamlGroupName or ''
-            ),
-            'STAGE': codebuild.BuildEnvironmentVariable(value=stage),
+            "ECR_REPOSITORY": codebuild.BuildEnvironmentVariable(value=repository_uri),
+            "ENVIRONMENT_URI": codebuild.BuildEnvironmentVariable(value=environment_uri),
+            "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.sqlPipelineUri),
+            "SAML_GROUP": codebuild.BuildEnvironmentVariable(value=pipeline.SamlGroupName or ""),
+            "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
         }
 
         return env_vars
@@ -772,7 +732,7 @@ class PipelineStack(Stack):
     ):
         return codebuild.PipelineProject(
             scope=self,
-            id=f'{pipeline.name}-{id_element}',
+            id=f"{pipeline.name}-{id_element}",
             environment=codebuild.BuildEnvironment(
                 privileged=True,
                 build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,

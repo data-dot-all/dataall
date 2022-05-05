@@ -41,15 +41,13 @@ def test_resolve_query_file():
 
     qry = re.sub(r"\n\s+", "", q).lower()
 
-    assert (
-        qry
-        == "select passengerid,pclass,sex,age,sibsp,parch,ticket,fare,cabin,embarked from titanic_train_raw"
-    )
+    assert qry == "select passengerid,pclass,sex,age,sibsp,parch,ticket,fare,cabin,embarked from titanic_train_raw"
+
 
 def test_run_query_handler(spark_session):
-    pax =  [ ("1", 10, "A"), ("2", 20, "B") ]
-    columns = ["passenger_id","age", "cabin"]
-    df= spark_session.createDataFrame(data=pax, schema = columns)
+    pax = [("1", 10, "A"), ("2", 20, "B")]
+    columns = ["passenger_id", "age", "cabin"]
+    df = spark_session.createDataFrame(data=pax, schema=columns)
     df.createOrReplaceTempView("titanic_raw")
 
     query_handler = query.Query(type="query", name="my_query", config={"sql": "SELECT * FROM {{dataframe}}"})
@@ -66,14 +64,5 @@ def test_run_query_handler(spark_session):
     )
 
     context = Context()
-    query_handler.run_step(spark_session, config_reader, context = context)
+    query_handler.run_step(spark_session, config_reader, context=context)
     assert context.df("my_query")
-
-
-
-
-
-
-
-
-

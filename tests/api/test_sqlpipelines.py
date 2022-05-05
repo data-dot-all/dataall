@@ -1,23 +1,21 @@
 import pytest
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(org1, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def pipeline(client, tenant, group, env1):
     response = client.query(
         """
@@ -34,12 +32,12 @@ def pipeline(client, tenant, group, env1):
         }
         """,
         input={
-            'label': 'my pipeline',
-            'SamlGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env1.environmentUri,
+            "label": "my pipeline",
+            "SamlGroupName": group.name,
+            "tags": [group.name],
+            "environmentUri": env1.environmentUri,
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert response.data.createSqlPipeline.repo
@@ -64,13 +62,13 @@ def test_update_pipeline(client, tenant, group, pipeline):
         """,
         sqlPipelineUri=pipeline.sqlPipelineUri,
         input={
-            'label': 'changed pipeline',
-            'tags': [group.name],
+            "label": "changed pipeline",
+            "tags": [group.name],
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
-    assert response.data.updateSqlPipeline.label == 'changed pipeline'
+    assert response.data.updateSqlPipeline.label == "changed pipeline"
 
 
 def test_list_pipelines(client, env1, db, org1, user, group, pipeline):
@@ -96,7 +94,7 @@ def test_list_pipelines(client, env1, db, org1, user, group, pipeline):
         username=user.userName,
         groups=[group.name],
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 1
+    assert len(response.data.listSqlPipelines["nodes"]) == 1
 
 
 def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
@@ -112,18 +110,18 @@ def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
         }
         """,
         filter=None,
-        username='bob',
+        username="bob",
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 0
+    assert len(response.data.listSqlPipelines["nodes"]) == 0
 
 
 def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.process',
-        return_value=[{'response': 'return value'}],
+        "dataall.aws.handlers.service_handlers.Worker.process",
+        return_value=[{"response": "return value"}],
     )
     module_mocker.patch(
-        'dataall.api.Objects.SqlPipeline.resolvers._get_creds_from_aws',
+        "dataall.api.Objects.SqlPipeline.resolvers._get_creds_from_aws",
         return_value=True,
     )
     response = client.query(
@@ -156,7 +154,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
             browseSqlPipelineRepository(input:$input)
         }
         """,
-        input=dict(branch='master', sqlPipelineUri=pipeline.sqlPipelineUri),
+        input=dict(branch="master", sqlPipelineUri=pipeline.sqlPipelineUri),
         username=user.userName,
         groups=[group.name],
     )
@@ -164,9 +162,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
 
 
 def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pipeline):
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue', return_value=True
-    )
+    module_mocker.patch("dataall.aws.handlers.service_handlers.Worker.queue", return_value=True)
     response = client.query(
         """
         mutation deleteSqlPipeline($sqlPipelineUri:String!,$deleteFromAWS:Boolean){
@@ -194,4 +190,4 @@ def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pi
         username=user.userName,
         groups=[group.name],
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 0
+    assert len(response.data.listSqlPipelines["nodes"]) == 0

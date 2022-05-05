@@ -21,12 +21,13 @@ class ATestStack(core.Stack):
         self.accountid = "012345678912"
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
+
 def test_make_sns_task():
-   stack = ATestStack()
-   config = """
+    stack = ATestStack()
+    config = """
                name: sns_test_task
                description: "piblishing to an sns topic."
                type: sns_publish
@@ -34,10 +35,6 @@ def test_make_sns_task():
                  topic_name: MySNSTopicName #created in the AWS resources
                  message: "ALL FILES LOADED"
             """
-   job_config = yaml.safe_load(config)
-   task = sns_task.make_publish_to_sns_task(stack, job_config)
-   assert task
-
-
-
-
+    job_config = yaml.safe_load(config)
+    task = sns_task.make_publish_to_sns_task(stack, job_config)
+    assert task

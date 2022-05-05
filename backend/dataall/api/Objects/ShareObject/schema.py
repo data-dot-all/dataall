@@ -1,26 +1,26 @@
 from .resolvers import *
 
 ShareableObject = gql.Union(
-    name='ShareableObject',
-    types=[gql.Ref('DatasetTable'), gql.Ref('DatasetStorageLocation')],
+    name="ShareableObject",
+    types=[gql.Ref("DatasetTable"), gql.Ref("DatasetStorageLocation")],
     resolver=union_resolver,
 )
 
 
 ShareItem = gql.ObjectType(
-    name='ShareItem',
+    name="ShareItem",
     fields=[
-        gql.Field(name='shareUri', type=gql.String),
-        gql.Field(name='shareItemUri', type=gql.ID),
-        gql.Field('itemUri', gql.String),
-        gql.Field(name='status', type=gql.Ref('ShareObjectStatus')),
-        gql.Field(name='action', type=gql.String),
-        gql.Field('itemType', ShareableType.toGraphQLEnum()),
-        gql.Field('itemName', gql.String),
-        gql.Field('description', gql.String),
+        gql.Field(name="shareUri", type=gql.String),
+        gql.Field(name="shareItemUri", type=gql.ID),
+        gql.Field("itemUri", gql.String),
+        gql.Field(name="status", type=gql.Ref("ShareObjectStatus")),
+        gql.Field(name="action", type=gql.String),
+        gql.Field("itemType", ShareableType.toGraphQLEnum()),
+        gql.Field("itemName", gql.String),
+        gql.Field("description", gql.String),
         gql.Field(
-            name='sharedObject',
-            type=gql.Ref('ShareableObject'),
+            name="sharedObject",
+            type=gql.Ref("ShareableObject"),
             resolver=resolve_shared_item,
         ),
         # gql.Field(name="permission", type=gql.String)
@@ -28,98 +28,96 @@ ShareItem = gql.ObjectType(
 )
 
 NotSharedItem = gql.ObjectType(
-    name='NotSharedItem',
+    name="NotSharedItem",
     fields=[
-        gql.Field('itemUri', gql.String),
-        gql.Field('shareItemUri', gql.String),
-        gql.Field('itemType', ShareableType.toGraphQLEnum()),
-        gql.Field('label', gql.String),
+        gql.Field("itemUri", gql.String),
+        gql.Field("shareItemUri", gql.String),
+        gql.Field("itemType", ShareableType.toGraphQLEnum()),
+        gql.Field("label", gql.String),
         # gql.Field("permission", DatasetRole.toGraphQLEnum()),
-        gql.Field('tags', gql.ArrayType(gql.String)),
-        gql.Field('created', gql.String),
+        gql.Field("tags", gql.ArrayType(gql.String)),
+        gql.Field("created", gql.String),
     ],
 )
 
 
 NotSharedItemsSearchResult = gql.ObjectType(
-    name='NotSharedItemsSearchResult',
+    name="NotSharedItemsSearchResult",
     fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(NotSharedItem)),
+        gql.Field(name="count", type=gql.Integer),
+        gql.Field(name="pageSize", type=gql.Integer),
+        gql.Field(name="nextPage", type=gql.Integer),
+        gql.Field(name="pages", type=gql.Integer),
+        gql.Field(name="page", type=gql.Integer),
+        gql.Field(name="previousPage", type=gql.Integer),
+        gql.Field(name="hasNext", type=gql.Boolean),
+        gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="nodes", type=gql.ArrayType(NotSharedItem)),
     ],
 )
 
 
 SharedItemSearchResult = gql.ObjectType(
-    name='SharedItemSearchResult',
+    name="SharedItemSearchResult",
     fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareItem'))),
+        gql.Field(name="count", type=gql.Integer),
+        gql.Field(name="pageSize", type=gql.Integer),
+        gql.Field(name="nextPage", type=gql.Integer),
+        gql.Field(name="pages", type=gql.Integer),
+        gql.Field(name="page", type=gql.Integer),
+        gql.Field(name="previousPage", type=gql.Integer),
+        gql.Field(name="hasNext", type=gql.Boolean),
+        gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="nodes", type=gql.ArrayType(gql.Ref("ShareItem"))),
     ],
 )
 
 ShareObjectStatistic = gql.ObjectType(
-    name='ShareObjectStatistic',
+    name="ShareObjectStatistic",
     fields=[
-        gql.Field(name='locations', type=gql.Integer),
-        gql.Field(name='tables', type=gql.Integer),
+        gql.Field(name="locations", type=gql.Integer),
+        gql.Field(name="tables", type=gql.Integer),
     ],
 )
 
 DatasetLink = gql.ObjectType(
-    name='DatasetLink',
+    name="DatasetLink",
     fields=[
-        gql.Field(name='datasetUri', type=gql.String),
-        gql.Field(name='datasetName', type=gql.String),
-        gql.Field(name='datasetOrganizationUri', type=gql.String),
-        gql.Field(name='businessOwnerEmail', type=gql.String),
-        gql.Field(name='datasetOrganizationName', type=gql.String),
-        gql.Field(name='exists', type=gql.Boolean),
+        gql.Field(name="datasetUri", type=gql.String),
+        gql.Field(name="datasetName", type=gql.String),
+        gql.Field(name="datasetOrganizationUri", type=gql.String),
+        gql.Field(name="businessOwnerEmail", type=gql.String),
+        gql.Field(name="datasetOrganizationName", type=gql.String),
+        gql.Field(name="exists", type=gql.Boolean),
     ],
 )
 ShareObject = gql.ObjectType(
-    name='ShareObject',
+    name="ShareObject",
     fields=[
-        gql.Field(name='shareUri', type=gql.ID),
-        gql.Field(name='status', type=gql.Ref('ShareObjectStatus')),
-        gql.Field(name='owner', type=gql.String),
-        gql.Field(name='created', type=gql.String),
-        gql.Field(name='deleted', type=gql.String),
-        gql.Field(name='updated', type=gql.String),
-        gql.Field(name='datasetUri', type=gql.String),
-        gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
-        gql.Field(name='statistics', type=gql.Ref('ShareObjectStatistic')),
+        gql.Field(name="shareUri", type=gql.ID),
+        gql.Field(name="status", type=gql.Ref("ShareObjectStatus")),
+        gql.Field(name="owner", type=gql.String),
+        gql.Field(name="created", type=gql.String),
+        gql.Field(name="deleted", type=gql.String),
+        gql.Field(name="updated", type=gql.String),
+        gql.Field(name="datasetUri", type=gql.String),
+        gql.Field(name="dataset", type=DatasetLink, resolver=resolve_dataset),
+        gql.Field(name="statistics", type=gql.Ref("ShareObjectStatistic")),
+        gql.Field(name="principal", resolver=resolve_principal, type=gql.Ref("Principal")),
         gql.Field(
-            name='principal', resolver=resolve_principal, type=gql.Ref('Principal')
-        ),
-        gql.Field(
-            name='environment',
+            name="environment",
             resolver=resolve_environment,
-            type=gql.Ref('Environment'),
+            type=gql.Ref("Environment"),
         ),
         gql.Field(
-            'items',
-            args=[gql.Argument(name='filter', type=gql.Ref('ShareableObjectFilter'))],
-            type=gql.Ref('SharedItemSearchResult'),
+            "items",
+            args=[gql.Argument(name="filter", type=gql.Ref("ShareableObjectFilter"))],
+            type=gql.Ref("SharedItemSearchResult"),
             resolver=list_shareable_objects,
         ),
         gql.Field(
-            name='userRoleForShareObject',
-            type=gql.Ref('ShareObjectPermission'),
+            name="userRoleForShareObject",
+            type=gql.Ref("ShareObjectPermission"),
             resolver=resolve_user_role,
         ),
     ],
@@ -127,44 +125,44 @@ ShareObject = gql.ObjectType(
 
 
 ShareSearchResult = gql.ObjectType(
-    name='ShareSearchResult',
+    name="ShareSearchResult",
     fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareObject'))),
+        gql.Field(name="count", type=gql.Integer),
+        gql.Field(name="pageSize", type=gql.Integer),
+        gql.Field(name="nextPage", type=gql.Integer),
+        gql.Field(name="pages", type=gql.Integer),
+        gql.Field(name="page", type=gql.Integer),
+        gql.Field(name="previousPage", type=gql.Integer),
+        gql.Field(name="hasNext", type=gql.Boolean),
+        gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="nodes", type=gql.ArrayType(gql.Ref("ShareObject"))),
     ],
 )
 
 
 ShareObjectHistory = gql.ObjectType(
-    name='ShareObjectHistory',
+    name="ShareObjectHistory",
     fields=[
-        gql.Field(name='historyUri', type=gql.ID),
-        gql.Field(name='label', type=gql.String),
-        gql.Field(name='owner', type=gql.String),
-        gql.Field(name='created', type=gql.String),
-        gql.Field(name='description', type=gql.String),
-        gql.Field(name='action', type=gql.String),
+        gql.Field(name="historyUri", type=gql.ID),
+        gql.Field(name="label", type=gql.String),
+        gql.Field(name="owner", type=gql.String),
+        gql.Field(name="created", type=gql.String),
+        gql.Field(name="description", type=gql.String),
+        gql.Field(name="action", type=gql.String),
     ],
 )
 
 SearchShareObjectHistory = gql.ObjectType(
-    name='SearchShareObjectHistory',
+    name="SearchShareObjectHistory",
     fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareObjectHistory'))),
+        gql.Field(name="count", type=gql.Integer),
+        gql.Field(name="pageSize", type=gql.Integer),
+        gql.Field(name="nextPage", type=gql.Integer),
+        gql.Field(name="pages", type=gql.Integer),
+        gql.Field(name="page", type=gql.Integer),
+        gql.Field(name="previousPage", type=gql.Integer),
+        gql.Field(name="hasNext", type=gql.Boolean),
+        gql.Field(name="hasPrevious", type=gql.Boolean),
+        gql.Field(name="nodes", type=gql.ArrayType(gql.Ref("ShareObjectHistory"))),
     ],
 )

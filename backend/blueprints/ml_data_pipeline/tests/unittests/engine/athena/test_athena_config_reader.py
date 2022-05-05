@@ -18,7 +18,7 @@ def test_athena_config_reader_steps():
     for step in config_reader.steps:
         steps.append(step["name"])
 
-    assert steps == ["Dim_color_01","Dim_color_02","Dim_color_03"]
+    assert steps == ["Dim_color_01", "Dim_color_02", "Dim_color_03"]
 
 
 def test_athena_config_reader_err():
@@ -40,4 +40,3 @@ def test_athena_config_reader_err():
         print(e)
 
     assert not read_success
-

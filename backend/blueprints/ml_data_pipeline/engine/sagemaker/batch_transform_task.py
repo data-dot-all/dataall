@@ -1,6 +1,5 @@
 from aws_cdk import aws_stepfunctions as stepfunctions
-from engine.sagemaker.mappers.sm_batch_transform_mapper import \
-    SageMakerBatchTransformJobPropsMapper
+from engine.sagemaker.mappers.sm_batch_transform_mapper import SageMakerBatchTransformJobPropsMapper
 
 
 def make_sagemaker_batch_transform_task(stack, job):
@@ -30,6 +29,4 @@ def make_sagemaker_batch_transform_task(stack, job):
             }
         ]
 
-    return stepfunctions.CustomState(
-        stack, f'SageMaker Batch: {job["name"]}', state_json=definition
-    )
+    return stepfunctions.CustomState(stack, f'SageMaker Batch: {job["name"]}', state_json=definition)

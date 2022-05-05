@@ -7,7 +7,7 @@ def process_data(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example read data from S3 into a dataframe
     # df = pd.read_csv(S3_PREFIX)
 

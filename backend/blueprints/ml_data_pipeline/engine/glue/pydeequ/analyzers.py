@@ -146,9 +146,7 @@ class CountDistinct(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.CountDistinct(
-            jc.iterable_to_scala_seq(self._jvm, self.column)
-        )
+        return self.jvmdeequAnalyzers.CountDistinct(jc.iterable_to_scala_seq(self._jvm, self.column))
 
 
 class DataType(BaseAnalyzer):
@@ -200,9 +198,7 @@ class Entropy(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Entropy(
-            self.column, getattr(self.jvmdeequAnalyzers.Entropy, "apply$default$2")()
-        )
+        return self.jvmdeequAnalyzers.Entropy(self.column, getattr(self.jvmdeequAnalyzers.Entropy, "apply$default$2")())
 
 
 class Histogram(BaseAnalyzer):
@@ -236,9 +232,7 @@ class Maximum(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Maximum(
-            self.column, getattr(self.jvmdeequAnalyzers.Maximum, "apply$default$2")()
-        )
+        return self.jvmdeequAnalyzers.Maximum(self.column, getattr(self.jvmdeequAnalyzers.Maximum, "apply$default$2")())
 
 
 class MaxLength(BaseAnalyzer):
@@ -264,9 +258,7 @@ class Mean(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Mean(
-            self.column, getattr(self.jvmdeequAnalyzers.Mean, "apply$default$2")()
-        )
+        return self.jvmdeequAnalyzers.Mean(self.column, getattr(self.jvmdeequAnalyzers.Mean, "apply$default$2")())
 
 
 class Minimum(BaseAnalyzer):
@@ -279,9 +271,7 @@ class Minimum(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Minimum(
-            self.column, getattr(self.jvmdeequAnalyzers.Minimum, "apply$default$2")()
-        )
+        return self.jvmdeequAnalyzers.Minimum(self.column, getattr(self.jvmdeequAnalyzers.Minimum, "apply$default$2")())
 
 
 class MinLength(BaseAnalyzer):
@@ -331,9 +321,7 @@ class Size(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Size(
-            getattr(self.jvmdeequAnalyzers.Size, "apply$default$1")()
-        )
+        return self.jvmdeequAnalyzers.Size(getattr(self.jvmdeequAnalyzers.Size, "apply$default$1")())
 
 
 class StandardDeviation(BaseAnalyzer):
@@ -360,9 +348,7 @@ class Sum(BaseAnalyzer):
 
     @property
     def jvmAnalyzer(self):
-        return self.jvmdeequAnalyzers.Sum(
-            self.column, getattr(self.jvmdeequAnalyzers.Sum, "apply$default$2")()
-        )
+        return self.jvmdeequAnalyzers.Sum(self.column, getattr(self.jvmdeequAnalyzers.Sum, "apply$default$2")())
 
 
 class Uniqueness(BaseAnalyzer):

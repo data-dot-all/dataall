@@ -4,12 +4,10 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
+from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
 from .. import exceptions, models, paginate, permissions
 from ..models.Enums import ConfidentialityClassification, Language
-from . import (Environment, KeyValueTag, Organization, ResourcePolicy, Stack,
-               Vote, has_resource_perm, has_tenant_perm)
+from . import Environment, KeyValueTag, Organization, ResourcePolicy, Stack, Vote, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 
@@ -27,58 +25,50 @@ class Dataset:
         check_perm: bool = False,
     ) -> models.Dataset:
         if not uri:
-            raise exceptions.RequiredParameter('environmentUri')
+            raise exceptions.RequiredParameter("environmentUri")
         if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('SamlAdminGroupName'):
-            raise exceptions.RequiredParameter('group')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
-        if len(data['label']) > 52:
-            raise exceptions.InvalidInput(
-                'Dataset name', data['label'], 'less than 52 characters'
-            )
+            raise exceptions.RequiredParameter("data")
+        if not data.get("SamlAdminGroupName"):
+            raise exceptions.RequiredParameter("group")
+        if not data.get("label"):
+            raise exceptions.RequiredParameter("label")
+        if len(data["label"]) > 52:
+            raise exceptions.InvalidInput("Dataset name", data["label"], "less than 52 characters")
 
         Environment.check_group_environment_permission(
             session=session,
             username=username,
             groups=groups,
             uri=uri,
-            group=data['SamlAdminGroupName'],
+            group=data["SamlAdminGroupName"],
             permission_name=permissions.CREATE_DATASET,
         )
 
         environment = Environment.get_environment_by_uri(session, uri)
 
-        organization = Organization.get_organization_by_uri(
-            session, environment.organizationUri
-        )
+        organization = Organization.get_organization_by_uri(session, environment.organizationUri)
 
         dataset = models.Dataset(
-            label=data.get('label'),
+            label=data.get("label"),
             owner=username,
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
+            description=data.get("description", "No description provided"),
+            tags=data.get("tags", []),
             AwsAccountId=environment.AwsAccountId,
-            SamlAdminGroupName=data['SamlAdminGroupName'],
+            SamlAdminGroupName=data["SamlAdminGroupName"],
             region=environment.region,
-            S3BucketName='undefined',
-            GlueDatabaseName='undefined',
-            IAMDatasetAdminRoleArn='undefined',
-            IAMDatasetAdminUserArn='undefined',
-            KmsAlias='undefined',
+            S3BucketName="undefined",
+            GlueDatabaseName="undefined",
+            IAMDatasetAdminRoleArn="undefined",
+            IAMDatasetAdminUserArn="undefined",
+            KmsAlias="undefined",
             environmentUri=environment.environmentUri,
             organizationUri=environment.organizationUri,
-            language=data.get('language', Language.English.value),
-            confidentiality=data.get(
-                'confidentiality', ConfidentialityClassification.Unclassified.value
-            ),
-            topics=data.get('topics', []),
-            businessOwnerEmail=data.get('businessOwnerEmail'),
-            businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
-            stewards=data.get('stewards')
-            if data.get('stewards')
-            else data['SamlAdminGroupName'],
+            language=data.get("language", Language.English.value),
+            confidentiality=data.get("confidentiality", ConfidentialityClassification.Unclassified.value),
+            topics=data.get("topics", []),
+            businessOwnerEmail=data.get("businessOwnerEmail"),
+            businessOwnerDelegationEmails=data.get("businessOwnerDelegationEmails", []),
+            stewards=data.get("stewards") if data.get("stewards") else data["SamlAdminGroupName"],
         )
         session.add(dataset)
         session.commit()
@@ -86,18 +76,18 @@ class Dataset:
         Dataset._set_dataset_aws_resources(dataset, data, environment)
 
         activity = models.Activity(
-            action='dataset:create',
-            label='dataset:create',
+            action="dataset:create",
+            label="dataset:create",
             owner=username,
-            summary=f'{username} created dataset {dataset.name} in {environment.name} on organization {organization.name}',
+            summary=f"{username} created dataset {dataset.name} in {environment.name} on organization {organization.name}",
             targetUri=dataset.datasetUri,
-            targetType='dataset',
+            targetType="dataset",
         )
         session.add(activity)
 
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=data['SamlAdminGroupName'],
+            group=data["SamlAdminGroupName"],
             permissions=permissions.DATASET_ALL,
             resource_uri=dataset.datasetUri,
             resource_type=models.Dataset.__name__,
@@ -129,7 +119,7 @@ class Dataset:
             pattern=NamingConventionPattern.S3,
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
-        dataset.S3BucketName = data.get('bucketName') or bucket_name
+        dataset.S3BucketName = data.get("bucketName") or bucket_name
 
         glue_db_name = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -137,10 +127,10 @@ class Dataset:
             pattern=NamingConventionPattern.GLUE,
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
-        dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
+        dataset.GlueDatabaseName = data.get("glueDatabaseName") or glue_db_name
 
         kms_alias = bucket_name
-        dataset.KmsAlias = data.get('KmsKeyId') or kms_alias
+        dataset.KmsAlias = data.get("KmsKeyId") or kms_alias
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -148,25 +138,21 @@ class Dataset:
             pattern=NamingConventionPattern.IAM,
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
-        iam_role_arn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}'
-        if data.get('adminRoleName'):
-            dataset.IAMDatasetAdminRoleArn = (
-                f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            )
-            dataset.IAMDatasetAdminUserArn = (
-                f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            )
+        iam_role_arn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}"
+        if data.get("adminRoleName"):
+            dataset.IAMDatasetAdminRoleArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
+            dataset.IAMDatasetAdminUserArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
         else:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
 
-        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-crawler'
-        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-profiler'
+        dataset.GlueCrawlerName = f"{dataset.S3BucketName}-crawler"
+        dataset.GlueProfilingJobName = f"{dataset.S3BucketName}-profiler"
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-trigger'
-        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-dataquality'
+        dataset.GlueProfilingTriggerName = f"{dataset.S3BucketName}-trigger"
+        dataset.GlueDataQualityJobName = f"{dataset.S3BucketName}-dataquality"
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-dqtrigger'
+        dataset.GlueDataQualityTriggerName = f"{dataset.S3BucketName}-dqtrigger"
         return dataset
 
     @staticmethod
@@ -176,12 +162,12 @@ class Dataset:
             environment_uri=dataset.environmentUri,
             target_uri=dataset.datasetUri,
             target_label=dataset.label,
-            target_type='dataset',
+            target_type="dataset",
             payload={
-                'bucket_name': dataset.S3BucketName,
-                'database_name': dataset.GlueDatabaseName,
-                'role_name': dataset.S3BucketName,
-                'user_name': dataset.S3BucketName,
+                "bucket_name": dataset.S3BucketName,
+                "database_name": dataset.GlueDatabaseName,
+                "role_name": dataset.S3BucketName,
+                "user_name": dataset.S3BucketName,
             },
         )
 
@@ -201,7 +187,7 @@ class Dataset:
     def get_dataset_by_uri(session, dataset_uri) -> models.Dataset:
         dataset: Dataset = session.query(models.Dataset).get(dataset_uri)
         if not dataset:
-            raise exceptions.ObjectNotFound('Dataset', dataset_uri)
+            raise exceptions.ObjectNotFound("Dataset", dataset_uri)
         return dataset
 
     @staticmethod
@@ -219,99 +205,77 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObject.status == 'Approved',
+                        models.ShareObject.status == "Approved",
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObject.status == 'Approved',
+                        models.ShareObject.status == "Approved",
                     ),
                 )
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.get("term"):
             query = query.filter(
                 or_(
-                    models.Dataset.description.ilike(filter.get('term') + '%%'),
-                    models.Dataset.label.ilike(filter.get('term') + '%%'),
+                    models.Dataset.description.ilike(filter.get("term") + "%%"),
+                    models.Dataset.label.ilike(filter.get("term") + "%%"),
                 )
             )
         return query
 
     @staticmethod
-    def paginated_user_datasets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_datasets(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=Dataset.query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page=data.get("page", 1),
+            page_size=data.get("pageSize", 10),
         ).to_dict()
 
     @staticmethod
-    def paginated_dataset_locations(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        query = session.query(models.DatasetStorageLocation).filter(
-            models.DatasetStorageLocation.datasetUri == uri
-        )
-        if data and data.get('term'):
+    def paginated_dataset_locations(session, username, groups, uri, data=None, check_perm=None) -> dict:
+        query = session.query(models.DatasetStorageLocation).filter(models.DatasetStorageLocation.datasetUri == uri)
+        if data and data.get("term"):
             query = query.filter(
                 or_(
                     *[
-                        models.DatasetStorageLocation.name.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
-                        models.DatasetStorageLocation.S3Prefix.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
+                        models.DatasetStorageLocation.name.ilike("%" + data.get("term") + "%"),
+                        models.DatasetStorageLocation.S3Prefix.ilike("%" + data.get("term") + "%"),
                     ]
                 )
             )
-        return paginate(
-            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
+        return paginate(query=query, page_size=data.get("pageSize", 10), page=data.get("page", 1)).to_dict()
 
     @staticmethod
-    def paginated_dataset_tables(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_dataset_tables(session, username, groups, uri, data=None, check_perm=None) -> dict:
         query = (
             session.query(models.DatasetTable)
             .filter(models.DatasetTable.datasetUri == uri)
             .order_by(models.DatasetTable.created.desc())
         )
-        if data and data.get('term'):
+        if data and data.get("term"):
             query = query.filter(
                 or_(
                     *[
-                        models.DatasetTable.name.ilike('%' + data.get('term') + '%'),
-                        models.DatasetTable.GlueTableName.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
+                        models.DatasetTable.name.ilike("%" + data.get("term") + "%"),
+                        models.DatasetTable.GlueTableName.ilike("%" + data.get("term") + "%"),
                     ]
                 )
             )
-        return paginate(
-            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
+        return paginate(query=query, page_size=data.get("pageSize", 10), page=data.get("page", 1)).to_dict()
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
     @has_resource_perm(permissions.UPDATE_DATASET)
-    def update_dataset(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Dataset:
+    def update_dataset(session, username, groups, uri, data=None, check_perm=None) -> models.Dataset:
         dataset: models.Dataset = Dataset.get_dataset_by_uri(session, uri)
         if data and isinstance(data, dict):
             for k in data.keys():
-                if k != 'stewards':
+                if k != "stewards":
                     setattr(dataset, k, data.get(k))
-            if data.get('stewards') and data.get('stewards') != dataset.stewards:
-                if data.get('stewards') != dataset.SamlAdminGroupName:
-                    Dataset.transfer_stewardship_to_new_stewards(
-                        session, dataset, data['stewards']
-                    )
-                    dataset.stewards = data['stewards']
+            if data.get("stewards") and data.get("stewards") != dataset.stewards:
+                if data.get("stewards") != dataset.SamlAdminGroupName:
+                    Dataset.transfer_stewardship_to_new_stewards(session, dataset, data["stewards"])
+                    dataset.stewards = data["stewards"]
                 else:
                     Dataset.transfer_stewardship_to_owners(session, dataset)
                     dataset.stewards = dataset.SamlAdminGroupName
@@ -325,12 +289,12 @@ class Dataset:
             )
             Dataset.update_dataset_glossary_terms(session, username, uri, data)
             activity = models.Activity(
-                action='dataset:update',
-                label='dataset:update',
+                action="dataset:update",
+                label="dataset:update",
                 owner=username,
-                summary=f'{username} updated dataset {dataset.name}',
+                summary=f"{username} updated dataset {dataset.name}",
                 targetUri=dataset.datasetUri,
-                targetType='dataset',
+                targetType="dataset",
             )
             session.add(activity)
             session.commit()
@@ -339,9 +303,7 @@ class Dataset:
     @staticmethod
     def transfer_stewardship_to_owners(session, dataset):
         dataset_shares = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.datasetUri == dataset.datasetUri)
-            .all()
+            session.query(models.ShareObject).filter(models.ShareObject.datasetUri == dataset.datasetUri).all()
         )
         if dataset_shares:
             for share in dataset_shares:
@@ -369,9 +331,7 @@ class Dataset:
             resource_type=models.Dataset.__name__,
         )
         dataset_shares = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.datasetUri == dataset.datasetUri)
-            .all()
+            session.query(models.ShareObject).filter(models.ShareObject.datasetUri == dataset.datasetUri).all()
         )
         if dataset_shares:
             for share in dataset_shares:
@@ -396,11 +356,9 @@ class Dataset:
 
     @staticmethod
     def update_dataset_glossary_terms(session, username, uri, data):
-        if data.get('terms'):
-            input_terms = data.get('terms', [])
-            current_links = session.query(models.TermLink).filter(
-                models.TermLink.targetUri == uri
-            )
+        if data.get("terms"):
+            input_terms = data.get("terms", [])
+            current_links = session.query(models.TermLink).filter(models.TermLink.targetUri == uri)
             for current_link in current_links:
                 if current_link not in input_terms:
                     session.delete(current_link)
@@ -419,7 +377,7 @@ class Dataset:
                         new_link = models.TermLink(
                             targetUri=uri,
                             nodeUri=nodeUri,
-                            targetType='Dataset',
+                            targetType="Dataset",
                             owner=username,
                             approvedByOwner=True,
                         )
@@ -445,11 +403,7 @@ class Dataset:
     @staticmethod
     def get_dataset_tables(session, dataset_uri):
         """return the dataset tables"""
-        return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .all()
-        )
+        return session.query(models.DatasetTable).filter(models.DatasetTable.datasetUri == dataset_uri).all()
 
     @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
@@ -461,13 +415,9 @@ class Dataset:
         )
 
     @staticmethod
-    def paginated_dataset_shares(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> [models.ShareObject]:
+    def paginated_dataset_shares(session, username, groups, uri, data=None, check_perm=None) -> [models.ShareObject]:
         query = Dataset.query_dataset_shares(session, uri)
-        return paginate(
-            query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
-        ).to_dict()
+        return paginate(query=query, page=data.get("page", 1), page_size=data.get("pageSize", 5)).to_dict()
 
     @staticmethod
     def list_dataset_shares(session, dataset_uri) -> [models.ShareObject]:
@@ -481,15 +431,13 @@ class Dataset:
             and_(
                 models.ShareObject.datasetUri == dataset_uri,
                 models.ShareObject.deleted.is_(None),
-                models.ShareObject.status == 'Approved',
+                models.ShareObject.status == "Approved",
             )
         )
         return query.all()
 
     @staticmethod
-    def list_dataset_redshift_clusters(
-        session, dataset_uri
-    ) -> [models.RedshiftClusterDataset]:
+    def list_dataset_redshift_clusters(session, dataset_uri) -> [models.RedshiftClusterDataset]:
         """return the dataset clusters"""
         return (
             session.query(models.RedshiftClusterDataset)
@@ -498,24 +446,18 @@ class Dataset:
         )
 
     @staticmethod
-    def delete_dataset(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
+    def delete_dataset(session, username, groups, uri, data=None, check_perm=None) -> bool:
         dataset = Dataset.get_dataset_by_uri(session, uri)
         Dataset._delete_dataset_not_approved_share_objects(session, uri)
         Dataset._delete_dataset_term_links(session, uri)
         Dataset._delete_dataset_tables(session, dataset.datasetUri)
         Dataset._delete_dataset_locations(session, dataset.datasetUri)
-        KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
-        Vote.delete_votes(session, dataset.datasetUri, 'dataset')
+        KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, "dataset")
+        Vote.delete_votes(session, dataset.datasetUri, "dataset")
         session.delete(dataset)
-        ResourcePolicy.delete_resource_policy(
-            session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
-        )
+        ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dataset.SamlAdminGroupName)
         if dataset.stewards:
-            ResourcePolicy.delete_resource_policy(
-                session=session, resource_uri=uri, group=dataset.stewards
-            )
+            ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
         return True
 
     @staticmethod
@@ -525,17 +467,13 @@ class Dataset:
             .filter(
                 and_(
                     models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.status != 'Approved',
+                    models.ShareObject.status != "Approved",
                 )
             )
             .all()
         )
         for share in share_objects:
-            (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.shareUri == share.shareUri)
-                .delete()
-            )
+            (session.query(models.ShareObjectItem).filter(models.ShareObjectItem.shareUri == share.shareUri).delete())
             session.delete(share)
 
     @staticmethod
@@ -547,7 +485,7 @@ class Dataset:
                 .filter(
                     and_(
                         models.TermLink.targetUri == tableUri,
-                        models.TermLink.targetType == 'DatasetTable',
+                        models.TermLink.targetType == "DatasetTable",
                     )
                 )
                 .all()
@@ -560,7 +498,7 @@ class Dataset:
             .filter(
                 and_(
                     models.TermLink.targetUri == uri,
-                    models.TermLink.targetType == 'Dataset',
+                    models.TermLink.targetType == "Dataset",
                 )
             )
             .all()
@@ -604,25 +542,15 @@ class Dataset:
 
     @staticmethod
     def list_all_active_datasets(session) -> [models.Dataset]:
-        return (
-            session.query(models.Dataset).filter(models.Dataset.deleted.is_(None)).all()
-        )
+        return session.query(models.Dataset).filter(models.Dataset.deleted.is_(None)).all()
 
     @staticmethod
     def get_dataset_by_bucket_name(session, bucket) -> [models.Dataset]:
-        return (
-            session.query(models.Dataset)
-            .filter(models.Dataset.S3BucketName == bucket)
-            .first()
-        )
+        return session.query(models.Dataset).filter(models.Dataset.S3BucketName == bucket).first()
 
     @staticmethod
     def count_dataset_tables(session, dataset_uri):
-        return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
+        return session.query(models.DatasetTable).filter(models.DatasetTable.datasetUri == dataset_uri).count()
 
     @staticmethod
     def count_dataset_locations(session, dataset_uri):

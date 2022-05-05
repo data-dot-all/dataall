@@ -12,11 +12,11 @@ class Thunk:
         return self.target.gql()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from ..gql import *
     from ..gql import Field
 
-    Foo = Field(name='foo', type=String)
+    Foo = Field(name="foo", type=String)
     t = Thunk(lambda: Foo)
     print(t.target.gql())
 

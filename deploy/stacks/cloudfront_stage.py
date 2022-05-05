@@ -10,8 +10,8 @@ class CloudfrontStage(Stage):
         self,
         scope,
         id: str,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         tooling_account_id=None,
         custom_domain=None,
         **kwargs,
@@ -20,23 +20,21 @@ class CloudfrontStage(Stage):
 
         cloudfront_stack = CloudfrontStack(
             self,
-            f'cloudfront-stack',
+            f"cloudfront-stack",
             envname=envname,
             resource_prefix=resource_prefix,
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
         )
 
-        Tags.of(cloudfront_stack).add('Application', f'{resource_prefix}-{envname}')
+        Tags.of(cloudfront_stack).add("Application", f"{resource_prefix}-{envname}")
 
         Aspects.of(cloudfront_stack).add(AwsSolutionsChecks(reports=True, verbose=True))
 
         NagSuppressions.add_stack_suppressions(
             cloudfront_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed["id"], reason=rule_suppressed["reason"])
                 for rule_suppressed in CLOUDFRONT_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

@@ -19,9 +19,7 @@ class Assertion:
     def evaluate_query(self, df):
         nb_rows = df.count()
         sign = self.props.get("sign", "gt")
-        return nb_rows, (
-            (nb_rows > 0 and sign == "gt") or (nb_rows == 0 and sign == "eq")
-        )
+        return nb_rows, ((nb_rows > 0 and sign == "gt") or (nb_rows == 0 and sign == "eq"))
 
     def run_step(self, spark, config, context, glueContext=None):
         self.logger.info("Inside Run Step")
@@ -37,16 +35,8 @@ class Assertion:
 
         nb_rows, assertion_break = self.evaluate_query(df)
         if assertion_break:
-            self.emit_metric(
-                StepMetric(
-                    name=f"{self.name}:elapsed", value=self.elapsed, unit="Milliseconds"
-                )
-            )
+            self.emit_metric(StepMetric(name=f"{self.name}:elapsed", value=self.elapsed, unit="Milliseconds"))
             raise Exception("Assertion failed {}".format(nb_rows))
         else:
             self.success()
-            self.emit_metric(
-                StepMetric(
-                    name=f"{self.name}:elapsed", value=self.elapsed, unit="Milliseconds"
-                )
-            )
+            self.emit_metric(StepMetric(name=f"{self.name}:elapsed", value=self.elapsed, unit="Milliseconds"))

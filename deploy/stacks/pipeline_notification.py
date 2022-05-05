@@ -13,8 +13,8 @@ class PipelineNotificationStack(pyNestedClass):
         self,
         scope,
         id,
-        git_branch='dev',
-        resource_prefix='dataall',
+        git_branch="dev",
+        resource_prefix="dataall",
         pipeline=None,
         **kwargs,
     ):
@@ -23,29 +23,27 @@ class PipelineNotificationStack(pyNestedClass):
 
         self.topic_key = kms.Key(
             self,
-            f'{resource_prefix}-{git_branch}-alarms-topic-key',
+            f"{resource_prefix}-{git_branch}-alarms-topic-key",
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{resource_prefix}-{git_branch}-alarms-topic-key',
+            alias=f"{resource_prefix}-{git_branch}-alarms-topic-key",
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
                             iam.AccountPrincipal(account_id=self.account),
                         ],
-                        actions=['kms:*'],
+                        actions=["kms:*"],
                     ),
                     iam.PolicyStatement(
-                        resources=['*'],
+                        resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(
-                                service='codestar-notifications.amazonaws.com'
-                            ),
+                            iam.ServicePrincipal(service="codestar-notifications.amazonaws.com"),
                         ],
-                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
                     ),
                 ],
             ),
@@ -53,8 +51,8 @@ class PipelineNotificationStack(pyNestedClass):
 
         self.notification_topic = sns.Topic(
             self,
-            'Topic',
-            topic_name=f'{resource_prefix}-{git_branch}-topic',
+            "Topic",
+            topic_name=f"{resource_prefix}-{git_branch}-topic",
             master_key=self.topic_key,
         )
 
@@ -62,29 +60,27 @@ class PipelineNotificationStack(pyNestedClass):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 principals=[
-                    iam.ServicePrincipal(
-                        service='codestar-notifications.amazonaws.com'
-                    ),
+                    iam.ServicePrincipal(service="codestar-notifications.amazonaws.com"),
                 ],
-                actions=['sns:Publish'],
-                resources=['*'],
-                conditions={'StringEquals': {'aws:SourceAccount': self.account}},
+                actions=["sns:Publish"],
+                resources=["*"],
+                conditions={"StringEquals": {"aws:SourceAccount": self.account}},
             )
         )
 
         self.notification_rule = notifications.NotificationRule(
             self,
-            'CodePipelineNotifications',
+            "CodePipelineNotifications",
             detail_type=DetailType.BASIC,
             events=[
-                'codepipeline-pipeline-action-execution-failed',
-                'codepipeline-pipeline-stage-execution-failed',
-                'codepipeline-pipeline-pipeline-execution-failed',
-                'codepipeline-pipeline-manual-approval-failed',
-                'codepipeline-pipeline-manual-approval-needed',
-                'codepipeline-pipeline-pipeline-execution-succeeded',
+                "codepipeline-pipeline-action-execution-failed",
+                "codepipeline-pipeline-stage-execution-failed",
+                "codepipeline-pipeline-pipeline-execution-failed",
+                "codepipeline-pipeline-manual-approval-failed",
+                "codepipeline-pipeline-manual-approval-needed",
+                "codepipeline-pipeline-pipeline-execution-succeeded",
             ],
-            notification_rule_name=f'{resource_prefix}-{git_branch}-pipeline-notifications',
+            notification_rule_name=f"{resource_prefix}-{git_branch}-pipeline-notifications",
             source=pipeline,
             targets=[self.notification_topic],
             enabled=True,

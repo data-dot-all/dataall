@@ -36,10 +36,10 @@ def modifier_factory(template):
             elif isinstance(self.of_type, Thunk):
                 return template(self.of_type.target.name)
             else:
-                raise Exception('Cant gql ')
+                raise Exception("Cant gql ")
 
     return Modifier
 
 
-ArrayType = modifier_factory(lambda name: f'[{name}]')
-NonNullableType = modifier_factory(lambda name: f'{name}!')
+ArrayType = modifier_factory(lambda name: f"[{name}]")
+NonNullableType = modifier_factory(lambda name: f"{name}!")

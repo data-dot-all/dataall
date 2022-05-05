@@ -12,7 +12,7 @@ def create_network(context: Context, source, input):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
+            uri=input["environmentUri"],
             data=input,
             check_perm=True,
         )

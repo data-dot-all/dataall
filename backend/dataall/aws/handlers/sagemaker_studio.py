@@ -9,7 +9,7 @@ class SagemakerStudio:
     @staticmethod
     def client(AwsAccountId, region):
         session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('sagemaker', region_name=region)
+        return session.client("sagemaker", region_name=region)
 
     @staticmethod
     def get_sagemaker_studio_domain(AwsAccountId, region):
@@ -20,20 +20,20 @@ class SagemakerStudio:
         client = SagemakerStudio.client(AwsAccountId, region)
         existing_domain = dict()
         try:
-            domain_id_paginator = client.get_paginator('list_domains')
+            domain_id_paginator = client.get_paginator("list_domains")
             domains = domain_id_paginator.paginate()
             for _domain in domains:
                 print(_domain)
-                for _domain in _domain.get('Domains'):
+                for _domain in _domain.get("Domains"):
                     # Get the domain name created by dataall
-                    if 'dataall' in _domain:
+                    if "dataall" in _domain:
                         return _domain
                     else:
                         existing_domain = _domain
             return existing_domain
         except ClientError as e:
             print(e)
-            return 'NotFound'
+            return "NotFound"
 
     @staticmethod
     def presigned_url(
@@ -48,9 +48,9 @@ class SagemakerStudio:
                 DomainId=sagemakerStudioDomainID,
                 UserProfileName=sagemakerStudioUserProfileNameSlugify,
             )
-            return response_signed_url['AuthorizedUrl']
+            return response_signed_url["AuthorizedUrl"]
         except ClientError:
-            return ''
+            return ""
 
     @staticmethod
     def get_user_profile_status(
@@ -65,10 +65,10 @@ class SagemakerStudio:
                 DomainId=sagemakerStudioDomainID,
                 UserProfileName=sagemakerStudioUserProfileNameSlugify,
             )
-            return response['Status']
+            return response["Status"]
         except ClientError as e:
             print(e)
-            return 'NotFound'
+            return "NotFound"
 
     @staticmethod
     def get_user_profile_applications(
@@ -80,24 +80,24 @@ class SagemakerStudio:
         client = SagemakerStudio.client(AwsAccountId, region)
         _running_apps = []
         try:
-            paginator_app = client.get_paginator('list_apps')
+            paginator_app = client.get_paginator("list_apps")
             response_paginator = paginator_app.paginate(
                 DomainIdEquals=sagemakerStudioDomainID,
                 UserProfileNameEquals=sagemakerStudioUserProfileNameSlugify,
             )
             for _response_app in response_paginator:
-                for _app in _response_app['Apps']:
-                    if _app.get('Status') not in ['Deleted']:
+                for _app in _response_app["Apps"]:
+                    if _app.get("Status") not in ["Deleted"]:
                         _running_apps.append(
                             dict(
-                                DomainId=_app.get('DomainId'),
-                                UserProfileName=_app.get('UserProfileName'),
-                                AppType=_app.get('AppType'),
-                                AppName=_app.get('AppName'),
-                                Status=_app.get('Status'),
+                                DomainId=_app.get("DomainId"),
+                                UserProfileName=_app.get("UserProfileName"),
+                                AppType=_app.get("AppType"),
+                                AppName=_app.get("AppName"),
+                                Status=_app.get("Status"),
                             )
                         )
             return _running_apps
         except ClientError as e:
             print(e)
-            return 'NotFound'
+            return "NotFound"

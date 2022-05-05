@@ -1,57 +1,55 @@
 from .resolvers import *
 
 createShareObject = gql.MutationField(
-    name='createShareObject',
+    name="createShareObject",
     args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='itemUri', type=gql.String),
-        gql.Argument(name='itemType', type=gql.String),
-        gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('NewShareObjectInput'))
-        ),
+        gql.Argument(name="datasetUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="itemUri", type=gql.String),
+        gql.Argument(name="itemType", type=gql.String),
+        gql.Argument(name="input", type=gql.NonNullableType(gql.Ref("NewShareObjectInput"))),
     ],
-    type=gql.Ref('ShareObject'),
+    type=gql.Ref("ShareObject"),
     resolver=create_share_object,
 )
 
 
 addSharedItem = gql.MutationField(
-    name='addSharedItem',
+    name="addSharedItem",
     args=[
-        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='input', type=gql.Ref('AddSharedItemInput')),
+        gql.Argument(name="shareUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="input", type=gql.Ref("AddSharedItemInput")),
     ],
-    type=gql.Ref('ShareItem'),
+    type=gql.Ref("ShareItem"),
     resolver=add_shared_item,
 )
 
 
 removeSharedItem = gql.MutationField(
-    name='removeSharedItem',
-    args=[gql.Argument(name='shareItemUri', type=gql.NonNullableType(gql.String))],
+    name="removeSharedItem",
+    args=[gql.Argument(name="shareItemUri", type=gql.NonNullableType(gql.String))],
     resolver=remove_shared_item,
     type=gql.Boolean,
 )
 
 
 submitShareObject = gql.MutationField(
-    name='submitShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('ShareObject'),
+    name="submitShareObject",
+    args=[gql.Argument(name="shareUri", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("ShareObject"),
     resolver=submit_share_object,
 )
 
 approveShareObject = gql.MutationField(
-    name='approveShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('ShareObject'),
+    name="approveShareObject",
+    args=[gql.Argument(name="shareUri", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("ShareObject"),
     resolver=approve_share_object,
 )
 
 
 rejectShareObject = gql.MutationField(
-    name='rejectShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('ShareObject'),
+    name="rejectShareObject",
+    args=[gql.Argument(name="shareUri", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("ShareObject"),
     resolver=reject_share_object,
 )

@@ -8,9 +8,7 @@ class JavaClassNotFoundException(Exception):
         self.java_class = java_class
 
     def __str__(self):
-        return "%s. Did you forget to add the jar to the class path?" % (
-            self.java_class
-        )
+        return "%s. Did you forget to add the jar to the class path?" % (self.java_class)
 
     def __repr__(self):
         return "%s: %s" % (self.__class__.__name__, self.java_class)

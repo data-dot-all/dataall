@@ -11,8 +11,8 @@ class CloudfrontStack(Stack):
         self,
         scope,
         id,
-        envname: str = 'dev',
-        resource_prefix='dataall',
+        envname: str = "dev",
+        resource_prefix="dataall",
         tooling_account_id=None,
         custom_domain=None,
         **kwargs,
@@ -21,7 +21,7 @@ class CloudfrontStack(Stack):
 
         auth_at_edge = AuthAtEdge(
             self,
-            f'AuthAtEdge',
+            f"AuthAtEdge",
             envname=envname,
             resource_prefix=resource_prefix,
             **kwargs,
@@ -29,7 +29,7 @@ class CloudfrontStack(Stack):
 
         distro = CloudfrontDistro(
             self,
-            f'CloudFront',
+            f"CloudFront",
             envname=envname,
             resource_prefix=resource_prefix,
             auth_at_edge=auth_at_edge,

@@ -4,8 +4,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from .. import exceptions, models, paginate, permissions
-from . import (Environment, Glossary, ResourcePolicy, Vote, has_resource_perm,
-               has_tenant_perm)
+from . import Environment, Glossary, ResourcePolicy, Vote, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 
@@ -24,63 +23,59 @@ class Dashboard:
     ) -> models.Dashboard:
         if not data:
             raise exceptions.RequiredParameter(data)
-        if not data.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('SamlGroupName'):
-            raise exceptions.RequiredParameter('group')
-        if not data.get('dashboardId'):
-            raise exceptions.RequiredParameter('dashboardId')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
+        if not data.get("environmentUri"):
+            raise exceptions.RequiredParameter("environmentUri")
+        if not data.get("SamlGroupName"):
+            raise exceptions.RequiredParameter("group")
+        if not data.get("dashboardId"):
+            raise exceptions.RequiredParameter("dashboardId")
+        if not data.get("label"):
+            raise exceptions.RequiredParameter("label")
 
         Environment.check_group_environment_permission(
             session=session,
             username=username,
             groups=groups,
             uri=uri,
-            group=data['SamlGroupName'],
+            group=data["SamlGroupName"],
             permission_name=permissions.CREATE_DASHBOARD,
         )
 
-        env: models.Environment = data.get(
-            'environment', Environment.get_environment_by_uri(session, uri)
-        )
+        env: models.Environment = data.get("environment", Environment.get_environment_by_uri(session, uri))
         dashboard: models.Dashboard = models.Dashboard(
-            label=data.get('label', 'untitled'),
-            environmentUri=data.get('environmentUri'),
+            label=data.get("label", "untitled"),
+            environmentUri=data.get("environmentUri"),
             organizationUri=env.organizationUri,
             region=env.region,
-            DashboardId=data.get('dashboardId'),
+            DashboardId=data.get("dashboardId"),
             AwsAccountId=env.AwsAccountId,
             owner=username,
-            namespace='test',
-            tags=data.get('tags', []),
-            SamlGroupName=data['SamlGroupName'],
+            namespace="test",
+            tags=data.get("tags", []),
+            SamlGroupName=data["SamlGroupName"],
         )
         session.add(dashboard)
         session.commit()
 
         activity = models.Activity(
-            action='DASHBOARD:CREATE',
-            label='DASHBOARD:CREATE',
+            action="DASHBOARD:CREATE",
+            label="DASHBOARD:CREATE",
             owner=username,
-            summary=f'{username} created dashboard {dashboard.label} in {env.label}',
+            summary=f"{username} created dashboard {dashboard.label} in {env.label}",
             targetUri=dashboard.dashboardUri,
-            targetType='dashboard',
+            targetType="dashboard",
         )
         session.add(activity)
 
-        Dashboard.set_dashboard_resource_policy(
-            session, env, dashboard, data['SamlGroupName']
-        )
+        Dashboard.set_dashboard_resource_policy(session, env, dashboard, data["SamlGroupName"])
 
-        if 'terms' in data.keys():
+        if "terms" in data.keys():
             Glossary.set_glossary_terms_links(
                 session,
                 username,
                 dashboard.dashboardUri,
-                'Dashboard',
-                data.get('terms', []),
+                "Dashboard",
+                data.get("terms", []),
             )
         return dashboard
 
@@ -119,7 +114,7 @@ class Dashboard:
     def get_dashboard_by_uri(session, uri) -> models.Dashboard:
         dashboard: models.Dashboard = session.query(models.Dashboard).get(uri)
         if not dashboard:
-            raise exceptions.ObjectNotFound('Dashboard', uri)
+            raise exceptions.ObjectNotFound("Dashboard", uri)
         return dashboard
 
     @staticmethod
@@ -136,29 +131,26 @@ class Dashboard:
                     models.Dashboard.SamlGroupName.in_(groups),
                     and_(
                         models.DashboardShare.SamlGroupName.in_(groups),
-                        models.DashboardShare.status
-                        == models.DashboardShareStatus.APPROVED.value,
+                        models.DashboardShare.status == models.DashboardShareStatus.APPROVED.value,
                     ),
                 )
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.get("term"):
             query = query.filter(
                 or_(
-                    models.Dashboard.description.ilike(filter.get('term') + '%%'),
-                    models.Dashboard.label.ilike(filter.get('term') + '%%'),
+                    models.Dashboard.description.ilike(filter.get("term") + "%%"),
+                    models.Dashboard.label.ilike(filter.get("term") + "%%"),
                 )
             )
         return query
 
     @staticmethod
-    def paginated_user_dashboards(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_dashboards(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=Dashboard.query_user_dashboards(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page=data.get("page", 1),
+            page_size=data.get("pageSize", 10),
         ).to_dict()
 
     @staticmethod
@@ -179,13 +171,11 @@ class Dashboard:
                 )
             )
         )
-        if filter and filter.get('term'):
+        if filter and filter.get("term"):
             query = query.filter(
                 or_(
-                    models.DashboardShare.SamlGroupName.ilike(
-                        filter.get('term') + '%%'
-                    ),
-                    models.Dashboard.label.ilike(filter.get('term') + '%%'),
+                    models.DashboardShare.SamlGroupName.ilike(filter.get("term") + "%%"),
+                    models.Dashboard.label.ilike(filter.get("term") + "%%"),
                 )
             )
         return query
@@ -193,15 +183,11 @@ class Dashboard:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DASHBOARDS)
     @has_resource_perm(permissions.SHARE_DASHBOARD)
-    def paginated_dashboard_shares(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_dashboard_shares(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
-            query=Dashboard.query_dashboard_shares(
-                session, username, groups, uri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            query=Dashboard.query_dashboard_shares(session, username, groups, uri, data),
+            page=data.get("page", 1),
+            page_size=data.get("pageSize", 10),
         ).to_dict()
 
     @staticmethod
@@ -217,42 +203,32 @@ class Dashboard:
     ) -> models.Dashboard:
 
         dashboard = data.get(
-            'dashboard',
-            Dashboard.get_dashboard_by_uri(session, data['dashboardUri']),
+            "dashboard",
+            Dashboard.get_dashboard_by_uri(session, data["dashboardUri"]),
         )
 
         for k in data.keys():
             setattr(dashboard, k, data.get(k))
 
-        if 'terms' in data.keys():
+        if "terms" in data.keys():
             Glossary.set_glossary_terms_links(
                 session,
                 username,
                 dashboard.dashboardUri,
-                'Dashboard',
-                data.get('terms', []),
+                "Dashboard",
+                data.get("terms", []),
             )
-        environment: models.Environment = Environment.get_environment_by_uri(
-            session, dashboard.environmentUri
-        )
-        Dashboard.set_dashboard_resource_policy(
-            session, environment, dashboard, dashboard.SamlGroupName
-        )
+        environment: models.Environment = Environment.get_environment_by_uri(session, dashboard.environmentUri)
+        Dashboard.set_dashboard_resource_policy(session, environment, dashboard, dashboard.SamlGroupName)
         return dashboard
 
     @staticmethod
-    def delete_dashboard(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
+    def delete_dashboard(session, username, groups, uri, data=None, check_perm=None) -> bool:
         dashboard = Dashboard.get_dashboard_by_uri(session, uri)
         session.delete(dashboard)
-        ResourcePolicy.delete_resource_policy(
-            session=session, resource_uri=uri, group=dashboard.SamlGroupName
-        )
-        Glossary.delete_glossary_terms_links(
-            session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
-        )
-        Vote.delete_votes(session, dashboard.dashboardUri, 'dashboard')
+        ResourcePolicy.delete_resource_policy(session=session, resource_uri=uri, group=dashboard.SamlGroupName)
+        Glossary.delete_glossary_terms_links(session, target_uri=dashboard.dashboardUri, target_type="Dashboard")
+        Vote.delete_votes(session, dashboard.dashboardUri, "dashboard")
         session.commit()
         return True
 
@@ -267,16 +243,16 @@ class Dashboard:
         check_perm: bool = False,
     ) -> models.DashboardShare:
         dashboard = Dashboard.get_dashboard_by_uri(session, uri)
-        if dashboard.SamlGroupName == data['principalId']:
+        if dashboard.SamlGroupName == data["principalId"]:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
-                message=f'Team {dashboard.SamlGroupName} is the owner of the dashboard {dashboard.label}',
+                message=f"Team {dashboard.SamlGroupName} is the owner of the dashboard {dashboard.label}",
             )
         share: models.DashboardShare = (
             session.query(models.DashboardShare)
             .filter(
                 models.DashboardShare.dashboardUri == uri,
-                models.DashboardShare.SamlGroupName == data['principalId'],
+                models.DashboardShare.SamlGroupName == data["principalId"],
             )
             .first()
         )
@@ -284,19 +260,19 @@ class Dashboard:
             share = models.DashboardShare(
                 owner=username,
                 dashboardUri=dashboard.dashboardUri,
-                SamlGroupName=data['principalId'],
+                SamlGroupName=data["principalId"],
                 status=models.DashboardShareStatus.REQUESTED.value,
             )
             session.add(share)
         else:
             if share.status not in models.DashboardShareStatus.__members__:
                 raise exceptions.InvalidInput(
-                    'Share status',
+                    "Share status",
                     share.status,
                     str(models.DashboardShareStatus.__members__),
                 )
-            if share.status == 'REJECTED':
-                share.status = 'REQUESTED'
+            if share.status == "REJECTED":
+                share.status = "REQUESTED"
 
         return share
 
@@ -312,13 +288,11 @@ class Dashboard:
         check_perm: bool = False,
     ) -> models.DashboardShare:
 
-        share: models.DashboardShare = data.get(
-            'share', session.query(models.DashboardShare).get(data['shareUri'])
-        )
+        share: models.DashboardShare = data.get("share", session.query(models.DashboardShare).get(data["shareUri"]))
 
         if share.status not in models.DashboardShareStatus.__members__:
             raise exceptions.InvalidInput(
-                'Share status',
+                "Share status",
                 share.status,
                 str(models.DashboardShareStatus.__members__),
             )
@@ -349,13 +323,11 @@ class Dashboard:
         check_perm: bool = False,
     ) -> models.DashboardShare:
 
-        share: models.DashboardShare = data.get(
-            'share', session.query(models.DashboardShare).get(data['shareUri'])
-        )
+        share: models.DashboardShare = data.get("share", session.query(models.DashboardShare).get(data["shareUri"]))
 
         if share.status not in models.DashboardShareStatus.__members__:
             raise exceptions.InvalidInput(
-                'Share status',
+                "Share status",
                 share.status,
                 str(models.DashboardShareStatus.__members__),
             )
@@ -389,13 +361,13 @@ class Dashboard:
         share = models.DashboardShare(
             owner=username,
             dashboardUri=dashboard.dashboardUri,
-            SamlGroupName=data['principalId'],
+            SamlGroupName=data["principalId"],
             status=models.DashboardShareStatus.APPROVED.value,
         )
         session.add(share)
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=data['principalId'],
+            group=data["principalId"],
             permissions=[permissions.GET_DASHBOARD],
             resource_uri=dashboard.dashboardUri,
             resource_type=models.Dashboard.__name__,
@@ -406,5 +378,5 @@ class Dashboard:
     def get_dashboard_share_by_uri(session, uri) -> models.DashboardShare:
         share: models.DashboardShare = session.query(models.DashboardShare).get(uri)
         if not share:
-            raise exceptions.ObjectNotFound('DashboardShare', uri)
+            raise exceptions.ObjectNotFound("DashboardShare", uri)
         return share

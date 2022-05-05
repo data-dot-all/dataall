@@ -13,12 +13,12 @@ class StackTagName(Enum):
     def __str__(self):
         return str(self.value)
 
-    CREATOR = 'Creator'
-    ORGANISATION = 'Organization'
-    ENVIRONMENT = 'Environment'
-    TARGET = 'Target'
-    TEAM = 'Team'
-    DATAALL = 'dataall'
+    CREATOR = "Creator"
+    ORGANISATION = "Organization"
+    ENVIRONMENT = "Environment"
+    TARGET = "Target"
+    TEAM = "Team"
+    DATAALL = "dataall"
 
 
 # Tags adding class
@@ -68,9 +68,7 @@ class TagsUtil:
             target_stack = cls.get_target(session, stack, model_name)
             environment = cls.get_environment(session, target_stack)
             organisation = cls.get_organization(session, environment)
-            key_value_tags: [models.KeyValueTag] = cls.get_model_key_value_tags(
-                session, stack, model_name
-            )
+            key_value_tags: [models.KeyValueTag] = cls.get_model_key_value_tags(session, stack, model_name)
 
         # Build a list of tuples with tag keys and values based on the collected up to this point
         # ex. target_stack, organisation etc.
@@ -78,27 +76,27 @@ class TagsUtil:
             (StackTagName.CREATOR.value, target_stack.owner),
             (
                 StackTagName.ORGANISATION.value,
-                organisation.name + '_' + organisation.organizationUri,
+                organisation.name + "_" + organisation.organizationUri,
             ),
             (
                 StackTagName.ENVIRONMENT.value,
-                environment.name + '_' + environment.environmentUri,
+                environment.name + "_" + environment.environmentUri,
             ),
             (
                 StackTagName.TEAM.value,
                 (
                     target_stack.SamlGroupName
-                    if hasattr(target_stack, 'SamlGroupName')
+                    if hasattr(target_stack, "SamlGroupName")
                     else target_stack.SamlAdminGroupName
                 ),
             ),
             (
                 StackTagName.TARGET.value,
-                model_name.__name__ + '_' + stack.target_uri,
+                model_name.__name__ + "_" + stack.target_uri,
             ),
             (
                 StackTagName.DATAALL.value,
-                'true',
+                "true",
             ),
         ]
 
@@ -115,7 +113,7 @@ class TagsUtil:
 
     @classmethod
     def get_engine(cls):
-        envname = os.environ.get('envname', 'local')
+        envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         return engine
 

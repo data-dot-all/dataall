@@ -34,42 +34,33 @@ def make_config(timestamp, stage, bucket, model_name, launch_ep):
         "content_type": "text/csv",
         "train_s3_uri": {
             "bucket": bucket,
-            "key_prefix": f"data/output/iris/{stage}/{timestamp}/prepare/training_data.csv"
+            "key_prefix": f"data/output/iris/{stage}/{timestamp}/prepare/training_data.csv",
         },
         "validation_s3_uri": {
             "bucket": bucket,
-            "key_prefix": f"data/output/iris/{stage}/{timestamp}/prepare/validation_data.csv"
-        }
+            "key_prefix": f"data/output/iris/{stage}/{timestamp}/prepare/validation_data.csv",
+        },
     }
 
     config["s3_transform_input"] = f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/prepare/test.csv"
 
     # Build training output
-    config[
-        "training_output"
-    ] = f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/training/"
+    config["training_output"] = f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/training/"
 
-    config[
-        "s3_transform_output"
-    ] =  f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/transform/"
+    config["s3_transform_output"] = f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/transform/"
 
-    config[ "s3_transform_output_path"] =  {
-          "bucket": bucket, 
-          "key_prefix": f"data/output/iris/{stage}/{timestamp}/transform/"
+    config["s3_transform_output_path"] = {
+        "bucket": bucket,
+        "key_prefix": f"data/output/iris/{stage}/{timestamp}/transform/",
     }
 
-    config["kpi_output_path"] = {
-        "bucket" : bucket,
-        "key_prefix" : f"data/output/iris/{stage}/{timestamp}/metrics/"
-    }
+    config["kpi_output_path"] = {"bucket": bucket, "key_prefix": f"data/output/iris/{stage}/{timestamp}/metrics/"}
 
     config["model_name"] = f"{model_name}-{timestamp}"
     config["hpo_output"] = f"s3://{bucket}/data/output/iris/{stage}/{timestamp}/hpo/"
     config["timestamp"] = timestamp
     config["launch_end_point"] = (
-        (launch_ep == True) or (launch_ep.lower() in ["true", "y", "yes"])
-        if launch_ep
-        else False
+        (launch_ep == True) or (launch_ep.lower() in ["true", "y", "yes"]) if launch_ep else False
     )
 
     config["transform_job_name"] = f"transform-{model_name}-{timestamp}"

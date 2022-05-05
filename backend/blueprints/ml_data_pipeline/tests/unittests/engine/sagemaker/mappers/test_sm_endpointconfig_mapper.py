@@ -1,7 +1,6 @@
 from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import core
-from engine.sagemaker.mappers.sm_endpointconfig_mapper import \
-    SageMakerEndpointConfigPropsMapper
+from engine.sagemaker.mappers.sm_endpointconfig_mapper import SageMakerEndpointConfigPropsMapper
 
 
 class ATestStack(core.Stack):
@@ -21,7 +20,7 @@ class ATestStack(core.Stack):
         self.tags_tracker = {}
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         pass
 
 

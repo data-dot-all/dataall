@@ -128,9 +128,7 @@ class AnalysisRunBuilder(BaseBuilder):
     def run(self):
         result = self.jvmAnalysisRunBuilder.run()
 
-        jvmAnalyzerContext = (
-            self._jvm.com.amazon.deequ.analyzers.runners.AnalyzerContext
-        )
+        jvmAnalyzerContext = self._jvm.com.amazon.deequ.analyzers.runners.AnalyzerContext
         try:
             df = jvmAnalyzerContext.successMetricsAsDataFrame(
                 self._jsparkSession,
@@ -179,9 +177,7 @@ class ConstraintSuggestionRunBuilder(BaseBuilder):
             dataFrame (pyspark.sql.dataframe.DataFrame)
         """
         super().__init__(SparkSession, dataFrame)
-        run_builder = (
-            self._jvm.com.amazon.deequ.suggestions.ConstraintSuggestionRunBuilder
-        )
+        run_builder = self._jvm.com.amazon.deequ.suggestions.ConstraintSuggestionRunBuilder
         self.jvmConstraintSuggestionRunBuilder = run_builder(self.dataFrame._jdf)
 
     def addConstraintRule(self, constraint):
@@ -198,9 +194,7 @@ class ConstraintSuggestionRunBuilder(BaseBuilder):
     def run(self):
         result = self.jvmConstraintSuggestionRunBuilder.run()
 
-        jvmSuggestionResult = (
-            self._jvm.com.amazon.deequ.suggestions.ConstraintSuggestionResult
-        )
+        jvmSuggestionResult = self._jvm.com.amazon.deequ.suggestions.ConstraintSuggestionResult
         try:
             df = jvmSuggestionResult.getConstraintSuggestionsAsJson(result)
             return df

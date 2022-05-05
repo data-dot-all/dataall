@@ -6,12 +6,12 @@ from typing import List
 
 import boto3
 
-log = logging.getLogger('aws:CloudWatch')
+log = logging.getLogger("aws:CloudWatch")
 
 
 class QueryStatus(Enum):
-    COMPLETE = 'Complete'
-    FAILED = 'Failed'
+    COMPLETE = "Complete"
+    FAILED = "Failed"
 
 
 class CloudWatch:
@@ -19,9 +19,7 @@ class CloudWatch:
         pass
 
     @staticmethod
-    def run_query(
-        query: str, log_group_name: str, days: int, timeout_min: int = 5
-    ) -> List[dict]:
+    def run_query(query: str, log_group_name: str, days: int, timeout_min: int = 5) -> List[dict]:
         """
         Runs a query against a given log group name via Cloudwatch insights
         Args:
@@ -43,7 +41,7 @@ class CloudWatch:
             log_group_name: the log group to run the query against
             days: the number of days back to query
         """
-        client = boto3.client('logs')
+        client = boto3.client("logs")
 
         start_time = time.mktime((datetime.utcnow() - timedelta(days=days)).timetuple())
         end_time = time.time()
@@ -55,7 +53,7 @@ class CloudWatch:
             queryString=query,
             limit=10000,
         )
-        return query_response['queryId']
+        return query_response["queryId"]
 
     @staticmethod
     def fetch_query_results(query_id: str, timeout: datetime) -> List[dict]:
@@ -66,13 +64,13 @@ class CloudWatch:
             query_id: the query id to fetch results for
             timeout: the time at which the query should be canceled/timed out
         """
-        client = boto3.client('logs')
+        client = boto3.client("logs")
 
         results = None
         while datetime.utcnow() < timeout:
             time.sleep(2)
             results = client.get_query_results(queryId=query_id)
-            if results['status'] in [
+            if results["status"] in [
                 QueryStatus.COMPLETE.value,
                 QueryStatus.FAILED.value,
             ]:
@@ -80,10 +78,10 @@ class CloudWatch:
 
         results = [
             {
-                r['field'].replace('@', ''): r['value']
+                r["field"].replace("@", ""): r["value"]
                 for r in records
-                if (r['field'] in ['@message', '@timestamp', '@logStream', '@logGroup'])
+                if (r["field"] in ["@message", "@timestamp", "@logStream", "@logGroup"])
             }
-            for records in results['results']
+            for records in results["results"]
         ]
         return results

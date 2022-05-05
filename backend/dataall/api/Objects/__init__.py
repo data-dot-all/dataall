@@ -6,13 +6,36 @@ from ariadne import make_executable_schema
 
 from ...api.constants import GraphQLEnumMapper
 from .. import gql
-from . import (Activity, AthenaQueryResult, Dashboard, Dataset,
-               DatasetProfiling, DatasetStorageLocation, DatasetTable,
-               DatasetTableColumn, Environment, Feed, Glossary, Group,
-               KeyValueTag, Notification, Organization, Permission, Principal,
-               RedshiftCluster, SagemakerNotebook, SagemakerStudio,
-               ShareObject, SqlPipeline, Stack, Tenant, Test, Vote, Vpc,
-               Worksheet)
+from . import (
+    Activity,
+    AthenaQueryResult,
+    Dashboard,
+    Dataset,
+    DatasetProfiling,
+    DatasetStorageLocation,
+    DatasetTable,
+    DatasetTableColumn,
+    Environment,
+    Feed,
+    Glossary,
+    Group,
+    KeyValueTag,
+    Notification,
+    Organization,
+    Permission,
+    Principal,
+    RedshiftCluster,
+    SagemakerNotebook,
+    SagemakerStudio,
+    ShareObject,
+    SqlPipeline,
+    Stack,
+    Tenant,
+    Test,
+    Vote,
+    Vpc,
+    Worksheet,
+)
 
 
 def bootstrap():
@@ -25,19 +48,19 @@ def bootstrap():
         gql.InputType: [],
     }
 
-    Query = gql.ObjectType(name='Query', fields=classes[gql.QueryField])
+    Query = gql.ObjectType(name="Query", fields=classes[gql.QueryField])
 
-    Mutation = gql.ObjectType(name='Mutation', fields=classes[gql.MutationField])
+    Mutation = gql.ObjectType(name="Mutation", fields=classes[gql.MutationField])
 
     for enumclass in GraphQLEnumMapper.__subclasses__():
         enumclass.toGraphQLEnum()
 
     for cls in classes.keys():
-        for name in cls.class_instances['default'].keys():
+        for name in cls.class_instances["default"].keys():
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))
             else:
-                raise Exception(f'Unknown Graphql Type :`{name}`')
+                raise Exception(f"Unknown Graphql Type :`{name}`")
 
     schema = gql.Schema(
         types=classes[gql.ObjectType],
@@ -50,7 +73,7 @@ def bootstrap():
 
 def save():
     schema = bootstrap()
-    with open('schema.graphql', 'w') as f:
+    with open("schema.graphql", "w") as f:
         f.write(schema.gql())
 
 
@@ -58,12 +81,12 @@ def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
         response = resolver(
             context=Namespace(
-                engine=info.context['engine'],
-                es=info.context['es'],
-                username=info.context['username'],
-                groups=info.context['groups'],
-                schema=info.context['schema'],
-                cdkproxyurl=info.context['cdkproxyurl'],
+                engine=info.context["engine"],
+                es=info.context["es"],
+                username=info.context["username"],
+                groups=info.context["groups"],
+                schema=info.context["schema"],
+                cdkproxyurl=info.context["cdkproxyurl"],
             ),
             source=obj or None,
             **kwargs,
@@ -77,13 +100,13 @@ def get_executable_schema():
     schema = bootstrap()
     _types = []
     for _type in schema.types:
-        if _type.name == 'Query':
+        if _type.name == "Query":
             query = QueryType()
             _types.append(query)
             for field in _type.fields:
                 if field.resolver:
                     query.field(field.name)(resolver_adapter(field.resolver))
-        elif _type.name == 'Mutation':
+        elif _type.name == "Mutation":
             mutation = MutationType()
             _types.append(mutation)
             for field in _type.fields:

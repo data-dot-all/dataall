@@ -10,8 +10,8 @@ class AlbFrontStage(Stage):
         self,
         scope,
         id: str,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         ecr_repository=None,
         image_tag=None,
         custom_domain=None,
@@ -22,7 +22,7 @@ class AlbFrontStage(Stage):
 
         albfront_stack = AlbFrontStack(
             self,
-            'albfront-stack',
+            "albfront-stack",
             envname=envname,
             resource_prefix=resource_prefix,
             ecr_repository=ecr_repository,
@@ -31,16 +31,14 @@ class AlbFrontStage(Stage):
             ip_ranges=ip_ranges,
         )
 
-        Tags.of(albfront_stack).add('Application', f'{resource_prefix}-{envname}')
+        Tags.of(albfront_stack).add("Application", f"{resource_prefix}-{envname}")
 
         Aspects.of(albfront_stack).add(AwsSolutionsChecks(reports=True, verbose=True))
 
         NagSuppressions.add_stack_suppressions(
             albfront_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed["id"], reason=rule_suppressed["reason"])
                 for rule_suppressed in ALBFRONT_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

@@ -3,23 +3,21 @@ import sys
 import unicodedata
 from html.entities import name2codepoint
 
-__all__ = ['slugify', 'smart_truncate']
+__all__ = ["slugify", "smart_truncate"]
 
 
-CHAR_ENTITY_PATTERN = re.compile(r'&(%s);' % '|'.join(name2codepoint))
-DECIMAL_PATTERN = re.compile(r'&#(\d+);')
-HEX_PATTERN = re.compile(r'&#x([\da-fA-F]+);')
-QUOTE_PATTERN = re.compile(r'[\']+')
-DISALLOWED_CHARS_PATTERN = re.compile(r'[^-a-zA-Z0-9]+')
-DISALLOWED_UNICODE_CHARS_PATTERN = re.compile(r'[\W_]+')
-DUPLICATE_DASH_PATTERN = re.compile(r'-{2,}')
-NUMBERS_PATTERN = re.compile(r'(?<=\d),(?=\d)')
-DEFAULT_SEPARATOR = '-'
+CHAR_ENTITY_PATTERN = re.compile(r"&(%s);" % "|".join(name2codepoint))
+DECIMAL_PATTERN = re.compile(r"&#(\d+);")
+HEX_PATTERN = re.compile(r"&#x([\da-fA-F]+);")
+QUOTE_PATTERN = re.compile(r"[\']+")
+DISALLOWED_CHARS_PATTERN = re.compile(r"[^-a-zA-Z0-9]+")
+DISALLOWED_UNICODE_CHARS_PATTERN = re.compile(r"[\W_]+")
+DUPLICATE_DASH_PATTERN = re.compile(r"-{2,}")
+NUMBERS_PATTERN = re.compile(r"(?<=\d),(?=\d)")
+DEFAULT_SEPARATOR = "-"
 
 
-def smart_truncate(
-    string, max_length=0, word_boundary=False, separator=' ', save_order=False
-):
+def smart_truncate(string, max_length=0, word_boundary=False, separator=" ", save_order=False):
     """
     Truncate a string.
     :param string (str): string for modification
@@ -44,14 +42,14 @@ def smart_truncate(
     if separator not in string:
         return string[:max_length]
 
-    truncated = ''
+    truncated = ""
     for word in string.split(separator):
         if word:
             next_len = len(truncated) + len(word)
             if next_len < max_length:
-                truncated += '{}{}'.format(word, separator)
+                truncated += "{}{}".format(word, separator)
             elif next_len == max_length:
-                truncated += '{}'.format(word)
+                truncated += "{}".format(word)
                 break
             else:
                 if save_order:
@@ -101,14 +99,14 @@ def slugify(
 
     # ensure text is unicode
     if not isinstance(text, str):
-        text = str(text, 'utf-8', 'ignore')
+        text = str(text, "utf-8", "ignore")
 
     # replace quotes with dashes - pre-process
     text = QUOTE_PATTERN.sub(DEFAULT_SEPARATOR, text)
 
     # ensure text is still in unicode
     if not isinstance(text, str):
-        text = str(text, 'utf-8', 'ignore')
+        text = str(text, "utf-8", "ignore")
 
     # character entity reference
     if entities:
@@ -130,22 +128,22 @@ def slugify(
 
     # translate
     if allow_unicode:
-        text = unicodedata.normalize('NFKC', text)
+        text = unicodedata.normalize("NFKC", text)
     else:
-        text = unicodedata.normalize('NFKD', text)
+        text = unicodedata.normalize("NFKD", text)
 
     if sys.version_info < (3,):
-        text = text.encode('ascii', 'ignore')
+        text = text.encode("ascii", "ignore")
 
     # make the text lowercase (optional)
     if lowercase:
         text = text.lower()
 
     # remove generated quotes -- post-process
-    text = QUOTE_PATTERN.sub('', text)
+    text = QUOTE_PATTERN.sub("", text)
 
     # cleanup numbers
-    text = NUMBERS_PATTERN.sub('', text)
+    text = NUMBERS_PATTERN.sub("", text)
 
     # replace all other unwanted characters
     if allow_unicode:
@@ -162,9 +160,7 @@ def slugify(
     if stopwords:
         if lowercase:
             stopwords_lower = [s.lower() for s in stopwords]
-            words = [
-                w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords_lower
-            ]
+            words = [w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords_lower]
         else:
             words = [w for w in text.split(DEFAULT_SEPARATOR) if w not in stopwords]
         text = DEFAULT_SEPARATOR.join(words)
@@ -176,9 +172,7 @@ def slugify(
 
     # smart truncate if requested
     if max_length > 0:
-        text = smart_truncate(
-            text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order
-        )
+        text = smart_truncate(text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order)
 
     if separator != DEFAULT_SEPARATOR:
         text = text.replace(DEFAULT_SEPARATOR, separator)

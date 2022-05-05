@@ -14,9 +14,7 @@ def list_tenant_permissions(
     with context.engine.scoped_session() as session:
         if not filter:
             filter = {}
-        return db.api.Permission.paginated_tenant_permissions(
-            session=session, data=filter
-        )
+        return db.api.Permission.paginated_tenant_permissions(session=session, data=filter)
 
 
 def list_resource_permissions(
@@ -27,6 +25,4 @@ def list_resource_permissions(
     with context.engine.scoped_session() as session:
         if not filter:
             filter = {}
-        return db.api.Permission.paginated_resource_permissions(
-            session=session, data=filter
-        )
+        return db.api.Permission.paginated_resource_permissions(session=session, data=filter)

@@ -10,8 +10,8 @@ class BackendStage(Stage):
         self,
         scope,
         id: str,
-        envname='dev',
-        resource_prefix='dataall',
+        envname="dev",
+        resource_prefix="dataall",
         ecr_repository=None,
         commit_id=None,
         tooling_account_id=None,
@@ -31,7 +31,7 @@ class BackendStage(Stage):
 
         backend_stack = BackendStack(
             self,
-            f'backend-stack',
+            f"backend-stack",
             envname=envname,
             resource_prefix=resource_prefix,
             tooling_account_id=tooling_account_id,
@@ -50,16 +50,14 @@ class BackendStage(Stage):
             **kwargs,
         )
 
-        Tags.of(backend_stack).add('Application', f'{resource_prefix}-{envname}')
+        Tags.of(backend_stack).add("Application", f"{resource_prefix}-{envname}")
 
         Aspects.of(backend_stack).add(AwsSolutionsChecks(reports=True, verbose=True))
 
         NagSuppressions.add_stack_suppressions(
             backend_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed["id"], reason=rule_suppressed["reason"])
                 for rule_suppressed in BACKEND_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

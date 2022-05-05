@@ -3,7 +3,7 @@ from ._cache import cache_instances
 
 @cache_instances
 class ObjectType:
-    def __init__(self, name, fields, directives=None, description=''):
+    def __init__(self, name, fields, directives=None, description=""):
         self.name = name
         self.description = description
         self._fields = fields
@@ -14,14 +14,14 @@ class ObjectType:
         return self._fields
 
     def gql(self, with_directives=True):
-        n = '\n'
-        directives_gql = ''
+        n = "\n"
+        directives_gql = ""
         if len(self.directives):
-            directives_gql = f'{n} {n.join([d.gql() for d in self.directives])}'
+            directives_gql = f"{n} {n.join([d.gql() for d in self.directives])}"
         if with_directives:
-            return f'type {self.name} {directives_gql} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
+            return f"type {self.name} {directives_gql} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}"
         else:
-            return f'type {self.name} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}'
+            return f"type {self.name} {{ {n} {n.join([f.gql(with_directives=with_directives) for f in self.fields])}{n} }}{n}"
 
     def field(self, name):
         return next(filter(lambda f: f.name == name, self.fields), None)
@@ -63,10 +63,10 @@ class ObjectType:
         if not self.field(field.name):
             self.fields.append(field)
         else:
-            raise Exception('Field already exists')
+            raise Exception("Field already exists")
 
     def remove_field(self, field_name):
         if self.field(field_name):
             self.fields = [f for f in self.fields if f.name != field_name]
         else:
-            raise Exception('Field does not exist')
+            raise Exception("Field does not exist")

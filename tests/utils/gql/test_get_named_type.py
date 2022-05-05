@@ -14,27 +14,27 @@ def test_modified_type():
 
 
 def test_object_type():
-    foo = gql.ObjectType(name='foo', fields=[])
+    foo = gql.ObjectType(name="foo", fields=[])
     assert gql.get_named_type(foo) == foo
 
 
 def test_object_type_modifiers():
-    foo = gql.ObjectType(name='foo', fields=[])
+    foo = gql.ObjectType(name="foo", fields=[])
     assert gql.get_named_type(gql.NonNullableType(foo)) == foo
     assert gql.get_named_type(gql.ArrayType(foo)) == foo
 
 
 def test_thunk():
-    foo = gql.ObjectType(name='foo', fields=[])
+    foo = gql.ObjectType(name="foo", fields=[])
     assert gql.get_named_type(gql.Thunk(lambda: foo)) == foo
 
 
 def test_modifier_thunk():
-    foo = gql.ObjectType(name='foo', fields=[])
+    foo = gql.ObjectType(name="foo", fields=[])
     assert gql.get_named_type(gql.ArrayType(gql.Thunk(lambda: foo))) == foo
     assert gql.get_named_type(gql.NonNullableType(gql.Thunk(lambda: foo))) == foo
 
 
 def test_thunk_modifier():
-    foo = gql.ObjectType(name='foo', fields=[])
+    foo = gql.ObjectType(name="foo", fields=[])
     assert gql.get_named_type(gql.Thunk(lambda: gql.ArrayType(foo))) == foo

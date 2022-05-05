@@ -7,13 +7,13 @@ class A:
         self.__dict__.update(config)
 
     def run_step(self):
-        print('A.run_step')
+        print("A.run_step")
 
 
 def wrapper(name):
     def decorator(cls):
         class Decorated(cls, A):
-            X = 'xxxx'
+            X = "xxxx"
 
             def __init__(self, **config):
                 super().__init__(**config)
@@ -23,10 +23,10 @@ def wrapper(name):
     return decorator
 
 
-@wrapper(name='Xsss')
+@wrapper(name="Xsss")
 class B:
     def run_step(self):
-        print('B.run_step')
+        print("B.run_step")
 
 
 class Rdd:
@@ -83,7 +83,7 @@ class Spark:
         return Dataframe()
 
 
-config = ConfigReader('config.yaml')
+config = ConfigReader("config.yaml")
 session = Runner(config=config, spark=Spark())
 
 session.run()

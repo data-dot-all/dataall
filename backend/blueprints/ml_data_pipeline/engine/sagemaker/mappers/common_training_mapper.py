@@ -1,6 +1,5 @@
 import sagemaker
-from engine.sagemaker.prebuilt_extension_image_builder import \
-    PrebuiltExtensionImageBuilder
+from engine.sagemaker.prebuilt_extension_image_builder import PrebuiltExtensionImageBuilder
 
 
 class CommonTrainingMapper:
@@ -15,9 +14,7 @@ class CommonTrainingMapper:
             print("container_uri of AWS algorithm {}".format(container_uri))
 
         elif config.get("pre_built"):
-            container_uri = PrebuiltExtensionImageBuilder.image_uri_from_main_module(
-                config["pre_built"]["module"]
-            )
+            container_uri = PrebuiltExtensionImageBuilder.image_uri_from_main_module(config["pre_built"]["module"])
 
             print("container_uri of pre_built: {}".format(container_uri))
 
@@ -27,14 +24,11 @@ class CommonTrainingMapper:
 
         algorithm_specification = {}
         algorithm_specification["TrainingImage"] = container_uri
-        algorithm_specification["TrainingInputMode"] = config.get(
-            "training_input_mode", "File"
-        )
+        algorithm_specification["TrainingInputMode"] = config.get("training_input_mode", "File")
 
         if config.get("metric_definitions"):
             algorithm_specification["MetricDefinitions"] = [
-                {"Name": m["name"], "Regex": m["regex"]}
-                for m in config["metric_definitions"]
+                {"Name": m["name"], "Regex": m["regex"]} for m in config["metric_definitions"]
             ]
 
         return algorithm_specification
@@ -59,9 +53,7 @@ class CommonTrainingMapper:
 
         training_data_source["ChannelName"] = "train"
         if training_input_from_path.get("content_type"):
-            training_data_source["ContentType.$"] = training_input_from_path[
-                "content_type"
-            ]
+            training_data_source["ContentType.$"] = training_input_from_path["content_type"]
         else:
             training_data_source["ContentType"] = "text/csv"
 
@@ -78,20 +70,16 @@ class CommonTrainingMapper:
         input_data_config = [training_data_source]
 
         if training_input_from_path.get("validation_s3_uri"):
-            validation_bucket_path = training_input_from_path["validation_s3_uri"][
-                "bucket"
-            ]
-            validation_prefix_key_path = training_input_from_path["validation_s3_uri"][
-                "prefix_key"
-            ]
-            validation_s3UriPath = f"States.Format('s3://{{}}/{{}}',{validation_bucket_path}, {validation_prefix_key_path})"
+            validation_bucket_path = training_input_from_path["validation_s3_uri"]["bucket"]
+            validation_prefix_key_path = training_input_from_path["validation_s3_uri"]["prefix_key"]
+            validation_s3UriPath = (
+                f"States.Format('s3://{{}}/{{}}',{validation_bucket_path}, {validation_prefix_key_path})"
+            )
 
             validation_data_source = {}
             validation_data_source["ChannelName"] = "validation"
             if training_input_from_path.get("content_type"):
-                validation_data_source["ContentType.$"] = training_input_from_path[
-                    "content_type"
-                ]
+                validation_data_source["ContentType.$"] = training_input_from_path["content_type"]
             else:
                 validation_data_source["ContentType"] = "text/csv"
 
@@ -111,9 +99,7 @@ class CommonTrainingMapper:
             test_s3UriPath = f"States.Format('s3://{{}}/{{}}',{test_bucket_path}, {test_prefix_key_path})"
             test_data_source["ChannelName"] = "test"
             if training_input_from_path.get("content_type"):
-                test_data_source["ContentType.$"] = training_input_from_path[
-                    "content_type"
-                ]
+                test_data_source["ContentType.$"] = training_input_from_path["content_type"]
             else:
                 test_data_source["ContentType"] = "text/csv"
             test_data_source["DataSource"] = {

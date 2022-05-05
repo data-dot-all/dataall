@@ -8,27 +8,27 @@ class Lambda(ServicePolicy):
         statements = [
             iam.PolicyStatement(
                 actions=[
-                    'lambda:ListFunctions',
-                    'lambda:ListEventSourceMappings',
-                    'lambda:ListLayerVersions',
-                    'lambda:ListLayers',
-                    'lambda:GetAccountSettings',
-                    'lambda:CreateEventSourceMapping',
-                    'lambda:ListCodeSigningConfigs',
+                    "lambda:ListFunctions",
+                    "lambda:ListEventSourceMappings",
+                    "lambda:ListLayerVersions",
+                    "lambda:ListLayers",
+                    "lambda:GetAccountSettings",
+                    "lambda:CreateEventSourceMapping",
+                    "lambda:ListCodeSigningConfigs",
                 ],
-                resources=['*'],
+                resources=["*"],
             ),
             iam.PolicyStatement(
                 actions=[
-                    'lambda:*',
+                    "lambda:*",
                 ],
                 resources=[
-                    f'arn:aws:lambda:{self.region}:{self.account}:code-signing-config:*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:event-source-mapping:*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*',
-                    f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*:*',
+                    f"arn:aws:lambda:{self.region}:{self.account}:code-signing-config:*",
+                    f"arn:aws:lambda:{self.region}:{self.account}:event-source-mapping:*",
+                    f"arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*",
+                    f"arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*",
+                    f"arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*",
+                    f"arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*:*",
                 ],
             ),
         ]

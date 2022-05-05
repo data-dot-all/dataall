@@ -25,7 +25,7 @@ class SessionHelper:
 
     @classmethod
     def get_root_account_session(cls):
-        ENVNAME = os.environ.get('envname', 'local')
+        ENVNAME = os.environ.get("envname", "local")
 
     @classmethod
     def get_session(cls, base_session=None, role_arn=None):
@@ -43,27 +43,27 @@ class SessionHelper:
             if external_id_secret:
                 assume_role_dict = dict(
                     RoleArn=role_arn,
-                    RoleSessionName=role_arn.split('/')[1],
+                    RoleSessionName=role_arn.split("/")[1],
                     ExternalId=external_id_secret,
                 )
             else:
                 assume_role_dict = dict(
                     RoleArn=role_arn,
-                    RoleSessionName=role_arn.split('/')[1],
+                    RoleSessionName=role_arn.split("/")[1],
                 )
             try:
                 sts = base_session.client(
-                    'sts',
-                    config=Config(user_agent_extra=f'{__pkg_name__}/{__version__}'),
+                    "sts",
+                    config=Config(user_agent_extra=f"{__pkg_name__}/{__version__}"),
                 )
                 response = sts.assume_role(**assume_role_dict)
                 return boto3.Session(
-                    aws_access_key_id=response['Credentials']['AccessKeyId'],
-                    aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-                    aws_session_token=response['Credentials']['SessionToken'],
+                    aws_access_key_id=response["Credentials"]["AccessKeyId"],
+                    aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
+                    aws_session_token=response["Credentials"]["SessionToken"],
                 )
             except ClientError as e:
-                log.error(f'Failed to assume role {role_arn} due to: {e} ')
+                log.error(f"Failed to assume role {role_arn} due to: {e} ")
                 raise e
 
         else:
@@ -77,16 +77,14 @@ class SessionHelper:
         :rtype:
         """
         secret_string = None
-        region = os.getenv('AWS_REGION', 'eu-west-1')
+        region = os.getenv("AWS_REGION", "eu-west-1")
         try:
             session = SessionHelper.get_session()
-            client = session.client('secretsmanager', region_name=region)
-            secret_string = client.get_secret_value(SecretId=secret_name).get(
-                'SecretString'
-            )
-            log.debug(f'Found Secret {secret_name}|{secret_string}')
+            client = session.client("secretsmanager", region_name=region)
+            secret_string = client.get_secret_value(SecretId=secret_name).get("SecretString")
+            log.debug(f"Found Secret {secret_name}|{secret_string}")
         except ClientError as e:
-            log.warning(f'Secret {secret_name} not found: {e}')
+            log.warning(f"Secret {secret_name} not found: {e}")
         return secret_string
 
     @classmethod
@@ -97,9 +95,7 @@ class SessionHelper:
         :return:
         :rtype:
         """
-        return SessionHelper.get_secret(
-            secret_name=f'dataall-externalId-{os.getenv("envname", "local")}'
-        )
+        return SessionHelper.get_secret(secret_name=f'dataall-externalId-{os.getenv("envname", "local")}')
 
     @classmethod
     def get_delegation_role_name(cls):
@@ -108,16 +104,12 @@ class SessionHelper:
             string: name of the assumed role
         """
         return (
-            SessionHelper.get_secret(
-                secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}'
-            )
-            or 'dataallPivotRole'
+            SessionHelper.get_secret(secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}')
+            or "dataallPivotRole"
         )
 
     @classmethod
-    def get_console_access_url(
-        cls, boto3_session, region='eu-west-1', bucket=None, redshiftcluster=None
-    ):
+    def get_console_access_url(cls, boto3_session, region="eu-west-1", bucket=None, redshiftcluster=None):
         """Returns an AWS Console access url for the boto3 session
         Args:
             boto3_session(object): a boto3 session
@@ -125,42 +117,35 @@ class SessionHelper:
                 String: aws federated access console url
         """
         c = boto3_session.get_credentials()
-        json_string_with_temp_credentials = '{'
+        json_string_with_temp_credentials = "{"
         json_string_with_temp_credentials += '"sessionId":"' + c.access_key + '",'
         json_string_with_temp_credentials += '"sessionKey":"' + c.secret_key + '",'
         json_string_with_temp_credentials += '"sessionToken":"' + c.token + '"'
-        json_string_with_temp_credentials += '}'
+        json_string_with_temp_credentials += "}"
 
-        request_parameters = '?Action=getSigninToken'
+        request_parameters = "?Action=getSigninToken"
         # request_parameters = "&SessionDuration=43200"
-        request_parameters += '&Session=' + urllib.parse.quote_plus(
-            json_string_with_temp_credentials
-        )
-        request_url = 'https://signin.aws.amazon.com/federation' + request_parameters
+        request_parameters += "&Session=" + urllib.parse.quote_plus(json_string_with_temp_credentials)
+        request_url = "https://signin.aws.amazon.com/federation" + request_parameters
 
         r = urllib.request.urlopen(request_url).read()
 
         signin_token = json.loads(r)
-        request_parameters = '?Action=login'
-        request_parameters += '&Issuer=Example.org'
+        request_parameters = "?Action=login"
+        request_parameters += "&Issuer=Example.org"
         if bucket:
-            request_parameters += '&Destination=' + quote_plus(
-                'https://{}.console.aws.amazon.com/s3/buckets/{}/'.format(
-                    region, bucket
-                )
+            request_parameters += "&Destination=" + quote_plus(
+                "https://{}.console.aws.amazon.com/s3/buckets/{}/".format(region, bucket)
             )
 
         elif redshiftcluster:
-            request_parameters += '&Destination=' + quote_plus(
-                f'https://{region}.console.aws.amazon.com/redshiftv2/'
-                f'home?region={region}#query-editor:'
+            request_parameters += "&Destination=" + quote_plus(
+                f"https://{region}.console.aws.amazon.com/redshiftv2/" f"home?region={region}#query-editor:"
             )
         else:
-            request_parameters += '&Destination=' + urllib.parse.quote_plus(
-                f'https://{region}.console.aws.amazon.com/'
-            )
-        request_parameters += '&SigninToken=' + signin_token['SigninToken']
-        request_url = 'https://signin.aws.amazon.com/federation' + request_parameters
+            request_parameters += "&Destination=" + urllib.parse.quote_plus(f"https://{region}.console.aws.amazon.com/")
+        request_parameters += "&SigninToken=" + signin_token["SigninToken"]
+        request_url = "https://signin.aws.amazon.com/federation" + request_parameters
 
         # Send final URL to stdout
         return request_url
@@ -173,9 +158,7 @@ class SessionHelper:
         Returns:
                 string : arn of the delegation role on the target aws account id
         """
-        return 'arn:aws:iam::{}:role/{}'.format(
-            accountid, cls.get_delegation_role_name()
-        )
+        return "arn:aws:iam::{}:role/{}".format(accountid, cls.get_delegation_role_name())
 
     @classmethod
     def get_delegation_role_id(cls, accountid):
@@ -186,9 +169,9 @@ class SessionHelper:
             string : RoleId of the role
         """
         session = SessionHelper.remote_session(accountid=accountid)
-        client = session.client('iam', region_name='eu-west-1')
+        client = session.client("iam", region_name="eu-west-1")
         response = client.get_role(RoleName=cls.get_delegation_role_name())
-        return response['Role']['RoleId']
+        return response["Role"]["RoleId"]
 
     @classmethod
     def remote_session(cls, accountid):
@@ -199,9 +182,7 @@ class SessionHelper:
             boto3.session.Session: boto3 Session, on the target aws accountid, assuming the delegation role
         """
         base_session = cls.get_session()
-        session = SessionHelper.get_session(
-            base_session=base_session, role_arn=cls.get_delegation_role_arn(accountid)
-        )
+        session = SessionHelper.get_session(base_session=base_session, role_arn=cls.get_delegation_role_arn(accountid))
         return session
 
     @classmethod
@@ -215,9 +196,9 @@ class SessionHelper:
         """
         if not session:
             session = cls.get_session()
-        client = session.client('sts')
+        client = session.client("sts")
         response = client.get_caller_identity()
-        return response['Account']
+        return response["Account"]
 
     @classmethod
     def get_organization_id(cls, session=None):
@@ -229,17 +210,17 @@ class SessionHelper:
         """
         if not session:
             session = cls.get_session()
-        client = session.client('organizations')
+        client = session.client("organizations")
         response = client.describe_organization()
-        return response['Organization']['Id']
+        return response["Organization"]["Id"]
 
     @staticmethod
     def get_role_id(accountid, name):
         session = SessionHelper.remote_session(accountid=accountid)
-        client = session.client('iam')
+        client = session.client("iam")
         try:
             response = client.get_role(RoleName=name)
-            return response['Role']['RoleId']
+            return response["Role"]["RoleId"]
         except ClientError:
             return None
 
@@ -252,7 +233,7 @@ class SessionHelper:
             str : account id or none if arn could not be parsed
         """
         try:
-            return arn.split(':')[4]
+            return arn.split(":")[4]
         except Exception:
             return None
 
@@ -265,7 +246,7 @@ class SessionHelper:
             str : name of the role, or none if arn could not be parsed
         """
         try:
-            return arn.split('/')[-1]
+            return arn.split("/")[-1]
         except Exception:
             return None
 
@@ -279,11 +260,7 @@ class SessionHelper:
         Return :
             list : list of all arns within the account
         """
-        return [
-            arn
-            for arn in arns
-            if SessionHelper.extract_account_from_role_arn(arn) == accountid
-        ]
+        return [arn for arn in arns if SessionHelper.extract_account_from_role_arn(arn) == accountid]
 
     @staticmethod
     def get_role_ids(accountid, arns):
@@ -315,53 +292,37 @@ class SessionHelper:
             boto3.session.Session : a boto3 session
         """
         if not access_key_id or not secret_key:
-            raise ValueError('Passed access_key_id and secret_key are invalid')
+            raise ValueError("Passed access_key_id and secret_key are invalid")
 
-        return boto3.Session(
-            aws_access_key_id=access_key_id, aws_secret_access_key=secret_key
-        )
+        return boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_key)
 
     @staticmethod
-    def generate_console_url(
-        credentials, session_duration=None, region='eu-west-1', bucket=None
-    ):
-        json_string_with_temp_credentials = '{'
-        json_string_with_temp_credentials += (
-            '"sessionId":"' + credentials['AccessKeyId'] + '",'
-        )
-        json_string_with_temp_credentials += (
-            '"sessionKey":"' + credentials['SecretAccessKey'] + '",'
-        )
-        json_string_with_temp_credentials += (
-            '"sessionToken":"' + credentials['SessionToken'] + '"'
-        )
-        json_string_with_temp_credentials += '}'
+    def generate_console_url(credentials, session_duration=None, region="eu-west-1", bucket=None):
+        json_string_with_temp_credentials = "{"
+        json_string_with_temp_credentials += '"sessionId":"' + credentials["AccessKeyId"] + '",'
+        json_string_with_temp_credentials += '"sessionKey":"' + credentials["SecretAccessKey"] + '",'
+        json_string_with_temp_credentials += '"sessionToken":"' + credentials["SessionToken"] + '"'
+        json_string_with_temp_credentials += "}"
 
-        request_parameters = '?Action=getSigninToken'
+        request_parameters = "?Action=getSigninToken"
         if session_duration:
-            request_parameters += '&SessionDuration={}'.format(session_duration)
-        request_parameters += '&Session=' + quote_plus(
-            json_string_with_temp_credentials
-        )
-        request_url = 'https://signin.aws.amazon.com/federation' + request_parameters
+            request_parameters += "&SessionDuration={}".format(session_duration)
+        request_parameters += "&Session=" + quote_plus(json_string_with_temp_credentials)
+        request_url = "https://signin.aws.amazon.com/federation" + request_parameters
 
         r = urlopen(request_url).read()
 
         signin_token = json.loads(r)
-        request_parameters = '?Action=login'
-        request_parameters += '&Issuer=Example.org'
+        request_parameters = "?Action=login"
+        request_parameters += "&Issuer=Example.org"
         if bucket:
-            request_parameters += '&Destination=' + quote_plus(
-                'https://{}.console.aws.amazon.com/s3/buckets/{}/'.format(
-                    region, bucket
-                )
+            request_parameters += "&Destination=" + quote_plus(
+                "https://{}.console.aws.amazon.com/s3/buckets/{}/".format(region, bucket)
             )
         else:
-            request_parameters += '&Destination=' + quote_plus(
-                'https://{}.console.aws.amazon.com/'.format(region)
-            )
-        request_parameters += '&SigninToken=' + signin_token['SigninToken']
-        request_url = 'https://signin.aws.amazon.com/federation' + request_parameters
+            request_parameters += "&Destination=" + quote_plus("https://{}.console.aws.amazon.com/".format(region))
+        request_parameters += "&SigninToken=" + signin_token["SigninToken"]
+        request_url = "https://signin.aws.amazon.com/federation" + request_parameters
 
         # Send final URL to stdout
         return request_url

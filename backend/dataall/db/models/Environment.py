@@ -5,16 +5,16 @@ from .. import Base, Resource, utils
 
 
 class Environment(Resource, Base):
-    __tablename__ = 'environment'
+    __tablename__ = "environment"
     organizationUri = Column(String, nullable=False)
-    environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
+    environmentUri = Column(String, primary_key=True, default=utils.uuid("environment"))
     AwsAccountId = Column(String, nullable=False)
-    region = Column(String, nullable=False, default='eu-west-1')
+    region = Column(String, nullable=False, default="eu-west-1")
     cognitoGroupName = Column(String, nullable=True)
-    resourcePrefix = Column(String, nullable=False, default='dataall')
+    resourcePrefix = Column(String, nullable=False, default="dataall")
 
     validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
+    environmentType = Column(String, nullable=False, default="Data")
     isOrganizationDefaultEnvironment = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
     EnvironmentDefaultIAMRoleImported = Column(Boolean, default=False)

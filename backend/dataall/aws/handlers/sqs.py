@@ -33,23 +33,19 @@ class SqsQueue:
 
     @classmethod
     def get_envname(cls):
-        return os.environ.get('envname', 'local')
+        return os.environ.get("envname", "local")
 
     @classmethod
     def get_sqs_client(cls):
         if not cls.disabled:
-            client = boto3.client(
-                'sqs', region_name=os.getenv('AWS_REGION', 'eu-west-1')
-            )
+            client = boto3.client("sqs", region_name=os.getenv("AWS_REGION", "eu-west-1"))
             return client
 
     @classmethod
     def send(cls, engine, task_ids: [str]):
-        cls.configure_(
-            Parameter().get_parameter(env=cls.get_envname(), path='sqs/queue_url')
-        )
+        cls.configure_(Parameter().get_parameter(env=cls.get_envname(), path="sqs/queue_url"))
         client = cls.get_sqs_client()
-        logger.debug(f'Sending task {task_ids} through SQS {cls.queue_url}')
+        logger.debug(f"Sending task {task_ids} through SQS {cls.queue_url}")
         try:
             return client.send_message(
                 QueueUrl=cls.queue_url,

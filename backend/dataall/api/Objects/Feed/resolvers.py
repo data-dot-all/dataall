@@ -20,19 +20,19 @@ class Feed:
 
 def resolve_feed_target_type(obj, *_):
     if isinstance(obj, models.DatasetTableColumn):
-        return 'DatasetTableColumn'
+        return "DatasetTableColumn"
     elif isinstance(obj, models.Worksheet):
-        return 'Worksheet'
+        return "Worksheet"
     elif isinstance(obj, models.SqlPipeline):
-        return 'SqlPipeline'
+        return "SqlPipeline"
     elif isinstance(obj, models.DatasetTable):
-        return 'DatasetTable'
+        return "DatasetTable"
     elif isinstance(obj, models.Dataset):
-        return 'Dataset'
+        return "Dataset"
     elif isinstance(obj, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
+        return "DatasetStorageLocation"
     elif isinstance(obj, models.Dashboard):
-        return 'Dashboard'
+        return "Dashboard"
     else:
         return None
 
@@ -42,13 +42,13 @@ def resolve_target(context: Context, source: Feed, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         model = {
-            'Dataset': models.Dataset,
-            'DatasetTable': models.DatasetTable,
-            'DatasetTableColumn': models.DatasetTableColumn,
-            'DatasetStorageLocation': models.DatasetStorageLocation,
-            'Dashboard': models.Dashboard,
-            'SqlPipeline': models.SqlPipeline,
-            'Worksheet': models.Worksheet,
+            "Dataset": models.Dataset,
+            "DatasetTable": models.DatasetTable,
+            "DatasetTableColumn": models.DatasetTableColumn,
+            "DatasetStorageLocation": models.DatasetStorageLocation,
+            "Dashboard": models.Dashboard,
+            "SqlPipeline": models.SqlPipeline,
+            "Worksheet": models.Worksheet,
         }[source.targetType]
         target = session.query(model).get(source.targetUri)
     return target
@@ -76,7 +76,7 @@ def post_message(
             targetUri=targetUri,
             targetType=targetType,
             creator=context.username,
-            content=input.get('content'),
+            content=input.get("content"),
         )
         session.add(m)
     return m
@@ -88,19 +88,15 @@ def resolve_messages(context: Context, source: Feed, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        q = session.query(models.FeedMessage).filter(
-            models.FeedMessage.targetUri == source.targetUri
-        )
-        term = filter.get('term')
+        q = session.query(models.FeedMessage).filter(models.FeedMessage.targetUri == source.targetUri)
+        term = filter.get("term")
         if term:
             q = q.filter(
                 or_(
-                    models.FeedMessage.content.ilike('%' + term + '%'),
-                    models.FeedMessage.creator.ilike('%' + term + '%'),
+                    models.FeedMessage.content.ilike("%" + term + "%"),
+                    models.FeedMessage.creator.ilike("%" + term + "%"),
                 )
             )
         q = q.order_by(models.FeedMessage.created.desc())
 
-    return paginate(
-        q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)
-    ).to_dict()
+    return paginate(q, page=filter.get("page", 1), page_size=filter.get("pageSize", 10)).to_dict()

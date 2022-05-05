@@ -4,51 +4,45 @@ import pytest
 from dataall.db import models
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def _org(db, org, tenant, user, group) -> models.Organization:
-    org = org('testorg', user.userName, group.name)
+    org = org("testorg", user.userName, group.name)
     yield org
 
 
-@pytest.fixture(scope='module')
-def _env(
-    db, _org: models.Organization, user, group, module_mocker, env
-) -> models.Environment:
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+@pytest.fixture(scope="module")
+def _env(db, _org: models.Organization, user, group, module_mocker, env) -> models.Environment:
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(_org, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def _dataset(db, _env, _org, group, user, dataset) -> models.Dataset:
     with db.scoped_session() as session:
-        yield dataset(
-            org=_org, env=_env, name='dataset1', owner=user.userName, group=group.name
-        )
+        yield dataset(org=_org, env=_env, name="dataset1", owner=user.userName, group=group.name)
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def _table(db, _dataset) -> models.DatasetTable:
     with db.scoped_session() as session:
         t = models.DatasetTable(
             datasetUri=_dataset.datasetUri,
-            label='table',
+            label="table",
             AWSAccountId=_dataset.AwsAccountId,
             region=_dataset.region,
             S3BucketName=_dataset.S3BucketName,
-            S3Prefix='/raw',
-            GlueTableName='table',
-            owner='alice',
+            S3Prefix="/raw",
+            GlueTableName="table",
+            owner="alice",
             GlueDatabaseName=_dataset.GlueDatabaseName,
         )
         session.add(t)
     yield t
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def _columns(db, _dataset, _table) -> List[models.DatasetTableColumn]:
     with db.scoped_session() as session:
         cols = []
@@ -56,12 +50,12 @@ def _columns(db, _dataset, _table) -> List[models.DatasetTableColumn]:
             c = models.DatasetTableColumn(
                 datasetUri=_dataset.datasetUri,
                 tableUri=_table.tableUri,
-                label=f'c{i+1}',
+                label=f"c{i+1}",
                 AWSAccountId=_dataset.AwsAccountId,
                 region=_dataset.region,
-                GlueTableName='table',
-                typeName='String',
-                owner='user',
+                GlueTableName="table",
+                typeName="String",
+                owner="user",
                 GlueDatabaseName=_dataset.GlueDatabaseName,
             )
             session.add(c)
@@ -69,7 +63,7 @@ def _columns(db, _dataset, _table) -> List[models.DatasetTableColumn]:
     yield cols
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def g1(client, group):
     r = client.query(
         """
@@ -82,16 +76,16 @@ def g1(client, group):
         }
         """,
         input={
-            'label': 'Customer Glossary',
-            'readme': 'Glossary of customer related data',
+            "label": "Customer Glossary",
+            "readme": "Glossary of customer related data",
         },
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     yield r.data.createGlossary
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def c1(client, g1, group):
     r = client.query(
         """
@@ -106,14 +100,14 @@ def c1(client, g1, group):
         }
         """,
         parentUri=g1.nodeUri,
-        input={'label': 'Identifiers', 'readme': 'Customer identifiers category'},
-        username='alice',
+        input={"label": "Identifiers", "readme": "Customer identifiers category"},
+        username="alice",
         groups=[group.name],
     )
     yield r.data.createCategory
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def subcategory(client, c1, group):
     r = client.query(
         """
@@ -130,18 +124,18 @@ def subcategory(client, c1, group):
         }
         """,
         input={
-            'label': 'OptionalIdentifiers',
-            'readme': 'Additional, non required customer identifiers',
+            "label": "OptionalIdentifiers",
+            "readme": "Additional, non required customer identifiers",
         },
         parentUri=c1.nodeUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     subcategory = r.data.createCategory
     yield subcategory
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def t1(client, c1, group):
     r = client.query(
         """
@@ -156,8 +150,8 @@ def t1(client, c1, group):
         }
         """,
         parentUri=c1.nodeUri,
-        input={'label': 'Customer ID', 'readme': 'Global Customer Identifier'},
-        username='alice',
+        input={"label": "Customer ID", "readme": "Global Customer Identifier"},
+        username="alice",
         groups=[group.name],
     )
     yield r.data.createTerm
@@ -318,17 +312,13 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
             }
         }
         """,
-        username='alice',
+        username="alice",
         groups=[group.name],
         datasetUri=_dataset.datasetUri,
-        input={'terms': [t1.nodeUri]},
+        input={"terms": [t1.nodeUri]},
     )
     with db.scoped_session() as session:
-        link: models.TermLink = (
-            session.query(models.TermLink)
-            .filter(models.TermLink.nodeUri == t1.nodeUri)
-            .first()
-        )
+        link: models.TermLink = session.query(models.TermLink).filter(models.TermLink.nodeUri == t1.nodeUri).first()
     r = client.query(
         """
         mutation ApproveTermAssociation($linkUri:String!){
@@ -336,7 +326,7 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         }
         """,
         linkUri=link.linkUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert r
@@ -350,7 +340,7 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
         }
         """,
         linkUri=link.linkUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     assert r
@@ -454,11 +444,11 @@ def test_update_glossary(client, g1, group):
         }
         """,
         nodeUri=g1.nodeUri,
-        input={'readme': g1.readme + '(updated description)'},
-        username='alice',
+        input={"readme": g1.readme + "(updated description)"},
+        username="alice",
         groups=[group.name],
     )
-    assert r.data.updateGlossary.readme == g1.readme + '(updated description)'
+    assert r.data.updateGlossary.readme == g1.readme + "(updated description)"
 
 
 def test_update_category(client, c1, group):
@@ -479,11 +469,11 @@ def test_update_category(client, c1, group):
         }
         """,
         nodeUri=c1.nodeUri,
-        input={'readme': c1.readme + '(updated description)'},
-        username='alice',
+        input={"readme": c1.readme + "(updated description)"},
+        username="alice",
         groups=[group.name],
     )
-    assert r.data.updateCategory.readme == c1.readme + '(updated description)'
+    assert r.data.updateCategory.readme == c1.readme + "(updated description)"
 
 
 def test_delete_subcategory(client, subcategory, group):
@@ -498,7 +488,7 @@ def test_delete_subcategory(client, subcategory, group):
         }
         """,
         nodeUri=subcategory.nodeUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(r)
@@ -524,8 +514,8 @@ def test_link_term(client, t1, _columns, group):
         """,
         nodeUri=t1.nodeUri,
         targetUri=col.columnUri,
-        targetType='Column',
-        username='alice',
+        targetType="Column",
+        username="alice",
         groups=[group.name],
     )
     linkUri = r.data.linkTerm.linkUri
@@ -547,7 +537,7 @@ def test_link_term(client, t1, _columns, group):
         }
         """,
         linkUri=linkUri,
-        username='alice',
+        username="alice",
     )
     print(r)
 
@@ -577,7 +567,7 @@ def test_get_term_associations(t1, client):
         }
         """,
         nodeUri=t1.nodeUri,
-        username='alice',
+        username="alice",
     )
     print(r)
 
@@ -594,7 +584,7 @@ def test_delete_category(client, c1, group):
         }
         """,
         nodeUri=c1.nodeUri,
-        username='alice',
+        username="alice",
         groups=[group.name],
     )
     print(r)

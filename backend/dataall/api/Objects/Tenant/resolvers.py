@@ -7,7 +7,7 @@ def update_group_permissions(context, source, input=None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['groupUri'],
+            uri=input["groupUri"],
             data=input,
             check_perm=True,
         )

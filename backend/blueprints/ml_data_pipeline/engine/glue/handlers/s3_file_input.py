@@ -46,7 +46,7 @@ class S3FileInput:
             prefixes = []
             for prefix in result.search("CommonPrefixes"):
                 prefix_name = prefix.get("Prefix")
-                if prefix_name[-1] == '/':
+                if prefix_name[-1] == "/":
                     prefix_name = prefix_name[:-1]
                 if prefix_name.split("/")[0] == prefix_name:
                     prefixes.append(prefix_name)
@@ -74,17 +74,11 @@ class S3FileInput:
                 if format_param == "csv":
 
                     if format_options.get("header"):
-                        format_options["withHeader"] = format_options.get(
-                            "withHeader", format_options.get("header")
-                        )
+                        format_options["withHeader"] = format_options.get("withHeader", format_options.get("header"))
                     if format_options.get("escape"):
-                        format_options["escaper"] = format_options.get(
-                            "escaper", format_options.get("escape")
-                        )
+                        format_options["escaper"] = format_options.get("escaper", format_options.get("escape"))
                     if format_options.get("sep"):
-                        format_options["separator"] = format_options.get(
-                            "separator", format_options.get("sep")
-                        )
+                        format_options["separator"] = format_options.get("separator", format_options.get("sep"))
                     if format_options.get("format"):
                         format_options.pop("format")
 
@@ -121,4 +115,4 @@ class S3FileInput:
                 )
             )
 
-        context.register_df_list(self.name , df_list)
+        context.register_df_list(self.name, df_list)

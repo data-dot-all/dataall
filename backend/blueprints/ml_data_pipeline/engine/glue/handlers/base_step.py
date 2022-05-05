@@ -26,9 +26,7 @@ class StepHandler:
         if not handler:
             source_file = config.get("__source__", "")
             raise Exception(
-                "Handler of type [{}] does not exist in [({}).{}]".format(
-                    _type, source_file, step_input.get("name")
-                )
+                "Handler of type [{}] does not exist in [({}).{}]".format(_type, source_file, step_input.get("name"))
             )
         return handler
 
@@ -131,9 +129,7 @@ class StepInterface:
 
         try:
 
-            self.run_step(
-                spark=spark, config=config, context=context, glueContext=glueContext
-            )
+            self.run_step(spark=spark, config=config, context=context, glueContext=glueContext)
             self.success()
 
         except Exception as e:

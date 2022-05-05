@@ -20,8 +20,8 @@ class Field:
         directives=[],
         resolver=None,
         test_scope: str = None,
-        test_cases: typing.List[str] = ['*'],
-        doc='',
+        test_cases: typing.List[str] = ["*"],
+        doc="",
     ):
         self.name: str = name
         self.type: typing.Union[Scalar, ObjectType, Ref] = type
@@ -47,14 +47,14 @@ class Field:
         elif isinstance(self.type, Union):
             t = self.type.name
         else:
-            raise Exception(f'Invalid type for field `{self.name}`: {type(self.type)}')
+            raise Exception(f"Invalid type for field `{self.name}`: {type(self.type)}")
         if self.args is not None:
             for a in self.args:
                 if not isinstance(a, Argument):
-                    raise Exception(f'Found wrong argument in field {self.name}')
+                    raise Exception(f"Found wrong argument in field {self.name}")
             gql = f'{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
         else:
-            gql = f'{self.name} : {t}'
+            gql = f"{self.name} : {t}"
 
         if not len(self.directives):
             return gql
@@ -62,12 +62,10 @@ class Field:
             if with_directives:
                 return f'{gql} {" ".join([d.gql() for d in self.directives])}'
             else:
-                return f'{gql}'
+                return f"{gql}"
 
     def directive(self, directive_name):
-        return next(
-            filter(lambda d: d.name == directive_name, self.directives or []), None
-        )
+        return next(filter(lambda d: d.name == directive_name, self.directives or []), None)
 
     def has_directive(self, directive_name):
         return self.directive(directive_name=directive_name) is not None

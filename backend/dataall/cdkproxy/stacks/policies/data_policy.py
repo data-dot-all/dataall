@@ -47,34 +47,34 @@ class DataPolicy:
             statements=[
                 iam.PolicyStatement(
                     actions=[
-                        's3:List*',
-                        's3:Get*',
-                        's3:PutAccountPublicAccessBlock',
-                        's3:PutAccessPointPublicAccessBlock',
-                        's3:PutStorageLensConfiguration',
-                        's3:CreateJob',
+                        "s3:List*",
+                        "s3:Get*",
+                        "s3:PutAccountPublicAccessBlock",
+                        "s3:PutAccessPointPublicAccessBlock",
+                        "s3:PutStorageLensConfiguration",
+                        "s3:CreateJob",
                     ],
-                    resources=['*'],
+                    resources=["*"],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:*'],
+                    actions=["s3:*"],
                     resources=[
-                        f'arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:job/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:storage-lens/*',
-                        f'arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*',
-                        f'arn:aws:s3:{self.region}:{self.account}:accesspoint/*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:s3:::{self.resource_prefix}*',
+                        f"arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*",
+                        f"arn:aws:s3:{self.region}:{self.account}:job/*",
+                        f"arn:aws:s3:{self.region}:{self.account}:storage-lens/*",
+                        f"arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*",
+                        f"arn:aws:s3:{self.region}:{self.account}:accesspoint/*",
+                        f"arn:aws:s3:::{self.resource_prefix}*/*",
+                        f"arn:aws:s3:::{self.resource_prefix}*",
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['athena:*', 'lakeformation:*', 'glue:*', 'kms:*'],
-                    resources=['*'],
+                    actions=["athena:*", "lakeformation:*", "glue:*", "kms:*"],
+                    resources=["*"],
                 ),
             ],
         )
-        logger.debug(f'Final generated policy {policy.document.to_json()}')
+        logger.debug(f"Final generated policy {policy.document.to_json()}")
 
         return policy
 
@@ -90,7 +90,7 @@ class DataPolicy:
             policy_name=self.name,
             statements=statements,
         )
-        logger.debug(f'Final generated policy {policy.document.to_json()}')
+        logger.debug(f"Final generated policy {policy.document.to_json()}")
 
         return policy
 
@@ -98,23 +98,23 @@ class DataPolicy:
         statements = [
             iam.PolicyStatement(
                 actions=[
-                    's3:List*',
-                    's3:Get*',
-                    's3:PutAccountPublicAccessBlock',
-                    's3:PutAccessPointPublicAccessBlock',
-                    's3:PutStorageLensConfiguration',
-                    's3:CreateJob',
+                    "s3:List*",
+                    "s3:Get*",
+                    "s3:PutAccountPublicAccessBlock",
+                    "s3:PutAccessPointPublicAccessBlock",
+                    "s3:PutStorageLensConfiguration",
+                    "s3:CreateJob",
                 ],
-                resources=['*'],
+                resources=["*"],
             ),
             iam.PolicyStatement(
-                actions=['s3:*'],
+                actions=["s3:*"],
                 resources=[
-                    f'arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:job/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:storage-lens/*',
-                    f'arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*',
-                    f'arn:aws:s3:{self.region}:{self.account}:accesspoint/*',
+                    f"arn:aws:s3-object-lambda:{self.region}:{self.account}:accesspoint/*",
+                    f"arn:aws:s3:{self.region}:{self.account}:job/*",
+                    f"arn:aws:s3:{self.region}:{self.account}:storage-lens/*",
+                    f"arn:aws:s3:us-west-2:{self.account}:async-request/mrap/*/*",
+                    f"arn:aws:s3:{self.region}:{self.account}:accesspoint/*",
                 ],
             ),
         ]
@@ -127,18 +127,18 @@ class DataPolicy:
 
     def set_allowed_s3_buckets_statements(self, statements):
         allowed_buckets = [
-            f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}',
-            f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/*',
+            f"arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}",
+            f"arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/*",
         ]
         if self.datasets:
             dataset: models.Dataset
             for dataset in self.datasets:
-                allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}/*')
-                allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
+                allowed_buckets.append(f"arn:aws:s3:::{dataset.S3BucketName}/*")
+                allowed_buckets.append(f"arn:aws:s3:::{dataset.S3BucketName}")
         statements.extend(
             [
                 iam.PolicyStatement(
-                    actions=['s3:*'],
+                    actions=["s3:*"],
                     resources=allowed_buckets,
                 )
             ]
@@ -148,10 +148,10 @@ class DataPolicy:
         statements.extend(
             [
                 iam.PolicyStatement(
-                    actions=['athena:*'],
+                    actions=["athena:*"],
                     resources=[
-                        f'arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}',
-                        f'arn:aws:athena:{self.region}:{self.account}:datacatalog/*',
+                        f"arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}",
+                        f"arn:aws:athena:{self.region}:{self.account}:datacatalog/*",
                     ],
                 )
             ]

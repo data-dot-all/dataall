@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ResourcePolicy:
     @staticmethod
-    def check_user_resource_permission(
-        session, username: str, groups: [str], resource_uri: str, permission_name: str
-    ):
+    def check_user_resource_permission(session, username: str, groups: [str], resource_uri: str, permission_name: str):
         resource_policy = ResourcePolicy.has_user_resource_permission(
             session=session,
             username=username,
@@ -47,13 +45,12 @@ class ResourcePolicy:
             )
             .join(
                 models.Permission,
-                models.Permission.permissionUri
-                == models.ResourcePolicyPermission.permissionUri,
+                models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
             )
             .filter(
                 and_(
                     models.ResourcePolicy.principalId.in_(groups),
-                    models.ResourcePolicy.principalType == 'GROUP',
+                    models.ResourcePolicy.principalType == "GROUP",
                     models.Permission.name == permission_name,
                     models.ResourcePolicy.resourceUri == resource_uri,
                 )
@@ -82,13 +79,12 @@ class ResourcePolicy:
             )
             .join(
                 models.Permission,
-                models.Permission.permissionUri
-                == models.ResourcePolicyPermission.permissionUri,
+                models.Permission.permissionUri == models.ResourcePolicyPermission.permissionUri,
             )
             .filter(
                 and_(
                     models.ResourcePolicy.principalId == group_uri,
-                    models.ResourcePolicy.principalType == 'GROUP',
+                    models.ResourcePolicy.principalType == "GROUP",
                     models.Permission.name == permission_name,
                     models.ResourcePolicy.resourceUri == resource_uri,
                 )
@@ -102,13 +98,11 @@ class ResourcePolicy:
             return policy
 
     @staticmethod
-    def find_resource_policy(
-        session, group_uri: str, resource_uri: str
-    ) -> models.ResourcePolicy:
+    def find_resource_policy(session, group_uri: str, resource_uri: str) -> models.ResourcePolicy:
         if not group_uri:
-            raise exceptions.RequiredParameter(param_name='group')
+            raise exceptions.RequiredParameter(param_name="group")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
         resource_policy = (
             session.query(models.ResourcePolicy)
             .filter(
@@ -134,13 +128,9 @@ class ResourcePolicy:
             group, permissions, resource_uri, resource_type
         )
 
-        policy = ResourcePolicy.save_resource_policy(
-            session, group, resource_uri, resource_type
-        )
+        policy = ResourcePolicy.save_resource_policy(session, group, resource_uri, resource_type)
 
-        ResourcePolicy.add_permission_to_resource_policy(
-            session, group, permissions, resource_uri, policy
-        )
+        ResourcePolicy.add_permission_to_resource_policy(session, group, permissions, resource_uri, policy)
 
         return policy
 
@@ -153,9 +143,7 @@ class ResourcePolicy:
     ) -> bool:
 
         ResourcePolicy.validate_delete_resource_policy_params(group, resource_uri)
-        policy = ResourcePolicy.find_resource_policy(
-            session, group_uri=group, resource_uri=resource_uri
-        )
+        policy = ResourcePolicy.find_resource_policy(session, group_uri=group, resource_uri=resource_uri)
         if policy:
             for permission in policy.permissions:
                 session.delete(permission)
@@ -165,28 +153,24 @@ class ResourcePolicy:
         return True
 
     @staticmethod
-    def validate_attach_resource_policy_params(
-        group, permissions, resource_uri, resource_type
-    ):
+    def validate_attach_resource_policy_params(group, permissions, resource_uri, resource_type):
         if not group:
-            raise exceptions.RequiredParameter(param_name='group')
+            raise exceptions.RequiredParameter(param_name="group")
         if not permissions:
-            raise exceptions.RequiredParameter(param_name='permissions')
+            raise exceptions.RequiredParameter(param_name="permissions")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
         if not resource_type:
-            raise exceptions.RequiredParameter(param_name='resource_type')
+            raise exceptions.RequiredParameter(param_name="resource_type")
 
     @staticmethod
     def save_resource_policy(session, group, resource_uri, resource_type):
-        ResourcePolicy.validate_save_resource_policy_params(
-            group, resource_uri, resource_type
-        )
+        ResourcePolicy.validate_save_resource_policy_params(group, resource_uri, resource_type)
         policy = ResourcePolicy.find_resource_policy(session, group, resource_uri)
         if not policy:
             policy = models.ResourcePolicy(
                 principalId=group,
-                principalType='GROUP',
+                principalType="GROUP",
                 resourceUri=resource_uri,
                 resourceType=resource_type,
             )
@@ -197,19 +181,15 @@ class ResourcePolicy:
     @staticmethod
     def validate_save_resource_policy_params(group, resource_uri, resource_type):
         if not group:
-            raise exceptions.RequiredParameter(param_name='group')
+            raise exceptions.RequiredParameter(param_name="group")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
         if not resource_type:
-            raise exceptions.RequiredParameter(param_name='resource_type')
+            raise exceptions.RequiredParameter(param_name="resource_type")
 
     @staticmethod
-    def add_permission_to_resource_policy(
-        session, group, permissions, resource_uri, policy
-    ):
-        ResourcePolicy.validate_add_permission_to_resource_policy_params(
-            group, permissions, policy, resource_uri
-        )
+    def add_permission_to_resource_policy(session, group, permissions, resource_uri, policy):
+        ResourcePolicy.validate_add_permission_to_resource_policy_params(group, permissions, policy, resource_uri)
 
         for permission in permissions:
             if not ResourcePolicy.has_group_resource_permission(
@@ -218,36 +198,32 @@ class ResourcePolicy:
                 permission_name=permission,
                 resource_uri=resource_uri,
             ):
-                ResourcePolicy.associate_permission_to_resource_policy(
-                    session, policy, permission
-                )
+                ResourcePolicy.associate_permission_to_resource_policy(session, policy, permission)
 
     @staticmethod
-    def validate_add_permission_to_resource_policy_params(
-        group, permissions, policy, resource_uri
-    ):
+    def validate_add_permission_to_resource_policy_params(group, permissions, policy, resource_uri):
         if not group:
-            raise exceptions.RequiredParameter(param_name='group')
+            raise exceptions.RequiredParameter(param_name="group")
         if not permissions:
-            raise exceptions.RequiredParameter(param_name='permissions')
+            raise exceptions.RequiredParameter(param_name="permissions")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
         if not policy:
-            raise exceptions.RequiredParameter(param_name='policy')
+            raise exceptions.RequiredParameter(param_name="policy")
 
     @staticmethod
     def validate_delete_resource_policy_params(group, resource_uri):
         if not group:
-            raise exceptions.RequiredParameter(param_name='group')
+            raise exceptions.RequiredParameter(param_name="group")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
 
     @staticmethod
     def associate_permission_to_resource_policy(session, policy, permission):
         if not policy:
-            raise exceptions.RequiredParameter(param_name='policy')
+            raise exceptions.RequiredParameter(param_name="policy")
         if not permission:
-            raise exceptions.RequiredParameter(param_name='permission')
+            raise exceptions.RequiredParameter(param_name="permission")
         policy_permission = models.ResourcePolicyPermission(
             sid=policy.sid,
             permissionUri=Permission.get_permission_by_name(
@@ -260,9 +236,9 @@ class ResourcePolicy:
     @staticmethod
     def get_resource_policy_permissions(session, group_uri, resource_uri):
         if not group_uri:
-            raise exceptions.RequiredParameter(param_name='group_uri')
+            raise exceptions.RequiredParameter(param_name="group_uri")
         if not resource_uri:
-            raise exceptions.RequiredParameter(param_name='resource_uri')
+            raise exceptions.RequiredParameter(param_name="resource_uri")
         policy = ResourcePolicy.find_resource_policy(
             session=session,
             group_uri=group_uri,

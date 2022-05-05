@@ -12,9 +12,7 @@ def list_my_notifications(
     filter: dict = None,
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Notification.paginated_notifications(
-            session=session, username=context.username, filter=filter
-        )
+        return db.api.Notification.paginated_notifications(session=session, username=context.username, filter=filter)
 
 
 def mark_as_read(
@@ -33,9 +31,7 @@ def count_unread_notifications(context: Context, source):
 
 def count_deleted_notifications(context: Context, source):
     with context.engine.scoped_session() as session:
-        return db.api.Notification.count_deleted_notifications(
-            session, context.username
-        )
+        return db.api.Notification.count_deleted_notifications(session, context.username)
 
 
 def count_read_notifications(context: Context, source):

@@ -21,199 +21,195 @@ from stacks import StackManager
 
 from ..db import get_engine, models
 
-print('\n'.join(sys.path))
+print("\n".join(sys.path))
 
-logger = logging.getLogger('cdksass')
+logger = logging.getLogger("cdksass")
 
-ENVNAME = os.getenv('envname', 'local')
-logger.warning(f'Application started for envname= `{ENVNAME}`')
+ENVNAME = os.getenv("envname", "local")
+logger.warning(f"Application started for envname= `{ENVNAME}`")
 
 StackManager.registered_stacks()
 
 
 def connect():
-    logger.info(f'Connecting to database for environment: `{ENVNAME}`')
+    logger.info(f"Connecting to database for environment: `{ENVNAME}`")
     try:
         engine = get_engine(envname=ENVNAME)
         with engine.scoped_session() as session:
             orgs = session.query(models.Organization).all()
         return engine
     except Exception as e:
-        raise Exception('Connection Error')
+        raise Exception("Connection Error")
 
 
 app = FastAPI()
 
 
-@app.get('/', status_code=status.HTTP_200_OK)
+@app.get("/", status_code=status.HTTP_200_OK)
 def up(response: Response):
-    logger.info('GET /')
-    return {'_ts': datetime.now().isoformat(), 'message': 'Service is up'}
+    logger.info("GET /")
+    return {"_ts": datetime.now().isoformat(), "message": "Service is up"}
 
 
-@app.get('/awscreds', status_code=status.HTTP_200_OK)
+@app.get("/awscreds", status_code=status.HTTP_200_OK)
 def check_creds(response: Response):
-    logger.info('GET /awscreds')
+    logger.info("GET /awscreds")
     try:
-        sts = boto3.client('sts', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
+        sts = boto3.client("sts", region_name=os.getenv("AWS_REGION", "eu-west-1"))
         data = sts.get_caller_identity()
         return {
-            '_ts': datetime.now().isoformat(),
-            'message': 'Retrieved current credentials',
-            'data': {
-                'UserId': data.get('UserId'),
-                'Account': data.get('Account'),
-                'Arn': data.get('Arn'),
+            "_ts": datetime.now().isoformat(),
+            "message": "Retrieved current credentials",
+            "data": {
+                "UserId": data.get("UserId"),
+                "Account": data.get("Account"),
+                "Arn": data.get("Arn"),
             },
         }
     except ClientError as e:
-        logger.exception('AWSCREDSERROR')
+        logger.exception("AWSCREDSERROR")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'message': 'Could not retrieve current aws credentials',
-            'data': None,
-            'error': str(e),
+            "_ts": datetime.now().isoformat(),
+            "message": "Could not retrieve current aws credentials",
+            "data": None,
+            "error": str(e),
         }
 
 
-@app.get('/connect', status_code=status.HTTP_200_OK)
+@app.get("/connect", status_code=status.HTTP_200_OK)
 def check_connect(response: Response):
-    logger.info('GET /connect')
+    logger.info("GET /connect")
     try:
         engine = connect()
         return {
-            '_ts': datetime.now().isoformat(),
-            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.params['host']}:{engine.dbconfig.params['port']})",
+            "_ts": datetime.now().isoformat(),
+            "message": f"Connected to database for environment {ENVNAME}({engine.dbconfig.params['host']}:{engine.dbconfig.params['port']})",
         }
     except Exception as e:
-        logger.exception('DBCONNECTIONERROR')
+        logger.exception("DBCONNECTIONERROR")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'error': str(e),
-            'message': f'Failed to connect to database for environment `{ENVNAME}`',
+            "_ts": datetime.now().isoformat(),
+            "error": str(e),
+            "message": f"Failed to connect to database for environment `{ENVNAME}`",
         }
 
 
-@app.get('/cdk-installed', status_code=status.HTTP_200_OK)
+@app.get("/cdk-installed", status_code=status.HTTP_200_OK)
 def check_cdk_installed(response: Response):
-    logger.info('GET /cdk-installed')
+    logger.info("GET /cdk-installed")
     try:
         wrapper.cdk_installed()
         return {
-            '_ts': datetime.now().isoformat(),
-            'message': 'Successfully ran cdk cli',
+            "_ts": datetime.now().isoformat(),
+            "message": "Successfully ran cdk cli",
         }
     except Exception as e:
-        logger.exception('CDKINSTALLERROR')
+        logger.exception("CDKINSTALLERROR")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'error': str(e),
-            'message': 'Failed to run cdk cli',
+            "_ts": datetime.now().isoformat(),
+            "error": str(e),
+            "message": "Failed to run cdk cli",
         }
 
 
-@app.post('/stack/{stackid}', status_code=status.HTTP_202_ACCEPTED)
-async def create_stack(
-    stackid: str, background_tasks: BackgroundTasks, response: Response
-):
+@app.post("/stack/{stackid}", status_code=status.HTTP_202_ACCEPTED)
+async def create_stack(stackid: str, background_tasks: BackgroundTasks, response: Response):
     """Deploys or updates the stack"""
-    logger.info(f'POST /stack/{stackid}')
+    logger.info(f"POST /stack/{stackid}")
     try:
         engine = connect()
     except Exception as e:
         print(e)
-        logger.exception('DBCONNECTION')
+        logger.exception("DBCONNECTION")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'error': str(e),
-            'message': f'Failed to connect to database for environment `{ENVNAME}`',
+            "_ts": datetime.now().isoformat(),
+            "error": str(e),
+            "message": f"Failed to connect to database for environment `{ENVNAME}`",
         }
 
     with engine.scoped_session() as session:
         stack: models.Stack = session.query(models.Stack).get(stackid)
         if not stack:
-            logger.warning(f'Could not find stack with stackUri `{stackid}`')
+            logger.warning(f"Could not find stack with stackUri `{stackid}`")
             response.status_code = status.HTTP_302_FOUND
             return {
-                '_ts': datetime.now().isoformat(),
-                'error': 'ObjectNotFound',
-                'message': f'Stack {stackid} not found',
+                "_ts": datetime.now().isoformat(),
+                "error": "ObjectNotFound",
+                "message": f"Stack {stackid} not found",
             }  # yaml.safe_load(response.stdout)
-        stack.status = 'RUNNING'
-    logger.info('Adding bg task')
+        stack.status = "RUNNING"
+    logger.info("Adding bg task")
     background_tasks.add_task(wrapper.deploy_cdk_stack, engine, stackid)
     return {
-        '_ts': datetime.now().isoformat(),
-        'message': f'Starting creation of StackId {stack.stackUri} on Account {stack.accountid} / Region {stack.region}',
+        "_ts": datetime.now().isoformat(),
+        "message": f"Starting creation of StackId {stack.stackUri} on Account {stack.accountid} / Region {stack.region}",
     }
 
 
-@app.delete('/stack/{stackid}', status_code=status.HTTP_202_ACCEPTED)
-async def delete_stack(
-    stackid: str, background_tasks: BackgroundTasks, response: Response
-):
+@app.delete("/stack/{stackid}", status_code=status.HTTP_202_ACCEPTED)
+async def delete_stack(stackid: str, background_tasks: BackgroundTasks, response: Response):
     """
     Deletes the stack
     """
-    logger.info(f'DELETE /stack/{stackid}')
+    logger.info(f"DELETE /stack/{stackid}")
     try:
         engine = connect()
     except Exception as e:
-        logger.exception('DBCONNECTION')
+        logger.exception("DBCONNECTION")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'error': str(e),
-            'message': f'Failed to connect to database for environment `{ENVNAME}`',
+            "_ts": datetime.now().isoformat(),
+            "error": str(e),
+            "message": f"Failed to connect to database for environment `{ENVNAME}`",
         }
     with engine.scoped_session() as session:
         stack: models.Stack = session.query(models.Stack).get(stackid)
         if not stack:
-            logger.warning(f'Could not find stack with stackUri `{stackid}`')
+            logger.warning(f"Could not find stack with stackUri `{stackid}`")
             response.status_code = status.HTTP_302_FOUND
             return {
-                '_ts': datetime.now().isoformat(),
-                'error': 'ObjectNotFound',
-                'message': f'Stack {stackid} not found',
+                "_ts": datetime.now().isoformat(),
+                "error": "ObjectNotFound",
+                "message": f"Stack {stackid} not found",
             }
-        stack.status = 'DELETING'
+        stack.status = "DELETING"
 
     background_tasks.add_task(wrapper.destroy_cdk_stack, engine, stackid)
     return {
-        '_ts': datetime.now().isoformat(),
-        'message': f'Starting deletion of StackId {stack.stackUri} on Account {stack.accountid} / Region {stack.region}',
+        "_ts": datetime.now().isoformat(),
+        "message": f"Starting deletion of StackId {stack.stackUri} on Account {stack.accountid} / Region {stack.region}",
     }
 
 
-@app.get('/stack/{stackid}', status_code=status.HTTP_200_OK)
+@app.get("/stack/{stackid}", status_code=status.HTTP_200_OK)
 def get_stack(stackid: str, response: Response):
     """
     Returns {StackId:"", "StackStatus"} for the given stack
     """
-    logger.info(f'GET /stack/{stackid}')
+    logger.info(f"GET /stack/{stackid}")
     try:
         engine = connect()
     except Exception as e:
-        logger.exception('DBCONNECTION')
+        logger.exception("DBCONNECTION")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
-            '_ts': datetime.now().isoformat(),
-            'error': str(e),
-            'message': f'Failed to connect to database for environment `{ENVNAME}`',
+            "_ts": datetime.now().isoformat(),
+            "error": str(e),
+            "message": f"Failed to connect to database for environment `{ENVNAME}`",
         }
     with engine.scoped_session() as session:
         stack: models.Stack = session.query(models.Stack).get(stackid)
         if not stack:
-            logger.warning(f'Could not find stack with stackUri `{stackid}`')
+            logger.warning(f"Could not find stack with stackUri `{stackid}`")
             response.status_code = status.HTTP_404_NOT_FOUND
             return {
-                '_ts': datetime.now().isoformat(),
-                'error': 'ObjectNotFound',
-                'message': f'Stack {stackid} not found',
+                "_ts": datetime.now().isoformat(),
+                "error": "ObjectNotFound",
+                "message": f"Stack {stackid} not found",
             }
         try:
             meta = wrapper.describe_stack(None, engine, stackid)

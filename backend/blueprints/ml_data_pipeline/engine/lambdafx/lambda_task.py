@@ -16,12 +16,10 @@ def get_function_name(stack, job):
         stack: the containing stack
         job: the job configuration
     """
-    if len(job['name']) > 38:
-        raise Exception(
-            'Name of the function cannot exceed 38 characters {}'.format(job['name'])
-        )
+    if len(job["name"]) > 38:
+        raise Exception("Name of the function cannot exceed 38 characters {}".format(job["name"]))
 
-    if len(job['name']) + len(stack.pipeline_name) >= 62:
+    if len(job["name"]) + len(stack.pipeline_name) >= 62:
         return f"{stack.pipeline_name[:20]}-{stack.pipeline_name[-4:]}-{job['name']}"
     else:
         return f"{stack.pipeline_name}-{job['name']}"
@@ -33,9 +31,7 @@ def default_lambda_description(job, stack):
         job: the job definition
         stack: the stack englobing the lambdafx
     """
-    return 'Python lambdafx created by data.all {} {}'.format(
-        job['name'], stack.pipeline_name
-    )
+    return "Python lambdafx created by data.all {} {}".format(job["name"], stack.pipeline_name)
 
 
 def make_lambda_function_task(stack, job):
@@ -47,12 +43,12 @@ def make_lambda_function_task(stack, job):
     """
     lambdafx = lambda_python.PythonFunction(
         stack,
-        job['name'],
+        job["name"],
         runtime=resource_task.lambda_to_runtime(job),
-        memory_size=job.get('memory_size', 1028),
-        description=job.get('description', default_lambda_description(job, stack)),
+        memory_size=job.get("memory_size", 1028),
+        description=job.get("description", default_lambda_description(job, stack)),
         function_name=get_function_name(stack, job),
-        **LambdaFxPropsMapper.map_function_props(stack, job['name'], job['config']),
+        **LambdaFxPropsMapper.map_function_props(stack, job["name"], job["config"]),
     )
 
     # pipeline_iam_role_arn could access to the lambda
@@ -61,7 +57,7 @@ def make_lambda_function_task(stack, job):
     lambdafx.add_permission(
         f"LambdaPermissionBasic{job.get('name')}",
         principal=principal,
-        action='lambda:*',
+        action="lambda:*",
     )
     # pipeline_fulldev_iam_role could access to the lambda
     principal = iam.ArnPrincipal(stack.pipeline_fulldev_iam_role)
@@ -69,7 +65,7 @@ def make_lambda_function_task(stack, job):
     lambdafx.add_permission(
         f"LambdaPermissionFullDev{job.get('name')}",
         principal=principal,
-        action='lambda:*',
+        action="lambda:*",
     )
     # pipeline_admin_iam_role could access to the lambda
     principal = iam.ArnPrincipal(stack.pipeline_admin_iam_role)
@@ -77,7 +73,7 @@ def make_lambda_function_task(stack, job):
     lambdafx.add_permission(
         f"LambdaPermissionAdmin{job.get('name')}",
         principal=principal,
-        action='lambda:*',
+        action="lambda:*",
     )
     # Tag the lambdafx functions
     stack.set_resource_tags(lambdafx)
@@ -86,6 +82,6 @@ def make_lambda_function_task(stack, job):
     task = tasks.LambdaInvoke(
         stack,
         f"Lambda: {job.get('name')}",
-        **LambdaFxPropsMapper.map_task_props(lambdafx, job['config']),
+        **LambdaFxPropsMapper.map_task_props(lambdafx, job["config"]),
     )
     return task

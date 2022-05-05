@@ -32,14 +32,12 @@ def update_organization(context, source, organizationUri=None, input=None):
 
 def get_organization(context: Context, source, organizationUri=None):
     with context.engine.scoped_session() as session:
-        return Organization.get_organization_by_uri(
-            session=session, uri=organizationUri
-        )
+        return Organization.get_organization_by_uri(session=session, uri=organizationUri)
 
 
 def list_organizations(context: Context, source, filter=None):
     if not filter:
-        filter = {'page': 1, 'pageSize': 5}
+        filter = {"page": 1, "pageSize": 5}
 
     with context.engine.scoped_session() as session:
         return Organization.paginated_user_organizations(
@@ -54,7 +52,7 @@ def list_organizations(context: Context, source, filter=None):
 
 def list_groups(context, source: models.Organization, filter=None):
     if not filter:
-        filter = {'page': 1, 'pageSize': 5}
+        filter = {"page": 1, "pageSize": 5}
     with context.engine.scoped_session() as session:
         return Organization.paginated_organization_groups(
             session=session,
@@ -68,7 +66,7 @@ def list_groups(context, source: models.Organization, filter=None):
 
 def list_organization_environments(context, source, filter=None):
     if not filter:
-        filter = {'page': 1, 'pageSize': 5}
+        filter = {"page": 1, "pageSize": 5}
     with context.engine.scoped_session() as session:
         return Organization.paginated_organization_environments(
             session=session,
@@ -82,15 +80,13 @@ def list_organization_environments(context, source, filter=None):
 
 def stats(context, source: models.Organization, **kwargs):
     with context.engine.scoped_session() as session:
-        environments = db.api.Organization.count_organization_environments(
-            session=session, uri=source.organizationUri
-        )
+        environments = db.api.Organization.count_organization_environments(session=session, uri=source.organizationUri)
 
         groups = db.api.Organization.count_organization_invited_groups(
             session=session, uri=source.organizationUri, group=source.SamlGroupName
         )
 
-    return {'environments': environments, 'groups': groups, 'users': 0}
+    return {"environments": environments, "groups": groups, "users": 0}
 
 
 def resolve_user_role(context: Context, source: models.Organization):
@@ -125,7 +121,7 @@ def invite_group(context: Context, source, input):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['organizationUri'],
+            uri=input["organizationUri"],
             data=input,
             check_perm=True,
         )
@@ -139,15 +135,13 @@ def remove_group(context: Context, source, organizationUri=None, groupUri=None):
             username=context.username,
             groups=context.groups,
             uri=organizationUri,
-            data={'groupUri': groupUri},
+            data={"groupUri": groupUri},
             check_perm=True,
         )
         return organization
 
 
-def list_organization_invited_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
+def list_organization_invited_groups(context: Context, source, organizationUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -161,9 +155,7 @@ def list_organization_invited_groups(
         )
 
 
-def list_organization_not_invited_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
+def list_organization_not_invited_groups(context: Context, source, organizationUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -177,9 +169,7 @@ def list_organization_not_invited_groups(
         )
 
 
-def list_organization_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
+def list_organization_groups(context: Context, source, organizationUri=None, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:

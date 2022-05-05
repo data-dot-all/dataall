@@ -7,11 +7,9 @@ from .Enums import ShareObjectStatus
 
 
 class ShareObjectItem(Base):
-    __tablename__ = 'share_object_item'
+    __tablename__ = "share_object_item"
     shareUri = Column(String, nullable=False)
-    shareItemUri = Column(
-        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
-    )
+    shareItemUri = Column(String, default=utils.uuid("shareitem"), nullable=False, primary_key=True)
     itemType = Column(String, nullable=False)
     itemUri = Column(String, nullable=False)
     itemName = Column(String, nullable=False)

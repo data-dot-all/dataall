@@ -5,8 +5,7 @@ from ....aws.handlers import stepfunction as helpers
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....db import exceptions, models, permissions
-from ....db.api import (Environment, KeyValueTag, Pipeline, ResourcePolicy,
-                        Stack)
+from ....db.api import Environment, KeyValueTag, Pipeline, ResourcePolicy, Stack
 from ...constants import DataPipelineRole
 from ...context import Context
 from ...Objects.Stack import stack_helper
@@ -20,7 +19,7 @@ def create_pipeline(context: Context, source, input=None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
+            uri=input["environmentUri"],
             data=input,
             check_perm=True,
         )
@@ -28,10 +27,10 @@ def create_pipeline(context: Context, source, input=None):
         Stack.create_stack(
             session=session,
             environment_uri=pipeline.environmentUri,
-            target_type='pipeline',
+            target_type="pipeline",
             target_uri=pipeline.sqlPipelineUri,
             target_label=pipeline.label,
-            payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+            payload={"account": pipeline.AwsAccountId, "region": pipeline.region},
         )
 
     stack_helper.deploy_stack(context, pipeline.sqlPipelineUri)
@@ -109,10 +108,8 @@ def get_clone_url_http(context: Context, source: models.SqlPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
-        return f'codecommit::{env.region}://{source.repo}'
+        env: models.Environment = session.query(models.Environment).get(source.environmentUri)
+        return f"codecommit::{env.region}://{source.repo}"
 
 
 def cat(context: Context, source, input: dict = None):
@@ -121,24 +118,22 @@ def cat(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['sqlPipelineUri'],
+            uri=input["sqlPipelineUri"],
             data=None,
             check_perm=True,
         )
         task = models.Task(
-            action='repo.sqlpipeline.cat',
-            targetUri=input.get('sqlPipelineUri'),
+            action="repo.sqlpipeline.cat",
+            targetUri=input.get("sqlPipelineUri"),
             payload={
-                'absolutePath': input.get('absolutePath'),
-                'branch': input.get('branch', 'master'),
+                "absolutePath": input.get("absolutePath"),
+                "branch": input.get("branch", "master"),
             },
         )
         session.add(task)
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return response[0]['response'].decode('ascii')
+    response = Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
+    return response[0]["response"].decode("ascii")
 
 
 def ls(context: Context, source, input: dict = None):
@@ -147,24 +142,22 @@ def ls(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['sqlPipelineUri'],
+            uri=input["sqlPipelineUri"],
             data=None,
             check_perm=True,
         )
         task = models.Task(
-            action='repo.sqlpipeline.ls',
-            targetUri=input.get('sqlPipelineUri'),
+            action="repo.sqlpipeline.ls",
+            targetUri=input.get("sqlPipelineUri"),
             payload={
-                'folderPath': input.get('folderPath', '/'),
-                'branch': input.get('branch', 'master'),
+                "folderPath": input.get("folderPath", "/"),
+                "branch": input.get("branch", "master"),
             },
         )
         session.add(task)
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return json.dumps(response[0]['response'])
+    response = Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
+    return json.dumps(response[0]["response"])
 
 
 def list_branches(context: Context, source, sqlPipelineUri: str = None):
@@ -177,13 +170,11 @@ def list_branches(context: Context, source, sqlPipelineUri: str = None):
             data=None,
             check_perm=True,
         )
-        task = models.Task(action='repo.sqlpipeline.branches', targetUri=sqlPipelineUri)
+        task = models.Task(action="repo.sqlpipeline.branches", targetUri=sqlPipelineUri)
         session.add(task)
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return response[0]['response']
+    response = Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
+    return response[0]["response"]
 
 
 def get_stack(context, source: models.SqlPipeline, **kwargs):
@@ -200,28 +191,22 @@ def get_job_runs(context, source: models.SqlPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        task = models.Task(targetUri=source.sqlPipelineUri, action='glue.job.runs')
+        task = models.Task(targetUri=source.sqlPipelineUri, action="glue.job.runs")
         session.add(task)
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )[0]
-    return response['response']
+    response = Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)[0]
+    return response["response"]
 
 
 def get_pipeline_executions(context: Context, source: models.SqlPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=source.sqlPipelineUri, action='sqlpipeline.pipeline.executions'
-        )
+        task = models.Task(targetUri=source.sqlPipelineUri, action="sqlpipeline.pipeline.executions")
         session.add(task)
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )[0]
-    return response['response']
+    response = Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)[0]
+    return response["response"]
 
 
 def get_creds(context: Context, source, sqlPipelineUri: str = None):
@@ -250,17 +235,15 @@ def _get_creds_from_aws(pipeline, env_role_arn):
     c = env_session.get_credentials()
     body = json.dumps(
         {
-            'AWS_ACCESS_KEY_ID': c.access_key,
-            'AWS_SECRET_ACCESS_KEY': c.secret_key,
-            'AWS_SESSION_TOKEN': c.token,
+            "AWS_ACCESS_KEY_ID": c.access_key,
+            "AWS_SECRET_ACCESS_KEY": c.secret_key,
+            "AWS_SESSION_TOKEN": c.token,
         }
     )
     return body
 
 
-def list_pipeline_state_machine_executions(
-    context: Context, source, sqlPipelineUri: str = None, stage: str = None
-):
+def list_pipeline_state_machine_executions(context: Context, source, sqlPipelineUri: str = None, stage: str = None):
     with context.engine.scoped_session() as session:
         pipeline = Pipeline.get_pipeline(
             session=session,
@@ -273,17 +256,15 @@ def list_pipeline_state_machine_executions(
 
         env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
-        executions = helpers.list_executions(
-            state_machine_name=pipeline.name, env=env, stage='Prod'
-        )
+        executions = helpers.list_executions(state_machine_name=pipeline.name, env=env, stage="Prod")
 
     return {
-        'count': len(executions),
-        'page': 1,
-        'pages': 4,
-        'hasNext': False,
-        'hasPrevious': False,
-        'nodes': executions,
+        "count": len(executions),
+        "page": 1,
+        "pages": 4,
+        "hasNext": False,
+        "hasPrevious": False,
+        "nodes": executions,
     }
 
 
@@ -306,9 +287,7 @@ def start_pipeline(context: Context, source, sqlPipelineUri: str = None):
     return execution_arn
 
 
-def delete_pipeline(
-    context: Context, source, sqlPipelineUri: str = None, deleteFromAWS: bool = None
-):
+def delete_pipeline(context: Context, source, sqlPipelineUri: str = None, deleteFromAWS: bool = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -318,15 +297,11 @@ def delete_pipeline(
             permission_name=permissions.DELETE_PIPELINE,
         )
 
-        pipeline: models.SqlPipeline = Pipeline.get_pipeline_by_uri(
-            session, sqlPipelineUri
-        )
+        pipeline: models.SqlPipeline = Pipeline.get_pipeline_by_uri(session, sqlPipelineUri)
 
-        env: models.Environment = Environment.get_environment_by_uri(
-            session, pipeline.environmentUri
-        )
+        env: models.Environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
-        KeyValueTag.delete_key_value_tags(session, pipeline.sqlPipelineUri, 'pipeline')
+        KeyValueTag.delete_key_value_tags(session, pipeline.sqlPipelineUri, "pipeline")
 
         session.delete(pipeline)
 
@@ -343,7 +318,7 @@ def delete_pipeline(
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
-            target_type='pipeline',
+            target_type="pipeline",
         )
 
     return True

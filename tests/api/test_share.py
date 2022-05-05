@@ -9,46 +9,44 @@ def random_table_name():
     def cpltz(l):
         return [item.capitalize() for item in l]
 
-    prefixes = cpltz(['big', 'small', 'shiny', 'fat', 'light', 'fun', 'clean'])
-    topics = cpltz(['sales', 'resources', 'receipts', 'orders', 'shipping'])
-    formats = cpltz(['csv', 'parquet', 'avro', 'orc', 'txt', 'delta'])
+    prefixes = cpltz(["big", "small", "shiny", "fat", "light", "fun", "clean"])
+    topics = cpltz(["sales", "resources", "receipts", "orders", "shipping"])
+    formats = cpltz(["csv", "parquet", "avro", "orc", "txt", "delta"])
 
-    return f'{random.choice(prefixes)}{random.choice(topics)}{random.choice(formats)}'
+    return f"{random.choice(prefixes)}{random.choice(topics)}{random.choice(formats)}"
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def org1(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org("testorg", user.userName, group.name)
     yield org1
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    module_mocker.patch("requests.post", return_value=True)
+    module_mocker.patch("dataall.api.Objects.Environment.resolvers.check_environment", return_value=True)
+    env1 = env(org1, "dev", user.userName, group.name, "111111111111", "eu-west-1")
     yield env1
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.Dataset:
     with db.scoped_session() as session:
         data = dict(
-            label='label',
+            label="label",
             owner=user.userName,
             SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
+            businessOwnerDelegationEmails=["foo@amazon.com"],
+            businessOwnerEmail=["bar@amazon.com"],
+            name="name",
+            S3BucketName="S3BucketName",
+            GlueDatabaseName="GlueDatabaseName",
+            KmsAlias="kmsalias",
+            AwsAccountId="123456789012",
+            region="eu-west-1",
+            IAMDatasetAdminUserArn=f"arn:aws:iam::123456789012:user/dataset",
+            IAMDatasetAdminRoleArn=f"arn:aws:iam::123456789012:role/dataset",
             stewards=group3.name,
         )
         dataset = dataall.db.api.Dataset.create_dataset(
@@ -62,25 +60,25 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.
         yield dataset
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def tables1(table, dataset1):
     for i in range(1, 100):
         table(dataset1, name=random_table_name(), username=dataset1.owner)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
-    yield org('org2', user2.userName, group2.name)
+    yield org("org2", user2.userName, group2.name)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env2(
     env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
 ) -> dataall.db.models.Environment:
-    yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-1')
+    yield env(org2, "dev", user2.userName, group2.name, "2" * 12, "eu-west-1")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dataset2(env2, org2, dataset, group2, user2) -> dataall.db.models.Dataset:
     yield dataset(
         org=org2,
@@ -91,18 +89,18 @@ def dataset2(env2, org2, dataset, group2, user2) -> dataall.db.models.Dataset:
     )
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def tables2(table, dataset2):
     for i in range(1, 100):
         table(dataset2, name=random_table_name(), username=dataset2.owner)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env1group(env1):
     return env1.SamlGroupName
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def env2group(env1):
     return env2.SamlGroupName
 
@@ -130,17 +128,17 @@ def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
 
     response = client.query(
         q,
-        username='anonymous',
+        username="anonymous",
         groups=[group3.name],
         datasetUri=dataset1.datasetUri,
         input={
-            'environmentUri': env2.environmentUri,
-            'principalId': group2.groupUri,
-            'principalType': dataall.api.constants.PrincipalType.Group.name,
+            "environmentUri": env2.environmentUri,
+            "principalId": group2.groupUri,
+            "principalType": dataall.api.constants.PrincipalType.Group.name,
         },
     )
 
-    assert 'Unauthorized' in response.errors[0].message
+    assert "Unauthorized" in response.errors[0].message
 
 
 def test_request_access_authorized(client, dataset1, env2, db, user2, group2, env1):
@@ -168,24 +166,19 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
         groups=[group2.name],
         datasetUri=dataset1.datasetUri,
         input={
-            'environmentUri': env2.environmentUri,
-            'principalId': group2.name,
-            'principalType': dataall.api.constants.PrincipalType.Group.name,
+            "environmentUri": env2.environmentUri,
+            "principalId": group2.name,
+            "principalType": dataall.api.constants.PrincipalType.Group.name,
         },
     )
     print(response)
 
     assert response.data.createShareObject.dataset.datasetUri == dataset1.datasetUri
-    assert (
-        response.data.createShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
+    assert response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.name
     assert response.data.createShareObject.owner == user2.userName
 
 
-def test_list_dataset_share_objects(
-    client, dataset1, env1, user, user3, env2, db, user2, group2, group, group4
-):
+def test_list_dataset_share_objects(client, dataset1, env1, user, user3, env2, db, user2, group2, group, group4):
     q = """
     query GetDataset(
         $datasetUri:String!,
@@ -212,19 +205,12 @@ def test_list_dataset_share_objects(
     )
 
     assert response.data.getDataset.shares.count >= 1
-    assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
-    )
+    assert response.data.getDataset.shares.nodes[0].userRoleForShareObject == "Requesters"
 
-    response = client.query(
-        q, username=user3.userName, groups=[group4.name], datasetUri=dataset1.datasetUri
-    )
+    response = client.query(q, username=user3.userName, groups=[group4.name], datasetUri=dataset1.datasetUri)
 
     assert response.data.getDataset.shares.count == 1
-    assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject
-        == 'NoPermission'
-    )
+    assert response.data.getDataset.shares.nodes[0].userRoleForShareObject == "NoPermission"
 
     response = client.query(
         q,
@@ -233,9 +219,7 @@ def test_list_dataset_share_objects(
         datasetUri=dataset1.datasetUri,
     )
     assert response.data.getDataset.shares.count == 1
-    assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
-    )
+    assert response.data.getDataset.shares.nodes[0].userRoleForShareObject == "Requesters"
 
 
 def test_add_item(
@@ -253,7 +237,7 @@ def test_add_item(
     group,
 ):
     module_mocker.patch(
-        'dataall.api.Objects.Stack.stack_helper.deploy_stack',
+        "dataall.api.Objects.Stack.stack_helper.deploy_stack",
         return_value=True,
     )
     get_share_object_query = q = """
@@ -306,25 +290,25 @@ def test_add_item(
         username=dataset1.owner,
         shareUri=share_object.shareUri,
         input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
+            "itemUri": "foo",
+            "itemType": dataall.api.constants.ShareableType.Table.name,
         },
         groups=[group.name],
     )
 
-    assert 'ResourceNotFound' in response.errors[0].message
+    assert "ResourceNotFound" in response.errors[0].message
 
     response = client.query(
         query,
-        username='noneofmybusiness',
-        groups=['anonymous'],
+        username="noneofmybusiness",
+        groups=["anonymous"],
         shareUri=share_object.shareUri,
         input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
+            "itemUri": "foo",
+            "itemType": dataall.api.constants.ShareableType.Table.name,
         },
     )
-    assert 'UnauthorizedOperation' in response.errors[0].message
+    assert "UnauthorizedOperation" in response.errors[0].message
 
     response = client.query(
         query,
@@ -332,12 +316,12 @@ def test_add_item(
         groups=[group2.name],
         shareUri=share_object.shareUri,
         input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
+            "itemUri": "foo",
+            "itemType": dataall.api.constants.ShareableType.Table.name,
         },
     )
 
-    assert 'ResourceNotFound' in response.errors[0].message
+    assert "ResourceNotFound" in response.errors[0].message
 
     random_table: dataall.db.models.DatasetTable = random.choice(this_dataset_tables)
     response = client.query(
@@ -346,8 +330,8 @@ def test_add_item(
         groups=[group2.name],
         shareUri=share_object.shareUri,
         input={
-            'itemUri': random_table.tableUri,
-            'itemType': dataall.api.constants.ShareableType.Table.name,
+            "itemUri": random_table.tableUri,
+            "itemType": dataall.api.constants.ShareableType.Table.name,
         },
     )
 
@@ -381,18 +365,9 @@ def test_add_item(
         groups=[group2.name],
     )
 
-    assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
-    assert (
-        response.data.getShareObject.principal.principalName
-        == f'{group2.name} ({env2.name}/{env2.region})'
-    )
-    assert (
-        response.data.getShareObject.principal.principalType
-        == dataall.api.constants.PrincipalType.Group.name
-    )
+    assert response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.name
+    assert response.data.getShareObject.principal.principalName == f"{group2.name} ({env2.name}/{env2.region})"
+    assert response.data.getShareObject.principal.principalType == dataall.api.constants.PrincipalType.Group.name
     assert response.data.getShareObject.dataset.datasetUri == dataset1.datasetUri
     assert response.data.getShareObject.datasetUri == dataset1.datasetUri
 
@@ -412,8 +387,8 @@ def test_add_item(
         shareUri=share_object.shareUri,
         groups=[group2.name],
     )
-    assert response.data.submitShareObject.status == 'PendingApproval'
-    assert response.data.submitShareObject.userRoleForShareObject == 'Requesters'
+    assert response.data.submitShareObject.status == "PendingApproval"
+    assert response.data.submitShareObject.userRoleForShareObject == "Requesters"
 
     query = """
             mutation approveShareObject($shareUri:String!){
@@ -431,8 +406,8 @@ def test_add_item(
         shareUri=share_object.shareUri,
         groups=[group3.name],
     )
-    assert response.data.approveShareObject.status == 'Approved'
-    assert response.data.approveShareObject.userRoleForShareObject == 'Approvers'
+    assert response.data.approveShareObject.status == "Approved"
+    assert response.data.approveShareObject.userRoleForShareObject == "Approvers"
 
     q = """
         query searchEnvironmentDataItems(
@@ -464,7 +439,7 @@ def test_add_item(
         username=user2.userName,
         groups=[env2.SamlGroupName],
         environmentUri=env2.environmentUri,
-        filter={'itemTypes': 'DatasetTable'},
+        filter={"itemTypes": "DatasetTable"},
     )
     assert response.data.searchEnvironmentDataItems.nodes[0].principalId == group2.name
 
@@ -483,7 +458,7 @@ def test_add_item(
         shareUri=share_object.shareUri,
         groups=[group3.name],
     )
-    assert response.data.rejectShareObject.status == 'Rejected'
+    assert response.data.rejectShareObject.status == "Rejected"
     query = """
         mutation RemoveSharedItem($shareItemUri:String!){
             removeSharedItem(shareItemUri:$shareItemUri)
@@ -507,9 +482,7 @@ def test_add_item(
                 }
             }
     """
-    response = client.query(
-        received_requests, username=user.userName, groups=[group.name]
-    )
+    response = client.query(received_requests, username=user.userName, groups=[group.name])
     assert response.data.requestsToMe.count == 0
     received_requests = """
                 query requestsToMe($filter: ShareObjectFilter){
@@ -521,9 +494,7 @@ def test_add_item(
                     }
                 }
         """
-    response = client.query(
-        received_requests, username=user3.userName, groups=[group3.name]
-    )
+    response = client.query(received_requests, username=user3.userName, groups=[group3.name])
     assert response.data.requestsToMe.count == 1
 
     sent_requests = """
@@ -536,9 +507,7 @@ def test_add_item(
                         }
                     }
             """
-    response = client.query(
-        sent_requests, username=user2.userName, groups=[group2.name]
-    )
+    response = client.query(sent_requests, username=user2.userName, groups=[group2.name])
     assert response.data.requestsFromMe.count == 1
 
     sent_requests = """
@@ -551,9 +520,7 @@ def test_add_item(
                             }
                         }
                 """
-    response = client.query(
-        sent_requests, username=user3.userName, groups=[group3.name]
-    )
+    response = client.query(sent_requests, username=user3.userName, groups=[group3.name])
     assert response.data.requestsFromMe.count == 0
 
 
@@ -573,8 +540,7 @@ def test_notifications(client, db, user):
                 """
     response = client.query(list, username=user.userName)
     assert (
-        response.data.listNotifications.nodes[0].type
-        == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
+        response.data.listNotifications.nodes[0].type == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
     )
     notificationUri = response.data.listNotifications.nodes[0].notificationUri
     query = """
@@ -589,9 +555,7 @@ def test_notifications(client, db, user):
                 markNotificationAsRead(notificationUri:$notificationUri)
             }
             """
-    response = client.query(
-        read, username=user.userName, notificationUri=notificationUri
-    )
+    response = client.query(read, username=user.userName, notificationUri=notificationUri)
     assert response
 
     query = """
@@ -606,9 +570,7 @@ def test_notifications(client, db, user):
                     deleteNotification(notificationUri:$notificationUri)
                 }
                 """
-    response = client.query(
-        read, username=user.userName, notificationUri=notificationUri
-    )
+    response = client.query(read, username=user.userName, notificationUri=notificationUri)
     assert response
     query = """
                         query countDeletedNotifications{
@@ -631,7 +593,7 @@ def test_notifications(client, db, user):
                     }
                 }
     """
-    response = client.query(query, username=user.userName, filter={'unread': True})
+    response = client.query(query, username=user.userName, filter={"unread": True})
     assert response.data.listNotifications.count == 2
 
     query = """
@@ -647,7 +609,7 @@ def test_notifications(client, db, user):
                         }
                     }
         """
-    response = client.query(query, username=user.userName, filter={'read': True})
+    response = client.query(query, username=user.userName, filter={"read": True})
     assert response.data.listNotifications.count == 0
 
     query = """
@@ -663,5 +625,5 @@ def test_notifications(client, db, user):
                             }
                         }
             """
-    response = client.query(query, username=user.userName, filter={'archived': True})
+    response = client.query(query, username=user.userName, filter={"archived": True})
     assert response.data.listNotifications.count == 1

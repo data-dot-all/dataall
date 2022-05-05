@@ -16,6 +16,7 @@ class ATestStack(core.Stack):
 
     def set_resource_tags(self, resource):
         pass
+
     def make_tag_str(self):
         pass
 

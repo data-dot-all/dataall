@@ -22,14 +22,14 @@ class ATestStack(core.Stack):
         self.build_id = "BID"
 
     def set_resource_tags(self, resource):
-        """ Puts the tag to the resource """
+        """Puts the tag to the resource"""
         for key, value in self.resource_tags.items():
             core.Tags.of(resource).add(key, value)
             self.tags_tracker[resource] = {key: value}
 
 
 def test_code_asset():
-    """ Tests code creation from asset. At this stage, nothing really happens"""
+    """Tests code creation from asset. At this stage, nothing really happens"""
     code = resource_task.code_from_path_and_cmd(
         "customcode/lambda_layers/pandasx", "echo hi", resource_task.lambda_to_runtime({"config": {}})
     )
@@ -53,7 +53,6 @@ def test_make_lambda_layer():
     assert lv.compatible_runtimes[0].name == resource_task.lambda_to_runtime({"config": {}}).name
 
 
-
 def test_make_lambda_function_trigger():
     stack = ATestStack()
     resource = {
@@ -66,10 +65,13 @@ def test_make_lambda_function_trigger():
             "runtime": "python3.8",
         },
     }
-    fn, _ = resource_task.make_lambda_function_trigger(stack, resource, "arn:aws:iam::012345678901:statemachine/statemachnie", "bucket", "test","ad_group_admin")
+    fn, _ = resource_task.make_lambda_function_trigger(
+        stack, resource, "arn:aws:iam::012345678901:statemachine/statemachnie", "bucket", "test", "ad_group_admin"
+    )
     assert fn
     assert fn.function_name
     assert fn.runtime.name == "python3.8"
+
 
 def test_make_lambda_python_function():
     stack = ATestStack()
@@ -107,7 +109,11 @@ def test_make_lambda_python_function_with_layer():
                     rm -rf /asset-output/python/scipy* && rm -rf /asset-output/python/numpy*
           """
     stack.layer_versions["pandas"] = resource_task.make_lambda_layer(
-        stack, "pandas", "customcode/lambda_layers/pandas", resource_task.lambda_to_runtime({"config": {"runtime": "python3.8"}}), cmd
+        stack,
+        "pandas",
+        "customcode/lambda_layers/pandas",
+        resource_task.lambda_to_runtime({"config": {"runtime": "python3.8"}}),
+        cmd,
     )
 
     fn, ev = resource_task.make_lambda_python_function(stack, resource)
@@ -145,13 +151,11 @@ def test_make_lambda_python_function_with_multiple_schedules():
             "index": "example_handler.py",
             "handler": "handler",
             "runtime": "python3.8",
-            "schedulers": [ {"cron": "cron(0 4 * * ? *)",
-                             "payload": "{ 'site_id': 4}"
-                            },
-                            {"cron": "cron(0 4 * * ? *)",
-                             "payload": "{ 'site_id': 5}"
-                            }]
-        }
+            "schedulers": [
+                {"cron": "cron(0 4 * * ? *)", "payload": "{ 'site_id': 4}"},
+                {"cron": "cron(0 4 * * ? *)", "payload": "{ 'site_id': 5}"},
+            ],
+        },
     }
     fn, events = resource_task.make_lambda_python_function(stack, resource)
 
@@ -159,17 +163,26 @@ def test_make_lambda_python_function_with_multiple_schedules():
     assert events
     assert stack.tags_tracker[fn] == stack.resource_tags
 
+
 def test_make_layer_version():
     stack = ATestStack()
     resource = {
-        "config": {"bundle_type": "simple", "layer_entry": "customcode/lambda_layers/awswrangler", "runtime": "python3.8"},
+        "config": {
+            "bundle_type": "simple",
+            "layer_entry": "customcode/lambda_layers/awswrangler",
+            "runtime": "python3.8",
+        },
         "name": "awswrangler",
     }
     resource_task.make_lambda_layer_version(stack, resource)
     assert stack.layer_versions["awswrangler"]
 
     resource = {
-        "config": {"layer_entry": "customcode/lambda_layers/awswrangler", "runtime": "python3.8", "description": "AWS Wrangler layer"},
+        "config": {
+            "layer_entry": "customcode/lambda_layers/awswrangler",
+            "runtime": "python3.8",
+            "description": "AWS Wrangler layer",
+        },
         "name": "awswrangler_2",
     }
     resource_task.make_lambda_layer_version(stack, resource)
