@@ -26,7 +26,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install isort
+          python -m pip install black
       - name: Lint
         run: make lint
+      - name: Black style
+        run: black --check .
 
 
