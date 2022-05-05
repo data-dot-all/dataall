@@ -1,6 +1,5 @@
 from ... import gql
-from .input_types import (InviteGroupToOrganizationInput,
-                          ModifyOrganizationInput, NewOrganizationInput)
+from .input_types import InviteGroupToOrganizationInput, ModifyOrganizationInput, NewOrganizationInput
 from .resolvers import *
 from .schema import Organization
 

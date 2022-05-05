@@ -1,8 +1,7 @@
 import copy
 
 import sagemaker
-from engine.sagemaker.mappers.common_training_mapper import \
-    CommonTrainingMapper
+from engine.sagemaker.mappers.common_training_mapper import CommonTrainingMapper
 
 
 class SageMakerTrainingJobPropsMapper:

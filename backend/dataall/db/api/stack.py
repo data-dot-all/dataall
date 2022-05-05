@@ -1,7 +1,6 @@
 import logging
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
+from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
 from .. import exceptions, models
 from . import ResourcePolicy, TargetType
 

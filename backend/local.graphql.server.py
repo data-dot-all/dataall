@@ -13,8 +13,7 @@ import logging
 
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import (Base, api, create_schema_and_tables, get_engine,
-                        init_permissions)
+from dataall.db import Base, api, create_schema_and_tables, get_engine, init_permissions
 from dataall.searchproxy import connect, run_query
 
 logger = logging.getLogger("graphql")

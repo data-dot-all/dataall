@@ -6,13 +6,36 @@ from ariadne import make_executable_schema
 
 from ...api.constants import GraphQLEnumMapper
 from .. import gql
-from . import (Activity, AthenaQueryResult, Dashboard, Dataset,
-               DatasetProfiling, DatasetStorageLocation, DatasetTable,
-               DatasetTableColumn, Environment, Feed, Glossary, Group,
-               KeyValueTag, Notification, Organization, Permission, Principal,
-               RedshiftCluster, SagemakerNotebook, SagemakerStudio,
-               ShareObject, SqlPipeline, Stack, Tenant, Test, Vote, Vpc,
-               Worksheet)
+from . import (
+    Activity,
+    AthenaQueryResult,
+    Dashboard,
+    Dataset,
+    DatasetProfiling,
+    DatasetStorageLocation,
+    DatasetTable,
+    DatasetTableColumn,
+    Environment,
+    Feed,
+    Glossary,
+    Group,
+    KeyValueTag,
+    Notification,
+    Organization,
+    Permission,
+    Principal,
+    RedshiftCluster,
+    SagemakerNotebook,
+    SagemakerStudio,
+    ShareObject,
+    SqlPipeline,
+    Stack,
+    Tenant,
+    Test,
+    Vote,
+    Vpc,
+    Worksheet,
+)
 
 
 def bootstrap():

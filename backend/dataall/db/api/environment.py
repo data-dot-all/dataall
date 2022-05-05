@@ -5,17 +5,14 @@ from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from ...utils.naming_convention import (NamingConventionPattern,
-                                        NamingConventionService)
+from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
 from .. import exceptions, models, permissions
 from ..api.organization import Organization
 from ..models import EnvironmentGroup
-from ..models.Enums import (EnvironmentPermission, EnvironmentType,
-                            ShareableType, ShareObjectStatus)
+from ..models.Enums import EnvironmentPermission, EnvironmentType, ShareableType, ShareObjectStatus
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
-from . import (KeyValueTag, Permission, ResourcePolicy, has_resource_perm,
-               has_tenant_perm)
+from . import KeyValueTag, Permission, ResourcePolicy, has_resource_perm, has_tenant_perm
 
 log = logging.getLogger(__name__)
 

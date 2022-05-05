@@ -4,9 +4,7 @@ Since there is no CloudFormation call for it we have to create a custom resource
 """
 
 import boto3
-from aws_cdk.custom_resources import (AwsCustomResource,
-                                      AwsCustomResourcePolicy, AwsSdkCall,
-                                      PhysicalResourceId)
+from aws_cdk.custom_resources import AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId
 
 client = boto3.client("athena")
 

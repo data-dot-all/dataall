@@ -41,11 +41,6 @@ bandit:
 	pip install bandit
 	python -m bandit -r backend/ | tee bandit.log || true
 
-check-security: upgrade-pip install-backend install-cdkproxy
-	pip install bandit
-	pip install safety
-	bandit -lll -r backend
-	safety check
 
 check-static: upgrade-pip install-backend install-cdkproxy
 	pip install flake8

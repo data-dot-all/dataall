@@ -5,8 +5,7 @@ from ....aws.handlers import stepfunction as helpers
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....db import exceptions, models, permissions
-from ....db.api import (Environment, KeyValueTag, Pipeline, ResourcePolicy,
-                        Stack)
+from ....db.api import Environment, KeyValueTag, Pipeline, ResourcePolicy, Stack
 from ...constants import DataPipelineRole
 from ...context import Context
 from ...Objects.Stack import stack_helper

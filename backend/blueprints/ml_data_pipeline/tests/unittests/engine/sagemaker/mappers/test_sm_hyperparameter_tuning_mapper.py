@@ -1,7 +1,6 @@
 from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import core
-from engine.sagemaker.mappers.sm_hyperparameter_tuning_mapper import \
-    SageMakerHyperparameterTuningPropsMapper
+from engine.sagemaker.mappers.sm_hyperparameter_tuning_mapper import SageMakerHyperparameterTuningPropsMapper
 
 
 class ATestStack(core.Stack):

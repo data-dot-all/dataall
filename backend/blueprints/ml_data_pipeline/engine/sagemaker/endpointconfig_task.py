@@ -5,8 +5,7 @@ from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from aws_cdk.aws_lambda import Code
-from engine.sagemaker.mappers.sm_endpointconfig_mapper import \
-    SageMakerEndpointConfigPropsMapper
+from engine.sagemaker.mappers.sm_endpointconfig_mapper import SageMakerEndpointConfigPropsMapper
 
 
 def make_sagemaker_endpoint_config_task(stack, job, group_index, job_index):

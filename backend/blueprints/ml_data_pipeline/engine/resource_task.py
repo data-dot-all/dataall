@@ -9,14 +9,22 @@ import re
 import uuid
 
 import boto3
-from aws_cdk import (aws_athena, aws_batch, aws_dynamodb, aws_ec2, aws_ecr,
-                     aws_ecs, aws_events, aws_events_targets, aws_glue)
+from aws_cdk import (
+    aws_athena,
+    aws_batch,
+    aws_dynamodb,
+    aws_ec2,
+    aws_ecr,
+    aws_ecs,
+    aws_events,
+    aws_events_targets,
+    aws_glue,
+)
 from aws_cdk import aws_iam
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_lambda_python as lambda_python
-from aws_cdk import (aws_s3, aws_sagemaker, aws_sns, aws_sns_subscriptions,
-                     aws_ssm, core)
+from aws_cdk import aws_s3, aws_sagemaker, aws_sns, aws_sns_subscriptions, aws_ssm, core
 from aws_cdk.aws_lambda import Code
 from engine.apigateway.apigateway_mapper import ApiGatewayPropsMapper
 from engine.dynamodb.dynamodb_mapper import DynamoDBPropsMapper

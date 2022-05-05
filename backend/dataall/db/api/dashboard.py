@@ -4,8 +4,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from .. import exceptions, models, paginate, permissions
-from . import (Environment, Glossary, ResourcePolicy, Vote, has_resource_perm,
-               has_tenant_perm)
+from . import Environment, Glossary, ResourcePolicy, Vote, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 
