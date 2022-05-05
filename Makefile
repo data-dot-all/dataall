@@ -50,7 +50,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 check-static: upgrade-pip install-backend install-cdkproxy
 	pip install flake8
 	pip install mypy
-	pip install isort02
+	pip install isort
 	pip install black
 	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/ && \
 	black --check . && \
