@@ -1,5 +1,5 @@
 # AWS data.all
-![Actions Status](https://github.com/awslabs/aws-dataall/actions/workflows/security-checks.yml/badge.svg)
+![Actions Status](https://github.com/awslabs/aws-dataall/actions/workflows/minimal-security-checks.yml/badge.svg)
 ![Actions Status](https://github.com/awslabs/aws-dataall/actions/workflows/static-checking.yml/badge.svg)
 ![Actions Status](https://github.com/awslabs/aws-dataall/actions/workflows/coverage.yml/badge.svg)
 ![Actions Status](https://github.com/awslabs/aws-dataall/actions/workflows/validate-db-schema.yml/badge.svg)
