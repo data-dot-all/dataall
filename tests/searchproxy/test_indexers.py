@@ -1,8 +1,7 @@
 import typing
 
-import pytest
-
 import dataall
+import pytest
 from dataall.searchproxy import indexers
 
 

@@ -1,10 +1,7 @@
 from ... import gql
 from .input_types import DatasetTableFilter
 from .resolvers import *
-from .schema import (
-    DatasetTable,
-    DatasetTableSearchResult,
-)
+from .schema import DatasetTable, DatasetTableSearchResult
 
 getDatasetTable = gql.QueryField(
     name='getDatasetTable',

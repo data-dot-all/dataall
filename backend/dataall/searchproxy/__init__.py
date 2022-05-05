@@ -1,7 +1,5 @@
 from .connect import connect
-from .indexers import upsert_dataset
-from .indexers import upsert_table
-from .indexers import upsert_dataset_tables
+from .indexers import upsert_dataset, upsert_dataset_tables, upsert_table
 from .search import run_query
 from .upsert import upsert
 

@@ -4,9 +4,8 @@
 import os
 
 import boto3
-from aws_cdk import App, Environment, Aspects
-from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
-
+from aws_cdk import App, Aspects, Environment
+from cdk_nag import AwsSolutionsChecks, NagPackSuppression, NagSuppressions
 from stacks.cdk_nag_exclusions import PIPELINE_STACK_CDK_NAG_EXCLUSIONS
 from stacks.pipeline import PipelineStack
 

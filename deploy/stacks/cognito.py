@@ -1,16 +1,11 @@
 import os
 
-from aws_cdk import (
-    custom_resources as cr,
-    aws_cognito as cognito,
-    aws_ssm as ssm,
-    aws_iam as iam,
-    aws_lambda as _lambda,
-    CfnOutput,
-    BundlingOptions,
-    Duration,
-    CustomResource,
-)
+from aws_cdk import BundlingOptions, CfnOutput, CustomResource, Duration
+from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_ssm as ssm
+from aws_cdk import custom_resources as cr
 
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling

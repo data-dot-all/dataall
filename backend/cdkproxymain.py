@@ -4,12 +4,11 @@ import sys
 from datetime import datetime
 
 import boto3
-from botocore.exceptions import ClientError
-from fastapi import FastAPI, BackgroundTasks, status, Response
-
 import dataall.cdkproxy.cdk_cli_wrapper as wrapper
-from dataall.cdkproxy.stacks import StackManager
+from botocore.exceptions import ClientError
 from dataall import db
+from dataall.cdkproxy.stacks import StackManager
+from fastapi import BackgroundTasks, FastAPI, Response, status
 
 print('\n'.join(sys.path))
 

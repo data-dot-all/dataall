@@ -1,11 +1,11 @@
 #!/bin/bash python3
 
 import json
-from pyspark.sql import SparkSession, DataFrame
 
 from glue.pydeequ.base import ConstraintSuggestionRunner
-from glue.pydeequ.suggestions import Rules
 from glue.pydeequ.examples import test_data
+from glue.pydeequ.suggestions import Rules
+from pyspark.sql import DataFrame, SparkSession
 
 
 def main():

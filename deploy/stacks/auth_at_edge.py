@@ -1,7 +1,5 @@
-from aws_cdk import (
-    aws_ssm as ssm,
-    aws_sam as sam,
-)
+from aws_cdk import aws_sam as sam
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

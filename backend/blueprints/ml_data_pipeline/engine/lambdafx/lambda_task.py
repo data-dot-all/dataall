@@ -1,9 +1,8 @@
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda_python as lambda_python
 from aws_cdk import aws_stepfunctions_tasks as tasks
-from aws_cdk import aws_iam as iam
-
-from engine.lambdafx.lambda_mapper import LambdaFxPropsMapper
 from engine import resource_task
+from engine.lambdafx.lambda_mapper import LambdaFxPropsMapper
 
 """ Code where the lambdafx functions are created. It uses LambdaFxPropsMapper to build the parameters of Lambda functions
     and its invocations.

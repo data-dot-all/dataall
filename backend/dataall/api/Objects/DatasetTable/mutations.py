@@ -1,8 +1,5 @@
 from ... import gql
-from .input_types import (
-    ModifyDatasetTableInput,
-    NewDatasetTableInput,
-)
+from .input_types import ModifyDatasetTableInput, NewDatasetTableInput
 from .resolvers import *
 
 createDatasetTable = gql.MutationField(

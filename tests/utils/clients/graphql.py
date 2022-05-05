@@ -1,12 +1,13 @@
-import typing
 import json
+import typing
+
+import dataall
 import pytest
 from ariadne import graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
 from ariadne.asgi import GraphQL
-from flask import Flask, request, jsonify, Response
+from ariadne.constants import PLAYGROUND_HTML
 from dotted.collection import DottedCollection
-import dataall
+from flask import Flask, Response, jsonify, request
 
 
 class ClientWrapper:

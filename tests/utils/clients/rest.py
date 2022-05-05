@@ -1,11 +1,12 @@
+import os
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import os
 
 os.environ['envname'] = 'pytest'
-from src.cdkproxymain import app
 import dataall
+from src.cdkproxymain import app
 
 ENVNAME = os.environ.get('envname', 'pytest')
 

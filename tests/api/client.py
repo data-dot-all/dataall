@@ -1,12 +1,13 @@
+import json
 import random
 import typing
-import json
+
+import dataall
 import pytest
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
-from flask import Flask, request, jsonify, Response
+from flask import Flask, Response, jsonify, request
 from munch import DefaultMunch
-import dataall
 
 
 class ClientWrapper:

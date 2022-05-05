@@ -8,10 +8,9 @@ from sqlalchemy import and_
 
 from ... import db
 from ...aws.handlers.service_handlers import Worker
-from ...aws.handlers.sts import SessionHelper
 from ...aws.handlers.sqs import SqsQueue
-from ...db import get_engine
-from ...db import models
+from ...aws.handlers.sts import SessionHelper
+from ...db import get_engine, models
 from ...tasks.subscriptions import poll_queues
 from ...utils import json_utils
 

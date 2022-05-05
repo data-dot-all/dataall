@@ -1,13 +1,11 @@
-from aws_cdk import (
-    aws_ec2 as ec2,
-    aws_iam as iam,
-    aws_lambda as _lambda,
-    aws_ssm as ssm,
-    aws_opensearchservice as opensearch,
-    aws_kms,
-    aws_logs as logs,
-    RemovalPolicy,
-)
+from aws_cdk import RemovalPolicy
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_opensearchservice as opensearch
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

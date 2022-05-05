@@ -3,9 +3,10 @@ import json
 import os
 import uuid
 
-from aws_synthetics.selenium import synthetics_webdriver as syn_webdriver
-from aws_synthetics.common import synthetics_logger as logger, synthetics_configuration
 import boto3
+from aws_synthetics.common import synthetics_configuration
+from aws_synthetics.common import synthetics_logger as logger
+from aws_synthetics.selenium import synthetics_webdriver as syn_webdriver
 from botocore.exceptions import ClientError
 
 TIMEOUT = 10

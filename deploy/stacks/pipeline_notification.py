@@ -1,4 +1,5 @@
-from aws_cdk import aws_codestarnotifications as notifications, RemovalPolicy
+from aws_cdk import RemovalPolicy
+from aws_cdk import aws_codestarnotifications as notifications
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_sns as sns

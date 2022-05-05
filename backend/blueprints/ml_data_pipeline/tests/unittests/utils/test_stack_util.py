@@ -1,6 +1,7 @@
+import yaml
 from aws_cdk import core
 from utils import stack_util
-import yaml
+
 
 class ATestStack(core.Stack):
     def __init__(self, **kwargs):

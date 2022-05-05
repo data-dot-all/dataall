@@ -1,11 +1,12 @@
 # lambda_function.py
 """ A lambda function that receives a csv file containing the truth vs predicted value """
+import json
+import logging
+from io import StringIO
+
+import boto3
 import pandas as pd
 from sklearn import metrics
-import boto3
-from io import StringIO
-import logging
-import json
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

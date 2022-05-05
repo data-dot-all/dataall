@@ -1,13 +1,10 @@
 from typing import cast
 
-from aws_cdk import (
-    aws_ec2 as ec2,
-    aws_ssm as ssm,
-    aws_iam as iam,
-    aws_logs as logs,
-    CfnOutput,
-    RemovalPolicy,
-)
+from aws_cdk import CfnOutput, RemovalPolicy
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

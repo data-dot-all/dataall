@@ -2,9 +2,10 @@ import os
 import re
 
 from engine.glue.glue_utils import ConfigReader
-from engine.glue.handlers import query
 from engine.glue.glue_utils.runner import Context
+from engine.glue.handlers import query
 from engine.glue.handlers.query_resolution import resolve_query
+
 
 def test_resolve_query_sql():
     query_handler = query.Query(type="query", name="my_query", config={"sql": "SELECT * FROM {{dataframe}}"})

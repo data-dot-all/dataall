@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 updateKeyValueTags = gql.MutationField(
     name='updateKeyValueTags',
     type=gql.ArrayType(gql.Ref('KeyValueTag')),

@@ -1,10 +1,7 @@
 from ... import gql
 from .input_types import OrganizationFilter
 from .resolvers import *
-from .schema import (
-    Organization,
-    OrganizationSearchResult,
-)
+from .schema import Organization, OrganizationSearchResult
 
 getOrganization = gql.QueryField(
     name='getOrganization',

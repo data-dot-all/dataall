@@ -1,17 +1,15 @@
 import logging
 import os
 
-from aws_cdk import (
-    cloudformation_include as cfn_inc,
-    Stack,
-)
+from aws_cdk import Stack
+from aws_cdk import cloudformation_include as cfn_inc
 
-from .manager import stack
 from ... import db
 from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from .manager import stack
 
 logger = logging.getLogger(__name__)
 

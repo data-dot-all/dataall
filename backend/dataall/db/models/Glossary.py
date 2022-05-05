@@ -1,12 +1,11 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, String, DateTime, Enum
+from sqlalchemy import Boolean, Column, DateTime, Enum, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
-from .. import Base
-from .. import utils
+from .. import Base, utils
 
 
 class GlossaryNodeStatus(enum.Enum):

@@ -1,14 +1,12 @@
 import logging
 
-from ..Stack import stack_helper
 from .... import db
 from ....api.constants import SagemakerStudioRole
 from ....api.context import Context
-from ....aws.handlers.sagemaker_studio import (
-    SagemakerStudio,
-)
-from ....db import exceptions, permissions, models
+from ....aws.handlers.sagemaker_studio import SagemakerStudio
+from ....db import exceptions, models, permissions
 from ....db.api import ResourcePolicy, Stack
+from ..Stack import stack_helper
 
 log = logging.getLogger(__name__)
 

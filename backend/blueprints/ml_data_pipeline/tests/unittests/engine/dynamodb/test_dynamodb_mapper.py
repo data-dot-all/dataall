@@ -1,9 +1,7 @@
+from aws_cdk import aws_dynamodb, core
 from engine import DynamoDBPropsMapper
 from engine.dynamodb.dynamodb_mapper import DynamoDBPropsMapperException
-from aws_cdk import aws_dynamodb
 
-
-from aws_cdk import core
 
 class ATestStack(core.Stack):
     def __init__(self, **kwargs):

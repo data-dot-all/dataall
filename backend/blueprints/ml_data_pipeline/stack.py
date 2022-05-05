@@ -19,12 +19,10 @@ The configuration file consists of three blocks:
 import os
 
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_ssm
 from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import core
-from aws_cdk import aws_ssm
-
-from utils import stack_util
-from utils import stack_task_util
+from utils import stack_task_util, stack_util
 
 
 class DataPipeline(core.Stack):

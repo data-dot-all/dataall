@@ -1,11 +1,8 @@
-from aws_cdk import (
-    aws_ssm as ssm,
-    aws_sqs as sqs,
-    aws_kms as kms,
-    aws_iam as iam,
-    RemovalPolicy,
-    Duration,
-)
+from aws_cdk import Duration, RemovalPolicy
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

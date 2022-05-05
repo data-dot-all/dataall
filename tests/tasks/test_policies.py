@@ -1,7 +1,7 @@
+import dataall
+import pytest
 from dataall.api.constants import OrganisationUserRole
 from dataall.tasks.bucket_policy_updater import BucketPoliciesUpdater
-import pytest
-import dataall
 
 
 @pytest.fixture(scope='module', autouse=True)

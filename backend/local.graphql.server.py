@@ -4,18 +4,18 @@ import boto3
 import jwt
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
-from flask import Flask, request, jsonify
+from dataall import db
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from dataall import db
-
 sts = boto3.client('sts', region_name='eu-west-1')
+import logging
+
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
+from dataall.db import (Base, api, create_schema_and_tables, get_engine,
+                        init_permissions)
 from dataall.searchproxy import connect, run_query
-
-import logging
 
 logger = logging.getLogger('graphql')
 logger.propagate = False

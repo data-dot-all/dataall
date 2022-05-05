@@ -1,11 +1,10 @@
 import nanoid
-from pyathena import connect
-from pyathena import result_set
+from pyathena import connect, result_set
 from pyathena.async_cursor import AsyncCursor
 from pyathena.model import AthenaQueryExecution
 
-from ....db import models
 from ....aws.handlers.sts import SessionHelper
+from ....db import models
 
 
 def random_key():

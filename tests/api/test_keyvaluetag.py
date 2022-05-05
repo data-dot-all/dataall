@@ -1,10 +1,8 @@
 from typing import List
 
 import dataall
-from dataall.db import models
 import pytest
-
-from dataall.db import exceptions
+from dataall.db import exceptions, models
 
 
 @pytest.fixture(scope='module')

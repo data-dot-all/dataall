@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 
 import jsii
-from aws_cdk import ILocalBundling, BundlingOptions
+from aws_cdk import BundlingOptions, ILocalBundling
 
 
 @jsii.implements(ILocalBundling)

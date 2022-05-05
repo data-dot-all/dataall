@@ -2,8 +2,7 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from .. import exceptions, permissions, paginate
-from .. import models
+from .. import exceptions, models, paginate, permissions
 from ..api.permission import Permission
 from ..api.tenant import Tenant
 from ..models.Permission import PermissionType

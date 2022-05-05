@@ -3,10 +3,10 @@ from typing import List
 
 from sqlalchemy.sql import and_
 
-from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary
-from ..models import Dataset
 from ...utils import json_utils
+from .. import api, exceptions, models, paginate, permissions
+from ..models import Dataset
+from . import Glossary, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 

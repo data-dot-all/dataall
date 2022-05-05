@@ -1,5 +1,5 @@
-from engine.sagemaker import endpoint_task
 from aws_cdk import core
+from engine.sagemaker import endpoint_task
 
 
 class ATestStack(core.Stack):

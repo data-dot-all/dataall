@@ -1,6 +1,4 @@
-from aws_cdk import (
-    aws_cloudwatch as cw,
-)
+from aws_cdk import aws_cloudwatch as cw
 
 
 class CDKDashboard:

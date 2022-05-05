@@ -1,6 +1,7 @@
 import os
-import pytest
+
 import dataall
+import pytest
 
 ENVNAME = os.environ.get('envname', 'pytest')
 

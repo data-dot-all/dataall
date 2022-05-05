@@ -1,5 +1,5 @@
-from aws_cdk import Stage, Tags, Aspects
-from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
+from aws_cdk import Aspects, Stage, Tags
+from cdk_nag import AwsSolutionsChecks, NagPackSuppression, NagSuppressions
 
 from .backend_stack import BackendStack
 from .cdk_nag_exclusions import BACKEND_STACK_CDK_NAG_EXCLUSIONS

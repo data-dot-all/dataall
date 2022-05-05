@@ -1,6 +1,5 @@
-from .resolvers import *
 from ...constants import *
-
+from .resolvers import *
 
 Group = gql.ObjectType(
     name='Group',

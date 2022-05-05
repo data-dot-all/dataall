@@ -1,4 +1,4 @@
-from aws_cdk import Stage, Tags, Aspects
+from aws_cdk import Aspects, Stage, Tags
 from cdk_nag import AwsSolutionsChecks
 
 from .ecr_stack import ECRRepositoryStack

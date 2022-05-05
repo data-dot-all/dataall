@@ -1,14 +1,12 @@
 import logging
 from datetime import datetime
 
-from sqlalchemy import asc, or_, and_, literal, case
-from sqlalchemy.orm import with_expression, aliased
+from sqlalchemy import and_, asc, case, literal, or_
+from sqlalchemy.orm import aliased, with_expression
 
-from .. import models, exceptions, permissions, paginate
-from .permission_checker import (
-    has_tenant_perm,
-)
+from .. import exceptions, models, paginate, permissions
 from ..models.Glossary import GlossaryNodeStatus
+from .permission_checker import has_tenant_perm
 
 logger = logging.getLogger(__name__)
 

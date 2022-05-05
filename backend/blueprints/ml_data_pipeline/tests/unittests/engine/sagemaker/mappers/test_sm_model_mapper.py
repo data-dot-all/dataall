@@ -1,6 +1,6 @@
+from aws_cdk import aws_stepfunctions_tasks as stepfunctions_tasks
 from aws_cdk import core
 from engine.sagemaker.mappers.sm_model_mapper import SageMakerModelPropsMapper
-from aws_cdk import aws_stepfunctions_tasks as stepfunctions_tasks
 
 
 class ATestStack(core.Stack):

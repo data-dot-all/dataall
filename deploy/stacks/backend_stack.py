@@ -1,7 +1,7 @@
 from builtins import super
 
-from aws_cdk import aws_ecr as ecr
 from aws_cdk import Stack
+from aws_cdk import aws_ecr as ecr
 
 from .aurora import AuroraServerlessStack
 from .cognito import IdpStack

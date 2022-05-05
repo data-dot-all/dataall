@@ -9,9 +9,8 @@ import os
 
 import sqlalchemy as sa
 from alembic import op
+from dataall.db import create_schema_if_not_exists, get_engine, has_table
 from sqlalchemy.dialects import postgresql
-
-from dataall.db import get_engine, has_table, create_schema_if_not_exists
 
 revision = 'bd271a2780b2'
 down_revision = None

@@ -1,10 +1,9 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, Enum, DateTime
+from sqlalchemy import Boolean, Column, DateTime, Enum, String
 
-from .. import Base
-from .. import utils
+from .. import Base, utils
 
 
 class NotificationType(enum.Enum):

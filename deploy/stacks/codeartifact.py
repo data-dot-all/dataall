@@ -1,4 +1,6 @@
-from aws_cdk import aws_codeartifact as codeartifact, aws_iam as iam, NestedStack
+from aws_cdk import NestedStack
+from aws_cdk import aws_codeartifact as codeartifact
+from aws_cdk import aws_iam as iam
 
 
 class CodeArtifactStack(NestedStack):

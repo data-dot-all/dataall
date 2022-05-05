@@ -1,12 +1,9 @@
 import os
 
-from aws_cdk import (
-    aws_ssm as ssm,
-    aws_s3 as s3,
-    aws_s3_deployment as s3d,
-    RemovalPolicy,
-    CfnOutput,
-)
+from aws_cdk import CfnOutput, RemovalPolicy
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_s3_deployment as s3d
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

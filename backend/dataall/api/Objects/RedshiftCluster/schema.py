@@ -1,6 +1,6 @@
+from ....api.constants import RedshiftClusterRole
 from ... import gql
 from .resolvers import *
-from ....api.constants import RedshiftClusterRole
 
 RedshiftCluster = gql.ObjectType(
     name='RedshiftCluster',

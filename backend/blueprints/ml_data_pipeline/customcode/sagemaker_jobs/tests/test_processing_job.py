@@ -1,5 +1,4 @@
 import pandas as pd
-
 from smjobs.processing.processing_job import process_data
 
 

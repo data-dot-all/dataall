@@ -1,6 +1,5 @@
 import pytest
-
-from dataall.db import models, api
+from dataall.db import api, models
 
 
 @pytest.fixture(scope='module', autouse=True)

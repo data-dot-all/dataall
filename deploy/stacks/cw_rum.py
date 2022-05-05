@@ -1,11 +1,8 @@
-from aws_cdk import (
-    aws_cloudwatch as cw,
-    aws_rum as rum,
-    aws_ssm as ssm,
-    aws_iam as iam,
-    CfnTag,
-    Duration,
-)
+from aws_cdk import CfnTag, Duration
+from aws_cdk import aws_cloudwatch as cw
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_rum as rum
+from aws_cdk import aws_ssm as ssm
 
 from .pyNestedStack import pyNestedClass
 

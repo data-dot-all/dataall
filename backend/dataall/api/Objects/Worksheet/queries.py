@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 getWorksheet = gql.QueryField(
     name='getWorksheet',
     type=gql.Ref('Worksheet'),

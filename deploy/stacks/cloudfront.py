@@ -1,21 +1,16 @@
 import hashlib
 import os
 
-from aws_cdk import (
-    aws_ssm as ssm,
-    aws_s3 as s3,
-    aws_cloudfront as cloudfront,
-    aws_certificatemanager as acm,
-    aws_route53 as route53,
-    aws_route53_targets as route53_targets,
-    aws_wafv2 as wafv2,
-    aws_lambda as _lambda,
-    aws_iam as iam,
-    Duration,
-    RemovalPolicy,
-    CfnOutput,
-    BundlingOptions,
-)
+from aws_cdk import BundlingOptions, CfnOutput, Duration, RemovalPolicy
+from aws_cdk import aws_certificatemanager as acm
+from aws_cdk import aws_cloudfront as cloudfront
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_route53 as route53
+from aws_cdk import aws_route53_targets as route53_targets
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_ssm as ssm
+from aws_cdk import aws_wafv2 as wafv2
 
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling

@@ -2,7 +2,8 @@ import logging
 import os
 import shutil
 
-from aws_cdk import aws_codebuild as codebuild, Stack, RemovalPolicy, CfnOutput
+from aws_cdk import CfnOutput, RemovalPolicy, Stack
+from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_codepipeline_actions as codepipeline_actions
@@ -13,12 +14,12 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm
 from aws_cdk.aws_s3_assets import Asset
 
-from .manager import stack
 from ... import db
 from ...db import models
 from ...db.api import Environment, Pipeline
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from .manager import stack
 
 logger = logging.getLogger(__name__)
 

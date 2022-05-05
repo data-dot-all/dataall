@@ -1,20 +1,16 @@
-from aws_cdk import (
-    aws_cloudwatch as cw,
-    aws_ecs as ecs,
-    aws_lambda as _lambda,
-    aws_kms as kms,
-    aws_ssm as ssm,
-    aws_cloudwatch_actions as cwa,
-    aws_sns as sns,
-    aws_logs as logs,
-    aws_iam as iam,
-    Duration,
-    RemovalPolicy,
-    Fn,
-)
+from aws_cdk import Duration, Fn, RemovalPolicy
+from aws_cdk import aws_cloudwatch as cw
+from aws_cdk import aws_cloudwatch_actions as cwa
+from aws_cdk import aws_ecs as ecs
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_ssm as ssm
 
+from .cw_widgets import widget_api, widget_ecs, widget_rds
 from .pyNestedStack import pyNestedClass
-from .cw_widgets import widget_rds, widget_api, widget_ecs
 
 
 class MonitoringStack(pyNestedClass):

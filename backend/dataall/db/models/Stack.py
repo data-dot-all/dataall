@@ -3,8 +3,7 @@ import datetime
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects import postgresql
 
-from .. import Base
-from .. import utils
+from .. import Base, utils
 
 
 class Stack(Base):

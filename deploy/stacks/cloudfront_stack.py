@@ -1,8 +1,9 @@
 from builtins import super
 
 from aws_cdk import Stack
-from .cloudfront import CloudfrontDistro
+
 from .auth_at_edge import AuthAtEdge
+from .cloudfront import CloudfrontDistro
 
 
 class CloudfrontStack(Stack):

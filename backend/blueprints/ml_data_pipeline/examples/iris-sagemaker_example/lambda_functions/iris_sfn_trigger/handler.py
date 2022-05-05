@@ -1,11 +1,11 @@
 """ The lambda that triggers the execution of state machine of iris classification.
     The lambda builds the configuration of the state machine.
 """
-import boto3
-from datetime import datetime
 import json
 import os
+from datetime import datetime
 
+import boto3
 
 # The state machine ARN. The ARN is provided in the environment variable
 # by the ML pipeline deployment.

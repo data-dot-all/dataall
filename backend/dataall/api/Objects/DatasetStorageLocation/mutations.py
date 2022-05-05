@@ -1,8 +1,6 @@
 from ... import gql
-from .input_types import (
-    ModifyDatasetFolderInput,
-    NewDatasetStorageLocationInput,
-)
+from .input_types import (ModifyDatasetFolderInput,
+                          NewDatasetStorageLocationInput)
 from .resolvers import *
 from .schema import DatasetStorageLocation
 

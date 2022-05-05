@@ -1,9 +1,8 @@
 import random
 import typing
 
-import pytest
-
 import dataall
+import pytest
 
 
 def random_table_name():

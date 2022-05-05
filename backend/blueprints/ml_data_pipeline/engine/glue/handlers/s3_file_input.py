@@ -1,7 +1,9 @@
+import re
+
+import boto3
+
 from .base_step import Step
 from .observability import StepMetric
-import boto3
-import re
 
 
 @Step(

@@ -2,14 +2,8 @@ import logging
 
 from sqlalchemy import and_
 
-from .. import exceptions, permissions
-from .. import models
-from . import (
-    has_tenant_perm,
-    has_resource_perm,
-    Environment,
-    ResourcePolicy,
-)
+from .. import exceptions, models, permissions
+from . import Environment, ResourcePolicy, has_resource_perm, has_tenant_perm
 
 log = logging.getLogger(__name__)
 

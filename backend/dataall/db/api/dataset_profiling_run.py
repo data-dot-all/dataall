@@ -1,6 +1,6 @@
 from sqlalchemy import and_
 
-from .. import paginate, models
+from .. import models, paginate
 from ..exceptions import ObjectNotFound
 
 

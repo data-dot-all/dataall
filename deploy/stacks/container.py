@@ -1,13 +1,11 @@
-from aws_cdk import (
-    aws_ec2 as ec2,
-    aws_ecs as ecs,
-    aws_ecs_patterns as ecs_patterns,
-    aws_iam as iam,
-    aws_ssm as ssm,
-    aws_ec2,
-    aws_logs as logs,
-    RemovalPolicy,
-)
+from aws_cdk import RemovalPolicy
+from aws_cdk import aws_ec2
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecs as ecs
+from aws_cdk import aws_ecs_patterns as ecs_patterns
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_ssm as ssm
 from aws_cdk.aws_applicationautoscaling import Schedule
 
 from .pyNestedStack import pyNestedClass

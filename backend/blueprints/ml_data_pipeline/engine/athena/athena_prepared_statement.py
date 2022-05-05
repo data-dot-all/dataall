@@ -3,13 +3,10 @@ Since there is no CloudFormation call for it we have to create a custom resource
 (scope, id, *, policy, function_name=None, install_latest_aws_sdk=None, log_retention=None, on_create=None, on_delete=None, on_update=None, resource_type=None, role=None, timeout=None)
 """
 
-from aws_cdk.custom_resources import AwsCustomResource
-from aws_cdk.custom_resources import (
-    AwsCustomResourcePolicy,
-    AwsSdkCall,
-    PhysicalResourceId,
-)
 import boto3
+from aws_cdk.custom_resources import (AwsCustomResource,
+                                      AwsCustomResourcePolicy, AwsSdkCall,
+                                      PhysicalResourceId)
 
 client = boto3.client('athena')
 

@@ -1,6 +1,6 @@
 from ... import gql
-from .resolvers import *
 from ...constants import DatasetRole, EnvironmentPermission
+from .resolvers import *
 
 DatasetStatistics = gql.ObjectType(
     name='DatasetStatistics',

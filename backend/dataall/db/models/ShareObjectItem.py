@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 
-from .Enums import ShareObjectStatus
 from .. import Base, utils
+from .Enums import ShareObjectStatus
 
 
 class ShareObjectItem(Base):

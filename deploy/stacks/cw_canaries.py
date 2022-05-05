@@ -1,14 +1,11 @@
 import os
 
-from aws_cdk import (
-    aws_synthetics as synthetics,
-    aws_cloudwatch as cw,
-    aws_iam as iam,
-    aws_s3 as s3,
-    aws_ec2 as ec2,
-    Duration,
-    RemovalPolicy,
-)
+from aws_cdk import Duration, RemovalPolicy
+from aws_cdk import aws_cloudwatch as cw
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_synthetics as synthetics
 
 from .pyNestedStack import pyNestedClass
 

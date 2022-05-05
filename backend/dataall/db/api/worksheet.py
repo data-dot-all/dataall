@@ -3,9 +3,8 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from .. import exceptions, permissions, paginate
-from .. import models
-from . import has_tenant_perm, ResourcePolicy, has_resource_perm
+from .. import exceptions, models, paginate, permissions
+from . import ResourcePolicy, has_resource_perm, has_tenant_perm
 
 logger = logging.getLogger(__name__)
 

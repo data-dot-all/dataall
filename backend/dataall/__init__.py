@@ -1,1 +1,1 @@
-from . import utils, db, aws, api, searchproxy, tasks, version
+from . import api, aws, db, searchproxy, tasks, utils, version

@@ -9,13 +9,11 @@ import datetime
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import Boolean, Column, String, orm, DateTime
+from dataall.db import utils
+from sqlalchemy import Boolean, Column, DateTime, String, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query_expression
-
-from dataall.db import utils
-
 
 # revision identifiers, used by Alembic.
 revision = '3ae3eeca475c'

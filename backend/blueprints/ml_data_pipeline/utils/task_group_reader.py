@@ -3,9 +3,10 @@ Configuration file (e.g. config_dpc.yaml) parser"
 """
 
 import os
+
+import boto3
 import yaml
 from jinja2 import Template
-import boto3
 
 
 class Stages:

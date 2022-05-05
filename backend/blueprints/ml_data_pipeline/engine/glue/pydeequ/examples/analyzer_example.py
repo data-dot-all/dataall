@@ -1,8 +1,7 @@
-from pyspark.sql import SparkSession, DataFrame
-
-from glue.pydeequ.base import AnalysisRunner
 import glue.pydeequ.analyzers as analyzers
+from glue.pydeequ.base import AnalysisRunner
 from glue.pydeequ.examples import test_data
+from pyspark.sql import DataFrame, SparkSession
 
 
 def main():

@@ -1,10 +1,10 @@
 #!/bin/bash python3
 
 import json
-from pyspark.sql import SparkSession, DataFrame
 
-from glue.pydeequ.profiler import ColumnProfilerRunner
 from glue.pydeequ.examples import test_data
+from glue.pydeequ.profiler import ColumnProfilerRunner
+from pyspark.sql import DataFrame, SparkSession
 
 
 def main():

@@ -1,7 +1,7 @@
 import typing
-import pytest
 
 import dataall
+import pytest
 
 
 @pytest.fixture(scope='module', autouse=True)

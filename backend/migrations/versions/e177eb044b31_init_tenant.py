@@ -6,12 +6,10 @@ Create Date: 2021-08-07 16:47:19.443969
 
 """
 from alembic import op
-
-# revision identifiers, used by Alembic.
-from sqlalchemy import orm
-
 from dataall import db
 from dataall.db import api
+# revision identifiers, used by Alembic.
+from sqlalchemy import orm
 
 revision = 'e177eb044b31'
 down_revision = '033c3d6c1849'

@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 markNotificationAsRead = gql.MutationField(
     name='markNotificationAsRead',
     args=[

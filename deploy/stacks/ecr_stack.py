@@ -1,10 +1,7 @@
-from aws_cdk import (
-    aws_ecr as ecr,
-    aws_iam as iam,
-    aws_ssm as ssm,
-    Stack,
-    RemovalPolicy,
-)
+from aws_cdk import RemovalPolicy, Stack
+from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_ssm as ssm
 
 
 class ECRRepositoryStack(Stack):

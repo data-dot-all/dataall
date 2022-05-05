@@ -2,7 +2,6 @@ import json
 
 import pytest
 from aws_cdk import App
-
 from dataall.cdkproxy.stacks import RedshiftStack
 
 

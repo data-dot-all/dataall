@@ -1,5 +1,4 @@
 import pytest
-
 from dataall.db import models
 
 

@@ -1,5 +1,5 @@
-from .resolvers import *
 from ...constants import EnvironmentPermission
+from .resolvers import *
 
 EnvironmentUserPermission = gql.ObjectType(
     name='EnvironmentUserPermission',

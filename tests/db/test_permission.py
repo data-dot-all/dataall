@@ -1,6 +1,5 @@
-import pytest
-
 import dataall
+import pytest
 from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType

@@ -1,5 +1,6 @@
-from .client import *
 from dataall.db import models
+
+from .client import *
 
 
 @pytest.fixture(scope='module', autouse=True)

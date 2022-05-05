@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 postFeedMessage = gql.MutationField(
     name='postFeedMessage',
     resolver=post_message,

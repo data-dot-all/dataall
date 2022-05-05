@@ -1,6 +1,7 @@
 from typing import List
-from dataall.db import models
+
 import pytest
+from dataall.db import models
 
 
 @pytest.fixture(scope='module')

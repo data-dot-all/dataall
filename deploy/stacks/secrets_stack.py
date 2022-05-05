@@ -1,11 +1,8 @@
 import json
 
-from aws_cdk import (
-    aws_kms as kms,
-    aws_secretsmanager as sm,
-    RemovalPolicy,
-    Duration,
-)
+from aws_cdk import Duration, RemovalPolicy
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_secretsmanager as sm
 
 from .pyNestedStack import pyNestedClass
 

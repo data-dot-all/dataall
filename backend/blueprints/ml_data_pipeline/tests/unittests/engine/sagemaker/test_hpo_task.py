@@ -1,6 +1,6 @@
+import yaml
 from aws_cdk import core
 from engine.sagemaker import hpo_task
-import yaml
 
 
 class ATestStack(core.Stack):

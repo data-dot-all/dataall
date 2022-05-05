@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import func, and_
+from sqlalchemy import and_, func
 
-from .. import models
 from ...db import paginate
+from .. import models
 
 
 class Notification:

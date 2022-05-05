@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 createWorksheet = gql.MutationField(
     name='createWorksheet',
     args=[gql.Argument(name='input', type=gql.Ref('NewWorksheetInput'))],

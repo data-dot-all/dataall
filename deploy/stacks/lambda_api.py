@@ -1,29 +1,20 @@
 import json
 
-from aws_cdk import (
-    aws_iam as iam,
-    aws_apigateway as apigw,
-    aws_lambda as _lambda,
-    aws_lambda_event_sources as lambda_event_sources,
-    aws_lambda_destinations as lambda_destination,
-    aws_wafv2 as wafv2,
-    aws_ssm as ssm,
-    aws_sns as sns,
-    aws_ec2 as ec2,
-    aws_kms as kms,
-    aws_sqs as sqs,
-    aws_logs as logs,
-    Duration,
-    CfnOutput,
-    Fn,
-    RemovalPolicy,
-)
-from aws_cdk.aws_ec2 import (
-    InterfaceVpcEndpoint,
-    InterfaceVpcEndpointAwsService,
-    Port,
-    Peer,
-)
+from aws_cdk import CfnOutput, Duration, Fn, RemovalPolicy
+from aws_cdk import aws_apigateway as apigw
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_lambda_destinations as lambda_destination
+from aws_cdk import aws_lambda_event_sources as lambda_event_sources
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_ssm as ssm
+from aws_cdk import aws_wafv2 as wafv2
+from aws_cdk.aws_ec2 import (InterfaceVpcEndpoint,
+                             InterfaceVpcEndpointAwsService, Peer, Port)
 
 from .pyNestedStack import pyNestedClass
 

@@ -2,8 +2,8 @@ import json
 
 import pytest
 from aws_cdk import App
-
-from dataall.cdkproxy.stacks import EnvironmentSetup, SagemakerStudioUserProfile
+from dataall.cdkproxy.stacks import (EnvironmentSetup,
+                                     SagemakerStudioUserProfile)
 
 
 @pytest.fixture(scope='function', autouse=True)

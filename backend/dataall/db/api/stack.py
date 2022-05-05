@@ -1,12 +1,9 @@
 import logging
 
+from ...utils.naming_convention import (NamingConventionPattern,
+                                        NamingConventionService)
+from .. import exceptions, models
 from . import ResourcePolicy, TargetType
-from .. import exceptions
-from .. import models
-from ...utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
 
 log = logging.getLogger(__name__)
 

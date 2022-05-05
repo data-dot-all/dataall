@@ -1,7 +1,6 @@
 import sagemaker
-from engine.sagemaker.prebuilt_extension_image_builder import (
-    PrebuiltExtensionImageBuilder,
-)
+from engine.sagemaker.prebuilt_extension_image_builder import \
+    PrebuiltExtensionImageBuilder
 
 
 class CommonTrainingMapper:

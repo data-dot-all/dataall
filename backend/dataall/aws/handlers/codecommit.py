@@ -1,6 +1,6 @@
+from ...db import Engine, models
 from .service_handlers import Worker
 from .sts import SessionHelper
-from ...db import models, Engine
 
 
 def _unpack(session, task):
