@@ -6,13 +6,11 @@ Create Date: 2021-09-15 13:41:44.102866
 
 """
 from alembic import op
-
+from dataall.db import Resource, utils
 # revision identifiers, used by Alembic.
-from sqlalchemy import orm, Column, String, Boolean
+from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
-
-from dataall.db import utils, Resource
 
 revision = "5e5c84138af7"
 down_revision = "94697ee46c0c"

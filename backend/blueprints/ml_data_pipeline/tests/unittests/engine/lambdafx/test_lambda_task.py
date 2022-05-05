@@ -1,6 +1,6 @@
 import yaml
-from engine.lambdafx import lambda_task
 from aws_cdk import core
+from engine.lambdafx import lambda_task
 
 
 class ATestStack(core.Stack):

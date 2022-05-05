@@ -1,5 +1,4 @@
 import pandas as pd
-
 from smjobs.training.training_job import process_data
 
 

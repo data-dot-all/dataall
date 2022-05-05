@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 getDatasetProfilingRun = gql.QueryField(
     name="getDatasetProfilingRun",
     args=[gql.Argument(name="profilingRunUri", type=gql.NonNullableType(gql.String))],

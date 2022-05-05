@@ -1,7 +1,6 @@
 from .... import db
 from ....api.context import Context
-from ....searchproxy.indexers import upsert_dashboard
-from ....searchproxy.indexers import upsert_dataset
+from ....searchproxy.indexers import upsert_dashboard, upsert_dataset
 
 
 def count_upvotes(context: Context, source, targetUri: str = None, targetType: str = None):

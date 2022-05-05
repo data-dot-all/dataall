@@ -1,7 +1,7 @@
-from sqlalchemy import Column, String, ARRAY, Integer, Boolean
+from sqlalchemy import ARRAY, Boolean, Column, Integer, String
 from sqlalchemy.orm import query_expression
 
-from .. import utils, Resource, Base
+from .. import Base, Resource, utils
 
 
 class RedshiftCluster(Resource, Base):

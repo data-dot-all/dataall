@@ -11,8 +11,7 @@ from .. import db
 from ..aws.handlers.glue import Glue
 from ..aws.handlers.quicksight import Quicksight
 from ..aws.handlers.sts import SessionHelper
-from ..db import get_engine
-from ..db import models, exceptions
+from ..db import exceptions, get_engine, models
 from ..searchproxy import connect
 from ..utils.alarm_service import AlarmService
 

@@ -1,6 +1,5 @@
-from ... import gql
 from ....api.constants import PrincipalType
-
+from ... import gql
 
 Principal = gql.ObjectType(
     name="Principal",

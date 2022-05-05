@@ -5,14 +5,14 @@ from botocore.exceptions import ClientError
 from pyathena import connect
 
 from .... import db
-from ..Dataset.resolvers import get_dataset
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....db import permissions, models
-from ....db.api import ResourcePolicy, Glossary
+from ....db import models, permissions
+from ....db.api import Glossary, ResourcePolicy
 from ....searchproxy import indexers
 from ....utils import json_utils
+from ..Dataset.resolvers import get_dataset
 
 log = logging.getLogger(__name__)
 

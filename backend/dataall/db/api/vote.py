@@ -1,8 +1,7 @@
 import logging
 from datetime import datetime
 
-from .. import exceptions
-from .. import models
+from .. import exceptions, models
 
 logger = logging.getLogger(__name__)
 

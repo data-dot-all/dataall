@@ -7,11 +7,10 @@ Create Date: 2021-08-03 07:53:28.164238
 """
 import os
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import orm
-
+from alembic import op
 from dataall.db import api, get_engine, has_table
+from sqlalchemy import orm
 
 # revision identifiers, used by Alembic.
 revision = "033c3d6c1849"

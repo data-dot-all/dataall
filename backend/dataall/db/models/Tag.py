@@ -2,8 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 
-from .. import Base
-from .. import utils
+from .. import Base, utils
 
 
 class Tag(Base):

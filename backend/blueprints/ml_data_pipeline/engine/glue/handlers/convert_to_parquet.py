@@ -1,25 +1,26 @@
 """
 Glue Job to tranform SAS7BDAT data to Parquet
 """
+# Generic AWS glue imports
+import csv
+import datetime
+import math
+import re
+import sys
+from statistics import stdev
+
+import boto3
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from awsglue.utils import getResolvedOptions
+from pyspark.conf import SparkConf
+from pyspark.context import SparkContext
+from pyspark.sql.functions import to_date, to_timestamp
+
 # AWS data.all step function integration imports
 from .base_step import Step
 from .observability import StepMetric
 from .structured_logging import StructuredLogger
-
-# Generic AWS glue imports
-import csv
-import datetime
-import sys
-import re
-import math
-import boto3
-from statistics import stdev
-from pyspark.context import SparkContext
-from pyspark.conf import SparkConf
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from pyspark.sql.functions import to_date, to_timestamp
 
 
 @Step(

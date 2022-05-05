@@ -4,11 +4,11 @@ from datetime import datetime, timedelta
 
 from botocore.exceptions import ClientError
 
+from ... import db
+from ...db import models
 from .glue import Glue
 from .service_handlers import Worker
 from .sts import SessionHelper
-from ... import db
-from ...db import models
 
 log = logging.getLogger(__name__)
 

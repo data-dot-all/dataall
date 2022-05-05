@@ -6,12 +6,9 @@ from operator import and_
 from .. import db
 from ..aws.handlers.glue import Glue
 from ..aws.handlers.sts import SessionHelper
-from ..db import get_engine
-from ..db import models
+from ..db import get_engine, models
 from ..searchproxy import indexers
-from ..searchproxy.connect import (
-    connect,
-)
+from ..searchproxy.connect import connect
 from ..utils.alarm_service import AlarmService
 
 root = logging.getLogger()

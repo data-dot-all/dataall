@@ -14,13 +14,12 @@ import sys
 from datetime import datetime
 
 import boto3
-from botocore.exceptions import ClientError
-from fastapi import FastAPI, BackgroundTasks, status, Response
-
 import cdk_cli_wrapper as wrapper
+from botocore.exceptions import ClientError
+from fastapi import BackgroundTasks, FastAPI, Response, status
 from stacks import StackManager
-from ..db import get_engine
-from ..db import models
+
+from ..db import get_engine, models
 
 print("\n".join(sys.path))
 

@@ -1,6 +1,7 @@
 import logging
-import yaml
 import os
+
+import yaml
 from jinja2 import Template
 
 logger = logging.getLogger()

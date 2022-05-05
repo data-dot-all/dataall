@@ -3,7 +3,7 @@ from sqlalchemy import or_
 from .... import db
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
-from ....db import paginate, permissions, models
+from ....db import models, paginate, permissions
 from ....db.api import ResourcePolicy
 
 

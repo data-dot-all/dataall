@@ -1,8 +1,8 @@
 import os
 
 from engine.glue.glue_utils import ConfigReader
-from engine.glue.handlers import assertion
 from engine.glue.glue_utils.runner import Context
+from engine.glue.handlers import assertion
 
 
 def evaluate_query(self, df):

@@ -1,6 +1,5 @@
-from ... import gql
 from ....api.constants import GraphQLEnumMapper, SortDirection
-
+from ... import gql
 
 AwsEnvironmentInput = gql.InputType(
     name="AwsEnvironmentInput",

@@ -1,14 +1,9 @@
 from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.s3 import S3
-from ....db import permissions, models
-from ....db.api import (
-    ResourcePolicy,
-    Glossary,
-    DatasetStorageLocation,
-    Dataset,
-    Environment,
-)
+from ....aws.handlers.service_handlers import Worker
+from ....db import models, permissions
+from ....db.api import (Dataset, DatasetStorageLocation, Environment, Glossary,
+                        ResourcePolicy)
 from ....searchproxy import indexers
 
 

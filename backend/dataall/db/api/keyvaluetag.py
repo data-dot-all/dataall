@@ -1,9 +1,8 @@
 import logging
 
+from .. import exceptions, models
 from . import TargetType
 from .resource_policy import ResourcePolicy
-from .. import exceptions
-from .. import models
 
 logger = logging.getLogger(__name__)
 

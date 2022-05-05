@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 countUpVotes = gql.QueryField(
     name="countUpVotes",
     type=gql.Integer,

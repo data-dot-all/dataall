@@ -1,6 +1,6 @@
-from aws_cdk import aws_stepfunctions_tasks as tasks
-from aws_cdk import aws_stepfunctions as stepfunctions
 from aws_cdk import aws_sns, aws_sns_subscriptions
+from aws_cdk import aws_stepfunctions as stepfunctions
+from aws_cdk import aws_stepfunctions_tasks as tasks
 
 
 def make_publish_to_sns_task(stack, job):

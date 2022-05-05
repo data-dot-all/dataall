@@ -1,7 +1,7 @@
-from aws_cdk import core
-from engine.sagemaker import training_task, hpo_task
 import yaml
 from aws_cdk import aws_stepfunctions as stepfunctions
+from aws_cdk import core
+from engine.sagemaker import hpo_task, training_task
 
 
 class ATestStack(core.Stack):

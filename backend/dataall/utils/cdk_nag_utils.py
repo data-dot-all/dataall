@@ -1,5 +1,5 @@
 from aws_cdk import Aspects, Stack
-from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
+from cdk_nag import AwsSolutionsChecks, NagPackSuppression, NagSuppressions
 
 CDK_NAG_EXCLUSIONS = [
     {

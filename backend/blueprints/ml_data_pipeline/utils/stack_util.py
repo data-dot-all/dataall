@@ -2,28 +2,21 @@
 Helper file to Pipeline stack operations: creation of triggers and resources in resources of the config_dpc.yaml.
 resources are defined in engine/resource_task.py
 """
+import ast
+import json
+import re
 import uuid
 
 import boto3
-from .task_group_reader import Stages
-import ast
-import json
-from engine import (
-    make_api_gateway,
-    make_dynamodb_table,
-    make_lambda_layer_version,
-    make_lambda_python_function,
-    make_lambda_function_trigger,
-    make_athena_workgroup,
-    make_athena_prepared_statement,
-    make_sns_topic,
-    make_batch_job_queue,
-    make_batch_job_definition,
-    make_batch_compute_environment,
-    make_sagemaker_model_package_group,
-)
 from aws_cdk import aws_events, aws_events_targets, core
-import re
+from engine import (make_api_gateway, make_athena_prepared_statement,
+                    make_athena_workgroup, make_batch_compute_environment,
+                    make_batch_job_definition, make_batch_job_queue,
+                    make_dynamodb_table, make_lambda_function_trigger,
+                    make_lambda_layer_version, make_lambda_python_function,
+                    make_sagemaker_model_package_group, make_sns_topic)
+
+from .task_group_reader import Stages
 
 
 class ResourceCreationException(Exception):

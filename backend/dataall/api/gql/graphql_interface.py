@@ -12,8 +12,8 @@ class Interface(ObjectType):
 
 if __name__ == "__main__":
     from .graphql_field import Field
-    from .graphql_type_modifiers import *
     from .graphql_scalar import *
+    from .graphql_type_modifiers import *
 
     Searchable = Interface(
         name="Searchable",

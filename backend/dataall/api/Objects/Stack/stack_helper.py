@@ -4,8 +4,8 @@ import requests
 
 from .... import db
 from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.ecs import Ecs
+from ....aws.handlers.service_handlers import Worker
 from ....db import models
 from ....utils import Parameter
 

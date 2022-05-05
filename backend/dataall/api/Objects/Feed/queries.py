@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 getFeed = gql.QueryField(
     name="getFeed",
     resolver=get_feed,

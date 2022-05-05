@@ -1,5 +1,5 @@
 from ....api.context import Context
-from ....db import paginate, models
+from ....db import models, paginate
 
 
 def list_user_activities(context: Context, source, filter: dict = None):

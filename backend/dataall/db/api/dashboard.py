@@ -1,17 +1,11 @@
 import logging
 
-from sqlalchemy import or_, and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from .. import models, exceptions, permissions, paginate
-from . import (
-    Environment,
-    has_tenant_perm,
-    has_resource_perm,
-    ResourcePolicy,
-    Glossary,
-    Vote,
-)
+from .. import exceptions, models, paginate, permissions
+from . import (Environment, Glossary, ResourcePolicy, Vote, has_resource_perm,
+               has_tenant_perm)
 
 logger = logging.getLogger(__name__)
 

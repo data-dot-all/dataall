@@ -1,6 +1,5 @@
 from ....api.constants import *
 
-
 NewShareObjectInput = gql.InputType(
     name="NewShareObjectInput",
     arguments=[

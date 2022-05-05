@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Boolean, Column, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 

@@ -1,21 +1,18 @@
 import logging
 import os
 
-from aws_cdk import (
-    aws_sagemaker as sagemaker,
-    aws_ec2 as ec2,
-    aws_kms as kms,
-    aws_iam as iam,
-    Stack,
-    CfnOutput,
-)
+from aws_cdk import CfnOutput, Stack
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_sagemaker as sagemaker
 
-from .manager import stack
 from ... import db
 from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from .manager import stack
 
 logger = logging.getLogger(__name__)
 

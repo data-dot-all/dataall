@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 listKeyValueTags = gql.QueryField(
     name="listKeyValueTags",
     type=gql.ArrayType(gql.Ref("KeyValueTag")),

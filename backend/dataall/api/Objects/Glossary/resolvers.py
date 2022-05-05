@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import and_, or_, asc
+from sqlalchemy import and_, asc, or_
 
 from .... import db
 from ....api.context import Context
-from ....db import paginate, exceptions, models
-from ....searchproxy import upsert_dataset
-from ....searchproxy import upsert_table
-from ....searchproxy.indexers import upsert_folder, upsert_dashboard
+from ....db import exceptions, models, paginate
+from ....searchproxy import upsert_dataset, upsert_table
+from ....searchproxy.indexers import upsert_dashboard, upsert_folder
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):

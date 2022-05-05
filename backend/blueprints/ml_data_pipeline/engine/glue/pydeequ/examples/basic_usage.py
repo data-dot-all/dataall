@@ -1,10 +1,9 @@
 #!/bin/bash python3
 
-from pyspark.sql import SparkSession, DataFrame
-
 from glue.pydeequ.base import VerificationSuite
 from glue.pydeequ.checks import Check
 from glue.pydeequ.examples import test_data
+from pyspark.sql import DataFrame, SparkSession
 
 
 def main():

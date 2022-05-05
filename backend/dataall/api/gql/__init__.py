@@ -6,17 +6,8 @@ from .graphql_field import Field
 from .graphql_input import InputType
 from .graphql_mutation_field import MutationField
 from .graphql_query_field import QueryField
-from .graphql_scalar import (
-    ID,
-    AWSDateTime,
-    Boolean,
-    Date,
-    Integer,
-    Number,
-    Scalar,
-    String,
-    scalars,
-)
+from .graphql_scalar import (ID, AWSDateTime, Boolean, Date, Integer, Number,
+                             Scalar, String, scalars)
 from .graphql_type import ObjectType
 from .graphql_type_modifiers import ArrayType, NonNullableType
 from .graphql_union_type import Union

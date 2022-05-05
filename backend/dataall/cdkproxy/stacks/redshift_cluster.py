@@ -2,26 +2,20 @@ import json
 import logging
 import os
 
-from aws_cdk import (
-    aws_ec2 as ec2,
-    aws_redshift_alpha as redshift,
-    aws_ec2,
-    aws_kms,
-    aws_secretsmanager,
-    aws_iam,
-    aws_s3,
-    RemovalPolicy,
-    Duration,
-    Stack,
-)
+from aws_cdk import Duration, RemovalPolicy, Stack
+from aws_cdk import aws_ec2
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam, aws_kms
+from aws_cdk import aws_redshift_alpha as redshift
+from aws_cdk import aws_s3, aws_secretsmanager
 from aws_cdk.aws_secretsmanager import SecretStringGenerator
 
-from .manager import stack
 from ... import db
 from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from .manager import stack
 
 logger = logging.getLogger(__name__)
 

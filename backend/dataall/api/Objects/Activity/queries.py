@@ -1,7 +1,6 @@
 from ... import gql
 from .resolvers import *
 
-
 listUserActivities = gql.QueryField(
     name="listUserActivities",
     type=gql.Ref("ActivitySearchResult"),

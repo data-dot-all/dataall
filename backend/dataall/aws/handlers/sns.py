@@ -3,10 +3,10 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from .sts import SessionHelper
 from ... import db
 from ...db import models
+from .service_handlers import Worker
+from .sts import SessionHelper
 
 logger = logging.getLogger(__name__)
 

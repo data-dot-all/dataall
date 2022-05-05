@@ -1,7 +1,7 @@
-from utils.task_group_reader import TaskGroupReader
+import aws_cdk.aws_stepfunctions_tasks
 from aws_cdk import core
 from utils import stack_task_util
-import aws_cdk.aws_stepfunctions_tasks
+from utils.task_group_reader import TaskGroupReader
 
 
 class PipelineStack(core.Stack):

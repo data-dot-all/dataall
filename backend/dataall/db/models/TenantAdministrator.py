@@ -1,7 +1,7 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, ForeignKey, String
 
-from .Tenant import Tenant
 from .. import Base
+from .Tenant import Tenant
 
 
 class TenantAdministrator(Base):

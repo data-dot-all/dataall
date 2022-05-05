@@ -1,9 +1,9 @@
-import boto3
-from io import BytesIO
-from PIL import Image
-import os
-
 import argparse
+import os
+from io import BytesIO
+
+import boto3
+from PIL import Image
 
 
 def from_s3(s3, bucket, key):
