@@ -1,6 +1,7 @@
+from .client import * # isort:skip
 from dataall.db import models
 
-from .client import *
+
 
 
 @pytest.fixture(scope="module", autouse=True)
