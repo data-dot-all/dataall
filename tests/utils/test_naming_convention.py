@@ -1,4 +1,7 @@
-from dataall.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.utils.naming_convention import (
+    NamingConventionPattern,
+    NamingConventionService,
+)
 
 
 def test_s3_bucket_name():

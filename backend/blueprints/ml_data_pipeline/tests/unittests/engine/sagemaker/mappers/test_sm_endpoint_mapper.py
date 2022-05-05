@@ -1,5 +1,9 @@
 from aws_cdk import core
-from engine import SageMakerEndpointConfigPropsMapper, SageMakerEndpointPropsMapper, SageMakerModelPropsMapper
+from engine import (
+    SageMakerEndpointConfigPropsMapper,
+    SageMakerEndpointPropsMapper,
+    SageMakerModelPropsMapper,
+)
 from utils.task_group_reader import TaskGroupReader
 
 

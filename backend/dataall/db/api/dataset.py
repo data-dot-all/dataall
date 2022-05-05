@@ -7,7 +7,16 @@ from sqlalchemy.orm import Query
 from ...utils.naming_convention import NamingConventionPattern, NamingConventionService
 from .. import exceptions, models, paginate, permissions
 from ..models.Enums import ConfidentialityClassification, Language
-from . import Environment, KeyValueTag, Organization, ResourcePolicy, Stack, Vote, has_resource_perm, has_tenant_perm
+from . import (
+    Environment,
+    KeyValueTag,
+    Organization,
+    ResourcePolicy,
+    Stack,
+    Vote,
+    has_resource_perm,
+    has_tenant_perm,
+)
 
 logger = logging.getLogger(__name__)
 

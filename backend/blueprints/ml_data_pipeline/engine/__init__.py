@@ -26,7 +26,9 @@ from .sagemaker.endpointconfig_task import make_sagemaker_endpoint_config_task
 from .sagemaker.hpo_task import make_sagemaker_hpo_task
 from .sagemaker.image_builder import SageMakerImageBuilder
 from .sagemaker.mappers.sm_endpoint_mapper import SageMakerEndpointPropsMapper
-from .sagemaker.mappers.sm_endpointconfig_mapper import SageMakerEndpointConfigPropsMapper
+from .sagemaker.mappers.sm_endpointconfig_mapper import (
+    SageMakerEndpointConfigPropsMapper,
+)
 from .sagemaker.mappers.sm_model_mapper import SageMakerModelPropsMapper
 from .sagemaker.mappers.sm_processing_mapper import SageMakerProcessingJobPropsMapper
 from .sagemaker.mappers.sm_training_mapper import SageMakerTrainingJobPropsMapper

@@ -11,7 +11,10 @@ from alembic import op
 from dataall.db import Resource, utils
 
 # revision identifiers, used by Alembic.
-from dataall.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.utils.naming_convention import (
+    NamingConventionPattern,
+    NamingConventionService,
+)
 from sqlalchemy import Boolean, Column, DateTime, String, orm
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
