@@ -37,7 +37,7 @@ jobs:
         run: black --check .
       - name: mypy check
         run: |
-          mypy --install-types --non-interactive cli core
+          mypy --install-types --non-interactive backend
       - name: Flake8 Lint
         run: |
           flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
