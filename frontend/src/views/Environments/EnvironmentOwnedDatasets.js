@@ -122,8 +122,8 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell>AWS Account</TableCell>
-                <TableCell>Region</TableCell>
+                <TableCell>Creator</TableCell>
+                <TableCell>Owners</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -136,8 +136,8 @@ const EnvironmentOwnedDatasets = ({ environment }) => {
                   items.nodes.map((dataset) => (
                     <TableRow hover key={dataset.environmentUri}>
                       <TableCell>{dataset.label}</TableCell>
-                      <TableCell>{dataset.AwsAccountId}</TableCell>
-                      <TableCell>{dataset.region}</TableCell>
+                      <TableCell>{dataset.owner}</TableCell>
+                      <TableCell>{dataset.SamlAdminGroupName}</TableCell>
                       <TableCell>
                         <StackStatus
                           status={
