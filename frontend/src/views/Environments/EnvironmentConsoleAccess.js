@@ -87,39 +87,11 @@ const EnvironmentConsoleAccess = ({ environment }) => {
       </CardContent>
       <CardContent>
         <Typography color="textSecondary" variant="subtitle2">
-          IAM role
+          Admin Team IAM role
         </Typography>
         <Typography color="textPrimary" variant="body2">
           {environment.EnvironmentDefaultIAMRoleArn}
         </Typography>
-      </CardContent>
-      <CardContent>
-        <Box
-          sx={{
-            alignItems: 'flex-start',
-            display: 'flex'
-          }}
-        >
-          <LoadingButton
-            loading={loadingCreds}
-            color="primary"
-            startIcon={<CopyAll size={15} />}
-            sx={{ mr: 1 }}
-            variant="outlined"
-            onClick={generateCredentials}
-          >
-            AWS Credentials
-          </LoadingButton>
-          <LoadingButton
-            loading={isLoadingUI}
-            startIcon={<FaExternalLinkAlt size={15} />}
-            color="primary"
-            variant="contained"
-            onClick={goToAWSConsole}
-          >
-            AWS console
-          </LoadingButton>
-        </Box>
       </CardContent>
     </Card>
   );
