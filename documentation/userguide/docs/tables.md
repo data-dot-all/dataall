@@ -6,15 +6,7 @@ In this section we will go through the different tabs in the Table window. We ca
 
 ![](pictures/tables/table_dataset.png#zoom#shadow)
 
-### :material-eye-outline: **Preview data**
-Data preview gives you the ability to preview a subset of the data available on data.all.
-Preview feature is available for data you own or data that's shared with you.
-
-Just select a table and in the **Preview** tab you will find the results of an SQL select subset of the table.
-
-![](pictures/tables/table_preview.png#zoom#shadow)
-
-### :material-pencil-outline: **Add or edit table metadata**
+### :material-card-search-outline: **Check table metadata**
 Also in the table window, go to the **Overview** tab where you will find the following information:
 
 - URI: unique table identifier
@@ -31,6 +23,22 @@ Also in the table window, go to the **Overview** tab where you will find the fol
     In the Overview tab, by clicking on **Edit** is where you can add them. Same applies for the description.
     Adding tags and terms to your tables will make them more discoverable in the Catalog.
 
+### :material-pencil-outline: **Add or edit table metadata**
+Edit your table metadata by clicking on the **Edit** button.
+
+### :material-eye-outline: **Preview data**
+Data preview gives you the ability to preview a subset of the data available on data.all.
+Preview feature is available for data you own or data that's shared with you.
+
+Just select a table and in the **Preview** tab you will find the results of an SQL select subset of the table.
+
+![](pictures/tables/table_preview.png#zoom#shadow)
+
+
+### :material-comment-text-multiple-outline: **Leave a message in Chat**
+As with datasets, in the **Chats** button users can interact and leave their comments and questions on
+the Table Chat.
+
 ### :material-table-column-plus-before: **Add column description**
 Metadata makes more sense when columns description fields are not empty.
 With data.all you can add columns description and avoid the pain of figuring out fields purpose.
@@ -40,10 +48,6 @@ as shown in the picture.
 
 
 ![](pictures/tables/table_column.png#zoom#shadow)
-
-### :material-comment-text-multiple-outline: **Post a comment in Feed**
-As with datasets, in the **Feed** tab of a table users can interact and leave their comments and questions on
-the Table feed.
 
 ###  :material-check-all: **Profile data**
 
@@ -66,7 +70,7 @@ By selecting the **Metrics** tab of your data table you can run a profiling job 
 
 ![](pictures/tables/table_metrics.png#zoom#shadow)
 
-## :material-trash-can-outline: **Delete a table**
+### :material-trash-can-outline: **Delete a table**
 Deleting a table means deleting it from the data.all Catalog, but it will be still available on the AWS Glue Catalog.
 Moreover, when data owners
 delete a table, they are **not** deleting its data from the dataset S3 bucket. Teams with shared access to the dataset
@@ -93,7 +97,7 @@ then in the **Folders** tab click on the arrow in the *Actions* column of your f
 ![](pictures/tables/folder_1.png#zoom#shadow)
 
 
-### :material-card-search-outline: **Look up folder and S3 metadata**
+### :material-card-search-outline: **Check folder and S3 metadata**
 The **Overview** tab of the folder contains folder metadata:
 - URI: unique folder identifier
 - Name: name of the folder, it is made out of the dataset name concatenated with the S3 prefix
@@ -104,6 +108,9 @@ The **Overview** tab of the folder contains folder metadata:
 - Created: creation time of the table
 
 ![](pictures/tables/folder_2.png#zoom#shadow)
+
+### :material-pencil-outline: **Add or edit table metadata**
+Edit your folder metadata by clicking on the **Edit** button.
 
 !!! note "Description, Tags and Glossary terms are not inherited"
     Careful, those 3 fields are not synced with their dataset metadata. Just click on
@@ -118,11 +125,11 @@ of the Folder **Overview** tab.
 
 ![](pictures/tables/folder_3.png#zoom#shadow)
 
-### :material-comment-text-multiple-outline: **Post a comment in Feed**
-Exactly the same as with tables. Allow your teams to discuss directly on the Folder feed.
+### :material-comment-text-multiple-outline: **Leave a message in Chat**
+Exactly the same as with tables. Allow your teams to discuss directly on the Folder Chat.
 
 
-## :material-trash-can-outline: **Delete a folder**
+### :material-trash-can-outline: **Delete a folder**
 Deleting folders is analogous to deleting tables. Deletion means deletion from the data.all Catalog and the content
 of the S3 prefix remains in the dataset S3 bucket. Only dataset owners can delete dataset folders.
 
