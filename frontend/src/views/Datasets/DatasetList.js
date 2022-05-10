@@ -94,7 +94,7 @@ const DatasetList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listDatasets(filter));
+    const response = await client.query(listDatasets({filter}));
     if (!response.errors) {
       setItems(response.data.listDatasets);
     } else {

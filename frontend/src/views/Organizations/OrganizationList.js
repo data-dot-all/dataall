@@ -35,7 +35,7 @@ const OrganizationList = () => {
   const client = useClient();
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listOrganizations(filter));
+    const response = await client.query(listOrganizations({filter}));
     if (!response.errors) {
       setItems(response.data.listOrganizations);
     } else {
