@@ -26,8 +26,10 @@ import * as WorksheetApi from '../../api/Worksheet';
 import { updateWorksheet } from '../../api/Worksheet';
 import useClient from '../../hooks/useClient';
 import listEnvironments from '../../api/Environment/listEnvironments';
+import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import { SET_ERROR } from '../../store/errorReducer';
 import listDatasetsCreatedInEnvironment from '../../api/Environment/listDatasetsCreatedInEnvironment';
+import listDatasets from '../../api/Dataset/listDatasets';
 import listDatasetTables from '../../api/Dataset/listDatasetTables';
 import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
 import runSqlQuery from '../../api/Environment/runSqlQuery';
@@ -47,6 +49,7 @@ const WorksheetView = () => {
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [groupOptions, setGroupOptions] = useState([]);
   const [worksheet, setWorksheet] = useState({ worksheetUri: '' });
   const [results, setResults] = useState({ rows: [], fields: [] });
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,7 @@ const WorksheetView = () => {
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
   const [currentEnv, setCurrentEnv] = useState();
+  const [currentTeam, setCurrentTeam] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseOptions, setDatabaseOptions] = useState([]);
@@ -98,23 +102,41 @@ const WorksheetView = () => {
     setLoadingEnvs(false);
   }, [client, dispatch]);
 
+  const fetchGroups = async (environmentUri) => {
+    try {
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
+      if (!response.errors) {
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   const fetchDatabases = useCallback(
     async (environment) => {
       setLoadingDatabases(true);
       let ownedDatabases = [];
       let sharedWithDatabases = [];
-      let response = await client.query(
-        listDatasetsCreatedInEnvironment({
-          environmentUri: environment.environmentUri,
-          filter: Defaults.SelectListFilter
-        })
-      );
+      let response = await client.query(listDatasets({ term: '', page: 1, pageSize: 10000}));
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      if (response.data.listDatasetsCreatedInEnvironment.nodes) {
+      if (response.data.listDatasets.nodes) {
         ownedDatabases =
-          response.data.listDatasetsCreatedInEnvironment.nodes?.map((d) => ({
+          response.data.listDatasets.nodes?.map((d) => ({
             ...d,
             value: d.datasetUri,
             label: d.GlueDatabaseName
@@ -294,9 +316,24 @@ const WorksheetView = () => {
     setSelectedTable('');
     setDatabaseOptions([]);
     setTableOptions([]);
+    setCurrentTeam('');
     setCurrentEnv(event.target.value);
-    fetchDatabases(event.target.value).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
+    fetchGroups(
+        event.target.value.environmentUri
+      ).catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+  }
+
+  function handleTeamChange(event) {
+    setColumns([]);
+    setSelectedDatabase('');
+    setSelectedTable('');
+    setDatabaseOptions([]);
+    setTableOptions([]);
+    setCurrentTeam(event.target.value);
+    fetchDatabases(currentEnv).catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
     );
   }
 
@@ -380,6 +417,36 @@ const WorksheetView = () => {
                         value={environment}
                       >
                         {environment.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+                <Box sx={{ p: 2, mt: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Team"
+                    name="team"
+                    onChange={(event) => {
+                      handleTeamChange(event);
+                    }}
+                    select
+                    value={currentTeam}
+                    variant="outlined"
+                    InputProps={{
+                      endAdornment: (
+                        <>
+                          {loadingEnvs ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                        </>
+                      )
+                    }}
+                  >
+                    {groupOptions.map((group) => (
+                      <MenuItem
+                        key={group.value} value={group.value}
+                      >
+                        {group.label}
                       </MenuItem>
                     ))}
                   </TextField>
