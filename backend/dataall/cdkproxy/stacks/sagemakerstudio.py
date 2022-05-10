@@ -52,7 +52,14 @@ class SagemakerStudioUserProfile(Stack):
         return env
 
     def __init__(self, scope, id: str, target_uri: str = None, **kwargs) -> None:
-        super().__init__(scope, id, **kwargs)
+        super().__init__(scope,
+                         id,
+                         description="Cloud formation stack of SM STUDIO PROFILE: {}; URI: {}; DESCRIPTION: {}".format(
+                             self.get_target(target_uri=target_uri).label,
+                             target_uri,
+                             self.get_target(target_uri=target_uri).description,
+                         )[:1024],
+                         **kwargs)
 
         # Required for dynamic stack tagging
         self.target_uri = target_uri
