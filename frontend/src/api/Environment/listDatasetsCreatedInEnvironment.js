@@ -25,6 +25,7 @@ const listDatasetsCreatedInEnvironment = ({ filter, environmentUri }) => ({
           AwsAccountId
           region
           GlueDatabaseName
+          SamlAdminGroupName
           name
           S3BucketName
           created
