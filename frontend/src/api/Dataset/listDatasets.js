@@ -22,6 +22,7 @@ const listDatasets = ({ filter }) => ({
           SamlAdminGroupName
           userRoleForDataset
           userRoleInEnvironment
+          GlueDatabaseName
           tags
           topics
           organization {

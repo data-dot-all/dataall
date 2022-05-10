@@ -52,6 +52,14 @@ class Dataset(Stack):
             env = Environment.get_environment_group(session, dataset.SamlAdminGroupName, dataset.environmentUri)
         return env
 
+    def get_target_with_uri(self, target_uri) -> models.Dataset:
+        engine = self.get_engine()
+        with engine.scoped_session() as session:
+            dataset = session.query(models.Dataset).get(target_uri)
+            if not dataset:
+                raise Exception('ObjectNotFound')
+        return dataset
+
     def get_target(self) -> models.Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
@@ -153,7 +161,15 @@ class Dataset(Stack):
         return locations
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
-        super().__init__(scope, id, **kwargs)
+        super().__init__(
+            scope,
+            id,
+            description="Cloud formation stack of DATASET: {}; URI: {}; DESCRIPTION: {}".format(
+                self.get_target_with_uri(target_uri=target_uri).label,
+                target_uri,
+                self.get_target_with_uri(target_uri=target_uri).description,
+            )[:1024],
+            **kwargs)
 
         # Required for dynamic stack tagging
         self.target_uri = target_uri

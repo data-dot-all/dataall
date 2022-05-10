@@ -129,12 +129,14 @@ class PipelineStack(Stack):
         super().__init__(
             scope,
             id,
-            env=kwargs.get("env"),
-            stack_name=kwargs.get("stack_name"),
-            tags=kwargs.get("tags"),
-            description="'{}' ({}) dataall code-pipeline for Datapipeline".format(
-                self.get_target(target_uri=target_uri).repo, target_uri
-            ),
+            env=kwargs.get('env'),
+            stack_name=kwargs.get('stack_name'),
+            tags=kwargs.get('tags'),
+            description="Cloud formation stack of PIPELINE: {}; URI: {}; DESCRIPTION: {}".format(
+                self.get_target(target_uri=target_uri).label,
+                target_uri,
+                self.get_target(target_uri=target_uri).description,
+            )[:1024],
         )
 
         # Required for dynamic stack tagging

@@ -1,9 +1,9 @@
-# **Hands-on Lab: Data Access Management with Datahub teams**
+# **Hands-on Lab: Data Access Management with data.all teams**
 
 This document is a step-by-step guide illustrating some functionalities
-of the Datahub "Teams" feature. This guide is far from exhaustive and
+of the data.all "Teams" feature. This guide is far from exhaustive and
 mainly focuses on how users can share data across environment and teams.
-After completing it, you are free to continue exploring Datahub and the
+After completing it, you are free to continue exploring data.all and the
 functionalities it provides.
 
 ## 🎯 **Scope of this guide**
@@ -11,13 +11,13 @@ functionalities it provides.
 
 To follow this guide, you will need:
 
--   An AWS account (#111111111111) where Datahub is deployed. Your
-    version of Datahub must support the "Teams" feature
+-   An AWS account (#111111111111) where data.all is deployed. Your
+    version of data.all must support the "Teams" feature
 
--   An AWS account that will be used as a Datahub environment for the
+-   An AWS account that will be used as a data.all environment for the
     data platform team (#222222222222)
 
--   An AWS account that will be used as a Datahub environment for the
+-   An AWS account that will be used as a data.all environment for the
     data science team (#333333333333)
 
 The scenario you will implement in this guide is the following. The data
@@ -54,22 +54,22 @@ You will go through the following steps to implement this scenario:
 
 Here is an illustration of the scenario:
 
-![scenario](pictures/hands-on-teams/image1.png#zoom#shadow)
+
 
 ### **1. Create users and groups in Cognito**
 
 
 First, you need to create users and groups from the Cognito console.
-This happens in the account where the infrastructure of Datahub is
+This happens in the account where the infrastructure of data.all is
 deployed (#111111111111). You will later use these users to connect to
-Datahub. Go to the AWS console and create five groups and four users as
+data.all. Go to the AWS console and create five groups and four users as
 follow:
 
 **Cognito group**
 
-![scenario](pictures/hands-on-teams/image2.png#zoom#shadow)
 
--   **DHAdministrators**: group for Datahub administrators
+
+-   **DAAdministrators**: group for data.all administrators
 
 -   **DataPlatformaAdmin**: group for data platform admin team
 
@@ -81,12 +81,12 @@ follow:
 
 **Cognito users**
 
-![scenario](pictures/hands-on-teams/image3.png#zoom#shadow)
 
--   **datahubadmin**: create this user and add it to both in the
-    DHAdministrators and DataPlatformAdmin groups. This user will be
-    able to manage permissions of all teams in Datahub (tanks to the
-    DHAdministrators group membership) and will be able to create
+
+-   **data.alladmin**: create this user and add it to both in the
+    DAAdministrators and DataPlatformAdmin groups. This user will be
+    able to manage permissions of all teams in data.all (tanks to the
+    DAAdministrators group membership) and will be able to create
     resources for the data platform team
 
 -   **ds-admin**: create this user and add it to the DataScienceAdmin
@@ -102,34 +102,34 @@ follow:
 After creating users and assigning them to groups in Cogntio, you end-up
 with the following situation:
 
-![scenario](pictures/hands-on-teams/image4.png#zoom#shadow)
+
 
 ### **2. Create the Organisation and the Environment for the data platform team**
 
 We will start by creating the resources for the data platform team. Log
-into Datahub with the user in the **DataPlatformAdmin** group. Create an
+into data.all with the user in the **DataPlatformAdmin** group. Create an
 Organisation for the Data Platform team. Make sure that the
 DataPlatformAdmin team manages this organization.
 
-![scenario](pictures/hands-on-teams/image5.png#zoom#shadow)
+
 
 
 Now link a new environment to this organisation. You can do this by
 clicking on **Environment** and then **Link Environment**
 
-![scenario](pictures/hands-on-teams/image6.png#zoom#shadow)
 
 
-When onboarding a new AWS account as an environment in Datahub, you
+
+When onboarding a new AWS account as an environment in data.all, you
 usually need to make some operations in the account first. The UI lists
 these operations for you: bootstrapping the AWS account and creating the
-datahubPivotRole notably. You will have to go through these operations
+data.allPivotRole notably. You will have to go through these operations
 if it is the first time you use this AWS account to create an
-environment in Datahub. Then, create the environment by providing a
+environment in data.all. Then, create the environment by providing a
 name, the account ID (#**222222222222**) and the Team managing it
 (**DataPlatformAdmin**).
 
-![scenario](pictures/hands-on-teams/image7.png#zoom#shadow)
+
 
 
 Wait until the stack is deployed successfully. You can check the status
@@ -137,20 +137,19 @@ of the stack in the **stack** tab of the environment. Once the status is
 **create_complete**, create a new dataset in this environment. You can
 do it from the **Contribute** window
 
-![scenario](pictures/hands-on-teams/image8.png#zoom#shadow)
 
 Deploy this dataset in the environment you have just created. Also make
 sure that the **DataPlatformAdmin** team owns this dataset (Governance
 section):
 
-![scenario](pictures/hands-on-teams/image9.png#zoom#shadow)
+
 
 Wait until the dataset is created successfully. You can check the status
 in the **stack** tab of the dataset. Once the status is
 **create_complete**, you can start uploading some data from the
 **upload** tab:
 
-![scenario](pictures/hands-on-teams/image10.png#zoom#shadow)
+
 
 From this window, you are able to upload files in your dataset. When
 uploading files, you can ask for a crawler running automatingly in your
@@ -158,57 +157,57 @@ dataset, thus populating a glue database. To make sure the crawler will
 work, please upload a csv file of your choice. Insert any name you want
 in the **prefix** section. This will be the name of your Glue table.
 
-![scenario](pictures/hands-on-teams/image11.png#zoom#shadow)
+
 
 Click on the **upload** button. This puts your file in the S3 bucket
-related to your Datahub dataset. It also launches the Glue crawler
+related to your data.all dataset. It also launches the Glue crawler
 populating the Glue database. Leave some time for the crawler to run and
 click on the **Tables** tab. If the crawler ran successfully, clicking
 on the **synchronize** button will display your table. At this point,
-feel free to explore your table from the Datahub user interface.
+feel free to explore your table from the data.all user interface.
 
-![scenario](pictures/hands-on-teams/image12.png#zoom#shadow)
+
 
 We have completed all the tasks on the data platform side. This included
 the creation of the organisation, the environment, the dataset and the
 upload of a csv file. This is an illustration of where we are in the
 process:
 
-![scenario](pictures/hands-on-teams/image13.png#zoom#shadow)
+
 
 
 **Note**: As you may have already noted down at the beginning of
 this guide, the data platform user is also part of the
-**DHAdministrators** group. Being part of this group enables this user
-to manage the permissions of all the other teams in Datahub. To do so,
+**DAAdministrators** group. Being part of this group enables this user
+to manage the permissions of all the other teams in data.all. To do so,
 click **Setting**. This provides the list of teams for which you can
 manage the permissions.
 
-![scenario](pictures/hands-on-teams/image14.png#zoom#shadow)
+
 
 Click on the icon next to the team's name to manage its permissions
 
-![scenario](pictures/hands-on-teams/image15.png#zoom#shadow)
+
 
 This opens a new window from where you can manage all permissions of the
 team.
 
-![scenario](pictures/hands-on-teams/image16.png#zoom#shadow)
+
 
 ### **3. Create the Organisation and the Environment for the data science team**
 
-You will now create Datahub resources for the data science team. Log
-into Datahub with the user in the **DataScienceAdmin** group. Create an
+You will now create data.all resources for the data science team. Log
+into data.all with the user in the **DataScienceAdmin** group. Create an
 Organisation for the data science team. Make sure that the
 **DataScienceAdmin** team manages this organization.
 
-![scenario](pictures/hands-on-teams/image17.png#zoom#shadow)
+
 
 Now link a new environment to this organisation. Provide a name for this
 environment, the AWS account ID (**#333333333333**), and the team owning
 it (**DataScienceAdmin**).
 
-![scenario](pictures/hands-on-teams/image18.png#zoom#shadow)
+
 
 You now have an organisation and an environment managed by the
 **DataScienceAdmin** team. The next step is to invite team A and team B
@@ -221,56 +220,56 @@ With the user in DataScienceAdmin team, select the data science
 environment and click on the **Teams** tab. You can invite other teams
 in your environment with the **invite** button.
 
-![scenario](pictures/hands-on-teams/image19.png#zoom#shadow)
+
 
 This opens a new window asking you to indicate the name of the team you
 want to invite. You can also manage the permissions this team will have
 in your environment. Use this **invite** button to invite **TeamA** and
 **TeamB** in your data science environment.
 
-![scenario](pictures/hands-on-teams/image20.png#zoom#shadow)
+
 
 Users from team A and team B now have access to your environment
 
 ### **5. Share data platform data with Team A in the data science environment**
 
-Log into Datahub with user in **TeamA**. This user does not own any
-data, but wants to access data of the data platform team. Go on Datahub
+Log into data.all with user in **TeamA**. This user does not own any
+data, but wants to access data of the data platform team. Go on data.all
 **Data Catalog** tab. This shows all the datasets and tables you can
 request access to. There are different tools you can use in order to
 find the data you are looking for (you can find more information about
-these in the Datahub documentation):
+these in the data.all documentation):
 
 -   Directly typing the name of the dataset or the table in the search
     bar
 
 -   Use tags or topics associated to the datasets
 
--   Use Datahub Glossary
+-   Use data.all Glossary
 
 In this case, data scientist in team A wants to access **mydpdata**
 uploaded by the data platform team. Use the search bar to find the data.
 When you see the table you want, click on **Request access**.
 
-![scenario](pictures/hands-on-teams/image21.png#zoom#shadow)
+
 
 This button opens a new window where you can configure your request.
-When you share a dataset or a table in Datahub, the share occurs at an
+When you share a dataset or a table in data.all, the share occurs at an
 environment and team level. You therefore need to indicate for which
 environment and for which team you make the request. In this case, the
 user in team A wants to access data in the data science environment.
 Fill the request accordingly.
 
-![scenario](pictures/hands-on-teams/image22.png#zoom#shadow)
+
 
 When you click on **Send Request**, this does not directly send the
 request to the data latform team. It rather creates a Draft that you can
 still edit in the **Collaborate** tab, under **Sent**. Click on the
 **Submit** button to send the request
 
-![scenario](pictures/hands-on-teams/image23.png#zoom#shadow)
 
-Now re-open a new Datahub window connected as the user in the
+
+Now re-open a new data.all window connected as the user in the
 **DataPlatformAdmin** team. This team owns the dataset and is therefore
 responsible of accepting access requests. It is possible to delegate
 this right to other teams using **Data Stewards** but we did not set
@@ -281,17 +280,17 @@ more about this request (who is making it, for which table in the
 dataset,...), click on **Learn More**. If you agree to grant access,
 click on **Approve**.
 
-![scenario](pictures/hands-on-teams/image24.png#zoom#shadow)
+
 
 This action triggers an ECS task that updates the permissions of the
 table in Lake Formation. Users in Team A are now able to access the data
 platform data. Let us verify it.
 
-Re-open Datahub connected as the user in **TeamA**. You can first visit
+Re-open data.all connected as the user in **TeamA**. You can first visit
 the **Contribute** tab where you will see the dataset that has been
 shared with team A.
 
-![scenario](pictures/hands-on-teams/image25.png#zoom#shadow)
+
 
 **Quick reminder**: The data platform team agreed to share the
 **mydpdata** table with TeamA in the data science environment called
@@ -299,12 +298,12 @@ shared with team A.
 
 As a conclusion, the table **mydpdata** is accessible from the
 environment **DSENV**, through a role only team A can assume. Team A
-users can assume this role directly from the Datahub user interface.
+users can assume this role directly from the data.all user interface.
 Select the data science environment and go under the **Teams** tab. You
 will then see all the teams that have access to the environment. Find
 TeamA line and click on the AWS logo.
 
-![scenario](pictures/hands-on-teams/image26.png#zoom#shadow)
+
 
 This opens a new window in the AWS console. The AWS account is the one
 you associated to the data science environment earlier in this guide
@@ -312,11 +311,11 @@ you associated to the data science environment earlier in this guide
 team. Use the search bar to get to the Athena console. In the Athena
 Query editor, you will be able to see under **Database** the dataset
 shared by the data platform team. The name of this database is a
-concatenation of "dh" (for Datahub), the name of the dataset (dpdataset)
+concatenation of "dh" (for data.all), the name of the dataset (dpdataset)
 and random characters to ensure unicity. Under **Tables**, you can now
 see **mydpdata** which you can query using with Athena.
 
-![scenario](pictures/hands-on-teams/image27.png#zoom#shadow)
+
 
 **Explanation**: When the data platform team uploaded the csv file
 under the **mydpdata** prefix, the crawler created a new Glue table
@@ -334,7 +333,7 @@ is a **read-only** access, and the data is not moved from the data
 platform environment to the data science environment.
 
 You can repeat the same thing to check that team B does not have access
-to the data. Log into Datahub with a user in **TeamB** and select the
+to the data. Log into data.all with a user in **TeamB** and select the
 data science environment. Under the **Teams** tab, click on the AWS logo
 to connect to the AWS console assuming the role of **TeamB**. Go to the
 Athena Query Editor and you will see that you won't be able to see data
@@ -344,7 +343,6 @@ At this stage of the guide, you should better understand how data
 sharing cross account works. The graph below illustrates where we are in
 the original scenario.
 
-![scenario](pictures/hands-on-teams/image28.png#zoom#shadow)
 
 ### **6. Create a Dataset managed by team A in the data science account**
 
@@ -355,13 +353,13 @@ create a dataset in the data science environment. We will make sure that
 other teams invited to the data science environment (t eamB) are not
 able to access the dataset of team A.
 
-![scenario](pictures/hands-on-teams/image29.png#zoom#shadow)
 
-Open Datahub with a user in **TeamA**. In the **Contribute** section,
+
+Open data.all with a user in **TeamA**. In the **Contribute** section,
 create a new dataset in the data science environment. Make sure that
 **TeamA** owns this dataset.
 
-![scenario](pictures/hands-on-teams/image30.png#zoom#shadow)
+
 
 When the dataset is fully created, upload a csv file from the **upload**
 tab of the dataset. Upload this file under a prefix named **datateama**
@@ -369,12 +367,12 @@ to create a new Glue table with the same name. After uploading the file,
 wait a few minutes to let the crawler do its job. In the **Tables**
 section, click on **Synchronize** to display your new table.
 
-![scenario](pictures/hands-on-teams/image31.png#zoom#shadow)
+
 
 Now that the data is uploaded, team A is able to access the data as it
 is registered as the owner of the dataset. However, team B is not able
 to read the data even if it has access to the environment. If you log
-into Datahub with the user in team B, you won't be able to see the
+into data.all with the user in team B, you won't be able to see the
 **TeamADataset** in the **Contribute** section. In addition, you will
 find below two screenshot of the Athena console. In the first
 screenshot, we assume the role of **TeamA** in the data science
@@ -388,20 +386,17 @@ dataset. This is because in this guide, we have not created or shared
 any dataset with team B. Team B is thus unable to query the data of team
 A.
 
-![scenario](pictures/hands-on-teams/image32.png#zoom#shadow)
 
-
-![scenario](pictures/hands-on-teams/image33.png#zoom#shadow)
 
 
 This last section illustrated how you can use teams to manage data
 access in a single environment. You have reached the end of the guide
-that illustrated some capabilities that Datahub brings. Now that you got
+that illustrated some capabilities that data.all brings. Now that you got
 the basis, fell free to explore all the other things you can do with
 your data.
 
 ### **Cleanup**
 
-When you are done with this guide, you delete your Datahub resources
+When you are done with this guide, you delete your data.all resources
 (dataset, environment, organization). This also automatically deletes
 the Cloudformation stacks created in your AWS accounts.

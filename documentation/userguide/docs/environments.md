@@ -2,26 +2,22 @@
 
 An environment is a **workplace** where a team can bring, process, analyze data and build data driven applications.
 Environments comprise AWS resources, thus when we create an environment, we deploy a CDK/CloudFormation stack
-to an AWS account and region. In other words, **an environment is mapped to an AWS account in one region.**
+to an AWS account and region. In other words, **an environment is mapped to an AWS account in one region, where
+users store data and work with data.**
 
 !!! danger "One AWS account, One environment"
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
     Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
 
-
-Teams correspond to IdP groups. Once added to an environment, these groups can access and work in <span style="color:grey">*data.all*</span>.
-
 ## :material-hammer-screwdriver: **Bootstrap your AWS account**
-!!! warning
-    <span style="color:grey">*data.all*</span> does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-    steps on that AWS account in each region you want to use.
+*data.all*does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
+steps on that AWS account in each region you want to use.
 
 ### 1. Create AWS IAM role
 <span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
 the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
 organization and click on link an environment to see this form)
 
-![organization_form](pictures/environments/boot_pivotrole.png#zoom#shadow)
 
 ### 2. Setup AWS CDK
 
@@ -68,7 +64,7 @@ aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.co
 
 !!! danger "Service link creation error"
     If you receive: An error occurred (InvalidInput) when calling the CreateServiceLinkedRole operation: Service
-role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
+    role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
     <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
 
 ### 4. (Optional) Amazon Quicksight
@@ -98,8 +94,8 @@ to enable Dashboard Embedding on <span style="color:grey">*data.all*</span> UI. 
     the by default Organization Administrator team, but users of this group can now invite other teams and grant them
     permission to manage organization teams, and link environment to the organization.
 
-Managing organization teams can be done through the UI or APIs. In our example, Maria created the AnyCompany Global
-organization and now she
+Managing organization teams can be done through the UI or APIs. From the UI, navigate to your organizations and
+click on the **Teams** tab.
 
 ![](pictures/environments/org_invite_group_1.png#zoom#shadow)
 
@@ -122,7 +118,6 @@ Navigate to your organization, click on the **Link Environment** button, and fil
 
 ![](pictures/environments/env_link_1.png#zoom#shadow)
 
-![](pictures/environments/env_link_2.png#zoom#shadow)
 
 | Field             | Description                                                                                                                               | Required | Editable |Example
 |-------------------|-------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|-------------
@@ -151,7 +146,6 @@ fourth step explained in the previous chapter "Bootstrap your AWS account".
 
 Click on Save, the new Environment should be displayed in the Environments section of the left side pane.
 
-![](pictures/environments/env_link_3.png#zoom#shadow)
 
 ## :material-card-search-outline: **Navigate Environment tabs**
 Go to the environment you want to check. You can find your environment in the Environments list clicking on the left
@@ -186,7 +180,7 @@ can manually trigger the update in case of change sets of the CloudFormation sta
     No need to navigate to the AWS console to find your logs!
 
 After being processed (not in `PENDING`), the status of the CloudFormation stack is directly read from
- <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html">CloudFormation</a>
+ <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html">CloudFormation</a>.
 
 ## :material-pencil-outline: **Edit and update an environment**
 Find your environment in the Environments list or by navigating to the corresponding organization. Once in your selected
@@ -221,7 +215,6 @@ AWS permissions that the onboarded group will have, adapting to different types 
 (data scientists, data engineers, data analysts, management). The customizable permissions can be enabled or
 disabled as appears in the following picture.
 
-
 ![](pictures/environments/env_teams_2.png#zoom#shadow)
 
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
@@ -229,7 +222,6 @@ new IAM role for the new team. The IAM role policies mapped to the permissions g
 (e.g., a team  invited without "Create Redshift clusters" permission will not have
 redshift permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
 
-![](pictures/environments/env_teams_3.png#zoom#shadow)
 
 !!! warning "Automated permission assignment"
     Groups retrieved from the IdP are automatically granted all
@@ -237,9 +229,9 @@ redshift permissions on the associated IAM role).To remove a group, in the *Acti
     onboarding process.
 
 Users will only be able to see the environments where a team that they belong to has been onboarded (either as
-creator of the environment or invited to the environment). In the following picture, Maria belongs to the
-*DataAnalyticsTeam* that owns the *Data Analysis* environment, but on top of that she can access the
-*Data Science* environment because her team has been invited by John.
+creator of the environment or invited to the environment). In the following picture, John belongs to the
+*DataScienceTeam* that owns the *Data Science* environment, but on top of that he can access the
+*Data Analysis* environment because her team has been invited by Maria.
 
 !!! success "Pro tip!"
     You know whether you are `OWNER` or `INVITED` in an environment by checking **your Role** in that
@@ -271,41 +263,9 @@ Networks are VPCs created from <span style="color:grey">*data.all*</span> and be
 ![](pictures/environments/env_networks.png#zoom#shadow)
 
 
-## :material-database-plus-outline: **Import/create Redshift clusters**
-
-
-## :material-bell-outline: **Enable and disable SNS subscriptions**
-When we enable Subscriptions we allow:
-
-- Data owners to subscribe to the **Data producers topic** and publish the latest datasets updates to data consumers.
-- Data consumers to subscribe to the **Data consumers topic** and receive the latest datasets updates from data owners.
-
-How do we enable Subscriptions? any user belonging to a team onboarded to the environment can click on the
-**Subscriptions** tab in the environment window and select **enable subscriptions** button.
-
-![](pictures/environments/env_tabs_3.png#zoom#shadow)
-
-Users can optionally bring their own SNS topic; otherwise, <span style="color:grey">*data.all*</span> will
-create 2 SNS topics of the form:
-
-    - arn:aws:sns:REGION:AWS-ACCOUNT:PREFIX-ENVIRONMENTNAME-producers-topic-ENVIRONMENTURI
-    - arn:aws:sns:REGION:AWS-ACCOUNT:PREFIX-ENVIRONMENTNAME-producers-topic-ENVIRONMENTURI
-
-In the tab that Subscriptions were enabled we can click on **disable subscriptions** to disable them.
-
-![](pictures/environments/env_tabs_4.png#zoom#shadow)
-
-As we explained in the Manage teams section, only environment owners can manage the enablement of Subscriptions
-in their environment. When for example Maria tries to disable subscriptions in the *Data Science* team where
-her team was invited, she gets the following message:
-
-
-![](pictures/environments/env_subs_1.png#zoom#shadow)
-
 ## :material-tag-remove-outline: **Create Key-value tags**
 In the **Tags** tab of the environment window, we can create key-value tags. These tags are not <span style="color:grey">*data.all*</span> tags
 that are used to tag datasets and find them in the catalog. In this case we are creating AWS tags as part of the
 environment CloudFormation stack. There are multiple tagging strategies as explained in the
 <a href="https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html">documentation</a>.
 
-![](pictures/environments/env_tabs_2.png#zoom#shadow)

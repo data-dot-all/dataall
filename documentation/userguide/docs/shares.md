@@ -32,14 +32,14 @@ request which will send it back to a `DRAFT` state.
 On left pane choose **Catalog** then **Search** for the table you want to access. Click on the lock icon of the selected
 data asset.
 
-![catalog_search](pictures/shares/shares_search.png#zoom#shadow)
+![catalog_search](pictures/shares/shares_1.png#zoom#shadow)
 
 The following window will open. Choose your target environment and team and optionally add a *Request purpose*. Finally,
 click on **Send Request**. This will create a share request or object for the corresponding dataset
 and if you have requested a table or folder
 it will add those items to the request. The share needs to be submitted for the reqeust to be sent to the approvers.
 
-![share_request_form](pictures/shares/share_request_form.png#zoom#shadow)
+![share_request_form](pictures/shares/shares_2.png#zoom#shadow)
 
 
 ### **Submit a share request (requester)**
@@ -47,13 +47,12 @@ A created share request needs to be filled with requested tables and/or folders 
 example, where we requested access to a table directly from the share request form, the requester can click on
 **Submit** from the Shares menu on the *Sent* tab.
 
-![submit_share_2](pictures/shares/share_in_datasets.png#zoom#shadow)
+![submit_share_2](pictures/shares/shares_3.png#zoom#shadow)
 
 If we have created a share request for a dataset or we want to edit the tables and folders that we want to access to,
-select **Learn more** to open the request. Is *cannes_festival_dates* the only table you want to get access to? yes?
+select **Learn more** to open the request. Is *supermarket_sales* the only table you want to get access to? yes?
 then click on **Submit** and wait for the approver to approve or reject the share request.
 
-![submit_share_2](pictures/shares/share_request_submit.png#zoom#shadow)
 
 ### **Approve/Reject a share request (approver)**
 !!! success "Notifications"
@@ -61,22 +60,17 @@ then click on **Submit** and wait for the approver to approve or reject the shar
     and the dataset. And viceversa, when a request is approved, the requesters get a notification with the
     approver's name and the approved dataset.
 
-![accept_share](pictures/shares/share_notification.png#zoom#shadow)
-
 As a dataset **owner** or **steward** you can approve or reject a dataset access request. To do that, you have 2 options.
 First, you can go from the Shares menu and in the *Received* tab approve or reject the request that is pending approval.
-
-![accept_share](pictures/shares/share_approve_menu.png#zoom#shadow)
 
 If you want to check the content of the request before approving or rejecting, click on **Learn more** and the
 following will open. Here you can see the tables and folders added to the dataset share request.
 
-![accept_share](pictures/shares/share_approve.png#zoom#shadow)
+![accept_share](pictures/shares/shares_5.png#zoom#shadow)
 
 If a dataset share request has been accepted, the requester should see the dataset on his or her screen. The role with
 regards to the dataset is `SHARED`.
 
-![submit_share](pictures/shares/share_submit_menu.png#zoom#shadow)
 
 ### **Add/delete items to/from a share request (requester/approver)**
 When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
@@ -87,12 +81,11 @@ It will be more clear with an example. As appears in the picture, go to the shar
 to add a table or folder to the request. On the contrary, if you want to remove a shared item click on the trash icon
 next to it.
 
-![add_share](pictures/shares/share_add_delete.png#zoom#shadow)
 
 If you are adding a new item to the request, the following window will open to let you choose a specific table
 or folder in the dataset.
 
-![add2_share](pictures/shares/share_add_2.png#zoom#shadow)
+![add_share](pictures/shares/shares_6.png#zoom#shadow)
 
 !!! warning "**You have to submit the request again!!**"
     Note that after you have added or removed an item, the share request status has gone from `APPROVED` to `DRAFT`.
@@ -128,10 +121,5 @@ Check the <a href="environments.html">environment</a> documentation for the step
     You can also **subscribe to data consumers SNS topic** to be aware of the latest data updates from the producers.
 
 #### Step 2: Publish notification update
-As dataset owner go to one of your dataset tables and publish data update notification to all consumers
-as shown below:
-![table_subscription](pictures/datasets/table_subscription.png#zoom#shadow)
+**IMPORTANT**This feature is disabled at the moment
 
-Or publish notifications on one of your folders:
-
-![folder_subscription](pictures/datasets/folder_subscription.png#zoom#shadow)

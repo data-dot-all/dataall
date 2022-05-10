@@ -1,5 +1,5 @@
 # **ML Studio**
- With ML Studio Notebooks we can add users to our SageMaker domain and open Amazon SageMaker Studio
+With ML Studio Notebooks we can add users to our SageMaker domain and open Amazon SageMaker Studio
 
 
 ## :material-new-box: **Create a ML Notebook**

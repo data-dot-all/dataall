@@ -14,34 +14,34 @@ IdP that has the right to manage high level application (tenant)
 permissions for all IdP groups integrated with data.all.
 
 This super user's team maps to a group from your IdP that's by default
-named "***DHAdministrators***", any user member of this group will be
+named "***DAAdministrators***", any user member of this group will be
 able to:
 
 - create organizations
 - manage tenant permissions on onboarded teams (IdP groups) as shown below.
 
 ### :material-account-plus-outline: **Manage tenant permissions**
-As a user part of "***DHAdministrators***" on your IdP you can access
+As a user part of "***DAAdministrators***" on your IdP you can access
 the settings menu from the profile icon.
 
-For example, John Doe is not part of "***DHAdministrators***", therefore he sees nothing
+For example, Maria Garcia is not part of "***DAAdministrators***", therefore she sees nothing
 
-![](pictures/organizations/org_john_tenant.png#zoom#shadow)
+![](pictures/organizations/org_tenant_2.png#zoom#shadow)
 
-On the other hand, Maria Garcia is part of this group and can navigate to **Admin settings**
+On the other hand, Tenant user is part of this group and can navigate to **Admin settings**
 
-![](pictures/organizations/org_maria_tenant.png#zoom#shadow)
+![](pictures/organizations/org_tenant_1.png#zoom#shadow)
 
-In *Admin Settings*, Maria can manage tenant permissions. In the following picture, Maria is NOT granting the
+In *Admin Settings*, the Tenant user can manage tenant permissions. In the following picture, the user is NOT granting the
 *DataScienceTeam* that John belongs to permissions to create an organization.
 
-![](pictures/organizations/manage_tenant_permissions.png#zoom#shadow)
+![](pictures/organizations/org_tenant_3.png#zoom#shadow)
 
 If the tenant revokes the permission of a team to manage an object, that team won't be able to perform any action on
 that particular object. For the given example, assuming that John only belongs to the *DataScienceTeam*,
 he is not able to create organizations:
 
-![](pictures/organizations/org_john_create_fail.png#zoom#shadow)
+![](pictures/organizations/org_tenant_4.png#zoom#shadow)
 
 ## **Organizations**
 Organizations are high level constructs where business units can collaborate across many different AWS accounts
@@ -58,7 +58,7 @@ within an organization.*
 
 To create an organization, on the left pane select **Organization**, click **Create** and complete the following form.
 
-![organization_form](pictures/organizations/create_org.png#zoom#shadow)
+![organization_form](pictures/organizations/org_tenant_5.png#zoom#shadow)
 
 
 | Field             | Description | Required | Editable | Example

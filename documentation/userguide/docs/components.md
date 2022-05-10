@@ -70,15 +70,24 @@ the owners of the asset can accept or reject the share.
 
 *We use Shares to collaborate and share data with other teams.*
 
-## **Play** (NEXT WEEK)
+## **Play**
 ### Worksheets
 Worksheets are AWS Athena sessions that allow us to query our datasets as if we were in the AWS Athena Query editor
 console.
 
 ### Notebooks
-### ML Studio
-### Pipelines
+Data practitioners can experiment machine learning algorithms
+spinning up Jupyter notebook with access to all your datasets. data.all leverages
+<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/nbi.html" target="_blank">
+Amazon SageMaker instance</a> to access Jupyter notebooks.
 
+### ML Studio
+With ML Studio Notebooks we can add users to our SageMaker domain and open Amazon SageMaker Studio
+
+### Pipelines
+In order to distribute data processing, data.all introduces data.all pipelines where:
+- data.all takes care of CI/CD infrastructure
+- data.all offers flexible pipeline blueprints to deploy AWS resources and a Step Function
 
 ### Dashboards
 In the Dashboard window we can start Quicksight sessions, create visual analysis and dashboards.
