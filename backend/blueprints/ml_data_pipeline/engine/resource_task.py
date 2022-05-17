@@ -57,7 +57,7 @@ def code_from_path_and_cmd(path: str, cmd: str, compatible_runtime: lambda_.Runt
         path=f'{path}',
         bundling=core.BundlingOptions(
             image=core.BundlingDockerImage.from_registry(
-                f'amazon/aws-sam-cli-build-image-{compatible_runtime.name}'
+                f'public.ecr.aws/sam/build-{compatible_runtime.name}'
             ),
             command=['bash', '-c', cmd],
         ),
