@@ -1,19 +1,22 @@
 from ... import gql
 
-NewSqlPipelineInput = gql.InputType(
-    name='NewSqlPipelineInput',
+NewDataPipelineInput = gql.InputType(
+    name='NewDataPipelineInput',
     arguments=[
         gql.Argument(name='label', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='description', type=gql.String),
         gql.Argument(name='SamlGroupName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='devStages', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='devStrategy', type=gql.NonNullableType(gql.String)),
+
     ],
 )
 
 
-UpdateSqlPipelineInput = gql.InputType(
-    name='UpdateSqlPipelineInput',
+UpdateDataPipelineInput = gql.InputType(
+    name='UpdateDataPipelineInput',
     arguments=[
         gql.Argument(name='label', type=gql.String),
         gql.Argument(name='description', type=gql.String),
@@ -21,8 +24,8 @@ UpdateSqlPipelineInput = gql.InputType(
     ],
 )
 
-SqlPipelineFilter = gql.InputType(
-    name='SqlPipelineFilter',
+DataPipelineFilter = gql.InputType(
+    name='DataPipelineFilter',
     arguments=[
         gql.Argument(name='term', type=gql.String),
         gql.Argument(name='page', type=gql.Integer),
@@ -30,20 +33,20 @@ SqlPipelineFilter = gql.InputType(
     ],
 )
 
-SqlPipelineBrowseInput = gql.InputType(
-    name='SqlPipelineBrowseInput',
+DataPipelineBrowseInput = gql.InputType(
+    name='DataPipelineBrowseInput',
     arguments=[
-        gql.Argument(name='sqlPipelineUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='DataPipelineUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='branch', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='folderPath', type=gql.String),
     ],
 )
 
 
-SqlPipelineFileContentInput = gql.InputType(
-    name='SqlPipelineFileContentInput',
+DataPipelineFileContentInput = gql.InputType(
+    name='DataPipelineFileContentInput',
     arguments=[
-        gql.Argument(name='sqlPipelineUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='DataPipelineUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='branch', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='absolutePath', type=gql.NonNullableType(gql.String)),
     ],

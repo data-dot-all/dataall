@@ -23,8 +23,8 @@ def resolve_feed_target_type(obj, *_):
         return 'DatasetTableColumn'
     elif isinstance(obj, models.Worksheet):
         return 'Worksheet'
-    elif isinstance(obj, models.SqlPipeline):
-        return 'SqlPipeline'
+    elif isinstance(obj, models.DataPipeline):
+        return 'DataPipeline'
     elif isinstance(obj, models.DatasetTable):
         return 'DatasetTable'
     elif isinstance(obj, models.Dataset):
@@ -47,7 +47,7 @@ def resolve_target(context: Context, source: Feed, **kwargs):
             'DatasetTableColumn': models.DatasetTableColumn,
             'DatasetStorageLocation': models.DatasetStorageLocation,
             'Dashboard': models.Dashboard,
-            'SqlPipeline': models.SqlPipeline,
+            'DataPipeline': models.DataPipeline,
             'Worksheet': models.Worksheet,
         }[source.targetType]
         target = session.query(model).get(source.targetUri)
