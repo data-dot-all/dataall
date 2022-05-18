@@ -54,7 +54,7 @@ const DatasetCreateForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments(Defaults.SelectListFilter)
+      listEnvironments({ filter: Defaults.SelectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
