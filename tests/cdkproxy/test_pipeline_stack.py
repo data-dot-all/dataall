@@ -44,7 +44,7 @@ def patch_methods(mocker, db, pipeline, env, org):
 @pytest.fixture(scope='function', autouse=True)
 def template(pipeline):
     app = App()
-    PipelineStack(app, 'Pipeline', target_uri=pipeline.sqlPipelineUri)
+    PipelineStack(app, 'Pipeline', target_uri=pipeline.DataPipelineUri)
     return json.dumps(app.synth().get_stack_by_name('Pipeline').template)
 
 
@@ -53,4 +53,3 @@ def test_resources_created(template):
     assert 'AWS::CodeBuild::Project' in template
     assert 'AWS::IAM::Role' in template
     assert 'AWS::S3::Bucket' in template
-    assert 'AWS::Lambda::Function' in template

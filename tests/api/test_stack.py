@@ -35,9 +35,9 @@ def test_update_stack(
     assert response.data.updateStack.targetUri == cluster.clusterUri
 
     response = update_stack_query(
-        client, pipeline.sqlPipelineUri, 'pipeline', group.name
+        client, pipeline.DataPipelineUri, 'pipeline', group.name
     )
-    assert response.data.updateStack.targetUri == pipeline.sqlPipelineUri
+    assert response.data.updateStack.targetUri == pipeline.DataPipelineUri
 
 
 def update_stack_query(client, target_uri, target_type, group):
