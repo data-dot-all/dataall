@@ -558,12 +558,12 @@ def sgm_notebook(
 
 
 @pytest.fixture(scope='module')
-def pipeline(client, tenant, group, env_fixture) -> models.SqlPipeline:
+def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
     response = client.query(
         """
-        mutation createSqlPipeline ($input:NewSqlPipelineInput){
-            createSqlPipeline(input:$input){
-                sqlPipelineUri
+        mutation createDataPipeline ($input:NewDataPipelineInput){
+            createDataPipeline(input:$input){
+                DataPipelineUri
                 label
                 description
                 tags
@@ -578,11 +578,13 @@ def pipeline(client, tenant, group, env_fixture) -> models.SqlPipeline:
             'SamlGroupName': group.name,
             'tags': [group.name],
             'environmentUri': env_fixture.environmentUri,
+            'devStages': ['test', 'prod'],
+            'devStrategy': 'trunk'
         },
         username='alice',
         groups=[group.name],
     )
-    yield response.data.createSqlPipeline
+    yield response.data.createDataPipeline
 
 
 @pytest.fixture(scope='module')

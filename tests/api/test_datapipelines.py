@@ -21,9 +21,9 @@ def env1(env, org1, user, group, tenant, module_mocker):
 def pipeline(client, tenant, group, env1):
     response = client.query(
         """
-        mutation createSqlPipeline ($input:NewSqlPipelineInput){
-            createSqlPipeline(input:$input){
-                sqlPipelineUri
+        mutation createDataPipeline ($input:NewDataPipelineInput){
+            createDataPipeline(input:$input){
+                DataPipelineUri
                 label
                 description
                 tags
@@ -38,21 +38,23 @@ def pipeline(client, tenant, group, env1):
             'SamlGroupName': group.name,
             'tags': [group.name],
             'environmentUri': env1.environmentUri,
+            'devStages': ['test','prod'],
+            'devStrategy': 'trunk'
         },
         username='alice',
         groups=[group.name],
     )
-    assert response.data.createSqlPipeline.repo
-    assert response.data.createSqlPipeline.sqlPipelineUri
-    return response.data.createSqlPipeline
+    assert response.data.createDataPipeline.repo
+    assert response.data.createDataPipeline.DataPipelineUri
+    return response.data.createDataPipeline
 
 
 def test_update_pipeline(client, tenant, group, pipeline):
     response = client.query(
         """
-        mutation updateSqlPipeline ($sqlPipelineUri:String!,$input:UpdateSqlPipelineInput){
-            updateSqlPipeline(sqlPipelineUri:$sqlPipelineUri,input:$input){
-                sqlPipelineUri
+        mutation updateDataPipeline ($DataPipelineUri:String!,$input:UpdateDataPipelineInput){
+            updateDataPipeline(DataPipelineUri:$DataPipelineUri,input:$input){
+                DataPipelineUri
                 label
                 description
                 tags
@@ -62,7 +64,7 @@ def test_update_pipeline(client, tenant, group, pipeline):
             }
         }
         """,
-        sqlPipelineUri=pipeline.sqlPipelineUri,
+        DataPipelineUri=pipeline.DataPipelineUri,
         input={
             'label': 'changed pipeline',
             'tags': [group.name],
@@ -70,17 +72,17 @@ def test_update_pipeline(client, tenant, group, pipeline):
         username='alice',
         groups=[group.name],
     )
-    assert response.data.updateSqlPipeline.label == 'changed pipeline'
+    assert response.data.updateDataPipeline.label == 'changed pipeline'
 
 
 def test_list_pipelines(client, env1, db, org1, user, group, pipeline):
     response = client.query(
         """
-        query ListSqlPipelines($filter:SqlPipelineFilter){
-            listSqlPipelines(filter:$filter){
+        query ListDataPipelines($filter:DataPipelineFilter){
+            listDataPipelines(filter:$filter){
                 count
                 nodes{
-                    sqlPipelineUri
+                    DataPipelineUri
                     cloneUrlHttp
                     environment {
                      environmentUri
@@ -96,17 +98,17 @@ def test_list_pipelines(client, env1, db, org1, user, group, pipeline):
         username=user.userName,
         groups=[group.name],
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 1
+    assert len(response.data.listDataPipelines['nodes']) == 1
 
 
 def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
     response = client.query(
         """
-        query listSqlPipelines($filter:SqlPipelineFilter){
-            listSqlPipelines(filter:$filter){
+        query listDataPipelines($filter:DataPipelineFilter){
+            listDataPipelines(filter:$filter){
                 count
                 nodes{
-                    sqlPipelineUri
+                    DataPipelineUri
                 }
             }
         }
@@ -114,7 +116,7 @@ def test_nopermissions_pipelines(client, env1, db, org1, user, group, pipeline):
         filter=None,
         username='bob',
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 0
+    assert len(response.data.listDataPipelines['nodes']) == 0
 
 
 def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mocker):
@@ -123,44 +125,44 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         return_value=[{'response': 'return value'}],
     )
     module_mocker.patch(
-        'dataall.api.Objects.SqlPipeline.resolvers._get_creds_from_aws',
+        'dataall.api.Objects.DataPipeline.resolvers._get_creds_from_aws',
         return_value=True,
     )
     response = client.query(
         """
-        query getSqlPipeline($sqlPipelineUri:String!){
-            getSqlPipeline(sqlPipelineUri:$sqlPipelineUri){
-                sqlPipelineUri
+        query getDataPipeline($DataPipelineUri:String!){
+            getDataPipeline(DataPipelineUri:$DataPipelineUri){
+                DataPipelineUri
             }
         }
         """,
-        sqlPipelineUri=pipeline.sqlPipelineUri,
+        DataPipelineUri=pipeline.DataPipelineUri,
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.getSqlPipeline.sqlPipelineUri == pipeline.sqlPipelineUri
+    assert response.data.getDataPipeline.DataPipelineUri == pipeline.DataPipelineUri
     response = client.query(
         """
-        query getSqlPipelineCredsLinux($sqlPipelineUri:String!){
-            getSqlPipelineCredsLinux(sqlPipelineUri:$sqlPipelineUri)
+        query getDataPipelineCredsLinux($DataPipelineUri:String!){
+            getDataPipelineCredsLinux(DataPipelineUri:$DataPipelineUri)
         }
         """,
-        sqlPipelineUri=pipeline.sqlPipelineUri,
+        DataPipelineUri=pipeline.DataPipelineUri,
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.getSqlPipelineCredsLinux
+    assert response.data.getDataPipelineCredsLinux
     response = client.query(
         """
-        query browseSqlPipelineRepository($input:SqlPipelineBrowseInput!){
-            browseSqlPipelineRepository(input:$input)
+        query browseDataPipelineRepository($input:DataPipelineBrowseInput!){
+            browseDataPipelineRepository(input:$input)
         }
         """,
-        input=dict(branch='master', sqlPipelineUri=pipeline.sqlPipelineUri),
+        input=dict(branch='master', DataPipelineUri=pipeline.DataPipelineUri),
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.browseSqlPipelineRepository
+    assert response.data.browseDataPipelineRepository
 
 
 def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pipeline):
@@ -169,23 +171,23 @@ def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pi
     )
     response = client.query(
         """
-        mutation deleteSqlPipeline($sqlPipelineUri:String!,$deleteFromAWS:Boolean){
-            deleteSqlPipeline(sqlPipelineUri:$sqlPipelineUri,deleteFromAWS:$deleteFromAWS)
+        mutation deleteDataPipeline($DataPipelineUri:String!,$deleteFromAWS:Boolean){
+            deleteDataPipeline(DataPipelineUri:$DataPipelineUri,deleteFromAWS:$deleteFromAWS)
         }
         """,
-        sqlPipelineUri=pipeline.sqlPipelineUri,
+        DataPipelineUri=pipeline.DataPipelineUri,
         deleteFromAWS=True,
         username=user.userName,
         groups=[group.name],
     )
-    assert response.data.deleteSqlPipeline
+    assert response.data.deleteDataPipeline
     response = client.query(
         """
-        query ListSqlPipelines($filter:SqlPipelineFilter){
-            listSqlPipelines(filter:$filter){
+        query ListDataPipelines($filter:DataPipelineFilter){
+            listDataPipelines(filter:$filter){
                 count
                 nodes{
-                    sqlPipelineUri
+                    DataPipelineUri
                 }
             }
         }
@@ -194,4 +196,4 @@ def test_delete_pipelines(client, env1, db, org1, user, group, module_mocker, pi
         username=user.userName,
         groups=[group.name],
     )
-    assert len(response.data.listSqlPipelines['nodes']) == 0
+    assert len(response.data.listDataPipelines['nodes']) == 0
