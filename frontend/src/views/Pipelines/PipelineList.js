@@ -21,7 +21,7 @@ import Pager from '../../components/Pager';
 import PipelineListItem from './PipelineListItem';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import listSqlPipelines from '../../api/SqlPipeline/listSqlPipelines';
+import listDataPipelines from '../../api/DataPipeline/listDataPipelines';
 
 function PipelinesPageHeader() {
   return (
@@ -83,9 +83,9 @@ const PipelineList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listSqlPipelines(filter));
+    const response = await client.query(listDataPipelines(filter));
     if (!response.errors) {
-      setItems(response.data.listSqlPipelines);
+      setItems(response.data.listDataPipelines);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

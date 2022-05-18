@@ -1,19 +1,19 @@
 import { gql } from 'apollo-boost';
 
-const searchSqlPipelines = (filter) => ({
+const searchDataPipelines = (filter) => ({
   variables: {
     filter
   },
   query: gql`
-    query ListSqlPipelines($filter: SqlPipelineFilter) {
-      listSqlPipelines(filter: $filter) {
+    query ListDataPipelines($filter: DataPipelineFilter) {
+      listDataPipelines(filter: $filter) {
         count
         page
         pages
         hasNext
         hasPrevious
         nodes {
-          sqlPipelineUri
+          DataPipelineUri
           name
           owner
           SamlGroupName
@@ -51,4 +51,4 @@ const searchSqlPipelines = (filter) => ({
   `
 });
 
-export default searchSqlPipelines;
+export default searchDataPipelines;

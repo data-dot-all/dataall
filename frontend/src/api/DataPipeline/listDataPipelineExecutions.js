@@ -1,14 +1,14 @@
 import { gql } from 'apollo-boost';
 
-const listSqlPipelineExecutions = ({ sqlPipelineUri, stage }) => ({
+const listDataPipelineExecutions = ({ DataPipelineUri, stage }) => ({
   variables: {
-    sqlPipelineUri,
+    DataPipelineUri,
     stage
   },
   query: gql`
-    query ListSqlPipelineExecutions($sqlPipelineUri: String!, $stage: String) {
-      listSqlPipelineExecutions(
-        sqlPipelineUri: $sqlPipelineUri
+    query ListDataPipelineExecutions($DataPipelineUri: String!, $stage: String) {
+      listDataPipelineExecutions(
+        DataPipelineUri: $DataPipelineUri
         stage: $stage
       ) {
         count
@@ -29,4 +29,4 @@ const listSqlPipelineExecutions = ({ sqlPipelineUri, stage }) => ({
   `
 });
 
-export default listSqlPipelineExecutions;
+export default listDataPipelineExecutions;

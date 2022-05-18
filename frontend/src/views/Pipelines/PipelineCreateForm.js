@@ -29,7 +29,7 @@ import listEnvironments from '../../api/Environment/listEnvironments';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import ChipInput from '../../components/TagsInput';
-import createSqlPipeline from '../../api/SqlPipeline/createSqlPipeline';
+import createDataPipeline from '../../api/DataPipeline/createDataPipeline';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 
@@ -42,6 +42,7 @@ const PipelineCrateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -94,13 +95,15 @@ const PipelineCrateForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        createSqlPipeline({
+        createDataPipeline({
           input: {
             label: values.label,
             environmentUri: values.environment.environmentUri,
             description: values.description,
             SamlGroupName: values.SamlGroupName,
-            tags: values.tags
+            tags: values.tags,
+            devStrategy: values.devStrategy,
+            devStages: values.devStages
           }
         })
       );
@@ -115,7 +118,7 @@ const PipelineCrateForm = (props) => {
           variant: 'success'
         });
         navigate(
-          `/console/pipelines/${response.data.createSqlPipeline.sqlPipelineUri}`
+          `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -200,7 +203,9 @@ const PipelineCrateForm = (props) => {
                 description: '',
                 SamlGroupName: '',
                 environment: '',
-                tags: []
+                tags: [],
+                devStages: [],
+                devStrategy: '',
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -209,8 +214,10 @@ const PipelineCrateForm = (props) => {
                 description: Yup.string().max(5000),
                 SamlGroupName: Yup.string()
                   .max(255)
-                  .required('* Team is required'),
+                  .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
+                devStages: Yup.array().required('*At least ONE stage is required'),
+                devStrategy: Yup.string().required('*A development strategy is required'),
                 tags: Yup.array().nullable()
               })}
               onSubmit={async (
@@ -381,6 +388,44 @@ const PipelineCrateForm = (props) => {
                               </MenuItem>
                             ))}
                           </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.devStrategy && errors.devStrategy
+                            )}
+                            helperText={
+                              touched.devStrategy && errors.devStrategy
+                            }
+                            label="Development strategy"
+                            name="devStrategy"
+                            onChange={handleChange}
+                            select
+                            value={values.devStrategy}
+                            variant="outlined"
+                          >
+                            {devOptions.map((dev) => (
+                              <MenuItem key={dev.value} value={dev.value}>
+                                {dev.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <Box>
+                            <ChipInput
+                              fullWidth
+                              error={Boolean(touched.devStages && errors.devStages)}
+                              helperText={touched.devStages && errors.devStages}
+                              variant="outlined"
+                              label="Development stages (dev,test,prod..)"
+                              placeholder="Hit enter after typing the value of each stage"
+                              onChange={(chip) => {
+                                setFieldValue('devStages', [...chip]);
+                              }}
+                            />
+                          </Box>
                         </CardContent>
                       </Card>
                       {errors.submit && (

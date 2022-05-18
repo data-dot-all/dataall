@@ -27,8 +27,8 @@ import useSettings from '../../hooks/useSettings';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import ChipInput from '../../components/TagsInput';
-import getSqlPipeline from '../../api/SqlPipeline/getSqlPipeline';
-import updateSqlPipeline from '../../api/SqlPipeline/updateSqlPipeline';
+import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
+import updateDataPipeline from '../../api/DataPipeline/updateDataPipeline';
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();
@@ -42,9 +42,9 @@ const PipelineEditForm = (props) => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(getSqlPipeline(params.uri));
-    if (!response.errors && response.data.getSqlPipeline !== null) {
-      setPipeline(response.data.getSqlPipeline);
+    const response = await client.query(getDataPipeline(params.uri));
+    if (!response.errors && response.data.getDataPipeline !== null) {
+      setPipeline(response.data.getDataPipeline);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -63,8 +63,8 @@ const PipelineEditForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        updateSqlPipeline({
-          sqlPipelineUri: pipeline.sqlPipelineUri,
+        updateDataPipeline({
+          DataPipelineUri: pipeline.DataPipelineUri,
           input: {
             description: values.description,
             label: values.label,
@@ -83,7 +83,7 @@ const PipelineEditForm = (props) => {
           variant: 'success'
         });
         navigate(
-          `/console/pipelines/${response.data.updateSqlPipeline.sqlPipelineUri}`
+          `/console/pipelines/${response.data.updateDataPipeline.DataPipelineUri}`
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -139,7 +139,7 @@ const PipelineEditForm = (props) => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/pipelines/${pipeline.sqlPipelineUri}`}
+                  to={`/console/pipelines/${pipeline.DataPipelineUri}`}
                   variant="subtitle2"
                 >
                   {pipeline.label}
@@ -153,7 +153,7 @@ const PipelineEditForm = (props) => {
                   component={RouterLink}
                   startIcon={<ArrowLeftIcon fontSize="small" />}
                   sx={{ mt: 1 }}
-                  to={`/console/pipelines/${pipeline.sqlPipelineUri}`}
+                  to={`/console/pipelines/${pipeline.DataPipelineUri}`}
                   variant="outlined"
                 >
                   Cancel
@@ -243,9 +243,6 @@ const PipelineEditForm = (props) => {
                             </Box>
                           )}
                         </CardContent>
-                      </Card>
-                      <Card sx={{ mt: 3 }}>
-                        <CardHeader title="Organize" />
                         <CardContent>
                           <TextField
                             disabled
@@ -256,6 +253,18 @@ const PipelineEditForm = (props) => {
                             onChange={handleChange}
                             variant="outlined"
                             value={pipeline.SamlGroupName}
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            disabled
+                            fullWidth
+                            label="Development Strategy"
+                            name="devStrategy"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            variant="outlined"
+                            value={pipeline.devStrategy}
                           />
                         </CardContent>
                         <CardContent>

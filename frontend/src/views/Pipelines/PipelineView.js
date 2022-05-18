@@ -33,8 +33,8 @@ import { useDispatch } from '../../store';
 import PipelineOverview from './PipelineOverview';
 import PencilAltIcon from '../../icons/PencilAlt';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import deleteSqlPipeline from '../../api/SqlPipeline/deleteSqlPipeline';
-import getSqlPipeline from '../../api/SqlPipeline/getSqlPipeline';
+import deleteDataPipeline from '../../api/DataPipeline/deleteDataPipeline';
+import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
 import PipelineRuns from './PipelineRuns';
 import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
@@ -80,7 +80,7 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
             underline="hover"
             color="textPrimary"
             component={RouterLink}
-            to={`/console/pipelines/${pipeline.sqlPipelineUri}`}
+            to={`/console/pipelines/${pipeline.DataPipelineUri}`}
             variant="subtitle2"
           >
             {pipeline.label}
@@ -104,7 +104,7 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
             component={RouterLink}
             startIcon={<PencilAltIcon fontSize="small" />}
             sx={{ mt: 1, mr: 1 }}
-            to={`/console/pipelines/${pipeline.sqlPipelineUri}/edit`}
+            to={`/console/pipelines/${pipeline.DataPipelineUri}/edit`}
             variant="outlined"
           >
             Edit
@@ -124,8 +124,8 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
       {openFeed && (
         <FeedComments
           objectOwner={pipeline.owner}
-          targetType="SqlPipeline"
-          targetUri={pipeline.sqlPipelineUri}
+          targetType="DataPipeline"
+          targetUri={pipeline.DataPipelineUri}
           open={openFeed}
           onClose={() => setOpenFeed(false)}
         />
@@ -160,11 +160,11 @@ const PipelineView = () => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(getSqlPipeline(params.uri));
-    if (!response.errors && response.data.getSqlPipeline !== null) {
-      setPipeline(response.data.getSqlPipeline);
+    const response = await client.query(getDataPipeline(params.uri));
+    if (!response.errors && response.data.getDataPipeline !== null) {
+      setPipeline(response.data.getDataPipeline);
       if (stack) {
-        setStack(response.data.getSqlPipeline.stack);
+        setStack(response.data.getDataPipeline.stack);
       }
     } else {
       const error = response.errors
@@ -186,8 +186,8 @@ const PipelineView = () => {
 
   const deletePipeline = async (deleteFromAWS = false) => {
     const response = await client.mutate(
-      deleteSqlPipeline({
-        sqlPipelineUri: pipeline.sqlPipelineUri,
+      deleteDataPipeline({
+        DataPipelineUri: pipeline.DataPipelineUri,
         deleteFromAWS
       })
     );
@@ -263,7 +263,7 @@ const PipelineView = () => {
             {currentTab === 'runs' && <PipelineRuns pipeline={pipeline} />}
             {currentTab === 'tags' && (
               <KeyValueTagList
-                targetUri={pipeline.sqlPipelineUri}
+                targetUri={pipeline.DataPipelineUri}
                 targetType="pipeline"
               />
             )}
@@ -271,7 +271,7 @@ const PipelineView = () => {
               <Stack
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
-                targetUri={pipeline.sqlPipelineUri}
+                targetUri={pipeline.DataPipelineUri}
                 targetType="pipeline"
               />
             )}
