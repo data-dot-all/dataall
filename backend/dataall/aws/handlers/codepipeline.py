@@ -10,7 +10,7 @@ from .sts import SessionHelper
 log = logging.getLogger('aws:codepipeline')
 
 
-@Worker.handler('sqlpipeline.pipeline.executions')
+@Worker.handler('datapipeline.pipeline.executions')
 def get_pipeline_execution(engine: Engine, task: models.Task):
     with engine.scoped_session() as session:
         stack = (
@@ -23,13 +23,13 @@ def get_pipeline_execution(engine: Engine, task: models.Task):
             )
             .first()
         )
-        sqlpipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(
+        Datapipeline: models.DataPipeline = session.query(models.DataPipeline).get(
             task.targetUri
         )
         outputs = stack.outputs
         codepipeline_name = outputs['PipelineNameOutput']
-        aws = SessionHelper.remote_session(sqlpipeline.AwsAccountId)
-        codepipeline_client = aws.client('codepipeline', region_name=sqlpipeline.region)
+        aws = SessionHelper.remote_session(Datapipeline.AwsAccountId)
+        codepipeline_client = aws.client('codepipeline', region_name=Datapipeline.region)
         executions = []
         try:
             response = codepipeline_client.list_pipeline_executions(
@@ -38,7 +38,7 @@ def get_pipeline_execution(engine: Engine, task: models.Task):
             executions = response['pipelineExecutionSummaries']
         except ClientError as e:
             log.warning(
-                f'Could not retrieve pipeline executions for {codepipeline_name} aws://{sqlpipeline.AwsAccountId}:{sqlpipeline.region}'
+                f'Could not retrieve pipeline executions for {codepipeline_name} aws://{Datapipeline.AwsAccountId}:{Datapipeline.region}'
             )
 
         return executions

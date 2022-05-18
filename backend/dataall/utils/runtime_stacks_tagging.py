@@ -56,7 +56,7 @@ class TagsUtil:
             SagemakerStudioDomain=models.SagemakerStudioUserProfile,
             SagemakerStudioUserProfile=models.SagemakerStudioUserProfile,
             SagemakerNotebook=models.SagemakerNotebook,
-            PipelineStack=models.SqlPipeline,
+            PipelineStack=models.DataPipeline,
             RedshiftStack=models.RedshiftCluster,
         )
 

@@ -58,7 +58,7 @@ class TargetType:
             dataset=models.Dataset,
             notebook=models.SagemakerNotebook,
             mlstudio=models.SagemakerStudioUserProfile,
-            pipeline=models.SqlPipeline,
+            pipeline=models.DataPipeline,
             redshift=models.RedshiftCluster,
         )
         return [k for k, v in target_types_map.items() if v == model_name][0]

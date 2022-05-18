@@ -4,14 +4,14 @@ from ...db import models, Engine
 
 
 def _unpack(session, task):
-    pipe: models.SqlPipeline = session.query(models.SqlPipeline).get(task.targetUri)
+    pipe: models.DataPipeline = session.query(models.DataPipeline).get(task.targetUri)
     env: models.Environment = session.query(models.Environment).get(pipe.environmentUri)
     remote_session = SessionHelper.remote_session(env.AwsAccountId)
     client = remote_session.client('codecommit', region_name=env.region)
     return (pipe, env, client)
 
 
-@Worker.handler('repo.sqlpipeline.cat')
+@Worker.handler('repo.datapipeline.cat')
 def cat(engine: Engine, task: models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = _unpack(session, task)
@@ -23,7 +23,7 @@ def cat(engine: Engine, task: models.Task):
         return response['fileContent']
 
 
-@Worker.handler('repo.sqlpipeline.ls')
+@Worker.handler('repo.datapipeline.ls')
 def ls(engine: Engine, task: models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = _unpack(session, task)
@@ -73,7 +73,7 @@ def ls(engine: Engine, task: models.Task):
         return nodes
 
 
-@Worker.handler('repo.sqlpipeline.branches')
+@Worker.handler('repo.datapipeline.branches')
 def list_branches(engine: Engine, task: models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = _unpack(session, task)
