@@ -204,7 +204,7 @@ class PipelineStack(Stack):
 
                 build_project = codebuild.PipelineProject(
                     scope=self,
-                    id=f'build-{pipeline.name}-{stage}',
+                    id=f'{pipeline.name}-build-{stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
@@ -271,7 +271,7 @@ class PipelineStack(Stack):
 
                 build_project = codebuild.PipelineProject(
                     scope=self,
-                    id=f'build-{pipeline.name}-{stage}',
+                    id=f'{pipeline.name}-build-{stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
@@ -372,7 +372,6 @@ class PipelineStack(Stack):
         """
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(yaml, file=text_file)
-
 
     @staticmethod
     def make_codebuild_policy_statements(
