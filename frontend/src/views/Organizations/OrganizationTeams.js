@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import {
   Box,
@@ -16,13 +16,14 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { GroupAddOutlined } from '@material-ui/icons';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { GroupAddOutlined } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@material-ui/lab';
-import { useTheme } from '@material-ui/core/styles';
-import { HiUserRemove, VscChecklist } from 'react-icons/all';
+import { LoadingButton } from '@mui/lab';
+import { useTheme } from '@mui/styles';
+import { HiUserRemove } from 'react-icons/hi';
+import { VscChecklist } from 'react-icons/vsc';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -52,7 +53,12 @@ function TeamRow({ team, organization, fetchItems }) {
   };
   const removeGroup = async (groupUri) => {
     try {
-      const response = await client.mutate(removeGroupFromOrganization({ organizationUri: organization.organizationUri, groupUri }));
+      const response = await client.mutate(
+        removeGroupFromOrganization({
+          organizationUri: organization.organizationUri,
+          groupUri
+        })
+      );
       if (!response.errors) {
         enqueueSnackbar('Team removed from organization', {
           anchorOrigin: {
@@ -73,28 +79,23 @@ function TeamRow({ team, organization, fetchItems }) {
   };
 
   return (
-    <TableRow
-      hover
-    >
+    <TableRow hover>
       <TableCell>
-        {team.groupUri}
-        {' '}
+        {team.groupUri}{' '}
         {team.groupUri === organization.SamlGroupName && (
-        <Label
-          color="primary"
-        >
-          Admins
-        </Label>
+          <Label color="primary">Admins</Label>
         )}
       </TableCell>
       <TableCell>
         {team.groupUri !== organization.SamlGroupName ? (
-          <LoadingButton
-            onClick={() => (handlePermissionsModalOpen(team))}
-          >
+          <LoadingButton onClick={() => handlePermissionsModalOpen(team)}>
             <VscChecklist
               size={20}
-              color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+              color={
+                theme.palette.mode === 'dark'
+                  ? theme.palette.primary.contrastText
+                  : theme.palette.primary.main
+              }
             />
           </LoadingButton>
         ) : (
@@ -107,13 +108,13 @@ function TeamRow({ team, organization, fetchItems }) {
           />
         )}
         {isPermissionModalOpen && (
-        <OrganizationTeamInviteEditForm
-          organization={organization}
-          team={team}
-          open
-          reloadTeams={fetchItems}
-          onClose={handlePermissionsModalClose}
-        />
+          <OrganizationTeamInviteEditForm
+            organization={organization}
+            team={team}
+            open
+            reloadTeams={fetchItems}
+            onClose={handlePermissionsModalClose}
+          />
         )}
       </TableCell>
       <TableCell>
@@ -122,7 +123,11 @@ function TeamRow({ team, organization, fetchItems }) {
             <LoadingButton onClick={() => removeGroup(team.groupUri)}>
               <HiUserRemove
                 size={25}
-                color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+                color={
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.primary.main
+                }
               />
             </LoadingButton>
           )}
@@ -152,10 +157,15 @@ const OrganizationTeams = ({ organization }) => {
     setIsTeamInviteModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await client.query(listOrganizationGroups({ organizationUri: organization.organizationUri, filter }));
+      const response = await client.query(
+        listOrganizationGroups({
+          organizationUri: organization.organizationUri,
+          filter
+        })
+      );
       if (!response.errors) {
         setItems({ ...response.data.listOrganizationGroups });
       } else {
@@ -166,13 +176,15 @@ const OrganizationTeams = ({ organization }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter, organization.organizationUri]);
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -180,8 +192,10 @@ const OrganizationTeams = ({ organization }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -196,13 +210,12 @@ const OrganizationTeams = ({ organization }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
-              <BsIcons.BsPeople style={{ marginRight: '10px' }} />
-              {' '}
+              <BsIcons.BsPeople style={{ marginRight: '10px' }} />{' '}
               Administrators
             </Box>
-                    )}
+          }
         />
         <Divider />
         <Box
@@ -214,12 +227,7 @@ const OrganizationTeams = ({ organization }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -244,12 +252,7 @@ const OrganizationTeams = ({ organization }) => {
               />
             </Box>
           </Grid>
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={2} sm={6} xs={12}>
             <Button
               color="primary"
               startIcon={<GroupAddOutlined fontSize="small" />}
@@ -260,12 +263,12 @@ const OrganizationTeams = ({ organization }) => {
               Invite
             </Button>
             {isTeamInviteModalOpen && (
-            <OrganizationTeamInviteForm
-              organization={organization}
-              open
-              reloadTeams={fetchItems}
-              onClose={handleTeamInviteModalClose}
-            />
+              <OrganizationTeamInviteForm
+                organization={organization}
+                open
+                reloadTeams={fetchItems}
+                onClose={handleTeamInviteModalClose}
+              />
             )}
           </Grid>
         </Box>
@@ -274,44 +277,38 @@ const OrganizationTeams = ({ organization }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    Permissions
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Permissions</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((team) => (
-                    <TeamRow
-                      team={team}
-                      organization={organization}
-                      fetchItems={fetchItems}
-                    />
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No admins found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((team) => (
+                      <TeamRow
+                        team={team}
+                        organization={organization}
+                        fetchItems={fetchItems}
+                      />
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No admins found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {!loading && items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>

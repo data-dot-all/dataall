@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -14,12 +14,12 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useSnackbar } from 'notistack';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { LoadingButton } from '@material-ui/lab';
+import CircularProgress from '@mui/material/CircularProgress';
+import { LoadingButton } from '@mui/lab';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import useClient from '../../hooks/useClient';
@@ -39,36 +39,33 @@ const OrganizationEditForm = (props) => {
   const params = useParams();
   const [organization, setOrganization] = useState({});
   const [loading, setLoading] = useState(true);
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrganization(response.data.getOrganization);
       setLoading(false);
-    } /* else {
-      setError({
-        header: 'Error',
-        content: `Could not retrieve organization ${params.uri}`
-      });
-    } */
+    }
     setLoading(false);
-  };
+  }, [client, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateOrganization({
-        organizationUri: organization.organizationUri,
-        input: {
-          label: values.label,
-          description: values.description,
-          tags: values.tags
-        }
-      }));
+      const response = await client.mutate(
+        updateOrganization({
+          organizationUri: organization.organizationUri,
+          input: {
+            label: values.label,
+            description: values.description,
+            tags: values.tags
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -79,7 +76,9 @@ const OrganizationEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/organizations/${response.data.updateOrganization.organizationUri}`);
+        navigate(
+          `/console/organizations/${response.data.updateOrganization.organizationUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -104,16 +103,9 @@ const OrganizationEditForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Organization Edit
               </Typography>
               <Breadcrumbs
@@ -122,6 +114,7 @@ const OrganizationEditForm = (props) => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/organizations"
@@ -130,6 +123,7 @@ const OrganizationEditForm = (props) => {
                   Admin
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/organizations"
@@ -137,10 +131,7 @@ const OrganizationEditForm = (props) => {
                 >
                   Organizations
                 </Link>
-                <Typography
-                  color="textSecondary"
-                  variant="subtitle2"
-                >
+                <Typography color="textSecondary" variant="subtitle2">
                   Edit
                 </Typography>
               </Breadcrumbs>
@@ -160,7 +151,9 @@ const OrganizationEditForm = (props) => {
               </Box>
             </Grid>
           </Grid>
-          {loading ? <CircularProgress /> : (
+          {loading ? (
+            <CircularProgress />
+          ) : (
             <Box sx={{ mt: 3 }}>
               <Formik
                 initialValues={{
@@ -169,15 +162,15 @@ const OrganizationEditForm = (props) => {
                   SamlGroupName: organization.SamlGroupName || '',
                   tags: organization.tags || []
                 }}
-                validationSchema={Yup
-                  .object()
-                  .shape({
-                    label: Yup.string().max(255).required(),
-                    description: Yup.string().max(5000),
-                    tags: Yup.array()
-
-                  })}
-                onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+                validationSchema={Yup.object().shape({
+                  label: Yup.string().max(255).required(),
+                  description: Yup.string().max(5000),
+                  tags: Yup.array()
+                })}
+                onSubmit={async (
+                  values,
+                  { setErrors, setStatus, setSubmitting }
+                ) => {
                   await submit(values, setStatus, setSubmitting, setErrors);
                 }}
               >
@@ -191,20 +184,9 @@ const OrganizationEditForm = (props) => {
                   touched,
                   values
                 }) => (
-                  <form
-                    onSubmit={handleSubmit}
-                    {...props}
-                  >
-                    <Grid
-                      container
-                      spacing={3}
-                    >
-                      <Grid
-                        item
-                        lg={8}
-                        md={6}
-                        xs={12}
-                      >
+                  <form onSubmit={handleSubmit} {...props}>
+                    <Grid container spacing={3}>
+                      <Grid item lg={8} md={6} xs={12}>
                         <Card>
                           <CardHeader title="Details" />
                           <CardContent>
@@ -231,7 +213,9 @@ const OrganizationEditForm = (props) => {
                                   }
                                 }}
                                 fullWidth
-                                helperText={`${200 - values.description.length} characters left`}
+                                helperText={`${
+                                  200 - values.description.length
+                                } characters left`}
                                 label="Short description"
                                 name="description"
                                 multiline
@@ -241,23 +225,18 @@ const OrganizationEditForm = (props) => {
                                 value={values.description}
                                 variant="outlined"
                               />
-                              {(touched.description && errors.description) && (
-                              <Box sx={{ mt: 2 }}>
-                                <FormHelperText error>
-                                  {errors.description}
-                                </FormHelperText>
-                              </Box>
+                              {touched.description && errors.description && (
+                                <Box sx={{ mt: 2 }}>
+                                  <FormHelperText error>
+                                    {errors.description}
+                                  </FormHelperText>
+                                </Box>
                               )}
                             </Box>
                           </CardContent>
                         </Card>
                       </Grid>
-                      <Grid
-                        item
-                        lg={4}
-                        md={6}
-                        xs={12}
-                      >
+                      <Grid item lg={4} md={6} xs={12}>
                         <Card>
                           <CardHeader title="Organize" />
                           <CardContent>
@@ -282,22 +261,19 @@ const OrganizationEditForm = (props) => {
                                   label="Tags"
                                   placeholder="Hit enter after typing value"
                                   onChange={(chip) => {
-                                    setFieldValue('tags', [
-                                      ...chip
-                                    ]);
+                                    setFieldValue('tags', [...chip]);
                                   }}
                                 />
-
                               </Box>
                             </CardContent>
                           </CardContent>
                         </Card>
                         {errors.submit && (
-                        <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
-                        </Box>
+                          <Box sx={{ mt: 3 }}>
+                            <FormHelperText error>
+                              {errors.submit}
+                            </FormHelperText>
+                          </Box>
                         )}
                         <Box
                           sx={{

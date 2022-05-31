@@ -4,136 +4,153 @@ import * as BiIcons from 'react-icons/bi';
 import { MdShowChart } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Box, Button, Divider, Drawer, IconButton, useTheme } from '@material-ui/core';
-import { AiOutlineExperiment, FiCodesandbox, FiPackage, SiJupyter, VscBook } from 'react-icons/all';
-import { ChevronLeft, ChevronRight, ShareOutlined } from '@material-ui/icons';
+import {
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  useTheme
+} from '@mui/material';
+import { AiOutlineExperiment } from 'react-icons/ai';
+import { FiCodesandbox, FiPackage } from 'react-icons/fi';
+import { SiJupyter } from 'react-icons/si';
+import { VscBook } from 'react-icons/vsc';
+import { ChevronLeft, ChevronRight, ShareOutlined } from '@mui/icons-material';
 import NavSection from '../NavSection';
 import Scrollbar from '../Scrollbar';
 import useSettings from '../../hooks/useSettings';
 
 const DefaultSidebar = (props) => {
   const { openDrawer, onOpenDrawerChange } = props;
-  const getSections = (isAdvancedMode) => (
-    !isAdvancedMode ? [
-      {
-        title: 'Discover',
-        items: [
+  const getSections = (isAdvancedMode) =>
+    !isAdvancedMode
+      ? [
           {
-            title: 'Catalog',
-            path: '/console/catalog',
-            icon: <VscBook size={15} />
+            title: 'Discover',
+            items: [
+              {
+                title: 'Catalog',
+                path: '/console/catalog',
+                icon: <VscBook size={15} />
+              },
+              {
+                title: 'Datasets',
+                path: '/console/datasets',
+                icon: <FiPackage size={15} />
+              },
+              {
+                title: 'Shares',
+                path: '/console/shares',
+                icon: <ShareOutlined size={10} />
+              }
+            ]
           },
           {
-            title: 'Datasets',
-            path: '/console/datasets',
-            icon: <FiPackage size={15} />
-          },
-          {
-            title: 'Shares',
-            path: '/console/shares',
-            icon: <ShareOutlined size={10} />
+            title: 'Play',
+            items: [
+              {
+                title: 'Worksheets',
+                path: '/console/worksheets',
+                icon: <AiOutlineExperiment size={15} />
+              },
+              {
+                title: 'ML Studio',
+                path: '/console/mlstudio',
+                icon: <FiCodesandbox size={15} />
+              },
+              {
+                title: 'Dashboards',
+                path: '/console/dashboards',
+                icon: <MdShowChart size={15} />
+              }
+            ]
           }
         ]
-      },
-      {
-        title: 'Play',
-        items: [
+      : [
           {
-            title: 'Worksheets',
-            path: '/console/worksheets',
-            icon: <AiOutlineExperiment size={15} />
+            title: 'Discover',
+            items: [
+              {
+                title: 'Catalog',
+                path: '/console/catalog',
+                icon: <VscBook size={15} />
+              },
+              {
+                title: 'Datasets',
+                path: '/console/datasets',
+                icon: <FiPackage size={15} />
+              },
+              {
+                title: 'Shares',
+                path: '/console/shares',
+                icon: <ShareOutlined size={15} />
+              },
+              {
+                title: 'Glossaries',
+                path: '/console/glossaries',
+                icon: <BsIcons.BsTag size={15} />
+              }
+            ]
           },
           {
-            title: 'ML Studio',
-            path: '/console/mlstudio',
-            icon: <FiCodesandbox size={15} />
+            title: 'Play',
+            items: [
+              {
+                title: 'Worksheets',
+                path: '/console/worksheets',
+                icon: <AiOutlineExperiment size={15} />
+              },
+              {
+                title: 'Notebooks',
+                path: '/console/notebooks',
+                icon: <SiJupyter size={15} />
+              },
+              {
+                title: 'ML Studio',
+                path: '/console/mlstudio',
+                icon: <FiCodesandbox size={15} />
+              },
+              {
+                title: 'Pipelines',
+                path: '/console/pipelines',
+                icon: <BsIcons.BsGear size={15} />
+              },
+              {
+                title: 'Dashboards',
+                path: '/console/dashboards',
+                icon: <MdShowChart size={15} />
+              }
+            ]
           },
           {
-            title: 'Dashboards',
-            path: '/console/dashboards',
-            icon: <MdShowChart size={15} />
+            title: 'Admin',
+            items: [
+              {
+                title: 'Organizations',
+                path: '/console/organizations',
+                icon: <BiIcons.BiBuildings size={15} />
+              },
+              {
+                title: 'Environments',
+                path: '/console/environments',
+                icon: <BsIcons.BsCloud size={15} />
+              }
+            ]
           }
-        ]
-      }
-    ] : [
-      {
-        title: 'Discover',
-        items: [
-          {
-            title: 'Catalog',
-            path: '/console/catalog',
-            icon: <VscBook size={15} />
-          },
-          {
-            title: 'Datasets',
-            path: '/console/datasets',
-            icon: <FiPackage size={15} />
-          },
-          {
-            title: 'Shares',
-            path: '/console/shares',
-            icon: <ShareOutlined size={15} />
-          },
-          {
-            title: 'Glossaries',
-            path: '/console/glossaries',
-            icon: <BsIcons.BsTag size={15} />
-          }
-        ]
-      },
-      {
-        title: 'Play',
-        items: [
-          {
-            title: 'Worksheets',
-            path: '/console/worksheets',
-            icon: <AiOutlineExperiment size={15} />
-          },
-          {
-            title: 'Notebooks',
-            path: '/console/notebooks',
-            icon: <SiJupyter size={15} />
-          },
-          {
-            title: 'ML Studio',
-            path: '/console/mlstudio',
-            icon: <FiCodesandbox size={15} />
-          },
-          {
-            title: 'Pipelines',
-            path: '/console/pipelines',
-            icon: <BsIcons.BsGear size={15} />
-          },
-          {
-            title: 'Dashboards',
-            path: '/console/dashboards',
-            icon: <MdShowChart size={15} />
-          }
-        ]
-      },
-      {
-        title: 'Admin',
-        items: [
-          {
-            title: 'Organizations',
-            path: '/console/organizations',
-            icon: <BiIcons.BiBuildings size={15} />
-          },
-          {
-            title: 'Environments',
-            path: '/console/environments',
-            icon: <BsIcons.BsCloud size={15} />
-          }
-        ]
-      }
-    ]);
+        ];
   const location = useLocation();
   const { settings } = useSettings();
-  const [sections, setSections] = useState(getSections(settings.isAdvancedMode));
+  const [sections, setSections] = useState(
+    getSections(settings.isAdvancedMode)
+  );
   const [displayCollapser, setDisplayCollapser] = useState(false);
   const theme = useTheme();
 
-  useEffect(() => setSections(getSections(settings.isAdvancedMode)), [settings.isAdvancedMode]);
+  useEffect(
+    () => setSections(getSections(settings.isAdvancedMode)),
+    [settings.isAdvancedMode]
+  );
 
   const content = (
     <Box
@@ -146,26 +163,26 @@ const DefaultSidebar = (props) => {
     >
       <Scrollbar options={{ suppressScrollX: true }}>
         <Box sx={{ p: 2 }}>
-          {sections && sections.map((section) => (
-            <NavSection
-              key={section.title}
-              pathname={location.pathname}
-              {...section}
-            />
-          ))}
+          {sections &&
+            sections.map((section) => (
+              <NavSection
+                key={section.title}
+                pathname={location.pathname}
+                {...section}
+              />
+            ))}
         </Box>
       </Scrollbar>
       <Divider />
-      <Box
-        sx={{ p: 2 }}
-        style={{ position: 'relative' }}
-      >
+      <Box sx={{ p: 2 }} style={{ position: 'relative' }}>
         <Box sx={{ pb: 1 }}>
           <Button
             color="primary"
             fullWidth
             sx={{ mt: 3 }}
-            onClick={() => { window.open(process.env.REACT_APP_USERGUIDE_LINK, '_blank'); }}
+            onClick={() => {
+              window.open(process.env.REACT_APP_USERGUIDE_LINK, '_blank');
+            }}
             variant="contained"
           >
             User Guide
@@ -180,6 +197,7 @@ const DefaultSidebar = (props) => {
       <Drawer
         anchor="left"
         open={openDrawer}
+        style={{ zIndex: 1250 }}
         PaperProps={{
           sx: {
             backgroundColor: 'background.paper'
@@ -192,7 +210,11 @@ const DefaultSidebar = (props) => {
         }}
       >
         <Box>
-          <IconButton onClick={() => { onOpenDrawerChange(false); }}>
+          <IconButton
+            onClick={() => {
+              onOpenDrawerChange(false);
+            }}
+          >
             {openDrawer}
             {theme.direction === 'ltr' ? <ChevronLeft /> : <ChevronRight />}
           </IconButton>
@@ -218,7 +240,7 @@ const DefaultSidebar = (props) => {
             setDisplayCollapser(false);
           }}
         >
-          { displayCollapser && (
+          {displayCollapser && (
             <Box
               sx={{
                 position: 'absolute',
@@ -235,7 +257,11 @@ const DefaultSidebar = (props) => {
                 borderRadius: 50
               }}
             >
-              <IconButton onClick={() => { onOpenDrawerChange(false); }}>
+              <IconButton
+                onClick={() => {
+                  onOpenDrawerChange(false);
+                }}
+              >
                 {openDrawer}
                 {openDrawer ? <ChevronLeft /> : <ChevronRight />}
               </IconButton>

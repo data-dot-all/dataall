@@ -7,11 +7,13 @@ const addSharedItem = ({ shareUri, input }) => {
       shareUri,
       input
     },
-    mutation: gql`mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput!){
-            addSharedItem(shareUri:$shareUri,input:$input){
-                shareItemUri
-            }
-        }`
+    mutation: gql`
+      mutation AddSharedItem($shareUri: String!, $input: AddSharedItemInput!) {
+        addSharedItem(shareUri: $shareUri, input: $input) {
+          shareItemUri
+        }
+      }
+    `
   };
 };
 

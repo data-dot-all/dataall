@@ -6,16 +6,16 @@ const listKeyValueTags = (targetUri, targetType) => ({
     targetType
   },
   query: gql`
-        query listKeyValueTags($targetUri:String!, $targetType:String!){
-            listKeyValueTags(targetUri:$targetUri, targetType:$targetType){
-                tagUri
-                targetUri
-                targetType
-                key
-                value
-            }
-        }
-        `
+    query listKeyValueTags($targetUri: String!, $targetType: String!) {
+      listKeyValueTags(targetUri: $targetUri, targetType: $targetType) {
+        tagUri
+        targetUri
+        targetType
+        key
+        value
+      }
+    }
+  `
 });
 
 export default listKeyValueTags;

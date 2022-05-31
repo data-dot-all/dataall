@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,12 +13,17 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { FaAws, FaTrash } from 'react-icons/all';
+} from '@mui/material';
+import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { ForumOutlined, Info, LocalOffer, PlaylistPlay } from '@material-ui/icons';
+import {
+  ForumOutlined,
+  Info,
+  LocalOffer,
+  PlaylistPlay
+} from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -37,7 +42,11 @@ import FeedComments from '../Feed/FeedComments';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Execution', value: 'runs', icon: <PlaylistPlay fontSize="small" /> },
+  {
+    label: 'Execution',
+    value: 'runs',
+    icon: <PlaylistPlay fontSize="small" />
+  },
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
@@ -45,32 +54,21 @@ const tabs = [
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
-          Pipeline
-          {' '}
-          {pipeline.label}
+        <Typography color="textPrimary" variant="h5">
+          Pipeline {pipeline.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Play
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/pipelines"
@@ -79,6 +77,7 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
             Pipelines
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/pipelines/${pipeline.sqlPipelineUri}`}
@@ -123,13 +122,13 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
         </Box>
       </Grid>
       {openFeed && (
-      <FeedComments
-        objectOwner={pipeline.owner}
-        targetType="SqlPipeline"
-        targetUri={pipeline.sqlPipelineUri}
-        open={openFeed}
-        onClose={() => setOpenFeed(false)}
-      />
+        <FeedComments
+          objectOwner={pipeline.owner}
+          targetType="SqlPipeline"
+          targetUri={pipeline.sqlPipelineUri}
+          open={openFeed}
+          onClose={() => setOpenFeed(false)}
+        />
       )}
     </Grid>
   );
@@ -159,7 +158,7 @@ const PipelineView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getSqlPipeline(params.uri));
     if (!response.errors && response.data.getSqlPipeline !== null) {
@@ -168,23 +167,30 @@ const PipelineView = () => {
         setStack(response.data.getSqlPipeline.stack);
       }
     } else {
-      const error = response.errors ? response.errors[0].message : 'Pipeline not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Pipeline not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri, stack]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
 
   const deletePipeline = async (deleteFromAWS = false) => {
-    const response = await client.mutate(deleteSqlPipeline({ sqlPipelineUri: pipeline.sqlPipelineUri, deleteFromAWS }));
+    const response = await client.mutate(
+      deleteSqlPipeline({
+        sqlPipelineUri: pipeline.sqlPipelineUri,
+        deleteFromAWS
+      })
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Pipeline deleted', {
@@ -236,7 +242,7 @@ const PipelineView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -244,31 +250,30 @@ const PipelineView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-            && <PipelineOverview pipeline={pipeline} />}
-            {currentTab === 'runs'
-            && <PipelineRuns pipeline={pipeline} />}
-            {currentTab === 'tags'
-            && (
-            <KeyValueTagList
-              targetUri={pipeline.sqlPipelineUri}
-              targetType="pipeline"
-            />
+            {currentTab === 'overview' && (
+              <PipelineOverview pipeline={pipeline} />
             )}
-            {currentTab === 'stack'
-            && (
-            <Stack
-              environmentUri={pipeline.environment.environmentUri}
-              stackUri={pipeline.stack.stackUri}
-              targetUri={pipeline.sqlPipelineUri}
-              targetType="pipeline"
-            />
+            {currentTab === 'runs' && <PipelineRuns pipeline={pipeline} />}
+            {currentTab === 'tags' && (
+              <KeyValueTagList
+                targetUri={pipeline.sqlPipelineUri}
+                targetType="pipeline"
+              />
+            )}
+            {currentTab === 'stack' && (
+              <Stack
+                environmentUri={pipeline.environment.environmentUri}
+                stackUri={pipeline.stack.stackUri}
+                targetUri={pipeline.sqlPipelineUri}
+                targetType="pipeline"
+              />
             )}
           </Box>
         </Container>

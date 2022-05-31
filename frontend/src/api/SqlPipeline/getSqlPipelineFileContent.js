@@ -5,10 +5,10 @@ const getSqlPipelineFileContent = (input) => ({
     input
   },
   query: gql`
-            query getSqlPipelineFileContent($input:SqlPipelineFileContentInput!){
-                getSqlPipelineFileContent(input:$input)
-            }
-        `
+    query getSqlPipelineFileContent($input: SqlPipelineFileContentInput!) {
+      getSqlPipelineFileContent(input: $input)
+    }
+  `
 });
 
 export default getSqlPipelineFileContent;

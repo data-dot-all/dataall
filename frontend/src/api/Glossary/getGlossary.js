@@ -4,44 +4,43 @@ const getGlossary = (nodeUri) => ({
   variables: {
     nodeUri
   },
-  query: gql`query GetGlossary($nodeUri:String!){
-            getGlossary(nodeUri:$nodeUri){
-                    nodeUri
-                    label
-                    readme
-                    created
-                    owner
-                    status
-                    path
-                    admin
-                    stats{
-                        categories
-                        terms
-                        associations
-                    }
-                    associations{
-                        count
-                        page
-                        pages
-                        hasNext
-                        hasPrevious
-                        nodes{
-                            __typename
-                            target{
-                                ...on Dataset{
-                                    label
-                                }
-                                ...on DatasetTable{
-                                    label
-                                }
-                            }
-
-
-                        }
-                    }
-                }
+  query: gql`
+    query GetGlossary($nodeUri: String!) {
+      getGlossary(nodeUri: $nodeUri) {
+        nodeUri
+        label
+        readme
+        created
+        owner
+        status
+        path
+        admin
+        stats {
+          categories
+          terms
+          associations
+        }
+        associations {
+          count
+          page
+          pages
+          hasNext
+          hasPrevious
+          nodes {
+            __typename
+            target {
+              ... on Dataset {
+                label
+              }
+              ... on DatasetTable {
+                label
+              }
             }
-        `
+          }
+        }
+      }
+    }
+  `
 });
 
 export default getGlossary;

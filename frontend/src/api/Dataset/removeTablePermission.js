@@ -7,16 +7,10 @@ const removeTablePermissions = ({ tableUri, role, userName }) => ({
     userName
   },
   mutation: gql`
-            mutation RemoveTablePermission(
-                $tableUri:String!,
-                $userName:String!
-            ){
-                removeTablePermission(
-                    tableUri:$tableUri,
-                    userName:$userName
-                )
-            }
-        `
+    mutation RemoveTablePermission($tableUri: String!, $userName: String!) {
+      removeTablePermission(tableUri: $tableUri, userName: $userName)
+    }
+  `
 });
 
 export default removeTablePermissions;

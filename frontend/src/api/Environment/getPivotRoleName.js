@@ -5,10 +5,10 @@ const getPivotRoleName = (organizationUri) => ({
     organizationUri
   },
   query: gql`
-            query getPivotRoleName($organizationUri:String!){
-                getPivotRoleName(organizationUri:$organizationUri)
-            }
-        `
+    query getPivotRoleName($organizationUri: String!) {
+      getPivotRoleName(organizationUri: $organizationUri)
+    }
+  `
 });
 
 export default getPivotRoleName;

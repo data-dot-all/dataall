@@ -5,10 +5,10 @@ const getDatasetAssumeRoleUrl = (datasetUri) => ({
     datasetUri
   },
   query: gql`
-            query GetDatasetAssumeRoleUrl($datasetUri:String!){
-                getDatasetAssumeRoleUrl(datasetUri:$datasetUri)
-            }
-        `
+    query GetDatasetAssumeRoleUrl($datasetUri: String!) {
+      getDatasetAssumeRoleUrl(datasetUri: $datasetUri)
+    }
+  `
 });
 
 export default getDatasetAssumeRoleUrl;

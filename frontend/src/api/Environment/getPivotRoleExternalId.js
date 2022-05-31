@@ -5,10 +5,10 @@ const getPivotRoleExternalId = (organizationUri) => ({
     organizationUri
   },
   query: gql`
-            query getPivotRoleExternalId($organizationUri:String!){
-                getPivotRoleExternalId(organizationUri:$organizationUri)
-            }
-        `
+    query getPivotRoleExternalId($organizationUri: String!) {
+      getPivotRoleExternalId(organizationUri: $organizationUri)
+    }
+  `
 });
 
 export default getPivotRoleExternalId;

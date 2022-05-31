@@ -6,22 +6,24 @@ const listEnvironmentMembers = ({ term, environmentUri }) => ({
     filter: { term: term || '' }
   },
   query: gql`
-            query getEnvironment($filter:OrganizationUserFilter,$environmentUri:String){
-                getEnvironment(environmentUri:$environmentUri){
-                    environmentUri
-                    userRoleInEnvironment
-                    users(filter:$filter){
-                        count
-                        nodes{
-                            userName
-                            userRoleInEnvironment
-                            created
-                        }
-                    }
-
-                }
-            }
-        `
+    query getEnvironment(
+      $filter: OrganizationUserFilter
+      $environmentUri: String
+    ) {
+      getEnvironment(environmentUri: $environmentUri) {
+        environmentUri
+        userRoleInEnvironment
+        users(filter: $filter) {
+          count
+          nodes {
+            userName
+            userRoleInEnvironment
+            created
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listEnvironmentMembers;

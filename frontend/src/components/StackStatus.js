@@ -23,11 +23,7 @@ const StackStatus = (props) => {
     }
     return color;
   };
-  return (
-    <Label color={statusColor(status)}>
-      {status}
-    </Label>
-  );
+  return <Label color={statusColor(status)}>{status}</Label>;
 };
 StackStatus.propTypes = {
   status: PropTypes.string.isRequired

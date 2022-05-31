@@ -15,10 +15,10 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import { DeleteOutlined } from '@material-ui/icons';
+} from '@mui/material';
+import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -30,7 +30,9 @@ const KeyValueTagUpdateForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [kvTags, setKeyValueTags] = useState(tags && tags.length > 0 ? tags : [{ key: '', value: '' }]);
+  const [kvTags, setKeyValueTags] = useState(
+    tags && tags.length > 0 ? tags : [{ key: '', value: '' }]
+  );
 
   const handleAddKeyValueRow = () => {
     if (kvTags.length <= 40) {
@@ -38,9 +40,12 @@ const KeyValueTagUpdateForm = (props) => {
         key: '',
         value: ''
       };
-      setKeyValueTags((prevState) => ([...prevState, item]));
+      setKeyValueTags((prevState) => [...prevState, item]);
     } else {
-      dispatch({ type: SET_ERROR, error: 'You cannot add more than 40 Key Value Tags' });
+      dispatch({
+        type: SET_ERROR,
+        error: 'You cannot add more than 40 Key Value Tags'
+      });
     }
   };
 
@@ -68,11 +73,16 @@ const KeyValueTagUpdateForm = (props) => {
   async function submit() {
     setIsSubmitting(true);
     try {
-      const response = await client.mutate(updateKeyValueTags({
-        targetUri,
-        targetType,
-        tags: kvTags.length > 0 ? kvTags.map((k) => ({ key: k.key, value: k.value })) : []
-      }));
+      const response = await client.mutate(
+        updateKeyValueTags({
+          targetUri,
+          targetType,
+          tags:
+            kvTags.length > 0
+              ? kvTags.map((k) => ({ key: k.key, value: k.value }))
+              : []
+        })
+      );
       if (!response.errors) {
         enqueueSnackbar('Key-Value tags saved', {
           anchorOrigin: {
@@ -97,40 +107,27 @@ const KeyValueTagUpdateForm = (props) => {
 
   return (
     <>
-      <Grid
-        container
-        spacing={3}
-      >
-        <Grid
-          item
-          lg={12}
-          xl={12}
-          xs={12}
-        >
+      <Grid container spacing={3}>
+        <Grid item lg={12} xl={12} xs={12}>
           <Box>
             <Card>
               <CardHeader title="Key-Value Tags" />
               <Divider />
               <CardContent>
                 <Box>
-                  <Table
-                    size="small"
-                  >
+                  <Table size="small">
                     {kvTags && kvTags.length > 0 && (
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Key</TableCell>
-                        <TableCell>Value</TableCell>
-                      </TableRow>
-                    </TableHead>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Key</TableCell>
+                          <TableCell>Value</TableCell>
+                        </TableRow>
+                      </TableHead>
                     )}
                     <TableBody>
                       {kvTags.map((item, idx) => (
                         <>
-                          <TableRow
-                            id="addr0"
-                            key={item.tagUri}
-                          >
+                          <TableRow id="addr0" key={item.tagUri}>
                             <TableCell>
                               <TextField
                                 fullWidth
@@ -150,7 +147,11 @@ const KeyValueTagUpdateForm = (props) => {
                               />
                             </TableCell>
                             <td>
-                              <IconButton onClick={() => { handleRemoveKeyValueRow(idx); }}>
+                              <IconButton
+                                onClick={() => {
+                                  handleRemoveKeyValueRow(idx);
+                                }}
+                              >
                                 <DeleteOutlined fontSize="small" />
                               </IconButton>
                             </td>
@@ -160,18 +161,11 @@ const KeyValueTagUpdateForm = (props) => {
                     </TableBody>
                   </Table>
                   <Box>
-                    <Button
-                      type="button"
-                      onClick={handleAddKeyValueRow}
-                    >
+                    <Button type="button" onClick={handleAddKeyValueRow}>
                       Add Tag
                     </Button>
                   </Box>
-                  <Box
-                    display="flex"
-                    justifyContent="flex-end"
-                    sx={{ p: 1 }}
-                  >
+                  <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>
                     <Button
                       color="primary"
                       sx={{ m: 1 }}
@@ -182,7 +176,7 @@ const KeyValueTagUpdateForm = (props) => {
                     </Button>
                     <LoadingButton
                       color="primary"
-                      pending={isSubmitting}
+                      loading={isSubmitting}
                       onClick={() => submit()}
                       sx={{ m: 1 }}
                       variant="contained"
@@ -197,7 +191,6 @@ const KeyValueTagUpdateForm = (props) => {
         </Grid>
       </Grid>
     </>
-
   );
 };
 

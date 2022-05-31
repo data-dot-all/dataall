@@ -140,13 +140,13 @@ upload of a file, however this feature can be disabled as appears in the picture
 
 2. Crawl data: the file has been uploaded but the table and its schema have not been registered in the dataset
 Glue Catalog database. If you have disabled the crawler in the upload, click on the **Start Crawler** button in the
-Tables tab. If you just want to crawl one prefix, you can specify it in the Start Crawler feature.
+Data tab. If you just want to crawl one prefix, you can specify it in the Start Crawler feature.
 
 
 ![crawl](pictures/datasets/dataset_crawl.png#zoom#shadow)
 
 3. Synchronize tables: Once crawled and registered in the Glue database, you can synchronize tables from your
-dataset's AWS Glue database by using **Synchronize** tables feature in the Tables tab. In any case,
+dataset's AWS Glue database by using **Synchronize** tables feature in the Data tab. In any case,
 data.all will synchronize automatically the tables for you at a frequency of **15 minutes**.
 
 You can preview your small set of data right away from data.all, check <a href="tables.html">Tables</a>.
@@ -186,18 +186,16 @@ Catalog and then click on Synchronize as we did in step 3.
 
 ### Folders
 
-As previously defined, folders are prefixes inside our dataset S3 bucket. To create a folder, go to the **Folders**
-tab and fill the following form. We will dive deeper in how to use folders in the
+As previously defined, folders are prefixes inside our dataset S3 bucket. To create a folder, go to the **Data**
+tab and on the folders section, click on Create. The following form will appear. 
+We will dive deeper in how to use folders in the
 <a href="tables.html">folders section</a>.
 
 ![create_folder](pictures/datasets/create_folder.png#zoom#shadow)
 
-
-
-
-## :material-comment-text-multiple-outline: **Post comments in Feed**
-Users can post comments in the **Feed** tab of the dataset window. This way, users can enrich the dataset
-information available with updates, comments, explanations or whatever they have to say.
+## :material-comment-text-multiple-outline: **Leave a message in Chat**
+In the **Chats** button users can interact and leave their comments and questions on
+the Dataset Chat.
 
 ![feed](pictures/datasets/dataset_feed.png#zoom#shadow)
 

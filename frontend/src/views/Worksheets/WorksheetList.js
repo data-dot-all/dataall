@@ -1,9 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Box, Breadcrumbs, Container, Grid, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  Box,
+  Breadcrumbs,
+  Container,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import PropTypes from 'prop-types';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -29,10 +36,7 @@ function WorksheetsPageHeader({ navigate }) {
       spacing={3}
     >
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Worksheets
         </Typography>
         <Breadcrumbs
@@ -40,13 +44,11 @@ function WorksheetsPageHeader({ navigate }) {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             Play
           </Typography>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/worksheets"
@@ -86,16 +88,18 @@ const WorksheetList = () => {
   const [loading, setLoading] = useState(true);
   const client = useClient();
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(WorksheetApi.listWorksheets({ filter }));
+    const response = await client.query(
+      WorksheetApi.listWorksheets({ filter })
+    );
     if (!response.errors) {
       setItems(response.data.listWorksheets);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -104,7 +108,9 @@ const WorksheetList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -116,9 +122,11 @@ const WorksheetList = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, dispatch, fetchItems]);
 
   return (
     <>
@@ -133,9 +141,7 @@ const WorksheetList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <WorksheetsPageHeader
-            navigate={navigate}
-          />
+          <WorksheetsPageHeader navigate={navigate} />
           <Box sx={{ mt: 3 }}>
             <SearchInput
               onChange={handleInputChange}
@@ -150,24 +156,19 @@ const WorksheetList = () => {
               mt: 3
             }}
           >
-            {loading ? <CircularProgress />
-              : (
-                <Box>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {items.nodes.map((node) => (
-                      <WorksheetListItem worksheet={node} />
-                    ))}
-                  </Grid>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box>
+                <Grid container spacing={3}>
+                  {items.nodes.map((node) => (
+                    <WorksheetListItem worksheet={node} />
+                  ))}
+                </Grid>
 
-                  <Pager
-                    items={items}
-                    onChange={handlePageChange}
-                  />
-                </Box>
-              )}
+                <Pager items={items} onChange={handlePageChange} />
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

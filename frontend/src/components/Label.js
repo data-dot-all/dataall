@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
-import { experimentalStyled } from '@material-ui/core/styles';
+import { styled } from '@mui/styles';
 
-const LabelRoot = experimentalStyled('span')((({ theme, styleProps }) => {
+const LabelRoot = styled('span')(({ theme, styleProps }) => {
   const backgroundColor = theme.palette[styleProps.color].main;
   const color = theme.palette[styleProps.color].contrastText;
 
@@ -27,7 +27,7 @@ const LabelRoot = experimentalStyled('span')((({ theme, styleProps }) => {
     textTransform: 'uppercase',
     whiteSpace: 'nowrap'
   };
-}));
+});
 
 const Label = (props) => {
   const { color = 'primary', children, ...other } = props;
@@ -35,10 +35,7 @@ const Label = (props) => {
   const styleProps = { color };
 
   return (
-    <LabelRoot
-      styleProps={styleProps}
-      {...other}
-    >
+    <LabelRoot styleProps={styleProps} {...other}>
       {children}
     </LabelRoot>
   );

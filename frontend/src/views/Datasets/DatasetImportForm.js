@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -20,9 +20,9 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -45,23 +45,47 @@ const DatasetImportForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [confidentialityOptions] = useState(['Unclassified', 'Official', 'Secret']);
+  const [confidentialityOptions] = useState([
+    'Unclassified',
+    'Official',
+    'Secret'
+  ]);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments({ filter: { roles: ['Admin', 'Owner', 'Invited', 'DatasetCreator'] } }));
+    const response = await client.query(
+      listEnvironments({
+        filter: Defaults.SelectListFilter
+      })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch]);
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -71,26 +95,30 @@ const DatasetImportForm = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(importDataset({
-        organizationUri: values.environment.organization.organizationUri,
-        environmentUri: values.environment.environmentUri,
-        owner: '',
-        label: values.label,
-        SamlAdminGroupName: values.SamlGroupName,
-        tags: values.tags,
-        description: values.description,
-        topics: values.topics ? values.topics.map((t) => t.value) : [],
-        bucketName: values.bucketName,
-        glueDatabaseName: values.glueDatabaseName,
-        stewards: values.stewards,
-        confidentiality: values.confidentiality
-      }));
+      const response = await client.mutate(
+        importDataset({
+          organizationUri: values.environment.organization.organizationUri,
+          environmentUri: values.environment.environmentUri,
+          owner: '',
+          label: values.label,
+          SamlAdminGroupName: values.SamlGroupName,
+          tags: values.tags,
+          description: values.description,
+          topics: values.topics ? values.topics.map((t) => t.value) : [],
+          bucketName: values.bucketName,
+          glueDatabaseName: values.glueDatabaseName,
+          stewards: values.stewards,
+          confidentiality: values.confidentiality
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -131,16 +159,9 @@ const DatasetImportForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Import a new dataset
               </Typography>
               <Breadcrumbs
@@ -148,13 +169,11 @@ const DatasetImportForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Contribute
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/datasets"
@@ -162,10 +181,7 @@ const DatasetImportForm = (props) => {
                 >
                   Datasets
                 </Link>
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Import
                 </Typography>
               </Breadcrumbs>
@@ -201,20 +217,29 @@ const DatasetImportForm = (props) => {
                 bucketName: '',
                 confidentiality: ''
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Dataset name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('*Team is required'),
-                  topics: Yup.array().min(1).required('*Topics are required'),
-                  environment: Yup.object().required('*Environment is required'),
-                  tags: Yup.array().min(1).required('*Tags are required'),
-                  glueDatabaseName: Yup.string().max(255),
-                  bucketName: Yup.string().max(255).required('*S3 bucket name is required'),
-                  confidentiality: Yup.string().max(255).required('*Confidentiality is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Dataset name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('*Team is required'),
+                topics: Yup.array().min(1).required('*Topics are required'),
+                environment: Yup.object().required('*Environment is required'),
+                tags: Yup.array().min(1).required('*Tags are required'),
+                glueDatabaseName: Yup.string().max(255),
+                bucketName: Yup.string()
+                  .max(255)
+                  .required('*S3 bucket name is required'),
+                confidentiality: Yup.string()
+                  .max(255)
+                  .required('*Confidentiality is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -228,20 +253,9 @@ const DatasetImportForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={7}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={7} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -266,8 +280,12 @@ const DatasetImportForm = (props) => {
                               }
                             }}
                             fullWidth
-                            error={Boolean(touched.description && errors.description)}
-                            helperText={`${200 - values.description.length} characters left`}
+                            error={Boolean(
+                              touched.description && errors.description
+                            )}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -277,7 +295,7 @@ const DatasetImportForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -291,8 +309,12 @@ const DatasetImportForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.confidentiality && errors.confidentiality)}
-                            helperText={touched.confidentiality && errors.confidentiality}
+                            error={Boolean(
+                              touched.confidentiality && errors.confidentiality
+                            )}
+                            helperText={
+                              touched.confidentiality && errors.confidentiality
+                            }
                             label="Confidentiality"
                             name="confidentiality"
                             onChange={handleChange}
@@ -301,10 +323,7 @@ const DatasetImportForm = (props) => {
                             variant="outlined"
                           >
                             {confidentialityOptions.map((c) => (
-                              <MenuItem
-                                key={c}
-                                value={c}
-                              >
+                              <MenuItem key={c} value={c}>
                                 {c}
                               </MenuItem>
                             ))}
@@ -319,12 +338,14 @@ const DatasetImportForm = (props) => {
                             onChange={(event, value) => {
                               setFieldValue('topics', value);
                             }}
-                            renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                              <Chip
-                                label={option.label}
-                                {...getTagProps({ index })}
-                              />
-                            ))}
+                            renderTags={(tagValue, getTagProps) =>
+                              tagValue.map((option, index) => (
+                                <Chip
+                                  label={option.label}
+                                  {...getTagProps({ index })}
+                                />
+                              ))
+                            }
                             renderInput={(p) => (
                               <TextField
                                 {...p}
@@ -346,33 +367,34 @@ const DatasetImportForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={5}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.environment && errors.environment)}
-                            helperText={touched.environment && errors.environment}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
                             label="Environment"
                             name="environment"
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
-                              fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
                             }}
                             select
@@ -395,7 +417,11 @@ const DatasetImportForm = (props) => {
                             fullWidth
                             label="Region"
                             name="region"
-                            value={values.environment ? values.environment.region : ''}
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -405,13 +431,19 @@ const DatasetImportForm = (props) => {
                             fullWidth
                             label="Organization"
                             name="organization"
-                            value={values.environment ? values.environment.organization.label : ''}
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.bucketName && errors.bucketName)}
+                            error={Boolean(
+                              touched.bucketName && errors.bucketName
+                            )}
                             fullWidth
                             helperText={touched.bucketName && errors.bucketName}
                             label="Amazon S3 bucket name"
@@ -424,9 +456,15 @@ const DatasetImportForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            error={Boolean(touched.glueDatabaseName && errors.glueDatabaseName)}
+                            error={Boolean(
+                              touched.glueDatabaseName &&
+                                errors.glueDatabaseName
+                            )}
                             fullWidth
-                            helperText={touched.glueDatabaseName && errors.glueDatabaseName}
+                            helperText={
+                              touched.glueDatabaseName &&
+                              errors.glueDatabaseName
+                            }
                             label="AWS Glue database name"
                             name="glueDatabaseName"
                             onBlur={handleBlur}
@@ -441,8 +479,12 @@ const DatasetImportForm = (props) => {
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={handleChange}
@@ -451,10 +493,7 @@ const DatasetImportForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -490,7 +529,7 @@ const DatasetImportForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -506,7 +545,6 @@ const DatasetImportForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

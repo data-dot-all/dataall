@@ -17,10 +17,10 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
-import { useEffect, useState } from 'react';
+import { LoadingButton } from '@mui/lab';
+import { useCallback, useEffect, useState } from 'react';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -43,21 +43,39 @@ const PipelineCrateForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listEnvironments({ filter: Defaults.SelectListFilter }));
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.SelectListFilter })
+    );
     if (!response.errors) {
-      setEnvironmentOptions(response.data.listEnvironments.nodes.map((e) => ({ ...e, value: e.environmentUri, label: e.label })));
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [client, dispatch]);
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(listEnvironmentGroups({ filter: Defaults.SelectListFilter, environmentUri }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
-        setGroupOptions(response.data.listEnvironmentGroups.nodes.map((g) => ({ value: g.groupUri, label: g.groupUri })));
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -67,19 +85,25 @@ const PipelineCrateForm = (props) => {
   };
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createSqlPipeline({ input: {
-        label: values.label,
-        environmentUri: values.environment.environmentUri,
-        description: values.description,
-        SamlGroupName: values.SamlGroupName,
-        tags: values.tags
-      } }));
+      const response = await client.mutate(
+        createSqlPipeline({
+          input: {
+            label: values.label,
+            environmentUri: values.environment.environmentUri,
+            description: values.description,
+            SamlGroupName: values.SamlGroupName,
+            tags: values.tags
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -90,7 +114,9 @@ const PipelineCrateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/pipelines/${response.data.createSqlPipeline.sqlPipelineUri}`);
+        navigate(
+          `/console/pipelines/${response.data.createSqlPipeline.sqlPipelineUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -119,16 +145,9 @@ const PipelineCrateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new pipeline
               </Typography>
               <Breadcrumbs
@@ -136,13 +155,11 @@ const PipelineCrateForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Play
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/pipelines"
@@ -151,6 +168,7 @@ const PipelineCrateForm = (props) => {
                   Pipelines
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/pipelines/new"
@@ -184,16 +202,21 @@ const PipelineCrateForm = (props) => {
                 environment: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Pipeline name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('* Team is required'),
-                  environment: Yup.object().required('*Environment is required'),
-                  tags: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Pipeline name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('* Team is required'),
+                environment: Yup.object().required('*Environment is required'),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -207,20 +230,9 @@ const PipelineCrateForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -245,7 +257,9 @@ const PipelineCrateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -255,12 +269,12 @@ const PipelineCrateForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
-                          <Box sx={{ mt: 2 }}>
-                            <FormHelperText error>
-                              {errors.description}
-                            </FormHelperText>
-                          </Box>
+                          {touched.description && errors.description && (
+                            <Box sx={{ mt: 2 }}>
+                              <FormHelperText error>
+                                {errors.description}
+                              </FormHelperText>
+                            </Box>
                           )}
                         </CardContent>
                         <CardContent>
@@ -273,33 +287,34 @@ const PipelineCrateForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.environment && errors.environment)}
-                            helperText={touched.environment && errors.environment}
+                            error={Boolean(
+                              touched.environment && errors.environment
+                            )}
+                            helperText={
+                              touched.environment && errors.environment
+                            }
                             label="Environment"
                             name="environment"
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
-                              fetchGroups(event.target.value.environmentUri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+                              fetchGroups(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
                             }}
                             select
@@ -322,7 +337,11 @@ const PipelineCrateForm = (props) => {
                             fullWidth
                             label="Region"
                             name="region"
-                            value={values.environment ? values.environment.region : ''}
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
@@ -332,15 +351,23 @@ const PipelineCrateForm = (props) => {
                             fullWidth
                             label="Organization"
                             name="organization"
-                            value={values.environment ? values.environment.organization.label : ''}
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
                             variant="outlined"
                           />
                         </CardContent>
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={handleChange}
@@ -349,10 +376,7 @@ const PipelineCrateForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -360,11 +384,9 @@ const PipelineCrateForm = (props) => {
                         </CardContent>
                       </Card>
                       {errors.submit && (
-                      <Box sx={{ mt: 3 }}>
-                        <FormHelperText error>
-                          {errors.submit}
-                        </FormHelperText>
-                      </Box>
+                        <Box sx={{ mt: 3 }}>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
+                        </Box>
                       )}
                       <Box
                         sx={{
@@ -375,7 +397,7 @@ const PipelineCrateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -391,7 +413,6 @@ const PipelineCrateForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

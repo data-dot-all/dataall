@@ -7,23 +7,18 @@ const runSavedQuery = ({ savedQueryUri, sqlBody }) => ({
     sqlBody
   },
   query: gql`
-            query RunSavedQuery (
-                $savedQueryUri:String!,
-                $sqlBody:String){
-                runSavedQuery(
-                    savedQueryUri:$savedQueryUri,
-                    sqlBody:$sqlBody
-                ){
-                    metadata{
-                        Name
-                        DataType
-                    }
-                    rows{
-                        data
-                    }
-                }
-            }
-        `
+    query RunSavedQuery($savedQueryUri: String!, $sqlBody: String) {
+      runSavedQuery(savedQueryUri: $savedQueryUri, sqlBody: $sqlBody) {
+        metadata {
+          Name
+          DataType
+        }
+        rows {
+          data
+        }
+      }
+    }
+  `
 });
 
 export default runSavedQuery;

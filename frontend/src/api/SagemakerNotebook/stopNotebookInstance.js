@@ -5,10 +5,10 @@ const stopSagemakerNotebook = (notebookUri) => ({
     notebookUri
   },
   mutation: gql`
-            mutation StopSagemakerNotebook($notebookUri:String!){
-                stopSagemakerNotebook(notebookUri:$notebookUri)
-            }
-        `
+    mutation StopSagemakerNotebook($notebookUri: String!) {
+      stopSagemakerNotebook(notebookUri: $notebookUri)
+    }
+  `
 });
 
 export default stopSagemakerNotebook;

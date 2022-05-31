@@ -31,7 +31,7 @@ resource_prefix = app.node.try_get_context('resource_prefix') or 'dataall'
 
 pipeline = PipelineStack(
     app,
-    f'{resource_prefix}-{git_branch}-cicd-stack',
+    "{resource_prefix}-{git_branch}-cicd-stack".format(resource_prefix=resource_prefix,git_branch=git_branch),
     env=env,
     target_envs=target_envs,
     git_branch=git_branch,

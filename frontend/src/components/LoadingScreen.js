@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import NProgress from 'nprogress';
-import { Box } from '@material-ui/core';
+import { Box } from '@mui/material';
 
 const LoadingScreen = () => {
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -16,10 +16,10 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { LoadingButton } from '@material-ui/lab';
+import CircularProgress from '@mui/material/CircularProgress';
+import { LoadingButton } from '@mui/lab';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import * as Yup from 'yup';
@@ -38,16 +38,9 @@ import * as Defaults from '../../components/defaults';
 function DashboardEditHeader(props) {
   const { dashboard } = props;
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           {`Update Dashboard: ${dashboard.label}`}
         </Typography>
         <Breadcrumbs
@@ -55,13 +48,11 @@ function DashboardEditHeader(props) {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Play
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/dashboards"
@@ -70,6 +61,7 @@ function DashboardEditHeader(props) {
             Dashboards
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/dashboards/${dashboard.dashboardUri}`}
@@ -77,10 +69,7 @@ function DashboardEditHeader(props) {
           >
             {dashboard.label}
           </Link>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-          >
+          <Typography color="textSecondary" variant="subtitle2">
             Edit
           </Typography>
         </Breadcrumbs>
@@ -116,18 +105,21 @@ const DashboardEditForm = () => {
   const [loading, setLoading] = useState(true);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [dashboardTerms, setDashboardTerms] = useState([]);
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     let response = await client.query(getDashboard(params.uri));
     let fetchedTerms = [];
     if (!response.errors && response.data.getDashboard !== null) {
       setDashboard(response.data.getDashboard);
-      if (response.data.getDashboard.terms && response.data.getDashboard.terms.nodes.length > 0) {
+      if (
+        response.data.getDashboard.terms &&
+        response.data.getDashboard.terms.nodes.length > 0
+      ) {
         fetchedTerms = response.data.getDashboard.terms.nodes.map((node) => ({
           label: node.label,
           value: node.nodeUri,
           nodeUri: node.nodeUri,
-          disabled: node.__typename !== 'Term', /*eslint-disable-line*/
+          disabled: node.__typename !== 'Term' /*eslint-disable-line*/,
           nodePath: node.path,
           nodeType: node.__typename /*eslint-disable-line*/
         }));
@@ -135,36 +127,43 @@ const DashboardEditForm = () => {
       setDashboardTerms(fetchedTerms);
       response = client.query(searchGlossary(Defaults.SelectListFilter));
       response.then((result) => {
-        if (result.data.searchGlossary && result.data.searchGlossary.nodes.length > 0) {
+        if (
+          result.data.searchGlossary &&
+          result.data.searchGlossary.nodes.length > 0
+        ) {
           const selectables = result.data.searchGlossary.nodes.map((node) => ({
             label: node.label,
             value: node.nodeUri,
             nodeUri: node.nodeUri,
-                disabled: node.__typename !== 'Term', /* eslint-disable-line*/
+            disabled: node.__typename !== 'Term' /* eslint-disable-line*/,
             nodePath: node.path,
-                nodeType: node.__typename /* eslint-disable-line*/
+            nodeType: node.__typename /* eslint-disable-line*/
           }));
           setSelectableTerms(selectables);
         }
       });
     } else {
-      const error = response.errors ? response.errors[0].message : 'Dashboard not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dashboard not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateDashboard(
-        {
+      const response = await client.mutate(
+        updateDashboard({
           dashboardUri: dashboard.dashboardUri,
           label: values.label,
           description: values.description,
-          terms: values.terms.nodes ? values.terms.nodes.map((t) => t.nodeUri) : values.terms.map((t) => t.nodeUri),
+          terms: values.terms.nodes
+            ? values.terms.nodes.map((t) => t.nodeUri)
+            : values.terms.map((t) => t.nodeUri),
           tags: values.tags
-        }
-      ));
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -180,7 +179,6 @@ const DashboardEditForm = () => {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
-      console.error(err);
       setStatus({ success: false });
       setErrors({ submit: err.message });
       setSubmitting(false);
@@ -192,7 +190,7 @@ const DashboardEditForm = () => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   if (loading) {
     return <CircularProgress />;
@@ -224,15 +222,18 @@ const DashboardEditForm = () => {
                 tags: dashboard.tags || [],
                 terms: dashboard.terms || []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Dashboard name is required'),
-                  description: Yup.string().max(5000),
-                  tags: Yup.array().nullable(),
-                  terms: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Dashboard name is required'),
+                description: Yup.string().max(5000),
+                tags: Yup.array().nullable(),
+                terms: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -246,19 +247,9 @@ const DashboardEditForm = () => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={8}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={8} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -297,7 +288,9 @@ const DashboardEditForm = () => {
                                 }
                               }}
                               fullWidth
-                              helperText={`${200 - values.description.length} characters left`}
+                              helperText={`${
+                                200 - values.description.length
+                              } characters left`}
                               label="Short description"
                               name="description"
                               multiline
@@ -307,7 +300,7 @@ const DashboardEditForm = () => {
                               value={values.description}
                               variant="outlined"
                             />
-                            {(touched.description && errors.description) && (
+                            {touched.description && errors.description && (
                               <Box sx={{ mt: 2 }}>
                                 <FormHelperText error>
                                   {errors.description}
@@ -318,12 +311,7 @@ const DashboardEditForm = () => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={4}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={4} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
@@ -335,48 +323,51 @@ const DashboardEditForm = () => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
                           <Box sx={{ mt: 3 }}>
                             {dashboard && (
-                            <Autocomplete
-                              multiple
-                              id="tags-filled"
-                              options={selectableTerms}
-                              defaultValue={dashboardTerms.map((node) => ({ label: node.label, nodeUri: node.nodeUri }))}
-                              getOptionLabel={(opt) => opt.label}
-                              getOptionDisabled={(opt) => opt.disabled}
-                              getOptionSelected={(option, value) => option.nodeUri === value.nodeUri}
-                              onChange={(event, value) => {
-                                setFieldValue('terms', value);
-                              }}
-                              renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                                <Chip
-                                  label={option.label}
-                                  {...getTagProps({ index })}
-                                />
-                              ))}
-                              renderInput={(p) => (
-                                <TextField
-                                  {...p}
-                                  variant="outlined"
-                                  label="Glossary Terms"
-                                />
-                              )}
-                            />
+                              <Autocomplete
+                                multiple
+                                id="tags-filled"
+                                options={selectableTerms}
+                                defaultValue={dashboardTerms.map((node) => ({
+                                  label: node.label,
+                                  nodeUri: node.nodeUri
+                                }))}
+                                getOptionLabel={(opt) => opt.label}
+                                getOptionDisabled={(opt) => opt.disabled}
+                                getOptionSelected={(option, value) =>
+                                  option.nodeUri === value.nodeUri
+                                }
+                                onChange={(event, value) => {
+                                  setFieldValue('terms', value);
+                                }}
+                                renderTags={(tagValue, getTagProps) =>
+                                  tagValue.map((option, index) => (
+                                    <Chip
+                                      label={option.label}
+                                      {...getTagProps({ index })}
+                                    />
+                                  ))
+                                }
+                                renderInput={(p) => (
+                                  <TextField
+                                    {...p}
+                                    variant="outlined"
+                                    label="Glossary Terms"
+                                  />
+                                )}
+                              />
                             )}
                           </Box>
                         </CardContent>
                       </Card>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box

@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import { Box, CardContent, CircularProgress, Dialog, FormHelperText, TextField, Typography } from '@material-ui/core';
-import { LoadingButton } from '@material-ui/lab';
+import {
+  Box,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  FormHelperText,
+  TextField,
+  Typography
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import addCategory from '../../api/Glossary/addCategory';
 
-const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, onClose, open }) => {
+const GlossaryCreateCategoryForm = ({
+  client,
+  data,
+  refresh,
+  isAdmin,
+  onApply,
+  onClose,
+  open
+}) => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState(data);
   const { enqueueSnackbar } = useSnackbar();
@@ -19,13 +35,15 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(addCategory({
-        parentUri: data.nodeUri,
-        input: {
-          label: values.label,
-          readme: values.readme
-        }
-      }));
+      const response = await client.mutate(
+        addCategory({
+          parentUri: data.nodeUri,
+          input: {
+            label: values.label,
+            readme: values.readme
+          }
+        })
+      );
       if (!response.errors) {
         enqueueSnackbar('Category created', {
           anchorOrigin: {
@@ -53,12 +71,7 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
     return <CircularProgress />;
   }
   return (
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -75,14 +88,16 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
               label: '',
               readme: ''
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                label: Yup.string().max(255).required('*Name is required'),
-                readme: Yup.string().max(5000).required('*Description is required')
-
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              label: Yup.string().max(255).required('*Name is required'),
+              readme: Yup.string()
+                .max(5000)
+                .required('*Description is required')
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -95,9 +110,7 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
+              <form onSubmit={handleSubmit}>
                 <CardContent>
                   <TextField
                     disabled
@@ -144,11 +157,9 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
                     value={values.readme}
                     variant="outlined"
                   />
-                  {(touched.readme && errors.readme) && (
+                  {touched.readme && errors.readme && (
                     <Box>
-                      <FormHelperText error>
-                        {errors.readme}
-                      </FormHelperText>
+                      <FormHelperText error>{errors.readme}</FormHelperText>
                     </Box>
                   )}
                 </CardContent>
@@ -164,7 +175,7 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
                   {isAdmin && (
                     <LoadingButton
                       color="primary"
-                      pending={isSubmitting}
+                      loading={isSubmitting}
                       type="submit"
                       variant="contained"
                     >
@@ -178,7 +189,6 @@ const GlossaryCreateCategoryForm = ({ client, data, refresh, isAdmin, onApply, o
         </Box>
       </Box>
     </Dialog>
-
   );
 };
 GlossaryCreateCategoryForm.propTypes = {

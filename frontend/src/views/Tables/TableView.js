@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -15,11 +15,11 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import * as PropTypes from 'prop-types';
-import { FaTrash } from 'react-icons/all';
+import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Warning } from '@material-ui/icons';
+import { ForumOutlined, Warning } from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -46,19 +46,10 @@ function TablePageHeader(props) {
   const { table, handleDeleteObjectModalOpen, isAdmin } = props;
   const [openFeed, setOpenFeed] = useState(false);
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
-          Table
-          {' '}
-          {table.GlueTableName}
+        <Typography color="textPrimary" variant="h5">
+          Table {table.GlueTableName}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
@@ -66,6 +57,7 @@ function TablePageHeader(props) {
           sx={{ mt: 1 }}
         >
           <Link
+            underline="hover"
             component={RouterLink}
             color="textPrimary"
             variant="subtitle2"
@@ -74,6 +66,7 @@ function TablePageHeader(props) {
             Discover
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/datasets"
@@ -82,6 +75,7 @@ function TablePageHeader(props) {
             Datasets
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/${table?.dataset?.datasetUri}`}
@@ -90,6 +84,7 @@ function TablePageHeader(props) {
             {table?.dataset?.name}
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/table/${table.tableUri}`}
@@ -100,49 +95,49 @@ function TablePageHeader(props) {
         </Breadcrumbs>
       </Grid>
       {isAdmin && (
-      <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            startIcon={<ForumOutlined fontSize="small" />}
-            sx={{ m: 1 }}
-            onClick={() => setOpenFeed(true)}
-            type="button"
-            variant="outlined"
-          >
-            Chat
-          </Button>
-          <Button
-            color="primary"
-            component={RouterLink}
-            startIcon={<PencilAltIcon fontSize="small" />}
-            sx={{ m: 1 }}
-            to={`/console/datasets/table/${table.tableUri}/edit`}
-            variant="outlined"
-          >
-            Edit
-          </Button>
-          <Button
-            color="primary"
-            startIcon={<FaTrash size={15} />}
-            sx={{ m: 1 }}
-            onClick={handleDeleteObjectModalOpen}
-            type="button"
-            variant="outlined"
-          >
-            Delete
-          </Button>
-        </Box>
-      </Grid>
+        <Grid item>
+          <Box sx={{ m: -1 }}>
+            <Button
+              color="primary"
+              startIcon={<ForumOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              onClick={() => setOpenFeed(true)}
+              type="button"
+              variant="outlined"
+            >
+              Chat
+            </Button>
+            <Button
+              color="primary"
+              component={RouterLink}
+              startIcon={<PencilAltIcon fontSize="small" />}
+              sx={{ m: 1 }}
+              to={`/console/datasets/table/${table.tableUri}/edit`}
+              variant="outlined"
+            >
+              Edit
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<FaTrash size={15} />}
+              sx={{ m: 1 }}
+              onClick={handleDeleteObjectModalOpen}
+              type="button"
+              variant="outlined"
+            >
+              Delete
+            </Button>
+          </Box>
+        </Grid>
       )}
       {openFeed && (
-      <FeedComments
-        objectOwner={table.dataset.owner}
-        targetType="DatasetTable"
-        targetUri={table.tableUri}
-        open={openFeed}
-        onClose={() => setOpenFeed(false)}
-      />
+        <FeedComments
+          objectOwner={table.dataset.owner}
+          targetType="DatasetTable"
+          targetUri={table.tableUri}
+          open={openFeed}
+          onClose={() => setOpenFeed(false)}
+        />
       )}
     </Grid>
   );
@@ -173,7 +168,9 @@ const TableView = () => {
   };
 
   const deleteTable = async () => {
-    const response = await client.mutate(deleteDatasetTable({ tableUri: table.tableUri }));
+    const response = await client.mutate(
+      deleteDatasetTable({ tableUri: table.tableUri })
+    );
     if (!response.errors) {
       navigate(`/console/datasets/${table.datasetUri}`);
     } else {
@@ -181,24 +178,30 @@ const TableView = () => {
     }
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDatasetTable(params.uri));
     if (!response.errors && response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
-      setIsAdmin(['Creator', 'Admin', 'Owner'].indexOf(response.data.getDatasetTable.dataset.userRoleForDataset) !== -1);
+      setIsAdmin(
+        ['Creator', 'Admin', 'Owner'].indexOf(
+          response.data.getDatasetTable.dataset.userRoleForDataset
+        ) !== -1
+      );
     } else {
       setTable(null);
-      const error = response.errors ? response.errors[0].message : 'Dataset table not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dataset table not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
@@ -236,7 +239,7 @@ const TableView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {tabs.map((tab) => (
                 <Tab
@@ -244,60 +247,44 @@ const TableView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'preview'
-            && <TablePreview table={table} />}
-            {currentTab === 'overview'
-                        && (
-                        <TableOverview
-                          table={table}
-                          isAdmin={isAdmin}
-                        />
-                        )}
-            {currentTab === 'columns'
-                        && (
-                        <TableColumns
-                          table={table}
-                          isAdmin={isAdmin}
-                        />
-                        )}
-            {currentTab === 'metrics'
-                        && (
-                        <TableMetrics
-                          table={table}
-                          isAdmin={isAdmin}
-                        />
-                        )}
+            {currentTab === 'preview' && <TablePreview table={table} />}
+            {currentTab === 'overview' && (
+              <TableOverview table={table} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'columns' && (
+              <TableColumns table={table} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'metrics' && (
+              <TableMetrics table={table} isAdmin={isAdmin} />
+            )}
           </Box>
         </Container>
       </Box>
       {isAdmin && (
-      <DeleteObjectModal
-        objectName={table.label}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={deleteTable}
-        deleteMessage={(
-          <Card>
-            <CardContent>
-              <Typography
-                gutterBottom
-                variant="body2"
-              >
-                <Warning />
-                {' '}
-                Table will be deleted from data.all catalog, but will still be available on AWS Glue catalog.
-              </Typography>
-            </CardContent>
-          </Card>
-        )}
-      />
+        <DeleteObjectModal
+          objectName={table.label}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={deleteTable}
+          deleteMessage={
+            <Card>
+              <CardContent>
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Table will be deleted from data.all catalog, but
+                  will still be available on AWS Glue catalog.
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
       )}
     </>
   );

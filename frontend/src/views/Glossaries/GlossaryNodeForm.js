@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import { Box, Card, CardContent, CircularProgress, FormHelperText, TextField } from '@material-ui/core';
-import { LoadingButton } from '@material-ui/lab';
+import {
+  Box,
+  Card,
+  CardContent,
+  CircularProgress,
+  FormHelperText,
+  TextField
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import updateGlossary from '../../api/Glossary/updateGlossary';
@@ -49,13 +56,15 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
       } else {
         mutation = updateGlossary;
       }
-      const response = await client.mutate(mutation({
-        nodeUri: data.nodeUri,
-        input: {
-          label: values.label,
-          readme: values.readme
-        }
-      }));
+      const response = await client.mutate(
+        mutation({
+          nodeUri: data.nodeUri,
+          input: {
+            label: values.label,
+            readme: values.readme
+          }
+        })
+      );
       if (!response.errors) {
         enqueueSnackbar('Glossary updated', {
           anchorOrigin: {
@@ -88,13 +97,10 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
             label: formData.label,
             readme: formData.readme
           }}
-          validationSchema={Yup
-            .object()
-            .shape({
-              label: Yup.string().max(255).required('*Name is required'),
-              readme: Yup.string().max(5000).required('*Description is required')
-
-            })}
+          validationSchema={Yup.object().shape({
+            label: Yup.string().max(255).required('*Name is required'),
+            readme: Yup.string().max(5000).required('*Description is required')
+          })}
           onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
             await submit(values, setStatus, setSubmitting, setErrors);
           }}
@@ -108,9 +114,7 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
             touched,
             values
           }) => (
-            <form
-              onSubmit={handleSubmit}
-            >
+            <form onSubmit={handleSubmit}>
               <Card>
                 <CardContent>
                   <TextField
@@ -149,46 +153,44 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
                     value={values.readme}
                     variant="outlined"
                   />
-                  {(touched.readme && errors.readme) && (
+                  {touched.readme && errors.readme && (
                     <Box>
-                      <FormHelperText error>
-                        {errors.readme}
-                      </FormHelperText>
+                      <FormHelperText error>{errors.readme}</FormHelperText>
                     </Box>
                   )}
                 </CardContent>
                 {isAdmin && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    mt: 3,
-                    mr: 3,
-                    mb: 2
-                  }}
-                >
-                  <LoadingButton
-                    color="primary"
-                    sx={{ m: 1 }}
-                    pending={isSubmitting}
-                    type="submit"
-                    variant="contained"
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mt: 3,
+                      mr: 3,
+                      mb: 2
+                    }}
                   >
-                    Save
-                  </LoadingButton>
-                  {/* eslint-disable-next-line react/prop-types */}
-                  {data.__typename !== 'Glossary' && (
-                  <LoadingButton
-                    sx={{ m: 1 }}
-                    color="primary"
-                    pending={deleting}
-                    onClick={deleteGlossaryNode}
-                    variant="contained"
-                  >
-                    Delete
-                  </LoadingButton>
-                  )}
-                </Box>
+                    <LoadingButton
+                      color="primary"
+                      sx={{ m: 1 }}
+                      loading={isSubmitting}
+                      type="submit"
+                      variant="contained"
+                    >
+                      Save
+                    </LoadingButton>
+                    {/* eslint-disable-next-line react/prop-types */}
+                    {data.__typename !== 'Glossary' && (
+                      <LoadingButton
+                        sx={{ m: 1 }}
+                        color="primary"
+                        loading={deleting}
+                        onClick={deleteGlossaryNode}
+                        variant="contained"
+                      >
+                        Delete
+                      </LoadingButton>
+                    )}
+                  </Box>
                 )}
               </Card>
             </form>
@@ -196,7 +198,6 @@ const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
         </Formik>
       </Box>
     </>
-
   );
 };
 GlossaryNodeForm.propTypes = {

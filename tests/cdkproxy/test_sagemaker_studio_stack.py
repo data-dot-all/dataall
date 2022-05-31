@@ -13,6 +13,10 @@ def patch_methods(mocker, db, sgm_studio, env, org):
         return_value=db,
     )
     mocker.patch(
+        'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
+        return_value="dataall-pivot-role-name-pytest",
+    )
+    mocker.patch(
         'dataall.cdkproxy.stacks.sagemakerstudio.SagemakerStudioUserProfile.get_target',
         return_value=sgm_studio,
     )

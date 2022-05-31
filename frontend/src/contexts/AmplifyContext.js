@@ -56,7 +56,8 @@ const handlers = {
   })
 };
 
-const reducer = (state, action) => (handlers[action.type] ? handlers[action.type](state, action) : state);
+const reducer = (state, action) =>
+  handlers[action.type] ? handlers[action.type](state, action) : state;
 
 const AuthContext = createContext({
   ...initialState,
@@ -99,20 +100,22 @@ export const AuthProvider = (props) => {
   }, []);
 
   const login = async () => {
-    Auth.federatedSignIn().then((user) => {
-      dispatch({
-        type: 'LOGIN',
-        payload: {
-          user: {
-            id: user.attributes.email,
-            email: user.attributes.email,
-            name: user.attributes.email
+    Auth.federatedSignIn()
+      .then((user) => {
+        dispatch({
+          type: 'LOGIN',
+          payload: {
+            user: {
+              id: user.attributes.email,
+              email: user.attributes.email,
+              name: user.attributes.email
+            }
           }
-        }
+        });
+      })
+      .catch((e) => {
+        console.log('Failed to authenticate user', e);
       });
-    }).catch((e) => {
-      console.log('Failed to authenticate user', e);
-    });
   };
 
   const logout = async () => {

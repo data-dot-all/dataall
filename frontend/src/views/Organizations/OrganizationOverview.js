@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Box, Grid } from '@material-ui/core';
+import { Box, Grid } from '@mui/material';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 
@@ -7,17 +7,8 @@ const OrganizationOverview = (props) => {
   const { organization, ...other } = props;
 
   return (
-    <Grid
-      container
-      spacing={3}
-      {...other}
-    >
-      <Grid
-        item
-        lg={8}
-        xl={9}
-        xs={12}
-      >
+    <Grid container spacing={3} {...other}>
+      <Grid item lg={8} xl={9} xs={12}>
         <Box>
           <ObjectBrief
             uri={organization.organizationUri}
@@ -27,12 +18,7 @@ const OrganizationOverview = (props) => {
           />
         </Box>
       </Grid>
-      <Grid
-        item
-        lg={4}
-        xl={3}
-        xs={12}
-      >
+      <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           owner={organization.owner}
           admins={organization.SamlGroupName || '-'}

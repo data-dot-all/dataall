@@ -1,5 +1,11 @@
 import PropTypes from 'prop-types';
-import { Card, CardContent, CardHeader, Divider, Typography } from '@material-ui/core';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Typography
+} from '@mui/material';
 
 const FolderS3Properties = (props) => {
   const { folder } = props;
@@ -9,58 +15,34 @@ const FolderS3Properties = (props) => {
       <CardHeader title="S3 Properties" />
       <Divider />
       <CardContent>
-        <Typography
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography color="textSecondary" variant="subtitle2">
           S3 URI
         </Typography>
-        <Typography
-          color="textPrimary"
-          variant="body2"
-        >
+        <Typography color="textPrimary" variant="body2">
           {`s3://${folder.dataset.S3BucketName}/${folder.S3Prefix}/`}
         </Typography>
       </CardContent>
       <CardContent>
-        <Typography
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography color="textSecondary" variant="subtitle2">
           S3 ARN
         </Typography>
-        <Typography
-          color="textPrimary"
-          variant="body2"
-        >
+        <Typography color="textPrimary" variant="body2">
           {`arn:aws:s3:::${folder.dataset.S3BucketName}/${folder.S3Prefix}/`}
         </Typography>
       </CardContent>
       <CardContent>
-        <Typography
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography color="textSecondary" variant="subtitle2">
           Region
         </Typography>
-        <Typography
-          color="textPrimary"
-          variant="body2"
-        >
+        <Typography color="textPrimary" variant="body2">
           {folder.dataset.region}
         </Typography>
       </CardContent>
       <CardContent>
-        <Typography
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography color="textSecondary" variant="subtitle2">
           Account
         </Typography>
-        <Typography
-          color="textPrimary"
-          variant="body2"
-        >
+        <Typography color="textPrimary" variant="body2">
           {folder.dataset.AwsAccountId}
         </Typography>
       </CardContent>

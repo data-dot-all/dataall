@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -8,7 +8,8 @@ import {
   Divider,
   Grid,
   IconButton,
-  InputAdornment, Link,
+  InputAdornment,
+  Link,
   Table,
   TableBody,
   TableCell,
@@ -16,13 +17,13 @@ import {
   TableRow,
   TextField,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
-import { DeleteOutlined, SyncAlt, Warning } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
-import { BsTable } from 'react-icons/all';
+import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import { BsTable } from 'react-icons/bs';
 import { Link as RouterLink } from 'react-router-dom';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
@@ -68,25 +69,29 @@ const DatasetTables = ({ dataset, isAdmin }) => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listDatasetTables({
-      datasetUri: dataset.datasetUri,
-      filter: { ...filter }
-    }));
+    const response = await client.query(
+      listDatasetTables({
+        datasetUri: dataset.datasetUri,
+        filter: { ...filter }
+      })
+    );
     if (!response.errors) {
       setItems({ ...response.data.getDataset.tables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  };
+  }, [dispatch, client, dataset, filter]);
 
   const synchronizeTables = async () => {
     setSyncingTables(true);
     const response = await client.mutate(syncTables(dataset.datasetUri));
     if (!response.errors) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       enqueueSnackbar(`Retrieved ${response.data.syncTables.count} tables`, {
         anchorOrigin: {
           horizontal: 'right',
@@ -102,7 +107,9 @@ const DatasetTables = ({ dataset, isAdmin }) => {
   };
 
   const deleteTable = async () => {
-    const response = await client.mutate(deleteDatasetTable({ tableUri: tableToDelete.tableUri }));
+    const response = await client.mutate(
+      deleteDatasetTable({ tableUri: tableToDelete.tableUri })
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Table deleted', {
@@ -112,7 +119,9 @@ const DatasetTables = ({ dataset, isAdmin }) => {
         },
         variant: 'success'
       });
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -120,9 +129,11 @@ const DatasetTables = ({ dataset, isAdmin }) => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -130,8 +141,10 @@ const DatasetTables = ({ dataset, isAdmin }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -146,12 +159,12 @@ const DatasetTables = ({ dataset, isAdmin }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
               <BsTable style={{ marginRight: '10px' }} />
               Tables
             </Box>
-              )}
+          }
         />
         <Divider />
         <Box
@@ -163,12 +176,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={9}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={9} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -194,14 +202,9 @@ const DatasetTables = ({ dataset, isAdmin }) => {
             </Box>
           </Grid>
           {isAdmin && (
-            <Grid
-              item
-              md={3}
-              sm={6}
-              xs={12}
-            >
+            <Grid item md={3} sm={6} xs={12}>
               <LoadingButton
-                pending={syncingTables}
+                loading={syncingTables}
                 color="primary"
                 onClick={synchronizeTables}
                 startIcon={<SyncAlt fontSize="small" />}
@@ -220,7 +223,6 @@ const DatasetTables = ({ dataset, isAdmin }) => {
               >
                 Start Crawler
               </LoadingButton>
-
             </Grid>
           )}
         </Box>
@@ -229,73 +231,70 @@ const DatasetTables = ({ dataset, isAdmin }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    Database
-                  </TableCell>
-                  <TableCell>
-                    Location
-                  </TableCell>
-                  <TableCell>
-                    Actions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Database</TableCell>
+                  <TableCell>Location</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((table) => (
-                    <TableRow
-                      hover
-                      key={table.tableUri}
-                    >
-                      <TableCell>
-                        <Link
-                          color="textPrimary"
-                          component={RouterLink}
-                          to={`/console/datasets/table/${table.tableUri}`}
-                          variant="subtitle2"
-                        >
-                          {table.GlueTableName}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {table.GlueDatabaseName}
-                      </TableCell>
-                      <TableCell>
-                        {table.S3Prefix}
-                      </TableCell>
-                      <TableCell>
-                        {isAdmin && (
-                        <IconButton onClick={() => { setTableToDelete(table); handleDeleteObjectModalOpen(table); }}>
-                          <DeleteOutlined fontSize="small" />
-                        </IconButton>
-                        )}
-                        <IconButton onClick={() => { navigate(`/console/datasets/table/${table.tableUri}`); }}>
-                          <ArrowRightIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No tables found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((table) => (
+                      <TableRow hover key={table.tableUri}>
+                        <TableCell>
+                          <Link
+                            underline="hover"
+                            color="textPrimary"
+                            component={RouterLink}
+                            to={`/console/datasets/table/${table.tableUri}`}
+                            variant="subtitle2"
+                          >
+                            {table.GlueTableName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{table.GlueDatabaseName}</TableCell>
+                        <TableCell>{table.S3Prefix}</TableCell>
+                        <TableCell>
+                          {isAdmin && (
+                            <IconButton
+                              onClick={() => {
+                                setTableToDelete(table);
+                                handleDeleteObjectModalOpen(table);
+                              }}
+                            >
+                              <DeleteOutlined fontSize="small" />
+                            </IconButton>
+                          )}
+                          <IconButton
+                            onClick={() => {
+                              navigate(
+                                `/console/datasets/table/${table.tableUri}`
+                              );
+                            }}
+                          >
+                            <ArrowRightIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No tables found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {!loading && items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>
@@ -315,20 +314,16 @@ const DatasetTables = ({ dataset, isAdmin }) => {
           onClose={handleDeleteObjectModalClose}
           open={isDeleteObjectModalOpen}
           deleteFunction={deleteTable}
-          deleteMessage={(
+          deleteMessage={
             <Card>
               <CardContent>
-                <Typography
-                  gutterBottom
-                  variant="body2"
-                >
-                  <Warning />
-                  {' '}
-                  Table will be deleted from data.all catalog, but will still be available on AWS Glue catalog.
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Table will be deleted from data.all catalog, but
+                  will still be available on AWS Glue catalog.
                 </Typography>
               </CardContent>
             </Card>
-                )}
+          }
         />
       )}
     </Box>

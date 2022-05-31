@@ -5,9 +5,17 @@ const archiveEnvironment = ({ environmentUri, deleteFromAWS }) => ({
     environmentUri,
     deleteFromAWS
   },
-  mutation: gql`mutation deleteEnvironment($environmentUri:String!, $deleteFromAWS:Boolean){
-            deleteEnvironment(environmentUri:$environmentUri, deleteFromAWS:$deleteFromAWS)
-        }`
+  mutation: gql`
+    mutation deleteEnvironment(
+      $environmentUri: String!
+      $deleteFromAWS: Boolean
+    ) {
+      deleteEnvironment(
+        environmentUri: $environmentUri
+        deleteFromAWS: $deleteFromAWS
+      )
+    }
+  `
 });
 
 export default archiveEnvironment;

@@ -1,4 +1,4 @@
-import { Box, Grid } from '@material-ui/core';
+import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
@@ -7,17 +7,8 @@ const TableOverview = (props) => {
   const { table, ...other } = props;
 
   return (
-    <Grid
-      container
-      spacing={3}
-      {...other}
-    >
-      <Grid
-        item
-        lg={8}
-        xl={9}
-        xs={12}
-      >
+    <Grid container spacing={3} {...other}>
+      <Grid item lg={8} xl={9} xs={12}>
         <Box>
           <ObjectBrief
             title="Details"
@@ -25,16 +16,15 @@ const TableOverview = (props) => {
             name={table.label || '-'}
             description={table.description || 'No description provided'}
             tags={table.tags && table.tags.length > 0 ? table.tags : ['-']}
-            terms={table.terms && table.terms.nodes.length > 0 ? table.terms.nodes : [{ label: '-', nodeUri: '-' }]}
+            terms={
+              table.terms && table.terms.nodes.length > 0
+                ? table.terms.nodes
+                : [{ label: '-', nodeUri: '-' }]
+            }
           />
         </Box>
       </Grid>
-      <Grid
-        item
-        lg={4}
-        xl={3}
-        xs={12}
-      >
+      <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           environment={table.dataset.environment}
           region={table.dataset.region}

@@ -1,10 +1,10 @@
 /* import Markdown from 'react-markdown/with-html';
-import { Box, Button, CircularProgress, Container, Paper } from '@material-ui/core';
+import { Box, Button, CircularProgress, Container, Paper } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { experimentalStyled } from '@material-ui/core/styles';
-import { LoadingButton } from '@material-ui/lab';
+import { styled } from '@mui/styles';
+import { LoadingButton } from '@mui/lab';
 import SimpleMDE from 'react-simplemde-editor';
 import useClient from '../../hooks/useClient';
 import { useDispatch } from '../../store';
@@ -13,7 +13,7 @@ import getDatasetSummary from '../../api/Dataset/getDatasetSummary';
 import saveDatasetSummary from '../../api/Dataset/saveDatasetSummary';
 import PencilAlt from '../../icons/PencilAlt';
 
-const MarkdownWrapper = experimentalStyled('div')(({ theme }) => ({
+const MarkdownWrapper = styled('div')(({ theme }) => ({
   color: theme.palette.text.primary,
   fontFamily: theme.typography.fontFamily,
   '& p': {

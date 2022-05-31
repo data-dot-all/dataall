@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { TreeItem, TreeView } from '@material-ui/lab';
-import { Box, CircularProgress, Typography } from '@material-ui/core';
+import React, { useCallback, useEffect, useState } from 'react';
+import { makeStyles } from '@mui/styles';
+import { TreeItem, TreeView } from '@mui/lab';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import * as BsIcons from 'react-icons/bs';
 import listToTree from '../../utils/listToTree';
 import searchGlossary from '../../api/Glossary/searchGlossary';
@@ -21,9 +21,10 @@ const useTreeItemStyles = makeStyles((theme) => ({
       backgroundColor: `var(--tree-view-bg-color, ${theme.palette.grey[400]})`,
       color: 'var(--tree-view-color)'
     },
-    '&:focus > $content $label, &:hover > $content $label, &$selected > $content $label': {
-      backgroundColor: 'transparent'
-    }
+    '&:focus > $content $label, &:hover > $content $label, &$selected > $content $label':
+      {
+        backgroundColor: 'transparent'
+      }
   },
   content: {
     color: theme.palette.text.secondary,
@@ -62,30 +63,28 @@ const useTreeItemStyles = makeStyles((theme) => ({
 }));
 function StyledTreeItem(props) {
   const classes = useTreeItemStyles();
-  const { labelText, labelIcon: LabelIcon, labelInfo, color, bgColor, ...other } = props;
+  const {
+    labelText,
+    labelIcon: LabelIcon,
+    labelInfo,
+    color,
+    bgColor,
+    ...other
+  } = props;
 
   return (
     <TreeItem
-      label={(
+      label={
         <div className={classes.labelRoot}>
-          <LabelIcon
-            color="inherit"
-            className={classes.labelIcon}
-          />
-          <Typography
-            variant="body2"
-            className={classes.labelText}
-          >
+          <LabelIcon color="inherit" className={classes.labelIcon} />
+          <Typography variant="body2" className={classes.labelText}>
             {labelText}
           </Typography>
-          <Typography
-            variant="caption"
-            color="inherit"
-          >
+          <Typography variant="caption" color="inherit">
             {labelInfo}
           </Typography>
         </div>
-            )}
+      }
       style={{
         '--tree-view-color': color,
         '--tree-view-bg-color': bgColor
@@ -129,7 +128,8 @@ const GlossarySearch = ({ matches, setQuery }) => {
   const getIcon = (nodeItem) => {
     if (nodeItem.__typename === 'Glossary') {
       return <BsIcons.BsBookmark size={12} />;
-    } if (nodeItem.__typename === 'Category') {
+    }
+    if (nodeItem.__typename === 'Category') {
       return <BsIcons.BsFolder size={12} />;
     }
     return <BsIcons.BsTag size={12} />;
@@ -167,32 +167,37 @@ const GlossarySearch = ({ matches, setQuery }) => {
       select(node);
     }
   };
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setFetchingItems(true);
-    const response = await client.query(searchGlossary(Defaults.SelectListFilter));
+    const response = await client.query(
+      searchGlossary(Defaults.SelectListFilter)
+    );
     if (!response.errors) {
-      setTree(listToTree(
-        response.data.searchGlossary.nodes,
-        {
+      setTree(
+        listToTree(response.data.searchGlossary.nodes, {
           idKey: 'nodeUri',
           parentKey: 'parentUri'
-        }
-      ));
+        })
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setFetchingItems(false);
-  };
+  }, [client, dispatch]);
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchItems]);
   return (
     <Box>
-      {fetchingItems ? <CircularProgress size={9} /> : (
+      {fetchingItems ? (
+        <CircularProgress size={9} />
+      ) : (
         <Box>
-          {(tree && tree.length > 0) ? (
+          {tree && tree.length > 0 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -215,8 +220,8 @@ const GlossarySearch = ({ matches, setQuery }) => {
                     {tree.map((node) => (
                       <StyledTreeItem
                         nodeId={node.nodeUri}
-                        onClick={() => (toggle(node))}
-                        labelText={(
+                        onClick={() => toggle(node)}
+                        labelText={
                           <Box
                             sx={{
                               display: 'flex',
@@ -234,64 +239,66 @@ const GlossarySearch = ({ matches, setQuery }) => {
                               {node.label}
                             </Typography>
                           </Box>
-                          )}
+                        }
                         labelIcon={() => getIcon(node)}
                       >
-                        {node.children && node.children.map((category) => (
-                          <StyledTreeItem
-                            nodeId={category.nodeUri}
-                            onClick={() => (toggle(category))}
-                            labelText={(
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  ml: 1
-                                }}
-                              >
-                                <Typography
+                        {node.children &&
+                          node.children.map((category) => (
+                            <StyledTreeItem
+                              nodeId={category.nodeUri}
+                              onClick={() => toggle(category)}
+                              labelText={
+                                <Box
                                   sx={{
-                                    flexGrow: 1,
-                                    fontWeight: 'inherit'
+                                    display: 'flex',
+                                    ml: 1
                                   }}
-                                  variant="caption"
-                                  color="textPrimary"
                                 >
-                                  {category.label}
-                                </Typography>
-                              </Box>
-                                  )}
-                            labelIcon={() => getIcon(category)}
-                          >
-                            {category.children && category.children.map((term) => (
-                              <StyledTreeItem
-                                nodeId={term.nodeUri}
-                                labelText={(
-                                  <Box
+                                  <Typography
                                     sx={{
-                                      display: 'flex',
-                                      ml: 1
+                                      flexGrow: 1,
+                                      fontWeight: 'inherit'
                                     }}
+                                    variant="caption"
+                                    color="textPrimary"
                                   >
-                                    <Typography
-                                      sx={{
-                                        flexGrow: 1,
-                                        fontWeight: 'inherit'
-                                      }}
-                                      variant="caption"
-                                      color="textPrimary"
-                                    >
-                                      {term.label}
-                                    </Typography>
-                                  </Box>
-                                          )}
-                                labelIcon={() => getIcon(term)}
-                                color="#1a73e8"
-                                bgColor="#e8f0fe"
-                                onClick={() => (toggle(term))}
-                              />
-                            ))}
-                          </StyledTreeItem>
-                        ))}
+                                    {category.label}
+                                  </Typography>
+                                </Box>
+                              }
+                              labelIcon={() => getIcon(category)}
+                            >
+                              {category.children &&
+                                category.children.map((term) => (
+                                  <StyledTreeItem
+                                    nodeId={term.nodeUri}
+                                    labelText={
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          ml: 1
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            flexGrow: 1,
+                                            fontWeight: 'inherit'
+                                          }}
+                                          variant="caption"
+                                          color="textPrimary"
+                                        >
+                                          {term.label}
+                                        </Typography>
+                                      </Box>
+                                    }
+                                    labelIcon={() => getIcon(term)}
+                                    color="#1a73e8"
+                                    bgColor="#e8f0fe"
+                                    onClick={() => toggle(term)}
+                                  />
+                                ))}
+                            </StyledTreeItem>
+                          ))}
                       </StyledTreeItem>
                     ))}
                   </TreeView>
@@ -300,10 +307,7 @@ const GlossarySearch = ({ matches, setQuery }) => {
             </Box>
           ) : (
             <Box sx={{ mb: 3 }}>
-              <Typography
-                color="textPrimary"
-                variant="subtitle2"
-              >
+              <Typography color="textPrimary" variant="subtitle2">
                 No glossaries found
               </Typography>
             </Box>

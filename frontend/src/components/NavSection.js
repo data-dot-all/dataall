@@ -1,34 +1,46 @@
 import PropTypes from 'prop-types';
 import { matchPath } from 'react-router-dom';
-import { List, ListSubheader } from '@material-ui/core';
+import { List, ListSubheader } from '@mui/material';
 import NavItem from './NavItem';
 
 const renderNavItems = ({ depth = 0, items, pathname }) => (
   <List disablePadding>
     {items.reduce(
       // eslint-disable-next-line no-use-before-define
-      (acc, item) => reduceChildRoutes({
-        acc,
-        item,
-        pathname,
-        depth
-      }), []
+      (acc, item) =>
+        reduceChildRoutes({
+          acc,
+          item,
+          pathname,
+          depth
+        }),
+      []
     )}
   </List>
 );
 
 const reduceChildRoutes = ({ acc, pathname, item, depth }) => {
   const key = `${item.title}-${depth}`;
-  const exactMatch = item.path ? !!matchPath({
-    path: item.path,
-    end: false
-  }, pathname) : false;
+  const exactMatch = item.path
+    ? !!matchPath(
+        {
+          path: item.path,
+          end: false
+        },
+        pathname
+      )
+    : false;
 
   if (item.children) {
-    const partialMatch = item.path ? !!matchPath({
-      path: item.path,
-      end: false
-    }, pathname) : false;
+    const partialMatch = item.path
+      ? !!matchPath(
+          {
+            path: item.path,
+            end: false
+          },
+          pathname
+        )
+      : false;
 
     acc.push(
       <NavItem
@@ -70,7 +82,7 @@ const NavSection = (props) => {
 
   return (
     <List
-      subheader={(
+      subheader={
         <ListSubheader
           disableGutters
           disableSticky
@@ -84,7 +96,7 @@ const NavSection = (props) => {
         >
           {title}
         </ListSubheader>
-            )}
+      }
       {...other}
     >
       {renderNavItems({

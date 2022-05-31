@@ -1,7 +1,7 @@
-import { createRef, useEffect, useState } from 'react';
+import { createRef, useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
-import { Box, Button, CircularProgress } from '@material-ui/core';
-import { FaExternalLinkAlt } from 'react-icons/all';
+import { Box, Button, CircularProgress } from '@mui/material';
+import { FaExternalLinkAlt } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import getReaderSession from '../../api/Dashboard/getDashboardReaderSession';
 import { useDispatch } from '../../store';
@@ -16,8 +16,10 @@ const DashboardViewer = ({ dashboard }) => {
   const [dashboardRef] = useState(createRef());
   const [sessionUrl, setSessionUrl] = useState(null);
 
-  const fetchReaderSessionUrl = async () => {
-    const response = await client.query(getReaderSession(dashboard.dashboardUri));
+  const fetchReaderSessionUrl = useCallback(async () => {
+    const response = await client.query(
+      getReaderSession(dashboard.dashboardUri)
+    );
     if (!response.errors) {
       setSessionUrl(response.data.getReaderSession);
       const options = {
@@ -36,13 +38,15 @@ const DashboardViewer = ({ dashboard }) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  };
+  }, [client, dispatch, dashboard, dashboardRef]);
 
   useEffect(() => {
     if (client && !sessionUrl) {
-      fetchReaderSessionUrl().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchReaderSessionUrl().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client]);
+  }, [client, dispatch, fetchReaderSessionUrl, sessionUrl]);
 
   if (!sessionUrl) {
     return <CircularProgress />;

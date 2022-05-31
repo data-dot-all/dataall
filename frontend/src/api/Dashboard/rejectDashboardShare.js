@@ -4,12 +4,14 @@ const rejectDashboardShare = (shareUri) => ({
   variables: {
     shareUri
   },
-  mutation: gql`mutation rejectDashboardShare($shareUri:String!){
-            rejectDashboardShare(shareUri:$shareUri){
-                shareUri
-                status
-            }
-        }`
+  mutation: gql`
+    mutation rejectDashboardShare($shareUri: String!) {
+      rejectDashboardShare(shareUri: $shareUri) {
+        shareUri
+        status
+      }
+    }
+  `
 });
 
 export default rejectDashboardShare;

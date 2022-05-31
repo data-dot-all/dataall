@@ -1,4 +1,13 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as FiIcons from 'react-icons/fi';
 import * as FaIcons from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
@@ -16,18 +25,8 @@ const PipelineListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={pipeline.sqlPipelineUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={pipeline.sqlPipelineUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={pipeline.sqlPipelineUri} md={3} xs={12} {...props}>
+      <Card key={pipeline.sqlPipelineUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -38,6 +37,7 @@ const PipelineListItem = (props) => {
             <IconAvatar icon={<BsIcons.BsGear size={18} />} />
             <Box sx={{ ml: 2 }}>
               <Link
+                underline="hover"
                 component="button"
                 color="textPrimary"
                 variant="h6"
@@ -54,18 +54,13 @@ const PipelineListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={pipeline.label}><span>{pipeline.label}</span></Tooltip>
+                <Tooltip title={pipeline.label}>
+                  <span>{pipeline.label}</span>
+                </Tooltip>
               </Link>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                by
-                {' '}
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+              <Typography color="textSecondary" variant="body2">
+                by{' '}
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   {pipeline.owner}
                 </Link>
               </Typography>
@@ -90,7 +85,9 @@ const PipelineListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={pipeline.description || 'No description provided'}><span>{pipeline.description || 'No description provided'}</span></Tooltip>
+            <Tooltip title={pipeline.description || 'No description provided'}>
+              <span>{pipeline.description || 'No description provided'}</span>
+            </Tooltip>
           </Typography>
         </Box>
         <Box
@@ -99,34 +96,24 @@ const PipelineListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUserShield />
-                {' '}
-                Role
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> Role
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Label color={pipeline.userRoleForPipeline === 'Creator' ? 'primary' : 'info'}>
+            <Grid item md={8} xs={12}>
+              <Label
+                color={
+                  pipeline.userRoleForPipeline === 'Creator'
+                    ? 'primary'
+                    : 'info'
+                }
+              >
                 {pipeline.userRoleForPipeline || '-'}
               </Label>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -134,28 +121,13 @@ const PipelineListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
+            <Grid item md={8} xs={12}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -168,11 +140,12 @@ const PipelineListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={pipeline.SamlGroupName || '-'}><span>{pipeline.SamlGroupName || '-'}</span></Tooltip>
+                <Tooltip title={pipeline.SamlGroupName || '-'}>
+                  <span>{pipeline.SamlGroupName || '-'}</span>
+                </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -180,32 +153,14 @@ const PipelineListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaAws />
-                {' '}
-                Account
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaAws /> Account
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {pipeline.environment.AwsAccountId}
               </Typography>
             </Grid>
@@ -217,32 +172,14 @@ const PipelineListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaGlobe />
-                {' '}
-                Region
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaGlobe /> Region
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
                 {pipeline.environment.region}
               </Typography>
             </Grid>
@@ -254,32 +191,14 @@ const PipelineListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FiIcons.FiActivity />
-                {' '}
-                Status
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FiIcons.FiActivity /> Status
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
                 <StackStatus status={pipeline.stack?.status} />
               </Typography>
             </Grid>

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -14,9 +14,9 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { FaNetworkWired } from 'react-icons/all';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { FaNetworkWired } from 'react-icons/fa';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -30,23 +30,11 @@ import listEnvironmentNetworks from '../../api/Environment/listEnvironmentNetwor
 
 function VpcRow({ vpc }) {
   return (
-    <TableRow
-      hover
-    >
+    <TableRow hover>
       <TableCell>
-        {vpc.label}
-        {' '}
-        {vpc.default && (
-        <Label
-          color="primary"
-        >
-          Default
-        </Label>
-        )}
+        {vpc.label} {vpc.default && <Label color="primary">Default</Label>}
       </TableCell>
-      <TableCell>
-        {vpc.VpcId}
-      </TableCell>
+      <TableCell>{vpc.VpcId}</TableCell>
       <TableCell>
         {vpc.privateSubnetIds && (
           <Box
@@ -104,9 +92,14 @@ const EnvironmentNetworks = ({ environment }) => {
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
-      const response = await client.query(listEnvironmentNetworks({ environmentUri: environment.environmentUri, filter }));
+      const response = await client.query(
+        listEnvironmentNetworks({
+          environmentUri: environment.environmentUri,
+          filter
+        })
+      );
       if (!response.errors) {
         setItems({ ...response.data.listEnvironmentNetworks });
       } else {
@@ -117,13 +110,15 @@ const EnvironmentNetworks = ({ environment }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, environment, filter]);
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, dispatch, fetchItems]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -131,8 +126,10 @@ const EnvironmentNetworks = ({ environment }) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -147,13 +144,11 @@ const EnvironmentNetworks = ({ environment }) => {
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
-              <FaNetworkWired style={{ marginRight: '10px' }} />
-              {' '}
-              Networks
+              <FaNetworkWired style={{ marginRight: '10px' }} /> Networks
             </Box>
-                    )}
+          }
         />
         <Divider />
         <Box
@@ -165,12 +160,7 @@ const EnvironmentNetworks = ({ environment }) => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -195,59 +185,46 @@ const EnvironmentNetworks = ({ environment }) => {
               />
             </Box>
           </Grid>
-          <Grid
-            item
-            md={2}
-            sm={6}
-            xs={12}
-          />
+          <Grid item md={2} sm={6} xs={12} />
         </Box>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    Vpc ID
-                  </TableCell>
-                  <TableCell>
-                    Private Subnets
-                  </TableCell>
-                  <TableCell>
-                    Public Subnets
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Vpc ID</TableCell>
+                  <TableCell>Private Subnets</TableCell>
+                  <TableCell>Public Subnets</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((vpc) => (
-                    <VpcRow
-                      vpc={vpc}
-                      environment={environment}
-                      fetchItems={fetchItems}
-                    />
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No VPC found
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((vpc) => (
+                      <VpcRow
+                        vpc={vpc}
+                        environment={environment}
+                        fetchItems={fetchItems}
+                      />
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No VPC found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               )}
             </Table>
             {!loading && items.nodes.length > 0 && (
-            <Pager
-              mgTop={2}
-              mgBottom={2}
-              items={items}
-              onChange={handlePageChange}
-            />
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={items}
+                onChange={handlePageChange}
+              />
             )}
           </Box>
         </Scrollbar>

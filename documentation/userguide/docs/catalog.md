@@ -21,7 +21,7 @@ It lets you narrow down results quickly using granular glossary terms like "sale
 Traditionally, a data glossary is just used to organize data. However, data.all uses it to power its search.
 This further encourages users to enrich and maintain the glossary regularly.
 
-![](pictures/catalog/catalog_1.png#zoom#shadow)
+![](pictures/catalog/catalog.png#zoom#shadow)
 
 ## **Glossaries**
 
@@ -81,13 +81,16 @@ A category is used to group the terms of a similar context together. it is just 
 
 ### **Link your data with appropriate glossary terms**
 You can associate a glossary term to a dataset or a table. Go to a dataset click on "edit" and update
-the glossary terms field as shown below:
+the glossary terms field as shown below
 
 ![link_term](pictures/catalog/glos_4.png#zoom#shadow)
 
-### **Check all data related to a glossary**
+### **Approve and Check all data related to a glossary**
 To see a list of all datasets and tables that have been linked with terms of a specific glossary, go to Glossaries
 and select the glossary. In the **Associations** tab it is possible to check the related data assets (target name),
 their types (e.g. dataset) and the specific term that they have used.
+
+**Important**: Glossary owners need to approve the association. If it is not approved it won't be used as filter in
+the catalog.
 
 ![relatedterm](pictures/catalog/glos_5.png#zoom#shadow)

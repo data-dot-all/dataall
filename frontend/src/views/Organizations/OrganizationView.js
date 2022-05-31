@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -14,11 +14,16 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { ArchiveOutlined, Info, SupervisedUserCircleRounded, Warning } from '@material-ui/icons';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import {
+  ArchiveOutlined,
+  Info,
+  SupervisedUserCircleRounded,
+  Warning
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { FaAws } from 'react-icons/all';
+import { FaAws } from 'react-icons/fa';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import PencilAltIcon from '../../icons/PencilAlt';
@@ -35,7 +40,11 @@ import OrganizationOverview from './OrganizationOverview';
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Environments', value: 'environments', icon: <FaAws size={20} /> },
-  { label: 'Teams', value: 'teams', icon: <SupervisedUserCircleRounded fontSize="small" /> }
+  {
+    label: 'Teams',
+    value: 'teams',
+    icon: <SupervisedUserCircleRounded fontSize="small" />
+  }
 ];
 
 const OrganizationView = () => {
@@ -48,7 +57,8 @@ const OrganizationView = () => {
   const client = useClient();
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] = useState(false);
+  const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
+    useState(false);
   const handleArchiveObjectModalOpen = () => {
     setIsArchiveObjectModalOpen(true);
   };
@@ -62,7 +72,9 @@ const OrganizationView = () => {
   };
 
   const archiveOrg = async () => {
-    const response = await client.mutate(archiveOrganization(org.organizationUri));
+    const response = await client.mutate(
+      archiveOrganization(org.organizationUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Organization archived', {
         anchorOrigin: {
@@ -78,20 +90,20 @@ const OrganizationView = () => {
     }
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrg(response.data.getOrganization);
       setLoading(false);
     }
     setLoading(false);
-  };
+  }, [client, params.uri]);
 
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, dispatch, fetchItem]);
 
   if (!org) {
     return null;
@@ -102,140 +114,127 @@ const OrganizationView = () => {
       <Helmet>
         <title>Organizations: Organization Details | data.all</title>
       </Helmet>
-      {loading ? <CircularProgress />
-        : (
-          <Box
-            sx={{
-              backgroundColor: 'background.default',
-              minHeight: '100%',
-              py: 8
-            }}
-          >
-            <Container maxWidth={settings.compact ? 'xl' : false}>
-              <Grid
-                container
-                justifyContent="space-between"
-                spacing={3}
-              >
-                <Grid item>
-                  <Typography
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <Box
+          sx={{
+            backgroundColor: 'background.default',
+            minHeight: '100%',
+            py: 8
+          }}
+        >
+          <Container maxWidth={settings.compact ? 'xl' : false}>
+            <Grid container justifyContent="space-between" spacing={3}>
+              <Grid item>
+                <Typography color="textPrimary" variant="h5">
+                  Organization {org.label}
+                </Typography>
+                <Breadcrumbs
+                  aria-label="breadcrumb"
+                  separator={<ChevronRightIcon fontSize="small" />}
+                  sx={{ mt: 1 }}
+                >
+                  <Link
+                    underline="hover"
                     color="textPrimary"
-                    variant="h5"
+                    component={RouterLink}
+                    to="/console/organizations"
+                    variant="subtitle2"
                   >
-                    Organization
-                    {' '}
+                    Admin
+                  </Link>
+                  <Link
+                    underline="hover"
+                    color="textPrimary"
+                    component={RouterLink}
+                    to="/console/organizations"
+                    variant="subtitle2"
+                  >
+                    Organizations
+                  </Link>
+                  <Typography color="textSecondary" variant="subtitle2">
                     {org.label}
                   </Typography>
-                  <Breadcrumbs
-                    aria-label="breadcrumb"
-                    separator={<ChevronRightIcon fontSize="small" />}
-                    sx={{ mt: 1 }}
-                  >
-                    <Link
-                      color="textPrimary"
-                      component={RouterLink}
-                      to="/console/organizations"
-                      variant="subtitle2"
-                    >
-                      Admin
-                    </Link>
-                    <Link
-                      color="textPrimary"
-                      component={RouterLink}
-                      to="/console/organizations"
-                      variant="subtitle2"
-                    >
-                      Organizations
-                    </Link>
-                    <Typography
-                      color="textSecondary"
-                      variant="subtitle2"
-                    >
-                      {org.label}
-                    </Typography>
-                  </Breadcrumbs>
-                </Grid>
-                <Grid item>
-                  <Box sx={{ m: -1 }}>
-                    <Button
-                      color="primary"
-                      component={RouterLink}
-                      startIcon={<PencilAltIcon fontSize="small" />}
-                      sx={{ m: 1 }}
-                      variant="outlined"
-                      to={`/console/organizations/${org.organizationUri}/edit`}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      color="primary"
-                      startIcon={<ArchiveOutlined />}
-                      sx={{ m: 1 }}
-                      variant="outlined"
-                      onClick={handleArchiveObjectModalOpen}
-                    >
-                      Archive
-                    </Button>
-                  </Box>
-                </Grid>
+                </Breadcrumbs>
               </Grid>
-              <Box sx={{ mt: 3 }}>
-                <Tabs
-                  indicatorColor="primary"
-                  onChange={handleTabsChange}
-                  scrollButtons="auto"
-                  textColor="primary"
-                  value={currentTab}
-                  variant="scrollable"
-                >
-                  {tabs.map((tab) => (
-                    <Tab
-                      key={tab.value}
-                      label={tab.label}
-                      value={tab.value}
-                      icon={settings.tabIcons ? tab.icon : null}
-                    />
-                  ))}
-                </Tabs>
-              </Box>
-              <Divider />
-              <Box sx={{ mt: 3 }}>
-                {currentTab === 'overview'
-                && <OrganizationOverview organization={org} />}
-                {currentTab === 'teams'
-                && <OrganizationTeams organization={org} />}
-                {currentTab === 'environments'
-                && <OrganizationEnvironments organization={org} />}
-              </Box>
-            </Container>
-          </Box>
-        )}
-      {isArchiveObjectModalOpen && (
-      <ArchiveObjectWithFrictionModal
-        objectName={org.label}
-        onApply={handleArchiveObjectModalClose}
-        onClose={handleArchiveObjectModalClose}
-        open={isArchiveObjectModalOpen}
-        archiveFunction={archiveOrg}
-        archiveMessage={(
-          <Card
-            variant="outlined"
-            color="error"
-            sx={{ mb: 2 }}
-          >
-            <CardContent>
-              <Typography
-                variant="subtitle2"
-                color="error"
+              <Grid item>
+                <Box sx={{ m: -1 }}>
+                  <Button
+                    color="primary"
+                    component={RouterLink}
+                    startIcon={<PencilAltIcon fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="outlined"
+                    to={`/console/organizations/${org.organizationUri}/edit`}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    color="primary"
+                    startIcon={<ArchiveOutlined />}
+                    sx={{ m: 1 }}
+                    variant="outlined"
+                    onClick={handleArchiveObjectModalOpen}
+                  >
+                    Archive
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+            <Box sx={{ mt: 3 }}>
+              <Tabs
+                indicatorColor="primary"
+                onChange={handleTabsChange}
+                scrollButtons="auto"
+                textColor="primary"
+                value={currentTab}
+                variant="fullWidth"
               >
-                <Warning sx={{ mr: 1 }} />
-                {' '}
-                Remove all environments linked to the organization before archiving !
-              </Typography>
-            </CardContent>
-          </Card>
+                {tabs.map((tab) => (
+                  <Tab
+                    key={tab.value}
+                    label={tab.label}
+                    value={tab.value}
+                    icon={settings.tabIcons ? tab.icon : null}
+                    iconPosition="start"
+                  />
+                ))}
+              </Tabs>
+            </Box>
+            <Divider />
+            <Box sx={{ mt: 3 }}>
+              {currentTab === 'overview' && (
+                <OrganizationOverview organization={org} />
               )}
-      />
+              {currentTab === 'teams' && (
+                <OrganizationTeams organization={org} />
+              )}
+              {currentTab === 'environments' && (
+                <OrganizationEnvironments organization={org} />
+              )}
+            </Box>
+          </Container>
+        </Box>
+      )}
+      {isArchiveObjectModalOpen && (
+        <ArchiveObjectWithFrictionModal
+          objectName={org.label}
+          onApply={handleArchiveObjectModalClose}
+          onClose={handleArchiveObjectModalClose}
+          open={isArchiveObjectModalOpen}
+          archiveFunction={archiveOrg}
+          archiveMessage={
+            <Card variant="outlined" color="error" sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="error">
+                  <Warning sx={{ mr: 1 }} /> Remove all environments linked to
+                  the organization before archiving !
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
       )}
     </>
   );

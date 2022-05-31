@@ -1,9 +1,18 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as FaIcons from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
-import { AiOutlineExperiment } from 'react-icons/all';
+import { AiOutlineExperiment } from 'react-icons/ai';
 import React from 'react';
 import IconAvatar from '../../components/IconAvatar';
 import Label from '../../components/Label';
@@ -14,18 +23,8 @@ const WorksheetListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={worksheet.worksheetUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={worksheet.worksheetUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={worksheet.worksheetUri} md={3} xs={12} {...props}>
+      <Card key={worksheet.worksheetUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -36,6 +35,7 @@ const WorksheetListItem = (props) => {
             <IconAvatar icon={<AiOutlineExperiment size={20} />} />
             <Box sx={{ ml: 1 }}>
               <Link
+                underline="hover"
                 component="button"
                 color="textPrimary"
                 variant="h6"
@@ -52,18 +52,13 @@ const WorksheetListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={worksheet.label}><span>{worksheet.label}</span></Tooltip>
+                <Tooltip title={worksheet.label}>
+                  <span>{worksheet.label}</span>
+                </Tooltip>
               </Link>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                by
-                {' '}
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+              <Typography color="textSecondary" variant="body2">
+                by{' '}
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   {worksheet.owner}
                 </Link>
               </Typography>
@@ -88,7 +83,9 @@ const WorksheetListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={worksheet.description || 'No description provided'}><span>{worksheet.description || 'No description provided'}</span></Tooltip>
+            <Tooltip title={worksheet.description || 'No description provided'}>
+              <span>{worksheet.description || 'No description provided'}</span>
+            </Tooltip>
           </Typography>
         </Box>
         <Box
@@ -97,34 +94,24 @@ const WorksheetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUserShield />
-                {' '}
-                Role
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> Role
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Label color={worksheet.userRoleForWorksheet === 'Creator' ? 'primary' : 'info'}>
+            <Grid item md={8} xs={12}>
+              <Label
+                color={
+                  worksheet.userRoleForWorksheet === 'Creator'
+                    ? 'primary'
+                    : 'info'
+                }
+              >
                 {worksheet.userRoleForWorksheet || '-'}
               </Label>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -132,28 +119,13 @@ const WorksheetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
+            <Grid item md={8} xs={12}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -166,11 +138,12 @@ const WorksheetListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={worksheet.SamlAdminGroupName || '-'}><span>{worksheet.SamlAdminGroupName || '-'}</span></Tooltip>
+                <Tooltip title={worksheet.SamlAdminGroupName || '-'}>
+                  <span>{worksheet.SamlAdminGroupName || '-'}</span>
+                </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{

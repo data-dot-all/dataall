@@ -5,10 +5,10 @@ const getSagemakerNotebookPresignedUrl = (notebookUri) => ({
     notebookUri
   },
   query: gql`
-            query getSagemakerNotebookPresignedUrl ($notebookUri:String!){
-                getSagemakerNotebookPresignedUrl(notebookUri:$notebookUri)
-            }
-        `
+    query getSagemakerNotebookPresignedUrl($notebookUri: String!) {
+      getSagemakerNotebookPresignedUrl(notebookUri: $notebookUri)
+    }
+  `
 });
 
 export default getSagemakerNotebookPresignedUrl;

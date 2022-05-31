@@ -6,23 +6,23 @@ const getStack = (environmentUri, stackUri) => ({
     stackUri
   },
   query: gql`
-            query getStack($environmentUri:String!,$stackUri:String!){
-                getStack(environmentUri:$environmentUri,stackUri:$stackUri){
-                    status
-                    stackUri
-                    targetUri
-                    accountid
-                    region
-                    stackid
-                    link
-                    outputs
-                    resources
-                    error
-                    events
-                    name
-                }
-            }
-        `
+    query getStack($environmentUri: String!, $stackUri: String!) {
+      getStack(environmentUri: $environmentUri, stackUri: $stackUri) {
+        status
+        stackUri
+        targetUri
+        accountid
+        region
+        stackid
+        link
+        outputs
+        resources
+        error
+        events
+        name
+      }
+    }
+  `
 });
 
 export default getStack;

@@ -1,11 +1,19 @@
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { Autocomplete, Box, CardContent, Dialog, FormHelperText, TextField, Typography } from '@material-ui/core';
+import {
+  Autocomplete,
+  Box,
+  CardContent,
+  Dialog,
+  FormHelperText,
+  TextField,
+  Typography
+} from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import React from 'react';
-import SendIcon from '@material-ui/icons/Send';
+import SendIcon from '@mui/icons-material/Send';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -18,11 +26,15 @@ const RequestDashboardAccessModal = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const groups = useGroups();
-  const idpGroupOptions = groups ? groups.map((g) => ({ value: g, label: g })) : [];
+  const idpGroupOptions = groups
+    ? groups.map((g) => ({ value: g, label: g }))
+    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(requestDashboardShare(hit._id, values.groupUri));
+      const response = await client.mutate(
+        requestDashboardShare(hit._id, values.groupUri)
+      );
       if (response && !response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -53,14 +65,7 @@ const RequestDashboardAccessModal = (props) => {
   }
 
   return (
-
-    <Dialog
-      maxWidth="md"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -70,11 +75,7 @@ const RequestDashboardAccessModal = (props) => {
         >
           Request Access
         </Typography>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="subtitle2"
-        >
+        <Typography align="center" color="textSecondary" variant="subtitle2">
           Your request will be submitted to the data owners
         </Typography>
         <Box sx={{ p: 3 }}>
@@ -83,13 +84,14 @@ const RequestDashboardAccessModal = (props) => {
               environment: '',
               comment: ''
             }}
-            validationSchema={Yup
-              .object()
-              .shape({
-                groupUri: Yup.string().required('*Team is required'),
-                comment: Yup.string().max(5000)
-              })}
-            onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            validationSchema={Yup.object().shape({
+              groupUri: Yup.string().required('*Team is required'),
+              comment: Yup.string().max(5000)
+            })}
+            onSubmit={async (
+              values,
+              { setErrors, setStatus, setSubmitting }
+            ) => {
               await submit(values, setStatus, setSubmitting, setErrors);
             }}
           >
@@ -103,9 +105,7 @@ const RequestDashboardAccessModal = (props) => {
               touched,
               values
             }) => (
-              <form
-                onSubmit={handleSubmit}
-              >
+              <form onSubmit={handleSubmit}>
                 <Box>
                   <CardContent>
                     <TextField
@@ -148,7 +148,9 @@ const RequestDashboardAccessModal = (props) => {
                         }
                       }}
                       fullWidth
-                      helperText={`${200 - values.comment.length} characters left`}
+                      helperText={`${
+                        200 - values.comment.length
+                      } characters left`}
                       label="Request purpose"
                       name="comment"
                       multiline
@@ -158,12 +160,10 @@ const RequestDashboardAccessModal = (props) => {
                       value={values.comment}
                       variant="outlined"
                     />
-                    {(touched.comment && errors.comment) && (
-                    <Box sx={{ mt: 2 }}>
-                      <FormHelperText error>
-                        {errors.comment}
-                      </FormHelperText>
-                    </Box>
+                    {touched.comment && errors.comment && (
+                      <Box sx={{ mt: 2 }}>
+                        <FormHelperText error>{errors.comment}</FormHelperText>
+                      </Box>
                     )}
                   </CardContent>
                 </Box>

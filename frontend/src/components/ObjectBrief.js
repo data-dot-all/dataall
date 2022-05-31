@@ -1,70 +1,69 @@
 import PropTypes from 'prop-types';
-import { Box, Card, CardContent, CardHeader, Chip, Typography, Divider } from '@material-ui/core';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Divider
+} from '@mui/material';
 import Label from './Label';
 
 const ObjectBrief = (props) => {
-  const { uri, description, tags, name, terms, topics, title, confidentiality, ...other } = props;
+  const {
+    uri,
+    description,
+    tags,
+    name,
+    terms,
+    topics,
+    title,
+    confidentiality,
+    ...other
+  } = props;
 
   return (
     <Card {...other}>
-      {title
-        && (
+      {title && (
         <Box>
           <CardHeader title={title} />
           <Divider />
         </Box>
-        )}
+      )}
       <CardContent>
         <Box>
           {uri && (
-          <Box>
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
-              URI
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="subtitle2"
-            >
-              {uri}
-            </Typography>
-          </Box>
+            <Box>
+              <Typography color="textSecondary" variant="subtitle2">
+                URI
+              </Typography>
+              <Typography color="textPrimary" variant="subtitle2">
+                {uri}
+              </Typography>
+            </Box>
           )}
           <Box sx={{ mt: 3 }}>
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
+            <Typography color="textSecondary" variant="subtitle2">
               Name
             </Typography>
-            <Typography
-              color="textPrimary"
-              variant="subtitle2"
-            >
+            <Typography color="textPrimary" variant="subtitle2">
               {name}
             </Typography>
           </Box>
           {confidentiality && (
-          <Box sx={{ mt: 3 }}>
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-            >
-              Classification
-            </Typography>
-            <Box sx={{ mt: 1 }}>
-              <Label color="primary">{confidentiality}</Label>
+            <Box sx={{ mt: 3 }}>
+              <Typography color="textSecondary" variant="subtitle2">
+                Classification
+              </Typography>
+              <Box sx={{ mt: 1 }}>
+                <Label color="primary">{confidentiality}</Label>
+              </Box>
             </Box>
-          </Box>
           )}
           {tags && tags.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Tags
               </Typography>
               <Box sx={{ mt: 1 }}>
@@ -81,10 +80,7 @@ const ObjectBrief = (props) => {
           )}
           {topics && topics.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Topics
               </Typography>
               <Box sx={{ mt: 1 }}>
@@ -101,10 +97,7 @@ const ObjectBrief = (props) => {
           )}
           {terms && terms.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Typography
-                color="textSecondary"
-                variant="subtitle2"
-              >
+              <Typography color="textSecondary" variant="subtitle2">
                 Glossary terms
               </Typography>
               <Box sx={{ mt: 1 }}>
@@ -120,16 +113,10 @@ const ObjectBrief = (props) => {
           )}
         </Box>
         <Box sx={{ mt: 3 }}>
-          <Typography
-            color="textSecondary"
-            variant="subtitle2"
-          >
+          <Typography color="textSecondary" variant="subtitle2">
             Description
           </Typography>
-          <Typography
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Typography color="textPrimary" variant="subtitle2">
             {description}
           </Typography>
         </Box>

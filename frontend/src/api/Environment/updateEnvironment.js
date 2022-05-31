@@ -5,21 +5,26 @@ const updateEnvironment = ({ environmentUri, input }) => ({
     environmentUri,
     input
   },
-  mutation: gql`mutation UpdateEnvironment($environmentUri:String!,$input:ModifyEnvironmentInput){
-            updateEnvironment(environmentUri:$environmentUri,input:$input){
-                environmentUri
-                label
-                userRoleInEnvironment
-                SamlGroupName
-                AwsAccountId
-                dashboardsEnabled
-                notebooksEnabled
-                mlStudiosEnabled
-                pipelinesEnabled
-                warehousesEnabled
-                created
-            }
-        }`
+  mutation: gql`
+    mutation UpdateEnvironment(
+      $environmentUri: String!
+      $input: ModifyEnvironmentInput
+    ) {
+      updateEnvironment(environmentUri: $environmentUri, input: $input) {
+        environmentUri
+        label
+        userRoleInEnvironment
+        SamlGroupName
+        AwsAccountId
+        dashboardsEnabled
+        notebooksEnabled
+        mlStudiosEnabled
+        pipelinesEnabled
+        warehousesEnabled
+        created
+      }
+    }
+  `
 });
 
 export default updateEnvironment;

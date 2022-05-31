@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { NavLink as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Box, Button, Collapse, ListItem } from '@material-ui/core';
+import { Box, Button, Collapse, ListItem } from '@mui/material';
 import ChevronDownIcon from '../icons/ChevronDown';
 import ChevronRightIcon from '../icons/ChevronRight';
 
 const NavItem = (props) => {
-  const { active, children, depth, icon, info, open: openProp, path, title, ...other } = props;
+  const {
+    active,
+    children,
+    depth,
+    icon,
+    info,
+    open: openProp,
+    path,
+    title,
+    ...other
+  } = props;
   const [open, setOpen] = useState(openProp);
 
   const handleToggle = () => {
@@ -29,8 +39,13 @@ const NavItem = (props) => {
         {...other}
       >
         <Button
-          endIcon={!open ? <ChevronRightIcon fontSize="small" />
-            : <ChevronDownIcon fontSize="small" />}
+          endIcon={
+            !open ? (
+              <ChevronRightIcon fontSize="small" />
+            ) : (
+              <ChevronDownIcon fontSize="small" />
+            )
+          }
           onClick={handleToggle}
           startIcon={icon}
           sx={{
@@ -46,14 +61,10 @@ const NavItem = (props) => {
           }}
           variant="text"
         >
-          <Box sx={{ flexGrow: 1 }}>
-            {title}
-          </Box>
+          <Box sx={{ flexGrow: 1 }}>{title}</Box>
           {info}
         </Button>
-        <Collapse in={open}>
-          {children}
-        </Collapse>
+        <Collapse in={open}>{children}</Collapse>
       </ListItem>
     );
   }
@@ -89,9 +100,7 @@ const NavItem = (props) => {
         variant="text"
         to={path}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          {title}
-        </Box>
+        <Box sx={{ flexGrow: 1 }}>{title}</Box>
         {info}
       </Button>
     </ListItem>

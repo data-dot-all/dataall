@@ -1,4 +1,13 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as FaIcons from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -15,18 +24,8 @@ const DashboardListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={dashboard.dashboardUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={dashboard.dashboardUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={dashboard.dashboardUri} md={3} xs={12} {...props}>
+      <Card key={dashboard.dashboardUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -37,6 +36,7 @@ const DashboardListItem = (props) => {
             <IconAvatar icon={<MdShowChart size={20} />} />
             <Box sx={{ ml: 2 }}>
               <Link
+                underline="hover"
                 component="button"
                 color="textPrimary"
                 variant="h6"
@@ -53,18 +53,13 @@ const DashboardListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={dashboard.label}><span>{dashboard.label}</span></Tooltip>
+                <Tooltip title={dashboard.label}>
+                  <span>{dashboard.label}</span>
+                </Tooltip>
               </Link>
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                by
-                {' '}
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+              <Typography color="textSecondary" variant="body2">
+                by{' '}
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   {dashboard.owner}
                 </Link>
               </Typography>
@@ -89,7 +84,9 @@ const DashboardListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={dashboard.description || 'No description provided'}><span>{dashboard.description || 'No description provided'}</span></Tooltip>
+            <Tooltip title={dashboard.description || 'No description provided'}>
+              <span>{dashboard.description || 'No description provided'}</span>
+            </Tooltip>
           </Typography>
         </Box>
         <Box
@@ -98,40 +95,26 @@ const DashboardListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUserShield />
-                {' '}
-                Role
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> Role
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
-                <Label color={dashboard.userRoleForDashboard === 'Creator' ? 'primary' : 'info'}>
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
+                <Label
+                  color={
+                    dashboard.userRoleForDashboard === 'Creator'
+                      ? 'primary'
+                      : 'info'
+                  }
+                >
                   {dashboard.userRoleForDashboard || '-'}
                 </Label>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -139,28 +122,13 @@ const DashboardListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
+            <Grid item md={8} xs={12}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -173,11 +141,12 @@ const DashboardListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={dashboard.SamlGroupName || '-'}><span>{dashboard.SamlGroupName || '-'}</span></Tooltip>
+                <Tooltip title={dashboard.SamlGroupName || '-'}>
+                  <span>{dashboard.SamlGroupName || '-'}</span>
+                </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -185,32 +154,14 @@ const DashboardListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaAws />
-                {' '}
-                Account
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaAws /> Account
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {dashboard.environment.AwsAccountId}
               </Typography>
             </Grid>
@@ -222,32 +173,14 @@ const DashboardListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={4}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaGlobe />
-                {' '}
-                Region
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaGlobe /> Region
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={8}
-              xs={12}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={8} xs={12}>
+              <Typography color="textPrimary" variant="body2">
                 {dashboard.environment.region}
               </Typography>
             </Grid>

@@ -6,20 +6,23 @@ const listDashboardShares = ({ dashboardUri, filter }) => ({
     filter
   },
   query: gql`
-            query listDashboardShares($dashboardUri:String!,$filter:DashboardShareFilter!){
-            listDashboardShares(dashboardUri:$dashboardUri,filter:$filter){
-                count
-                nodes{
-                    dashboardUri
-                    shareUri
-                    SamlGroupName
-                    owner
-                    created
-                    status
-                }
-            }
+    query listDashboardShares(
+      $dashboardUri: String!
+      $filter: DashboardShareFilter!
+    ) {
+      listDashboardShares(dashboardUri: $dashboardUri, filter: $filter) {
+        count
+        nodes {
+          dashboardUri
+          shareUri
+          SamlGroupName
+          owner
+          created
+          status
         }
-        `
+      }
+    }
+  `
 });
 
 export default listDashboardShares;

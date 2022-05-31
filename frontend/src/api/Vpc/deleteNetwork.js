@@ -4,9 +4,11 @@ const deleteNetwork = ({ vpcUri }) => ({
   variables: {
     vpcUri
   },
-  mutation: gql`mutation deleteNetwork($vpcUri:String!){
-            deleteNetwork(vpcUri:$vpcUri)
-        }`
+  mutation: gql`
+    mutation deleteNetwork($vpcUri: String!) {
+      deleteNetwork(vpcUri: $vpcUri)
+    }
+  `
 });
 
 export default deleteNetwork;

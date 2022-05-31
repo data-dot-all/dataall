@@ -1,8 +1,16 @@
-import { Box, Card, CardHeader, Divider, Grid, Link, Typography } from '@material-ui/core';
+import {
+  Box,
+  Card,
+  CardHeader,
+  Divider,
+  Grid,
+  Link,
+  Typography
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { BlockOutlined, CheckCircleOutlined } from '@material-ui/icons';
-import { LoadingButton } from '@material-ui/lab';
+import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import ShareStatus from '../../components/ShareStatus';
@@ -22,10 +30,7 @@ const DashboardShareItem = (props) => {
   const [rejecting, setRejecting] = useState(false);
   const accept = async () => {
     setAccepting(true);
-    const response = await client
-      .mutate(
-        approveDashboardShare(share.shareUri)
-      );
+    const response = await client.mutate(approveDashboardShare(share.shareUri));
     if (!response.errors) {
       enqueueSnackbar('Share request approved', {
         anchorOrigin: {
@@ -43,10 +48,7 @@ const DashboardShareItem = (props) => {
 
   const reject = async () => {
     setRejecting(true);
-    const response = await client
-      .mutate(
-        rejectDashboardShare(share.shareUri)
-      );
+    const response = await client.mutate(rejectDashboardShare(share.shareUri));
     if (!response.errors) {
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
@@ -68,18 +70,12 @@ const DashboardShareItem = (props) => {
         mt: 2
       }}
     >
-      <Grid
-        container
-      >
-        <Grid
-          item
-          md={share.status === 'REQUESTED' ? 9 : 10}
-          xs={6}
-        >
+      <Grid container>
+        <Grid item md={share.status === 'REQUESTED' ? 9 : 10} xs={6}>
           <CardHeader
             avatar={<TextAvatar name={share.owner} />}
             disableTypography
-            subheader={(
+            subheader={
               <Box
                 sx={{
                   alignItems: 'center',
@@ -97,35 +93,26 @@ const DashboardShareItem = (props) => {
                 >
                   <ShareStatus status={share.status} />
                 </Box>
-                <Typography
-                  color="textSecondary"
-                  variant="body2"
-                >
-                  | For
-                  {' '}
+                <Typography color="textSecondary" variant="body2">
+                  | For{' '}
                   <Link
+                    underline="hover"
                     component={RouterLink}
                     color="textPrimary"
                     variant="subtitle2"
                     to={`/console/dashboards/${share.dashboardUri}`}
                   >
                     {dashboard.label}
-                  </Link>
-                  {' '}
-                  |
-                  {' '}
-                  {share.created}
+                  </Link>{' '}
+                  | {share.created}
                 </Typography>
               </Box>
-            )}
-            title={(
-              <Link
-                color="textPrimary"
-                variant="subtitle2"
-              >
+            }
+            title={
+              <Link underline="hover" color="textPrimary" variant="subtitle2">
                 {share.owner}
               </Link>
-            )}
+            }
           />
           <Box
             sx={{
@@ -133,83 +120,70 @@ const DashboardShareItem = (props) => {
               px: 3
             }}
           >
-            {share.status === 'APPROVED'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
+            {share.status === 'APPROVED' && (
+              <Typography color="textSecondary" variant="body1">
                 {`Dashboard ${dashboard.label} access
                   approved for the team ${share.SamlGroupName || '-'}.`}
               </Typography>
-              )}
-            {share.status === 'REQUESTED'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                  {`Approving will grant the team ${share.SamlGroupName || '-'}
+            )}
+            {share.status === 'REQUESTED' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Approving will grant the team ${share.SamlGroupName || '-'}
                    access to dashboard ${dashboard.label}.`}
               </Typography>
-              )}
-            {share.status === 'REJECTED'
-              && (
-              <Typography
-                color="textSecondary"
-                variant="body1"
-              >
-                  {`Access to dashboard ${dashboard.label}
+            )}
+            {share.status === 'REJECTED' && (
+              <Typography color="textSecondary" variant="body1">
+                {`Access to dashboard ${dashboard.label}
                   was rejected for the team ${share.SamlGroupName || '-'}.`}
               </Typography>
-              )}
-
+            )}
           </Box>
         </Grid>
-        <Grid
-          item
-          md={share.status === 'REQUESTED' ? 3 : 2}
-          xs={6}
-        >
-          { (dashboard.userRoleForDashboard === 'Creator' || dashboard.userRoleForDashboard === 'Admin') && share.status === 'REQUESTED' && (
-            <Box sx={{ ml: 7 }}>
+        <Grid item md={share.status === 'REQUESTED' ? 3 : 2} xs={6}>
+          {(dashboard.userRoleForDashboard === 'Creator' ||
+            dashboard.userRoleForDashboard === 'Admin') &&
+            share.status === 'REQUESTED' && (
+              <Box sx={{ ml: 7 }}>
+                <LoadingButton
+                  loading={accepting}
+                  color="success"
+                  startIcon={<CheckCircleOutlined />}
+                  sx={{ mt: 6, mb: 1, mr: 1 }}
+                  onClick={accept}
+                  type="button"
+                  variant="outlined"
+                >
+                  Approve
+                </LoadingButton>
+                <LoadingButton
+                  loading={rejecting}
+                  color="error"
+                  sx={{ mt: 6, mb: 1 }}
+                  startIcon={<BlockOutlined />}
+                  onClick={reject}
+                  type="button"
+                  variant="outlined"
+                >
+                  Reject
+                </LoadingButton>
+              </Box>
+            )}
+          {(dashboard.userRoleForDashboard === 'Creator' ||
+            dashboard.userRoleForDashboard === 'Admin') &&
+            share.status === 'APPROVED' && (
               <LoadingButton
-                pending={accepting}
-                color="success"
-                startIcon={<CheckCircleOutlined />}
-                sx={{ mt: 6, mb: 1, mr: 1 }}
-                onClick={accept}
-                type="button"
-                variant="outlined"
-              >
-                Approve
-              </LoadingButton>
-              <LoadingButton
-                pending={rejecting}
+                loading={rejecting}
                 color="error"
-                sx={{ mt: 6, mb: 1 }}
                 startIcon={<BlockOutlined />}
+                sx={{ mt: 6, mb: 3 }}
                 onClick={reject}
                 type="button"
                 variant="outlined"
               >
                 Reject
               </LoadingButton>
-            </Box>
-          )}
-          {(dashboard.userRoleForDashboard === 'Creator' || dashboard.userRoleForDashboard === 'Admin') && share.status === 'APPROVED' && (
-            <LoadingButton
-              pending={rejecting}
-              color="error"
-              startIcon={<BlockOutlined />}
-              sx={{ mt: 6, mb: 3 }}
-              onClick={reject}
-              type="button"
-              variant="outlined"
-            >
-              Reject
-            </LoadingButton>
-          )}
+            )}
         </Grid>
       </Grid>
       <Divider />

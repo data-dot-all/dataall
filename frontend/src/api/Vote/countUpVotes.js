@@ -6,10 +6,10 @@ const countUpVotes = (targetUri, targetType) => ({
     targetType
   },
   query: gql`
-        query countUpVotes($targetUri:String!, $targetType:String!){
-            countUpVotes(targetUri:$targetUri, targetType:$targetType)
-        }
-        `
+    query countUpVotes($targetUri: String!, $targetType: String!) {
+      countUpVotes(targetUri: $targetUri, targetType: $targetType)
+    }
+  `
 });
 
 export default countUpVotes;

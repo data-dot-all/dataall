@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -11,15 +11,18 @@ import {
   CardContent,
   CardHeader,
   CircularProgress,
-  Container, FormControlLabel, FormGroup,
+  Container,
+  FormControlLabel,
+  FormGroup,
   FormHelperText,
   Grid,
-  Link, Switch,
+  Link,
+  Switch,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -40,35 +43,43 @@ const EnvironmentEditForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [env, setEnv] = useState('');
 
-  const fetchItem = async () => {
-    const response = await client.query(getEnvironment({ environmentUri: params.uri }));
+  const fetchItem = useCallback(async () => {
+    const response = await client.query(
+      getEnvironment({ environmentUri: params.uri })
+    );
     if (!response.errors && response.data.getEnvironment) {
       setEnv(response.data.getEnvironment);
     } else {
-      const error = response.errors ? response.errors[0].message : 'Environment not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Environment not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(updateEnvironment({ environmentUri: env.environmentUri,
-        input: {
-          label: values.label,
-          tags: values.tags,
-          description: values.description,
-          dashboardsEnabled: values.dashboardsEnabled,
-          notebooksEnabled: values.notebooksEnabled,
-          mlStudiosEnabled: values.mlStudiosEnabled,
-          pipelinesEnabled: values.pipelinesEnabled,
-          warehousesEnabled: values.warehousesEnabled,
-          resourcePrefix: values.resourcePrefix
-        } }));
+      const response = await client.mutate(
+        updateEnvironment({
+          environmentUri: env.environmentUri,
+          input: {
+            label: values.label,
+            tags: values.tags,
+            description: values.description,
+            dashboardsEnabled: values.dashboardsEnabled,
+            notebooksEnabled: values.notebooksEnabled,
+            mlStudiosEnabled: values.mlStudiosEnabled,
+            pipelinesEnabled: values.pipelinesEnabled,
+            warehousesEnabled: values.warehousesEnabled,
+            resourcePrefix: values.resourcePrefix
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -79,7 +90,9 @@ const EnvironmentEditForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/environments/${response.data.updateEnvironment.environmentUri}`);
+        navigate(
+          `/console/environments/${response.data.updateEnvironment.environmentUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -109,19 +122,10 @@ const EnvironmentEditForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Edit environment
-                {' '}
-                {env.label}
+              <Typography color="textPrimary" variant="h5">
+                Edit environment {env.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -129,6 +133,7 @@ const EnvironmentEditForm = (props) => {
                 sx={{ mt: 1 }}
               >
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/organizations"
@@ -137,6 +142,7 @@ const EnvironmentEditForm = (props) => {
                   Admin
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/environments"
@@ -145,6 +151,7 @@ const EnvironmentEditForm = (props) => {
                   Environments
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/environments/${env.environmentUri}`}
@@ -153,6 +160,7 @@ const EnvironmentEditForm = (props) => {
                   {env.label}
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/environments/${env.environmentUri}`}
@@ -190,20 +198,29 @@ const EnvironmentEditForm = (props) => {
                 warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Environment name is required'),
-                  description: Yup.string().max(5000),
-                  tags: Yup.array().nullable(),
-                  resourcePrefix: Yup.string()
-                    .trim()
-                    .matches('^[a-z-]*$', '*Resource prefix is not valid (^[a-z-]*$)')
-                    .min(1, '*Resource prefix must have at least 1 character')
-                    .max(20, "*Resource prefix can't be longer than 20 characters")
-                    .required('*Resource prefix is required')
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Environment name is required'),
+                description: Yup.string().max(5000),
+                tags: Yup.array().nullable(),
+                resourcePrefix: Yup.string()
+                  .trim()
+                  .matches(
+                    '^[a-z-]*$',
+                    '*Resource prefix is not valid (^[a-z-]*$)'
+                  )
+                  .min(1, '*Resource prefix must have at least 1 character')
+                  .max(
+                    20,
+                    "*Resource prefix can't be longer than 20 characters"
+                  )
+                  .required('*Resource prefix is required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -217,20 +234,9 @@ const EnvironmentEditForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -255,7 +261,9 @@ const EnvironmentEditForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -265,7 +273,7 @@ const EnvironmentEditForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -298,21 +306,14 @@ const EnvironmentEditForm = (props) => {
                               variant="outlined"
                               label="Tags"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </CardContent>
                         </Card>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={7} md={6} xs={12}>
                       <Box>
                         <Card>
                           <CardHeader title="AWS Information" />
@@ -342,9 +343,13 @@ const EnvironmentEditForm = (props) => {
                           </CardContent>
                           <CardContent>
                             <TextField
-                              error={Boolean(touched.resourcePrefix && errors.resourcePrefix)}
+                              error={Boolean(
+                                touched.resourcePrefix && errors.resourcePrefix
+                              )}
                               fullWidth
-                              helperText={touched.resourcePrefix && errors.resourcePrefix}
+                              helperText={
+                                touched.resourcePrefix && errors.resourcePrefix
+                              }
                               label="Resources Prefix"
                               placeholder="Prefix will be applied to All AWS resources created on this environment"
                               name="resourcePrefix"
@@ -364,7 +369,7 @@ const EnvironmentEditForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked={values.dashboardsEnabled}
                                       color="primary"
@@ -373,18 +378,20 @@ const EnvironmentEditForm = (props) => {
                                       name="dashboardsEnabled"
                                       value={values.dashboardsEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Dashboards
-                                      {' '}
-                                      <small>(Requires Amazon QuickSight Enterprise Subscription)</small>
+                                      Dashboards{' '}
+                                      <small>
+                                        (Requires Amazon QuickSight Enterprise
+                                        Subscription)
+                                      </small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.dashboardsEnabled}
                                 />
@@ -394,7 +401,7 @@ const EnvironmentEditForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked={values.notebooksEnabled}
                                       color="primary"
@@ -403,31 +410,32 @@ const EnvironmentEditForm = (props) => {
                                       name="notebooksEnabled"
                                       value={values.notebooksEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Box>
                                       <Typography
                                         color="textSecondary"
                                         gutterBottom
                                         variant="subtitle2"
                                       >
-                                        Notebooks
-                                        {' '}
-                                        <small>(Requires Amazon Sagemaker notebook instances)</small>
+                                        Notebooks{' '}
+                                        <small>
+                                          (Requires Amazon Sagemaker notebook
+                                          instances)
+                                        </small>
                                       </Typography>
                                     </Box>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.notebooksEnabled}
                                 />
                               </FormGroup>
-
                             </Box>
                             <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked={values.mlStudiosEnabled}
                                       color="primary"
@@ -436,18 +444,19 @@ const EnvironmentEditForm = (props) => {
                                       name="mlStudiosEnabled"
                                       value={values.mlStudiosEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      ML Studio
-                                      {' '}
-                                      <small>(Requires Amazon Sagemaker Studio)</small>
+                                      ML Studio{' '}
+                                      <small>
+                                        (Requires Amazon Sagemaker Studio)
+                                      </small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                 />
                               </FormGroup>
@@ -456,7 +465,7 @@ const EnvironmentEditForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked={values.pipelinesEnabled}
                                       color="primary"
@@ -465,18 +474,17 @@ const EnvironmentEditForm = (props) => {
                                       name="pipelinesEnabled"
                                       value={values.pipelinesEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Pipelines
-                                      {' '}
+                                      Pipelines{' '}
                                       <small>(Requires AWS DevTools)</small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.pipelinesEnabled}
                                 />
@@ -486,7 +494,7 @@ const EnvironmentEditForm = (props) => {
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
-                                  control={(
+                                  control={
                                     <Switch
                                       defaultChecked={values.warehousesEnabled}
                                       color="primary"
@@ -495,33 +503,31 @@ const EnvironmentEditForm = (props) => {
                                       name="warehousesEnabled"
                                       value={values.warehousesEnabled}
                                     />
-                                    )}
-                                  label={(
+                                  }
+                                  label={
                                     <Typography
                                       color="textSecondary"
                                       gutterBottom
                                       variant="subtitle2"
                                     >
-                                      Warehouses
-                                      {' '}
-                                      <small>(Requires Amazon Redshift clusters)</small>
+                                      Warehouses{' '}
+                                      <small>
+                                        (Requires Amazon Redshift clusters)
+                                      </small>
                                     </Typography>
-                                    )}
+                                  }
                                   labelPlacement="end"
                                   value={values.warehousesEnabled}
                                 />
                               </FormGroup>
                             </Box>
-
                           </CardContent>
                         </Card>
                       </Box>
 
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box
@@ -533,7 +539,7 @@ const EnvironmentEditForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -549,7 +555,6 @@ const EnvironmentEditForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

@@ -5,9 +5,17 @@ const deleteSqlPipeline = ({ sqlPipelineUri, deleteFromAWS }) => ({
     sqlPipelineUri,
     deleteFromAWS
   },
-  mutation: gql`mutation deleteSqlPipeline($sqlPipelineUri:String!,$deleteFromAWS:Boolean){
-            deleteSqlPipeline(sqlPipelineUri:$sqlPipelineUri,deleteFromAWS:$deleteFromAWS)
-        }`
+  mutation: gql`
+    mutation deleteSqlPipeline(
+      $sqlPipelineUri: String!
+      $deleteFromAWS: Boolean
+    ) {
+      deleteSqlPipeline(
+        sqlPipelineUri: $sqlPipelineUri
+        deleteFromAWS: $deleteFromAWS
+      )
+    }
+  `
 });
 
 export default deleteSqlPipeline;

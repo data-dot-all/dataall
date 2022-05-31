@@ -1,20 +1,19 @@
 import PropTypes from 'prop-types';
-import { experimentalStyled } from '@material-ui/core/styles';
+import { styled } from '@mui/styles';
 
-const CircularProgressRoot = experimentalStyled('div')({
+const CircularProgressRoot = styled('div')({
   height: 56,
   width: 56
 });
 
-const CircularProgressBackground = experimentalStyled('path')(({ theme }) => ({
+const CircularProgressBackground = styled('path')(({ theme }) => ({
   fill: 'none',
-  stroke: theme.palette.mode === 'dark'
-    ? 'rgba(0,0,0,0.15)'
-    : 'rgba(0,0,0,0.05)',
+  stroke:
+    theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.05)',
   strokeWidth: 4
 }));
 
-const CircularProgressValue = experimentalStyled('path')(({ theme }) => ({
+const CircularProgressValue = styled('path')(({ theme }) => ({
   animation: '$progress 1s ease-out forwards',
   fill: 'none',
   stroke: theme.palette.primary.main,

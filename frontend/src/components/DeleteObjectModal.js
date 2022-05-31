@@ -1,18 +1,20 @@
 import PropTypes from 'prop-types';
-import { Box, Button, CardContent, Dialog, Typography } from '@material-ui/core';
-import { FaTrash } from 'react-icons/all';
+import { Box, Button, CardContent, Dialog, Typography } from '@mui/material';
+import { FaTrash } from 'react-icons/fa';
 
 const DeleteObjectModal = (props) => {
-  const { objectName, deleteMessage, onApply, onClose, open, deleteFunction, ...other } = props;
+  const {
+    objectName,
+    deleteMessage,
+    onApply,
+    onClose,
+    open,
+    deleteFunction,
+    ...other
+  } = props;
 
   return (
-    <Dialog
-      maxWidth="sm"
-      fullWidth
-      onClose={onClose}
-      open={open}
-      {...other}
-    >
+    <Dialog maxWidth="sm" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -20,18 +22,10 @@ const DeleteObjectModal = (props) => {
           gutterBottom
           variant="h6"
         >
-          Delete
-          {' '}
-          {objectName}
-          {' '}
-          ?
+          Delete {objectName} ?
         </Typography>
 
-        {deleteMessage && (
-        <Box sx={{ mt: 1 }}>
-          {deleteMessage}
-        </Box>
-        )}
+        {deleteMessage && <Box sx={{ mt: 1 }}>{deleteMessage}</Box>}
         <CardContent>
           <Button
             fullWidth
@@ -39,7 +33,9 @@ const DeleteObjectModal = (props) => {
             color="error"
             type="submit"
             variant="contained"
-            onClick={() => { deleteFunction(); }}
+            onClick={() => {
+              deleteFunction();
+            }}
           >
             Delete
           </Button>

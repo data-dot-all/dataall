@@ -1,4 +1,4 @@
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip } from '@mui/material';
 import useSettings from '../../hooks/useSettings';
 import Refresh from '../../icons/Refresh';
 
@@ -12,17 +12,16 @@ const SwitchModePopover = () => {
   /**
    * @description Toggle mode.
    */
-  const handleSwitch = () => saveSettings({
-    ...settings,
-    isAdvancedMode: !settings.isAdvancedMode
-  });
+  const handleSwitch = () =>
+    saveSettings({
+      ...settings,
+      isAdvancedMode: !settings.isAdvancedMode
+    });
 
   return (
     <Tooltip title="Switch mode">
       <IconButton onClick={handleSwitch}>
-        <Refresh
-          fontSize="small"
-        />
+        <Refresh fontSize="small" />
       </IconButton>
     </Tooltip>
   );

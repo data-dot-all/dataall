@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,12 +13,15 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
-import { BiStopCircle, FaAws, FaTrash, SiJupyter, VscDebugStart } from 'react-icons/all';
+} from '@mui/material';
+import { BiStopCircle } from 'react-icons/bi';
+import { FaAws, FaTrash } from 'react-icons/fa';
+import { VscDebugStart } from 'react-icons/vsc';
+import { SiJupyter } from 'react-icons/si';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import { Info, LocalOffer, RefreshRounded } from '@material-ui/icons';
+import { Info, LocalOffer, RefreshRounded } from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -40,13 +43,22 @@ import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
  * @returns {JSX.Element|null}
  */
 const NotebookView = () => {
-  const getTabs = (isAdvancedMode) => (
-    isAdvancedMode ? [
-      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-      { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-      { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
-    ] : []
-  );
+  const getTabs = (isAdvancedMode) =>
+    isAdvancedMode
+      ? [
+          {
+            label: 'Overview',
+            value: 'overview',
+            icon: <Info fontSize="small" />
+          },
+          {
+            label: 'Tags',
+            value: 'tags',
+            icon: <LocalOffer fontSize="small" />
+          },
+          { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
+        ]
+      : [];
   const dispatch = useDispatch();
   const { settings } = useSettings();
   const { enqueueSnackbar } = useSnackbar();
@@ -60,13 +72,17 @@ const NotebookView = () => {
   const [isRefreshingNotebook, setIsRefreshingNotebook] = useState(false);
   const [notebook, setNotebook] = useState(null);
   const [stack, setStack] = useState(null);
-  const [isOpeningSagemakerNotebook, setIsOpeningSagemakerNotebook] = useState(false);
+  const [isOpeningSagemakerNotebook, setIsOpeningSagemakerNotebook] =
+    useState(false);
   const [isStoppedInstance, setIsStoppedInstance] = useState({});
   const [isNotFoundInstance, setNotFoundInstance] = useState({});
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [tabs, setTabs] = useState(getTabs(settings.isAdvancedMode));
 
-  useEffect(() => setTabs(getTabs(settings.isAdvancedMode)), [settings.isAdvancedMode]);
+  useEffect(
+    () => setTabs(getTabs(settings.isAdvancedMode)),
+    [settings.isAdvancedMode]
+  );
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -76,7 +92,7 @@ const NotebookView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  async function getNotebookInstance() {
+  const getNotebookInstance = useCallback(async () => {
     const response = await client.query(getSagemakerNotebook(params.uri));
     if (!response.errors) {
       setNotebook(response.data.getSagemakerNotebook);
@@ -95,10 +111,12 @@ const NotebookView = () => {
         setNotFoundInstance(false);
       }
     } else {
-      const error = response.errors ? response.errors[0].message : 'Notebook not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Notebook not found';
       dispatch({ type: SET_ERROR, error });
     }
-  }
+  }, [params.uri, client, dispatch]);
 
   const refreshInstance = async () => {
     setIsRefreshingNotebook(true);
@@ -113,14 +131,16 @@ const NotebookView = () => {
     setIsRefreshingNotebook(false);
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     await getNotebookInstance();
     setLoading(false);
-  };
+  }, [getNotebookInstance]);
 
   const removeNotebook = async (deleteFromAWS = false) => {
-    const response = await client.mutate(deleteSagemakerNotebook(notebook.notebookUri, deleteFromAWS));
+    const response = await client.mutate(
+      deleteSagemakerNotebook(notebook.notebookUri, deleteFromAWS)
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Notebook deleted', {
@@ -137,7 +157,9 @@ const NotebookView = () => {
   };
   const getNotebookPresignedUrl = async () => {
     setIsOpeningSagemakerNotebook(true);
-    const response = await client.query(getSagemakerNotebookPresignedUrl(notebook.notebookUri));
+    const response = await client.query(
+      getSagemakerNotebookPresignedUrl(notebook.notebookUri)
+    );
     if (!response.errors) {
       window.open(response.data.getSagemakerNotebookPresignedUrl);
     } else {
@@ -150,14 +172,16 @@ const NotebookView = () => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
   const stopNotebook = async () => {
     setIsStoppingNotebook(true);
-    const response = await client.mutate(stopSagemakerNotebook(notebook.notebookUri));
+    const response = await client.mutate(
+      stopSagemakerNotebook(notebook.notebookUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Notebook instance is stopping', {
         anchorOrigin: {
@@ -174,7 +198,9 @@ const NotebookView = () => {
 
   const startNotebook = async () => {
     setIsStartingNotebook(true);
-    const response = await client.mutate(startSagemakerNotebook(notebook.notebookUri));
+    const response = await client.mutate(
+      startSagemakerNotebook(notebook.notebookUri)
+    );
     if (!response.errors) {
       enqueueSnackbar('Notebook instance starting', {
         anchorOrigin: {
@@ -209,7 +235,7 @@ const NotebookView = () => {
           scrollButtons="auto"
           textColor="primary"
           value={currentTab}
-          variant="scrollable"
+          variant="fullWidth"
         >
           {tabs.map((tab) => (
             <Tab
@@ -217,6 +243,7 @@ const NotebookView = () => {
               label={tab.label}
               value={tab.value}
               icon={settings.tabIcons ? tab.icon : null}
+              iconPosition="start"
             />
           ))}
         </Tabs>
@@ -243,32 +270,21 @@ const NotebookView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Notebook
-                {' '}
-                {notebook.label}
+              <Typography color="textPrimary" variant="h5">
+                Notebook {notebook.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Link
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Link underline="hover" color="textPrimary" variant="subtitle2">
                   Play
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/notebooks"
@@ -277,6 +293,7 @@ const NotebookView = () => {
                   Notebooks
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/notebooks/${notebook.notebookUri}`}
@@ -290,7 +307,7 @@ const NotebookView = () => {
               <Box sx={{ m: -1 }}>
                 <LoadingButton
                   disabled={isStoppedInstance || isNotFoundInstance}
-                  pending={isOpeningSagemakerNotebook}
+                  loading={isOpeningSagemakerNotebook}
                   color="primary"
                   startIcon={<SiJupyter size={15} />}
                   sx={{ m: 1 }}
@@ -302,7 +319,7 @@ const NotebookView = () => {
                 </LoadingButton>
                 <LoadingButton
                   disabled={isStoppedInstance || isNotFoundInstance}
-                  pending={isStoppingNotebook}
+                  loading={isStoppingNotebook}
                   color="primary"
                   startIcon={<BiStopCircle size={15} />}
                   sx={{ m: 1 }}
@@ -314,7 +331,7 @@ const NotebookView = () => {
                 </LoadingButton>
                 <LoadingButton
                   disabled={!isStoppedInstance || isNotFoundInstance}
-                  pending={isStartingNotebook}
+                  loading={isStartingNotebook}
                   color="primary"
                   startIcon={<VscDebugStart size={15} />}
                   sx={{ m: 1 }}
@@ -326,7 +343,7 @@ const NotebookView = () => {
                 </LoadingButton>
                 <LoadingButton
                   color="primary"
-                  pending={isRefreshingNotebook}
+                  loading={isRefreshingNotebook}
                   startIcon={<RefreshRounded fontSize="small" />}
                   sx={{ m: 1 }}
                   variant="outlined"
@@ -347,26 +364,25 @@ const NotebookView = () => {
               </Box>
             </Grid>
           </Grid>
-          {settings.isAdvancedMode && (tabHeader)}
+          {settings.isAdvancedMode && tabHeader}
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'overview'
-            && <NotebookOverview notebook={notebook} />}
-            {currentTab === 'tags'
-            && (
-            <KeyValueTagList
-              targetUri={notebook.notebookUri}
-              targetType="notebook"
-            />
+            {currentTab === 'overview' && (
+              <NotebookOverview notebook={notebook} />
             )}
-            {currentTab === 'stack'
-                      && (
-                      <Stack
-                        environmentUri={notebook.environment.environmentUri}
-                        stackUri={notebook.stack.stackUri}
-                        targetUri={notebook.notebookUri}
-                        targetType="notebook"
-                      />
-                      )}
+            {currentTab === 'tags' && (
+              <KeyValueTagList
+                targetUri={notebook.notebookUri}
+                targetType="notebook"
+              />
+            )}
+            {currentTab === 'stack' && (
+              <Stack
+                environmentUri={notebook.environment.environmentUri}
+                stackUri={notebook.stack.stackUri}
+                targetUri={notebook.notebookUri}
+                targetType="notebook"
+              />
+            )}
           </Box>
         </Container>
       </Box>

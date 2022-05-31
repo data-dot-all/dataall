@@ -5,16 +5,18 @@ const updateTerm = ({ input, nodeUri }) => ({
     input,
     nodeUri
   },
-  mutation: gql`mutation UpdateTerm($nodeUri:String!,$input:UpdateTermInput){
-            updateTerm(nodeUri:$nodeUri, input:$input){
-                nodeUri
-                label
-                path
-                readme
-                created
-                owner
-            }
-        }`
+  mutation: gql`
+    mutation UpdateTerm($nodeUri: String!, $input: UpdateTermInput) {
+      updateTerm(nodeUri: $nodeUri, input: $input) {
+        nodeUri
+        label
+        path
+        readme
+        created
+        owner
+      }
+    }
+  `
 });
 
 export default updateTerm;

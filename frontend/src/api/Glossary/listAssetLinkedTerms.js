@@ -5,34 +5,39 @@ const listAssetLinkedTerms = ({ uri, filter }) => ({
     filter,
     uri
   },
-  query: gql`query ListAssetLinkedTerms($uri:String,!$filter:GlossaryTermTargetFilter){
-            listAssetLinkedTerms(uri:$uri,filter:$filter){
-                count
-                page
-                pages
-                hasNext
-                hasPrevious
-                nodes{
-                    linkUri
-                    nodeUri
-                    owner
-                    created
-                    approvedByOwner
-                    approvedBySteward
-                    term{
-                        label
-                        readme
-                        created
-                        owner
-                        glossary{
-                            label
-                            nodeUri
-                        }
-                        path
-                    }
-                }
+  query: gql`
+    query ListAssetLinkedTerms(
+      $uri: String!
+      $filter: GlossaryTermTargetFilter
+    ) {
+      listAssetLinkedTerms(uri: $uri, filter: $filter) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          linkUri
+          nodeUri
+          owner
+          created
+          approvedByOwner
+          approvedBySteward
+          term {
+            label
+            readme
+            created
+            owner
+            glossary {
+              label
+              nodeUri
             }
-        }`
+            path
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listAssetLinkedTerms;

@@ -7,14 +7,16 @@ const updateDataset = ({ datasetUri, input }) => {
       datasetUri,
       input
     },
-    mutation: gql`mutation UpdateDataset($datasetUri:String,$input:ModifyDatasetInput){
-            updateDataset(datasetUri:$datasetUri,input:$input){
-                datasetUri
-                label
-                tags
-                userRoleForDataset
-            }
-        }`
+    mutation: gql`
+      mutation UpdateDataset($datasetUri: String, $input: ModifyDatasetInput) {
+        updateDataset(datasetUri: $datasetUri, input: $input) {
+          datasetUri
+          label
+          tags
+          userRoleForDataset
+        }
+      }
+    `
   };
 };
 

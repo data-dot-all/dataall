@@ -14,13 +14,13 @@ import {
   Link,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Formik } from 'formik';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import * as Yup from 'yup';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ChipInput from '../../components/TagsInput';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -34,16 +34,9 @@ import getDataset from '../../api/Dataset/getDataset';
 function FolderCreateHeader(props) {
   const { dataset } = props;
   return (
-    <Grid
-      container
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
-        <Typography
-          color="textPrimary"
-          variant="h5"
-        >
+        <Typography color="textPrimary" variant="h5">
           Create a new folder
         </Typography>
         <Breadcrumbs
@@ -51,13 +44,11 @@ function FolderCreateHeader(props) {
           separator={<ChevronRightIcon fontSize="small" />}
           sx={{ mt: 1 }}
         >
-          <Link
-            color="textPrimary"
-            variant="subtitle2"
-          >
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
             Discover
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to="/console/datasets"
@@ -66,6 +57,7 @@ function FolderCreateHeader(props) {
             Datasets
           </Link>
           <Link
+            underline="hover"
             color="textPrimary"
             component={RouterLink}
             to={`/console/datasets/${dataset.datasetUri}`}
@@ -105,32 +97,38 @@ const FolderCreateForm = () => {
   const [loading, setLoading] = useState(true);
   const [dataset, setDataset] = useState(null);
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
     } else {
-      const error = response.errors ? response.errors[0].message : 'Dataset not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dataset not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(addDatasetStorageLocation({ datasetUri: dataset.datasetUri,
-        input: {
-          label: values.label,
-          prefix: values.prefix,
-          tags: values.tags,
-          description: values.description
-        } }));
+      const response = await client.mutate(
+        addDatasetStorageLocation({
+          datasetUri: dataset.datasetUri,
+          input: {
+            label: values.label,
+            prefix: values.prefix,
+            tags: values.tags,
+            description: values.description
+          }
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -141,7 +139,9 @@ const FolderCreateForm = () => {
           },
           variant: 'success'
         });
-        navigate(`/console/datasets/folder/${response.data.createDatasetStorageLocation.locationUri}`);
+        navigate(
+          `/console/datasets/folder/${response.data.createDatasetStorageLocation.locationUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -182,16 +182,18 @@ const FolderCreateForm = () => {
                 description: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Folder name is required'),
-                  prefix: Yup.string().max(255).required('*Prefix is required'),
-                  description: Yup.string().max(5000),
-                  tags: Yup.array().min(1).required('*Tags are required')
-
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Folder name is required'),
+                prefix: Yup.string().max(255).required('*Prefix is required'),
+                description: Yup.string().max(5000),
+                tags: Yup.array().min(1).required('*Tags are required')
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -205,19 +207,9 @@ const FolderCreateForm = () => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={8}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={8} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -255,7 +247,9 @@ const FolderCreateForm = () => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -265,7 +259,7 @@ const FolderCreateForm = () => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -275,12 +269,7 @@ const FolderCreateForm = () => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={4}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={4} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
@@ -292,18 +281,14 @@ const FolderCreateForm = () => {
                             variant="outlined"
                             label="Tags"
                             onChange={(chip) => {
-                              setFieldValue('tags', [
-                                ...chip
-                              ]);
+                              setFieldValue('tags', [...chip]);
                             }}
                           />
                         </CardContent>
                       </Card>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
-                          <FormHelperText error>
-                            {errors.submit}
-                          </FormHelperText>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
                         </Box>
                       )}
                       <Box

@@ -1,5 +1,3 @@
 import Catalog from './Catalog';
 
-export {
-  Catalog
-};
+export { Catalog };

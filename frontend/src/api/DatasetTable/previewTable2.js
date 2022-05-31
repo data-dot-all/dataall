@@ -5,13 +5,13 @@ const previewTable2 = (tableUri) => ({
     tableUri
   },
   query: gql`
-            query PreviewTable2($tableUri:String!){
-                previewTable2(tableUri:$tableUri){
-                    rows
-                    fields
-                }
-            }
-        `
+    query PreviewTable2($tableUri: String!) {
+      previewTable2(tableUri: $tableUri) {
+        rows
+        fields
+      }
+    }
+  `
 });
 
 export default previewTable2;

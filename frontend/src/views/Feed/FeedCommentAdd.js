@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Box, IconButton, TextField, Tooltip } from '@material-ui/core';
-import SendIcon from '@material-ui/icons/Send';
+import { Box, IconButton, TextField, Tooltip } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import useClient from '../../hooks/useClient';
@@ -17,13 +17,15 @@ const FeedCommentAdd = (props) => {
   const client = useClient();
 
   const postMessage = async () => {
-    const response = await client.mutate(postFeedMessage({
-      targetUri,
-      targetType,
-      input: {
-        content: value
-      }
-    }));
+    const response = await client.mutate(
+      postFeedMessage({
+        targetUri,
+        targetType,
+        input: {
+          content: value
+        }
+      })
+    );
     if (!response.errors) {
       enqueueSnackbar('Message published', {
         anchorOrigin: {
@@ -44,8 +46,10 @@ const FeedCommentAdd = (props) => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter' && value)) {
-      postMessage().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter' && value) {
+      postMessage().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 

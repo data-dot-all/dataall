@@ -4,9 +4,9 @@ import ReactDOM from 'react-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider as ReduxProvider } from 'react-redux';
-import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
-import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
-import StyledEngineProvider from '@material-ui/core/StyledEngineProvider';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import StyledEngineProvider from '@mui/material/StyledEngineProvider';
 import App from './App';
 import { AuthProvider } from './contexts/AmplifyContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -31,7 +31,8 @@ ReactDOM.render(
         </StyledEngineProvider>
       </ReduxProvider>
     </HelmetProvider>
-  </StrictMode>, document.getElementById('root')
+  </StrictMode>,
+  document.getElementById('root')
 );
 
 // If you want to enable client cache, register instead.

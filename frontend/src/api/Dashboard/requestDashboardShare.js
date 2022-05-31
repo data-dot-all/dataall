@@ -5,12 +5,20 @@ const requestDashboardShare = (dashboardUri, principalId) => ({
     dashboardUri,
     principalId
   },
-  mutation: gql`mutation requestDashboardShare($dashboardUri:String!, $principalId:String!){
-            requestDashboardShare(dashboardUri:$dashboardUri, principalId:$principalId){
-                shareUri
-                status
-            }
-        }`
+  mutation: gql`
+    mutation requestDashboardShare(
+      $dashboardUri: String!
+      $principalId: String!
+    ) {
+      requestDashboardShare(
+        dashboardUri: $dashboardUri
+        principalId: $principalId
+      ) {
+        shareUri
+        status
+      }
+    }
+  `
 });
 
 export default requestDashboardShare;

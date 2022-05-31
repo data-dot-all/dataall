@@ -16,9 +16,9 @@ import {
   MenuItem,
   TextField,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@material-ui/lab';
+import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -36,16 +36,20 @@ const WorksheetCreateForm = (props) => {
   const client = useClient();
   const groups = useGroups();
   const { settings } = useSettings();
-  const groupOptions = groups ? groups.map((g) => ({ value: g, label: g })) : [];
+  const groupOptions = groups
+    ? groups.map((g) => ({ value: g, label: g }))
+    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      const response = await client.mutate(createWorksheet({
-        label: values.label,
-        description: values.description,
-        SamlAdminGroupName: values.SamlGroupName,
-        tags: values.tags
-      }));
+      const response = await client.mutate(
+        createWorksheet({
+          label: values.label,
+          description: values.description,
+          SamlAdminGroupName: values.SamlGroupName,
+          tags: values.tags
+        })
+      );
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
@@ -56,7 +60,9 @@ const WorksheetCreateForm = (props) => {
           },
           variant: 'success'
         });
-        navigate(`/console/worksheets/${response.data.createWorksheet.worksheetUri}`);
+        navigate(
+          `/console/worksheets/${response.data.createWorksheet.worksheetUri}`
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -82,16 +88,9 @@ const WorksheetCreateForm = (props) => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new worksheet
               </Typography>
               <Breadcrumbs
@@ -99,13 +98,11 @@ const WorksheetCreateForm = (props) => {
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Play
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/worksheets"
@@ -114,6 +111,7 @@ const WorksheetCreateForm = (props) => {
                   Worksheets
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/worksheets/new"
@@ -146,15 +144,20 @@ const WorksheetCreateForm = (props) => {
                 SamlGroupName: '',
                 tags: []
               }}
-              validationSchema={Yup
-                .object()
-                .shape({
-                  label: Yup.string().max(255).required('*Worksheet name is required'),
-                  description: Yup.string().max(5000),
-                  SamlGroupName: Yup.string().max(255).required('* Team is required'),
-                  tags: Yup.array().nullable()
-                })}
-              onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+              validationSchema={Yup.object().shape({
+                label: Yup.string()
+                  .max(255)
+                  .required('*Worksheet name is required'),
+                description: Yup.string().max(5000),
+                SamlGroupName: Yup.string()
+                  .max(255)
+                  .required('* Team is required'),
+                tags: Yup.array().nullable()
+              })}
+              onSubmit={async (
+                values,
+                { setErrors, setStatus, setSubmitting }
+              ) => {
                 await submit(values, setStatus, setSubmitting, setErrors);
               }}
             >
@@ -168,20 +171,9 @@ const WorksheetCreateForm = (props) => {
                 touched,
                 values
               }) => (
-                <form
-                  onSubmit={handleSubmit}
-                  {...props}
-                >
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    <Grid
-                      item
-                      lg={7}
-                      md={6}
-                      xs={12}
-                    >
+                <form onSubmit={handleSubmit} {...props}>
+                  <Grid container spacing={3}>
+                    <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
                         <CardContent>
@@ -206,7 +198,9 @@ const WorksheetCreateForm = (props) => {
                               }
                             }}
                             fullWidth
-                            helperText={`${200 - values.description.length} characters left`}
+                            helperText={`${
+                              200 - values.description.length
+                            } characters left`}
                             label="Short description"
                             name="description"
                             multiline
@@ -216,7 +210,7 @@ const WorksheetCreateForm = (props) => {
                             value={values.description}
                             variant="outlined"
                           />
-                          {(touched.description && errors.description) && (
+                          {touched.description && errors.description && (
                             <Box sx={{ mt: 2 }}>
                               <FormHelperText error>
                                 {errors.description}
@@ -226,19 +220,18 @@ const WorksheetCreateForm = (props) => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid
-                      item
-                      lg={5}
-                      md={6}
-                      xs={12}
-                    >
+                    <Grid item lg={5} md={6} xs={12}>
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
                           <TextField
                             fullWidth
-                            error={Boolean(touched.SamlGroupName && errors.SamlGroupName)}
-                            helperText={touched.SamlGroupName && errors.SamlGroupName}
+                            error={Boolean(
+                              touched.SamlGroupName && errors.SamlGroupName
+                            )}
+                            helperText={
+                              touched.SamlGroupName && errors.SamlGroupName
+                            }
                             label="Team"
                             name="SamlGroupName"
                             onChange={handleChange}
@@ -247,10 +240,7 @@ const WorksheetCreateForm = (props) => {
                             variant="outlined"
                           >
                             {groupOptions.map((group) => (
-                              <MenuItem
-                                key={group.value}
-                                value={group.value}
-                              >
+                              <MenuItem key={group.value} value={group.value}>
                                 {group.label}
                               </MenuItem>
                             ))}
@@ -266,9 +256,7 @@ const WorksheetCreateForm = (props) => {
                               label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
-                                setFieldValue('tags', [
-                                  ...chip
-                                ]);
+                                setFieldValue('tags', [...chip]);
                               }}
                             />
                           </Box>
@@ -283,7 +271,7 @@ const WorksheetCreateForm = (props) => {
                       >
                         <LoadingButton
                           color="primary"
-                          pending={isSubmitting}
+                          loading={isSubmitting}
                           type="submit"
                           variant="contained"
                         >
@@ -299,7 +287,6 @@ const WorksheetCreateForm = (props) => {
         </Container>
       </Box>
     </>
-
   );
 };
 

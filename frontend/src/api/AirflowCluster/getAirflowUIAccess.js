@@ -5,10 +5,10 @@ const getAirflowClusterWebLoginToken = (clusterUri) => ({
     clusterUri
   },
   query: gql`
-            query getAirflowClusterWebLoginToken($clusterUri:String!){
-                getAirflowClusterWebLoginToken(clusterUri:$clusterUri)
-            }
-        `
+    query getAirflowClusterWebLoginToken($clusterUri: String!) {
+      getAirflowClusterWebLoginToken(clusterUri: $clusterUri)
+    }
+  `
 });
 
 export default getAirflowClusterWebLoginToken;

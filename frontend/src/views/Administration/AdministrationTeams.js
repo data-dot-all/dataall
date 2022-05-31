@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import {
   Box,
@@ -14,11 +14,11 @@ import {
   TableHead,
   TableRow,
   TextField
-} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { LoadingButton } from '@material-ui/lab';
-import { useTheme } from '@material-ui/core/styles';
-import { VscChecklist } from 'react-icons/all';
+} from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import { LoadingButton } from '@mui/lab';
+import { useTheme } from '@mui/styles';
+import { VscChecklist } from 'react-icons/vsc';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../../components/defaults';
 import SearchIcon from '../../icons/Search';
@@ -41,29 +41,26 @@ function TeamRow({ team, fetchItems }) {
     setIsTeamEditModalOpen(true);
   };
   return (
-    <TableRow
-      hover
-    >
+    <TableRow hover>
+      <TableCell>{team.groupUri} </TableCell>
       <TableCell>
-        {team.groupUri}
-        {' '}
-      </TableCell>
-      <TableCell>
-        <LoadingButton
-          onClick={() => (handleTeamEditModalOpen(team))}
-        >
+        <LoadingButton onClick={() => handleTeamEditModalOpen(team)}>
           <VscChecklist
             size={20}
-            color={theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main}
+            color={
+              theme.palette.mode === 'dark'
+                ? theme.palette.primary.contrastText
+                : theme.palette.primary.main
+            }
           />
         </LoadingButton>
         {isTeamEditModalOpen && (
-        <TeamPermissionsEditForm
-          team={team}
-          open
-          reloadTeams={fetchItems}
-          onClose={handleTeamEditModalClose}
-        />
+          <TeamPermissionsEditForm
+            team={team}
+            open
+            reloadTeams={fetchItems}
+            onClose={handleTeamEditModalClose}
+          />
         )}
       </TableCell>
     </TableRow>
@@ -82,7 +79,7 @@ const AdministrationTeams = () => {
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await client.query(listTenantGroups(filter));
       if (!response.errors) {
@@ -95,7 +92,7 @@ const AdministrationTeams = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, dispatch, filter]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -103,8 +100,10 @@ const AdministrationTeams = () => {
   };
 
   const handleInputKeyup = (event) => {
-    if ((event.code === 'Enter')) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (event.code === 'Enter') {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   };
 
@@ -116,22 +115,22 @@ const AdministrationTeams = () => {
 
   useEffect(() => {
     if (client) {
-      fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page]);
+  }, [client, filter.page, fetchItems, dispatch]);
 
   return (
     <Box>
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
-          title={(
+          title={
             <Box>
-              <BsIcons.BsPeople style={{ marginRight: '10px' }} />
-              {' '}
-              Tenant Teams
+              <BsIcons.BsPeople style={{ marginRight: '10px' }} /> Tenant Teams
             </Box>
-                )}
+          }
         />
         <Divider />
         <Box
@@ -143,12 +142,7 @@ const AdministrationTeams = () => {
             p: 2
           }}
         >
-          <Grid
-            item
-            md={10}
-            sm={6}
-            xs={12}
-          >
+          <Grid item md={10} sm={6} xs={12}>
             <Box
               sx={{
                 m: 1,
@@ -179,28 +173,21 @@ const AdministrationTeams = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Name
-                  </TableCell>
-                  <TableCell>
-                    Permissions
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Permissions</TableCell>
                 </TableRow>
               </TableHead>
-              {loading ? <CircularProgress sx={{ mt: 1 }} /> : (
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
                 <TableBody>
-                  {items.nodes.length > 0 ? items.nodes.map((team) => (
-                    <TeamRow
-                      team={team}
-                      fetchItems={fetchItems}
-                    />
-                  )) : (
-                    <TableRow
-                      hover
-                    >
-                      <TableCell>
-                        No Team invited
-                      </TableCell>
+                  {items.nodes.length > 0 ? (
+                    items.nodes.map((team) => (
+                      <TeamRow team={team} fetchItems={fetchItems} />
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No Team invited</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

@@ -5,15 +5,15 @@ const getUserProfile = (username) => ({
     username
   },
   query: gql`
-            query GetUserProfile($username:String){
-                getUserProfile(username:$username){
-                    username
-                    bio
-                    b64EncodedAvatar
-                    tags
-                }
-            }
-        `
+    query GetUserProfile($username: String) {
+      getUserProfile(username: $username) {
+        username
+        bio
+        b64EncodedAvatar
+        tags
+      }
+    }
+  `
 });
 
 export default getUserProfile;

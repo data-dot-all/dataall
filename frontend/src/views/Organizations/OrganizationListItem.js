@@ -1,4 +1,13 @@
-import { Box, Button, Card, Divider, Grid, Link, Tooltip, Typography } from '@material-ui/core';
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Grid,
+  Link,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import * as BiIcon from 'react-icons/bi';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -15,27 +24,11 @@ const OrganizationListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid
-      item
-      key={organization.orgnanizationUri}
-      md={3}
-      xs={12}
-      {...props}
-    >
-      <Card
-        key={organization.orgnanizationUri}
-        className={classes.card}
-        raised
-      >
+    <Grid item key={organization.orgnanizationUri} md={3} xs={12} {...props}>
+      <Card key={organization.orgnanizationUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={11}
-              xs={11}
-            >
+          <Grid container>
+            <Grid item md={11} xs={11}>
               <Box
                 sx={{
                   display: 'flex'
@@ -44,11 +37,14 @@ const OrganizationListItem = (props) => {
                 <IconAvatar icon={<BiIcon.BiBuildings size={15} />} />
                 <Box sx={{ ml: 2 }}>
                   <Link
+                    underline="hover"
                     component="button"
                     color="textPrimary"
                     variant="h6"
                     onClick={() => {
-                      navigate(`/console/organizations/${organization.organizationUri}`);
+                      navigate(
+                        `/console/organizations/${organization.organizationUri}`
+                      );
                     }}
                     sx={{
                       width: '99%',
@@ -60,15 +56,14 @@ const OrganizationListItem = (props) => {
                       WebkitLineClamp: 2
                     }}
                   >
-                    <Tooltip title={organization.label}><span>{organization.label}</span></Tooltip>
+                    <Tooltip title={organization.label}>
+                      <span>{organization.label}</span>
+                    </Tooltip>
                   </Link>
-                  <Typography
-                    color="textSecondary"
-                    variant="body2"
-                  >
-                    by
-                    {' '}
+                  <Typography color="textSecondary" variant="body2">
+                    by{' '}
                     <Link
+                      underline="hover"
                       color="textPrimary"
                       variant="subtitle2"
                     >
@@ -98,7 +93,13 @@ const OrganizationListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={organization.description || 'No description provided'}><span>{organization.description || 'No description provided'}</span></Tooltip>
+            <Tooltip
+              title={organization.description || 'No description provided'}
+            >
+              <span>
+                {organization.description || 'No description provided'}
+              </span>
+            </Tooltip>
           </Typography>
         </Box>
         <Box
@@ -107,34 +108,24 @@ const OrganizationListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={5}
-              xs={6}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUserShield />
-                {' '}
-                Role
+          <Grid container>
+            <Grid item md={5} xs={6}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> Role
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={7}
-              xs={6}
-            >
-              <Label color={organization.userRoleInOrganization === 'Owner' ? 'primary' : 'info'}>
+            <Grid item md={7} xs={6}>
+              <Label
+                color={
+                  organization.userRoleInOrganization === 'Owner'
+                    ? 'primary'
+                    : 'info'
+                }
+              >
                 {organization.userRoleInOrganization || '-'}
               </Label>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -142,28 +133,13 @@ const OrganizationListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={5}
-              xs={12}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaUsersCog />
-                {' '}
-                Team
+          <Grid container>
+            <Grid item md={5} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUsersCog /> Team
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={7}
-              xs={6}
-            >
+            <Grid item md={7} xs={6}>
               <Typography
                 color="textPrimary"
                 variant="body2"
@@ -176,11 +152,12 @@ const OrganizationListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={organization.SamlGroupName || '-'}><span>{organization.SamlGroupName || '-'}</span></Tooltip>
+                <Tooltip title={organization.SamlGroupName || '-'}>
+                  <span>{organization.SamlGroupName || '-'}</span>
+                </Tooltip>
               </Typography>
             </Grid>
           </Grid>
-
         </Box>
         <Box
           sx={{
@@ -188,32 +165,14 @@ const OrganizationListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={5}
-              xs={6}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaIcons.FaAws />
-                {' '}
-                Environments
+          <Grid container>
+            <Grid item md={5} xs={6}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaAws /> Environments
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={7}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={7} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {organization.stats.environments}
               </Typography>
             </Grid>
@@ -225,32 +184,14 @@ const OrganizationListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid
-            container
-          >
-            <Grid
-              item
-              md={5}
-              xs={6}
-            >
-              <Typography
-                color="textSecondary"
-                variant="body2"
-              >
-                <FaUserPlus />
-                {' '}
-                Teams
+          <Grid container>
+            <Grid item md={5} xs={6}>
+              <Typography color="textSecondary" variant="body2">
+                <FaUserPlus /> Teams
               </Typography>
             </Grid>
-            <Grid
-              item
-              md={7}
-              xs={6}
-            >
-              <Typography
-                color="textPrimary"
-                variant="body2"
-              >
+            <Grid item md={7} xs={6}>
+              <Typography color="textPrimary" variant="body2">
                 {organization.stats.groups}
               </Typography>
             </Grid>

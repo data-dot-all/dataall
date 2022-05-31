@@ -5,25 +5,24 @@ const listWorksheetShares = ({ worksheetUri, filter }) => ({
     worksheetUri,
     filter
   },
-  query: gql`query GetWorksheet(
-            $worksheetUri:String!,
-            $filter:WorksheetFilter
-        ){
-        getWorksheet(worksheetUri:$worksheetUri){
-            shares(filter:$filter){
-                count
-                page
-                pages
-                hasNext
-                hasPrevious
-                nodes{
-                    worksheetShareUri
-                    principalId
-                    principalType                }
-
-            }
-            }
-        }`
+  query: gql`
+    query GetWorksheet($worksheetUri: String!, $filter: WorksheetFilter) {
+      getWorksheet(worksheetUri: $worksheetUri) {
+        shares(filter: $filter) {
+          count
+          page
+          pages
+          hasNext
+          hasPrevious
+          nodes {
+            worksheetShareUri
+            principalId
+            principalType
+          }
+        }
+      }
+    }
+  `
 });
 
 export default listWorksheetShares;

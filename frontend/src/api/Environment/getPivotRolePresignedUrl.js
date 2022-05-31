@@ -5,10 +5,10 @@ const getPivotRolePresignedUrl = (organizationUri) => ({
     organizationUri
   },
   query: gql`
-            query getPivotRolePresignedUrl($organizationUri:String!){
-                getPivotRolePresignedUrl(organizationUri:$organizationUri)
-            }
-        `
+    query getPivotRolePresignedUrl($organizationUri: String!) {
+      getPivotRolePresignedUrl(organizationUri: $organizationUri)
+    }
+  `
 });
 
 export default getPivotRolePresignedUrl;

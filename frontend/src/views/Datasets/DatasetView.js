@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,11 +13,18 @@ import {
   Tab,
   Tabs,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { FaAws, FaTrash } from 'react-icons/all';
+import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Info, LocalOffer, ShareOutlined, Upload, ViewArrayOutlined } from '@material-ui/icons';
+import {
+  ForumOutlined,
+  Info,
+  LocalOffer,
+  ShareOutlined,
+  Upload,
+  ViewArrayOutlined
+} from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -60,15 +67,35 @@ const DatasetView = () => {
 
   const getTabs = () => {
     const tabs = [
-      { label: 'Data', value: 'data', icon: <ViewArrayOutlined fontSize="small" /> },
+      {
+        label: 'Data',
+        value: 'data',
+        icon: <ViewArrayOutlined fontSize="small" />
+      },
       { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> }
     ];
     if (isAdmin) {
-      tabs.push({ label: 'Shares', value: 'shares', icon: <ShareOutlined fontSize="small" /> });
-      tabs.push({ label: 'Upload', value: 'upload', icon: <Upload fontSize="small" /> });
+      tabs.push({
+        label: 'Shares',
+        value: 'shares',
+        icon: <ShareOutlined fontSize="small" />
+      });
+      tabs.push({
+        label: 'Upload',
+        value: 'upload',
+        icon: <Upload fontSize="small" />
+      });
       if (settings.isAdvancedMode) {
-        tabs.push({ label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> });
-        tabs.push({ label: 'Stack', value: 'stack', icon: <FaAws size={20} /> });
+        tabs.push({
+          label: 'Tags',
+          value: 'tags',
+          icon: <LocalOffer fontSize="small" />
+        });
+        tabs.push({
+          label: 'Stack',
+          value: 'stack',
+          icon: <FaAws size={20} />
+        });
       }
     }
     return tabs;
@@ -82,12 +109,15 @@ const DatasetView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const getUserDatasetVote = async (datasetUri) => {
-    const response = await client.query(getVote(datasetUri, 'dataset'));
-    if (!response.errors && response.data.getVote !== null) {
-      setIsUpVoted(response.data.getVote.upvote);
-    }
-  };
+  const getUserDatasetVote = useCallback(
+    async (datasetUri) => {
+      const response = await client.query(getVote(datasetUri, 'dataset'));
+      if (!response.errors && response.data.getVote !== null) {
+        setIsUpVoted(response.data.getVote.upvote);
+      }
+    },
+    [client]
+  );
 
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
@@ -99,19 +129,29 @@ const DatasetView = () => {
   };
 
   const upVoteDataset = async (datasetUri) => {
-    const response = await client.mutate(upVote({ targetUri: datasetUri, targetType: 'dataset', upvote: !isUpVoted }));
+    const response = await client.mutate(
+      upVote({
+        targetUri: datasetUri,
+        targetType: 'dataset',
+        upvote: !isUpVoted
+      })
+    );
     if (!response.errors && response.data.upVote !== null) {
       setIsUpVoted(response.data.upVote.upvote);
     }
     reloadVotes().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
   };
 
-  const fetchItem = async () => {
+  const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
-      setIsAdmin(['BusinessOwner', 'Admin', 'DataSteward', 'Creator'].indexOf(response.data.getDataset.userRoleForDataset) !== -1);
+      setIsAdmin(
+        ['BusinessOwner', 'Admin', 'DataSteward', 'Creator'].indexOf(
+          response.data.getDataset.userRoleForDataset
+        ) !== -1
+      );
       setUpvotes(response.data.getDataset.statistics.upvotes);
       if (response.data.getDataset.stack) {
         setStack(response.data.getDataset.stack);
@@ -119,25 +159,31 @@ const DatasetView = () => {
         setStack({ status: 'CREATE_FAILED' });
       }
     } else {
-      const error = response.errors ? response.errors[0].message : 'Dataset not found';
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Dataset not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  };
+  }, [client, dispatch, params.uri]);
 
   useEffect(() => {
     if (client) {
-      getUserDatasetVote(params.uri).catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getUserDatasetVote(params.uri).catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client]);
+  }, [client, fetchItem, getUserDatasetVote, dispatch, params.uri]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
 
   const removeDataset = async (deleteFromAWS = false) => {
-    const response = await client.mutate(deleteDataset(dataset.datasetUri, deleteFromAWS));
+    const response = await client.mutate(
+      deleteDataset(dataset.datasetUri, deleteFromAWS)
+    );
     if (!response.errors) {
       handleDeleteObjectModalClose();
       enqueueSnackbar('Dataset deleted', {
@@ -166,11 +212,11 @@ const DatasetView = () => {
         <title>Datasets: Dataset Details | data.all</title>
       </Helmet>
       {isAdmin && (
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={dataset.environment?.environmentUri}
-      />
+        <StackStatus
+          stack={stack}
+          setStack={setStack}
+          environmentUri={dataset.environment?.environmentUri}
+        />
       )}
       <Box
         sx={{
@@ -180,32 +226,21 @@ const DatasetView = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <Grid
-            container
-            justifyContent="space-between"
-            spacing={3}
-          >
+          <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
-                Dataset
-                {' '}
-                {dataset.label}
+              <Typography color="textPrimary" variant="h5">
+                Dataset {dataset.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
                 separator={<ChevronRightIcon fontSize="small" />}
                 sx={{ mt: 1 }}
               >
-                <Typography
-                  color="textPrimary"
-                  variant="subtitle2"
-                >
+                <Typography color="textPrimary" variant="subtitle2">
                   Contribute
                 </Typography>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to="/console/datasets"
@@ -214,6 +249,7 @@ const DatasetView = () => {
                   Datasets
                 </Link>
                 <Link
+                  underline="hover"
                   color="textPrimary"
                   component={RouterLink}
                   to={`/console/datasets/${dataset.datasetUri}`}
@@ -224,49 +260,46 @@ const DatasetView = () => {
               </Breadcrumbs>
             </Grid>
             {isAdmin && (
-            <Grid item>
-              <Box sx={{ m: -1 }}>
-                <UpVoteButton
-                  upVoted={isUpVoted}
-                  onClick={() => upVoteDataset(dataset.datasetUri)}
-                  upVotes={upVotes}
-                />
-                <Button
-                  color="primary"
-                  startIcon={<ForumOutlined fontSize="small" />}
-                  sx={{ mt: 1, mr: 1 }}
-                  onClick={() => setOpenFeed(true)}
-                  type="button"
-                  variant="outlined"
-                >
-                  Chat
-                </Button>
-                <DatasetAWSActions
-                  dataset={dataset}
-                  isAdmin={isAdmin}
-                />
-                <Button
-                  color="primary"
-                  component={RouterLink}
-                  startIcon={<PencilAltIcon fontSize="small" />}
-                  sx={{ mt: 1, mr: 1 }}
-                  to={`/console/datasets/${dataset.datasetUri}/edit`}
-                  variant="outlined"
-                >
-                  Edit
-                </Button>
-                <Button
-                  color="primary"
-                  startIcon={<FaTrash size={15} />}
-                  sx={{ mt: 1 }}
-                  onClick={handleDeleteObjectModalOpen}
-                  type="button"
-                  variant="outlined"
-                >
-                  Delete
-                </Button>
-              </Box>
-            </Grid>
+              <Grid item>
+                <Box sx={{ m: -1 }}>
+                  <UpVoteButton
+                    upVoted={isUpVoted}
+                    onClick={() => upVoteDataset(dataset.datasetUri)}
+                    upVotes={upVotes}
+                  />
+                  <Button
+                    color="primary"
+                    startIcon={<ForumOutlined fontSize="small" />}
+                    sx={{ mt: 1, mr: 1 }}
+                    onClick={() => setOpenFeed(true)}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Chat
+                  </Button>
+                  <DatasetAWSActions dataset={dataset} isAdmin={isAdmin} />
+                  <Button
+                    color="primary"
+                    component={RouterLink}
+                    startIcon={<PencilAltIcon fontSize="small" />}
+                    sx={{ mt: 1, mr: 1 }}
+                    to={`/console/datasets/${dataset.datasetUri}/edit`}
+                    variant="outlined"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    color="primary"
+                    startIcon={<FaTrash size={15} />}
+                    sx={{ mt: 1 }}
+                    onClick={handleDeleteObjectModalOpen}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              </Grid>
             )}
           </Grid>
           <Box sx={{ mt: 3 }}>
@@ -276,7 +309,7 @@ const DatasetView = () => {
               scrollButtons="auto"
               textColor="primary"
               value={currentTab}
-              variant="scrollable"
+              variant="fullWidth"
             >
               {getTabs().map((tab) => (
                 <Tab
@@ -284,72 +317,60 @@ const DatasetView = () => {
                   label={tab.label}
                   value={tab.value}
                   icon={settings.tabIcons ? tab.icon : null}
+                  iconPosition="start"
                 />
               ))}
             </Tabs>
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {currentTab === 'data'
-            && (
-            <DatasetData
-              dataset={dataset}
-              isAdmin={isAdmin}
-            />
+            {currentTab === 'data' && (
+              <DatasetData dataset={dataset} isAdmin={isAdmin} />
             )}
-            {currentTab === 'overview'
-                        && (
-                        <DatasetOverview
-                          dataset={dataset}
-                          isAdmin={isAdmin}
-                        />
-                        )}
-            {isAdmin && currentTab === 'shares'
-                        && <ShareInboxList dataset={dataset} />}
-            {isAdmin && currentTab === 'upload'
-            && (
-            <DatasetUpload
-              dataset={dataset}
-              isAdmin={isAdmin}
-            />
+            {currentTab === 'overview' && (
+              <DatasetOverview dataset={dataset} isAdmin={isAdmin} />
             )}
-            {isAdmin && currentTab === 'tags'
-            && (
-            <KeyValueTagList
-              targetUri={dataset.datasetUri}
-              targetType="dataset"
-            />
+            {isAdmin && currentTab === 'shares' && (
+              <ShareInboxList dataset={dataset} />
             )}
-            {isAdmin && currentTab === 'stack'
-                        && (
-                        <Stack
-                          environmentUri={dataset.environment.environmentUri}
-                          stackUri={dataset.stack.stackUri}
-                          targetUri={dataset.datasetUri}
-                          targetType="dataset"
-                        />
-                        )}
+            {isAdmin && currentTab === 'upload' && (
+              <DatasetUpload dataset={dataset} isAdmin={isAdmin} />
+            )}
+            {isAdmin && currentTab === 'tags' && (
+              <KeyValueTagList
+                targetUri={dataset.datasetUri}
+                targetType="dataset"
+              />
+            )}
+            {isAdmin && currentTab === 'stack' && (
+              <Stack
+                environmentUri={dataset.environment.environmentUri}
+                stackUri={dataset.stack.stackUri}
+                targetUri={dataset.datasetUri}
+                targetType="dataset"
+              />
+            )}
           </Box>
         </Container>
       </Box>
       {isAdmin && (
-      <DeleteObjectWithFrictionModal
-        objectName={dataset.label}
-        onApply={handleDeleteObjectModalClose}
-        onClose={handleDeleteObjectModalClose}
-        open={isDeleteObjectModalOpen}
-        deleteFunction={removeDataset}
-        isAWSResource
-      />
+        <DeleteObjectWithFrictionModal
+          objectName={dataset.label}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={removeDataset}
+          isAWSResource
+        />
       )}
       {openFeed && (
-      <FeedComments
-        objectOwner={dataset.owner}
-        targetType="Dataset"
-        targetUri={dataset.datasetUri}
-        open={openFeed}
-        onClose={() => setOpenFeed(false)}
-      />
+        <FeedComments
+          objectOwner={dataset.owner}
+          targetType="Dataset"
+          targetUri={dataset.datasetUri}
+          open={openFeed}
+          onClose={() => setOpenFeed(false)}
+        />
       )}
     </>
   );

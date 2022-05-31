@@ -1,13 +1,13 @@
 import { useRoutes } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
-import { ThemeProvider } from '@material-ui/core';
+import { ThemeProvider } from '@mui/material';
 import GlobalStyles from './components/GlobalStyles';
 import SplashScreen from './components/SplashScreen';
 import useAuth from './hooks/useAuth';
 import useScrollReset from './hooks/useScrollReset';
 import useSettings from './hooks/useSettings';
 import routes from './routes';
-import { createTheme } from './theme';
+import { createMaterialTheme } from './theme';
 
 const App = () => {
   const content = useRoutes(routes);
@@ -15,7 +15,7 @@ const App = () => {
   const auth = useAuth();
   useScrollReset();
 
-  const theme = createTheme({
+  const theme = createMaterialTheme({
     direction: settings.direction,
     responsiveFontSizes: settings.responsiveFontSizes,
     roundedCorners: settings.roundedCorners,
@@ -24,11 +24,7 @@ const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider
-        dense
-        maxSnack={3}
-        hideIconVariant
-      >
+      <SnackbarProvider dense maxSnack={3} hideIconVariant>
         <GlobalStyles />
         {auth.isInitialized ? content : <SplashScreen />}
       </SnackbarProvider>
