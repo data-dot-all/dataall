@@ -8,7 +8,7 @@ nanoid==2.0.0
 opensearch-py==1.0.0
 PyAthena==2.3.0
 pygresql==5.2.2
-pyjwt==1.7.1
+pyjwt==2.4.0
 PyYAML==6.0
 requests==2.27.1
 requests_aws4auth==1.1.1
