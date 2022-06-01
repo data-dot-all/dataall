@@ -2,10 +2,10 @@ from ... import gql
 from .resolvers import *
 from ...constants import DataPipelineRole
 
-SqlPipeline = gql.ObjectType(
-    name='SqlPipeline',
+DataPipeline = gql.ObjectType(
+    name='DataPipeline',
     fields=[
-        gql.Field('sqlPipelineUri', type=gql.ID),
+        gql.Field('DataPipelineUri', type=gql.ID),
         gql.Field('name', type=gql.String),
         gql.Field('label', type=gql.String),
         gql.Field('description', type=gql.String),
@@ -21,14 +21,16 @@ SqlPipeline = gql.ObjectType(
         gql.Field(
             'environment', type=gql.Ref('Environment'), resolver=get_pipeline_env
         ),
+        gql.Field('devStages', type=gql.ArrayType(gql.String)),
+        gql.Field('devStrategy', type=gql.String),
         gql.Field('cloneUrlHttp', gql.String, resolver=get_clone_url_http),
         gql.Field('stack', gql.Ref('Stack'), resolver=get_stack),
         gql.Field(
-            'runs', gql.ArrayType(gql.Ref('SqlPipelineRun')), resolver=get_job_runs
+            'runs', gql.ArrayType(gql.Ref('DataPipelineRun')), resolver=get_job_runs
         ),
         gql.Field(
             'builds',
-            gql.ArrayType(gql.Ref('SqlPipelineBuild')),
+            gql.ArrayType(gql.Ref('DataPipelineBuild')),
             resolver=get_pipeline_executions,
         ),
         gql.Field(
@@ -40,21 +42,21 @@ SqlPipeline = gql.ObjectType(
 )
 
 
-SqlPipelineSearchResults = gql.ObjectType(
-    name='SqlPipelineSearchResults',
+DataPipelineSearchResults = gql.ObjectType(
+    name='DataPipelineSearchResults',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(SqlPipeline)),
+        gql.Field(name='nodes', type=gql.ArrayType(DataPipeline)),
     ],
 )
 
 
-SqlPipelineExecution = gql.ObjectType(
-    name='SqlPipelineExecution',
+DataPipelineExecution = gql.ObjectType(
+    name='DataPipelineExecution',
     fields=[
         gql.Field(name='executionArn', type=gql.ID),
         gql.Field(name='stateMachineArn', type=gql.NonNullableType(gql.String)),
@@ -66,20 +68,20 @@ SqlPipelineExecution = gql.ObjectType(
 )
 
 
-SqlPipelineExecutionSearchResults = gql.ObjectType(
-    name='SqlPipelineExecutionSearchResults',
+DataPipelineExecutionSearchResults = gql.ObjectType(
+    name='DataPipelineExecutionSearchResults',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(SqlPipelineExecution)),
+        gql.Field(name='nodes', type=gql.ArrayType(DataPipelineExecution)),
     ],
 )
 
-SqlPipelineRun = gql.ObjectType(
-    name='SqlPipelineRun',
+DataPipelineRun = gql.ObjectType(
+    name='DataPipelineRun',
     fields=[
         gql.Field(name='Id', type=gql.ID),
         gql.Field(name='JobName', type=gql.String),
@@ -92,8 +94,8 @@ SqlPipelineRun = gql.ObjectType(
 )
 
 
-SqlPipelineBuild = gql.ObjectType(
-    name='SqlPipelineBuild',
+DataPipelineBuild = gql.ObjectType(
+    name='DataPipelineBuild',
     fields=[
         gql.Field(name='pipelineExecutionId', type=gql.ID),
         gql.Field(name='status', type=gql.String),
@@ -103,14 +105,14 @@ SqlPipelineBuild = gql.ObjectType(
 )
 
 
-SqlPipelineBuildSearchResults = gql.ObjectType(
-    name='SqlPipelineBuildSearchResults',
+DataPipelineBuildSearchResults = gql.ObjectType(
+    name='DataPipelineBuildSearchResults',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(SqlPipelineBuild)),
+        gql.Field(name='nodes', type=gql.ArrayType(DataPipelineBuild)),
     ],
 )

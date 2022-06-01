@@ -23,9 +23,9 @@ import Scrollbar from '../../components/Scrollbar';
 import RefreshTableMenu from '../../components/RefreshTableMenu';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
-import listSqlPipelineExecutions from '../../api/SqlPipeline/listSqlPipelineExecutions';
+import listDataPipelineExecutions from '../../api/DataPipeline/listDataPipelineExecutions';
 import Label from '../../components/Label';
-import startDataProcessingPipeline from '../../api/SqlPipeline/startPipeline';
+import startDataProcessingPipeline from '../../api/DataPipeline/startPipeline';
 
 const PipelineRuns = ({ pipeline }) => {
   const client = useClient();
@@ -39,23 +39,23 @@ const PipelineRuns = ({ pipeline }) => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listSqlPipelineExecutions({
-        sqlPipelineUri: pipeline.sqlPipelineUri,
+      listDataPipelineExecutions({
+        DataPipelineUri: pipeline.DataPipelineUri,
         stage: 'prod'
       })
     );
     if (!response.errors) {
-      setItems(response.data.listSqlPipelineExecutions);
+      setItems(response.data.listDataPipelineExecutions);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, dispatch, pipeline.sqlPipelineUri]);
+  }, [client, dispatch, pipeline.DataPipelineUri]);
 
   const runPipeline = async () => {
     setRunning(true);
     const response = await client.mutate(
-      startDataProcessingPipeline(pipeline.sqlPipelineUri)
+      startDataProcessingPipeline(pipeline.DataPipelineUri)
     );
     if (!response.errors) {
       enqueueSnackbar('Pipeline started successfully', {

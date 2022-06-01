@@ -28,7 +28,6 @@ class CodeStar(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value],
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
                     },
                 },

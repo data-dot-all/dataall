@@ -353,8 +353,8 @@ class Environment:
                 == models.Environment.environmentUri,
             )
             .outerjoin(
-                models.SqlPipeline,
-                models.SqlPipeline.environmentUri == models.Environment.environmentUri,
+                models.DataPipeline,
+                models.DataPipeline.environmentUri == models.Environment.environmentUri,
             )
             .outerjoin(
                 models.Dashboard,
@@ -372,7 +372,7 @@ class Environment:
                         models.RedshiftCluster.SamlGroupName == group,
                         models.Dataset.SamlAdminGroupName == group,
                         models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
-                        models.SqlPipeline.SamlGroupName == group,
+                        models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
                     ),
                 )
@@ -1035,8 +1035,8 @@ class Environment:
             .all()
         )
         pipelines = (
-            session.query(models.SqlPipeline.label, models.SqlPipeline.sqlPipelineUri)
-            .filter(models.SqlPipeline.environmentUri == environment_uri)
+            session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
+            .filter(models.DataPipeline.environmentUri == environment_uri)
             .all()
         )
         dashboards = (

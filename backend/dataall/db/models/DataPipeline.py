@@ -1,18 +1,21 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import query_expression
+from sqlalchemy.dialects import postgresql
 
 from .. import Base, Resource, utils
 
 
-class SqlPipeline(Resource, Base):
-    __tablename__ = 'sqlpipeline'
+class DataPipeline(Resource, Base):
+    __tablename__ = 'datapipeline'
     environmentUri = Column(String, nullable=False)
-    sqlPipelineUri = Column(
-        String, nullable=False, primary_key=True, default=utils.uuid('sqlPipelineUri')
+    DataPipelineUri = Column(
+        String, nullable=False, primary_key=True, default=utils.uuid('DataPipelineUri')
     )
     region = Column(String, default='eu-west-1')
     AwsAccountId = Column(String, nullable=False)
     SamlGroupName = Column(String, nullable=False)
     repo = Column(String, nullable=False)
+    devStages = Column(postgresql.ARRAY(String), nullable=False)
+    devStrategy = Column(String, nullable=False)
 
     userRoleForPipeline = query_expression()

@@ -25,8 +25,8 @@ const PipelineListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
-    <Grid item key={pipeline.sqlPipelineUri} md={3} xs={12} {...props}>
-      <Card key={pipeline.sqlPipelineUri} className={classes.card} raised>
+    <Grid item key={pipeline.DataPipelineUri} md={3} xs={12} {...props}>
+      <Card key={pipeline.DataPipelineUri} className={classes.card} raised>
         <Box sx={{ p: 2 }}>
           <Box
             sx={{
@@ -42,7 +42,7 @@ const PipelineListItem = (props) => {
                 color="textPrimary"
                 variant="h6"
                 onClick={() => {
-                  navigate(`/console/pipelines/${pipeline.sqlPipelineUri}`);
+                  navigate(`/console/pipelines/${pipeline.DataPipelineUri}`);
                 }}
                 sx={{
                   width: '99%',
@@ -213,7 +213,7 @@ const PipelineListItem = (props) => {
           <Grid
             alignItems="center"
             container
-            key={pipeline.sqlPipelineUri}
+            key={pipeline.DataPipelineUri}
             justifyContent="space-between"
             spacing={3}
           />
@@ -237,7 +237,7 @@ const PipelineListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={`/console/pipelines/${pipeline.sqlPipelineUri}`}
+              to={`/console/pipelines/${pipeline.DataPipelineUri}`}
             >
               Learn More
             </Button>

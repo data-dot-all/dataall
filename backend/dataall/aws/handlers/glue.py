@@ -550,13 +550,13 @@ class Glue:
     @Worker.handler(path='glue.job.runs')
     def get_job_runs(engine, task: models.Task):
         with engine.scoped_session() as session:
-            sql_pipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(
+            Data_pipeline: models.DataPipeline = session.query(models.DataPipeline).get(
                 task.targetUri
             )
-            aws = SessionHelper.remote_session(sql_pipeline.AwsAccountId)
-            glue_client = aws.client('glue', region_name=sql_pipeline.region)
+            aws = SessionHelper.remote_session(Data_pipeline.AwsAccountId)
+            glue_client = aws.client('glue', region_name=Data_pipeline.region)
             try:
-                response = glue_client.get_job_runs(JobName=sql_pipeline.name)
+                response = glue_client.get_job_runs(JobName=Data_pipeline.name)
                 print(response)
             except ClientError as e:
                 log.warning(f'Could not retrieve pipeline runs , {str(e)}')

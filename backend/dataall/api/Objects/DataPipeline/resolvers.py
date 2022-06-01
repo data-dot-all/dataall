@@ -28,23 +28,23 @@ def create_pipeline(context: Context, source, input=None):
             session=session,
             environment_uri=pipeline.environmentUri,
             target_type='pipeline',
-            target_uri=pipeline.sqlPipelineUri,
+            target_uri=pipeline.DataPipelineUri,
             target_label=pipeline.label,
             payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
         )
 
-    stack_helper.deploy_stack(context, pipeline.sqlPipelineUri)
+    stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
 
     return pipeline
 
 
-def update_pipeline(context: Context, source, sqlPipelineUri: str, input: dict = None):
+def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict = None):
     with context.engine.scoped_session() as session:
         pipeline = Pipeline.update_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=sqlPipelineUri,
+            uri=DataPipelineUri,
             data=input,
             check_perm=True,
         )
@@ -65,19 +65,19 @@ def list_pipelines(context: Context, source, filter: dict = None):
         )
 
 
-def get_pipeline(context: Context, source, sqlPipelineUri: str = None):
+def get_pipeline(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         return Pipeline.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=sqlPipelineUri,
+            uri=DataPipelineUri,
             data=None,
             check_perm=True,
         )
 
 
-def resolve_user_role(context: Context, source: models.SqlPipeline):
+def resolve_user_role(context: Context, source: models.DataPipeline):
     if not source:
         return None
     if context.username and source.owner == context.username:
@@ -87,7 +87,7 @@ def resolve_user_role(context: Context, source: models.SqlPipeline):
     return DataPipelineRole.NoPermission.value
 
 
-def get_pipeline_env(context: Context, source: models.SqlPipeline, **kwargs):
+def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -95,7 +95,7 @@ def get_pipeline_env(context: Context, source: models.SqlPipeline, **kwargs):
     return env
 
 
-def get_pipeline_org(context: Context, source: models.SqlPipeline, **kwargs):
+def get_pipeline_org(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -104,7 +104,7 @@ def get_pipeline_org(context: Context, source: models.SqlPipeline, **kwargs):
     return org
 
 
-def get_clone_url_http(context: Context, source: models.SqlPipeline, **kwargs):
+def get_clone_url_http(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -120,13 +120,13 @@ def cat(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['sqlPipelineUri'],
+            uri=input['DataPipelineUri'],
             data=None,
             check_perm=True,
         )
         task = models.Task(
-            action='repo.sqlpipeline.cat',
-            targetUri=input.get('sqlPipelineUri'),
+            action='repo.datapipeline.cat',
+            targetUri=input.get('DataPipelineUri'),
             payload={
                 'absolutePath': input.get('absolutePath'),
                 'branch': input.get('branch', 'master'),
@@ -146,13 +146,13 @@ def ls(context: Context, source, input: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['sqlPipelineUri'],
+            uri=input['DataPipelineUri'],
             data=None,
             check_perm=True,
         )
         task = models.Task(
-            action='repo.sqlpipeline.ls',
-            targetUri=input.get('sqlPipelineUri'),
+            action='repo.datapipeline.ls',
+            targetUri=input.get('DataPipelineUri'),
             payload={
                 'folderPath': input.get('folderPath', '/'),
                 'branch': input.get('branch', 'master'),
@@ -166,17 +166,17 @@ def ls(context: Context, source, input: dict = None):
     return json.dumps(response[0]['response'])
 
 
-def list_branches(context: Context, source, sqlPipelineUri: str = None):
+def list_branches(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         Pipeline.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=sqlPipelineUri,
+            uri=DataPipelineUri,
             data=None,
             check_perm=True,
         )
-        task = models.Task(action='repo.sqlpipeline.branches', targetUri=sqlPipelineUri)
+        task = models.Task(action='repo.datapipeline.branches', targetUri=DataPipelineUri)
         session.add(task)
 
     response = Worker.process(
@@ -185,21 +185,21 @@ def list_branches(context: Context, source, sqlPipelineUri: str = None):
     return response[0]['response']
 
 
-def get_stack(context, source: models.SqlPipeline, **kwargs):
+def get_stack(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
         context=context,
-        targetUri=source.sqlPipelineUri,
+        targetUri=source.DataPipelineUri,
         environmentUri=source.environmentUri,
     )
 
 
-def get_job_runs(context, source: models.SqlPipeline, **kwargs):
+def get_job_runs(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        task = models.Task(targetUri=source.sqlPipelineUri, action='glue.job.runs')
+        task = models.Task(targetUri=source.DataPipelineUri, action='glue.job.runs')
         session.add(task)
 
     response = Worker.process(
@@ -208,12 +208,12 @@ def get_job_runs(context, source: models.SqlPipeline, **kwargs):
     return response['response']
 
 
-def get_pipeline_executions(context: Context, source: models.SqlPipeline, **kwargs):
+def get_pipeline_executions(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         task = models.Task(
-            targetUri=source.sqlPipelineUri, action='sqlpipeline.pipeline.executions'
+            targetUri=source.DataPipelineUri, action='datapipeline.pipeline.executions'
         )
         session.add(task)
 
@@ -223,16 +223,16 @@ def get_pipeline_executions(context: Context, source: models.SqlPipeline, **kwar
     return response['response']
 
 
-def get_creds(context: Context, source, sqlPipelineUri: str = None):
+def get_creds(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=sqlPipelineUri,
+            resource_uri=DataPipelineUri,
             permission_name=permissions.CREDENTIALS_PIPELINE,
         )
-        pipeline = Pipeline.get_pipeline_by_uri(session, sqlPipelineUri)
+        pipeline = Pipeline.get_pipeline_by_uri(session, DataPipelineUri)
         env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
         env_role_arn = env.EnvironmentDefaultIAMRoleArn
@@ -258,14 +258,14 @@ def _get_creds_from_aws(pipeline, env_role_arn):
 
 
 def list_pipeline_state_machine_executions(
-    context: Context, source, sqlPipelineUri: str = None, stage: str = None
+    context: Context, source, DataPipelineUri: str = None, stage: str = None
 ):
     with context.engine.scoped_session() as session:
         pipeline = Pipeline.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=sqlPipelineUri,
+            uri=DataPipelineUri,
             data=None,
             check_perm=True,
         )
@@ -286,17 +286,17 @@ def list_pipeline_state_machine_executions(
     }
 
 
-def start_pipeline(context: Context, source, sqlPipelineUri: str = None):
+def start_pipeline(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=sqlPipelineUri,
+            resource_uri=DataPipelineUri,
             permission_name=permissions.START_PIPELINE,
         )
 
-        pipeline = Pipeline.get_pipeline_by_uri(session, sqlPipelineUri)
+        pipeline = Pipeline.get_pipeline_by_uri(session, DataPipelineUri)
 
         env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
@@ -306,39 +306,39 @@ def start_pipeline(context: Context, source, sqlPipelineUri: str = None):
 
 
 def delete_pipeline(
-    context: Context, source, sqlPipelineUri: str = None, deleteFromAWS: bool = None
+    context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
 ):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=sqlPipelineUri,
+            resource_uri=DataPipelineUri,
             permission_name=permissions.DELETE_PIPELINE,
         )
 
-        pipeline: models.SqlPipeline = Pipeline.get_pipeline_by_uri(
-            session, sqlPipelineUri
+        pipeline: models.DataPipeline = Pipeline.get_pipeline_by_uri(
+            session, DataPipelineUri
         )
 
         env: models.Environment = Environment.get_environment_by_uri(
             session, pipeline.environmentUri
         )
 
-        KeyValueTag.delete_key_value_tags(session, pipeline.sqlPipelineUri, 'pipeline')
+        KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
         session.delete(pipeline)
 
         ResourcePolicy.delete_resource_policy(
             session=session,
-            resource_uri=pipeline.sqlPipelineUri,
+            resource_uri=pipeline.DataPipelineUri,
             group=pipeline.SamlGroupName,
         )
 
     if deleteFromAWS:
         stack_helper.delete_stack(
             context=context,
-            target_uri=sqlPipelineUri,
+            target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,

@@ -9,7 +9,7 @@ FeedTarget = gql.Union(
         gql.Ref('DatasetTable'),
         gql.Ref('DatasetTableColumn'),
         gql.Ref('DatasetStorageLocation'),
-        gql.Ref('SqlPipeline'),
+        gql.Ref('DataPipeline'),
         gql.Ref('Worksheet'),
         gql.Ref('Dashboard'),
     ],

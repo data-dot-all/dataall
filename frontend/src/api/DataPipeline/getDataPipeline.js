@@ -1,13 +1,13 @@
 import { gql } from 'apollo-boost';
 
-const getSqlPipeline = (sqlPipelineUri) => ({
+const getDataPipeline = (DataPipelineUri) => ({
   variables: {
-    sqlPipelineUri
+    DataPipelineUri
   },
   query: gql`
-    query GetSqlPipeline($sqlPipelineUri: String!) {
-      getSqlPipeline(sqlPipelineUri: $sqlPipelineUri) {
-        sqlPipelineUri
+    query GetDataPipeline($DataPipelineUri: String!) {
+      getDataPipeline(DataPipelineUri: $DataPipelineUri) {
+        DataPipelineUri
         name
         owner
         SamlGroupName
@@ -18,6 +18,8 @@ const getSqlPipeline = (sqlPipelineUri) => ({
         tags
         repo
         cloneUrlHttp
+        devStages
+        devStrategy
         environment {
           environmentUri
           AwsAccountId
@@ -51,4 +53,4 @@ const getSqlPipeline = (sqlPipelineUri) => ({
   `
 });
 
-export default getSqlPipeline;
+export default getDataPipeline;

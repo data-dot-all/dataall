@@ -13,7 +13,7 @@ const PipelineOverview = (props) => {
         <Box sx={{ mb: 3 }}>
           <ObjectBrief
             title="Details"
-            uri={pipeline.sqlPipelineUri || '-'}
+            uri={pipeline.DataPipelineUri || '-'}
             name={pipeline.label || '-'}
             description={pipeline.description || 'No description provided'}
             tags={

@@ -31,7 +31,7 @@ class Pipeline:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.SqlPipeline:
+    ) -> models.DataPipeline:
 
         Pipeline._validate_input(data)
 
@@ -52,7 +52,7 @@ class Pipeline:
                 message=f'Pipelines feature is disabled for the environment {environment.label}',
             )
 
-        pipeline: models.SqlPipeline = models.SqlPipeline(
+        pipeline: models.DataPipeline = models.DataPipeline(
             owner=username,
             environmentUri=environment.environmentUri,
             SamlGroupName=data['SamlGroupName'],
@@ -62,13 +62,15 @@ class Pipeline:
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
             repo=slugify(data['label']),
+            devStages=data.get('devStages', []),
+            devStrategy=data['devStrategy'],
         )
 
         session.add(pipeline)
         session.commit()
 
         aws_compliant_name = NamingConventionService(
-            target_uri=pipeline.sqlPipelineUri,
+            target_uri=pipeline.DataPipelineUri,
             target_label=pipeline.label,
             pattern=NamingConventionPattern.DEFAULT,
             resource_prefix=environment.resourcePrefix,
@@ -82,7 +84,7 @@ class Pipeline:
             label='PIPELINE:CREATE',
             owner=username,
             summary=f'{username} created dashboard {pipeline.label} in {environment.label}',
-            targetUri=pipeline.sqlPipelineUri,
+            targetUri=pipeline.DataPipelineUri,
             targetType='pipeline',
         )
         session.add(activity)
@@ -91,8 +93,8 @@ class Pipeline:
             session=session,
             group=data['SamlGroupName'],
             permissions=permissions.PIPELINE_ALL,
-            resource_uri=pipeline.sqlPipelineUri,
-            resource_type=models.SqlPipeline.__name__,
+            resource_uri=pipeline.DataPipelineUri,
+            resource_type=models.DataPipeline.__name__,
         )
 
         if environment.SamlGroupName != pipeline.SamlGroupName:
@@ -100,8 +102,8 @@ class Pipeline:
                 session=session,
                 group=environment.SamlGroupName,
                 permissions=permissions.PIPELINE_ALL,
-                resource_uri=pipeline.sqlPipelineUri,
-                resource_type=models.SqlPipeline.__name__,
+                resource_uri=pipeline.DataPipelineUri,
+                resource_type=models.DataPipeline.__name__,
             )
 
         return pipeline
@@ -149,7 +151,7 @@ class Pipeline:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.SqlPipeline:
+    ) -> models.DataPipeline:
         return Pipeline.get_pipeline_by_uri(session, uri)
 
     @staticmethod
@@ -157,8 +159,8 @@ class Pipeline:
     @has_resource_perm(permissions.UPDATE_PIPELINE)
     def update_pipeline(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.SqlPipeline:
-        pipeline: models.SqlPipeline = Pipeline.get_pipeline_by_uri(session, uri)
+    ) -> models.DataPipeline:
+        pipeline: models.DataPipeline = Pipeline.get_pipeline_by_uri(session, uri)
         if data:
             if isinstance(data, dict):
                 for k in data.keys():
@@ -167,24 +169,24 @@ class Pipeline:
 
     @staticmethod
     def get_pipeline_by_uri(session, uri):
-        pipeline: models.SqlPipeline = session.query(models.SqlPipeline).get(uri)
+        pipeline: models.DataPipeline = session.query(models.DataPipeline).get(uri)
         if not pipeline:
             raise exceptions.ObjectNotFound('Pipeline', uri)
         return pipeline
 
     @staticmethod
     def query_user_pipelines(session, username, groups, filter) -> Query:
-        query = session.query(models.SqlPipeline).filter(
+        query = session.query(models.DataPipeline).filter(
             or_(
-                models.SqlPipeline.owner == username,
-                models.SqlPipeline.SamlGroupName.in_(groups),
+                models.DataPipeline.owner == username,
+                models.DataPipeline.SamlGroupName.in_(groups),
             )
         )
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.SqlPipeline.description.ilike(filter.get('term') + '%%'),
-                    models.SqlPipeline.label.ilike(filter.get('term') + '%%'),
+                    models.DataPipeline.description.ilike(filter.get('term') + '%%'),
+                    models.DataPipeline.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
