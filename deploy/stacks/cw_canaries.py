@@ -144,7 +144,8 @@ class CloudWatchCanariesStack(pyNestedClass):
                         'secretsmanager:DescribeSecret',
                     ],
                     resources=[
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*'
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*'
                     ],
                 ),
                 iam.PolicyStatement(

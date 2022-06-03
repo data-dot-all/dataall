@@ -327,6 +327,7 @@ class ContainerStack(pyNestedClass):
                     ],
                     resources=[
                         f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
                         f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*',
                         f'arn:aws:ecs:{self.region}:{self.account}:container-instance/*{resource_prefix}*/*',
                         f'arn:aws:ecs:{self.region}:{self.account}:task-definition/*{resource_prefix}*:*',
