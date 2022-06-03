@@ -593,7 +593,9 @@ Resources:
             Action:
               - "secretsmanager:DescribeSecret"
               - "secretsmanager:GetSecretValue"
-            Resource: !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
           - Sid: SecretsmanagerList
             Effect: Allow
             Action:

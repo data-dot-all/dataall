@@ -191,6 +191,7 @@ class IdpStack(pyNestedClass):
                     f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
                     f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
                     f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
                     f'arn:aws:rum:{self.region}:{self.account}:appmonitor/*{resource_prefix}*',
                 ],
             ),

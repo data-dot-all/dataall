@@ -42,6 +42,7 @@ class DBMigrationStack(pyNestedClass):
                 ],
                 resources=[
                     f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
                     f'arn:aws:kms:{self.region}:{self.account}:key/*',
                     f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
                     f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
