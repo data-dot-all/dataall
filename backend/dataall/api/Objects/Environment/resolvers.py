@@ -7,7 +7,6 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
-from ..AthenaQueryResult import helpers as athena_helpers
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
@@ -523,22 +522,6 @@ def list_environment_redshift_clusters(
             data=filter,
             check_perm=True,
         )
-
-
-def run_sql_query(
-    context: Context, source, environmentUri: str = None, sqlQuery: str = None
-):
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.RUN_ATHENA_QUERY,
-        )
-    return athena_helpers.run_query(
-        context=context, environmentUri=environmentUri, sql=sqlQuery
-    )
 
 
 def enable_subscriptions(
