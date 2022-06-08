@@ -22,17 +22,18 @@ import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { useDispatch } from '../../store';
-import * as WorksheetApi from '../../api/Worksheet';
-import { updateWorksheet } from '../../api/Worksheet';
+import getWorksheet from '../../api/Worksheet/getWorksheet';
+import updateWorksheet from '../../api/Worksheet/updateWorksheet';
+import runAthenaSqlQuery from '../../api/Worksheet/runAthenaSqlQuery';
+import deleteWorksheet from '../../api/Worksheet/deleteWorksheet';
 import useClient from '../../hooks/useClient';
 import listEnvironments from '../../api/Environment/listEnvironments';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import { SET_ERROR } from '../../store/errorReducer';
-import listDatasetsCreatedInEnvironment from '../../api/Environment/listDatasetsCreatedInEnvironment';
 import listDatasets from '../../api/Dataset/listDatasets';
 import listDatasetTables from '../../api/Dataset/listDatasetTables';
 import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
-import runSqlQuery from '../../api/Environment/runSqlQuery';
+import searchEnvironmentDataItems from '../../api/Environment/listDatasetsPublishedInEnvironment';
 import PencilAltIcon from '../../icons/PencilAlt';
 import Scrollbar from '../../components/Scrollbar';
 import SQLQueryEditor from './SQLQueryEditor';
@@ -40,7 +41,8 @@ import WorksheetResult from './WorksheetResult';
 import WorksheetEditFormModal from './WorksheetEditFormModal';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
 import * as Defaults from '../../components/defaults';
-import searchEnvironmentDataItems from '../../api/Environment/listDatasetsPublishedInEnvironment';
+
+
 
 const WorksheetView = () => {
   const navigate = useNavigate();
@@ -247,9 +249,10 @@ const WorksheetView = () => {
     try {
       setRunningQuery(true);
       const response = await client.query(
-        runSqlQuery({
-          environmentUri: currentEnv.environmentUri,
-          sqlQuery: sqlBody
+        runAthenaSqlQuery({
+            sqlQuery: sqlBody,
+            environmentUri:currentEnv.environmentUri,
+            worksheetUri: worksheet.worksheetUri
         })
       );
       if (!response.errors) {
@@ -270,9 +273,10 @@ const WorksheetView = () => {
       setRunningQuery(false);
     }
   }, [client, dispatch, currentEnv, sqlBody]);
-  const deleteWorksheet = useCallback(async () => {
+
+  const deleteWorksheetfunction = useCallback(async () => {
     const response = await client.mutate(
-      WorksheetApi.deleteWorksheet(worksheet.worksheetUri)
+      deleteWorksheet(worksheet.worksheetUri)
     );
     if (!response.errors) {
       enqueueSnackbar('Worksheet deleted', {
@@ -289,7 +293,7 @@ const WorksheetView = () => {
   }, [client, dispatch, enqueueSnackbar, navigate, worksheet]);
   const fetchWorksheet = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(WorksheetApi.getWorksheet(params.uri));
+    const response = await client.query(getWorksheet(params.uri));
     if (!response.errors) {
       setWorksheet(response.data.getWorksheet);
       setSqlBody(response.data.getWorksheet.sqlBody);
@@ -650,7 +654,7 @@ const WorksheetView = () => {
           onApply={handleDeleteWorksheetModalClose}
           onClose={handleDeleteWorksheetModalClose}
           open={isDeleteWorksheetOpen}
-          deleteFunction={deleteWorksheet}
+          deleteFunction={deleteWorksheetfunction}
           isAWSResource={false}
         />
       )}
