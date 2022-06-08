@@ -55,7 +55,7 @@ def run_query_with_role(environment: models.Environment, environment_group: mode
         aws_secret_access_key=creds.secret_key,
         aws_session_token=creds.token,
         work_group=environment_group.environmentAthenaWorkGroup,
-        s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/preview/',
+        s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{environment_group.environmentAthenaWorkGroup}/',
         region_name=environment.region,
     )
     cursor = connection.cursor()
