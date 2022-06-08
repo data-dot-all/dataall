@@ -1,7 +1,7 @@
 from sqlalchemy import and_
 
 from .... import db
-from ..Worksheet import athena_helpers
+from ..AthenaQueryResult import helpers as athena_helpers
 from ....api.constants import WorksheetRole
 from ....api.context import Context
 from ....db import paginate, exceptions, permissions, models
@@ -134,118 +134,27 @@ def resolve_shares(context: Context, source: models.Worksheet, filter: dict = No
     ).to_dict()
 
 
-def start_query(context, source, worksheetUri: str = None, input: dict = None):
+def run_sql_query(
+    context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None
+):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=worksheetUri,
-            permission_name=permissions.RUN_WORKSHEET_QUERY,
-        )
-
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=input['environmentUri'],
+            resource_uri=environmentUri,
             permission_name=permissions.RUN_ATHENA_QUERY,
         )
-
-        environment = db.api.Environment.get_environment_by_uri(
-            session, input['environmentUri']
-        )
-
+        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
         worksheet = db.api.Worksheet.get_worksheet_by_uri(session, worksheetUri)
 
         env_group = db.api.Environment.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
 
-        athena_response = athena_helpers.async_run_query_on_environment(
-            environment=environment,
-            environment_group=env_group,
-            sql=input.get('sqlBody', None),
-            query_id=input.get('AthenaQueryId', None),
-        )
-        if not athena_response.Error:
-            result = models.WorksheetQueryResult(
-                worksheetUri=worksheetUri,
-                queryType='data',
-                AwsAccountId=environment.AwsAccountId,
-                region=environment.region,
-                AthenaQueryId=athena_response.AthenaQueryId,
-                OutputLocation=athena_response.OutputLocation,
-                sqlBody=input.get('sqlBody'),
-                error=athena_response.Error,
-                status=athena_response.Status,
-            )
-            session.add(result)
-    return athena_response.to_dict()
-
-
-def poll_query(context, source, worksheetUri: str = None, AthenaQueryId: str = None):
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=worksheetUri,
-            permission_name=permissions.RUN_WORKSHEET_QUERY,
-        )
-
-        result: models.WorksheetQueryResult = session.query(
-            models.WorksheetQueryResult
-        ).get(AthenaQueryId)
-
-        if not result:
-            raise exceptions.AWSResourceNotFound(
-                action='Poll Athena Query', message='Query not found on Amazon Athena'
-            )
-
-        poll_result = athena_helpers.async_run_query(
-            aws=result.AwsAccountId, region=result.region, query_id=result.AthenaQueryId
-        )
-
-        if poll_result.Status != result.status:
-            result.status = poll_result.Status
-            result.ElapsedTimeInMs = poll_result.ElapsedTimeInMs
-            result.DataScannedInBytes = poll_result.DataScannedInBytes
-            result.error = poll_result.Error
-
-        return poll_result.to_dict()
-
-
-def resolve_last_saved_query_result(context: Context, source: models.Worksheet):
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=source.worksheetUri,
-            permission_name=permissions.GET_WORKSHEET,
-        )
-        last_query = (
-            session.query(models.WorksheetQueryResult)
-            .filter(
-                and_(
-                    models.WorksheetQueryResult.worksheetUri == source.worksheetUri,
-                    models.WorksheetQueryResult.queryType == 'data',
-                    models.WorksheetQueryResult.status == 'SUCCEEDED',
-                )
-            )
-            .order_by(models.WorksheetQueryResult.created.desc())
-            .first()
-        )
-        if last_query:
-            poll_result = athena_helpers.async_run_query(
-                aws=last_query.AwsAccountId,
-                region=last_query.region,
-                query_id=last_query.AthenaQueryId,
-            )
-        else:
-            poll_result = None
-    return poll_result
+    return athena_helpers.run_query_with_role(
+        environment=environment, environment_group=env_group, sql=sqlQuery
+    )
 
 
 def delete_worksheet(context, source, worksheetUri: str = None):

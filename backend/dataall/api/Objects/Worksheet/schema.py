@@ -18,7 +18,6 @@ Worksheet = gql.ObjectType(
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(
             name='lastSavedQueryResult',
-            resolver=resolve_last_saved_query_result,
             type=gql.Ref('AthenaQueryResult'),
         ),
         gql.Field(
