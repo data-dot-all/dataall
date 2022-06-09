@@ -18,33 +18,13 @@ listWorksheets = gql.QueryField(
 )
 
 
-"""
-
-getWorksheetChart = gql.QueryField(
-    name="getWorksheetChart",
-    resolver=get_worksheet_chart,
-    type=gql.Ref("WorksheetChart"),
-    args=[
-        gql.Argument(name="worksheetChartUri", type=gql.NonNullableType(gql.String))
-    ]
-)
-
-getWorksheetQuery= gql.QueryField(
-    name="getWorksheetQuery",
-    resolver=get_worksheet_query,
-    type=gql.Ref("WorksheetQuery"),
-    args=[
-        gql.Argument(name="worksheetQueryUri", type=gql.NonNullableType(gql.String))
-    ]
-)
-"""
-
-pollWorksheetQuery = gql.QueryField(
-    name='pollWorksheetQuery',
-    resolver=poll_query,
-    args=[
-        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='AthenaQueryId', type=gql.String),
-    ],
+runAthenaSqlQuery = gql.QueryField(
+    name='runAthenaSqlQuery',
     type=gql.Ref('AthenaQueryResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='sqlQuery', type=gql.NonNullableType(gql.String)),
+    ],
+    resolver=run_sql_query,
 )

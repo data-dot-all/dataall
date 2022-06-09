@@ -48,15 +48,6 @@ deleteShareWorksheet = gql.MutationField(
     type=gql.Boolean,
 )
 
-startWorksheetQuery = gql.MutationField(
-    name='startWorksheetQuery',
-    resolver=start_query,
-    args=[
-        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='input', type=gql.Ref('WorksheetQueryInput')),
-    ],
-    type=gql.Ref('AthenaQueryResult'),
-)
 
 deleteWorksheet = gql.MutationField(
     name='deleteWorksheet',

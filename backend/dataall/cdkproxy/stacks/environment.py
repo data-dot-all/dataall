@@ -639,7 +639,7 @@ class EnvironmentSetup(Stack):
 
     def create_athena_workgroup(self, output_bucket, workgroup_name):
         athena_workgroup_output_location = ''.join(
-            ['s3://', output_bucket.bucket_name, '/']
+            ['s3://', output_bucket.bucket_name, '/athenaqueries/', workgroup_name, '/']
         )
         athena_workgroup = aws_athena.CfnWorkGroup(
             self,
