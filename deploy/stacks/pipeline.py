@@ -400,6 +400,7 @@ class PipelineStack(Stack):
                             phases={
                                 'build': {
                                     'commands': [
+                                        'n 16.15.1',
                                         'set -eu',
                                         'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
