@@ -395,7 +395,8 @@ class PipelineStack(Stack):
                     "codebuild:UpdateReport",
                     "codebuild:BatchPutTestCases",
                     "codebuild:BatchPutCodeCoverages",
-                    "sts:AssumeRole"
+                    "sts:AssumeRole",
+                    "cloudformation:DescribeStacks"
                 ],
                 resources=["*"],
             )
