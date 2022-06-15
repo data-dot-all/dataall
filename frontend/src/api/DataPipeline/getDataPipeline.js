@@ -20,8 +20,8 @@ const getDataPipeline = (DataPipelineUri) => ({
         cloneUrlHttp
         devStages
         devStrategy
-        inputDataset
-        outputDataset
+        inputDatasetUri
+        outputDatasetUri
         environment {
           environmentUri
           AwsAccountId

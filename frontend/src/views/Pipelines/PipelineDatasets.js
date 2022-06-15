@@ -25,8 +25,8 @@ const PipelineDatasets = (props) => {
 
   const fetchDatasets = useCallback(async () => {
     setLoading(true);
-    if (pipeline.inputDataset) {
-      const response = await client.query(getDataset(pipeline.inputDataset));
+    if (pipeline.inputDatasetUri) {
+      const response = await client.query(getDataset(pipeline.inputDatasetUri));
       if (!response.errors && response.data.getDataset !== null) {
         setInputDataset(response.data.getDataset.label);
       } else {
@@ -36,8 +36,8 @@ const PipelineDatasets = (props) => {
         dispatch({type: SET_ERROR, error});
       }
     }
-    if (pipeline.outputDataset) {
-      const response = await client.query(getDataset(pipeline.outputDataset));
+    if (pipeline.outputDatasetUri) {
+      const response = await client.query(getDataset(pipeline.outputDatasetUri));
       if (!response.errors && response.data.getDataset !== null) {
         setOutputDataset(response.data.getDataset.label);
       } else {
