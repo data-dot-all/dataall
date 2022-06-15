@@ -17,7 +17,7 @@ from aws_cdk.aws_s3_assets import Asset
 from .manager import stack
 from ... import db
 from ...db import models
-from ...db.api import Environment, Pipeline
+from ...db.api import Environment, Pipeline, Dataset
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
 
@@ -35,7 +35,7 @@ class PipelineStack(Stack):
 
     - Defaults for source/synth - CodeCommit & cdk synth
     - blueprint with DDK application code added in the CodeCommit repository <https://github.com/awslabs/aws-ddk>
-    - ability to define development stages: dev, test,..., prod
+    - ability to define development stages: dev, test, prod
     - ability to select gitflow or trunk-based as development strategy
     - Ability to connect to private artifactory to pull artifacts from at synth
     - Security best practices - ensures pipeline buckets block non-SSL, and are KMS-encrypted with rotated keys
@@ -71,6 +71,14 @@ class PipelineStack(Stack):
             )
         return env
 
+    def get_dataset(self, dataset_uri) -> models.Dataset:
+        engine = self.get_engine()
+        with engine.scoped_session() as session:
+            ds = Dataset.get_dataset_by_uri(
+                session, dataset_uri
+            )
+        return ds
+
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         kwargs.setdefault("tags", {}).update({"utility": "dataall-data-pipeline"})
         super().__init__(
@@ -94,6 +102,8 @@ class PipelineStack(Stack):
         pipeline = self.get_target(target_uri=target_uri)
         pipeline_environment = self.get_pipeline_environment(pipeline=pipeline)
         pipeline_env_team = self.get_env_team(pipeline=pipeline)
+        input_dataset = self.get_dataset(dataset_uri=pipeline.inputDatasetUri) if pipeline.inputDatasetUri else pipeline.inputDatasetUri
+        output_dataset = self.get_dataset(dataset_uri=pipeline.outputDatasetUri) if pipeline.outputDatasetUri else pipeline.outputDatasetUri
 
         # Support resources
         build_role_policy = iam.Policy(
@@ -146,7 +156,7 @@ class PipelineStack(Stack):
         code_dir_path = os.path.realpath(
             os.path.abspath(
                 os.path.join(
-                    __file__, "..", "..", "..", "..", "blueprints", "ddk_blueprint"
+                    __file__, "..", "assets", "data_pipeline_ddk_blueprint"
                 )
             )
         )
@@ -168,7 +178,7 @@ class PipelineStack(Stack):
             )
         )
 
-        codecommit.CfnRepository(
+        repository = codecommit.CfnRepository(
             scope=self,
             code=code,
             id="CodecommitRepository",
@@ -213,6 +223,8 @@ class PipelineStack(Stack):
                             pipeline_environment=pipeline_environment,
                             pipeline_env_team=pipeline_env_team,
                             stage=stage,
+                            input_dataset=input_dataset,
+                            output_dataset=output_dataset
                         ),
                     ),
                     role=build_project_role,
@@ -280,6 +292,8 @@ class PipelineStack(Stack):
                             pipeline_environment=pipeline_environment,
                             pipeline_env_team=pipeline_env_team,
                             stage=stage,
+                            input_dataset=input_dataset,
+                            output_dataset=output_dataset
                         ),
                     ),
                     role=build_project_role,
@@ -341,9 +355,11 @@ class PipelineStack(Stack):
         pipeline_environment,
         pipeline_env_team,
         stage,
+        input_dataset,
+        output_dataset
     ):
 
-        env_vars = {
+        env_vars_1 = {
             "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
             "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
             "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
@@ -351,9 +367,25 @@ class PipelineStack(Stack):
             "AWSACCOUNTID": codebuild.BuildEnvironmentVariable(value=pipeline_environment.AwsAccountId),
             "AWSREGION": codebuild.BuildEnvironmentVariable(value=pipeline_environment.region),
             "ENVTEAM_ROLEARN": codebuild.BuildEnvironmentVariable(value=pipeline_env_team.environmentIAMRoleArn),
-            "ENVTEAM_ROLENAME": codebuild.BuildEnvironmentVariable(value=pipeline_env_team.environmentIAMRoleName)
-
+            "ENVTEAM_ROLENAME": codebuild.BuildEnvironmentVariable(value=pipeline_env_team.environmentIAMRoleName),
         }
+        env_vars = dict(env_vars_1)
+        if input_dataset:
+            env_vars_i = {
+                "INPUT_DATASET": codebuild.BuildEnvironmentVariable(value=input_dataset.label),
+                "INPUT_DATASET_BUCKET": codebuild.BuildEnvironmentVariable(value=input_dataset.S3BucketName),
+                "INPUT_DATASET_GLUEDATABASE": codebuild.BuildEnvironmentVariable(value=input_dataset.GlueDatabaseName)
+            }
+            env_vars.update(env_vars_i)
+
+        if output_dataset:
+            env_vars_o = {
+                "OUTPUT_DATASET": codebuild.BuildEnvironmentVariable(value=output_dataset.label),
+                "OUTPUT_DATASET_BUCKET": codebuild.BuildEnvironmentVariable(value=output_dataset.S3BucketName),
+                "OUTPUT_DATASET_GLUEDATABASE": codebuild.BuildEnvironmentVariable(
+                    value=output_dataset.GlueDatabaseName),
+            }
+            env_vars.update(env_vars_o)
         return env_vars
 
     @staticmethod
@@ -363,6 +395,7 @@ class PipelineStack(Stack):
             phases:
               pre_build:
                 commands:
+                - n 16.15.1
                 - npm install -g aws-cdk
                 - pip install aws-ddk && pip install -r requirements.txt
               build:
