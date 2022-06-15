@@ -87,22 +87,6 @@ def resolve_user_role(context: Context, source: models.DataPipeline):
     return DataPipelineRole.NoPermission.value
 
 
-def get_pipeline_input_dataset(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        dataset = session.query(models.Dataset).get(source.inputDatasetUri)
-    return dataset
-
-
-def get_pipeline_output_dataset(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        dataset = session.query(models.Dataset).get(source.outputDatasetUri)
-    return dataset
-
-
 def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
