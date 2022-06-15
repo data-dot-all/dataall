@@ -156,7 +156,7 @@ class PipelineStack(Stack):
         code_dir_path = os.path.realpath(
             os.path.abspath(
                 os.path.join(
-                    __file__, "..", "assets", "data_pipeline_ddk_blueprint"
+                    __file__, "..", "..", "..", "..", "blueprints", "data_pipeline_ddk_blueprint"
                 )
             )
         )
