@@ -232,7 +232,8 @@ class PipelineStack(Stack):
                     ],
                 )
 
-                if stage != 'prod':
+                # Skip manual approval for one stage pipelines
+                if stage != 'prod' and len(pipeline.devStages) > 1:
                     self.codepipeline_pipeline.add_stage(
                         stage_name=f'ManualApproval-{stage}',
                         actions=[
@@ -361,14 +362,17 @@ class PipelineStack(Stack):
         yaml = """
             version: '0.2'
             phases:
+              install:
+                commands:
+                - 'n 16.15.1'
               pre_build:
                 commands:
                 - npm install -g aws-cdk
                 - pip install aws-ddk && pip install -r requirements.txt
               build:
                 commands:
-                    - aws sts get-caller-identity
-                    - ddk deploy
+                - aws sts get-caller-identity
+                - ddk deploy
         """
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(yaml, file=text_file)
