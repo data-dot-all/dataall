@@ -39,7 +39,9 @@ def pipeline(client, tenant, group, env1):
             'tags': [group.name],
             'environmentUri': env1.environmentUri,
             'devStages': ['test','prod'],
-            'devStrategy': 'trunk'
+            'devStrategy': 'trunk',
+            'inputDatasetUri': '',
+            'outputDatasetUri': ''
         },
         username='alice',
         groups=[group.name],
