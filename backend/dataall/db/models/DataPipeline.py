@@ -19,4 +19,5 @@ class DataPipeline(Resource, Base):
     devStrategy = Column(String, nullable=False)
     inputDatasetUri = Column(String, nullable=True)
     outputDatasetUri = Column(String, nullable=True)
+    template = Column(String, nullable=True, default="")
     userRoleForPipeline = query_expression()

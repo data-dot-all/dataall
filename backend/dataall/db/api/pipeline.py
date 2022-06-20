@@ -66,6 +66,7 @@ class Pipeline:
             devStrategy=data['devStrategy'],
             inputDatasetUri=data['inputDatasetUri'],
             outputDatasetUri=data['outputDatasetUri'],
+            template=data['template'],
         )
 
         session.add(pipeline)
