@@ -312,6 +312,7 @@ Resources:
             Effect: Allow
             Action:
               - 'sagemaker:ListTags'
+              - 'sagemaker:DescribeUserProfile'
               - 'sagemaker:DeleteNotebookInstance'
               - 'sagemaker:StopNotebookInstance'
               - 'sagemaker:CreatePresignedNotebookInstanceUrl'
@@ -322,11 +323,13 @@ Resources:
             Resource:
               - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:domain/*'
+              - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:user-profile/*/*'
           - Sid: SagemakerNotebookInstances
             Effect: Allow
             Action:
              - 'sagemaker:ListNotebookInstances'
              - 'sagemaker:ListDomains'
+             - 'sagemaker:ListApps'
             Resource: '*'
           - Effect: Allow
             Action:
