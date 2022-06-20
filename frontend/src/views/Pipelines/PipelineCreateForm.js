@@ -163,7 +163,8 @@ const PipelineCrateForm = (props) => {
             devStrategy: values.devStrategy,
             devStages: values.devStages,
             inputDatasetUri: values.inputDatasetUri,
-            outputDatasetUri: values.outputDatasetUri
+            outputDatasetUri: values.outputDatasetUri,
+            template: values.template,
           }
         })
       );
@@ -268,6 +269,7 @@ const PipelineCrateForm = (props) => {
                 devStrategy: '',
                 inputDatasetUri: '',
                 outputDatasetUri: '',
+                template: ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -282,7 +284,8 @@ const PipelineCrateForm = (props) => {
                 devStrategy: Yup.string().required('*A development strategy is required'),
                 tags: Yup.array().nullable(),
                 inputDatasetUri: Yup.string().nullable(),
-                outputDatasetUri: Yup.string().nullable()
+                outputDatasetUri: Yup.string().nullable(),
+                template: Yup.string().nullable()
               })}
               onSubmit={async (
                 values,
@@ -548,6 +551,19 @@ const PipelineCrateForm = (props) => {
                               }}
                             />
                           </Box>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.template && errors.template)}
+                            fullWidth
+                            helperText={touched.template && errors.template}
+                            label="URL to a git repository (ddk init --template)"
+                            name="template"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.template}
+                            variant="outlined"
+                          />
                         </CardContent>
                       </Card>
                       {errors.submit && (

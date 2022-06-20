@@ -112,7 +112,8 @@ class PipelineStack(Stack):
             policy_name=f"{pipeline.name}-policy",
             statements=self.make_codebuild_policy_statements(
                 pipeline_environment=pipeline_environment,
-                pipeline_env_team=pipeline_env_team
+                pipeline_env_team=pipeline_env_team,
+                pipeline=pipeline
             ),
         )
 
@@ -156,7 +157,7 @@ class PipelineStack(Stack):
         code_dir_path = os.path.realpath(
             os.path.abspath(
                 os.path.join(
-                    __file__, "..", "..", "data_pipeline_ddk_blueprint"
+                    __file__, "..", "..", "data_pipeline_blueprint"
                 )
             )
         )
@@ -363,6 +364,9 @@ class PipelineStack(Stack):
             "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
             "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
             "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
+            "DEV_STRATEGY": codebuild.BuildEnvironmentVariable(value=pipeline.devStrategy),
+            "DEV_STAGES": codebuild.BuildEnvironmentVariable(value=pipeline.devStages),
+            "TEMPLATE": codebuild.BuildEnvironmentVariable(value=pipeline.template),
             "ENVIRONMENT_URI": codebuild.BuildEnvironmentVariable(value=pipeline_environment.environmentUri),
             "AWSACCOUNTID": codebuild.BuildEnvironmentVariable(value=pipeline_environment.AwsAccountId),
             "AWSREGION": codebuild.BuildEnvironmentVariable(value=pipeline_environment.region),
@@ -392,12 +396,20 @@ class PipelineStack(Stack):
     def write_deploy_stage_buildspec(path, output_file):
         yaml = """
             version: '0.2'
+            env:
+                git-credential-helper: yes
             phases:
               pre_build:
                 commands:
                 - n 16.15.1
                 - npm install -g aws-cdk
-                - pip install aws-ddk && pip install -r requirements.txt
+                - pip install aws-ddk
+                - git config --global user.email "codebuild@example.com"
+                - git config --global user.name "CodeBuild"
+                - echo ${CODEBUILD_BUILD_NUMBER}
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - pip install -r requirements.txt
               build:
                 commands:
                     - aws sts get-caller-identity
@@ -410,6 +422,7 @@ class PipelineStack(Stack):
     def make_codebuild_policy_statements(
             pipeline_environment,
             pipeline_env_team,
+            pipeline
     ) -> List[iam.PolicyStatement]:
         return[
             iam.PolicyStatement(
@@ -428,10 +441,18 @@ class PipelineStack(Stack):
                     "codebuild:UpdateReport",
                     "codebuild:BatchPutTestCases",
                     "codebuild:BatchPutCodeCoverages",
+                    "codecommit:ListRepositories",
                     "sts:AssumeRole",
                     "cloudformation:DescribeStacks"
                 ],
                 resources=["*"],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    "codecommit:*"
+                ],
+                resources=[f"arn:aws:codecommit:{pipeline_environment.region}:{pipeline_environment.AwsAccountId}:{pipeline.repo}"],
             )
+
 
         ]

@@ -41,7 +41,8 @@ def pipeline(client, tenant, group, env1):
             'devStages': ['test','prod'],
             'devStrategy': 'trunk',
             'inputDatasetUri': '',
-            'outputDatasetUri': ''
+            'outputDatasetUri': '',
+            'template': ''
         },
         username='alice',
         groups=[group.name],
