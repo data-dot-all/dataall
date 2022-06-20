@@ -632,6 +632,15 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:states:*:${AWS::AccountId}:stateMachine:${EnvironmentResourcePrefix}*'
+          - Sid: CodeCommit
+            Action:
+              - 'codecommit:GetFile'
+              - 'codecommit:ListBranches'
+              - 'codecommit:GetFolder'
+              - 'codecommit:GetCommit'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-3
       Roles:
         - !Ref PivotRoleName

@@ -7,6 +7,7 @@ from ...constants import DataPipelineRole
 from ...context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
+from ....aws.handlers.codecommit import CodeCommit
 from ....db import permissions, models, exceptions
 from ....db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
 
