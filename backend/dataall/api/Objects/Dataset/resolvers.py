@@ -13,6 +13,7 @@ from ....api.context import Context
 from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
+from ....aws.handlers.sns import Sns
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ResourcePolicy
 from ....db.api.organization import Organization
