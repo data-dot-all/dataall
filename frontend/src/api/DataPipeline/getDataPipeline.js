@@ -22,6 +22,7 @@ const getDataPipeline = (DataPipelineUri) => ({
         devStrategy
         inputDatasetUri
         outputDatasetUri
+        template
         environment {
           environmentUri
           AwsAccountId
