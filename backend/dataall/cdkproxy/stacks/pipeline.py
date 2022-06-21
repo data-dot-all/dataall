@@ -162,7 +162,11 @@ class PipelineStack(Stack):
             )
         )
 
-        PipelineStack.write_deploy_stage_buildspec(path=code_dir_path, output_file="deploy_stage_buildspec.yaml")
+        PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file="deploy_buildspec.yaml")
+
+        PipelineStack.write_init_deploy_buildspec(path=code_dir_path, output_file="init_deploy_buildspec.yaml")
+
+        PipelineStack.write_init_branches_deploy_buildspec(path=code_dir_path, output_file="init_branches_deploy_buildspec.yaml")
 
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
@@ -229,7 +233,7 @@ class PipelineStack(Stack):
                         ),
                     ),
                     role=build_project_role,
-                    build_spec=codebuild.BuildSpec.from_source_filename("deploy_stage_buildspec.yaml"),
+                    build_spec=codebuild.BuildSpec.from_source_filename("init_deploy_buildspec.yaml"),
                     encryption_key=self.codebuild_key,
                 )
 
@@ -258,6 +262,7 @@ class PipelineStack(Stack):
         else:
             for stage in pipeline.devStages:
                 branch_name = stage if stage != 'prod' else 'main'
+                buildspec = "init_branches_deploy_buildspec.yaml" if stage == 'prod' else "deploy_buildspec.yaml"
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
                     id=f"{pipeline.name}-{stage}",
@@ -298,7 +303,7 @@ class PipelineStack(Stack):
                         ),
                     ),
                     role=build_project_role,
-                    build_spec=codebuild.BuildSpec.from_source_filename("deploy_stage_buildspec.yaml"),
+                    build_spec=codebuild.BuildSpec.from_source_filename(buildspec),
                     encryption_key=self.codebuild_key,
                 )
 
@@ -393,7 +398,7 @@ class PipelineStack(Stack):
         return env_vars
 
     @staticmethod
-    def write_deploy_stage_buildspec(path, output_file):
+    def write_init_deploy_buildspec(path, output_file):
         yaml = """
             version: '0.2'
             env:
@@ -407,8 +412,61 @@ class PipelineStack(Stack):
                 - git config --global user.email "codebuild@example.com"
                 - git config --global user.name "CodeBuild"
                 - echo ${CODEBUILD_BUILD_NUMBER}
-                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - echo ${TEMPLATE}
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == ""]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
                 - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - pip install -r requirements.txt
+              build:
+                commands:
+                    - aws sts get-caller-identity
+                    - ddk deploy
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(yaml, file=text_file)
+
+    @staticmethod
+    def write_init_branches_deploy_buildspec(path, output_file):
+        yaml = """
+            version: '0.2'
+            env:
+                git-credential-helper: yes
+            phases:
+              pre_build:
+                commands:
+                - n 16.15.1
+                - npm install -g aws-cdk
+                - pip install aws-ddk
+                - git config --global user.email "codebuild@example.com"
+                - git config --global user.name "CodeBuild"
+                - echo ${CODEBUILD_BUILD_NUMBER}
+                - echo ${TEMPLATE}
+                - echo ${DEV_STAGES}
+                - echo ${STAGE}
+                - stages=$(echo $DEV_STAGES | tr ",", "\n")
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == ""]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; git checkout -b ; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME;git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; for stage in $stages; do if [[$stage != "prod" ]]; then git checkout $stage; git push --set-upstream origin $stage; fi; done; else echo "not first build"; fi
+                - pip install -r requirements.txt
+              build:
+                commands:
+                    - aws sts get-caller-identity
+                    - ddk deploy
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(yaml, file=text_file)
+
+    @staticmethod
+    def write_deploy_buildspec(path, output_file):
+        yaml = """
+            version: '0.2'
+            env:
+                git-credential-helper: yes
+            phases:
+              pre_build:
+                commands:
+                - n 16.15.1
+                - npm install -g aws-cdk
+                - pip install aws-ddk
                 - pip install -r requirements.txt
               build:
                 commands:
