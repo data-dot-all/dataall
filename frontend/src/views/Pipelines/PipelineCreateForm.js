@@ -32,6 +32,8 @@ import ChipInput from '../../components/TagsInput';
 import createDataPipeline from '../../api/DataPipeline/createDataPipeline';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
+import listDatasetsOwnedByEnvGroup from "../../api/Environment/listDatasetsOwnedByEnvGroup";
+import listDataItemsSharedWithEnvGroup from "../../api/Environment/listDataItemsSharedWithEnvGroup";
 
 const PipelineCrateForm = (props) => {
   const navigate = useNavigate();
@@ -40,8 +42,10 @@ const PipelineCrateForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
+  const [currentEnv, setCurrentEnv] = useState('');
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
 
   const fetchEnvironments = useCallback(async () => {
@@ -62,7 +66,9 @@ const PipelineCrateForm = (props) => {
     }
     setLoading(false);
   }, [client, dispatch]);
+
   const fetchGroups = async (environmentUri) => {
+    setCurrentEnv(environmentUri)
     try {
       const response = await client.query(
         listEnvironmentGroups({
@@ -84,6 +90,58 @@ const PipelineCrateForm = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
+
+  const fetchDatasets = async (groupUri) => {
+    let ownedDatasets = [];
+    let sharedWithDatasets = [];
+    try {
+      const response = await client.query(
+        listDatasetsOwnedByEnvGroup({
+          filter: Defaults.SelectListFilter,
+          environmentUri: currentEnv,
+          groupUri: groupUri,
+        })
+      );
+      if (!response.errors) {
+        ownedDatasets =
+          response.data.listDatasetsOwnedByEnvGroup.nodes?.map((dataset) => ({
+            value: dataset.datasetUri,
+            label: dataset.label
+          }))
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+    try {
+      const response = await client.query(
+        listDataItemsSharedWithEnvGroup({
+          filter: {
+            page: 1,
+            pageSize: 10000,
+            term: '',
+            itemTypes: 'DatasetTable'
+          },
+          environmentUri: currentEnv,
+          groupUri: groupUri,
+        })
+      );
+      if (!response.errors) {
+        sharedWithDatasets =
+          response.data.listDataItemsSharedWithEnvGroup.nodes?.map((dataset) => ({
+            value: dataset.datasetUri,
+            label: dataset.label
+          }))
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+    setDatasetOptions(ownedDatasets.concat(sharedWithDatasets));
+  };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -103,7 +161,10 @@ const PipelineCrateForm = (props) => {
             SamlGroupName: values.SamlGroupName,
             tags: values.tags,
             devStrategy: values.devStrategy,
-            devStages: values.devStages
+            devStages: values.devStages,
+            inputDatasetUri: values.inputDatasetUri,
+            outputDatasetUri: values.outputDatasetUri,
+            template: values.template,
           }
         })
       );
@@ -206,6 +267,9 @@ const PipelineCrateForm = (props) => {
                 tags: [],
                 devStages: [],
                 devStrategy: '',
+                inputDatasetUri: '',
+                outputDatasetUri: '',
+                template: ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -218,7 +282,10 @@ const PipelineCrateForm = (props) => {
                 environment: Yup.object().required('*Environment is required'),
                 devStages: Yup.array().required('*At least ONE stage is required'),
                 devStrategy: Yup.string().required('*A development strategy is required'),
-                tags: Yup.array().nullable()
+                tags: Yup.array().nullable(),
+                inputDatasetUri: Yup.string().nullable(),
+                outputDatasetUri: Yup.string().nullable(),
+                template: Yup.string().nullable()
               })}
               onSubmit={async (
                 values,
@@ -300,6 +367,55 @@ const PipelineCrateForm = (props) => {
                           </Box>
                         </CardContent>
                       </Card>
+                      <Card sx={{ mb: 3 }}>
+                        <CardHeader title="Parameters" />
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.inputDatasetUri && errors.inputDatasetUri
+                            )}
+                            helperText={
+                              touched.inputDatasetUri && errors.inputDatasetUri
+                            }
+                            label="Input Dataset"
+                            name="inputDatasetUri"
+                            onChange={handleChange}
+                            select
+                            value={values.inputDatasetUri}
+                            variant="outlined"
+                          >
+                            {datasetOptions.map((dataset) => (
+                              <MenuItem key={dataset.value} value={dataset.value}>
+                                {dataset.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.outputDatasetUri && errors.outputDatasetUri
+                            )}
+                            helperText={
+                              touched.outputDatasetUri && errors.outputDatasetUri
+                            }
+                            label="Output Dataset"
+                            name="outputDatasetUri"
+                            onChange={handleChange}
+                            select
+                            value={values.outputDatasetUri}
+                            variant="outlined"
+                          >
+                            {datasetOptions.map((dataset) => (
+                              <MenuItem key={dataset.value} value={dataset.value}>
+                                {dataset.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                      </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
@@ -377,7 +493,16 @@ const PipelineCrateForm = (props) => {
                             }
                             label="Team"
                             name="SamlGroupName"
-                            onChange={handleChange}
+                            onChange={(event) => {
+                              setFieldValue('inputDatasetUri', '');
+                              setFieldValue('outputDatasetUri', '');
+                              fetchDatasets(
+                                event.target.value
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                              setFieldValue('SamlGroupName', event.target.value);
+                            }}
                             select
                             value={values.SamlGroupName}
                             variant="outlined"
@@ -426,6 +551,19 @@ const PipelineCrateForm = (props) => {
                               }}
                             />
                           </Box>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.template && errors.template)}
+                            fullWidth
+                            helperText={touched.template && errors.template}
+                            label="URL to a git repository (ddk init --template)"
+                            name="template"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.template}
+                            variant="outlined"
+                          />
                         </CardContent>
                       </Card>
                       {errors.submit && (

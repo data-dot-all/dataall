@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 import PipelineCodeCommit from './PipelineCodeCommit';
+import PipelineDatasets from './PipelineDatasets';
 
 const PipelineOverview = (props) => {
   const { pipeline, ...other } = props;
@@ -26,15 +27,20 @@ const PipelineOverview = (props) => {
         </Box>
       </Grid>
       <Grid item lg={4} xl={3} xs={12}>
-        <ObjectMetadata
-          environment={pipeline.environment}
-          region={pipeline.environment?.region}
-          organization={pipeline.organization}
-          owner={pipeline.owner}
-          admins={pipeline.SamlGroupName || '-'}
-          created={pipeline.created}
-          status={pipeline.stack?.status}
-        />
+        <Box sx={{ mb: 3 }}>
+         <ObjectMetadata
+           environment={pipeline.environment}
+           region={pipeline.environment?.region}
+           organization={pipeline.organization}
+           owner={pipeline.owner}
+           admins={pipeline.SamlGroupName || '-'}
+           created={pipeline.created}
+           status={pipeline.stack?.status}
+         />
+        </Box>
+        <Box sx={{ sx: 3 }}>
+          <PipelineDatasets pipeline={pipeline} />
+        </Box>
       </Grid>
     </Grid>
   );

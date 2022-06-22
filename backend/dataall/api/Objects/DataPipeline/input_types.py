@@ -10,7 +10,9 @@ NewDataPipelineInput = gql.InputType(
         gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
         gql.Argument(name='devStages', type=gql.ArrayType(gql.String)),
         gql.Argument(name='devStrategy', type=gql.NonNullableType(gql.String)),
-
+        gql.Argument(name='inputDatasetUri', type=gql.String),
+        gql.Argument(name='outputDatasetUri', type=gql.String),
+        gql.Argument(name='template', type=gql.String),
     ],
 )
 

@@ -21,6 +21,9 @@ DataPipeline = gql.ObjectType(
         gql.Field(
             'environment', type=gql.Ref('Environment'), resolver=get_pipeline_env
         ),
+        gql.Field('inputDatasetUri', type=gql.String),
+        gql.Field('outputDatasetUri', type=gql.String),
+        gql.Field('template', type=gql.String),
         gql.Field('devStages', type=gql.ArrayType(gql.String)),
         gql.Field('devStrategy', type=gql.String),
         gql.Field('cloneUrlHttp', gql.String, resolver=get_clone_url_http),

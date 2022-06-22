@@ -42,11 +42,6 @@ import FeedComments from '../Feed/FeedComments';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  {
-    label: 'Execution',
-    value: 'runs',
-    icon: <PlaylistPlay fontSize="small" />
-  },
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
@@ -260,7 +255,6 @@ const PipelineView = () => {
             {currentTab === 'overview' && (
               <PipelineOverview pipeline={pipeline} />
             )}
-            {currentTab === 'runs' && <PipelineRuns pipeline={pipeline} />}
             {currentTab === 'tags' && (
               <KeyValueTagList
                 targetUri={pipeline.DataPipelineUri}

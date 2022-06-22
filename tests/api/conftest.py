@@ -579,7 +579,10 @@ def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
             'tags': [group.name],
             'environmentUri': env_fixture.environmentUri,
             'devStages': ['test', 'prod'],
-            'devStrategy': 'trunk'
+            'devStrategy': 'trunk',
+            'inputDatasetUri': '',
+            'outputDatasetUri': '',
+            'template': '',
         },
         username='alice',
         groups=[group.name],
