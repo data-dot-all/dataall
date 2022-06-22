@@ -320,6 +320,7 @@ Resources:
               - 'sagemaker:StartNotebookInstance'
               - 'sagemaker:AddTags'
               - 'sagemaker:DescribeDomain'
+              - 'sagemaker:CreatePresignedDomainUrl'
             Resource:
               - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:domain/*'

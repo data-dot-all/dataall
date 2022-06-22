@@ -45,9 +45,6 @@ class Sagemaker(ServicePolicy):
             iam.PolicyStatement(
                 actions=['sagemaker:Create*'],
                 resources=['*'],
-                conditions={
-                    'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}
-                },
             ),
             iam.PolicyStatement(
                 actions=['sagemaker:Start*', 'sagemaker:Stop*'],
