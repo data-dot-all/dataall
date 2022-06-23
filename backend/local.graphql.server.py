@@ -55,7 +55,7 @@ def request_context(headers, mock=False):
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')
         try:
-            decoded = jwt.decode(headers.get('Authorization'), verify=False)
+            decoded = jwt.decode(headers.get('Authorization'), options={"verify_signature": False})
             username = decoded.get('email', 'anonymous')
             groups = []
             saml_groups = decoded.get('custom:saml.groups', [])
