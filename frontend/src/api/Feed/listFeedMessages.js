@@ -30,7 +30,7 @@ const listFeedMessages = ({ targetUri, targetType, filter }) => ({
           ... on Worksheet {
             label
           }
-          ... on SqlPipeline {
+          ... on DataPipeline {
             label
           }
         }
