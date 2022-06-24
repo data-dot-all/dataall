@@ -27,7 +27,6 @@ from aws_cdk.aws_ec2 import (
 
 from .pyNestedStack import pyNestedClass
 
-
 class LambdaApiStack(pyNestedClass):
     def __init__(
         self,
@@ -40,6 +39,7 @@ class LambdaApiStack(pyNestedClass):
         ecr_repository=None,
         image_tag=None,
         internet_facing=True,
+        custom_waf_rules=None,
         ip_ranges=None,
         apig_vpce=None,
         prod_sizing=False,
@@ -127,6 +127,7 @@ class LambdaApiStack(pyNestedClass):
             apig_vpce,
             envname,
             internet_facing,
+            custom_waf_rules,
             ip_ranges,
             resource_prefix,
             vpc,
@@ -260,6 +261,7 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce,
         envname,
         internet_facing,
+        custom_waf_rules,
         ip_ranges,
         resource_prefix,
         vpc,
@@ -289,6 +291,19 @@ class LambdaApiStack(pyNestedClass):
             user_pool,
         )
 
+        # Create IP set if IP filtering enabled in CDK.json
+        ip_set_regional=None
+        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+            ip_set_regional = wafv2.CfnIPSet(
+                self,
+                "DataallRegionalIPSet",
+                name=f"{resource_prefix}-{envname}-ipset-regional",
+                description=f"IP addresses allowed for Dataall {envname}",
+                addresses=custom_waf_rules.get("allowed_ip_list"),
+                ip_address_version="IPV4",
+                scope="REGIONAL"
+            )
+
         acl = wafv2.CfnWebACL(
             self,
             'ACL-ApiGW',
@@ -299,7 +314,7 @@ class LambdaApiStack(pyNestedClass):
                 metric_name='waf-apigw',
                 sampled_requests_enabled=True,
             ),
-            rules=self.get_waf_rules(envname),
+            rules=self.get_waf_rules(envname,custom_waf_rules,ip_set_regional),
         )
 
         wafv2.CfnWebACLAssociation(
@@ -580,8 +595,56 @@ class LambdaApiStack(pyNestedClass):
         return api_policy
 
     @staticmethod
-    def get_waf_rules(envname):
+    def get_waf_rules(envname,custom_waf_rules=None,ip_set_regional=None):
         waf_rules = []
+        priority = 0
+        if custom_waf_rules:
+            if custom_waf_rules.get("allowed_geo_list"):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='GeoMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    geo_match_statement=wafv2.CfnWebACL.GeoMatchStatementProperty(
+                                        country_codes=custom_waf_rules.get("allowed_geo_list")
+                                    )
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='GeoMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
+            if custom_waf_rules.get("allowed_ip_list"):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='IPMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    ip_set_reference_statement={
+                                        "arn" : ip_set_regional.attr_arn
+                                    }
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='IPMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesAdminProtectionRuleSet',
@@ -595,10 +658,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
                 ),
-                priority=0,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesAmazonIpReputationList',
@@ -612,10 +676,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
                 ),
-                priority=1,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesCommonRuleSet',
@@ -629,10 +694,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesCommonRuleSet',
                 ),
-                priority=2,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
@@ -646,10 +712,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
                 ),
-                priority=3,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesLinuxRuleSet',
@@ -663,10 +730,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesLinuxRuleSet',
                 ),
-                priority=4,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesSQLiRuleSet',
@@ -680,10 +748,11 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesSQLiRuleSet',
                 ),
-                priority=5,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='APIGatewayRateLimit',
@@ -698,9 +767,10 @@ class LambdaApiStack(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name=f'WAFAPIGatewayRateLimit{envname}',
                 ),
-                priority=6,
+                priority=priority,
             )
         )
+        priority += 1
         return waf_rules
 
     def create_sns_topic(
