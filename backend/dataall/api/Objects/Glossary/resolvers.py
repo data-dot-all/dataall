@@ -8,6 +8,9 @@ from ....db import paginate, exceptions, models
 from ....searchproxy import upsert_dataset
 from ....searchproxy import upsert_table
 from ....searchproxy.indexers import upsert_folder, upsert_dashboard
+from ....api.constants import (
+    GlossaryRole
+)
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
@@ -180,6 +183,14 @@ def get_node(context: Context, source, nodeUri: str = None):
         if not node:
             raise exceptions.ObjectNotFound('Node', nodeUri)
     return node
+
+
+def resolve_user_role(context: Context, source: models.GlossaryNode, **kwargs):
+    if not source:
+        return None
+    if source.admin in context.groups:
+        return GlossaryRole.Admin.value
+    return GlossaryRole.NoPermission.value
 
 
 def delete_node(context: Context, source, nodeUri: str = None) -> bool:

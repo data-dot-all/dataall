@@ -90,6 +90,12 @@ class DatasetRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
+class GlossaryRole(GraphQLEnumMapper):
+    # Permissions on a glossary
+    Admin = '900'
+    NoPermission = '000'
+
+
 class RedshiftClusterRole(GraphQLEnumMapper):
     Creator = '950'
     Admin = '900'

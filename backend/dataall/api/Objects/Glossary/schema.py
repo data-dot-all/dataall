@@ -1,6 +1,6 @@
 from ... import gql
 from .resolvers import *
-
+from ...constants import GlossaryRole
 
 GlossaryNode = gql.Union(
     name='GlossaryNode',
@@ -35,6 +35,11 @@ Glossary = gql.ObjectType(
         gql.Field(name='label', type=gql.NonNullableType(gql.String)),
         gql.Field(name='name', type=gql.NonNullableType(gql.String)),
         gql.Field(name='admin', type=gql.String),
+        gql.Field(
+            name='userRoleForGlossary',
+            type=GlossaryRole.toGraphQLEnum(),
+            resolver=resolve_user_role,
+        ),
         gql.Field(name='readme', type=gql.String),
         gql.Field(name='created', type=gql.NonNullableType(gql.String)),
         gql.Field(name='updated', type=gql.String),

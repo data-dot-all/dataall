@@ -123,8 +123,9 @@ const GlossaryView = () => {
     const response = await client.query(getGlossary(params.uri));
     if (!response.errors && response.data.getGlossary !== null) {
       setIsAdmin(
-        response.data.getGlossary.owner === user.email ||
-          response.data.getGlossary.admin === user.email
+        ['Admin'].indexOf(
+          response.data.getGlossary.userRoleForGlossary
+        ) !== -1
       );
       setGlossary(response.data.getGlossary);
     } else {
