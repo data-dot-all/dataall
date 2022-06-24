@@ -43,6 +43,7 @@ class Environment:
             label=data.get('label', 'Unnamed'),
             tags=data.get('tags', []),
             owner=username,
+            description=data.get('description', ''),
             environmentType=data.get('type', EnvironmentType.Data.value),
             AwsAccountId=data.get('AwsAccountId'),
             region=data.get('region'),
