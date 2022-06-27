@@ -22,6 +22,8 @@ services:
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
     restart:
       on-failure:60
+    platform:
+      linux/amd64
 
   graphql:
     build:
