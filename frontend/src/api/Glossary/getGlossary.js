@@ -15,6 +15,7 @@ const getGlossary = (nodeUri) => ({
         status
         path
         admin
+        userRoleForGlossary
         stats {
           categories
           terms
