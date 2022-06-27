@@ -20,7 +20,6 @@ from aws_cdk import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 
-
 class CloudfrontDistro(pyNestedClass):
     def __init__(
         self,
@@ -30,11 +29,74 @@ class CloudfrontDistro(pyNestedClass):
         resource_prefix='dataall',
         auth_at_edge=None,
         custom_domain=None,
+        custom_waf_rules=None,
         tooling_account_id=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+
+        # Create IP set if IP filtering enabled
+        ip_set_cloudfront=None
+        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+            ip_set_cloudfront = wafv2.CfnIPSet(
+                self,
+                "DataallCloudfrontIPSet",
+                name=f"{resource_prefix}-{envname}-ipset-cloudfront",
+                description=f"IP addresses to allow for Dataall {envname}",
+                addresses=custom_waf_rules.get("allowed_ip_list"),
+                ip_address_version="IPV4",
+                scope="CLOUDFRONT"
+            )
+
         waf_rules = []
+        priority = 0
+        if custom_waf_rules:
+            if custom_waf_rules.get("allowed_geo_list"):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='GeoMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    geo_match_statement=wafv2.CfnWebACL.GeoMatchStatementProperty(
+                                        country_codes=custom_waf_rules.get("allowed_geo_list")
+                                    )
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='GeoMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
+            if custom_waf_rules.get("allowed_ip_list"):
+                waf_rules.append(
+                    wafv2.CfnWebACL.RuleProperty(
+                        name='IPMatch',
+                        statement=wafv2.CfnWebACL.StatementProperty(
+                            not_statement=wafv2.CfnWebACL.NotStatementProperty(
+                                statement=wafv2.CfnWebACL.StatementProperty(
+                                    ip_set_reference_statement={
+                                        "arn" : ip_set_cloudfront.attr_arn
+                                    }
+                                )
+                            )
+                        ),
+                        action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                        visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                            sampled_requests_enabled=True,
+                            cloud_watch_metrics_enabled=True,
+                            metric_name='IPMatch',
+                        ),
+                        priority=priority,
+                    )
+                )
+                priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesAdminProtectionRuleSet',
@@ -48,10 +110,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
                 ),
-                priority=0,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesAmazonIpReputationList',
@@ -65,10 +128,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
                 ),
-                priority=1,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesCommonRuleSet',
@@ -82,10 +146,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesCommonRuleSet',
                 ),
-                priority=2,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
@@ -99,10 +164,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
                 ),
-                priority=3,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesLinuxRuleSet',
@@ -116,10 +182,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesLinuxRuleSet',
                 ),
-                priority=4,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+        priority += 1
         waf_rules.append(
             wafv2.CfnWebACL.RuleProperty(
                 name='AWS-AWSManagedRulesSQLiRuleSet',
@@ -133,10 +200,11 @@ class CloudfrontDistro(pyNestedClass):
                     cloud_watch_metrics_enabled=True,
                     metric_name='AWS-AWSManagedRulesSQLiRuleSet',
                 ),
-                priority=5,
+                priority=priority,
                 override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
             )
         )
+
         acl = wafv2.CfnWebACL(
             self,
             'ACL-Cloudfront',

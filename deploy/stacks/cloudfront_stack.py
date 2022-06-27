@@ -14,6 +14,7 @@ class CloudfrontStack(Stack):
         resource_prefix='dataall',
         tooling_account_id=None,
         custom_domain=None,
+        custom_waf_rules=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -34,5 +35,6 @@ class CloudfrontStack(Stack):
             auth_at_edge=auth_at_edge,
             tooling_account_id=tooling_account_id,
             custom_domain=custom_domain,
+            custom_waf_rules=custom_waf_rules,
             **kwargs,
         )
