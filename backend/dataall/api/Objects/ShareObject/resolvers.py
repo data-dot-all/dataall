@@ -115,6 +115,7 @@ def reject_share_object(context: Context, source, shareUri: str = None):
 
     return share
 
+
 def delete_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         share = db.api.ShareObject.get_share_by_uri(session, shareUri)
@@ -128,6 +129,7 @@ def delete_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
         return True
+
 
 def add_shared_item(context, source, shareUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:

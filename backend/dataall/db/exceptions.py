@@ -172,6 +172,7 @@ class SharedItemsFound(Exception):
     def __str__(self):
         return f'{self.message}'
 
+
 class OrganizationResourcesFound(Exception):
     def __init__(self, action, message):
         self.action = action
