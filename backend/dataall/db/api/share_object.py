@@ -449,14 +449,6 @@ class ShareObject:
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_items = session.query(models.ShareObjectItem).filter(
-            models.ShareObjectItem.shareUri == share.shareUri
-        )
-        if shared_items:
-            raise exceptions.SharedItemsFound(
-                action="Delete Share Object",
-                message="Delete all shared items before proceeding",
-            )
         history = models.ShareObjectHistory(
             owner=username,
             label=f'{username} has cancelled share object',
@@ -464,7 +456,7 @@ class ShareObject:
             actionName='CANCEL',
         )
         session.add(history)
-        session.delete(share)
+        share.deleted = datetime.now()
         return True
 
     @staticmethod
@@ -584,7 +576,6 @@ class ShareObject:
                     models.Dataset.stewards.in_(groups),
                 )
             )
-            .filter(models.ShareObject.deleted.is_(None))
         )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
@@ -607,6 +598,5 @@ class ShareObject:
                     ),
                 )
             )
-            .filter(models.ShareObject.deleted.is_(None))
         )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
