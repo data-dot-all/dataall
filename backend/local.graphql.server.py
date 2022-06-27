@@ -49,10 +49,8 @@ CORS(app)
 
 def request_context(headers, mock=False):
     if mock:
-        username = headers.get('username', 'janedoe@amazon.com')
-        groups = headers.get('groups', ['Scientists'])
-        # username = headers.get('username', 'anonymous@amazon.com')
-        # groups = headers.get('groups', ['Engineers'])
+        username = headers.get('username', 'anonymous@amazon.com')
+        groups = headers.get('groups', ['Engineers', 'Scientists'])
     else:
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')
