@@ -34,6 +34,7 @@ import {
 import { LoadingButton } from '@mui/lab';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import useClient from '../../hooks/useClient';
@@ -47,6 +48,7 @@ import Scrollbar from '../../components/Scrollbar';
 import * as Defaults from '../../components/defaults';
 import { PagedResponseDefault } from '../../components/defaults';
 import removeSharedItem from '../../api/ShareObject/removeSharedItem';
+import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import PlusIcon from '../../icons/Plus';
 import AddShareItemModal from './AddShareItemModal';
 import approveShareObject from '../../api/ShareObject/approveShareObject';
@@ -59,6 +61,7 @@ function ShareViewHeader(props) {
     client,
     dispatch,
     enqueueSnackbar,
+    navigate,
     fetchItem,
     fetchItems,
     loading
@@ -66,6 +69,7 @@ function ShareViewHeader(props) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -86,6 +90,27 @@ function ShareViewHeader(props) {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setSubmitting(false);
+  };
+  const remove = async () => {
+    setRemoving(true);
+    const response = await client.mutate(
+      deleteShareObject({
+        shareUri: share.shareUri
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Share request deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      navigate('/console/shares');
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setRemoving(false);
   };
   const accept = async () => {
     setAccepting(true);
@@ -186,6 +211,15 @@ function ShareViewHeader(props) {
             >
               Refresh
             </Button>
+            <Button
+              color="primary"
+              startIcon={<DeleteOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={remove}
+            >
+              Delete
+            </Button>
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
                 {share.status === 'PendingApproval' && (
@@ -257,6 +291,7 @@ ShareViewHeader.propTypes = {
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
+  navigate: PropTypes.any,
   fetchItem: PropTypes.func,
   fetchItems: PropTypes.func,
   loading: PropTypes.bool
@@ -327,6 +362,7 @@ const ShareView = () => {
   const [share, setShare] = useState(null);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
   const [sharedItems, setSharedItems] = useState(PagedResponseDefault);
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
@@ -415,6 +451,7 @@ const ShareView = () => {
             share={share}
             client={client}
             dispatch={dispatch}
+            navigate={navigate}
             enqueueSnackbar={enqueueSnackbar}
             fetchItem={fetchItem}
             fetchItems={fetchShareItems}

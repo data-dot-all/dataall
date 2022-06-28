@@ -29,6 +29,7 @@ from .ResourcePolicyPermission import ResourcePolicyPermission
 from .SagemakerNotebook import SagemakerNotebook
 from .SagemakerStudio import SagemakerStudio, SagemakerStudioUserProfile
 from .ShareObject import ShareObject
+from .ShareObjectHistory import ShareObjectHistory
 from .ShareObjectItem import ShareObjectItem
 from .DataPipeline import DataPipeline
 from .Stack import Stack
