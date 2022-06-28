@@ -18,6 +18,7 @@ nav:
         - Dashboards: dashboards.md
         # - Warehouses: redshift.md
     - Security: security.md
+    - Monitoring: monitoring.md
     - Labs:
       - Data access management: lab1.md
       #- Data ingestion and transformation with pipelines: lab_template.md
