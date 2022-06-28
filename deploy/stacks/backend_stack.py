@@ -1,6 +1,7 @@
 from builtins import super
 
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import Stack
 
 from .aurora import AuroraServerlessStack
@@ -34,10 +35,10 @@ class BackendStack(Stack):
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
-        custom_waf_rules=None,
         ip_ranges=None,
         apig_vpce=None,
         prod_sizing=False,
+        quicksight_enabled=False,
         enable_cw_canaries=False,
         enable_cw_rum=False,
         **kwargs,
@@ -117,7 +118,6 @@ class BackendStack(Stack):
             image_tag=image_tag,
             ecr_repository=repo,
             internet_facing=internet_facing,
-            custom_waf_rules=custom_waf_rules,
             ip_ranges=ip_ranges,
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
@@ -149,6 +149,17 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        if quicksight_enabled:
+            quicksight_monitoring_sg = ec2.SecurityGroup(
+            self,
+            f'QuicksightMonitoringDBSG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+        )
+        else:
+            quicksight_monitoring_sg = None
+
         aurora_stack = AuroraServerlessStack(
             self,
             f'Aurora',
@@ -162,6 +173,7 @@ class BackendStack(Stack):
             ecs_security_groups=ecs_stack.ecs_security_groups,
             codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
             prod_sizing=prod_sizing,
+            quicksight_monitoring_sg=quicksight_monitoring_sg,
             **kwargs,
         )
 
