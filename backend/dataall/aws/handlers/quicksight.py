@@ -4,6 +4,7 @@ import re
 from botocore.exceptions import ClientError
 
 from .sts import SessionHelper
+from .secrets_manager import SecretsManager
 
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)
@@ -262,3 +263,56 @@ class Quicksight:
                         return True
 
         return False
+
+    @staticmethod
+    def create_data_source(AwsAccountId, region, UserName, vpnConnectionId):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if not user:
+            return False
+        try:
+            response = client.describe_data_source(
+                AwsAccountId=AwsAccountId, DataSourceId="dataall-metadata-db"
+            )
+
+        except:
+            aurora_params = SecretsManager.get_secret_value(
+                AwsAccountId=AwsAccountId, region=region, secretId="abcde"
+            )
+            response = client.create_data_source(
+                AwsAccountId=AwsAccountId,
+                DataSourceId="dataall-metadata-db",
+                Name="sample-aurora-db",
+                Type="AURORA_POSTGRESQL",
+                DataSourceParameters = {
+                    'AuroraPostgreSqlParameters':{
+                            'Host': "dataall-dev-db.cluster-cxf75rkkjzhz.eu-west-1.rds.amazonaws.com",
+                            'Port': 5432,
+                            'Database': "devdb",
+                        }
+                },
+                Credentials = {
+                    "CredentialPair": {
+                        "Username": "dtaadmin",
+                        "Password": ",B3jDZGa-9nbMq,kI780CIiPfPlR4BWj"
+                    }
+                },
+                Permissions= [
+                    {
+                        "Principal": user.get('Arn'),
+                        "Actions": [
+                            "quicksight:UpdateDataSourcePermissions",
+                            "quicksight:DescribeDataSource",
+                            "quicksight:DescribeDataSourcePermissions",
+                            "quicksight:PassDataSource",
+                            "quicksight:UpdateDataSource",
+                            "quicksight:DeleteDataSource"
+                        ]
+                    }
+                ],
+                VpcConnectionProperties = {
+                    'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpnConnectionId}"
+                }
+            )
+
+        return True
