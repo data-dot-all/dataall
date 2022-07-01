@@ -43,13 +43,13 @@ const TableColumns = (props) => {
     }
   };
 
-  const handleEditCellChangeCommitted = ({ id, field, props }) => {
-    /*eslint-disable-line*/
-    const data = props;
-    if (field === 'description') {
+  const handleEditCellChangeCommitted = (e:GridCellEditCommitParams) => {
+    const data = e.value;
+    if (e.field === 'description') {
       columns.map((c) => {
-        if (c.id === id) {
-          return updateDescription(c, data.value.toString()).catch((e) =>
+        if (c.id === e.id && data.toString() !== c.description) {
+          c.description = data.toString();
+          return updateDescription(c, data.toString()).catch((e) =>
             dispatch({ type: SET_ERROR, error: e.message })
           );
         }
@@ -171,7 +171,7 @@ const TableColumns = (props) => {
           <DataGrid
             rows={columns}
             columns={header}
-            onEditCellChangeCommitted={handleEditCellChangeCommitted}
+            onCellEditCommit={handleEditCellChangeCommitted}
           />
         )}
       </Card>
