@@ -272,9 +272,23 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
             permission_name=permissions.CREDENTIALS_DATASET,
         )
         dataset = Dataset.get_dataset_by_uri(session, datasetUri)
-    pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
+        if dataset.SamlAdminGroupName not in context.groups:
+            share = (
+                session.query(models.ShareObject)
+                .filter(models.ShareObject.datasetUri == datasetUri)
+                .filter(models.ShareObject.owner == context.username)
+                .first()
+            )
+            shared_environment = Environment.get_environment_by_uri(session=session, uri=share.environmentUri)
+            role_arn = shared_environment.EnvironmentDefaultIAMRoleArn
+            account_id = shared_environment.AwsAccountId
+        else:
+            role_arn = dataset.IAMDatasetAdminRoleArn
+            account_id = dataset.AwsAccountId
+
+    pivot_session = SessionHelper.remote_session(account_id)
     aws_session = SessionHelper.get_session(
-        base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn
+        base_session=pivot_session, role_arn=role_arn
     )
     url = SessionHelper.get_console_access_url(
         aws_session,
