@@ -355,6 +355,16 @@ class ShareObject:
         return share
 
     @staticmethod
+    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner):
+        share: models.ShareObject = (
+            session.query(models.ShareObject)
+            .filter(models.ShareObject.datasetUri == dataset_uri)
+            .filter(models.ShareObject.owner == dataset_owner)
+            .first()
+        )
+        return share
+
+    @staticmethod
     @has_resource_perm(permissions.ADD_ITEM)
     def add_share_object_item(
         session,

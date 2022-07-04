@@ -15,7 +15,7 @@ from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
 from ....db import paginate, exceptions, permissions, models
-from ....db.api import Dataset, Environment, ResourcePolicy
+from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
 from ....searchproxy import indexers
 
@@ -273,14 +273,21 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
         )
         dataset = Dataset.get_dataset_by_uri(session, datasetUri)
         if dataset.SamlAdminGroupName not in context.groups:
-            share = (
-                session.query(models.ShareObject)
-                .filter(models.ShareObject.datasetUri == datasetUri)
-                .filter(models.ShareObject.owner == context.username)
-                .first()
+            share = ShareObject.get_share_by_dataset_attributes(
+                session=session,
+                dataset_uri=datasetUri,
+                dataset_owner=context.username
             )
-            shared_environment = Environment.get_environment_by_uri(session=session, uri=share.environmentUri)
-            role_arn = shared_environment.EnvironmentDefaultIAMRoleArn
+            shared_environment = Environment.get_environment_by_uri(
+                session=session,
+                uri=share.environmentUri
+            )
+            env_group = Environment.find_environment_group(
+                session=session,
+                group_uri=share.principalId,
+                environment_uri=share.environmentUri
+            )
+            role_arn = env_group.environmentIAMRoleArn
             account_id = shared_environment.AwsAccountId
         else:
             role_arn = dataset.IAMDatasetAdminRoleArn
