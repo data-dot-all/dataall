@@ -38,9 +38,12 @@ If enabled, we allow AWS Quicksight to establish a VPC connection with our RDS m
 We modify the security group of our Aurora RDS database to communicate with Quicksight, then we can use AWS Quicksight to 
 create rich dynamic analyses and dashboards based on the information on RDS. Once the deployment is complete you need to follow the next steps:
 
-Pre-requisite: Quicksight Enterprise Edition
+**1) Pre-requisite: Quicksight Enterprise Edition**
+We need to subscribe to Quicksight and allow data.all domain to embed dashboards, follow the instructions in the step 4 of the
+<a href="environments.html#link-environment">Linking environment section</a>. 
 
-**1) Create Quicksight VPC connection**
+
+**2) Create Quicksight VPC connection**
 
 Follow the steps in the
 <a href="https://docs.aws.amazon.com/quicksight/latest/user/vpc-creating-a-connection-in-quicksight.html">documentation</a>
@@ -57,19 +60,13 @@ To complete the set-up you will need the following information:
 - Security group created for Quicksight: In the VPC console, under security groups, look for a group called `<resource-prefix>-<envname>-quicksight-monitoring-sg`
 For example using the default resource prefix, in an environment called prod, look for `dataall-prod-quicksight-monitoring-sg`.
 
-**2) Create Aurora data source**
-
-You will find the necessary connection parameters in AWS Secrets Manager as appears in the following picture.
-
-![quicksight](pictures/monitoring/secrets.png#zoom#shadow)
-
-![quicksight](pictures/monitoring/secret2.png#zoom#shadow)
-
-In the Quicksight console, go to Datasets and create a new dataset selecting the **Aurora** option. 
-Fill the form with the information from AWS Secrets Manager and under **Connection type** select the VPC connection created in step 1.
+**3) [WIP] Create Aurora data source and Quicksight data sets**
+We have automated this step for you! As a tenant user, a user that belongs to `DAADministrators` group, sign in to data.all.
+In the UI navigate to the **Admin Settings** window by clicking in the top-right corner. You will appear in a window with 2 tabs: Teams and Monitoring.
+In the Monitoring tab, introduce the VPC connection ... and click on .....
 
 
-**3) Customize your analyses and share your dashboards**
+**4) Customize your analyses and share your dashboards**
 Explore Quicksight documentation for next steps, such as <a href="https://docs.aws.amazon.com/quicksight/latest/user/working-with-visuals.html">customization of analyses</a>,
 <a href="https://docs.aws.amazon.com/quicksight/latest/user/share-dashboard-view.html">sharing dashboards</a>
 or <a href="https://docs.aws.amazon.com/quicksight/latest/user/sending-reports.html">sending reports via email</a>.

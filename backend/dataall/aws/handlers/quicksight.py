@@ -265,7 +265,7 @@ class Quicksight:
         return False
 
     @staticmethod
-    def create_data_source(AwsAccountId, region, UserName, vpnConnectionId):
+    def create_data_source_vpc(AwsAccountId, region, UserName, vpnConnectionId):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if not user:
@@ -314,5 +314,56 @@ class Quicksight:
                     'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpnConnectionId}"
                 }
             )
+
+        return True
+
+    @staticmethod
+    def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, datasetId):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if not user:
+            return False
+
+        data_source = client.describe_data_source(
+            AwsAccountId=AwsAccountId,
+            DataSourceId=dataSourceId
+        )
+
+        if not data_source:
+            return False
+
+        response = client.create_data_set(
+            AwsAccountId=AwsAccountId,
+            DataSetId=datasetId,
+            Name=datasetId,
+            PhysicalTableMap={
+                'string': {
+                    'RelationalTable': {
+                        'DataSourceArn': data_source.get('DataSource').get('Arn'),
+                        'Catalog': 'string',
+                        'Schema': 'string',
+                        'Name': 'string',
+                        'InputColumns': [
+                            {
+                                'Name': 'string',
+                                'Type': 'STRING'
+                            },
+                        ]
+                    }
+                }},
+            ImportMode= 'DIRECT_QUERY',
+            Permissions=[
+                {
+                    'Principal': user.get('Arn'),
+                    'Actions': [
+                        "quicksight:DescribeDataSet",
+                        "quicksight:DescribeDataSetPermissions",
+                        "quicksight:PassDataSet",
+                        "quicksight:DescribeIngestion",
+                        "quicksight:ListIngestions"
+                    ]
+                },
+            ],
+        )
 
         return True
