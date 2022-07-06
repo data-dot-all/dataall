@@ -112,6 +112,68 @@ class Pipeline:
         return pipeline
 
     @staticmethod
+    @has_tenant_perm(permissions.MANAGE_PIPELINES)
+    @has_resource_perm(permissions.CREATE_PIPELINE)
+    def create_pipeline_environment(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.DataPipeline:
+
+        Environment.check_group_environment_permission(
+            session=session,
+            username=username,
+            groups=groups,
+            uri=uri,
+            group=data['SamlGroupName'],
+            permission_name=permissions.CREATE_PIPELINE,
+        )
+
+        environment = Environment.get_environment_by_uri(session, uri)
+
+        if not environment.pipelinesEnabled:
+            raise exceptions.UnauthorizedOperation(
+                action=permissions.CREATE_PIPELINE,
+                message=f'Pipelines feature is disabled for the environment {environment.label}',
+            )
+
+        pipeline_env: models.DataPipelineEnvironment = models.DataPipelineEnvironment(
+            environmentUri=environment.environmentUri,
+            SamlGroupName=data['SamlGroupName'],
+            label=data['label'],
+            description=data.get('description', 'No description provided'),
+            tags=data.get('tags', []),
+            AwsAccountId=environment.AwsAccountId,
+            region=environment.region,
+            repo=slugify(data['label']),
+            devStages=data.get('devStages', []),
+            devStrategy=data['devStrategy'],
+            inputDatasetUri=data['inputDatasetUri'],
+            outputDatasetUri=data['outputDatasetUri'],
+            template=data['template'],
+        )
+
+        environmentUri = Column(String, nullable=False)
+        environmentLabel = Column(String, nullable=False)
+        DataPipelineUri = Column(String, nullable=False)
+        DataPipelineLabel = Column(String, nullable=False)
+        envpipelineUri = Column(String, nullable=False, primary_key=True)
+        region = Column(String, default='eu-west-1')
+        AwsAccountId = Column(String, nullable=False)
+        SamlGroupName = Column(String, nullable=False)
+        devStage = Column(String, nullable=False)
+        inputDatasetUri = Column(String, nullable=True)
+        outputDatasetUri = Column(String, nullable=True)
+
+        session.add(pipeline_env)
+        session.commit()
+
+        return pipeline_env
+
+    @staticmethod
     def _validate_input(data):
         if not data:
             raise exceptions.RequiredParameter(data)

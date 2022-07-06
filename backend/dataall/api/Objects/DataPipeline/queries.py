@@ -49,20 +49,3 @@ getDataPipelineCredsLinux = gql.QueryField(
     resolver=get_creds,
 )
 
-
-listDataPipelineExecutions = gql.QueryField(
-    name='listDataPipelineExecutions',
-    args=[
-        gql.Argument(name='DataPipelineUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='stage', type=gql.String),
-    ],
-    resolver=list_pipeline_state_machine_executions,
-    type=gql.Ref('DataPipelineExecutionSearchResults'),
-)
-
-
-listDataPipelineBuilds = gql.QueryField(
-    name='listDataPipelineBuilds',
-    args=[gql.Argument(name='DataPipelineUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('DataPipelineBuildSearchResults'),
-)

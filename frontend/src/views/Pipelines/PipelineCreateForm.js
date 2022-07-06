@@ -11,10 +11,16 @@ import {
   CardHeader,
   CircularProgress,
   Container,
+  Divider,
   FormHelperText,
   Grid,
   Link,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
   Typography
 } from '@mui/material';
@@ -34,6 +40,9 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 import listDatasetsOwnedByEnvGroup from "../../api/Environment/listDatasetsOwnedByEnvGroup";
 import listDataItemsSharedWithEnvGroup from "../../api/Environment/listDataItemsSharedWithEnvGroup";
+import PipelineEnvironmentUpdateForm from "./PipelineEnvironmentUpdateForm";
+import PencilAlt from "../../icons/PencilAlt";
+import Scrollbar from "../../components/Scrollbar";
 
 const PipelineCrateForm = (props) => {
   const navigate = useNavigate();
@@ -358,7 +367,7 @@ const PipelineCrateForm = (props) => {
                               error={Boolean(touched.tags && errors.tags)}
                               helperText={touched.tags && errors.tags}
                               variant="outlined"
-                              label="Tags"
+                              label="Tagseeeehhhhh"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
                                 setFieldValue('tags', [...chip]);
@@ -594,6 +603,9 @@ const PipelineCrateForm = (props) => {
             </Formik>
           </Box>
         </Container>
+      </Box>
+      <Box sx={{ mt: 3 }}>
+        <PipelineEnvironmentUpdateForm/>
       </Box>
     </>
   );

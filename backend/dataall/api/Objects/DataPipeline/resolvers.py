@@ -39,6 +39,19 @@ def create_pipeline(context: Context, source, input=None):
     return pipeline
 
 
+def create_pipeline_environment(context: Context, source, input=None):
+    with context.engine.scoped_session() as session:
+        pipeline_env = Pipeline.create_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=input['environmentUri'],
+            data=input,
+            check_perm=True,
+        )
+    return pipeline_env
+
+
 def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict = None):
     with context.engine.scoped_session() as session:
         pipeline = Pipeline.update_pipeline(
@@ -305,7 +318,8 @@ def start_pipeline(context: Context, source, DataPipelineUri: str = None):
 
     return execution_arn
 
-
+def delete_pipeline_environment(context: Context, source, DataPipelineEnvironmentUri: str = None):
+    return True
 def delete_pipeline(
     context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
 ):
