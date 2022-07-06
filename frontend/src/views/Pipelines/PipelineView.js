@@ -35,7 +35,6 @@ import PencilAltIcon from '../../icons/PencilAlt';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
 import deleteDataPipeline from '../../api/DataPipeline/deleteDataPipeline';
 import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
-import PipelineRuns from './PipelineRuns';
 import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import FeedComments from '../Feed/FeedComments';
