@@ -49,8 +49,10 @@ CORS(app)
 
 def request_context(headers, mock=False):
     if mock:
-        username = headers.get('username', 'anonymous@amazon.com')
-        groups = headers.get('groups', ['Engineers', 'Scientists'])
+        #username = headers.get('username', 'janedoe@amazon.com')
+        username = 'someone@amazon.com'
+        #groups = headers.get('groups', ['Scientists', 'DAAdministrators'])
+        groups = ['Scientists', 'DAAdministrators']
     else:
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')
@@ -131,6 +133,7 @@ def graphql_server():
     # GraphQL queries are always sent as POST
     print(request.data)
     data = request.get_json()
+    print(request_context(request.headers, mock=True))
 
     # Note: Passing the request to the context is optional.
     # In Flask, the current request is always accessible as flask.request

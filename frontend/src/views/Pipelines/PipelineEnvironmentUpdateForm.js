@@ -24,6 +24,7 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 
 const PipelineEnvironmentUpdateForm = () => {
+  const { environmentOptions } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
@@ -110,7 +111,16 @@ const PipelineEnvironmentUpdateForm = () => {
                                 value={kvEnvs[idx].label}
                                 onChange={handleChange(idx, 'label')}
                                 variant="outlined"
-                              />
+                              >
+                                {environmentOptions.map((environment) => (
+                                  <MenuItem
+                                    key={environment.environmentUri}
+                                    value={environment}
+                                  >
+                                    {environment.label}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
                             </TableCell>
                             <td>
                               <IconButton
@@ -151,5 +161,7 @@ const PipelineEnvironmentUpdateForm = () => {
     </>
   );
 };
-
+PipelineEnvironmentUpdateForm.propTypes = {
+  environmentOptions: PropTypes.array.isRequired,
+};
 export default PipelineEnvironmentUpdateForm;

@@ -17,7 +17,7 @@ NewDataPipelineInput = gql.InputType(
 )
 
 NewDataPipelineEnvironmentInput = gql.InputType(
-    name='NewDataPipelineInput',
+    name='NewDataPipelineEnvironmentInput',
     arguments=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='pipelineUri', type=gql.NonNullableType(gql.String)),
