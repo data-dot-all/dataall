@@ -367,7 +367,7 @@ const PipelineCrateForm = (props) => {
                               error={Boolean(touched.tags && errors.tags)}
                               helperText={touched.tags && errors.tags}
                               variant="outlined"
-                              label="Tagseeeehhhhh"
+                              label="Tags"
                               placeholder="Hit enter after typing value"
                               onChange={(chip) => {
                                 setFieldValue('tags', [...chip]);
@@ -575,6 +575,12 @@ const PipelineCrateForm = (props) => {
                           />
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      <Box sx={{ mt: 3 }}>
+                        <PipelineEnvironmentUpdateForm/>
+                        environmentOptions={environmentOptions}
+                      </Box>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>
@@ -596,16 +602,13 @@ const PipelineCrateForm = (props) => {
                           Create Pipeline
                         </LoadingButton>
                       </Box>
-                    </Grid>
+                  </Grid>
                   </Grid>
                 </form>
               )}
             </Formik>
           </Box>
         </Container>
-      </Box>
-      <Box sx={{ mt: 3 }}>
-        <PipelineEnvironmentUpdateForm/>
       </Box>
     </>
   );
