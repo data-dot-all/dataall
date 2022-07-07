@@ -7,6 +7,7 @@ ARG PYTHON_VERSION=python3.8
 RUN mkdir /code
 RUN mkdir /build
 
+RUN yum clean all
 RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION

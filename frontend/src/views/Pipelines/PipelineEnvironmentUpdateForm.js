@@ -9,6 +9,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -23,13 +24,16 @@ import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 
-const PipelineEnvironmentUpdateForm = () => {
-  const { environmentOptions } = props;
+const PipelineEnvironmentUpdateForm = (props) => {
+  const { environmentOptions,UpdateEnvstoParent } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [kvEnvs, setKeyValueEnvs] = useState([{ stage: '', label: '' }]
+  );
+  const [environmentOps, setEnvironmentOps] = useState(
+    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'some', label: 'some' }]
   );
 
   const handleAddEnvRow = () => {
@@ -48,7 +52,9 @@ const PipelineEnvironmentUpdateForm = () => {
   };
 
   const handleChange = (idx, field) => (e) => {
+    console.log("inside handle change")
     const { value } = e.target;
+    console.log (value)
     setKeyValueEnvs((prevstate) => {
       const rows = [...prevstate];
       if (field === 'stage') {
@@ -68,17 +74,15 @@ const PipelineEnvironmentUpdateForm = () => {
     });
   };
 
-  async function submit() {
-    console.log("submitting")
-  }
-
+  console.log(environmentOptions)
+  console.log(environmentOps)
   return (
     <>
       <Grid container spacing={3}>
         <Grid item lg={12} xl={12} xs={12}>
           <Box>
             <Card>
-              <CardHeader title="Deployment environments" />
+              <CardHeader title="Development environments" />
               <Divider />
               <CardContent>
                 <Box>
@@ -86,7 +90,7 @@ const PipelineEnvironmentUpdateForm = () => {
                     {kvEnvs && kvEnvs.length > 0 && (
                       <TableHead>
                         <TableRow>
-                          <TableCell>Deployment Stage</TableCell>
+                          <TableCell>Development Stage</TableCell>
                           <TableCell>Environment</TableCell>
                         </TableRow>
                       </TableHead>
@@ -110,12 +114,13 @@ const PipelineEnvironmentUpdateForm = () => {
                                 name="label"
                                 value={kvEnvs[idx].label}
                                 onChange={handleChange(idx, 'label')}
+                                select
                                 variant="outlined"
                               >
-                                {environmentOptions.map((environment) => (
+                                {environmentOps.map((environment) => (
                                   <MenuItem
                                     key={environment.environmentUri}
-                                    value={environment}
+                                    value={environment.label}
                                   >
                                     {environment.label}
                                   </MenuItem>
@@ -138,14 +143,14 @@ const PipelineEnvironmentUpdateForm = () => {
                   </Table>
                   <Box>
                     <Button type="button" onClick={handleAddEnvRow}>
-                      Add Deployment environments
+                      Add environment
                     </Button>
                   </Box>
                   <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>
                     <LoadingButton
                       color="primary"
                       loading={isSubmitting}
-                      onClick={() => submit()}
+                      onClick={() => UpdateEnvstoParent(kvEnvs)}
                       sx={{ m: 1 }}
                       variant="contained"
                     >
@@ -163,5 +168,6 @@ const PipelineEnvironmentUpdateForm = () => {
 };
 PipelineEnvironmentUpdateForm.propTypes = {
   environmentOptions: PropTypes.array.isRequired,
+  UpdateEnvstoParent: PropTypes.func.isRequired
 };
 export default PipelineEnvironmentUpdateForm;
