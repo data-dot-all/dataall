@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import { SET_ERROR } from '../store/errorReducer';
 
 const anonymousUser = {
-  id: 'anonymous@amazon.com',
-  email: 'anonymous@amazon.com',
-  name: 'anonymous@amazon.com'
+  id: 'someone@amazon.com',
+  email: 'someone@amazon.com',
+  name: 'someone@amazon.com'
 };
 const initialState = {
   isAuthenticated: true,

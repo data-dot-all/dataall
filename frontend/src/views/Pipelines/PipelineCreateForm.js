@@ -56,6 +56,13 @@ const PipelineCrateForm = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
+  const [childenvs, setChildEnvs] = useState([]);
+
+  const UpdateEnvstoParent = (kvEnvs) => {
+    setChildEnvs(kvEnvs)
+    console.log("in parent, UpdateEnvstoParent")
+    console.log(kvEnvs)
+  }
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -158,6 +165,7 @@ const PipelineCrateForm = (props) => {
       );
     }
   }, [client, dispatch, fetchEnvironments]);
+
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -288,9 +296,9 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
-                environment: Yup.object().required('*Environment is required'),
+                environment: Yup.object().required('*CICD Environment is required'),
                 devStages: Yup.array().required('*At least ONE stage is required'),
-                devStrategy: Yup.string().required('*A development strategy is required'),
+                devStrategy: Yup.string().required('*A CICD strategy is required'),
                 tags: Yup.array().nullable(),
                 inputDatasetUri: Yup.string().nullable(),
                 outputDatasetUri: Yup.string().nullable(),
@@ -428,7 +436,7 @@ const PipelineCrateForm = (props) => {
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
-                        <CardHeader title="Deployment" />
+                        <CardHeader title="CICD" />
                         <CardContent>
                           <TextField
                             fullWidth
@@ -438,7 +446,7 @@ const PipelineCrateForm = (props) => {
                             helperText={
                               touched.environment && errors.environment
                             }
-                            label="Environment"
+                            label="CICD Environment"
                             name="environment"
                             onChange={(event) => {
                               setFieldValue('SamlGroupName', '');
@@ -532,7 +540,7 @@ const PipelineCrateForm = (props) => {
                             helperText={
                               touched.devStrategy && errors.devStrategy
                             }
-                            label="Development strategy"
+                            label="CICD strategy"
                             name="devStrategy"
                             onChange={handleChange}
                             select
@@ -553,7 +561,7 @@ const PipelineCrateForm = (props) => {
                               error={Boolean(touched.devStages && errors.devStages)}
                               helperText={touched.devStages && errors.devStages}
                               variant="outlined"
-                              label="Development stages (dev,test,prod..)"
+                              label="Deployment stages (dev,test,prod..)"
                               placeholder="Hit enter after typing the value of each stage"
                               onChange={(chip) => {
                                 setFieldValue('devStages', [...chip]);
@@ -578,8 +586,11 @@ const PipelineCrateForm = (props) => {
                     </Grid>
                     <Grid item lg={12} md={6} xs={12}>
                       <Box sx={{ mt: 3 }}>
-                        <PipelineEnvironmentUpdateForm/>
-                        environmentOptions={environmentOptions}
+                        <PipelineEnvironmentUpdateForm
+                          environmentOptions={environmentOptions}
+                          UpdateEnvstoParent={UpdateEnvstoParent}
+
+                        />
                       </Box>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
