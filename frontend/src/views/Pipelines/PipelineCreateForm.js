@@ -166,6 +166,10 @@ const PipelineCrateForm = (props) => {
     }
   }, [client, dispatch, fetchEnvironments]);
 
+  async function submitEnvironment(kvEnv) {
+    console.log("inside submitenvironmets")
+    console.log(kvEnv)
+  }
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -179,14 +183,19 @@ const PipelineCrateForm = (props) => {
             tags: values.tags,
             devStrategy: values.devStrategy,
             devStages: values.devStages,
-            inputDatasetUri: values.inputDatasetUri,
-            outputDatasetUri: values.outputDatasetUri,
-            template: values.template,
+            template: values.template
           }
         })
       );
       if (!response.errors) {
         setStatus({ success: true });
+        console.log("submitting environments")
+        console.log(kvEnvs)
+        for (let i=0; kvEnvs.lenght; i++){
+          console.log("inside loop")
+          console.log(kvEnvs[i])
+          submitEnvironment(kvEnvs[i])
+        }
         setSubmitting(false);
         enqueueSnackbar('Pipeline creation started', {
           anchorOrigin: {
@@ -284,9 +293,7 @@ const PipelineCrateForm = (props) => {
                 tags: [],
                 devStages: [],
                 devStrategy: '',
-                inputDatasetUri: '',
-                outputDatasetUri: '',
-                template: ''
+                template: '',
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -300,9 +307,7 @@ const PipelineCrateForm = (props) => {
                 devStages: Yup.array().required('*At least ONE stage is required'),
                 devStrategy: Yup.string().required('*A CICD strategy is required'),
                 tags: Yup.array().nullable(),
-                inputDatasetUri: Yup.string().nullable(),
-                outputDatasetUri: Yup.string().nullable(),
-                template: Yup.string().nullable()
+                template: Yup.string().nullable(),
               })}
               onSubmit={async (
                 values,
@@ -382,55 +387,6 @@ const PipelineCrateForm = (props) => {
                               }}
                             />
                           </Box>
-                        </CardContent>
-                      </Card>
-                      <Card sx={{ mb: 3 }}>
-                        <CardHeader title="Parameters" />
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.inputDatasetUri && errors.inputDatasetUri
-                            )}
-                            helperText={
-                              touched.inputDatasetUri && errors.inputDatasetUri
-                            }
-                            label="Input Dataset"
-                            name="inputDatasetUri"
-                            onChange={handleChange}
-                            select
-                            value={values.inputDatasetUri}
-                            variant="outlined"
-                          >
-                            {datasetOptions.map((dataset) => (
-                              <MenuItem key={dataset.value} value={dataset.value}>
-                                {dataset.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.outputDatasetUri && errors.outputDatasetUri
-                            )}
-                            helperText={
-                              touched.outputDatasetUri && errors.outputDatasetUri
-                            }
-                            label="Output Dataset"
-                            name="outputDatasetUri"
-                            onChange={handleChange}
-                            select
-                            value={values.outputDatasetUri}
-                            variant="outlined"
-                          >
-                            {datasetOptions.map((dataset) => (
-                              <MenuItem key={dataset.value} value={dataset.value}>
-                                {dataset.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
                         </CardContent>
                       </Card>
                     </Grid>
