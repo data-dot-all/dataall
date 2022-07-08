@@ -45,7 +45,6 @@ def create_pipeline_environment(context: Context, source, input=None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=input['environmentUri'],
             data=input,
             check_perm=True,
         )
@@ -299,7 +298,6 @@ def list_pipeline_state_machine_executions(
         'nodes': executions,
     }
 
-
 def start_pipeline(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -320,6 +318,7 @@ def start_pipeline(context: Context, source, DataPipelineUri: str = None):
 
 def delete_pipeline_environment(context: Context, source, DataPipelineEnvironmentUri: str = None):
     return True
+
 def delete_pipeline(
     context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
 ):
