@@ -666,3 +666,140 @@ def test_notifications(client, db, user):
             """
     response = client.query(query, username=user.userName, filter={'archived': True})
     assert response.data.listNotifications.count == 1
+
+
+def test_delete_share_object(client, dataset1, group, user2, group2, env2):
+    get_share_object_query = """
+    query GetDataset(
+        $datasetUri:String!,
+    ){
+        getDataset(datasetUri:$datasetUri){
+            datasetUri
+            tables{
+                count
+                nodes{
+                    tableUri
+
+                }
+
+            }
+            shares{
+                count
+                nodes{
+                    owner
+                    shareUri
+                    status
+
+                }
+            }
+        }
+    }
+    """
+    response = client.query(
+        get_share_object_query,
+        username=dataset1.owner,
+        groups=[group.name],
+        datasetUri=dataset1.datasetUri,
+    )
+    share_object = response.data.getDataset.shares.nodes[0]
+
+    delete_share_object_query = """
+    mutation DeleteShareObject($shareUri: String!){
+      deleteShareObject(shareUri:$shareUri)
+    }
+    """
+    response = client.query(
+        delete_share_object_query,
+        username=dataset1.owner,
+        groups=[group.name],
+        shareUri=share_object.shareUri,
+    )
+    assert response.data.deleteShareObject
+
+    create_shared_object_query = """
+    mutation CreateShareObject(
+        $datasetUri:String!,
+        $input:NewShareObjectInput
+    ){
+        createShareObject(datasetUri:$datasetUri, input:$input){
+            shareUri
+            status
+            owner
+            dataset{
+                datasetUri
+                datasetName
+                exists
+            }
+        }
+    }
+    """
+
+    client.query(
+        create_shared_object_query,
+        username=user2.userName,
+        groups=[group2.name],
+        datasetUri=dataset1.datasetUri,
+        input={
+            'environmentUri': env2.environmentUri,
+            'principalId': group2.name,
+            'principalType': dataall.api.constants.PrincipalType.Group.name,
+        },
+    )
+    add_item_query = """
+    mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
+        addSharedItem(shareUri:$shareUri,input:$input){
+            shareUri
+            shareItemUri
+            itemUri
+        }
+    }
+    """
+    response = client.query(
+        get_share_object_query,
+        username=dataset1.owner,
+        groups=[group.name],
+        datasetUri=dataset1.datasetUri,
+    )
+
+    share_object = response.data.getDataset.shares.nodes[0]
+
+    this_dataset_tables = response.data.getDataset.tables.nodes
+    random_table: dataall.db.models.DatasetTable = random.choice(this_dataset_tables)
+    response = client.query(
+        add_item_query,
+        username=share_object.owner,
+        groups=[group2.name],
+        shareUri=share_object.shareUri,
+        input={
+            'itemUri': random_table.tableUri,
+            'itemType': dataall.api.constants.ShareableType.Table.name,
+        },
+    )
+
+    shared_item = response.data.addSharedItem
+
+    response = client.query(
+        delete_share_object_query,
+        username=user2.userName, groups=[group2.name],
+        shareUri=share_object.shareUri,
+    )
+    assert 'ShareItemsFound' in response.errors[0].message
+
+    remove_item_query = """
+        mutation RemoveSharedItem($shareItemUri:String!){
+            removeSharedItem(shareItemUri:$shareItemUri)
+        }
+    """
+    client.query(
+        remove_item_query,
+        username=user2.userName,
+        groups=[group2.name],
+        shareItemUri=shared_item.shareItemUri
+    )
+
+    response = client.query(
+        delete_share_object_query,
+        username=user2.userName, groups=[group2.name],
+        shareUri=share_object.shareUri,
+    )
+    assert response.data.deleteShareObject
