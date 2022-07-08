@@ -30,10 +30,10 @@ const PipelineEnvironmentUpdateForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [kvEnvs, setKeyValueEnvs] = useState([{ stage: '', label: '' }]
+  const [kvEnvs, setKeyValueEnvs] = useState([{ stage: '', environmentLabel: '', environmentUri: '' }]
   );
   const [environmentOps, setEnvironmentOps] = useState(
-    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'some', label: 'some' }]
+    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' }]
   );
 
   const handleAddEnvRow = () => {
@@ -54,13 +54,14 @@ const PipelineEnvironmentUpdateForm = (props) => {
   const handleChange = (idx, field) => (e) => {
     console.log("inside handle change")
     const { value } = e.target;
-    console.log (value)
+
     setKeyValueEnvs((prevstate) => {
       const rows = [...prevstate];
       if (field === 'stage') {
         rows[idx].stage = value;
       } else {
-        rows[idx].label = value;
+        rows[idx].environmentLabel = value.label;
+        rows[idx].environmentUri = value.environmentUri;
       }
       return rows;
     });
@@ -112,7 +113,7 @@ const PipelineEnvironmentUpdateForm = (props) => {
                               <TextField
                                 fullWidth
                                 name="label"
-                                value={kvEnvs[idx].label}
+                                value={kvEnvs[idx].environmentLabel}
                                 onChange={handleChange(idx, 'label')}
                                 select
                                 variant="outlined"
@@ -120,7 +121,7 @@ const PipelineEnvironmentUpdateForm = (props) => {
                                 {environmentOps.map((environment) => (
                                   <MenuItem
                                     key={environment.environmentUri}
-                                    value={environment.label}
+                                    value={environment}
                                   >
                                     {environment.label}
                                   </MenuItem>

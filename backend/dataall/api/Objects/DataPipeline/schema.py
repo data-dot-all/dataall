@@ -48,6 +48,7 @@ DataPipelineSearchResults = gql.ObjectType(
     ],
 )
 
+
 DataPipelineEnvironment = gql.ObjectType(
     name='DataPipelineEnvironment',
     fields=[
