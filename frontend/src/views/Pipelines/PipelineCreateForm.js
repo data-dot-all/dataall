@@ -56,13 +56,7 @@ const PipelineCrateForm = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
-  const [childenvs, setChildEnvs] = useState([]);
-
-  const UpdateEnvstoParent = (kvEnvs) => {
-    setChildEnvs(kvEnvs)
-    console.log("in parent, UpdateEnvstoParent")
-    console.log(kvEnvs)
-  }
+  const [envsReadyForSubmmission, setEnvsReadyForSubmmission] = useState(false);
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -165,12 +159,7 @@ const PipelineCrateForm = (props) => {
       );
     }
   }, [client, dispatch, fetchEnvironments]);
-
-  async function submitEnvironment(kvEnv) {
-    console.log("inside submitenvironmets")
-    console.log(kvEnv)
-  }
-
+  
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
@@ -190,12 +179,7 @@ const PipelineCrateForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         console.log("submitting environments")
-        console.log(kvEnvs)
-        for (let i=0; kvEnvs.lenght; i++){
-          console.log("inside loop")
-          console.log(kvEnvs[i])
-          submitEnvironment(kvEnvs[i])
-        }
+        setEnvsReadyForSubmmission(true)
         setSubmitting(false);
         enqueueSnackbar('Pipeline creation started', {
           anchorOrigin: {
@@ -218,6 +202,7 @@ const PipelineCrateForm = (props) => {
       dispatch({ type: SET_ERROR, error: err.message });
     }
   }
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -544,8 +529,7 @@ const PipelineCrateForm = (props) => {
                       <Box sx={{ mt: 3 }}>
                         <PipelineEnvironmentUpdateForm
                           environmentOptions={environmentOptions}
-                          UpdateEnvstoParent={UpdateEnvstoParent}
-
+                          envsReadyForSubmmission={envsReadyForSubmmission}
                         />
                       </Box>
                       {errors.submit && (

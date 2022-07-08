@@ -118,7 +118,6 @@ class Pipeline:
         session,
         username: str,
         groups: [str],
-        uri: str,
         data: dict = None,
         check_perm: bool = False,
     ) -> models.DataPipeline:
@@ -127,7 +126,7 @@ class Pipeline:
             session=session,
             username=username,
             groups=groups,
-            uri=uri,
+            uri=data['environmentUri'],
             group=data['SamlGroupName'],
             permission_name=permissions.CREATE_PIPELINE,
         )
@@ -143,30 +142,15 @@ class Pipeline:
         pipeline_env: models.DataPipelineEnvironment = models.DataPipelineEnvironment(
             environmentUri=environment.environmentUri,
             SamlGroupName=data['SamlGroupName'],
-            label=data['label'],
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
+            environmentLabel=data['environmentLabel'],
+            environmentUri=data['environmentUri'],
+            DataPipelineUri=data['DataPipelineUri'],
+            DataPipelineLabel=data['DataPipelineLabel'],
+            envpipelineUri=data['envpipelineUri'],
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
-            repo=slugify(data['label']),
-            devStages=data.get('devStages', []),
-            devStrategy=data['devStrategy'],
-            inputDatasetUri=data['inputDatasetUri'],
-            outputDatasetUri=data['outputDatasetUri'],
-            template=data['template'],
+            devStage=data['devStage']
         )
-
-        environmentUri = Column(String, nullable=False)
-        environmentLabel = Column(String, nullable=False)
-        DataPipelineUri = Column(String, nullable=False)
-        DataPipelineLabel = Column(String, nullable=False)
-        envpipelineUri = Column(String, nullable=False, primary_key=True)
-        region = Column(String, default='eu-west-1')
-        AwsAccountId = Column(String, nullable=False)
-        SamlGroupName = Column(String, nullable=False)
-        devStage = Column(String, nullable=False)
-        inputDatasetUri = Column(String, nullable=True)
-        outputDatasetUri = Column(String, nullable=True)
 
         session.add(pipeline_env)
         session.commit()

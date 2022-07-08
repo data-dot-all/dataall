@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -25,7 +25,7 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 
 const PipelineEnvironmentUpdateForm = (props) => {
-  const { environmentOptions,UpdateEnvstoParent } = props;
+  const { environmentOptions, envsReadyForSubmmission } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
@@ -75,8 +75,18 @@ const PipelineEnvironmentUpdateForm = (props) => {
     });
   };
 
-  console.log(environmentOptions)
-  console.log(environmentOps)
+  const submitEnvironments = () => {
+    console.log("inside submitenvironmets")
+  }
+
+  useEffect(() => {
+      if (client && envsReadyForSubmmission) {
+        submitEnvironments().catch((e) =>
+          dispatch({ type: SET_ERROR, error: e.message })
+        );
+      }
+    }, [client, dispatch, envsReadyForSubmmission]);
+
   return (
     <>
       <Grid container spacing={3}>
@@ -147,17 +157,6 @@ const PipelineEnvironmentUpdateForm = (props) => {
                       Add environment
                     </Button>
                   </Box>
-                  <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>
-                    <LoadingButton
-                      color="primary"
-                      loading={isSubmitting}
-                      onClick={() => UpdateEnvstoParent(kvEnvs)}
-                      sx={{ m: 1 }}
-                      variant="contained"
-                    >
-                      Save
-                    </LoadingButton>
-                  </Box>
                 </Box>
               </CardContent>
             </Card>
@@ -169,6 +168,6 @@ const PipelineEnvironmentUpdateForm = (props) => {
 };
 PipelineEnvironmentUpdateForm.propTypes = {
   environmentOptions: PropTypes.array.isRequired,
-  UpdateEnvstoParent: PropTypes.func.isRequired
+  envsReadyForSubmmission: PropTypes.bool.isRequired,
 };
 export default PipelineEnvironmentUpdateForm;
