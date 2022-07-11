@@ -25,7 +25,7 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 
 const PipelineEnvironmentUpdateForm = (props) => {
-  const { environmentOptions, envsReadyForSubmmission } = props;
+  const { environmentOptions, triggerEnvSubmit } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
@@ -33,7 +33,7 @@ const PipelineEnvironmentUpdateForm = (props) => {
   const [kvEnvs, setKeyValueEnvs] = useState([{ stage: '', environmentLabel: '', environmentUri: '' }]
   );
   const [environmentOps, setEnvironmentOps] = useState(
-    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' }]
+    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
   );
 
   const handleAddEnvRow = () => {
@@ -77,15 +77,16 @@ const PipelineEnvironmentUpdateForm = (props) => {
 
   const submitEnvironments = () => {
     console.log("inside submitenvironmets")
+    console.log(kvEnvs)
   }
 
   useEffect(() => {
-      if (client && envsReadyForSubmmission) {
+      if (client && triggerEnvSubmit) {
         submitEnvironments().catch((e) =>
           dispatch({ type: SET_ERROR, error: e.message })
         );
       }
-    }, [client, dispatch, envsReadyForSubmmission]);
+    }, [client, dispatch, triggerEnvSubmit]);
 
   return (
     <>
@@ -101,6 +102,7 @@ const PipelineEnvironmentUpdateForm = (props) => {
                     {kvEnvs && kvEnvs.length > 0 && (
                       <TableHead>
                         <TableRow>
+                          <TableCell>Order</TableCell>
                           <TableCell>Development Stage</TableCell>
                           <TableCell>Environment</TableCell>
                         </TableRow>
@@ -110,6 +112,14 @@ const PipelineEnvironmentUpdateForm = (props) => {
                       {kvEnvs.map((item, idx) => (
                         <>
                           <TableRow id="addr0" key={item.uri}>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="idx"
+                                value={idx.toString()}
+                                variant="outlined"
+                              />
+                            </TableCell>
                             <TableCell>
                               <TextField
                                 fullWidth
@@ -168,6 +178,6 @@ const PipelineEnvironmentUpdateForm = (props) => {
 };
 PipelineEnvironmentUpdateForm.propTypes = {
   environmentOptions: PropTypes.array.isRequired,
-  envsReadyForSubmmission: PropTypes.bool.isRequired,
+  triggerEnvSubmit: PropTypes.bool.isRequired,
 };
 export default PipelineEnvironmentUpdateForm;

@@ -56,7 +56,7 @@ const PipelineCrateForm = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
-  const [envsReadyForSubmmission, setEnvsReadyForSubmmission] = useState(false);
+  const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -179,7 +179,7 @@ const PipelineCrateForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         console.log("submitting environments")
-        setEnvsReadyForSubmmission(true)
+        setTriggerEnvSubmit(true)
         setSubmitting(false);
         enqueueSnackbar('Pipeline creation started', {
           anchorOrigin: {
@@ -192,6 +192,7 @@ const PipelineCrateForm = (props) => {
           `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
         );
       } else {
+        setTriggerEnvSubmit(true)
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
@@ -286,9 +287,8 @@ const PipelineCrateForm = (props) => {
                   .required('*Pipeline name is required'),
                 description: Yup.string().max(5000),
                 SamlGroupName: Yup.string()
-                  .max(255)
-                  .required('*Team is required'),
-                environment: Yup.object().required('*CICD Environment is required'),
+                  .max(255),
+                environment: Yup.object(),
                 devStages: Yup.array().required('*At least ONE stage is required'),
                 devStrategy: Yup.string().required('*A CICD strategy is required'),
                 tags: Yup.array().nullable(),
@@ -529,7 +529,7 @@ const PipelineCrateForm = (props) => {
                       <Box sx={{ mt: 3 }}>
                         <PipelineEnvironmentUpdateForm
                           environmentOptions={environmentOptions}
-                          envsReadyForSubmmission={envsReadyForSubmmission}
+                          triggerEnvSubmit={triggerEnvSubmit}
                         />
                       </Box>
                       {errors.submit && (
