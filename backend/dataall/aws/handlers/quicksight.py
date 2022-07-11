@@ -1,10 +1,13 @@
 import logging
 import re
+import os
+import ast
 
 from botocore.exceptions import ClientError
 
 from .sts import SessionHelper
 from .secrets_manager import SecretsManager
+from .parameter_store import ParameterStoreManager
 
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)
@@ -265,7 +268,7 @@ class Quicksight:
         return False
 
     @staticmethod
-    def create_data_source_vpc(AwsAccountId, region, UserName, vpnConnectionId):
+    def create_data_source_vpc(AwsAccountId, region, UserName, vpcConnectionId):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if not user:
@@ -275,29 +278,34 @@ class Quicksight:
                 AwsAccountId=AwsAccountId, DataSourceId="dataall-metadata-db"
             )
 
-        except:
+        except client.exceptions.ResourceNotFoundException:
+            aurora_secret_arn = ParameterStoreManager.get_parameter_value(AwsAccountId=AwsAccountId, region=region, parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn')
+
             aurora_params = SecretsManager.get_secret_value(
-                AwsAccountId=AwsAccountId, region=region, secretId="abcde"
+                AwsAccountId=AwsAccountId, region=region, secretId=aurora_secret_arn
             )
+            print(aurora_params)
+            print(type(aurora_params))
+            aurora_params_dict = ast.literal_eval(aurora_params)
             response = client.create_data_source(
                 AwsAccountId=AwsAccountId,
                 DataSourceId="dataall-metadata-db",
                 Name="sample-aurora-db",
                 Type="AURORA_POSTGRESQL",
-                DataSourceParameters = {
-                    'AuroraPostgreSqlParameters':{
-                            'Host': "dataall-dev-db.cluster-cxf75rkkjzhz.eu-west-1.rds.amazonaws.com",
-                            'Port': 5432,
-                            'Database': "devdb",
-                        }
-                },
-                Credentials = {
-                    "CredentialPair": {
-                        "Username": "dtaadmin",
-                        "Password": ",B3jDZGa-9nbMq,kI780CIiPfPlR4BWj"
+                DataSourceParameters={
+                    'AuroraPostgreSqlParameters': {
+                        'Host': aurora_params_dict["host"],
+                        'Port': aurora_params_dict["port"],
+                        'Database': aurora_params_dict["dbname"]
                     }
                 },
-                Permissions= [
+                Credentials={
+                    "CredentialPair": {
+                        "Username": aurora_params_dict["username"],
+                        "Password": aurora_params_dict["password"],
+                    }
+                },
+                Permissions=[
                     {
                         "Principal": user.get('Arn'),
                         "Actions": [
@@ -310,12 +318,12 @@ class Quicksight:
                         ]
                     }
                 ],
-                VpcConnectionProperties = {
-                    'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpnConnectionId}"
+                VpcConnectionProperties={
+                    'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpcConnectionId}"
                 }
             )
 
-        return True
+        return "dataall-metadata-db"
 
     @staticmethod
     def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, datasetId):
@@ -351,7 +359,7 @@ class Quicksight:
                         ]
                     }
                 }},
-            ImportMode= 'DIRECT_QUERY',
+            ImportMode='DIRECT_QUERY',
             Permissions=[
                 {
                     'Principal': user.get('Arn'),
@@ -364,6 +372,49 @@ class Quicksight:
                     ]
                 },
             ],
+        )
+
+        return True
+
+    @staticmethod
+    def create_analysis(AwsAccountId, region, UserName):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if not user:
+            return False
+
+        response = client.create_analysis(
+            AwsAccountId=AwsAccountId,
+            AnalysisId='dataallMonitoringAnalysis',
+            Name='dataallMonitoringAnalysis',
+            Permissions=[
+                {
+                    'Principal': user.get('Arn'),
+                    'Actions': [
+                        'quicksight:DescribeAnalysis',
+                        'quicksight:DescribeAnalysisPermissions',
+                        'quicksight:UpdateAnalysisPermissions',
+                        'quicksight:UpdateAnalysis'
+                    ]
+                },
+            ],
+            SourceEntity={
+                'SourceTemplate': {
+                    'DataSetReferences': [
+                        {
+                            'DataSetPlaceholder': 'environment',
+                            'DataSetArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:dataset/dataallenvironment"
+                        },
+                    ],
+                    'Arn': 'string'
+                }
+            },
+            Tags=[
+                {
+                    'Key': 'application',
+                    'Value': 'dataall'
+                },
+            ]
         )
 
         return True

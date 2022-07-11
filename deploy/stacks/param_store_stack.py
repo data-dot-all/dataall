@@ -14,6 +14,7 @@ class ParamStoreStack(pyNestedClass):
         resource_prefix='dataall',
         custom_domain=None,
         enable_cw_canaries=False,
+        quicksight_enabled=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -56,4 +57,18 @@ class ParamStoreStack(pyNestedClass):
                 f'CWCanariesRegion{envname}',
                 parameter_name=f'/dataall/{envname}/canary/environment_region',
                 string_value='updateme(e.g: eu-west-1)',
+            )
+
+        if quicksight_enabled:
+            aws_ssm.StringParameter(
+                self,
+                f'QSVPCConnectionIdEnv{envname}',
+                parameter_name=f'/dataall/{envname}/quicksightmonitoring/VPCConnectionId',
+                string_value='updateme',
+            )
+            aws_ssm.StringParameter(
+                self,
+                f'QSDashboardIdEnv{envname}',
+                parameter_name=f'/dataall/{envname}/quicksightmonitoring/DashboardId',
+                string_value='updateme',
             )
