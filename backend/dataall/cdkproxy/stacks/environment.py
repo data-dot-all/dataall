@@ -172,26 +172,25 @@ class EnvironmentSetup(Stack):
         if self._environment.mlStudiosEnabled and not(self.sagemaker_domain_exists):
 
             sagemaker_domain_role = iam.Role(
-            self, 
-            'RoleForSagemakerStudioUsers',
-		    assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-		    role_name="RoleSagemakerStudioUsers",
-		    managed_policies=
-                    [iam.ManagedPolicy.from_managed_policy_arn(
+                self,
+                'RoleForSagemakerStudioUsers',
+                assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
+                role_name="RoleSagemakerStudioUsers",
+                managed_policies=[iam.ManagedPolicy.from_managed_policy_arn(
                     self,
-			        id="SagemakerFullAccess",
-			        managed_policy_arn="arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"),
+                    id="SagemakerFullAccess",
+                    managed_policy_arn="arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"),
                     iam.ManagedPolicy.from_managed_policy_arn(
                     self,
-			        id="S3FullAccess",
-			        managed_policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess")
-		            ]
+                        id="S3FullAccess",
+                        managed_policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess")
+                ]
             )
 
             sagemaker_domain_key = kms.Key(
                 self,
                 'SagemakerDomainKmsKey',
-                alias=f"SagemakerStudioDomain",
+                alias="SagemakerStudioDomain",
                 enable_key_rotation=True,
                 policy=iam.PolicyDocument(
                     assign_sids=True,
@@ -216,33 +215,33 @@ class EnvironmentSetup(Stack):
             subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
 
             sagemaker_domain = sagemaker.CfnDomain(
-            self,
-            "SagemakerStudioDomain",
-            domain_name = f"SagemakerStudioDomain-{self._environment.region}-{self._environment.AwsAccountId}",
-            auth_mode = "IAM",
+                self,
+                "SagemakerStudioDomain",
+                domain_name=f"SagemakerStudioDomain-{self._environment.region}-{self._environment.AwsAccountId}",
+                auth_mode="IAM",
 
-            default_user_settings = sagemaker.CfnDomain.UserSettingsProperty(
-                execution_role = sagemaker_domain_role.role_arn,
+                default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
+                    execution_role=sagemaker_domain_role.role_arn,
 
-                security_groups=[],
+                    security_groups=[],
 
-                sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
-                    notebook_output_option = "Allowed",
-                    s3_kms_key_id = sagemaker_domain_key.key_id,
-                    s3_output_path = f"s3://sagemaker-{self._environment.region}-{self._environment.AwsAccountId}",
-                )
-            ),
+                    sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
+                        notebook_output_option="Allowed",
+                        s3_kms_key_id=sagemaker_domain_key.key_id,
+                        s3_output_path=f"s3://sagemaker-{self._environment.region}-{self._environment.AwsAccountId}",
+                    )
+                ),
 
-            vpc_id = vpc_id,
-            subnet_ids = subnet_ids,
-            app_network_access_type = "VpcOnly",
-            kms_key_id = sagemaker_domain_key.key_id,
+                vpc_id=vpc_id,
+                subnet_ids=subnet_ids,
+                app_network_access_type="VpcOnly",
+                kms_key_id=sagemaker_domain_key.key_id,
             )
 
             ssm.StringParameter(
                 self,
                 'SagemakerStudioDomainId',
-                string_value = sagemaker_domain.attr_domain_id,
+                string_value=sagemaker_domain.attr_domain_id,
                 parameter_name=f'/datahub/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 

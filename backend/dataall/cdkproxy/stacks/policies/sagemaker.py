@@ -126,7 +126,7 @@ class Sagemaker(ServicePolicy):
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/sagemaker/*:log-stream:*',
                 ]
             ),
-             iam.PolicyStatement(
+            iam.PolicyStatement(
                 actions=[
                     'ecr:GetAuthorizationToken',
                     'ecr:BatchCheckLayerAvailability',

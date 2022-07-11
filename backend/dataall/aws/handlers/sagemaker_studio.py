@@ -100,4 +100,3 @@ class SagemakerStudio:
             return _running_apps
         except ClientError as e:
             raise e
-
