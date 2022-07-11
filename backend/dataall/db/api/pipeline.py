@@ -143,7 +143,6 @@ class Pipeline:
             environmentUri=environment.environmentUri,
             SamlGroupName=data['SamlGroupName'],
             environmentLabel=data['environmentLabel'],
-            environmentUri=data['environmentUri'],
             DataPipelineUri=data['DataPipelineUri'],
             DataPipelineLabel=data['DataPipelineLabel'],
             envpipelineUri=data['envpipelineUri'],
