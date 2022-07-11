@@ -1,6 +1,7 @@
 from builtins import super
 
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import Stack
 
@@ -64,6 +65,7 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             custom_domain=custom_domain,
             enable_cw_canaries=enable_cw_canaries,
+            quicksight_enabled=quicksight_enabled,
             **kwargs,
         )
 
@@ -150,13 +152,83 @@ class BackendStack(Stack):
         )
 
         if quicksight_enabled:
+            pivot_role_in_account = iam.Role(
+                self,
+                id=f'PivotRoleLimited',
+                role_name=f'dataallPivotRole',
+                assumed_by=iam.CompositePrincipal(
+                    iam.ServicePrincipal('lambda.amazonaws.com'),
+                    iam.AccountPrincipal(self.account),
+                ),
+            )
+
+            pivot_role_in_account_policies = [
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'ssm:GetParametersByPath',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        'ssm:PutParameter'
+                    ],
+                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*']
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'secretsmanager:DescribeSecret',
+                        'secretsmanager:GetSecretValue'
+                    ],
+                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*']
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'ssm:DescribeParameters',
+                        'quicksight:GetSessionEmbedUrl',
+                        'quicksight:ListUserGroups',
+                        'secretsmanager:ListSecrets'
+                    ],
+                    resources=['*']
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'quicksight:RegisterUser',
+                        'quicksight:DescribeUser',
+                        'quicksight:DescribeGroup',
+                        'quicksight:CreateGroup',
+                        'quicksight:CreateGroupMembership',
+                        'quicksight:UpdateUser',
+                        'quicksight:CreateDataSource',
+                        'quicksight:DescribeDataSource',
+                        'quicksight:PassDataSource',
+                        'quicksight:GetDashboardEmbedUrl',
+                        'quicksight:DescribeDashboardPermissions',
+                        'quicksight:SearchDashboards',
+                        'quicksight:GetAuthCode',
+                        'quicksight:CreateDataSet'
+                    ],
+                    resources=[f'arn:aws:quicksight:*:{self.account}:user/*',
+                               f'arn:aws:quicksight:*:{self.account}:group/*',
+                               f'arn:aws:quicksight:*:{self.account}:datasource/*',
+                               f'arn:aws:quicksight:*:{self.account}:dashboard/*',
+                               f'arn:aws:quicksight:*:{self.account}:dataset/*'
+                               ],
+                )
+            ]
+
+            for policy in pivot_role_in_account_policies:
+                pivot_role_in_account.add_to_policy(policy)
+
             quicksight_monitoring_sg = ec2.SecurityGroup(
-            self,
-            f'QuicksightMonitoringDBSG{envname}',
-            security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
-            vpc=vpc,
-            allow_all_outbound=False,
-        )
+                self,
+                f'QuicksightMonitoringDBSG{envname}',
+                security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
+                vpc=vpc,
+                allow_all_outbound=False,
+            )
+
         else:
             quicksight_monitoring_sg = None
 
