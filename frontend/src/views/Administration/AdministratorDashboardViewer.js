@@ -42,11 +42,10 @@ const DashboardViewer = () => {
   const [dashboardId, setDashboardId] = useState('');
   const [vpcConnectionId, setVpcConnectionId] = useState('');
   const [trustedAccount, setTrustedAccount] = useState(null);
-  const [ready, setReady] = useState(false);
   const [dashboardRef] = useState(createRef());
   const [sessionUrl, setSessionUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [isOpeningSession, setIsOpeningSession] = useState(false);
+  const [isCreatingDataSource, setIsCreatingDataSource] = useState(false);
 
   const fetchTrustedAccount = useCallback(async () => {
     const response = await client.query(getTrustAccount());
@@ -84,7 +83,7 @@ const DashboardViewer = () => {
           console.log(resp.data.getPlatformReaderSession)
           setSessionUrl(resp.data.getPlatformReaderSession)
           const options = {
-            url: response.data.getPlatformReaderSession,
+            url: resp.data.getPlatformReaderSession,
             scrolling: 'no',
             height: '700px',
             width: '100%',
@@ -97,7 +96,7 @@ const DashboardViewer = () => {
           };
           QuickSightEmbedding.embedDashboard(options);
         }else{
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+          dispatch({ type: SET_ERROR, error: resp.errors[0].message });
         }
       }
     } else {
@@ -151,13 +150,13 @@ const DashboardViewer = () => {
       if (!response.errors) {
         setStatus({success: true});
         setSubmitting(false);
-        const resp = await client.query(getPlatformReaderSession(response.data.getMonitoringDashboardId));
+        const resp = await client.query(getPlatformReaderSession(values.dash));
         if (!resp.errors){
           console.log("inside resp")
           console.log(resp.data.getPlatformReaderSession)
           setSessionUrl(resp.data.getPlatformReaderSession)
           const options = {
-            url: response.data.getPlatformReaderSession,
+            url: resp.data.getPlatformReaderSession,
             scrolling: 'no',
             height: '700px',
             width: '100%',
@@ -170,7 +169,7 @@ const DashboardViewer = () => {
           };
           QuickSightEmbedding.embedDashboard(options);
         }else{
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+          dispatch({ type: SET_ERROR, error: resp.errors[0].message });
         }
       }else{
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -188,12 +187,12 @@ const DashboardViewer = () => {
     console.log("inside enableQuicksight")
     console.log(dashboardId)
     console.log(vpcConnectionId)
-    setLoading(true)
+    setIsCreatingDataSource(true)
     const response = await client.mutate(createQuicksightDataSourceSet({vpcConnectionId}));
     if (response.errors) {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setLoading(false)
+    setIsCreatingDataSource(false)
   }
 
   const startAuthorSession = async () => {
@@ -269,7 +268,7 @@ const DashboardViewer = () => {
                             values
                           }) => (
                             <form onSubmit={handleSubmit}>
-                              <Grid container>
+                              <Grid container justifyContent="space-between" spacing={3}>
                                 <Grid item lg={7} md={7} xs={7}>
                                    <TextField
                                     error={Boolean(touched.vpc && errors.vpc)}
@@ -307,7 +306,8 @@ const DashboardViewer = () => {
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
                       <Grid item lg={6} xl={6} xs={6}>
-                        <Button
+                        <LoadingButton
+                          loading={isCreatingDataSource}
                           color="primary"
                           endIcon={<AddOutlined fontSize="small" />}
                           sx={{ mt: 1, mb: 2, ml: 2 }}
@@ -319,7 +319,7 @@ const DashboardViewer = () => {
                           }}
                         >
                           Create Quicksight data source
-                        </Button>
+                        </LoadingButton>
                       </Grid>
                     </Grid>
                   </Box>
@@ -387,7 +387,7 @@ const DashboardViewer = () => {
                             values
                           }) => (
                             <form onSubmit={handleSubmit}>
-                              <Grid container>
+                              <Grid container justifyContent="space-between" spacing={3}>
                                 <Grid item lg={7} md={7} xs={7}>
                                    <TextField
                                     error={Boolean(touched.dash && errors.dash)}
@@ -396,7 +396,7 @@ const DashboardViewer = () => {
                                     name="dash"
                                     onBlur={handleBlur}
                                     onChange={handleChange}
-                                    value={values.dash ? values.dash : vpcConnectionId}
+                                    value={values.dash ? values.dash : dashboardId}
                                     variant="outlined"
                                    />
                                 </Grid>
