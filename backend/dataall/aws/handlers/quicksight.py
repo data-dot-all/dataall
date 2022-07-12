@@ -280,12 +280,9 @@ class Quicksight:
 
         except client.exceptions.ResourceNotFoundException:
             aurora_secret_arn = ParameterStoreManager.get_parameter_value(AwsAccountId=AwsAccountId, region=region, parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn')
-
             aurora_params = SecretsManager.get_secret_value(
                 AwsAccountId=AwsAccountId, region=region, secretId=aurora_secret_arn
             )
-            print(aurora_params)
-            print(type(aurora_params))
             aurora_params_dict = ast.literal_eval(aurora_params)
             response = client.create_data_source(
                 AwsAccountId=AwsAccountId,
@@ -326,7 +323,7 @@ class Quicksight:
         return "dataall-metadata-db"
 
     @staticmethod
-    def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, datasetId):
+    def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, tablesToImport):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if not user:
@@ -340,39 +337,41 @@ class Quicksight:
         if not data_source:
             return False
 
-        response = client.create_data_set(
-            AwsAccountId=AwsAccountId,
-            DataSetId=datasetId,
-            Name=datasetId,
-            PhysicalTableMap={
-                'string': {
-                    'RelationalTable': {
-                        'DataSourceArn': data_source.get('DataSource').get('Arn'),
-                        'Catalog': 'string',
-                        'Schema': 'string',
-                        'Name': 'string',
-                        'InputColumns': [
-                            {
-                                'Name': 'string',
-                                'Type': 'STRING'
-                            },
+        for table in tablesToImport:
+
+            response = client.create_data_set(
+                AwsAccountId=AwsAccountId,
+                DataSetId=f"dataall-imported-{table}",
+                Name=f"dataall-imported-{table}",
+                PhysicalTableMap={
+                    'string': {
+                        'RelationalTable': {
+                            'DataSourceArn': data_source.get('DataSource').get('Arn'),
+                            'Catalog': 'string',
+                            'Schema': 'dev',
+                            'Name': table,
+                            'InputColumns': [
+                                {
+                                    'Name': 'string',
+                                    'Type': 'STRING'
+                                },
+                            ]
+                        }
+                    }},
+                ImportMode='DIRECT_QUERY',
+                Permissions=[
+                    {
+                        'Principal': user.get('Arn'),
+                        'Actions': [
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions"
                         ]
-                    }
-                }},
-            ImportMode='DIRECT_QUERY',
-            Permissions=[
-                {
-                    'Principal': user.get('Arn'),
-                    'Actions': [
-                        "quicksight:DescribeDataSet",
-                        "quicksight:DescribeDataSetPermissions",
-                        "quicksight:PassDataSet",
-                        "quicksight:DescribeIngestion",
-                        "quicksight:ListIngestions"
-                    ]
-                },
-            ],
-        )
+                    },
+                ],
+            )
 
         return True
 
@@ -403,10 +402,10 @@ class Quicksight:
                     'DataSetReferences': [
                         {
                             'DataSetPlaceholder': 'environment',
-                            'DataSetArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:dataset/dataallenvironment"
+                            'DataSetArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:dataset/<DATASET-ID>"
                         },
                     ],
-                    'Arn': 'string'
+                    'Arn': '<TEMPLATE-THAT-WE-WANT-TO-MIGRATE'
                 }
             },
             Tags=[

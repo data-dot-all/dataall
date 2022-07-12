@@ -79,10 +79,10 @@ def create_quicksight_data_source_set(context, source, vpcConnectionId: str = No
     user = Quicksight.register_user(AwsAccountId=current_account, UserName='dataallTenantUser', UserRole='AUTHOR')
 
     datasourceId = Quicksight.create_data_source_vpc(AwsAccountId=current_account, region=region, UserName='dataallTenantUser', vpcConnectionId=vpcConnectionId)
-    datasets = Quicksight.create_data_set_from_source(AwsAccountId=current_account, region=region, UserName='dataallTenantUser', dataSourceId=datasourceId, datasetId='dataallenvironment')
-    analysis = Quicksight.create_analysis(AwsAccountId=current_account, region=region, UserName='dataallTenantUser')
+    # Data sets are not created programmatically. Too much overhead for the value added. However, an example API is provided:
+    # datasets = Quicksight.create_data_set_from_source(AwsAccountId=current_account, region=region, UserName='dataallTenantUser', dataSourceId=datasourceId, tablesToImport=['organization', 'environment', 'dataset', 'datapipeline', 'dashboard', 'share_object'])
 
-    return analysis
+    return datasourceId
 
 
 def get_quicksight_author_session(context, source, awsAccount: str = None):
@@ -102,6 +102,31 @@ def get_quicksight_author_session(context, source, awsAccount: str = None):
             region=region,
             UserName=context.username,
             UserRole='AUTHOR',
+        )
+
+    return url
+
+
+def get_quicksight_reader_session(context, source, dashboardId: str = None):
+    with context.engine.scoped_session() as session:
+        admin = db.api.TenantPolicy.is_tenant_admin(context.groups)
+
+        if not admin:
+            raise db.exceptions.TenantUnauthorized(
+                username=context.username,
+                action=db.permissions.TENANT_ALL,
+                tenant_name=context.username,
+            )
+
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        current_account = SessionHelper.get_account()
+
+        url = Quicksight.get_reader_session(
+            AwsAccountId=current_account,
+            region=region,
+            UserName=context.username,
+            UserRole='READER',
+            DashboardId=dashboardId
         )
 
     return url

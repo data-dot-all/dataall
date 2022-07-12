@@ -6,8 +6,10 @@ import {
   Box,
   Grid,
   Card,
+  CardActions,
   CardContent,
   CardHeader,
+  Container,
   Divider,
   TextField,
   Typography,
@@ -24,10 +26,11 @@ import updateSSMParameter from "../../api/Tenant/updateSSMParameter";
 import getTrustAccount from '../../api/Environment/getTrustAccount';
 import createQuicksightDataSourceSet from '../../api/Tenant/createQuicksightDataSourceSet';
 import getPlatformAuthorSession from '../../api/Tenant/getPlatformAuthorSession';
+import getPlatformReaderSession from '../../api/Tenant/getPlatformReaderSession';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
-import {AwsRegions} from "../../constants";
+import useSettings from '../../hooks/useSettings';
 
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
@@ -35,11 +38,13 @@ const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 const DashboardViewer = () => {
   const dispatch = useDispatch();
   const client = useClient();
+  const { settings } = useSettings();
   const [dashboardId, setDashboardId] = useState('');
   const [vpcConnectionId, setVpcConnectionId] = useState('');
   const [trustedAccount, setTrustedAccount] = useState(null);
   const [ready, setReady] = useState(false);
-  const [readerSessionUrl, setReaderSessionUrl] = useState(null);
+  const [dashboardRef] = useState(createRef());
+  const [sessionUrl, setSessionUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isOpeningSession, setIsOpeningSession] = useState(false);
 
@@ -56,7 +61,7 @@ const DashboardViewer = () => {
     const response = await client.query(getMonitoringVPCConnectionId());
     if (!response.errors) {
       setVpcConnectionId(response.data.getMonitoringVPCConnectionId);
-      console.log("fetch")
+      console.log("fetch vpc")
       console.log(response.data.getMonitoringVPCConnectionId)
       console.log(vpcConnectionId)
     } else {
@@ -68,10 +73,32 @@ const DashboardViewer = () => {
     const response = await client.query(getMonitoringDashboardId());
     if (!response.errors) {
       setDashboardId(response.data.getMonitoringDashboardId);
-      console.log("fetch")
+      console.log("fetch dashboard")
+      console.log(response.data.getMonitoringDashboardId)
       console.log(dashboardId)
       if (response.data.getMonitoringDashboardId != "updateme"){
-        setReady(true)
+        console.log("getting url")
+        const resp = await client.query(getPlatformReaderSession(response.data.getMonitoringDashboardId));
+        if (!resp.errors){
+          console.log("inside resp")
+          console.log(resp.data.getPlatformReaderSession)
+          setSessionUrl(resp.data.getPlatformReaderSession)
+          const options = {
+            url: response.data.getPlatformReaderSession,
+            scrolling: 'no',
+            height: '700px',
+            width: '100%',
+            locale: 'en-US',
+            footerPaddingEnabled: true,
+            sheetTabsDisabled: false,
+            printEnabled: false,
+            maximize: true,
+            container: dashboardRef.current
+          };
+          QuickSightEmbedding.embedDashboard(options);
+        }else{
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
       }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -119,11 +146,32 @@ const DashboardViewer = () => {
       console.log("values")
       console.log(values);
       console.log(values.dash)
-      setVpcConnectionId(values.dash)
+      setDashboardId(values.dash)
       const response = await client.mutate(updateSSMParameter({name:"DashboardId", value:values.dash}));
       if (!response.errors) {
         setStatus({success: true});
         setSubmitting(false);
+        const resp = await client.query(getPlatformReaderSession(response.data.getMonitoringDashboardId));
+        if (!resp.errors){
+          console.log("inside resp")
+          console.log(resp.data.getPlatformReaderSession)
+          setSessionUrl(resp.data.getPlatformReaderSession)
+          const options = {
+            url: response.data.getPlatformReaderSession,
+            scrolling: 'no',
+            height: '700px',
+            width: '100%',
+            locale: 'en-US',
+            footerPaddingEnabled: true,
+            sheetTabsDisabled: false,
+            printEnabled: false,
+            maximize: true,
+            container: dashboardRef.current
+          };
+          QuickSightEmbedding.embedDashboard(options);
+        }else{
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
       }else{
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -142,19 +190,16 @@ const DashboardViewer = () => {
     console.log(vpcConnectionId)
     setLoading(true)
     const response = await client.mutate(createQuicksightDataSourceSet({vpcConnectionId}));
-    if (!response.errors) {
-      setReady(true);
-    } else {
+    if (response.errors) {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false)
   }
 
-
-  const startQSSession = async () => {
+  const startAuthorSession = async () => {
     setIsOpeningSession(true);
     const response = await client.query(getPlatformAuthorSession(trustedAccount));
-    if (response.errors) {
+    if (!response.errors) {
       window.open(response.data.getPlatformAuthorSession, '_blank');
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -162,14 +207,11 @@ const DashboardViewer = () => {
     setIsOpeningSession(false);
   };
 
-  if (loading) {
-    return <CircularProgress />;
-  }
 
   return (
     <Container maxWidth={settings.compact ? 'xl' : false}>
           <Grid container justifyContent="space-between" spacing={3}>
-            <Grid item lg={12} md={6} xs={12}>
+            <Grid item lg={12} md={12} sm={12} xs={12}>
               <Card sx={{ mt: 3 }}>
                 <CardHeader title="Prerequisites" />
                 <Divider />
@@ -187,9 +229,9 @@ const DashboardViewer = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item lg={6} md={6} xs={12}>
+            <Grid item lg={6} md={6} sm={12} xs={12}>
               <Card sx={{ mt: 3 }}>
-                <CardHeader title="Ingest the data into Quicksight" />
+                <CardHeader title="Create the RDS data source in Quicksight" />
                 <Divider />
                 <CardContent>
                   <Box>
@@ -227,25 +269,30 @@ const DashboardViewer = () => {
                             values
                           }) => (
                             <form onSubmit={handleSubmit}>
-                             <TextField
-                              error={Boolean(touched.vpc && errors.vpc)}
-                              fullWidth
-                              helperText={touched.vpc && errors.vpc}
-                              label="VPC Connection Id"
-                              name="vpc"
-                              onBlur={handleBlur}
-                              onChange={handleChange}
-                              value={values.vpc}
-                              variant="outlined"
-                             />
-                             <LoadingButton
-                              color="primary"
-                              loading={isSubmitting}
-                              type="submit"
-                              variant="contained"
-                            >
-                              Save
-                            </LoadingButton>
+                              <Grid container>
+                                <Grid item lg={7} md={7} xs={7}>
+                                   <TextField
+                                    error={Boolean(touched.vpc && errors.vpc)}
+                                    helperText={touched.vpc && errors.vpc}
+                                    defaultValue={vpcConnectionId}
+                                    name="vpc"
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    value={values.vpc ? values.vpc : vpcConnectionId}
+                                    variant="outlined"
+                                   />
+                                </Grid>
+                                <Grid item lg={5} md={5} xs={5}>
+                                   <LoadingButton
+                                    color="primary"
+                                    loading={isSubmitting}
+                                    type="submit"
+                                    variant="contained"
+                                  >
+                                    Save
+                                  </LoadingButton>
+                                </Grid>
+                              </Grid>
                            </form>
                           )}
                         </Formik>
@@ -255,7 +302,7 @@ const DashboardViewer = () => {
                   <Box>
                     <Box>
                       <Typography color="textSecondary" variant="subtitle2">
-                        4. Click on the button to automatically create the data source and data sets in Quicksight
+                        4. Click on the button to automatically create the data source connecting our RDS Aurora database with Quicksight
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
@@ -271,13 +318,15 @@ const DashboardViewer = () => {
                             );
                           }}
                         >
-                          Create Quicksight resources
+                          Create Quicksight data source
                         </Button>
                       </Grid>
                     </Grid>
                   </Box>
                 </CardContent>
               </Card>
+            </Grid>
+            <Grid item lg={6} md={6} sm={12} xs={12}>
               <Card sx={{ mt: 3 }}>
                 <CardHeader title="Get insights in Quicksight" />
                 <Divider />
@@ -285,7 +334,7 @@ const DashboardViewer = () => {
                   <Box>
                     <Box>
                       <Typography color="textSecondary" variant="subtitle2">
-                        5. Go to Quicksight to build your Analysis and publish a Dashboard
+                        5. Go to Quicksight to build your Analysis and publish a Dashboard. Check the user guide for more details.
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
@@ -295,7 +344,7 @@ const DashboardViewer = () => {
                           color="primary"
                           endIcon={<ArrowRightAlt fontSize="small" />}
                           variant="outlined"
-                          onClick={startQSSession}
+                          onClick={startAuthorSession}
                           sx={{ mt: 1, mb: 2, ml: 2 }}
                         >
                           Start Quicksight session
@@ -306,7 +355,7 @@ const DashboardViewer = () => {
                   <Box>
                     <Box mb={1}>
                       <Typography color="textSecondary" variant="subtitle2">
-                        6. Import or update your Dashboard ID
+                        6. Introduce or update your Dashboard ID
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={6}>
@@ -338,25 +387,30 @@ const DashboardViewer = () => {
                             values
                           }) => (
                             <form onSubmit={handleSubmit}>
-                             <TextField
-                              error={Boolean(touched.dash && errors.dash)}
-                              fullWidth
-                              helperText={touched.dash && errors.dash}
-                              label="Dashboard Id"
-                              name="dash"
-                              onBlur={handleBlur}
-                              onChange={handleChange}
-                              value={values.dash}
-                              variant="outlined"
-                             />
-                             <LoadingButton
-                              color="primary"
-                              loading={isSubmitting}
-                              type="submit"
-                              variant="contained"
-                            >
-                              Save
-                            </LoadingButton>
+                              <Grid container>
+                                <Grid item lg={7} md={7} xs={7}>
+                                   <TextField
+                                    error={Boolean(touched.dash && errors.dash)}
+                                    helperText={touched.dash && errors.dash}
+                                    defaultValue={dashboardId}
+                                    name="dash"
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    value={values.dash ? values.dash : vpcConnectionId}
+                                    variant="outlined"
+                                   />
+                                </Grid>
+                                <Grid item lg={5} md={7} xs={7}>
+                                   <LoadingButton
+                                    color="primary"
+                                    loading={isSubmitting}
+                                    type="submit"
+                                    variant="contained"
+                                  >
+                                    Save
+                                  </LoadingButton>
+                                </Grid>
+                              </Grid>
                            </form>
                           )}
                         </Formik>
@@ -366,8 +420,8 @@ const DashboardViewer = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item lg={6} md={6} xs={12}>
-              <ReactIf.If condition={ready}>
+            <Grid item lg={6} md={6} sm={12} xs={12}>
+              <ReactIf.If condition={sessionUrl}>
                 <ReactIf.Then>
                   <Box sx={{ mb: 3 }}>
                     <Button
@@ -378,9 +432,10 @@ const DashboardViewer = () => {
                       startIcon={<FaCheckCircle size={15} />}
                       variant="outlined"
                     >
-                      View in Quicksight
+                      Import Dashboard
                     </Button>
                   </Box>
+                  <div ref={dashboardRef} />
                 </ReactIf.Then>
               </ReactIf.If>
             </Grid>

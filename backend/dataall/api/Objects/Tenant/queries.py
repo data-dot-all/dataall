@@ -37,3 +37,12 @@ getPlatformAuthorSession = gql.QueryField(
     type=gql.String,
     resolver=get_quicksight_author_session,
 )
+
+getPlatformReaderSession = gql.QueryField(
+    name='getPlatformReaderSession',
+    args=[
+        gql.Argument(name='dashboardId', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.String,
+    resolver=get_quicksight_reader_session,
+)
