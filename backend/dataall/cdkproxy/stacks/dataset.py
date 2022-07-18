@@ -261,13 +261,13 @@ class Dataset(Stack):
                 bucket_key_enabled=True,
             )
 
-            dataset_bucket.add_to_resource_policy(
-                permission=iam.PolicyStatement(
-                    actions=['s3:*'],
-                    resources=[dataset_bucket.bucket_arn],
-                    principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
-                )
-            )
+            # dataset_bucket.add_to_resource_policy(
+            #     permission=iam.PolicyStatement(
+            #         actions=['s3:*'],
+            #         resources=[dataset_bucket.bucket_arn],
+            #         principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
+            #     )
+            # )
 
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -292,15 +292,6 @@ class Dataset(Stack):
                     ),
                 ],
                 enabled=True,
-            )
-        shared_locations = self.get_shared_folders()
-        for location in shared_locations:
-            dataset_bucket.grant_read(
-                identity=iam.AccountPrincipal(location.AwsAccountId),
-                objects_key_pattern=f'{location.S3Prefix}/*',
-            )
-            dataset_bucket.encryption_key.grant_decrypt(
-                grantee=iam.AccountPrincipal(location.AwsAccountId)
             )
 
         # Dataset Admin and ETL User

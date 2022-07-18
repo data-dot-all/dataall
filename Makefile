@@ -35,7 +35,7 @@ install-tests:
 
 lint:
 	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,W504,F405,F403,F401,E712,E203 backend/
 
 bandit:
 	pip install bandit

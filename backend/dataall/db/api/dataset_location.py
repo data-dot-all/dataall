@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sqlalchemy import and_
 
@@ -264,3 +265,47 @@ class DatasetStorageLocation:
         else:
             logging.info(f'Found location {location.locationUri}|{location.S3Prefix}')
             return location
+
+    @staticmethod
+    def get_dataset_locations_shared_with_env(
+        session, share_uri: str, dataset_uri: str, status: List[str]
+    ):
+        locations = (
+            session.query(models.DatasetStorageLocation)
+            .join(
+                models.ShareObjectItem,
+                and_(
+                    models.ShareObjectItem.itemUri
+                    == models.DatasetStorageLocation.locationUri,
+                    models.ShareObjectItem.shareUri
+                    == share_uri,
+                ),
+            )
+            .filter(
+                and_(
+                    models.DatasetStorageLocation.datasetUri == dataset_uri,
+                    models.DatasetStorageLocation.deleted.is_(None),
+                    models.ShareObjectItem.status.in_(status),
+                )
+            )
+            .all()
+        )
+        logging.info(f'found {len(locations)} shared locations')
+
+        # if locations:
+        #     share_items = (
+        #         session.query(models.ShareObjectItem)
+        #         .filter(
+        #             and_(
+        #                 models.ShareObjectItem.shareUri == share_uri,
+        #                 models.ShareObjectItem.itemType == 'DatasetStorageLocation',
+        #                 models.ShareObjectItem.status.in_(status),
+        #             )
+        #         )
+        #         .all()
+        #     )
+        #     for item in share_items:
+        #         item.status = models.Enum.ShareObjectStatus.Share_Succeeded.value
+        #     session.commit()
+
+        return locations

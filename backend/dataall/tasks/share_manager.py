@@ -3,12 +3,15 @@ import os
 import sys
 import time
 import uuid
+import json
+from typing import Any
 
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
 from .. import db
 from ..aws.handlers.glue import Glue
+from ..aws.handlers.s3 import S3
 from ..aws.handlers.quicksight import Quicksight
 from ..aws.handlers.sts import SessionHelper
 from ..db import get_engine
@@ -41,6 +44,7 @@ class ShareManager:
                 dataset,
                 share,
                 shared_tables,
+                shared_folers,
                 source_environment,
                 target_environment,
             ) = ShareManager.get_share_data(session, share_uri, ['Approved'])
@@ -64,6 +68,17 @@ class ShareManager:
             ShareManager.clean_shared_database(
                 session, dataset, shared_tables, target_environment
             )
+
+            ShareManager.share_folders(
+                session,
+                share,
+                target_environment,
+                shared_folers,
+                dataset,
+                principals,
+            )
+
+            # ShareManager.clean_shared_folders()
 
         return True
 
@@ -127,6 +142,73 @@ class ShareManager:
                 )
                 AlarmService().trigger_table_sharing_failure_alarm(
                     table, share, target_environment
+                )
+
+    @staticmethod
+    def share_folders(
+        session,
+        share: models.ShareObject,
+        target_environment: models.Environment,
+        shared_folders: [models.DatasetStorageLocation],
+        dataset: models.Dataset,
+        principal: [str]
+    ):
+        for folder in shared_folders:
+            share_item = ShareManager.get_share_item(session, share, folder)
+
+            ShareManager.update_share_item_status(
+                session,
+                share_item,
+                models.ShareObjectStatus.Share_In_Progress.value
+            )
+
+            source_account_id = folder.AWSAccountId
+            access_point_name = share_item.S3AccessPointName
+            bucket_name = folder.S3BucketName
+            dataset_admin = dataset.IAMDatasetAdminRoleArn
+            target_account_id = target_environment.AwsAccountId
+            folder_name = folder.S3Prefix
+
+            try:
+                if not ShareManager.manage_access_point_and_bucket_policy(
+                    dataset_admin,
+                    source_account_id,
+                    bucket_name,
+                    access_point_name,
+                    target_account_id,
+                    folder_name,
+                ):
+                    policy = S3.get_access_point_policy(source_account_id, access_point_name)
+                    print('what we got is ', policy)
+                    # policy = json.loads(policy)
+
+                    # # Update principals and Resource = envs and folders
+                    policy['Statement'][0]['Principal']['AWS'].append(f'arn:aws:iam:{target_environment.AwsAccountId}:root')
+                    policy['Statement'][0]['Resource'].append(f'arn:aws:s3:{folder.region}:{source_account_id}:accesspoint/{access_point_name}/object/{folder.S3Prefix}/*')
+                    policy = json.dumps(policy)
+                    print('after update is ', policy)
+                    print('type of policy: ', type(policy))
+                    S3.attach_access_point_policy(folder, access_point_name, policy)
+
+                ShareManager.update_share_item_status(
+                    session,
+                    share_item,
+                    models.ShareObjectStatus.Share_Succeeded.value,
+                )
+            except Exception as e:
+                logging.error(
+                    f'Failed to share folder {folder.S3Prefix} '
+                    f'from source account {folder.AWSAccountId}//{folder.region} '
+                    f'with target account {target_environment.AwsAccountId}//{target_environment.region} '
+                    f'due to: {e}'
+                )
+                ShareManager.update_share_item_status(
+                    session,
+                    share_item,
+                    models.ShareObjectStatus.Share_Failed.value,
+                )
+                AlarmService().trigger_folder_sharing_failure_alarm(
+                    folder, share, target_environment
                 )
 
     @staticmethod
@@ -402,8 +484,8 @@ class ShareManager:
             return response.get('resourceShareInvitation')
         except ClientError as e:
             if (
-                e.response['Error']['Code']
-                == 'ResourceShareInvitationAlreadyAcceptedException'
+                e.response['Error']['Code'] ==
+                'ResourceShareInvitationAlreadyAcceptedException'
             ):
                 log.info(
                     f'Failed to accept RAM invitation '
@@ -514,8 +596,8 @@ class ShareManager:
                             models.ShareObjectItem.GlueTableName == table['Name'],
                             models.ShareObject.datasetUri == dataset.datasetUri,
                             models.ShareObject.status == 'Approved',
-                            models.ShareObject.environmentUri
-                            == target_environment.environmentUri,
+                            models.ShareObject.environmentUri ==
+                            target_environment.environmentUri,
                         )
                     )
                     .first()
@@ -582,7 +664,7 @@ class ShareManager:
         :param entries:
         :return:
         """
-        entries_chunks: list = [entries[i : i + 20] for i in range(0, len(entries), 20)]
+        entries_chunks: list = [entries[i: i + 20] for i in range(0, len(entries), 20)]
         failures = []
         try:
             for entries_chunk in entries_chunks:
@@ -604,10 +686,10 @@ class ShareManager:
         except ClientError as e:
             for failure in failures:
                 if not (
-                    failure['Error']['ErrorCode'] == 'InvalidInputException'
-                    and (
-                        'Grantee has no permissions' in failure['Error']['ErrorMessage']
-                        or 'No permissions revoked' in failure['Error']['ErrorMessage']
+                    failure['Error']['ErrorCode'] == 'InvalidInputException' and
+                    (
+                        'Grantee has no permissions' in failure['Error']['ErrorMessage'] or
+                        'No permissions revoked' in failure['Error']['ErrorMessage']
                     )
                 ):
                     log.warning(f'Batch Revoke ended with failures: {failures}')
@@ -793,6 +875,12 @@ class ShareManager:
             environment_uri=target_environment.environmentUri,
             status=status,
         )
+        share_folders = db.api.DatasetStorageLocation.get_dataset_locations_shared_with_env(
+            session,
+            dataset_uri=dataset.datasetUri,
+            share_uri=share_uri,
+            status=status,
+        )
         env_group: models.EnvironmentGroup = (
             session.query(models.EnvironmentGroup)
             .filter(
@@ -813,6 +901,7 @@ class ShareManager:
             dataset,
             share,
             shared_tables,
+            share_folders,
             source_environment,
             target_environment,
         )
@@ -824,8 +913,8 @@ class ShareManager:
             .filter(
                 and_(
                     models.Environment.environmentUri == environment_uri,
-                    models.ShareObject.status
-                    == models.Enums.ShareObjectStatus.Approved.value,
+                    models.ShareObject.status ==
+                    models.Enums.ShareObjectStatus.Approved.value,
                 )
             )
             .all()
@@ -835,13 +924,23 @@ class ShareManager:
     def get_share_item(
         session,
         share: models.ShareObject,
-        table: models.DatasetTable,
+        share_category: Any,
     ) -> models.ShareObjectItem:
+        if isinstance(share_category, models.DatasetTable):
+            category_uri = share_category.tableUri
+        elif isinstance(share_category, models.DatasetStorageLocation):
+            category_uri = share_category.locationUri
+        else:
+            raise exceptions.InvalidInput(
+                'share_category',
+                share_category,
+                'DatasetTable or DatasetStorageLocation'
+            )
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == table.tableUri,
+                    models.ShareObjectItem.itemUri == category_uri,
                     models.ShareObjectItem.shareUri == share.shareUri,
                 )
             )
@@ -849,7 +948,7 @@ class ShareManager:
         )
 
         if not share_item:
-            raise exceptions.ObjectNotFound('ShareObjectItem', table.tableUri)
+            raise exceptions.ObjectNotFound('ShareObjectItem', category_uri)
 
         return share_item
 
@@ -864,6 +963,89 @@ class ShareManager:
         share_item.status = status
         session.commit()
         return share_item
+
+    @staticmethod
+    def manage_access_point_and_bucket_policy(
+        dataset_admin: str,
+        account_id: str,
+        bucket_name: str,
+        access_point_name: str,
+        target_account_id: str,
+        folder_name: str
+    ):
+        if not S3.get_bucket_access_point(account_id, access_point_name):
+            access_point = S3.create_bucket_access_point(account_id, bucket_name, access_point_name)
+            bucket_policy = json.loads(S3.get_bucket_policy(account_id, bucket_name))
+            dataset_admin = SessionHelper.extract_account_from_role_arn(dataset_admin)
+            exceptions_roleId = [
+                f'{item}:*' for item in [
+                    SessionHelper.get_role_id(account_id, 'dataallPivotRole'),
+                    SessionHelper.get_role_id(account_id, dataset_admin)
+                ]
+            ]
+            allow_owner_access = {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ],
+                "Condition": {
+                    "StringLike": {
+                        "aws:userId": exceptions_roleId
+                    }
+                }
+            }
+            delegated_to_accesspoint = {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "s3:DataAccessPointArn": f"{access_point['AccessPointArn']}"
+                    }
+                }
+            }
+            bucket_policy['Statement'].append(allow_owner_access)
+            bucket_policy['Statement'].append(delegated_to_accesspoint)
+            S3.create_bucket_policy(account_id, bucket_name, json.dumps(bucket_policy))
+            access_point_policy = {
+                'Version': '2012-10-17',
+                "Statement": [
+                    {
+                        "Sid": "AllowListFolderToIamRole",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": f"arn:aws:iam::{target_account_id}:root"
+                        },
+                        "Action": "s3:ListBucket",
+                        "Resource": f"{access_point['AccessPointArn']}",
+                        "Condition": {
+                            "StringLike": {
+                                "s3:prefix": f"{folder_name}/*"
+                            }
+                        }
+                    },
+                    {
+                        "Sid": "AllowReadAccessToIamRole",
+                        "Effect": "Allow",
+                        "Principal": {
+                            'AWS': f'arn:aws:iam::{target_account_id}:root'
+                        },
+                        "Action": "s3:GetObject",
+                        "Resource": f"{access_point['AccessPointArn']}/object/{folder_name}/*",
+                    }
+                ]
+            }
+            S3.attach_access_point_policy(account_id, access_point_name, json.dumps(access_point_policy))
+            return True
+        else:
+            return False
 
 
 if __name__ == '__main__':

@@ -69,6 +69,19 @@ Resources:
             Action: 's3:GetObject'
             Resource:
               - 'arn:aws:s3:::crawler-public*'
+          - Sid: ManagedAccessPoints
+            Action:
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: ManagedBuckets
             Action:
               - 's3:List*'
