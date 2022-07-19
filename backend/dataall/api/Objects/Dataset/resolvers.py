@@ -305,6 +305,9 @@ def sync_tables(context: Context, source, datasetUri: str = None):
         indexers.upsert_dataset_tables(
             session=session, es=context.es, datasetUri=dataset.datasetUri
         )
+        indexers.remove_deleted_tables(
+            session=session, es=context.es, datasetUri=dataset.datasetUri
+        )
         return Dataset.paginated_dataset_tables(
             session=session,
             username=context.username,
