@@ -287,7 +287,12 @@ class Dataset:
     ) -> dict:
         query = (
             session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == uri)
+            .filter(
+                and_(
+                    models.DatasetTable.datasetUri == uri,
+                    models.DatasetTable.LastGlueTableStatus != 'Deleted',
+                )
+            )
             .order_by(models.DatasetTable.created.desc())
         )
         if data and data.get('term'):

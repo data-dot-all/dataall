@@ -319,11 +319,32 @@ def upsert_dashboard(session, es, dashboardUri: str):
 def upsert_dataset_tables(session, es, datasetUri: str):
     tables = (
         session.query(models.DatasetTable)
-        .filter(models.DatasetTable.datasetUri == datasetUri)
+        .filter(
+            and_(
+                models.DatasetTable.datasetUri == datasetUri,
+                models.DatasetTable.LastGlueTableStatus != 'Deleted',
+            )
+        )
         .all()
     )
     for table in tables:
         upsert_table(session, es, table.tableUri)
+    return tables
+
+
+def remove_deleted_tables(session, es, datasetUri: str):
+    tables = (
+        session.query(models.DatasetTable)
+        .filter(
+            and_(
+                models.DatasetTable.datasetUri == datasetUri,
+                models.DatasetTable.LastGlueTableStatus == 'Deleted',
+            )
+        )
+        .all()
+    )
+    for table in tables:
+        delete_doc(es, doc_id=table.tableUri)
     return tables
 
 
