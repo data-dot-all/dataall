@@ -105,9 +105,9 @@ function FolderPageHeader(props) {
           </Link>
         </Breadcrumbs>
       </Grid>
-      {isAdmin && (
-        <Grid item>
-          <Box sx={{ m: -1 }}>
+      <Grid item>
+        <Box sx={{ m: -1 }}>
+          {isAdmin && (
             <Button
               color="primary"
               startIcon={<ForumOutlined fontSize="small" />}
@@ -118,18 +118,18 @@ function FolderPageHeader(props) {
             >
               Chat
             </Button>
-            {isAdmin && (
-              <LoadingButton
-                loading={isLoadingUI}
-                startIcon={<FaExternalLinkAlt size={15} />}
-                variant="outlined"
-                color="primary"
-                sx={{ m: 1 }}
-                onClick={goToS3Console}
-              >
-                S3 Bucket
-              </LoadingButton>
-            )}
+          )}
+          <LoadingButton
+            loading={isLoadingUI}
+            startIcon={<FaExternalLinkAlt size={15} />}
+            variant="outlined"
+            color="primary"
+            sx={{ m: 1 }}
+            onClick={goToS3Console}
+          >
+            S3 Bucket
+          </LoadingButton>
+          {isAdmin && (
             <Button
               color="primary"
               component={RouterLink}
@@ -140,6 +140,8 @@ function FolderPageHeader(props) {
             >
               Edit
             </Button>
+          )}
+          {isAdmin && (
             <Button
               color="primary"
               startIcon={<FaTrash size={15} />}
@@ -150,9 +152,9 @@ function FolderPageHeader(props) {
             >
               Delete
             </Button>
-          </Box>
-        </Grid>
-      )}
+        )}
+        </Box>
+      </Grid>
       {openFeed && (
         <FeedComments
           objectOwner={folder.dataset.owner}
