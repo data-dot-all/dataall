@@ -209,7 +209,10 @@ class EnvironmentSetup(Stack):
                 ),
             )
 
-            default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
+try:
+      default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
+except Exception as e:
+       logger.error(f"Default VPC not found, Exception: {e}")
             vpc_id = default_vpc.vpc_id
             subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
             subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
