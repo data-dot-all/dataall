@@ -287,7 +287,7 @@ class Quicksight:
             response = client.create_data_source(
                 AwsAccountId=AwsAccountId,
                 DataSourceId="dataall-metadata-db",
-                Name="sample-aurora-db",
+                Name="dataall-metadata-db",
                 Type="AURORA_POSTGRESQL",
                 DataSourceParameters={
                     'AuroraPostgreSqlParameters': {
@@ -318,6 +318,19 @@ class Quicksight:
                 VpcConnectionProperties={
                     'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpcConnectionId}"
                 }
+            )
+
+            response = client.update_data_source_permissions(
+                AwsAccountId=AwsAccountId,
+                DataSourceId="dataall-metadata-db",
+                GrantPermissions=[
+                    {
+                        'Principal': 'string',
+                        'Actions': [
+                            'string',
+                        ]
+                    },
+                ]
             )
 
         return "dataall-metadata-db"
