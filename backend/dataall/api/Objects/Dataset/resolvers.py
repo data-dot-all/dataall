@@ -15,7 +15,7 @@ from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
 from ....db import paginate, exceptions, permissions, models
-from ....db.api import Dataset, Environment, ResourcePolicy
+from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
 from ....searchproxy import indexers
 
@@ -272,9 +272,30 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
             permission_name=permissions.CREDENTIALS_DATASET,
         )
         dataset = Dataset.get_dataset_by_uri(session, datasetUri)
-    pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
+        if dataset.SamlAdminGroupName not in context.groups:
+            share = ShareObject.get_share_by_dataset_attributes(
+                session=session,
+                dataset_uri=datasetUri,
+                dataset_owner=context.username
+            )
+            shared_environment = Environment.get_environment_by_uri(
+                session=session,
+                uri=share.environmentUri
+            )
+            env_group = Environment.find_environment_group(
+                session=session,
+                group_uri=share.principalId,
+                environment_uri=share.environmentUri
+            )
+            role_arn = env_group.environmentIAMRoleArn
+            account_id = shared_environment.AwsAccountId
+        else:
+            role_arn = dataset.IAMDatasetAdminRoleArn
+            account_id = dataset.AwsAccountId
+
+    pivot_session = SessionHelper.remote_session(account_id)
     aws_session = SessionHelper.get_session(
-        base_session=pivot_session, role_arn=dataset.IAMDatasetAdminRoleArn
+        base_session=pivot_session, role_arn=role_arn
     )
     url = SessionHelper.get_console_access_url(
         aws_session,
@@ -303,6 +324,9 @@ def sync_tables(context: Context, source, datasetUri: str = None):
     Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
     with context.engine.scoped_session() as session:
         indexers.upsert_dataset_tables(
+            session=session, es=context.es, datasetUri=dataset.datasetUri
+        )
+        indexers.remove_deleted_tables(
             session=session, es=context.es, datasetUri=dataset.datasetUri
         )
         return Dataset.paginated_dataset_tables(

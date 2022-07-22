@@ -109,6 +109,7 @@ class ECRRepositoryStack(Stack):
 
         regions = list(set(regions))
         if len(regions) > 1:
+            regions.remove(self.region)
             replication_destinations = []
             for region in regions:
                 replication_destinations.append(
