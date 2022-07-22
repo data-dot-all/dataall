@@ -209,14 +209,14 @@ class EnvironmentSetup(Stack):
                 ),
             )
 
-try:
-      default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
-except Exception as e:
-       logger.error(f"Default VPC not found, Exception: {e}")
-            vpc_id = default_vpc.vpc_id
-            subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
-            subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
-            subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
+            try:
+                default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
+                vpc_id = default_vpc.vpc_id
+                subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
+                subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
+                subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
+            except Exception as e:
+                logger.error(f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation.")
 
             sagemaker_domain = sagemaker.CfnDomain(
                 self,
