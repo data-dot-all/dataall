@@ -70,7 +70,7 @@ REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
         f.write(file_content)
 
     if cw_rum_enabled == 'True':
-        rum = boto3.client('rum', region=region)
+        rum = boto3.client('rum', region_name=region)
         app_monitor = rum.get_app_monitor(Name=f'{resource_prefix}-{envname}-monitor')[
             'AppMonitor'
         ]
