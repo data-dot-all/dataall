@@ -282,7 +282,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
                 session=session,
                 uri=share.environmentUri
             )
-            env_group = Environment.find_environment_group(
+            env_group = Environment.get_environment_group(
                 session=session,
                 group_uri=share.principalId,
                 environment_uri=share.environmentUri
