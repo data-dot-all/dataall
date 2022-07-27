@@ -350,6 +350,12 @@ class ContainerStack(pyNestedClass):
                 ),
                 iam.PolicyStatement(
                     actions=[
+                        'ecs:ListTasks',
+                    ],
+                    resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
                         's3:GetObject',
                         's3:ListBucketVersions',
                         's3:ListBucket',
