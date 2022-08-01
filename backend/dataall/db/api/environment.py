@@ -1038,19 +1038,11 @@ class Environment:
 
     @staticmethod
     def find_environment_group(session, group_uri, environment_uri):
-        env_group = (
-            session.query(models.EnvironmentGroup)
-            .filter(
-                (
-                    and_(
-                        models.EnvironmentGroup.groupUri == group_uri,
-                        models.EnvironmentGroup.environmentUri == environment_uri,
-                    )
-                )
-            )
-            .first()
-        )
-        return env_group
+        try:
+            env_group = Environment.get_environment_group(session, group_uri, environment_uri)
+            return env_group
+        except Exception:
+            return None
 
     @staticmethod
     def get_environment_group(session, group_uri, environment_uri):
@@ -1067,7 +1059,7 @@ class Environment:
             .first()
         )
         if not env_group:
-            exceptions.ObjectNotFound(
+            raise exceptions.ObjectNotFound(
                 'EnvironmentGroup', f'({group_uri},{environment_uri})'
             )
         return env_group
