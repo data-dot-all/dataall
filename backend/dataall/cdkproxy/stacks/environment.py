@@ -169,7 +169,7 @@ class EnvironmentSetup(Stack):
 
         self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
 
-        if self._environment.mlStudiosEnabled and not(self.sagemaker_domain_exists):
+        if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
 
             sagemaker_domain_role = iam.Role(
                 self,
