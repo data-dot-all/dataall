@@ -140,7 +140,7 @@ class Permission:
                 if p == permissions.CREATE_REDSHIFT_CLUSTER:
                     description = 'Create Redshift clusters on this environment'
                 if p == permissions.CREATE_SGMSTUDIO_NOTEBOOK:
-                    description = 'Create ML Studio notebooks on this environment'
+                    description = 'Manage ML Studio profiles on this environment'
                 if p == permissions.INVITE_ENVIRONMENT_GROUP:
                     description = 'Invite other teams to this environment'
                 if p == permissions.CREATE_SHARE_OBJECT:

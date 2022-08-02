@@ -99,5 +99,4 @@ class SagemakerStudio:
                         )
             return _running_apps
         except ClientError as e:
-            print(e)
-            return 'NotFound'
+            raise e

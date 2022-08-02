@@ -35,6 +35,6 @@ delete window that appears after clicking on delete.
 ![notebooks](pictures/mlstudio/ml_studio_3.png#zoom#shadow)
 
 ## :material-file-code-outline: **Open Amazon SageMaker Studio**
-Click on the **Open Notebook** button of the ML Studio notebook window to open Amazon SageMaker Studio.
+Click on the **Open ML Studio** button of the ML Studio notebook window to open Amazon SageMaker Studio.
 
 ![notebooks](pictures/mlstudio/ml_studio_2.png#zoom#shadow)

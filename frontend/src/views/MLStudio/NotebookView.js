@@ -113,7 +113,7 @@ const NotebookView = () => {
     );
     if (!response.errors) {
       handleDeleteObjectModalClose();
-      enqueueSnackbar('Notebook deleted', {
+      enqueueSnackbar('ML Studio Profile deleted', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -136,7 +136,7 @@ const NotebookView = () => {
   return (
     <>
       <Helmet>
-        <title>ML Studio: Notebook Details | data.all</title>
+        <title>ML Studio: Profile Details | DataStudio</title>
       </Helmet>
       <StackStatus
         stack={stack}
@@ -195,7 +195,7 @@ const NotebookView = () => {
                   type="button"
                   variant="outlined"
                 >
-                  Open Notebook
+                  Open JupyterLab
                 </LoadingButton>
                 <Button
                   color="primary"

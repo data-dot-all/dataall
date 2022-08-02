@@ -106,7 +106,7 @@ const NotebookCreateForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('ML Studio creation stared', {
+        enqueueSnackbar('ML Studio user profile creation started', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -145,8 +145,11 @@ const NotebookCreateForm = (props) => {
         <Container maxWidth={settings.compact ? 'xl' : false}>
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography color="textPrimary" variant="h5">
-                Create a new notebook
+              <Typography
+                color="textPrimary"
+                variant="h5"
+              >
+                Create a new ML Studio profile
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -203,7 +206,7 @@ const NotebookCreateForm = (props) => {
               validationSchema={Yup.object().shape({
                 label: Yup.string()
                   .max(255)
-                  .required('*Sagemaker Studio user profile is required'),
+                  .required('*ML Studio user profile is required'),
                 description: Yup.string().max(5000),
                 SamlAdminGroupName: Yup.string()
                   .max(255)
@@ -238,7 +241,7 @@ const NotebookCreateForm = (props) => {
                             error={Boolean(touched.label && errors.label)}
                             fullWidth
                             helperText={touched.label && errors.label}
-                            label="SageMaker Studio profile name"
+                            label="ML Studio profile name"
                             name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -404,7 +407,7 @@ const NotebookCreateForm = (props) => {
                           type="submit"
                           variant="contained"
                         >
-                          Create Notebook
+                          Create ML Studio profile
                         </LoadingButton>
                       </Box>
                     </Grid>
