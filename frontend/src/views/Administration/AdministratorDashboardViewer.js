@@ -4,6 +4,8 @@ import { Formik, useFormik } from 'formik';
 import * as ReactIf from 'react-if';
 import {
   Box,
+  Button,
+  Collapse,
   Grid,
   Card,
   CardActions,
@@ -12,12 +14,11 @@ import {
   Container,
   Divider,
   TextField,
-  Typography,
-  Button,
-  CircularProgress
+  Typography
 } from '@mui/material';
 import { FaCheckCircle } from 'react-icons/fa';
 import { AddOutlined, CopyAllOutlined, ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { LoadingButton } from '@mui/lab';
 import getMonitoringDashboardId from '../../api/Tenant/getMonitoringDashboardId';
@@ -206,7 +207,27 @@ const DashboardViewer = () => {
     setIsOpeningSession(false);
   };
 
+  interface ExpandMoreProps extends IconButtonProps {
+    expand: boolean;
+  }
 
+  const ExpandMore = styled((props: ExpandMoreProps) => {
+    const { expand, ...other } = props;
+    return <IconButton {...other} />;
+  })(({ theme, expand }) => ({
+    transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
+    marginLeft: 'auto',
+    transition: theme.transitions.create('transform', {
+      duration: theme.transitions.duration.shortest,
+    }),
+  }));
+
+  export default function RecipeReviewCard() {
+    const [expanded, setExpanded] = React.useState(false);
+
+    const handleExpandClick = () => {
+      setExpanded(!expanded);
+    };
   return (
     <Container maxWidth={settings.compact ? 'xl' : false}>
           <Grid container justifyContent="space-between" spacing={3}>
@@ -232,15 +253,26 @@ const DashboardViewer = () => {
               <Card sx={{ mt: 3 }}>
                 <CardHeader title="Create the RDS data source in Quicksight" />
                 <Divider />
-                <CardContent>
-                  <Box>
+                <CardActions disableSpacing>
+                  <ExpandMore
+                    expand={expanded}
+                    onClick={handleExpandClick}
+                    aria-expanded={expanded}
+                    aria-label="show more"
+                  >
+                    <ExpandMoreIcon />
+                  </ExpandMore>
+                </CardActions>
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                  <CardContent>
+                  <Box mb={1}>
                     <Box mb={1}>
                       <Typography color="textSecondary" variant="subtitle2">
                         3. Introduce or Update the VPC Connection ID value in the following box:
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={6}>
-                      <Grid item lg={4} xl={6} xs={6}>
+                      <Grid item lg={12} xl={12} xs={12}>
                         <Formik
                           initialValues={{
                             vpc: vpcConnectionId
@@ -269,9 +301,10 @@ const DashboardViewer = () => {
                           }) => (
                             <form onSubmit={handleSubmit}>
                               <Grid container justifyContent="space-between" spacing={3}>
-                                <Grid item lg={7} md={7} xs={7}>
+                                <Grid item lg={8} md={8} xs={8}>
                                    <TextField
                                     error={Boolean(touched.vpc && errors.vpc)}
+                                    fullWidth
                                     helperText={touched.vpc && errors.vpc}
                                     defaultValue={vpcConnectionId}
                                     name="vpc"
@@ -281,7 +314,7 @@ const DashboardViewer = () => {
                                     variant="outlined"
                                    />
                                 </Grid>
-                                <Grid item lg={5} md={5} xs={5}>
+                                <Grid item lg={4} md={4} xs={4}>
                                    <LoadingButton
                                     color="primary"
                                     loading={isSubmitting}
@@ -305,7 +338,7 @@ const DashboardViewer = () => {
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
-                      <Grid item lg={6} xl={6} xs={6}>
+                      <Grid item lg={12} xl={12} xs={12}>
                         <LoadingButton
                           loading={isCreatingDataSource}
                           color="primary"
@@ -324,6 +357,7 @@ const DashboardViewer = () => {
                     </Grid>
                   </Box>
                 </CardContent>
+                </Collapse>
               </Card>
             </Grid>
             <Grid item lg={6} md={6} sm={12} xs={12}>
@@ -338,7 +372,7 @@ const DashboardViewer = () => {
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
-                      <Grid item lg={4} xl={6} xs={6}>
+                      <Grid item lg={12} xl={12} xs={12}>
                         <LoadingButton
                           loading={isOpeningSession}
                           color="primary"
@@ -359,7 +393,7 @@ const DashboardViewer = () => {
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={6}>
-                      <Grid item lg={6} xl={6} xs={6}>
+                      <Grid item lg={12} xl={12} xs={12}>
                         <Formik
                           initialValues={{
                             dash: dashboardId
@@ -388,9 +422,10 @@ const DashboardViewer = () => {
                           }) => (
                             <form onSubmit={handleSubmit}>
                               <Grid container justifyContent="space-between" spacing={3}>
-                                <Grid item lg={7} md={7} xs={7}>
+                                <Grid item lg={8} md={8} xs={8}>
                                    <TextField
                                     error={Boolean(touched.dash && errors.dash)}
+                                    fullWidth
                                     helperText={touched.dash && errors.dash}
                                     defaultValue={dashboardId}
                                     name="dash"
@@ -400,7 +435,7 @@ const DashboardViewer = () => {
                                     variant="outlined"
                                    />
                                 </Grid>
-                                <Grid item lg={5} md={7} xs={7}>
+                                <Grid item lg={4} md={4} xs={4}>
                                    <LoadingButton
                                     color="primary"
                                     loading={isSubmitting}
@@ -420,7 +455,7 @@ const DashboardViewer = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item lg={6} md={6} sm={12} xs={12}>
+            <Grid item lg={12} md={12} sm={12} xs={12}>
               <ReactIf.If condition={sessionUrl}>
                 <ReactIf.Then>
                   <Box sx={{ mb: 3 }}>
@@ -445,3 +480,5 @@ const DashboardViewer = () => {
 };
 
 export default DashboardViewer;
+
+
