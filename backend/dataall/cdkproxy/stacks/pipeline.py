@@ -488,7 +488,7 @@ class PipelineStack(Stack):
             pipeline_env_team,
             pipeline
     ) -> List[iam.PolicyStatement]:
-        return[
+        return [
             iam.PolicyStatement(
                 actions=[
                     "ec2:DescribeAvailabilityZones",
