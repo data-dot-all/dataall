@@ -270,9 +270,9 @@ class Quicksight:
     @staticmethod
     def create_data_source_vpc(AwsAccountId, region, UserName, vpcConnectionId):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
-        user = Quicksight.describe_user(AwsAccountId, UserName)
-        if not user:
-            return False
+        identity_region = 'us-east-1'
+
+        user = Quicksight.register_user(AwsAccountId, UserName, UserRole='AUTHOR')
         try:
             response = client.describe_data_source(
                 AwsAccountId=AwsAccountId, DataSourceId="dataall-metadata-db"
@@ -304,7 +304,7 @@ class Quicksight:
                 },
                 Permissions=[
                     {
-                        "Principal": user.get('Arn'),
+                        "Principal": f"arn:aws:quicksight:{identity_region}:{AwsAccountId}:group/default/dataall",
                         "Actions": [
                             "quicksight:UpdateDataSourcePermissions",
                             "quicksight:DescribeDataSource",
@@ -318,19 +318,6 @@ class Quicksight:
                 VpcConnectionProperties={
                     'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpcConnectionId}"
                 }
-            )
-
-            response = client.update_data_source_permissions(
-                AwsAccountId=AwsAccountId,
-                DataSourceId="dataall-metadata-db",
-                GrantPermissions=[
-                    {
-                        'Principal': 'string',
-                        'Actions': [
-                            'string',
-                        ]
-                    },
-                ]
             )
 
         return "dataall-metadata-db"
