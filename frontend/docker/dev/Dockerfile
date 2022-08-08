@@ -27,7 +27,7 @@ COPY ./docker/dev/.env ./
 
 COPY ./docker/dev/nginx.config /etc/nginx/nginx.template
 
-RUN cp /etc/nginx/nginx.template /etc/nginx/conf.d/default.conf
+RUN cp /etc/nginx/nginx.template /etc/nginx/nginx.conf
 
 COPY . ./
 

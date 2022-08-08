@@ -35,9 +35,9 @@ RUN sed -i 's|SERVERNAME|'$SERVERNAME'|g' /etc/nginx/nginx.template
 
 RUN cat /etc/nginx/nginx.template
 
-RUN cp /etc/nginx/nginx.template /etc/nginx/conf.d/default.conf
+RUN cp /etc/nginx/nginx.template /etc/nginx/nginx.conf
 
-RUN cat /etc/nginx/conf.d/default.conf
+RUN cat /etc/nginx/nginx.conf
 
 COPY . ./
 
