@@ -18,7 +18,6 @@ from aws_cdk import (
 )
 
 from .pyNestedStack import pyNestedClass
-from .solution_bundling import SolutionBundling
 
 class CloudfrontDistro(pyNestedClass):
     def __init__(
@@ -493,12 +492,7 @@ class CloudfrontDistro(pyNestedClass):
             description='Edge function to set security policy headers for docs',
             handler='index.handler',
             code=_lambda.Code.from_asset(
-                path=docs_http_headers,
-                bundling=BundlingOptions(
-                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                    local=SolutionBundling(source_path=docs_http_headers),
-                    command=['bash', '-c', """cp -au . /asset-output"""],
-                ),
+                path=docs_http_headers
             ),
             timeout=Duration.seconds(5),
             memory_size=128,

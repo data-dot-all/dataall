@@ -13,7 +13,6 @@ from aws_cdk import (
 )
 
 from .pyNestedStack import pyNestedClass
-from .solution_bundling import SolutionBundling
 
 
 class IdpStack(pyNestedClass):
@@ -255,11 +254,7 @@ class IdpStack(pyNestedClass):
                 role=cognito_sync_role,
                 handler='index.on_event',
                 code=_lambda.Code.from_asset(
-                    path=cognito_assets,
-                    bundling=BundlingOptions(
-                        image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                        local=SolutionBundling(source_path=cognito_assets),
-                    ),
+                    path=cognito_assets
                 ),
                 memory_size=512 if prod_sizing else 256,
                 description='dataall Custom resource to sync cognito params to us-east-1',
