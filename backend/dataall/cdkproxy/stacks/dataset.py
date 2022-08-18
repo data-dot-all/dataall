@@ -317,7 +317,26 @@ class Dataset(Stack):
                 iam.PolicyStatement(
                     actions=['s3:*'],
                     effect=iam.Effect.ALLOW,
-                    resources=[dataset_bucket.bucket_arn + '/*'],
+                    resources=[
+                        dataset_bucket.bucket_arn + '/*',
+                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        's3:GetAccessPoint',
+                        's3:GetAccessPointPolicy',
+                        's3:ListAccessPoints',
+                        's3:CreateAccessPoint',
+                        's3:DeleteAccessPoint',
+                        's3:GetAccessPointPolicyStatus',
+                        's3:DeleteAccessPointPolicy',
+                        's3:PutAccessPointPolicy',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/*',
+                    ],
                 ),
                 iam.PolicyStatement(
                     actions=['s3:List*', 's3:Get*'],

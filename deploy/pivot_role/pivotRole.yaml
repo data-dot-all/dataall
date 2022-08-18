@@ -178,6 +178,7 @@ Resources:
               - 'glue:UpdateTrigger'
               - 'glue:UpdateJob'
               - 'glue:TagResource'
+              - 'glue:UpdateCrawler'
             Effect: Allow
             Resource: '*'
           - Sid: KMS
