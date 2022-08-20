@@ -304,7 +304,7 @@ class Quicksight:
                 },
                 Permissions=[
                     {
-                        "Principal": f"arn:aws:quicksight:{identity_region}:{AwsAccountId}:group/default/dataall",
+                        "Principal": f"arn:aws:quicksight:{region}:{AwsAccountId}:group/default/dataall",
                         "Actions": [
                             "quicksight:UpdateDataSourcePermissions",
                             "quicksight:DescribeDataSource",

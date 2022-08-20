@@ -53,28 +53,43 @@ Follow the steps in the
 
 To complete the set-up you will need the following information:
 
-- VPC_ID of the RDS Aurora database, which you can find in the RDS Console
+- VPC_ID of the RDS Aurora database, which is the same as the data.all created one. If you have more than one VPC in the account, you can always check this value in 
+AWS SSM Parameters or in the Aurora database as appears in the picture:
 
-![quicksight](pictures/monitoring/vpc1.png#zoom#shadow)
+
+![quicksight](pictures/monitoring/vpc2.png#zoom#shadow)
 
 - Security group created for Quicksight: In the VPC console, under security groups, look for a group called `<resource-prefix>-<envname>-quicksight-monitoring-sg`
 For example using the default resource prefix, in an environment called prod, look for `dataall-prod-quicksight-monitoring-sg`.
 
-**3) [WIP] Create Aurora data source and Quicksight data sets**
+**3) Create Aurora data source**
 We have automated this step for you! As a tenant user, a user that belongs to `DAADministrators` group, sign in to data.all.
 In the UI navigate to the **Admin Settings** window by clicking in the top-right corner. You will appear in a window with 2 tabs: Teams and Monitoring.
-In the Monitoring tab, introduce the VPC connection ... and click on .....
+In the Monitoring tab, introduce the VPC connection name that you created in step 2 and click on the *Save* button. Then, click on the 
+*Create Quicksight data source* button. Right now, a connection between the RDS database and Quicksight has been established.
 
+![quicksight](pictures/monitoring/qs1.png#zoom#shadow)
 
 **4) Customize your analyses and share your dashboards**
-Explore Quicksight documentation for next steps, such as <a href="https://docs.aws.amazon.com/quicksight/latest/user/working-with-visuals.html">customization of analyses</a>,
-<a href="https://docs.aws.amazon.com/quicksight/latest/user/share-dashboard-view.html">sharing dashboards</a>
-or <a href="https://docs.aws.amazon.com/quicksight/latest/user/sending-reports.html">sending reports via email</a>.
+Go to Quicksight to start building your analysis by clicking on the *Start Quicksight session* button. 
+First, you need to create a dataset. Use the **dataall-metadata-db** data source, this is our connection with RDS.
+
+![quicksight](pictures/monitoring/qs2.png#zoom#shadow)
+
+Use this dataset in an analysis (check the docs <a href="https://docs.aws.amazon.com/quicksight/latest/user/working-with-visuals.html">customization of analyses</a>) 
+and publish it as a dashboard (docs in <a href="https://docs.aws.amazon.com/quicksight/latest/user/creating-a-dashboard.html">publish dashboards</a>)
 
 !!! abstract "Not only RDS"
     With Quicksight you can go one step further and communicate with other AWS services and data sources. Explore the documentation
     for cost analyses in AWS with Quicksight or AWS CloudWatch Logs collection and visualization with Quicksight.
 
 
+**5) Bring your dashboard back to data.all**
+Once your dashboard is ready, copy its ID (you can find it in the URL as appears in the below picture)
 
 
+![quicksight](pictures/monitoring/qs3.png#zoom#shadow)
+
+Back in the data.all Monitoring tab, introduce this dashbaord ID. Now, other tenants can see your dashboard directly from data.all UI!
+
+![quicksight](pictures/monitoring/qs4.png#zoom#shadow)

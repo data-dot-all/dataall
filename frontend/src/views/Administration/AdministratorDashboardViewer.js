@@ -4,8 +4,6 @@ import { Formik, useFormik } from 'formik';
 import * as ReactIf from 'react-if';
 import {
   Box,
-  Button,
-  Collapse,
   Grid,
   Card,
   CardActions,
@@ -14,11 +12,12 @@ import {
   Container,
   Divider,
   TextField,
-  Typography
+  Typography,
+  Button,
+  CircularProgress
 } from '@mui/material';
 import { FaCheckCircle } from 'react-icons/fa';
 import { AddOutlined, CopyAllOutlined, ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { LoadingButton } from '@mui/lab';
 import getMonitoringDashboardId from '../../api/Tenant/getMonitoringDashboardId';
@@ -32,7 +31,6 @@ import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import useSettings from '../../hooks/useSettings';
-
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 
@@ -61,9 +59,6 @@ const DashboardViewer = () => {
     const response = await client.query(getMonitoringVPCConnectionId());
     if (!response.errors) {
       setVpcConnectionId(response.data.getMonitoringVPCConnectionId);
-      console.log("fetch vpc")
-      console.log(response.data.getMonitoringVPCConnectionId)
-      console.log(vpcConnectionId)
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -73,15 +68,9 @@ const DashboardViewer = () => {
     const response = await client.query(getMonitoringDashboardId());
     if (!response.errors) {
       setDashboardId(response.data.getMonitoringDashboardId);
-      console.log("fetch dashboard")
-      console.log(response.data.getMonitoringDashboardId)
-      console.log(dashboardId)
       if (response.data.getMonitoringDashboardId != "updateme"){
-        console.log("getting url")
         const resp = await client.query(getPlatformReaderSession(response.data.getMonitoringDashboardId));
         if (!resp.errors){
-          console.log("inside resp")
-          console.log(resp.data.getPlatformReaderSession)
           setSessionUrl(resp.data.getPlatformReaderSession)
           const options = {
             url: resp.data.getPlatformReaderSession,
@@ -121,9 +110,6 @@ const DashboardViewer = () => {
 
   async function submitVpc(values, setStatus, setSubmitting, setErrors){
     try {
-      console.log("values")
-      console.log(values);
-      console.log(values.vpc)
       setVpcConnectionId(values.vpc)
       const response = await client.mutate(updateSSMParameter({name:"VPCConnectionId", value:values.vpc}));
       if (!response.errors) {
@@ -143,9 +129,6 @@ const DashboardViewer = () => {
 
   async function submitDash(values, setStatus, setSubmitting, setErrors){
     try {
-      console.log("values")
-      console.log(values);
-      console.log(values.dash)
       setDashboardId(values.dash)
       const response = await client.mutate(updateSSMParameter({name:"DashboardId", value:values.dash}));
       if (!response.errors) {
@@ -153,8 +136,6 @@ const DashboardViewer = () => {
         setSubmitting(false);
         const resp = await client.query(getPlatformReaderSession(values.dash));
         if (!resp.errors){
-          console.log("inside resp")
-          console.log(resp.data.getPlatformReaderSession)
           setSessionUrl(resp.data.getPlatformReaderSession)
           const options = {
             url: resp.data.getPlatformReaderSession,
@@ -185,9 +166,6 @@ const DashboardViewer = () => {
   };
 
   async function createQuicksightdata () {
-    console.log("inside enableQuicksight")
-    console.log(dashboardId)
-    console.log(vpcConnectionId)
     setIsCreatingDataSource(true)
     const response = await client.mutate(createQuicksightDataSourceSet({vpcConnectionId}));
     if (response.errors) {
@@ -207,27 +185,7 @@ const DashboardViewer = () => {
     setIsOpeningSession(false);
   };
 
-  interface ExpandMoreProps extends IconButtonProps {
-    expand: boolean;
-  }
 
-  const ExpandMore = styled((props: ExpandMoreProps) => {
-    const { expand, ...other } = props;
-    return <IconButton {...other} />;
-  })(({ theme, expand }) => ({
-    transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-    marginLeft: 'auto',
-    transition: theme.transitions.create('transform', {
-      duration: theme.transitions.duration.shortest,
-    }),
-  }));
-
-  export default function RecipeReviewCard() {
-    const [expanded, setExpanded] = React.useState(false);
-
-    const handleExpandClick = () => {
-      setExpanded(!expanded);
-    };
   return (
     <Container maxWidth={settings.compact ? 'xl' : false}>
           <Grid container justifyContent="space-between" spacing={3}>
@@ -253,18 +211,7 @@ const DashboardViewer = () => {
               <Card sx={{ mt: 3 }}>
                 <CardHeader title="Create the RDS data source in Quicksight" />
                 <Divider />
-                <CardActions disableSpacing>
-                  <ExpandMore
-                    expand={expanded}
-                    onClick={handleExpandClick}
-                    aria-expanded={expanded}
-                    aria-label="show more"
-                  >
-                    <ExpandMoreIcon />
-                  </ExpandMore>
-                </CardActions>
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <CardContent>
+                <CardContent>
                   <Box mb={1}>
                     <Box mb={1}>
                       <Typography color="textSecondary" variant="subtitle2">
@@ -338,7 +285,7 @@ const DashboardViewer = () => {
                       </Typography>
                     </Box>
                     <Grid container justifyContent="space-between" spacing={3}>
-                      <Grid item lg={12} xl={12} xs={12}>
+                      <Grid item lg={6} xl={6} xs={6}>
                         <LoadingButton
                           loading={isCreatingDataSource}
                           color="primary"
@@ -357,7 +304,6 @@ const DashboardViewer = () => {
                     </Grid>
                   </Box>
                 </CardContent>
-                </Collapse>
               </Card>
             </Grid>
             <Grid item lg={6} md={6} sm={12} xs={12}>
@@ -458,18 +404,6 @@ const DashboardViewer = () => {
             <Grid item lg={12} md={12} sm={12} xs={12}>
               <ReactIf.If condition={sessionUrl}>
                 <ReactIf.Then>
-                  <Box sx={{ mb: 3 }}>
-                    <Button
-                      color="primary"
-                      component="a"
-                      target="_blank"
-                      rel="noreferrer"
-                      startIcon={<FaCheckCircle size={15} />}
-                      variant="outlined"
-                    >
-                      Import Dashboard
-                    </Button>
-                  </Box>
                   <div ref={dashboardRef} />
                 </ReactIf.Then>
               </ReactIf.If>
@@ -480,5 +414,3 @@ const DashboardViewer = () => {
 };
 
 export default DashboardViewer;
-
-
