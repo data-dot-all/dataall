@@ -49,6 +49,12 @@ class ServicePolicy(object):
         from .cloudformation import Cloudformation
 
         policies: [aws_iam.ManagedPolicy] = [
+            
+            # This policy covers the minumum actions required independent 
+            # of the service permissions given to the group.
+            # The 'glue:GetTable', 'glue:GetPartitions' and 
+            # 'lakeformation:GetDataAccess' actions are additionally 
+            # required for the Worksheet/Athena feature.
             aws_iam.ManagedPolicy(
                 self.stack,
                 self.id,
@@ -59,6 +65,9 @@ class ServicePolicy(object):
                             'athena:ListEngineVersions',
                             'athena:ListDataCatalogs',
                             'athena:ListWorkGroups',
+                            'glue:GetTable',
+                            'glue:GetPartitions',
+                            'lakeformation:GetDataAccess',
                             'kms:Decrypt',
                             'kms:DescribeKey',
                             'kms:Encrypt',
