@@ -362,6 +362,14 @@ Resources:
                   - LakeFormation*
           - Effect: Allow
             Action:
+              - 'ram:AssociateResourceShare'
+            Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
+            Condition:
+              'ForAllValues:StringLike':
+                'ram:ResourceShareName':
+                  - LakeFormation*
+          - Effect: Allow
+            Action:
               - 'ram:DeleteResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
             Condition:
