@@ -463,7 +463,7 @@ Resources:
               - 'cloudformation:DescribeStackResource'
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkitDataAll/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
         - !Ref PivotRoleName
