@@ -24,6 +24,7 @@ class AuroraServerlessStack(pyNestedClass):
         ecs_security_groups: [aws_ec2.SecurityGroup] = None,
         codebuild_dbmigration_sg: aws_ec2.SecurityGroup = None,
         prod_sizing=False,
+        quicksight_monitoring_sg = None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -78,6 +79,32 @@ class AuroraServerlessStack(pyNestedClass):
                 connection=ec2.Port.tcp(5432),
                 description=f'Allow dataall ECS codebuild alembic migration',
             )
+
+        if quicksight_monitoring_sg:
+            db_security_group.add_ingress_rule(
+                peer=quicksight_monitoring_sg,
+                connection=ec2.Port.tcp(5432),
+                description=f'Allow Quicksight connection from Quicksight to RDS port',
+            )
+
+            db_security_group.add_egress_rule(
+                peer=quicksight_monitoring_sg,
+                connection=ec2.Port.all_tcp(),
+                description=f'Allow Quicksight connection from RDS to Quicksight',
+            )
+
+            quicksight_monitoring_sg.add_ingress_rule(
+                peer=db_security_group,
+                connection=ec2.Port.all_tcp(),
+                description=f'Allow RDS from RDS to Quicksight',
+            )
+
+            quicksight_monitoring_sg.add_egress_rule(
+                peer=db_security_group,
+                connection=ec2.Port.tcp(5432),
+                description=f'Allow RDS from Quicksight to RDS',
+            )
+
 
         key = aws_kms.Key(
             self,

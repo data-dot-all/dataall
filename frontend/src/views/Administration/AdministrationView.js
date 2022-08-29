@@ -15,8 +15,10 @@ import {
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import AdministrationTeams from './AdministrationTeams';
+import DashboardViewer from './AdministratorDashboardViewer'
 
-const tabs = [{ label: 'Teams', value: 'teams' }];
+
+const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' }];
 
 const AdministrationView = () => {
   const { settings } = useSettings();
@@ -87,6 +89,7 @@ const AdministrationView = () => {
           <Divider />
           <Box sx={{ mt: 3 }}>
             {currentTab === 'teams' && <AdministrationTeams />}
+            {currentTab === 'dashboard' && <DashboardViewer />}
           </Box>
         </Container>
       </Box>
@@ -95,3 +98,4 @@ const AdministrationView = () => {
 };
 
 export default AdministrationView;
+

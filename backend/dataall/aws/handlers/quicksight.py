@@ -1,9 +1,13 @@
 import logging
 import re
+import os
+import ast
 
 from botocore.exceptions import ClientError
 
 from .sts import SessionHelper
+from .secrets_manager import SecretsManager
+from .parameter_store import ParameterStoreManager
 
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)
@@ -262,3 +266,154 @@ class Quicksight:
                         return True
 
         return False
+
+    @staticmethod
+    def create_data_source_vpc(AwsAccountId, region, UserName, vpcConnectionId):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        identity_region = 'us-east-1'
+
+        user = Quicksight.register_user(AwsAccountId, UserName, UserRole='AUTHOR')
+        try:
+            response = client.describe_data_source(
+                AwsAccountId=AwsAccountId, DataSourceId="dataall-metadata-db"
+            )
+
+        except client.exceptions.ResourceNotFoundException:
+            aurora_secret_arn = ParameterStoreManager.get_parameter_value(AwsAccountId=AwsAccountId, region=region, parameter_path=f'/dataall/{os.getenv("envname", "local")}/aurora/secret_arn')
+            aurora_params = SecretsManager.get_secret_value(
+                AwsAccountId=AwsAccountId, region=region, secretId=aurora_secret_arn
+            )
+            aurora_params_dict = ast.literal_eval(aurora_params)
+            response = client.create_data_source(
+                AwsAccountId=AwsAccountId,
+                DataSourceId="dataall-metadata-db",
+                Name="dataall-metadata-db",
+                Type="AURORA_POSTGRESQL",
+                DataSourceParameters={
+                    'AuroraPostgreSqlParameters': {
+                        'Host': aurora_params_dict["host"],
+                        'Port': aurora_params_dict["port"],
+                        'Database': aurora_params_dict["dbname"]
+                    }
+                },
+                Credentials={
+                    "CredentialPair": {
+                        "Username": aurora_params_dict["username"],
+                        "Password": aurora_params_dict["password"],
+                    }
+                },
+                Permissions=[
+                    {
+                        "Principal": f"arn:aws:quicksight:{region}:{AwsAccountId}:group/default/dataall",
+                        "Actions": [
+                            "quicksight:UpdateDataSourcePermissions",
+                            "quicksight:DescribeDataSource",
+                            "quicksight:DescribeDataSourcePermissions",
+                            "quicksight:PassDataSource",
+                            "quicksight:UpdateDataSource",
+                            "quicksight:DeleteDataSource"
+                        ]
+                    }
+                ],
+                VpcConnectionProperties={
+                    'VpcConnectionArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:vpcConnection/{vpcConnectionId}"
+                }
+            )
+
+        return "dataall-metadata-db"
+
+    @staticmethod
+    def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, tablesToImport):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if not user:
+            return False
+
+        data_source = client.describe_data_source(
+            AwsAccountId=AwsAccountId,
+            DataSourceId=dataSourceId
+        )
+
+        if not data_source:
+            return False
+
+        for table in tablesToImport:
+
+            response = client.create_data_set(
+                AwsAccountId=AwsAccountId,
+                DataSetId=f"dataall-imported-{table}",
+                Name=f"dataall-imported-{table}",
+                PhysicalTableMap={
+                    'string': {
+                        'RelationalTable': {
+                            'DataSourceArn': data_source.get('DataSource').get('Arn'),
+                            'Catalog': 'string',
+                            'Schema': 'dev',
+                            'Name': table,
+                            'InputColumns': [
+                                {
+                                    'Name': 'string',
+                                    'Type': 'STRING'
+                                },
+                            ]
+                        }
+                    }},
+                ImportMode='DIRECT_QUERY',
+                Permissions=[
+                    {
+                        'Principal': user.get('Arn'),
+                        'Actions': [
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions"
+                        ]
+                    },
+                ],
+            )
+
+        return True
+
+    @staticmethod
+    def create_analysis(AwsAccountId, region, UserName):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if not user:
+            return False
+
+        response = client.create_analysis(
+            AwsAccountId=AwsAccountId,
+            AnalysisId='dataallMonitoringAnalysis',
+            Name='dataallMonitoringAnalysis',
+            Permissions=[
+                {
+                    'Principal': user.get('Arn'),
+                    'Actions': [
+                        'quicksight:DescribeAnalysis',
+                        'quicksight:DescribeAnalysisPermissions',
+                        'quicksight:UpdateAnalysisPermissions',
+                        'quicksight:UpdateAnalysis'
+                    ]
+                },
+            ],
+            SourceEntity={
+                'SourceTemplate': {
+                    'DataSetReferences': [
+                        {
+                            'DataSetPlaceholder': 'environment',
+                            'DataSetArn': f"arn:aws:quicksight:{region}:{AwsAccountId}:dataset/<DATASET-ID>"
+                        },
+                    ],
+                    'Arn': '<TEMPLATE-THAT-WE-WANT-TO-MIGRATE'
+                }
+            },
+            Tags=[
+                {
+                    'Key': 'application',
+                    'Value': 'dataall'
+                },
+            ]
+        )
+
+        return True
