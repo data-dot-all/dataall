@@ -44,4 +44,5 @@ class ParameterStoreManager:
             ).put_parameter(Name=parameter_name, Value=parameter_value, Overwrite=True)['Version']
         except ClientError as e:
             raise Exception(e)
-        return str(response)
+        else:
+            return str(response)
