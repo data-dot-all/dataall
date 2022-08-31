@@ -3,6 +3,8 @@ import os
 import sys
 import time
 import uuid
+import json
+from typing import Any
 
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
@@ -11,6 +13,9 @@ from .. import db
 from ..aws.handlers.glue import Glue
 from ..aws.handlers.quicksight import Quicksight
 from ..aws.handlers.sts import SessionHelper
+from ..aws.handlers.s3 import S3
+from ..aws.handlers.kms import KMS
+from ..aws.handlers.iam import IAM
 from ..db import get_engine
 from ..db import models, exceptions
 from ..searchproxy import connect
@@ -37,15 +42,17 @@ class ShareManager:
         """
         with engine.scoped_session() as session:
             (
-                env_group,
+                source_env_group,
+                target_env_group,
                 dataset,
                 share,
                 shared_tables,
+                shared_folders,
                 source_environment,
                 target_environment,
             ) = ShareManager.get_share_data(session, share_uri, ['Approved'])
 
-            principals = [env_group.environmentIAMRoleArn]
+            principals = [target_env_group.environmentIAMRoleArn]
 
             if target_environment.dashboardsEnabled:
                 ShareManager.add_quicksight_group_to_shared_with_principals(
@@ -63,6 +70,16 @@ class ShareManager:
 
             ShareManager.clean_shared_database(
                 session, dataset, shared_tables, target_environment
+            )
+
+            ShareManager.share_folders(
+                session,
+                share,
+                source_env_group,
+                target_env_group,
+                target_environment,
+                shared_folders,
+                dataset,
             )
 
         return True
@@ -127,6 +144,90 @@ class ShareManager:
                 )
                 AlarmService().trigger_table_sharing_failure_alarm(
                     table, share, target_environment
+                )
+
+    @staticmethod
+    def share_folders(
+        session,
+        share: models.ShareObject,
+        source_env_group: models.EnvironmentGroup,
+        target_env_group: models.EnvironmentGroup,
+        target_environment: models.Environment,
+        shared_folders: [models.DatasetStorageLocation],
+        dataset: models.Dataset,
+    ):
+        for folder in shared_folders:
+            share_item = ShareManager.get_share_item(session, share, folder)
+
+            ShareManager.update_share_item_status(
+                session,
+                share_item,
+                models.ShareObjectStatus.Share_In_Progress.value
+            )
+
+            source_account_id = folder.AWSAccountId
+            access_point_name = share_item.S3AccessPointName
+            bucket_name = folder.S3BucketName
+            target_account_id = target_environment.AwsAccountId
+            source_env_admin = source_env_group.environmentIAMRoleArn
+            dataset_admin = dataset.IAMDatasetAdminRoleArn
+            target_env_admin = target_env_group.environmentIAMRoleName
+            s3_prefix = folder.S3Prefix
+
+            try:
+                ShareManager.manage_access_point_and_bucket_policy(
+                    dataset_admin,
+                    source_account_id,
+                    bucket_name,
+                    access_point_name,
+                    target_account_id,
+                    source_env_admin,
+                )
+
+                ShareManager.manage_target_role_access_policy(
+                    bucket_name,
+                    access_point_name,
+                    target_account_id,
+                    target_env_admin,
+                    dataset,
+                )
+                ShareManager.manage_access_point_policy(
+                    dataset_admin,
+                    source_account_id,
+                    access_point_name,
+                    target_account_id,
+                    source_env_admin,
+                    target_env_admin,
+                    s3_prefix,
+                    dataset,
+                )
+
+                ShareManager.update_dataset_bucket_key_policy(
+                    source_account_id,
+                    target_account_id,
+                    target_env_admin,
+                    dataset
+                )
+
+                ShareManager.update_share_item_status(
+                    session,
+                    share_item,
+                    models.ShareObjectStatus.Share_Succeeded.value,
+                )
+            except Exception as e:
+                logging.error(
+                    f'Failed to share folder {folder.S3Prefix} '
+                    f'from source account {folder.AWSAccountId}//{folder.region} '
+                    f'with target account {target_environment.AwsAccountId}//{target_environment.region} '
+                    f'due to: {e}'
+                )
+                ShareManager.update_share_item_status(
+                    session,
+                    share_item,
+                    models.ShareObjectStatus.Share_Failed.value,
+                )
+                AlarmService().trigger_folder_sharing_failure_alarm(
+                    folder, share, target_environment
                 )
 
     @staticmethod
@@ -793,26 +894,35 @@ class ShareManager:
             environment_uri=target_environment.environmentUri,
             status=status,
         )
-        env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
-            .filter(
-                and_(
-                    models.EnvironmentGroup.environmentUri == share.environmentUri,
-                    models.EnvironmentGroup.groupUri == share.principalId,
-                )
-            )
-            .first()
+        shared_folders = db.api.DatasetStorageLocation.get_dataset_locations_shared_with_env(
+            session,
+            dataset_uri=dataset.datasetUri,
+            share_uri=share_uri,
+            status=status,
         )
-        if not env_group:
+        source_env_group = db.api.Environment.get_environment_group(
+            session,
+            dataset.SamlAdminGroupName,
+            dataset.environmentUri
+        )
+        target_env_group = db.api.Environment.get_environment_group(
+            session,
+            share.principalId,
+            share.environmentUri
+        )
+        if not target_env_group:
             raise Exception(
                 f'Share object Team {share.principalId} is not a member of the '
                 f'environment {target_environment.name}/{target_environment.AwsAccountId}'
             )
+
         return (
-            env_group,
+            source_env_group,
+            target_env_group,
             dataset,
             share,
             shared_tables,
+            shared_folders,
             source_environment,
             target_environment,
         )
@@ -835,13 +945,23 @@ class ShareManager:
     def get_share_item(
         session,
         share: models.ShareObject,
-        table: models.DatasetTable,
+        share_category: Any,
     ) -> models.ShareObjectItem:
+        if isinstance(share_category, models.DatasetTable):
+            category_uri = share_category.tableUri
+        elif isinstance(share_category, models.DatasetStorageLocation):
+            category_uri = share_category.locationUri
+        else:
+            raise exceptions.InvalidInput(
+                'share_category',
+                share_category,
+                'DatasetTable or DatasetStorageLocation'
+            )
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == table.tableUri,
+                    models.ShareObjectItem.itemUri == category_uri,
                     models.ShareObjectItem.shareUri == share.shareUri,
                 )
             )
@@ -849,7 +969,7 @@ class ShareManager:
         )
 
         if not share_item:
-            raise exceptions.ObjectNotFound('ShareObjectItem', table.tableUri)
+            raise exceptions.ObjectNotFound('ShareObjectItem', category_uri)
 
         return share_item
 
@@ -864,6 +984,203 @@ class ShareManager:
         share_item.status = status
         session.commit()
         return share_item
+
+    @staticmethod
+    def manage_access_point_and_bucket_policy(
+        dataset_admin: str,
+        source_account_id: str,
+        bucket_name: str,
+        access_point_name: str,
+        target_account_id: str,
+        source_env_admin: str,
+    ):
+        if not S3.get_bucket_access_point(source_account_id, access_point_name):
+            S3.create_bucket_access_point(source_account_id, bucket_name, access_point_name)
+            bucket_policy = json.loads(S3.get_bucket_policy(source_account_id, bucket_name))
+            exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
+                source_account_id,
+                [dataset_admin, source_env_admin, SessionHelper.get_delegation_role_arn(source_account_id)]
+            )]
+            allow_owner_access = {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ],
+                "Condition": {
+                    "StringLike": {
+                        "aws:userId": exceptions_roleId
+                    }
+                }
+            }
+            delegated_to_accesspoint = {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "s3:DataAccessPointAccount": f"{source_account_id}"
+                    }
+                }
+            }
+            bucket_policy['Statement'].append(allow_owner_access)
+            bucket_policy['Statement'].append(delegated_to_accesspoint)
+            S3.create_bucket_policy(source_account_id, bucket_name, json.dumps(bucket_policy))
+
+    @staticmethod
+    def manage_target_role_access_policy(
+        bucket_name: str,
+        access_point_name: str,
+        target_account_id: str,
+        target_env_admin: str,
+        dataset: models.Dataset,
+    ):
+        # target_env_admin = SessionHelper.extract_name_from_role_arn(target_env_admin)
+        existing_policy = IAM.get_role_policy(
+            target_account_id,
+            target_env_admin,
+            "targetDatasetAccessControlPolicy",
+        )
+        if existing_policy:  # type dict
+            if bucket_name not in ",".join(existing_policy["Statement"][0]["Resource"]):
+                target_resources = [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*",
+                    f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
+                    f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
+                ]
+                policy = existing_policy["Statement"][0]["Resource"].extend(target_resources)
+            else:
+                return
+        else:
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:*"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{bucket_name}",
+                            f"arn:aws:s3:::{bucket_name}/*",
+                            f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
+                            f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
+                        ]
+                    }
+                ]
+            }
+        IAM.update_role_policy(
+            target_account_id,
+            target_env_admin,
+            "targetDatasetAccessControlPolicy",
+            json.dumps(policy)
+        )
+
+    @staticmethod
+    def manage_access_point_policy(
+        dataset_admin: str,
+        source_account_id: str,
+        access_point_name: str,
+        target_account_id: str,
+        source_env_admin: str,
+        target_env_admin: str,
+        s3_prefix: str,
+        dataset: models.Dataset,
+    ):
+        access_point_arn = f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}"
+        exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
+            source_account_id,
+            [dataset_admin, source_env_admin, SessionHelper.get_delegation_role_arn(source_account_id)]
+        )]
+        admin_statement = {
+            "Sid": "AllowAllToAdmin",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": f"{access_point_arn}",
+            "Condition": {
+                "StringLike": {
+                    "aws:userId": exceptions_roleId
+                }
+            }
+        }
+        existing_policy = S3.get_access_point_policy(source_account_id, access_point_name)
+        # requester will use this role to access resources
+        target_env_admin_id = SessionHelper.get_role_id(target_account_id, target_env_admin)
+        print(target_env_admin_id)
+        if existing_policy:
+            existing_policy = json.loads(existing_policy)
+            # sid_list = [item["Sid"] for item in existing_policy["Statement"]]
+            statements = {item["Sid"]: item for item in existing_policy["Statement"]}
+            if target_env_admin_id in statements.keys():
+                prefix_list = statements[f"{target_env_admin_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+                if s3_prefix not in prefix_list:
+                    prefix_list.append(f"{s3_prefix}/*")
+                    statements[f"{target_env_admin_id}1"]["Resource"].append(f"{access_point_arn}/object/{s3_prefix}/*")
+            else:
+                additional_policy = S3.generate_access_point_policy_template(
+                    target_env_admin_id,
+                    access_point_arn,
+                    s3_prefix,
+                )
+                existing_policy["Statement"].extend(additional_policy["Statement"])
+            access_point_policy = existing_policy
+        else:
+            print(target_env_admin_id)
+            print(access_point_arn)
+            print(s3_prefix)
+            access_point_policy = S3.generate_access_point_policy_template(
+                target_env_admin_id,
+                access_point_arn,
+                s3_prefix,
+            )
+        access_point_policy["Statement"].append(admin_statement)
+        print("attaching policy to access point")
+        print(access_point_policy)
+        S3.attach_access_point_policy(source_account_id, access_point_name, json.dumps(access_point_policy))
+
+    @staticmethod
+    def update_dataset_bucket_key_policy(
+        source_account_id: str,
+        target_account_id: str,
+        target_env_admin: str,
+        dataset: models.Dataset,
+    ):
+        key_alias = f"alias/{dataset.KmsAlias}"
+        kms_keyId = KMS.get_key_id(source_account_id, key_alias)
+        existing_policy = KMS.get_key_policy(source_account_id, kms_keyId, "default")
+        target_env_admin_id = SessionHelper.get_role_id(target_account_id, target_env_admin)
+        if existing_policy and f'{target_env_admin_id}:*' not in existing_policy:
+            policy = json.loads(existing_policy)
+            policy["Statement"].append(
+                {
+                    "Sid": f"{target_env_admin_id}",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": "*"
+                    },
+                    "Action": "kms:Decrypt",
+                    "Resource": "*",
+                    "Condition": {
+                        "StringLike": {
+                            "aws:userId": f"{target_env_admin_id}:*"
+                        }
+                    }
+                }
+            )
+            KMS.put_key_policy(
+                source_account_id,
+                kms_keyId,
+                "default",
+                json.dumps(policy)
+            )
 
 
 if __name__ == '__main__':
