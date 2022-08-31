@@ -102,6 +102,7 @@ class PipelineStack(Stack):
         pipeline = self.get_target(target_uri=target_uri)
         pipeline_environment = self.get_pipeline_environment(pipeline=pipeline)
         pipeline_env_team = self.get_env_team(pipeline=pipeline)
+        # TODO:   aDAPT THE CODE TO SEARCH FOR PIPELINE DATASETS
         input_dataset = self.get_dataset(dataset_uri=pipeline.inputDatasetUri) if pipeline.inputDatasetUri else pipeline.inputDatasetUri
         output_dataset = self.get_dataset(dataset_uri=pipeline.outputDatasetUri) if pipeline.outputDatasetUri else pipeline.outputDatasetUri
 

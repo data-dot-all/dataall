@@ -52,12 +52,14 @@ const PipelineCrateForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [currentEnv, setCurrentEnv] = useState('');
+  const [finalEnvs, setFinalEnvs] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
-
+  const [pipelineUri, setPipelineUri] = useState('');
+  
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -178,8 +180,9 @@ const PipelineCrateForm = (props) => {
       );
       if (!response.errors) {
         setStatus({ success: true });
-        console.log("submitting environments")
-        setTriggerEnvSubmit(true)
+        console.log("submitting environments from pipeline")
+        setTriggerEnvSubmit(true);
+        setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
         setSubmitting(false);
         enqueueSnackbar('Pipeline creation started', {
           anchorOrigin: {
@@ -192,12 +195,13 @@ const PipelineCrateForm = (props) => {
           `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
         );
       } else {
-        setTriggerEnvSubmit(true)
+        setTriggerEnvSubmit(false);
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
       console.error(err);
       setStatus({ success: false });
+      setTriggerEnvSubmit(false);
       setErrors({ submit: err.message });
       setSubmitting(false);
       dispatch({ type: SET_ERROR, error: err.message });
@@ -452,13 +456,13 @@ const PipelineCrateForm = (props) => {
                             label="Team"
                             name="SamlGroupName"
                             onChange={(event) => {
-                              setFieldValue('inputDatasetUri', '');
+                              /*setFieldValue('inputDatasetUri', '');
                               setFieldValue('outputDatasetUri', '');
                               fetchDatasets(
                                 event.target.value
                               ).catch((e) =>
                                 dispatch({ type: SET_ERROR, error: e.message })
-                              );
+                              );*/
                               setFieldValue('SamlGroupName', event.target.value);
                             }}
                             select
@@ -530,6 +534,7 @@ const PipelineCrateForm = (props) => {
                         <PipelineEnvironmentUpdateForm
                           environmentOptions={environmentOptions}
                           triggerEnvSubmit={triggerEnvSubmit}
+                          pipelineUri={pipelineUri}
                         />
                       </Box>
                       {errors.submit && (

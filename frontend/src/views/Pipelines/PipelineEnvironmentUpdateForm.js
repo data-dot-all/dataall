@@ -23,15 +23,15 @@ import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
+import createDataPipelineEnvironment from '../../api/DataPipeline/createDataPipelineEnvironment';
 
 const PipelineEnvironmentUpdateForm = (props) => {
-  const { environmentOptions, triggerEnvSubmit } = props;
+  const { environmentOptions, triggerEnvSubmit, pipelineUri } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [kvEnvs, setKeyValueEnvs] = useState([{ stage: '', environmentLabel: '', environmentUri: '' }]
-  );
+  const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [environmentOps, setEnvironmentOps] = useState(
     environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
   );
@@ -75,18 +75,35 @@ const PipelineEnvironmentUpdateForm = (props) => {
     });
   };
 
-  const submitEnvironments = () => {
-    console.log("inside submitenvironmets")
-    console.log(kvEnvs)
+  async function submit(env) {
+    try {
+      const response = await client.mutate(
+        createDataPipelineEnvironment({
+          input: {
+            stage: env.stage,
+            environmentLabel:env.label,
+            environmentUri:env.environmentUri
+          }
+        })
+      );
+      if (!response.errors) {
+        console.log("submited env")
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch({ type: SET_ERROR, error: err.message });
+    }
   }
 
   useEffect(() => {
-      if (client && triggerEnvSubmit) {
-        submitEnvironments().catch((e) =>
-          dispatch({ type: SET_ERROR, error: e.message })
-        );
+      if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
+        console.log("triggerNOW")
+        console.log(pipelineUri)
+        kvEnvs.forEach(submit())
       }
-    }, [client, dispatch, triggerEnvSubmit]);
+    }, [client, dispatch, triggerEnvSubmit, pipelineUri]);
 
   return (
     <>
@@ -179,5 +196,6 @@ const PipelineEnvironmentUpdateForm = (props) => {
 PipelineEnvironmentUpdateForm.propTypes = {
   environmentOptions: PropTypes.array.isRequired,
   triggerEnvSubmit: PropTypes.bool.isRequired,
+  pipelineUri: PropTypes.string.isRequired,
 };
 export default PipelineEnvironmentUpdateForm;
