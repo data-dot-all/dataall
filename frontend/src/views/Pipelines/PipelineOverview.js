@@ -38,9 +38,6 @@ const PipelineOverview = (props) => {
            status={pipeline.stack?.status}
          />
         </Box>
-        <Box sx={{ sx: 3 }}>
-          <PipelineDatasets pipeline={pipeline} />
-        </Box>
       </Grid>
     </Grid>
   );

@@ -64,8 +64,6 @@ class Pipeline:
             repo=slugify(data['label']),
             devStages=data.get('devStages', []),
             devStrategy=data['devStrategy'],
-            inputDatasetUri=data['inputDatasetUri'],
-            outputDatasetUri=data['outputDatasetUri'],
             template=data['template'],
         )
 
