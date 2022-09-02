@@ -44,11 +44,6 @@ const getDataPipeline = (DataPipelineUri) => ({
           outputs
           resources
         }
-        runs {
-          Id
-          StartedOn
-          JobRunState
-        }
       }
     }
   `
