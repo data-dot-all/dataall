@@ -89,6 +89,12 @@ def get_pipeline(context: Context, source, DataPipelineUri: str = None):
             check_perm=True,
         )
 
+def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        env = session.query(models.Environment).get(source.environmentUri)
+    return env
 
 def resolve_user_role(context: Context, source: models.DataPipeline):
     if not source:
