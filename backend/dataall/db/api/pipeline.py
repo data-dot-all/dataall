@@ -118,7 +118,7 @@ class Pipeline:
         groups: [str],
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DataPipeline:
+    ) -> models.DataPipelineEnvironment:
 
         Environment.check_group_environment_permission(
             session=session,
@@ -129,7 +129,7 @@ class Pipeline:
             permission_name=permissions.CREATE_PIPELINE,
         )
 
-        environment = Environment.get_environment_by_uri(session, uri)
+        environment = Environment.get_environment_by_uri(session, data['environmentUri'])
 
         if not environment.pipelinesEnabled:
             raise exceptions.UnauthorizedOperation(
@@ -137,16 +137,18 @@ class Pipeline:
                 message=f'Pipelines feature is disabled for the environment {environment.label}',
             )
 
+        pipeline = Pipeline.get_pipeline_by_uri(session, data['pipelineUri'])
+
         pipeline_env: models.DataPipelineEnvironment = models.DataPipelineEnvironment(
             environmentUri=environment.environmentUri,
-            SamlGroupName=data['SamlGroupName'],
-            environmentLabel=data['environmentLabel'],
-            DataPipelineUri=data['DataPipelineUri'],
-            DataPipelineLabel=data['DataPipelineLabel'],
-            envpipelineUri=data['envpipelineUri'],
+            SamlGroupName=pipeline.SamlGroupName,
+            environmentLabel=environment.label,
+            pipelineUri=pipeline.DataPipelineUri,
+            pipelineLabel=pipeline.label,
+            envpipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}",
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
-            devStage=data['devStage']
+            stage=data['stage']
         )
 
         session.add(pipeline_env)
