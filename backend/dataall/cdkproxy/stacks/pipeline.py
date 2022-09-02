@@ -54,8 +54,16 @@ class PipelineStack(Stack):
         engine = self.get_engine()
         with engine.scoped_session() as session:
             return Pipeline.get_pipeline_by_uri(session, target_uri)
+        
+    def get_pipeline_environments(self, targer_uri) -> models.DataPipelineEnvironment:
+        engine = self.get_engine()
+        with engine.scoped_session() as session:
+            envs = Pipeline.query_user_pipeline_environments(
+                session, targer_uri
+            )
+        return envs
 
-    def get_pipeline_environment(
+    def get_pipeline_cicd_environment(
         self, pipeline: models.DataPipeline
     ) -> models.Environment:
         envname = os.environ.get("envname", "local")
@@ -100,11 +108,14 @@ class PipelineStack(Stack):
         self.target_uri = target_uri
 
         pipeline = self.get_target(target_uri=target_uri)
-        pipeline_environment = self.get_pipeline_environment(pipeline=pipeline)
+        pipeline_environment = self.get_pipeline_cicd_environment(pipeline=pipeline)
         pipeline_env_team = self.get_env_team(pipeline=pipeline)
-        # TODO:   aDAPT THE CODE TO SEARCH FOR PIPELINE DATASETS
+        # TODO:   ADAPT THE CODE TO SEARCH FOR PIPELINE DATASETS
         input_dataset = self.get_dataset(dataset_uri=pipeline.inputDatasetUri) if pipeline.inputDatasetUri else pipeline.inputDatasetUri
         output_dataset = self.get_dataset(dataset_uri=pipeline.outputDatasetUri) if pipeline.outputDatasetUri else pipeline.outputDatasetUri
+        
+        #Development environments
+        development_environments = self.get_pipeline_environments(targer_uri=target_uri)
 
         # Support resources
         build_role_policy = iam.Policy(
@@ -169,6 +180,8 @@ class PipelineStack(Stack):
 
         PipelineStack.write_init_branches_deploy_buildspec(path=code_dir_path, output_file="init_branches_deploy_buildspec.yaml")
 
+        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
         PipelineStack.zip_directory(code_dir_path)
@@ -216,19 +229,19 @@ class PipelineStack(Stack):
                 ],
             )
 
-            for stage in pipeline.devStages:
+            for env in development_environments:
 
                 build_project = codebuild.PipelineProject(
                     scope=self,
-                    id=f'{pipeline.name}-build-{stage}',
+                    id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
-                            pipeline_environment=pipeline_environment,
+                            pipeline_environment=env.environmentLabel,
                             pipeline_env_team=pipeline_env_team,
-                            stage=stage,
+                            stage=env.stage,
                             input_dataset=input_dataset,
                             output_dataset=output_dataset
                         ),
@@ -239,10 +252,10 @@ class PipelineStack(Stack):
                 )
 
                 self.codepipeline_pipeline.add_stage(
-                    stage_name=f'Deploy-Stage-{stage}',
+                    stage_name=f'Deploy-Stage-{env.stage}',
                     actions=[
                         codepipeline_actions.CodeBuildAction(
-                            action_name=f'deploy-{stage}',
+                            action_name=f'deploy-{env.stage}',
                             input=self.source_artifact,
                             project=build_project,
                             outputs=[codepipeline.Artifact()],
@@ -251,31 +264,31 @@ class PipelineStack(Stack):
                 )
 
                 # Skip manual approval for one stage pipelines
-                if stage != 'prod' and len(pipeline.devStages) > 1:
+                if env.stage != 'prod' and len(pipeline.devStages) > 1:
                     self.codepipeline_pipeline.add_stage(
-                        stage_name=f'ManualApproval-{stage}',
+                        stage_name=f'ManualApproval-{env.stage}',
                         actions=[
                             codepipeline_actions.ManualApprovalAction(
-                                action_name=f'ManualApproval-{stage}'
+                                action_name=f'ManualApproval-{env.stage}'
                             )
                         ],
                     )
 
         else:
-            for stage in pipeline.devStages:
-                branch_name = stage if stage != 'prod' else 'main'
+            for env in development_environments:
+                branch_name = env.stage if env.stage != 'prod' else 'main'
                 buildspec = "init_deploy_buildspec.yaml" if stage == 'prod' else "deploy_buildspec.yaml"
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
-                    id=f"{pipeline.name}-{stage}",
-                    pipeline_name=f"{pipeline.name}-{stage}",
+                    id=f"{pipeline.name}-{env.stage}",
+                    pipeline_name=f"{pipeline.name}-{env.stage}",
                     restart_execution_on_update=True,
                 )
                 self.codepipeline_pipeline = codepipeline_pipeline
                 self.source_artifact = codepipeline.Artifact()
 
                 codepipeline_pipeline.add_stage(
-                    stage_name=f'Source-{stage}',
+                    stage_name=f'Source-{env.stage}',
                     actions=[
                         codepipeline_actions.CodeCommitSourceAction(
                             action_name='CodeCommit',
@@ -283,7 +296,7 @@ class PipelineStack(Stack):
                             output=self.source_artifact,
                             trigger=codepipeline_actions.CodeCommitTrigger.POLL,
                             repository=codecommit.Repository.from_repository_name(
-                                self, f'source_blueprint_repo_{stage}', repository_name=pipeline.repo
+                                self, f'source_blueprint_repo_{env.stage}', repository_name=pipeline.repo
                             ),
                         )
                     ],
@@ -297,9 +310,9 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                         environment_variables=PipelineStack.make_environment_variables(
                             pipeline=pipeline,
-                            pipeline_environment=pipeline_environment,
+                            pipeline_environment=env.environmentLabel,
                             pipeline_env_team=pipeline_env_team,
-                            stage=stage,
+                            stage=env.stage,
                             input_dataset=input_dataset,
                             output_dataset=output_dataset
                         ),
@@ -310,10 +323,10 @@ class PipelineStack(Stack):
                 )
 
                 self.codepipeline_pipeline.add_stage(
-                    stage_name=f'Deploy-Stage-{stage}',
+                    stage_name=f'Deploy-Stage-{env.stage}',
                     actions=[
                         codepipeline_actions.CodeBuildAction(
-                            action_name=f'deploy-{stage}',
+                            action_name=f'deploy-{env.stage}',
                             input=self.source_artifact,
                             project=build_project,
                             outputs=[codepipeline.Artifact()],
@@ -521,3 +534,40 @@ class PipelineStack(Stack):
 
 
         ]
+
+    @staticmethod
+    def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
+        json_cicd = f"""
+                    {{
+                        "cicd": {{
+                            "account": "{pipeline_environment.AwsAccountId}",
+                            "region": "{pipeline_environment.region}"
+                        }}
+                    }}
+                """
+        json_envs = ""
+        for env in development_environments:
+            json_env = f"""
+                    ,
+                    {{
+                        "{env.stage}": {{
+                            "account": "{env.AwsAccountId}",
+                            "region": "{env.region}",
+                            "resources": {
+                                "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
+                            }
+                        }}
+                    }}
+                """
+            json_envs = json_envs + json_env
+
+        json = f"""
+            {{
+                "environments": {{
+                    {json_cicd}
+                    {json_envs}
+                }}
+            }}
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(json, file=text_file)

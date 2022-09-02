@@ -280,16 +280,10 @@ class Pipeline:
         return pipeline_env
 
     @staticmethod
-    def query_user_pipeline_environments(session, username, groups, filter) -> Query:
+    def query_user_pipeline_environments(session, uri) -> Query:
         query = session.query(models.DataPipelineEnvironment).filter(
-            models.DataPipelineEnvironment.SamlGroupName.in_(groups),
+            models.DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
         )
-
-        if filter and filter.get('pipelineUri'):
-            query = query.filter(
-                models.DataPipelineEnvironment.pipelineUri.ilike(filter.get('pipelineUri') + '%%'),
-            )
-
         return query
 
     @staticmethod
@@ -297,7 +291,7 @@ class Pipeline:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Pipeline.query_user_pipeline_environments(session, username, groups, data),
+            query=Pipeline.query_user_pipeline_environments(session, data.get('pipelineUri')),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
