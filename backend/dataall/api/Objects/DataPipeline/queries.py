@@ -49,3 +49,17 @@ getDataPipelineCredsLinux = gql.QueryField(
     resolver=get_creds,
 )
 
+listDataPipelineEnvironments = gql.QueryField(
+    name='listDataPipelineEnvironments',
+    args=[gql.Argument(name='filter', type=gql.Ref('DataPipelineEnvironmentFilter'))],
+    resolver=list_pipeline_environments,
+    type=gql.Ref('DataPipelineEnvironmentSearchResults'),
+)
+
+getDataPipelineEnvironment = gql.QueryField(
+    name='getDataPipelineEnvironment',
+    args=[gql.Argument(name='envPipelineUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('DataPipelineEnvironment'),
+    resolver=get_pipeline_environment,
+)
+

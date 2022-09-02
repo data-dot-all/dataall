@@ -100,12 +100,30 @@ def resolve_user_role(context: Context, source: models.DataPipeline):
     return DataPipelineRole.NoPermission.value
 
 
-def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
+def get_pipeline_environment(context: Context, source, envPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-    return env
+        return Pipeline.get_pipeline(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=envPipelineUri,
+            data=None,
+            check_perm=True,
+        )
+
+
+def list_pipeline_environments(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return Pipeline.paginated_user_pipeline_environments(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=None,
+            data=filter,
+            check_perm=None,
+        )
 
 
 def get_pipeline_org(context: Context, source: models.DataPipeline, **kwargs):
