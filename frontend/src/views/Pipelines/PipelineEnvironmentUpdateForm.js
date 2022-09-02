@@ -75,14 +75,17 @@ const PipelineEnvironmentUpdateForm = (props) => {
     });
   };
 
-  async function submit(env) {
+  async function submit(element) {
+    console.log("element")
+    console.log(element)
     try {
       const response = await client.mutate(
         createDataPipelineEnvironment({
           input: {
-            stage: env.stage,
-            environmentLabel:env.label,
-            environmentUri:env.environmentUri
+            stage: element.stage,
+            pipelineUri: pipelineUri,
+            environmentLabel:element.environmentLabel,
+            environmentUri:element.environmentUri
           }
         })
       );
@@ -101,7 +104,9 @@ const PipelineEnvironmentUpdateForm = (props) => {
       if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
         console.log("triggerNOW")
         console.log(pipelineUri)
-        kvEnvs.forEach(submit())
+        console.log(kvEnvs.length)
+        console.log(kvEnvs)
+        kvEnvs.forEach(element => submit(element))
       }
     }, [client, dispatch, triggerEnvSubmit, pipelineUri]);
 

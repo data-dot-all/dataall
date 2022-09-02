@@ -21,8 +21,6 @@ DataPipeline = gql.ObjectType(
         gql.Field(
             'environment', type=gql.Ref('Environment'), resolver=get_pipeline_env
         ),
-        gql.Field('inputDatasetUri', type=gql.String),
-        gql.Field('outputDatasetUri', type=gql.String),
         gql.Field('template', type=gql.String),
         gql.Field('devStages', type=gql.ArrayType(gql.String)),
         gql.Field('devStrategy', type=gql.String),
@@ -52,15 +50,15 @@ DataPipelineSearchResults = gql.ObjectType(
 DataPipelineEnvironment = gql.ObjectType(
     name='DataPipelineEnvironment',
     fields=[
+        gql.Field(name='envPipelineUri', type=gql.String),
         gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='environmentLabel', type=gql.String),
-        gql.Field(name='DataPipelineUri', type=gql.String),
-        gql.Field(name='DataPipelineLabel', type=gql.String),
-        gql.Field(name='envPipelineUri', type=gql.String),
+        gql.Field(name='pipelineUri', type=gql.String),
+        gql.Field(name='pipelineLabel', type=gql.String),
+        gql.Field(name='stage', type=gql.String),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
-        gql.Field(name='devStage', type=gql.String),
     ],
 )
 
