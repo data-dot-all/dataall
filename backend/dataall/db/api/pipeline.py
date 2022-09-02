@@ -258,3 +258,46 @@ class Pipeline:
         session.delete(pipeline)
         session.commit()
         return True
+
+    @staticmethod
+    @has_tenant_perm(permissions.MANAGE_PIPELINES)
+    @has_resource_perm(permissions.GET_PIPELINE)
+    def get_pipeline_environment(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.DataPipeline:
+        return Pipeline.get_pipeline_environment_by_uri(session, uri)
+
+    @staticmethod
+    def get_pipeline_environment_by_uri(session, uri):
+        pipeline_env: models.DataPipelineEnvironment = session.query(models.DataPipelineEnvironment).get(uri)
+        if not pipeline_env:
+            raise exceptions.ObjectNotFound('PipelineEnvironment', uri)
+        return pipeline_env
+
+    @staticmethod
+    def query_user_pipeline_environments(session, username, groups, filter) -> Query:
+        query = session.query(models.DataPipelineEnvironment).filter(
+            models.DataPipelineEnvironment.SamlGroupName.in_(groups),
+        )
+
+        if filter and filter.get('pipelineUri'):
+            query = query.filter(
+                models.DataPipelineEnvironment.pipelineUri.ilike(filter.get('pipelineUri') + '%%'),
+            )
+
+        return query
+
+    @staticmethod
+    def paginated_pipeline_environments(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return paginate(
+            query=Pipeline.query_user_pipeline_environments(session, username, groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()

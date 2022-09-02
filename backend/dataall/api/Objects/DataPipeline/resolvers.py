@@ -102,7 +102,7 @@ def resolve_user_role(context: Context, source: models.DataPipeline):
 
 def get_pipeline_environment(context: Context, source, envPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        return Pipeline.get_pipeline(
+        return Pipeline.get_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,
