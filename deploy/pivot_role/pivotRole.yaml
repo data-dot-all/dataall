@@ -331,6 +331,7 @@ Resources:
              - 'sagemaker:ListNotebookInstances'
              - 'sagemaker:ListDomains'
              - 'sagemaker:ListApps'
+             - 'sagemaker:DeleteApp'
             Resource: '*'
           - Effect: Allow
             Action:
@@ -513,6 +514,7 @@ Resources:
               - 'lakeformation:GetTableObjects'
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
+              - 'lakeformation:DescribeResource'
             Resource: '*'
           - Sid: Compute
             Effect: Allow
