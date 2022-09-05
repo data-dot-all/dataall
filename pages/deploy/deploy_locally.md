@@ -29,17 +29,18 @@ data.all is fully dockerized with docker-compose, and can be started in a minute
 
 ```bash
 git clone https://github.com/awslabs/aws-dataall.git
-cd aws-dataall
 ```
 
 ## 2. Run Docker compose
 
 ```bash
-cd data.all
+cd aws-dataall
 docker-compose up
 ```
 
 ![dockercompose](../img/docker_compose.png#zoom#shadow)
+
+Docker will read the credentials specified as 'default' that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
 
 ## 🎉 Congratulations 🎉
 Now visit [http://localhost:8080](http://localhost:8080)
