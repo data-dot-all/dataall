@@ -15,12 +15,9 @@ test and release new features quickly and easily.
 Depending on your OS, you will need the following:
 
 - Python >= 3.7
-- Docker, Docker-compose >= 2
-- node
+- Docker
 - Yarn
-- AWS credentials as environment variables.
-
-Docker will read the credentials specified as 'default' that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
+- AWS credentials as environment variables:
 ```bash
 export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
 export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
@@ -43,6 +40,7 @@ docker-compose up
 
 ![dockercompose](../img/docker_compose.png#zoom#shadow)
 
+Docker will read the credentials specified as 'default' that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
 
 ## 🎉 Congratulations 🎉
 Now visit [http://localhost:8080](http://localhost:8080)
