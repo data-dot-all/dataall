@@ -110,6 +110,7 @@ const DashboardList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
+      setFilter({page: 1, term: event.target.value});
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
