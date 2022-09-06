@@ -15,9 +15,12 @@ test and release new features quickly and easily.
 Depending on your OS, you will need the following:
 
 - Python >= 3.7
-- Docker
+- Docker, Docker-compose >= 2
+- node
 - Yarn
-- AWS credentials as environment variables:
+- AWS credentials as environment variables.
+
+Docker will read the credentials specified as 'default' that you have configured in your local machine, EC2 or Cloud9 or wherever you are working.
 ```bash
 export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
 export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
