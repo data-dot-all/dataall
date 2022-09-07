@@ -51,6 +51,7 @@ const OrganizationList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
+      setFilter({term: event.target.value });
       fetchItems();
     }
   };

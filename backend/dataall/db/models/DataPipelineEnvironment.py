@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 
@@ -13,6 +13,7 @@ class DataPipelineEnvironment(Resource, Base):
     pipelineUri = Column(String, nullable=False)
     pipelineLabel = Column(String, nullable=False)
     stage = Column(String, nullable=False)
+    order = Column(Integer, nullable=False)
     region = Column(String, default='eu-west-1')
     AwsAccountId = Column(String, nullable=False)
-    SamlGroupName = Column(String, nullable=False)
+    samlGroupName = Column(String, nullable=False)

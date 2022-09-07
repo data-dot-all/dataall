@@ -18,7 +18,6 @@ const getDataPipeline = (DataPipelineUri) => ({
         tags
         repo
         cloneUrlHttp
-        devStages
         devStrategy
         template
         environment {
@@ -31,6 +30,24 @@ const getDataPipeline = (DataPipelineUri) => ({
           organizationUri
           label
           name
+        }
+        developmentEnvironments {
+          count
+          page
+          pages
+          hasNext
+          hasPrevious
+          nodes {
+            envPipelineUri
+            environmentUri
+            environmentLabel
+            pipelineUri
+            pipelineLabel
+            stage
+            region
+            AwsAccountId
+            samlGroupName
+          }
         }
         stack {
           stack
