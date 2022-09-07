@@ -77,19 +77,20 @@ class S3:
             return response['Policy']
 
     @staticmethod
-    def get_bucket_access_point(account_id: str, access_point_name: str):
+    def get_bucket_access_point_arn(account_id: str, access_point_name: str):
         try:
             s3control = S3.client(account_id, 's3control')
-            s3control.get_access_point(
+            access_point = s3control.get_access_point(
                 AccountId=account_id,
                 Name=access_point_name,
             )
-            return True
         except Exception as e:
             log.info(
                 f'Failed to get S3 bucket access point {access_point_name} on {account_id} : {e}'
             )
-            return False
+            return None
+        else:
+            return access_point["AccessPointArn"]
 
     @staticmethod
     def create_bucket_access_point(account_id: str, bucket_name: str, access_point_name: str):
@@ -106,7 +107,21 @@ class S3:
             )
             raise e
         else:
-            return access_point
+            return access_point["AccessPointArn"]
+
+    @staticmethod
+    def delete_bucket_access_point(account_id: str, access_point_name: str):
+        try:
+            s3control = S3.client(account_id, 's3control')
+            s3control.delete_access_point(
+                AccountId=account_id,
+                Name=access_point_name,
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to delete S3 bucket access point {access_point_name}/{account_id} : {e}'
+            )
+            raise e
 
     @staticmethod
     def get_access_point_policy(account_id: str, access_point_name: str):
@@ -178,6 +193,5 @@ class S3:
                     }
                 }
             ]
-
         }
         return policy

@@ -51,3 +51,20 @@ class IAM:
             return None
         else:
             return response["PolicyDocument"]
+
+    @staticmethod
+    def delete_role_policy(
+        account_id: str,
+        role_name: str,
+        policy_name: str,
+    ):
+        try:
+            iamcli = IAM.client(account_id)
+            iamcli.delete_role_policy(
+                RoleName=role_name,
+                PolicyName=policy_name,
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to delete policy {policy_name} of role {role_name} : {e}'
+            )

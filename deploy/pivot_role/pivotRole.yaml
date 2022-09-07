@@ -643,9 +643,10 @@ Resources:
               - 'iam:ListRoles'
             Effect: Allow
             Resource: '*'
-          - Sid: IAMPutRolePolicy
+          - Sid: IAMRolePolicy
             Action:
               - 'iam:PutRolePolicy'
+              - 'iam:DeleteRolePolicy'
             Effect: Allow
             Resource: '*'
           - Sid: IAMPassRole
