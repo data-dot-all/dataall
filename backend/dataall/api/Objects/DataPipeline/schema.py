@@ -21,8 +21,12 @@ DataPipeline = gql.ObjectType(
         gql.Field(
             'environment', type=gql.Ref('Environment'), resolver=get_pipeline_env
         ),
+        gql.Field(
+            'developmentEnvironments',
+            type=gql.Ref('DataPipelineEnvironmentSearchResults'),
+            resolver=list_pipeline_environments,
+        ),
         gql.Field('template', type=gql.String),
-        gql.Field('devStages', type=gql.ArrayType(gql.String)),
         gql.Field('devStrategy', type=gql.String),
         gql.Field('cloneUrlHttp', gql.String, resolver=get_clone_url_http),
         gql.Field('stack', gql.Ref('Stack'), resolver=get_stack),
@@ -56,11 +60,13 @@ DataPipelineEnvironment = gql.ObjectType(
         gql.Field(name='pipelineUri', type=gql.String),
         gql.Field(name='pipelineLabel', type=gql.String),
         gql.Field(name='stage', type=gql.String),
+        gql.Field(name='order', type=gql.Integer),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='samlGroupName', type=gql.String),
     ],
 )
+
 
 DataPipelineEnvironmentSearchResults = gql.ObjectType(
     name='DataPipelineEnvironmentSearchResults',

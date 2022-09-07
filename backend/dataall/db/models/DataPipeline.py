@@ -15,7 +15,6 @@ class DataPipeline(Resource, Base):
     AwsAccountId = Column(String, nullable=False)
     SamlGroupName = Column(String, nullable=False)
     repo = Column(String, nullable=False)
-    devStages = Column(postgresql.ARRAY(String), nullable=False)
     devStrategy = Column(String, nullable=False)
     template = Column(String, nullable=True, default="")
     userRoleForPipeline = query_expression()

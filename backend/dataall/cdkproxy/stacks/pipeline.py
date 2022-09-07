@@ -230,7 +230,6 @@ class PipelineStack(Stack):
             )
 
             for env in development_environments:
-
                 build_project = codebuild.PipelineProject(
                     scope=self,
                     id=f'{pipeline.name}-build-{env.stage}',

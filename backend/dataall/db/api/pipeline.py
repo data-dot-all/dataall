@@ -62,7 +62,6 @@ class Pipeline:
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
             repo=slugify(data['label']),
-            devStages=data.get('devStages', []),
             devStrategy=data['devStrategy'],
             template=data['template'],
         )
@@ -110,8 +109,6 @@ class Pipeline:
         return pipeline
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_PIPELINES)
-    @has_resource_perm(permissions.CREATE_PIPELINE)
     def create_pipeline_environment(
         session,
         username: str,
@@ -125,7 +122,7 @@ class Pipeline:
             username=username,
             groups=groups,
             uri=data['environmentUri'],
-            group=data['SamlGroupName'],
+            group=data['samlGroupName'],
             permission_name=permissions.CREATE_PIPELINE,
         )
 
@@ -140,15 +137,18 @@ class Pipeline:
         pipeline = Pipeline.get_pipeline_by_uri(session, data['pipelineUri'])
 
         pipeline_env: models.DataPipelineEnvironment = models.DataPipelineEnvironment(
+            owner=username,
+            label=f"{pipeline.label}-{environment.label}",
             environmentUri=environment.environmentUri,
-            SamlGroupName=pipeline.SamlGroupName,
             environmentLabel=environment.label,
             pipelineUri=pipeline.DataPipelineUri,
             pipelineLabel=pipeline.label,
-            envpipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}",
+            envPipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}",
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
-            stage=data['stage']
+            stage=data['stage'],
+            order=data['order'],
+            samlGroupName=data['samlGroupName']
         )
 
         session.add(pipeline_env)
@@ -280,7 +280,7 @@ class Pipeline:
         return pipeline_env
 
     @staticmethod
-    def query_user_pipeline_environments(session, uri) -> Query:
+    def query_pipeline_environments(session, uri) -> Query:
         query = session.query(models.DataPipelineEnvironment).filter(
             models.DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
         )
@@ -291,7 +291,7 @@ class Pipeline:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Pipeline.query_user_pipeline_environments(session, data.get('pipelineUri')),
+            query=Pipeline.query_pipeline_environments(session, data.get('pipelineUri')),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()

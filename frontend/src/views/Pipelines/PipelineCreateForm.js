@@ -40,7 +40,7 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 import listDatasetsOwnedByEnvGroup from "../../api/Environment/listDatasetsOwnedByEnvGroup";
 import listDataItemsSharedWithEnvGroup from "../../api/Environment/listDataItemsSharedWithEnvGroup";
-import PipelineEnvironmentUpdateForm from "./PipelineEnvironmentUpdateForm";
+import PipelineEnvironmentCreateForm from "./PipelineEnvironmentCreateForm";
 import PencilAlt from "../../icons/PencilAlt";
 import Scrollbar from "../../components/Scrollbar";
 
@@ -173,7 +173,6 @@ const PipelineCrateForm = (props) => {
             SamlGroupName: values.SamlGroupName,
             tags: values.tags,
             devStrategy: values.devStrategy,
-            devStages: values.devStages,
             template: values.template
           }
         })
@@ -281,7 +280,6 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: '',
                 environment: '',
                 tags: [],
-                devStages: [],
                 devStrategy: '',
                 template: '',
               }}
@@ -293,7 +291,6 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: Yup.string()
                   .max(255),
                 environment: Yup.object(),
-                devStages: Yup.array().required('*At least ONE stage is required'),
                 devStrategy: Yup.string().required('*A CICD strategy is required'),
                 tags: Yup.array().nullable(),
                 template: Yup.string().nullable(),
@@ -316,7 +313,7 @@ const PipelineCrateForm = (props) => {
                 values
               }) => (
                 <form onSubmit={handleSubmit} {...props}>
-                  <Grid container spacing={3}>
+                  <Grid container spacing={1} alignItems="stretch">
                     <Grid item lg={7} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Details" />
@@ -418,34 +415,6 @@ const PipelineCrateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
-                            disabled
-                            fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Organization"
-                            name="organization"
-                            value={
-                              values.environment
-                                ? values.environment.organization.label
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
                             fullWidth
                             error={Boolean(
                               touched.SamlGroupName && errors.SamlGroupName
@@ -478,6 +447,34 @@ const PipelineCrateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <TextField
+                            disabled
+                            fullWidth
+                            label="Region"
+                            name="region"
+                            value={
+                              values.environment
+                                ? values.environment.region
+                                : ''
+                            }
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            disabled
+                            fullWidth
+                            label="Organization"
+                            name="organization"
+                            value={
+                              values.environment
+                                ? values.environment.organization.label
+                                : ''
+                            }
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
                             fullWidth
                             error={Boolean(
                               touched.devStrategy && errors.devStrategy
@@ -500,21 +497,6 @@ const PipelineCrateForm = (props) => {
                           </TextField>
                         </CardContent>
                         <CardContent>
-                          <Box>
-                            <ChipInput
-                              fullWidth
-                              error={Boolean(touched.devStages && errors.devStages)}
-                              helperText={touched.devStages && errors.devStages}
-                              variant="outlined"
-                              label="Deployment stages (dev,test,prod..)"
-                              placeholder="Hit enter after typing the value of each stage"
-                              onChange={(chip) => {
-                                setFieldValue('devStages', [...chip]);
-                              }}
-                            />
-                          </Box>
-                        </CardContent>
-                        <CardContent>
                           <TextField
                             error={Boolean(touched.template && errors.template)}
                             fullWidth
@@ -531,7 +513,7 @@ const PipelineCrateForm = (props) => {
                     </Grid>
                     <Grid item lg={12} md={6} xs={12}>
                       <Box sx={{ mt: 3 }}>
-                        <PipelineEnvironmentUpdateForm
+                        <PipelineEnvironmentCreateForm
                           environmentOptions={environmentOptions}
                           triggerEnvSubmit={triggerEnvSubmit}
                           pipelineUri={pipelineUri}

@@ -4,13 +4,14 @@ import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 import PipelineCodeCommit from './PipelineCodeCommit';
 import PipelineDatasets from './PipelineDatasets';
+import PipelineEnvironments from './PipelineEnvironments';
 
 const PipelineOverview = (props) => {
   const { pipeline, ...other } = props;
 
   return (
     <Grid container spacing={3} {...other}>
-      <Grid item lg={8} xl={9} xs={12}>
+      <Grid item lg={7} xl={9} xs={12}>
         <Box sx={{ mb: 3 }}>
           <ObjectBrief
             title="Details"
@@ -26,7 +27,7 @@ const PipelineOverview = (props) => {
           <PipelineCodeCommit pipeline={pipeline} />
         </Box>
       </Grid>
-      <Grid item lg={4} xl={3} xs={12}>
+      <Grid item lg={5} xl={3} xs={12}>
         <Box sx={{ mb: 3 }}>
          <ObjectMetadata
            environment={pipeline.environment}
@@ -38,6 +39,13 @@ const PipelineOverview = (props) => {
            status={pipeline.stack?.status}
          />
         </Box>
+      </Grid>
+      <Grid item lg={12} xl={6} xs={12} >
+          <Box sx={{ mb: 3 }}>
+            <PipelineEnvironments
+              pipeline={pipeline}
+            />
+          </Box>
       </Grid>
     </Grid>
   );
