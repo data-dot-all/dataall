@@ -67,14 +67,14 @@ const PipelineEnvironments = (props) => {
                       </TableHead>
                     )}
                     <TableBody>
-                      {pipeline.developmentEnvironments && (pipeline.developmentEnvironments.map((item, idx) => (
+                      {pipeline.developmentEnvironments && (pipeline.developmentEnvironments.nodes.map((e) => (
                         <>
-                          <TableRow id="addr0" key={item.uri}>
+                          <TableRow id="addr0" key={e.envPipelineUri}>
                             <TableCell>
                               <TextField
                                 fullWidth
                                 name="idx"
-                                value={pipeline.developmentEnvironments[idx].order}
+                                value={e.order}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -82,7 +82,7 @@ const PipelineEnvironments = (props) => {
                               <TextField
                                 fullWidth
                                 name="stage"
-                                value={pipeline.developmentEnvironments[idx].stage}
+                                value={e.stage}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -90,7 +90,7 @@ const PipelineEnvironments = (props) => {
                               <TextField
                                 fullWidth
                                 name="env"
-                                value={pipeline.developmentEnvironments[idx].environmentLabel}
+                                value={e.environmentLabel}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -98,7 +98,7 @@ const PipelineEnvironments = (props) => {
                               <TextField
                                 fullWidth
                                 name="team"
-                                value={pipeline.developmentEnvironments[idx].samlGroupName}
+                                value={e.samlGroupName}
                                 variant="outlined"
                               />
                             </TableCell>
