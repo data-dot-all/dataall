@@ -74,7 +74,7 @@ const PipelineEnvironments = (props) => {
                               <TextField
                                 fullWidth
                                 name="idx"
-                                value={e.order}
+                                value={e.order.toString()}
                                 variant="outlined"
                               />
                             </TableCell>
