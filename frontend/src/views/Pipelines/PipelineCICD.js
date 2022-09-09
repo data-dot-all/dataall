@@ -12,6 +12,7 @@ import {
   Typography
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
+import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { CopyAll } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import useClient from '../../hooks/useClient';
@@ -21,12 +22,22 @@ import getDataPipelineCredsLinux from '../../api/DataPipeline/getDataPipelineCre
 import ChipInput from "../../components/TagsInput";
 import Label from "../../components/Label";
 
-const PipelineCodeCommit = (props) => {
+const PipelineCICD = (props) => {
   const { pipeline } = props;
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const [loadingCreds, setLoadingCreds] = useState(false);
+
+  const copyNotification = () => {
+    enqueueSnackbar('Copied to clipboard', {
+      anchorOrigin: {
+        horizontal: 'right',
+        vertical: 'top'
+      },
+      variant: 'success'
+    });
+  };
 
   const generateCredentials = async () => {
     setLoadingCreds(true);
@@ -52,7 +63,7 @@ const PipelineCodeCommit = (props) => {
 
   return (
     <Card {...pipeline}>
-      <CardHeader title="AWS CICD Pipeline" />
+      <CardHeader title="CICD" />
       <Divider />
       <CardContent sx={{ pt: 0 }}>
         <List>
@@ -65,7 +76,22 @@ const PipelineCodeCommit = (props) => {
             }}
           >
             <Typography color="textSecondary" variant="subtitle2">
-              Account
+              CICD Environment
+            </Typography>
+            <Typography color="textPrimary" variant="body2">
+              {pipeline.environment.label}
+            </Typography>
+          </ListItem>
+          <ListItem
+            disableGutters
+            divider
+            sx={{
+              justifyContent: 'space-between',
+              padding: 2
+            }}
+          >
+            <Typography color="textSecondary" variant="subtitle2">
+              AWS Account
             </Typography>
             <Typography color="textPrimary" variant="body2">
               {pipeline.environment.AwsAccountId}
@@ -80,10 +106,10 @@ const PipelineCodeCommit = (props) => {
             }}
           >
             <Typography color="textSecondary" variant="subtitle2">
-              Region
+              Team
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              {pipeline.environment.region}
+              {pipeline.SamlGroupName}
             </Typography>
           </ListItem>
           <ListItem
@@ -136,25 +162,6 @@ const PipelineCodeCommit = (props) => {
         </List>
       </CardContent>
       <CardContent>
-        <Box>
-            <Box sx={{ mt: 3 }}>
-              <Typography color="textSecondary" variant="subtitle2">
-                Development stages
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                {pipeline.devStages?.map((stage) => (
-                  <Chip
-                    sx={{ mr: 0.5, mb: 0.5 }}
-                    key={stage}
-                    label={stage}
-                    variant="outlined"
-                  />
-                ))}
-              </Box>
-            </Box>
-        </Box>
-      </CardContent>
-      <CardContent>
         <Box
           sx={{
             alignItems: 'flex-start',
@@ -172,6 +179,26 @@ const PipelineCodeCommit = (props) => {
             AWS Credentials
           </LoadingButton>
         </Box>
+        <Box
+          <Typography color="textPrimary" variant="subtitle2">
+            <CopyToClipboard
+              onCopy={() => copyNotification()}
+              text={`git clone codecommit::${pipeline.environment.region}:${'//'}${pipeline.repo}`}
+            >
+              <IconButton>
+                <CopyAllOutlined
+                  sx={{
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? theme.palette.primary.contrastText
+                        : theme.palette.primary.main
+                  }}
+                />
+              </IconButton>
+            </CopyToClipboard>
+            {`git clone codecommit::${pipeline.environment.region}:${'//'}${pipeline.repo}`}
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -182,4 +209,4 @@ PipelineCodeCommit.propTypes = {
   pipeline: PropTypes.object.isRequired
 };
 
-export default PipelineCodeCommit;
+export default PipelineCICD;

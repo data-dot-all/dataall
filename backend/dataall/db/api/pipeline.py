@@ -291,7 +291,7 @@ class Pipeline:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Pipeline.query_pipeline_environments(session, data.get('pipelineUri')),
+            query=Pipeline.query_pipeline_environments(session, uri),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()

@@ -118,14 +118,16 @@ def get_pipeline_environment(context: Context, source: models.DataPipelineEnviro
         )
 
 
-def list_pipeline_environments(context: Context, source: models.DataPipeline):
+def list_pipeline_environments(context: Context, source: models.DataPipeline, filter: dict = None):
+    if not filter:
+        filter = {}
     with context.engine.scoped_session() as session:
-        return Pipeline.paginated_user_pipelines(
+        return Pipeline.paginated_pipeline_environments(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=source.DataPipelineUri,
-            data=None,
+            data=filter,
             check_perm=None,
         )
 
