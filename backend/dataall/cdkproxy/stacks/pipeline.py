@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-import json
 from typing import List
 
 
@@ -528,28 +527,26 @@ class PipelineStack(Stack):
 
     @staticmethod
     def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
-        json_cicd = f""" 
-            "cicd": {{
-                "account": "{pipeline_environment.AwsAccountId}",
-                "region": "{pipeline_environment.region}"
-            }}"""
         json_envs = ""
         for env in development_environments:
             json_env = f""",
-                "{env.stage}": {{
-                    "account": "{env.AwsAccountId}",
-                    "region": "{env.region}",
-                    "resources": {{
-                        "ddk-bucket": {{"versioned": false, "removal_policy": "destroy"}}
-                    }}
-                }}"""
-            json_envs = json_envs + json_env
-
-        ddk_json = f"""{{
-            "environments": {{
-                {json_cicd}{json_envs}
+        "{env.stage}": {{
+            "account": "{env.AwsAccountId}",
+            "region": "{env.region}",
+            "resources": {{
+                "ddk-bucket": {{"versioned": false, "removal_policy": "destroy"}}
             }}
         }}"""
+            json_envs = json_envs + json_env
 
-        with open(f'{path}/{output_file}', 'w') as file:
-            json.dumps(ddk_json, file=file, ensure_ascii=False, indent=4)
+        json = f"""{{
+    "environments": {{
+        "cicd": {{
+            "account": "{pipeline_environment.AwsAccountId}",
+            "region": "{pipeline_environment.region}"
+        }}{json_envs}
+    }}
+}}"""
+
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(json, file=text_file)
