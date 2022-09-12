@@ -11,8 +11,8 @@ const PipelineOverview = (props) => {
 
   return (
     <Grid container spacing={3} {...other}>
-      <Grid item lg={12} xl={6} xs={12}
-          <Grid item lg={7} xl={9} xs={12}>
+      <Grid item lg={6} xl={6} xs={12}>
+          <Grid item lg={12} xl={12} xs={12}>
             <Box sx={{ mb: 3 }}>
               <ObjectBrief
                 title="Details"
@@ -25,7 +25,21 @@ const PipelineOverview = (props) => {
               />
             </Box>
           </Grid>
-          <Grid item lg={5} xl={3} xs={12}>
+          <Grid item lg={12} xl={12} xs={12}>
+              <Box sx={{ mb: 3 }}>
+                <PipelineEnvironments
+                  pipeline={pipeline}
+                />
+              </Box>
+          </Grid>
+      </Grid>
+      <Grid item lg={6} xl={6} xs={12}>
+          <Grid item lg={12} xl={12} xs={12}>
+              <Box sx={{ sx: 3 }}>
+              <PipelineCICD pipeline={pipeline} />
+              </Box>
+          </Grid>
+          <Grid item lg={12} xl={12} xs={12}>
             <Box sx={{ mb: 3 }}>
              <ObjectMetadata
                owner={pipeline.owner}
@@ -35,20 +49,7 @@ const PipelineOverview = (props) => {
              />
             </Box>
           </Grid>
-      </Grid>
-      <Grid item lg={12} xl={6} xs={12} >
-          <Grid item lg={6} xl={9} xs={12}>
-              <Box sx={{ sx: 3 }}>
-              <PipelineCICD pipeline={pipeline} />
-              </Box>
-          </Grid>
-          <Grid item lg={6} xl={9} xs={12}>
-              <Box sx={{ mb: 3 }}>
-                <PipelineEnvironments
-                  pipeline={pipeline}
-                />
-              </Box>
-          </Grid>
+
       </Grid>
     </Grid>
   );
