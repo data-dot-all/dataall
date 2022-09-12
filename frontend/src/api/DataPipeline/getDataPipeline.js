@@ -44,6 +44,7 @@ const getDataPipeline = (DataPipelineUri) => ({
             pipelineUri
             pipelineLabel
             stage
+            order
             region
             AwsAccountId
             samlGroupName
