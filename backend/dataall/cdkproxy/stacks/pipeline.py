@@ -54,7 +54,7 @@ class PipelineStack(Stack):
         engine = self.get_engine()
         with engine.scoped_session() as session:
             return Pipeline.get_pipeline_by_uri(session, target_uri)
-        
+
     def get_pipeline_environments(self, targer_uri) -> models.DataPipelineEnvironment:
         engine = self.get_engine()
         with engine.scoped_session() as session:
@@ -110,8 +110,7 @@ class PipelineStack(Stack):
         pipeline = self.get_target(target_uri=target_uri)
         pipeline_environment = self.get_pipeline_cicd_environment(pipeline=pipeline)
         pipeline_env_team = self.get_env_team(pipeline=pipeline)
-        
-        #Development environments
+        # Development environments
         development_environments = self.get_pipeline_environments(targer_uri=target_uri)
 
         # Support resources
@@ -259,7 +258,7 @@ class PipelineStack(Stack):
                 )
 
                 # Skip manual approval for one stage pipelines
-                if env.stage != 'prod': # and len(pipeline.devStages) > 1:
+                if env.stage != 'prod':
                     self.codepipeline_pipeline.add_stage(
                         stage_name=f'ManualApproval-{env.stage}',
                         actions=[
@@ -272,7 +271,7 @@ class PipelineStack(Stack):
         else:
             for env in development_environments:
                 branch_name = env.stage if env.stage != 'prod' else 'main'
-                buildspec = "init_deploy_buildspec.yaml" if stage == 'prod' else "deploy_buildspec.yaml"
+                buildspec = "init_deploy_buildspec.yaml" if env.stage == 'prod' else "deploy_buildspec.yaml"
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
                     id=f"{pipeline.name}-{env.stage}",
@@ -299,7 +298,7 @@ class PipelineStack(Stack):
 
                 build_project = codebuild.PipelineProject(
                     scope=self,
-                    id=f'{pipeline.name}-build-{stage}',
+                    id=f'{pipeline.name}-build-{env.stage}',
                     environment=codebuild.BuildEnvironment(
                         privileged=True,
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,

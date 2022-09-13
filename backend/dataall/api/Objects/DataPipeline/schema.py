@@ -79,7 +79,3 @@ DataPipelineEnvironmentSearchResults = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(DataPipelineEnvironment)),
     ],
 )
-
-
-
-

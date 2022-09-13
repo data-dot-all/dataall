@@ -62,4 +62,3 @@ getDataPipelineEnvironment = gql.QueryField(
     type=gql.Ref('DataPipelineEnvironment'),
     resolver=get_pipeline_environment,
 )
-
