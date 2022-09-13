@@ -80,7 +80,7 @@ def test_create_pipeline_environment(client, tenant, group, env2, pipeline):
             'order': 1,
             'pipelineUri': pipeline.DataPipelineUri,
             'environmentUri': env2.environmentUri,
-            'environmentLabel': env2.environmentLabel,
+            'environmentLabel': env2.label,
             'samlGroupName': group.name
         },
         username='alice',
