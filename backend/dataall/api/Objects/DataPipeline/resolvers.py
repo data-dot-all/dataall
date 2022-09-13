@@ -364,7 +364,7 @@ def delete_pipeline(
             session, pipeline.environmentUri
         )
 
-        Pipeline.delete_pipeline_environments(
+        deleted = Pipeline.delete_pipeline_environments(
             session, DataPipelineUri
         )
 
