@@ -340,9 +340,6 @@ def start_pipeline(context: Context, source, DataPipelineUri: str = None):
 
     return execution_arn
 
-def delete_pipeline_environment(context: Context, source, DataPipelineEnvironmentUri: str = None):
-    return True
-
 def delete_pipeline(
     context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
 ):
@@ -363,15 +360,21 @@ def delete_pipeline(
             session, pipeline.environmentUri
         )
 
+        Pipeline.delete_pipeline_environments(
+            session, DataPipelineUri
+        )
+
         KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
         session.delete(pipeline)
+
 
         ResourcePolicy.delete_resource_policy(
             session=session,
             resource_uri=pipeline.DataPipelineUri,
             group=pipeline.SamlGroupName,
         )
+
 
     if deleteFromAWS:
         stack_helper.delete_stack(
