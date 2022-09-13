@@ -287,6 +287,13 @@ class Pipeline:
         return query
 
     @staticmethod
+    def delete_pipeline_environments(session, uri) -> Query:
+        query = session.query(models.DataPipelineEnvironment).filter(
+            models.DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
+        ).delete()
+        return True
+
+    @staticmethod
     def paginated_pipeline_environments(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
