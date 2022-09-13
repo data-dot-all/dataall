@@ -89,12 +89,14 @@ def get_pipeline(context: Context, source, DataPipelineUri: str = None):
             check_perm=True,
         )
 
+
 def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         env = session.query(models.Environment).get(source.environmentUri)
     return env
+
 
 def resolve_user_role(context: Context, source: models.DataPipeline):
     if not source:
@@ -322,6 +324,7 @@ def list_pipeline_state_machine_executions(
         'nodes': executions,
     }
 
+
 def start_pipeline(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -339,6 +342,7 @@ def start_pipeline(context: Context, source, DataPipelineUri: str = None):
         execution_arn = helpers.run_pipeline(state_machine_name=pipeline.name, env=env)
 
     return execution_arn
+
 
 def delete_pipeline(
     context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
@@ -368,13 +372,11 @@ def delete_pipeline(
 
         session.delete(pipeline)
 
-
         ResourcePolicy.delete_resource_policy(
             session=session,
             resource_uri=pipeline.DataPipelineUri,
             group=pipeline.SamlGroupName,
         )
-
 
     if deleteFromAWS:
         stack_helper.delete_stack(

@@ -42,4 +42,3 @@ createDataPipelineEnvironment = gql.MutationField(
     ],
     resolver=create_pipeline_environment,
 )
-
