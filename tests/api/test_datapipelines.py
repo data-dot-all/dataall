@@ -88,7 +88,7 @@ def test_create_pipeline_environment(client, tenant, group, env2, pipeline):
     )
     assert response.data.createDataPipelineEnvironment.envPipelineUri
     assert response.data.createDataPipelineEnvironment.stage == 'dev'
-    assert response.data.createDataPipelineEnvironment.AwsAccountId == AwsAccountId
+    assert response.data.createDataPipelineEnvironment.AwsAccountId == env2.AwsAccountId
 
 
 
