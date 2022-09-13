@@ -287,7 +287,7 @@ class Pipeline:
         return query
 
     @staticmethod
-    def delete_pipeline_environments(session, uri) -> Query:
+    def delete_pipeline_environments(session, uri) -> bool:
         query = session.query(models.DataPipelineEnvironment).filter(
             models.DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
         ).delete()
