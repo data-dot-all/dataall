@@ -189,7 +189,6 @@ def pipeline(db, env: models.Environment) -> models.DataPipeline:
             environmentUri=env.environmentUri,
             repo='pipeline',
             SamlGroupName='admins',
-            devStages=['dev', 'prod'],
             devStrategy='trunk'
         )
         session.add(pipeline)
