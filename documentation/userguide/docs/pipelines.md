@@ -21,7 +21,7 @@ the pipeline we have to specify:
 - Development strategy: GitFlow or Trunk-based
 - Template: it corresponds with the --template parameter that can be passed to DDK init command. See the <a href="https://awslabs.github.io/aws-ddk/release/latest/api/cli/aws_ddk.html#ddk-init">docs</a> for more details.
 
-Moreover, we can add **Development environments**. These are the AWS accounts and regions where the infrastructure defined in the CICD pipeline
+Finally, we need to add **Development environments**. These are the AWS accounts and regions where the infrastructure defined in the CICD pipeline
 is deployed. 
 
 ![create_pipeline](pictures/pipelines/pip_create_form.png#zoom#shadow)
@@ -33,7 +33,7 @@ In the first run of the CodePipeline Pipeline a DDK application is initialized i
 If you want to change the deploy commands in the AWS CodeBuild deploy stage, note that the buildspec of the CodeBuild step is part of the CodeCommit repository.
 
 
-!!!warning "GitFlow and branches"
+!!!warning "GitFlow and CodeCommit branches"
       If you selected GitFlow as development strategy, you probably noticed that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
       After the first successful run of the prod-CodePipeline pipeline, just create branches in the CodeCommit repository for the other stages and you are ready to go.
 
@@ -116,6 +116,7 @@ There are other ways of implementing this logic, but here we propose one simple 
 Step 1: Create your own config based in the global configuration
 
 ```
+### utils/config.py
 from aws_ddk_core.config.config import Config
 from typing import Dict
 
@@ -176,14 +177,14 @@ import os
 import aws_cdk as cdk
 from ddk_app.ddk_app_stack import DdkApplicationStack
 
-from utils.yaraconfig import DAConfig
+from utils.config import DAConfig
 
 stage_id = os.environ.get('STAGE', None)
 pipeline_name = os.environ.get('PIPELINE_NAME')
 
 app = cdk.App()
 
-config = YaraConfig()
+config = DAConfig()
 environment_id = config.get_stage_env_id(stage_id)
 env_vars = config.get_env_var_config(environment_id)
 
