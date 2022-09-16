@@ -5,7 +5,7 @@ from sqlalchemy.dialects import postgresql
 from .. import Base, Resource, utils
 
 
-class DataPipelineEnvironment(Resource, Base):
+class DataPipelineEnvironment(Base):
     __tablename__ = 'datapipelineenvironments'
     envPipelineUri = Column(String, nullable=False, primary_key=True)
     environmentUri = Column(String, nullable=False)
