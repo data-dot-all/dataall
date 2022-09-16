@@ -6,10 +6,8 @@ Create Date: 2022-09-15 17:53:13.455441
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-from sqlalchemy import Column, TIMESTAMP, INTEGER, VARCHAR, NVARCHAR
-from dataall.db import get_engine, has_table, create_schema_if_not_exists
+import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -20,23 +18,30 @@ depends_on = None
 
 
 def upgrade():
-    print('Open-source v_1.2.0')
     op.drop_column('datapipeline', 'devStages')
     op.drop_column('datapipeline', 'inputDatasetUri')
     op.drop_column('datapipeline', 'outputDatasetUri')
 
     op.create_table(
         'datapipelineenvironments',
-        Column('envPipelineUri', VARCHAR(50), primary_key=True),
-        Column('environmentUri', VARCHAR(50), nullable=False),
-        Column('environmentLabel', VARCHAR(50), nullable=False),
-        Column('pipelineUri', VARCHAR(50), nullable=False),
-        Column('pipelineLabel', VARCHAR(50), nullable=False),
-        Column('stage', VARCHAR(50), nullable=False),
-        Column('order', INTEGER, nullable=False),
-        Column('region', VARCHAR(50), nullable=False),
-        Column('AwsAccountId', VARCHAR(50), nullable=False),
-        Column('samlGroupName', VARCHAR(50), nullable=False),
+        sa.Column('label', sa.String(), nullable=False),
+        sa.Column('name', sa.String(), nullable=False),
+        sa.Column('owner', sa.String(), nullable=False),
+        sa.Column('created', sa.DateTime(), nullable=True),
+        sa.Column('updated', sa.DateTime(), nullable=True),
+        sa.Column('deleted', sa.DateTime(), nullable=True),
+        sa.Column('description', sa.String(), nullable=True),
+        sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
+        sa.Column('envPipelineUri', sa.String(), nullable=False),
+        sa.Column('environmentUri', sa.String(), nullable=False),
+        sa.Column('environmentLabel', sa.String(), nullable=False),
+        sa.Column('pipelineUri', sa.String(), nullable=False),
+        sa.Column('pipelineLabel', sa.String(), nullable=False),
+        sa.Column('stage', sa.String(), nullable=False),
+        sa.Column('order', sa.Integer, nullable=False),
+        sa.Column('region', sa.String(), nullable=False),
+        sa.Column('AwsAccountId', sa.String(), nullable=False),
+        sa.Column('samlGroupName', sa.String(), nullable=False),
         sa.PrimaryKeyConstraint('envPipelineUri'),
     )
     pass
