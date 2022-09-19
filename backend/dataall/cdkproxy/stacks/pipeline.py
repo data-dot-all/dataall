@@ -225,7 +225,7 @@ class PipelineStack(Stack):
                 ],
             )
 
-            for env in development_environments:
+            for env in sorted(development_environments, key=lambda env: env.order):
                 print(env)
                 build_project = codebuild.PipelineProject(
                     scope=self,
@@ -258,7 +258,7 @@ class PipelineStack(Stack):
                 )
 
                 # Skip manual approval for one stage pipelines
-                if env.stage != 'prod':
+                if env.order < len(development_environments):
                     self.codepipeline_pipeline.add_stage(
                         stage_name=f'ManualApproval-{env.stage}',
                         actions=[
@@ -382,23 +382,6 @@ class PipelineStack(Stack):
             "ENVTEAM_ROLENAME": codebuild.BuildEnvironmentVariable(value=pipeline_env_team),
         }
         env_vars = dict(env_vars_1)
-
-        # if input_dataset:
-        #     env_vars_i = {
-        #         "INPUT_DATASET": codebuild.BuildEnvironmentVariable(value=input_dataset.label),
-        #         "INPUT_DATASET_BUCKET": codebuild.BuildEnvironmentVariable(value=input_dataset.S3BucketName),
-        #         "INPUT_DATASET_GLUEDATABASE": codebuild.BuildEnvironmentVariable(value=input_dataset.GlueDatabaseName)
-        #     }
-        #     env_vars.update(env_vars_i)
-        #
-        # if output_dataset:
-        #     env_vars_o = {
-        #         "OUTPUT_DATASET": codebuild.BuildEnvironmentVariable(value=output_dataset.label),
-        #         "OUTPUT_DATASET_BUCKET": codebuild.BuildEnvironmentVariable(value=output_dataset.S3BucketName),
-        #         "OUTPUT_DATASET_GLUEDATABASE": codebuild.BuildEnvironmentVariable(
-        #             value=output_dataset.GlueDatabaseName),
-        #     }
-        #     env_vars.update(env_vars_o)
         return env_vars
 
     @staticmethod
@@ -417,8 +400,8 @@ class PipelineStack(Stack):
                 - git config --global user.name "CodeBuild"
                 - echo ${CODEBUILD_BUILD_NUMBER}
                 - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then echo "${TEMPLATE}"; else echo "not first build"; fi
-                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
-                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; cp multiapp.py ./app.py; rm multiapp.py dataall_ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; cp multiapp.py ./app.py; rm multiapp.py dataall_ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
                 - pip install -r requirements.txt
               build:
                 commands:
@@ -452,8 +435,8 @@ class PipelineStack(Stack):
                 - stages=$(echo $DEV_STAGES | tr ",","\n")
                 - for stage in $stages; do echo $stage; done
                 - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then echo "${TEMPLATE}"; else echo "not first build"; fi
-                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
-                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" == "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; cp multiapp.py ./app.py; rm multiapp.py dataall_ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
+                - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" && "${TEMPLATE}" != "" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; git checkout main; ddk init --generate-only --template $TEMPLATE ddk-app; cp -R ddk-app/* ./; rm -r ddk-app; cp dataall_ddk.json ./ddk.json; cp multiapp.py ./app.py; rm multiapp.py dataall_ddk.json; git add .; git commit -m "First Commit from CodeBuild - DDK application"; git push --set-upstream origin main; else echo "not first build"; fi
                 - if [[ "${CODEBUILD_BUILD_NUMBER}" == "1" ]] ; then git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; cd $PIPELINE_NAME; for stage in $stages; do if [[$stage != "prod" ]]; then git checkout $stage; git push --set-upstream origin $stage; fi; done; else echo "not first build"; fi
                 - pip install -r requirements.txt
               build:
