@@ -36,6 +36,12 @@ const PipelineEnvironments = (props) => {
   useEffect(() => {
       if (client && pipeline) {
         console.log("useeffect")
+        console.log(pipeline)
+        const environmentsSorted = pipeline.developmentEnvironments.nodes.sort((a, b) => {
+          return a.order - b.order;
+        });
+        setEnvironments(environmentsSorted)
+        console.log(environments)
       }
     }, [client, pipeline]);
 
@@ -52,56 +58,31 @@ const PipelineEnvironments = (props) => {
                   <Table size="small">
                     <colgroup>
                         <col width="5%" />
+                        <col width="10%" />
+                        <col width="35%" />
+                        <col width="35%" />
                         <col width="15%" />
-                        <col width="40%" />
-                        <col width="40%" />
                     </colgroup>
-                    {pipeline.developmentEnvironments > 0 && (
+                    {environments > 0 && (
                       <TableHead>
                         <TableRow>
                           <TableCell>Order</TableCell>
                           <TableCell>Development Stage</TableCell>
                           <TableCell>Environment</TableCell>
                           <TableCell>Team</TableCell>
+                          <TableCell>AWS Account</TableCell>
                         </TableRow>
                       </TableHead>
                     )}
                     <TableBody>
-                      {pipeline.developmentEnvironments && (pipeline.developmentEnvironments.nodes.map((e) => (
+                      {environments && (environments.map((e) => (
                         <>
                           <TableRow id="addr0" key={e.envPipelineUri}>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                name="idx"
-                                value={e.order.toString()}
-                                variant="outlined"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                name="stage"
-                                value={e.stage}
-                                variant="outlined"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                name="env"
-                                value={e.environmentLabel}
-                                variant="outlined"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                name="team"
-                                value={e.samlGroupName}
-                                variant="outlined"
-                              />
-                            </TableCell>
+                            <TableCell>{e.order}</TableCell>
+                            <TableCell>{e.stage}</TableCell>
+                            <TableCell>{e.environmentLabel}</TableCell>
+                            <TableCell>{e.samlGroupName}</TableCell>
+                            <TableCell>{e.AwsAccountId}</TableCell>
                           </TableRow>
                         </>
                       )))}

@@ -13,7 +13,7 @@ const PipelineOverview = (props) => {
     <Grid container spacing={3} {...other}>
       <Grid item lg={8} xl={8} xs={12}>
           <Grid item lg={12} xl={12} xs={12}>
-              <Box sx={{ sx: 3 }}>
+              <Box sx={{ mb: 3 }}>
               <PipelineCICD pipeline={pipeline} />
               </Box>
           </Grid>
