@@ -226,7 +226,6 @@ class PipelineStack(Stack):
             )
 
             for env in sorted(development_environments, key=lambda env: env.order):
-                print(env)
                 build_project = codebuild.PipelineProject(
                     scope=self,
                     id=f'{pipeline.name}-build-{env.stage}',
@@ -257,8 +256,8 @@ class PipelineStack(Stack):
                     ],
                 )
 
-                # Skip manual approval for one stage pipelines
-                if env.order < len(development_environments):
+                # Skip manual approval for one stage pipelines and for last stage
+                if env.order < development_environments.count():
                     self.codepipeline_pipeline.add_stage(
                         stage_name=f'ManualApproval-{env.stage}',
                         actions=[
