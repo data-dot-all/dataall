@@ -26,7 +26,7 @@ def patch_methods(mocker, db, pipeline, env, pip_envs, org):
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_environments',
-        return_value=[pip_envs],
+        return_value=pip_envs,
     )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
