@@ -195,9 +195,9 @@ def pipeline(db, env: models.Environment) -> models.DataPipeline:
     yield pipeline
 
 @pytest.fixture(scope='module', autouse=True)
-def pip_env(db, env: models.Environment, pipeline: models.DataPipeline) -> models.DataPipelineEnvironment:
+def pip_envs(db, env: models.Environment, pipeline: models.DataPipeline) -> models.DataPipelineEnvironment:
     with db.scoped_session() as session:
-        pipeline_env = models.DataPipelineEnvironment(
+        pipeline_env1 = models.DataPipelineEnvironment(
             owner='me',
             label=f"{pipeline.label}-{env.label}",
             environmentUri=env.environmentUri,
@@ -212,8 +212,9 @@ def pip_env(db, env: models.Environment, pipeline: models.DataPipeline) -> model
             samlGroupName='admins'
         )
 
-        session.add(pipeline_env)
-    yield pipeline_env
+        session.add(pipeline_env1)
+
+    yield api.Pipeline.query_pipeline_environments(session=session, uri=pipeline.DataPipelineUri)
 
 @pytest.fixture(scope='module', autouse=True)
 def redshift_cluster(db, env: models.Environment) -> models.RedshiftCluster:
