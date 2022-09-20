@@ -7,7 +7,7 @@ from dataall.cdkproxy.stacks.pipeline import PipelineStack
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, pipeline, env, org):
+def patch_methods(mocker, db, pipeline, env, pip_envs, org):
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_engine',
         return_value=db,
@@ -21,8 +21,12 @@ def patch_methods(mocker, db, pipeline, env, org):
         return_value=pipeline,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_environment',
+        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_cicd_environment',
         return_value=env,
+    )
+    mocker.patch(
+        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_environments',
+        return_value=[pip_envs],
     )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
