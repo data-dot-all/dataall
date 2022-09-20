@@ -226,6 +226,9 @@ class PipelineStack(Stack):
             )
 
             for env in sorted(development_environments, key=lambda env: env.order):
+
+                buildspec = "init_deploy_buildspec.yaml" if env.order == 1 else "deploy_buildspec.yaml"
+
                 build_project = codebuild.PipelineProject(
                     scope=self,
                     id=f'{pipeline.name}-build-{env.stage}',
@@ -240,7 +243,7 @@ class PipelineStack(Stack):
                         ),
                     ),
                     role=build_project_role,
-                    build_spec=codebuild.BuildSpec.from_source_filename("init_deploy_buildspec.yaml"),
+                    build_spec=codebuild.BuildSpec.from_source_filename(buildspec),
                     encryption_key=self.codebuild_key,
                 )
 
@@ -269,8 +272,8 @@ class PipelineStack(Stack):
 
         else:
             for env in development_environments:
-                branch_name = env.stage if env.stage != 'prod' else 'main'
-                buildspec = "init_deploy_buildspec.yaml" if env.stage == 'prod' else "deploy_buildspec.yaml"
+                branch_name = 'main' if (env.stage == 'prod' or development_environments.count() == 1) else env.stage
+                buildspec = "init_deploy_buildspec.yaml" if (env.stage == 'prod' or development_environments.count() == 1) else "deploy_buildspec.yaml"
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
                     id=f"{pipeline.name}-{env.stage}",

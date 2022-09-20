@@ -2,21 +2,21 @@
 
 Different business units might have their own data lake and ingest and process the data with very different tools:
 Scikit Learn, Spark, SparkML, AWS SageMaker, AmazonAthena… The diversity of tools and use-cases result in a
-wide variety of CICD standards which difficult developing collaboration.
+wide variety of CICD standards which discourages development collaboration.
 
 In order to distribute data ingestion and processing, data.all introduces data.all pipelines:
 
 - data.all takes care of CICD infrastructure
-- data.all integrates with <a href="https://awslabs.github.io/aws-ddk/">AWS DDK</a>
-- data.all allows you to define development environments from the UI and deploys data pipelines to those AWS accounts
+- data.all integrates with <a href="https://awslabs.github.io/aws-ddk/">AWS DDK</a>, a tool to help you build data workflows in AWS
+- data.all allows you to define development environments directly from the UI and deploys data pipelines to those AWS accounts
 
 !!! success "Focus on value-added code"
-      data.all takes care of the CICD and multi-environment configuration and DDK provides reusable assets and data constructs that accelerate the deployment of AWS data pipelines,
+      data.all takes care of the CICD and multi-environment configuration and DDK provides reusable assets and data constructs that accelerate the deployment of AWS data workflows,
       so you can focus on writing the actual transformation code and generating value from your data!
 
 
 ## Multi-environment Pipelines
-In some cases, enterprises decide to separate CICD resources from data application resources, which at the same time need to be deployed to multiple accounts.
+In some cases, enterprises decide to separate CICD resources from data application resources, which at the same time, need to be deployed to multiple accounts.
 Data.all allows users to easily define their CICD environment and other infrastructure environments in a flexible, robust way.
 
 Let's see it with an example. In your enterprise, the Research team has 3 AWS accounts: Research-CICD, Research-DEV and Research-PROD. They want to ingest data with a data pipeline that is written in Infrastructure-As-Code
@@ -26,6 +26,7 @@ in the Research-CICD account. The actual data pipeline is deployed in 2 data acc
 ### Pre-requisites
 As a pre-requisite, Research-DEV and Research-PROD accounts need to be bootstrapped trusting the CICD account (`-a` parameter) and setting the stage of the AWS account, the environment id, with the  `e` parameter. Assuming 111111111111 = CICD account the commands are as follows:
 
+- In Research-CICD (111111111111): `ddk bootstrap -e cicd`
 - In Research-DEV (222222222222): `ddk bootstrap -e dev -a 111111111111`
 - In Research-PROD (333333333333): `ddk bootstrap -e prod -a 111111111111`
 
@@ -62,6 +63,8 @@ If you want to change the commands that are run in the AWS CodeBuild deploy stag
 !!!warning "GitFlow and CodeCommit branches"
       If you selected GitFlow as development strategy, you probably noticed that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
       After the first successful run of the prod-CodePipeline pipeline, just create branches in the CodeCommit repository for the other stages and you are ready to go.
+
+![create_pipeline](pictures/pipelines/pip_codepipeline.png#zoom#shadow)
 
 ### Multi-env configuration
 In the deployed repository, data.all pushes a `ddk.json` file with the details of the selected development environments:
@@ -139,9 +142,9 @@ From the guide, we need to bootstrap the accounts and modify the `app.py`. Once 
 
 **Comparison**
 
-- data.all default pipelines are simpler to implement: in the default data.all CICD, we define CICD infrastructure from data.all code, with option 2 we let users define the CICD infrastructure. With the data.all default pipelines, users don't have to modify the DDK code to create CICD resources, they can directly start working on the data pipeline stack. 
+- data.all default pipelines are simpler to implement: in the default data.all CICD, we define CICD infrastructure from data.all code; with DDK CICDPipelines 2 we let users define the CICD resources. With the data.all default pipelines, users don't have to modify the DDK code to create CICD resources, they can directly start working on the data pipeline stack. 
 - DDK CICDPipeline offers additional methods and flexibility: the DDK construct comes with some interesting features, such as testing stages or monitoring. Users can define their own pipelines from scratch.
-- DDK CICDPipeline creates an extra new CloudFormation stack and the data.all deployed pipeline(s) is obsolete. 
+- DDK CICDPipeline creates an extra new CloudFormation stack and the existing deployed CICD pipeline(s) is obsolete. 
 - The DDK CICDPipeline construct is an opinionated construct that follows trunk-based development strategy only. Hence, you would typically use data.all default pipelines if GitFlow adapts better to your needs.
 
 ## Single-environment pipelines
@@ -151,8 +154,7 @@ select the same data.all Environment as the CICD environment and for the develop
 You still need to bootstrap the AWS account with the following command: `ddk bootstrap`
 
 
-## Working with pipelines
-### Cloning the repository
+## Cloning the repository
 Pre-requisites:
 
 1. Install git: `sudo yum install git`
@@ -166,11 +168,3 @@ Clone the repo:
     
 ![created_pipeline](pictures/pipelines/pip_overview.png#zoom#shadow)
 
-### Environment variables
-From the repository we can access the following environment variables:
-
-![created_pipeline](pictures/pipelines/env_vars.png#zoom#shadow)
-
-!!!abstract "No more hard-coding parameters"
-      Use these environment variables in your code and avoid hard-coding IAM roles. Use the ENVTEAM IAM role 
-      to access the datasets of your team
