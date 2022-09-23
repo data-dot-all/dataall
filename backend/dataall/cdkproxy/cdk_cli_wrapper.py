@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import ast
 
 import boto3
 from botocore.exceptions import ClientError
@@ -25,14 +26,21 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print('        Running configure                     ')
     print('..............................................')
-    sts = boto3.client('sts')
-    idnty = sts.get_caller_identity()
-    this_aws_account = idnty['Account']
-    role_name = idnty.get('Arn').split('/')[1]
-    role_arn = f'arn:aws:iam::{this_aws_account}:role/{role_name}'
-    creds = sts.assume_role(
-        RoleArn=role_arn, RoleSessionName='CdkSession', DurationSeconds=900
-    ).get('Credentials', {})
+    print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
+    cmd = [
+        'curl',
+        '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI'
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        creds = ast.literal_eval(process.stdout)
+        print(creds)
     return creds
 
 
