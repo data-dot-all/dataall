@@ -140,4 +140,3 @@ ShareSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareObject'))),
     ],
 )
-

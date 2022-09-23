@@ -63,5 +63,3 @@ ShareableObjectFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
     ],
 )
-
-
