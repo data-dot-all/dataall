@@ -141,30 +141,3 @@ ShareSearchResult = gql.ObjectType(
     ],
 )
 
-
-ShareObjectHistory = gql.ObjectType(
-    name='ShareObjectHistory',
-    fields=[
-        gql.Field(name='historyUri', type=gql.ID),
-        gql.Field(name='label', type=gql.String),
-        gql.Field(name='owner', type=gql.String),
-        gql.Field(name='created', type=gql.String),
-        gql.Field(name='description', type=gql.String),
-        gql.Field(name='action', type=gql.String),
-    ],
-)
-
-SearchShareObjectHistory = gql.ObjectType(
-    name='SearchShareObjectHistory',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='pageSize', type=gql.Integer),
-        gql.Field(name='nextPage', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='previousPage', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareObjectHistory'))),
-    ],
-)

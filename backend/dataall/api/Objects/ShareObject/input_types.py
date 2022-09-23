@@ -65,10 +65,3 @@ ShareableObjectFilter = gql.InputType(
 )
 
 
-ShareObjectHistoryFilter = gql.InputType(
-    name='ShareObjectHistoryFilter',
-    arguments=[
-        gql.Argument('page', gql.Integer),
-        gql.Argument('pageSize', gql.Integer),
-    ],
-)
