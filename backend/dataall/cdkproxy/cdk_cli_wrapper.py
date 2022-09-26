@@ -68,6 +68,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
             stack.status = 'PENDING'
             session.commit()
             app_path = app_path or './app.py'
+            app_path = '../cdkproxy/ddk_pipeline/app.py' if stack.stack == 'pipeline' else app_path
+
+            logger.info(f'app_path: {app_path}')
+
             cmd = [
                 '. ~/.nvm/nvm.sh &&',
                 'cdk',
