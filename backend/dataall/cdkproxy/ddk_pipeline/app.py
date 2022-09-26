@@ -21,7 +21,7 @@ config = Config()
 (
     CICDPipelineStack(
         app,
-        id="DdkCodePipeline",
+        id=f"dataall-pipeline-2q42dq4p",
         environment_id="dev",
         pipeline_name="ddk-application-pipeline",
     )
