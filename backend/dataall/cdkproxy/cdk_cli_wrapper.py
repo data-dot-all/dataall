@@ -14,6 +14,7 @@ from botocore.exceptions import ClientError
 from ..aws.handlers.sts import SessionHelper
 from ..db import Engine
 from ..db import models
+from ..db.api import Pipeline, Environment
 from ..utils.alarm_service import AlarmService
 
 logger = logging.getLogger('cdksass')
@@ -53,6 +54,70 @@ def update_stack_output(session, stack):
         stack.outputs = outputs
 
 
+def initialize_ddk(pipeline, pipeline_environment):
+    print('..............................................')
+    print('        Initialize DDK                        ')
+    print('..............................................')
+    cmd = [
+        '. ~/.nvm/nvm.sh &&',
+        'ddk',
+        'create-repository',
+        pipeline.repo
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        print("Successfully created repo")
+    else:
+        logger.error(
+            f'Failed to create repo due to {str(process.stderr)}'
+        )
+
+    cmd = [
+        'git',
+        'clone',
+        f"codecommit::{pipeline_environment.region}//{pipeline.repo}"
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        print("Successfully cloned repo")
+    else:
+        logger.error(
+            f'Failed to clone repo due to {str(process.stderr)}'
+        )
+
+    cmd = [
+        'cd',
+        pipeline.repo,
+        '&&',
+        'ddk',
+        'init',
+        'app',
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        print("Successfully ddk init")
+
+    return
+
+
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
     sts = boto3.client('sts')
@@ -67,6 +132,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
             stack: models.Stack = session.query(models.Stack).get(stackid)
             stack.status = 'PENDING'
             session.commit()
+            if stack.stack == 'pipeline':
+                pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
+                pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
+                initialize_ddk(pipeline, pipeline_environment)
             app_path = app_path or './app.py'
             app_path = '../cdkproxy/ddk_pipeline/app.py' if stack.stack == 'pipeline' else app_path
 
