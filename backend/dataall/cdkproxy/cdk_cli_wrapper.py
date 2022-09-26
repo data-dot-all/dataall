@@ -120,7 +120,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     {
                         'AWS_ACCESS_KEY_ID': creds.get('AccessKeyId'),
                         'AWS_SECRET_ACCESS_KEY': creds.get('SecretAccessKey'),
-                        'AWS_SESSION_TOKEN': creds.get('SessionToken'),
+                        'AWS_SESSION_TOKEN': creds.get('Token'),
                     }
                 )
 
