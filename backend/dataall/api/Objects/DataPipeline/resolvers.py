@@ -33,6 +33,14 @@ def create_pipeline(context: Context, source, input=None):
             target_label=pipeline.label,
             payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
         )
+        Stack.create_stack(
+            session=session,
+            environment_uri=pipeline.environmentUri,
+            target_type='pipelinePip',
+            target_uri=f"{pipeline.DataPipelineUri}pip",
+            target_label=pipeline.label,
+            payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+        )
 
     stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
 

@@ -56,7 +56,7 @@ def update_stack_output(session, stack):
 
 def initialize_ddk(pipeline, pipeline_environment):
     print('..............................................')
-    print('        Initialize DDK                        ')
+    print('        Running configure  DDK                ')
     print('..............................................')
     cmd = [
         'git',
@@ -84,11 +84,10 @@ def initialize_ddk(pipeline, pipeline_environment):
         logger.error(
             f'Failed to run git init due to {str(process.stderr)}'
         )
-
     cmd = [
-        'pip',
-        'install',
-        'aws-ddk'
+        'git',
+        'config',
+        '--list'
     ]
     process = subprocess.run(
         ' '.join(cmd),
@@ -98,44 +97,44 @@ def initialize_ddk(pipeline, pipeline_environment):
         capture_output=True
     )
     if process.returncode == 0:
-        print("Successfully installed AWS-DDK")
+        print("git list config")
     else:
         logger.error(
-            f'Failed to install AWS-DDK due to {str(process.stderr)}'
+            f'Failed to run git list config due to {str(process.stderr)}'
         )
-
-    cmd = [
-        'aws',
-        'codecommit',
-        'create-repository',
-        '--repository-name',
-        pipeline.repo,
-        '--region',
-        pipeline_environment.region
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print("Successfully created repo")
-    else:
-        logger.error(
-            f'Failed to create repo due to {str(process.stderr)}'
+    print(str(process.stdout))
+    role_arn = f'arn:aws:iam::{pipeline_environment.AwsAccountId}:role/dataallPivotRole'
+    sts = boto3.client('sts')
+    env_creds = sts.assume_role(
+        RoleArn=role_arn, RoleSessionName='CdkSession', DurationSeconds=900
+    ).get('Credentials', {})
+    env = {
+        'AWS_REGION': pipeline_environment.region,
+        'AWS_DEFAULT_REGION': pipeline_environment.region,
+        'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
+        'envname': os.environ.get('envname', 'local'),
+    }
+    if env_creds:
+        env.update(
+            {
+                'AWS_ACCESS_KEY_ID': env_creds.get('AccessKeyId'),
+                'AWS_SECRET_ACCESS_KEY': env_creds.get('SecretAccessKey'),
+                'AWS_SESSION_TOKEN': env_creds.get('SessionToken'),
+            }
         )
-
     cmd = [
         'git',
         'clone',
-        f"codecommit::{pipeline_environment.region}://{pipeline.repo}"
+        f"codecommit::{pipeline_environment.region}://{pipeline.repo}",
+        '&&',
+        'cd',
+        pipeline.repo
     ]
     process = subprocess.run(
         ' '.join(cmd),
         text=True,
         shell=True,  # nosec
+        env=env,
         encoding='utf-8',
         capture_output=True
     )
@@ -144,40 +143,6 @@ def initialize_ddk(pipeline, pipeline_environment):
     else:
         logger.error(
             f'Failed to clone repo due to {str(process.stderr)}'
-        )
-
-    cmd = [
-        'cd',
-        pipeline.repo,
-        '&&',
-        'ddk',
-        'init',
-        'app',
-        '&&',
-        'git',
-        'add',
-        '.',
-        '&&',
-        'git',
-        'commit',
-        '-m',
-        '"First DDK init commit"'
-        '&&',
-        'git',
-        'push'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print("Successfully ddk init")
-    else:
-        logger.error(
-            f'Failed to initialize ddk due to {str(process.stderr)}'
         )
 
     return
