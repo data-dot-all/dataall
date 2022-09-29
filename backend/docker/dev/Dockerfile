@@ -45,6 +45,10 @@ $PATH" >> ~/.bashrc && \
 
 RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
+RUN yum update && \
+    yum upgrade -y && \
+    yum install -y git
+
 COPY ./requirements.txt dh.requirements.txt
 COPY ./dataall/cdkproxy/requirements.txt cdk.requirements.txt
 
@@ -52,10 +56,5 @@ RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
-RUN yum update && \
-    yum upgrade -y && \
-    yum install -y git \
-
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install git-remote-codecommit"
 
 ENTRYPOINT [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
