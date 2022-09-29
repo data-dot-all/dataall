@@ -59,10 +59,59 @@ def initialize_ddk(pipeline, pipeline_environment):
     print('        Initialize DDK                        ')
     print('..............................................')
     cmd = [
-        '. ~/.nvm/nvm.sh &&',
-        'ddk',
+        'git',
+        'config',
+        '--global',
+        'user.name',
+        'data.allECS',
+        '&&',
+        'git',
+        'config',
+        '--global',
+        'user.email',
+        'data.allECS@email.com'
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        print("Successfully git init")
+    else:
+        logger.error(
+            f'Failed to run git init due to {str(process.stderr)}'
+        )
+
+    cmd = [
+        'pip',
+        'install',
+        'aws-ddk'
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    if process.returncode == 0:
+        print("Successfully installed AWS-DDK")
+    else:
+        logger.error(
+            f'Failed to install AWS-DDK due to {str(process.stderr)}'
+        )
+
+    cmd = [
+        'aws',
+        'codecommit',
         'create-repository',
-        pipeline.repo
+        '--repository-name',
+        pipeline.repo,
+        '--region',
+        pipeline_environment.region
     ]
     process = subprocess.run(
         ' '.join(cmd),
@@ -81,7 +130,7 @@ def initialize_ddk(pipeline, pipeline_environment):
     cmd = [
         'git',
         'clone',
-        f"codecommit::{pipeline_environment.region}//{pipeline.repo}"
+        f"codecommit::{pipeline_environment.region}://{pipeline.repo}"
     ]
     process = subprocess.run(
         ' '.join(cmd),
@@ -104,6 +153,18 @@ def initialize_ddk(pipeline, pipeline_environment):
         'ddk',
         'init',
         'app',
+        '&&',
+        'git',
+        'add',
+        '.',
+        '&&',
+        'git',
+        'commit',
+        '-m',
+        '"First DDK init commit"'
+        '&&',
+        'git',
+        'push'
     ]
     process = subprocess.run(
         ' '.join(cmd),
@@ -114,6 +175,10 @@ def initialize_ddk(pipeline, pipeline_environment):
     )
     if process.returncode == 0:
         print("Successfully ddk init")
+    else:
+        logger.error(
+            f'Failed to initialize ddk due to {str(process.stderr)}'
+        )
 
     return
 
@@ -132,12 +197,8 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
             stack: models.Stack = session.query(models.Stack).get(stackid)
             stack.status = 'PENDING'
             session.commit()
-            if stack.stack == 'pipeline':
-                pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
-                pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-                initialize_ddk(pipeline, pipeline_environment)
+
             app_path = app_path or './app.py'
-            app_path = '../cdkproxy/ddk_pipeline/app.py' if stack.stack == 'pipeline' else app_path
 
             logger.info(f'app_path: {app_path}')
 
@@ -203,6 +264,11 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                 stack.stackid = meta['StackId']
                 stack.status = meta['StackStatus']
                 update_stack_output(session, stack)
+                if stack.stack == 'pipeline':
+                    pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
+                    pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
+                    initialize_ddk(pipeline, pipeline_environment)
+                    deploy_cdk_stack(engine=engine, stackid=f"{stack.stackid}pip", app_path='../cdkproxy/ddk_pipeline/app.py')
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(
