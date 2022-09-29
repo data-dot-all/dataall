@@ -52,4 +52,8 @@ RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
 
+RUN yum update && \
+    yum upgrade -y && \
+    yum install -y git
+
 ENTRYPOINT [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
