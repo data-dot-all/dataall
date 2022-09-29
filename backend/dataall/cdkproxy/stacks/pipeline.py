@@ -123,8 +123,10 @@ class PipelineStack(Stack):
             )
         )
 
-        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="dataall_ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
+        PipelineStack.write_ddk_app_multienvironment(path=code_dir_path, output_file="app.py", pipeline=pipeline, development_environments=development_environments)
+        
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
         PipelineStack.zip_directory(code_dir_path)
@@ -202,3 +204,52 @@ class PipelineStack(Stack):
 
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
+
+
+    @staticmethod
+    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
+        header = f"""
+# !/usr/bin/env python3
+
+import aws_cdk as cdk
+from aws_ddk_core.cicd import CICDPipelineStack
+from ddk_app.ddk_app_stack import DDKApplicationStack
+from aws_ddk_core.config import Config
+
+app = cdk.App()
+
+class ApplicationStage(cdk.Stage):
+    def __init__(
+            self,
+            scope,
+            environment_id: str,
+            **kwargs,
+    ) -> None:
+        super().__init__(scope, f"{pipeline.label}-{{environment_id.title()}}", **kwargs)
+        DDKApplicationStack(self, "DataPipeline-{pipeline.label}", environment_id)
+
+config = Config()
+(
+    CICDPipelineStack(
+        app,
+        id="{pipeline.label}-CICD",
+        environment_id="cicd",
+        pipeline_name="{pipeline.label}",
+    )
+        .add_source_action(repository_name="{pipeline.repo}")
+        .add_synth_action()
+        .build()"""
+
+        stages = ""
+        for env in development_environments:
+            stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
+            stages = stages + stage
+        footer = f"""
+        .synth()
+)
+
+app.synth()
+"""
+        app = header + stages + footer
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(app, file=text_file)
