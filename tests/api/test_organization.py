@@ -8,6 +8,36 @@ def org1(org, user, group, tenant):
     yield org1
 
 
+@pytest.fixture(scope='module', autouse=True)
+def org2(org, user2, group2, tenant):
+    org2 = org('anothertestorg', user2.userName, group2.name)
+    yield org2
+
+
+@pytest.fixture(scope='module', autouse=True)
+def env_dev(env, org2, user2, group2, tenant, module_mocker):
+    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    env2 = env(org2, 'dev', user2.userName, group2.name, '222222222222', 'eu-west-1', 'description')
+    yield env2
+
+
+@pytest.fixture(scope='module', autouse=True)
+def env_other(env, org2, user2, group2, tenant, module_mocker):
+    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    env2 = env(org2, 'other', user2.userName, group2.name, '222222222222', 'eu-west-1')
+    yield env2
+
+
+@pytest.fixture(scope='module', autouse=True)
+def env_prod(env, org2, user2, group2, tenant, module_mocker):
+    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    env2 = env(org2, 'prod', user2.userName, group2.name, '111111111111', 'eu-west-1', 'description')
+    yield env2
+
+
 def test_get_org(client, org1, group):
     response = client.query(
         """
@@ -372,3 +402,79 @@ def test_archive_org(client, org1, group, group2):
     )
     print(response)
     assert response.data.archiveOrganization
+
+
+def test_list_organization_environments(org2, client, group2):
+    response = client.query(
+        """
+        query GetOrg($organizationUri:String!, $filter: EnvironmentFilter){
+            getOrganization(organizationUri:$organizationUri){
+                environments(filter: $filter) {
+                    count
+                    nodes {
+                        label
+                        description
+                    }
+                }
+            }
+        }
+        """,
+        username='alice',
+        organizationUri=org2.organizationUri,
+        groups=[group2.name],
+        filter={'term': ''},
+    )
+
+    assert response.data.getOrganization.environments.count == 3
+
+
+def test_list_organization_environments_filter_by_label(org2, env_other, client, group2):
+    response = client.query(
+        """
+        query GetOrg($organizationUri:String!, $filter: EnvironmentFilter){
+            getOrganization(organizationUri:$organizationUri){
+                environments(filter: $filter) {
+                    count
+                    nodes {
+                        label
+                        description
+                    }
+                }
+            }
+        }
+        """,
+        username='alice',
+        organizationUri=org2.organizationUri,
+        groups=[group2.name],
+        filter={'term': 'other'},
+    )
+
+    assert response.data.getOrganization.environments.count == 1
+    assert response.data.getOrganization.environments.nodes[0].label == env_other.label
+
+
+def test_list_organization_environments_filter_by_desc(org2, env_dev, env_prod, client, group2):
+    response = client.query(
+        """
+        query GetOrg($organizationUri:String!, $filter: EnvironmentFilter){
+            getOrganization(organizationUri:$organizationUri){
+                environments(filter: $filter) {
+                    count
+                    nodes {
+                        label
+                        description
+                    }
+                }
+            }
+        }
+        """,
+        username='alice',
+        organizationUri=org2.organizationUri,
+        groups=[group2.name],
+        filter={'term': 'description'},
+    )
+
+    assert response.data.getOrganization.environments.count == 2
+    envs = set(map(lambda n: n.label, response.data.getOrganization.environments.nodes))
+    assert env_dev.label in envs
+    assert env_prod.label in envs

@@ -296,7 +296,7 @@ def dataset(client, patch_es):
 def env(client):
     cache = {}
 
-    def factory(org, envname, owner, group, account, region):
+    def factory(org, envname, owner, group, account, region, desc='test'):
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
             return cache[key]
@@ -319,7 +319,7 @@ def env(client):
             groups=[group],
             input={
                 'label': f'{envname}',
-                'description': f'test',
+                'description': f'{desc}',
                 'organizationUri': org.organizationUri,
                 'AwsAccountId': account,
                 'tags': ['a', 'b', 'c'],

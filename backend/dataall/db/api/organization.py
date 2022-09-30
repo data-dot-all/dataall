@@ -138,8 +138,8 @@ class Organization:
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.Group.label.ilike('%' + filter.get('term') + '%'),
-                    models.Group.description.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.label.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.description.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
