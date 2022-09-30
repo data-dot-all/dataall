@@ -116,9 +116,7 @@ def test_list_organizations_alice(client, org1, group):
     )
 
     assert response.data.listOrganizations.count == 1
-    assert (
-        response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
-    )
+    assert response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
 
 
 def test_list_organizations_admin(client, org1, group):
@@ -138,9 +136,7 @@ def test_list_organizations_admin(client, org1, group):
     )
     print(response)
     assert response.data.listOrganizations.count == 1
-    assert (
-        response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
-    )
+    assert response.data.listOrganizations.nodes[0].organizationUri == org1.organizationUri
 
 
 def test_list_organizations_anyone(client, org1):
@@ -162,9 +158,7 @@ def test_list_organizations_anyone(client, org1):
     assert response.data.listOrganizations.count == 0
 
 
-def test_group_invitation(
-    db, client, org1, group2, user, group3, group, dataset, env, module_mocker
-):
+def test_group_invitation(db, client, org1, group2, user, group3, group, dataset, env, module_mocker):
     response = client.query(
         """
         mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
@@ -263,9 +257,7 @@ def test_group_invitation(
     assert response.data.listOrganizationGroups.count == 2
 
     module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
     env2 = env(org1, 'devg2', user.userName, group2.name, '111111111112', 'eu-west-1')
     assert env2.environmentUri
 
