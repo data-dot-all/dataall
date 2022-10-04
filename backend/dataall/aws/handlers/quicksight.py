@@ -4,7 +4,7 @@ import os
 import ast
 
 from botocore.exceptions import ClientError
-
+from ....db import exceptions
 from .sts import SessionHelper
 from .secrets_manager import SecretsManager
 from .parameter_store import ParameterStoreManager
@@ -14,6 +14,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class Quicksight:
+    def __init__(self):
+        pass
+
     @staticmethod
     def get_identity_region(AwsAccountId):
         """Quicksight manages identities in one region, and there is no API to retrieve it
@@ -26,9 +29,8 @@ class Quicksight:
             the region quicksight uses as identity region
         """
         identity_region_rex = re.compile('Please use the (?P<region>.*) endpoint.')
-        session = SessionHelper.remote_session(AwsAccountId)
         identity_region = 'us-east-1'
-        client = session.client('quicksight', region_name=identity_region)
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
@@ -66,6 +68,36 @@ class Quicksight:
         identity_region = Quicksight.get_identity_region(AwsAccountId)
         session = SessionHelper.remote_session(AwsAccountId)
         return session.client('quicksight', region_name=region)
+
+    @staticmethod
+    def check_quicksight_enterprise_subscription(AwsAccountId):
+        """
+        Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's 
+        subscription. A successful API call returns an AccountInfo object that includes an account's name, 
+        subscription status, authentication type, edition, and notification email address.
+        Args:
+            AwsAccountId(str) : aws account id
+        Returns: bool
+            True if Quicksight Enterprise Edition is enabled in the AWS Account
+        """
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId)
+        try:
+            response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
+            if response['AccountInfo']['Edition'] == 'ENTERPRISE':
+                return True
+            elif response['AccountInfo']:
+                logger.info(
+                    f"Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response['AccountInfo']['Edition']})"
+                )
+                raise Exception('Quicksight Enterprise Subscription not found')
+            else:
+                logger.info(
+                    f'Quicksight Enterprise Subscription not found in Account: {AwsAccountId})'
+                )
+                raise Exception('Quicksight Enterprise Subscription not found')
+
+        except client.exceptions.ResourceNotFoundException:
+            raise Exception('Quicksight Enterprise Subscription not found')
 
     @staticmethod
     def create_quicksight_default_group(AwsAccountId):
