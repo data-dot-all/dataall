@@ -241,6 +241,14 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
         environmentUri=source.environmentUri,
     )
 
+def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
+    if not source:
+        return None
+    return stack_helper.get_stack_with_cfn_resources(
+        context=context,
+        targetUri=f"{source.DataPipelineUri}pip",
+        environmentUri=source.environmentUri,
+    )
 
 def get_job_runs(context, source: models.DataPipeline, **kwargs):
     if not source:

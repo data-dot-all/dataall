@@ -42,7 +42,8 @@ import FeedComments from '../Feed/FeedComments';
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-  { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
+  { label: 'Repo Stack', value: 'stack', icon: <FaAws size={20} /> }
+  { label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20} /> }
 ];
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
@@ -143,6 +144,7 @@ const PipelineView = () => {
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState(null);
   const [stack, setStack] = useState(null);
+  const [cicdStack, setCicdStack] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -160,6 +162,9 @@ const PipelineView = () => {
       if (stack) {
         setStack(response.data.getDataPipeline.stack);
       }
+      if (cicdStack) {
+        setCicdStack(response.data.getDataPipeline.stack);
+      }
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -167,7 +172,8 @@ const PipelineView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack]);
+  }, [client, dispatch, params.uri, stack, cicdStack]);
+  
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
