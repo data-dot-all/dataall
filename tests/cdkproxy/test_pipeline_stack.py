@@ -53,7 +53,4 @@ def template(pipeline):
 
 
 def test_resources_created(template):
-    assert 'AWS::CodePipeline::Pipeline' in template
-    assert 'AWS::CodeBuild::Project' in template
-    assert 'AWS::IAM::Role' in template
-    assert 'AWS::S3::Bucket' in template
+    assert 'AWS::CodeCommit::Repository' in template

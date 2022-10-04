@@ -3,7 +3,6 @@ import os
 import shutil
 from typing import List
 
-
 from aws_cdk import aws_codebuild as codebuild, Stack, RemovalPolicy, CfnOutput
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_codepipeline as codepipeline
@@ -23,8 +22,6 @@ from ...utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
 
-class PipelineHelpers:
-    "some methods for CICD"
 
 @stack("pipeline")
 class PipelineStack(Stack):
@@ -113,7 +110,6 @@ class PipelineStack(Stack):
         # Development environments
         development_environments = self.get_pipeline_environments(targer_uri=target_uri)
 
-
         # Create CodeCommit repository and mirror blueprint code
         code_dir_path = os.path.realpath(
             os.path.abspath(
@@ -126,7 +122,7 @@ class PipelineStack(Stack):
         PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
         PipelineStack.write_ddk_app_multienvironment(path=code_dir_path, output_file="app.py", pipeline=pipeline, development_environments=development_environments)
-        
+
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
         PipelineStack.zip_directory(code_dir_path)
@@ -178,7 +174,6 @@ class PipelineStack(Stack):
         else:
             logger.info("Info: %s Zip not found" % f"{path}/code.zip")
 
-
     @staticmethod
     def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
         json_envs = ""
@@ -204,7 +199,6 @@ class PipelineStack(Stack):
 
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
-
 
     @staticmethod
     def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
@@ -244,7 +238,7 @@ config = Config()
         for env in development_environments:
             stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
             stages = stages + stage
-        footer = f"""
+        footer = """
         .synth()
 )
 

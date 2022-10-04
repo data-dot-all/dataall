@@ -66,7 +66,6 @@ def clone_remote_stack(pipeline, pipeline_environment):
 
     python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')
 
-
     env = {
         'AWS_REGION': pipeline_environment.region,
         'AWS_DEFAULT_REGION': pipeline_environment.region,
@@ -216,6 +215,9 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                 if stack.stack == 'pipeline':
                     logger.warning(f'Starting new remote stack from  targetUri {stack.targetUri}pip')
                     cicdstack: models.Stack = Stack.get_stack_by_target_uri(session, target_uri=f"{stack.targetUri}pip")
+                    cicdstack.EcsTaskArn = stack.EcsTaskArn
+                    session.commit()
+                    logger.warning(cicdstack.EcsTaskArn)
                     pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
                     clone_remote_stack(pipeline, pipeline_environment)

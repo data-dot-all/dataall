@@ -241,6 +241,7 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
         environmentUri=source.environmentUri,
     )
 
+
 def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
@@ -249,6 +250,7 @@ def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
         targetUri=f"{source.DataPipelineUri}pip",
         environmentUri=source.environmentUri,
     )
+
 
 def get_job_runs(context, source: models.DataPipeline, **kwargs):
     if not source:
