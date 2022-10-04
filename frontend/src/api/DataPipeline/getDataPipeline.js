@@ -62,6 +62,18 @@ const getDataPipeline = (DataPipelineUri) => ({
           outputs
           resources
         }
+        cicdStack {
+          stack
+          status
+          stackUri
+          targetUri
+          accountid
+          region
+          stackid
+          link
+          outputs
+          resources
+        }
       }
     }
   `
