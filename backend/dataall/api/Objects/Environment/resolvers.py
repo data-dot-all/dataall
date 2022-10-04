@@ -10,7 +10,9 @@ from sqlalchemy import and_
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
-from ....aws.handlers.sts import SessionHelper, CloudFormation, Quicksight
+from ....aws.handlers.sts import SessionHelper
+from ....aws.handlers.quicksight import Quicksight
+from ....aws.handlers.cloudformation import CloudFormation
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (

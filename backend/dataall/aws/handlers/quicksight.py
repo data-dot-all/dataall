@@ -4,7 +4,6 @@ import os
 import ast
 
 from botocore.exceptions import ClientError
-from ....db import exceptions
 from .sts import SessionHelper
 from .secrets_manager import SecretsManager
 from .parameter_store import ParameterStoreManager
@@ -16,6 +15,16 @@ logger.setLevel(logging.DEBUG)
 class Quicksight:
     def __init__(self):
         pass
+    @staticmethod
+    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
+        """Returns a boto3 quicksight client in the provided account/region
+        Args:
+            AwsAccountId(str) : aws account id
+            region(str) : aws region
+        Returns : boto3.client ("quicksight")
+        """
+        session = SessionHelper.remote_session(AwsAccountId)
+        return session.client('quicksight', region_name=region)
 
     @staticmethod
     def get_identity_region(AwsAccountId):
@@ -56,18 +65,6 @@ class Quicksight:
         identity_region = Quicksight.get_identity_region(AwsAccountId)
         session = SessionHelper.remote_session(AwsAccountId)
         return session.client('quicksight', region_name=identity_region)
-
-    @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
-        """Returns a boto3 quicksight client in the provided account/region
-        Args:
-            AwsAccountId(str) : aws account id
-            region(str) : aws region
-        Returns : boto3.client ("quicksight")
-        """
-        identity_region = Quicksight.get_identity_region(AwsAccountId)
-        session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('quicksight', region_name=region)
 
     @staticmethod
     def check_quicksight_enterprise_subscription(AwsAccountId):
