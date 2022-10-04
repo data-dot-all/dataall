@@ -54,69 +54,25 @@ def update_stack_output(session, stack):
         stack.outputs = outputs
 
 
-def initialize_ddk(pipeline, pipeline_environment):
-    print('..............................................')
-    print('        Running configure  DDK                ')
-    print('..............................................')
-    cmd = [
-        'git',
-        'config',
-        '--global',
-        'user.name',
-        'data.allECS',
-        '&&',
-        'git',
-        'config',
-        '--global',
-        'user.email',
-        'data.allECS@email.com'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print(f"Successfully git init: {str(process.stdout)}")
-    else:
-        logger.error(
-            f'Failed to run git init due to {str(process.stderr)}'
-        )
-    cmd = [
-        'git',
-        'config',
-        '--list'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print(f"git list config: {str(process.stdout)}")
-    else:
-        logger.error(
-            f'Failed to run git list config due to {str(process.stderr)}'
-        )
-
+def clone_remote_stack(pipeline, pipeline_environment):
+    print('..................................................')
+    print('     Configure remote CDK app                     ')
+    print('..................................................')
     role_arn = f'arn:aws:iam::{pipeline_environment.AwsAccountId}:role/dataallPivotRole'
     sts = boto3.client('sts')
     env_creds = sts.assume_role(
         RoleArn=role_arn, RoleSessionName='CdkSession', DurationSeconds=900
     ).get('Credentials', {})
 
-    print(sys.path)
-    python_path = '/:'.join(sys.path)[1:] + ':/code'
+    python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')
+
 
     env = {
         'AWS_REGION': pipeline_environment.region,
         'AWS_DEFAULT_REGION': pipeline_environment.region,
         'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
         'PYTHONPATH': python_path,
+        'PATH': python_path,
         'envname': os.environ.get('envname', 'local'),
     }
     if env_creds:
@@ -127,68 +83,49 @@ def initialize_ddk(pipeline, pipeline_environment):
                 'AWS_SESSION_TOKEN': env_creds.get('SessionToken'),
             }
         )
+    print(f"ENVIRONMENT = {env}")
+    print('..................................................')
+    print('        Clone remote CDK app                      ')
+    print('..................................................')
 
     cmd = [
-        'pip',
-        'list'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print(f"OUTPUT: {str(process.stdout)}")
-
-    cmd = [
-        'sudo',
-        'pip',
-        'install',
-        'git-remote-codecommit',
-        '--force'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        env=env,
-        encoding='utf-8',
-        capture_output=True
-    )
-    if process.returncode == 0:
-        print(f"git remote: {str(process.stdout)}")
-    else:
-        logger.error(
-            f'Failed to run git remote config due to {str(process.stderr)}'
-        )
-    cmd = [
+        'git',
+        'config',
+        '--system',
+        'user.name',
+        'data.allECS',
+        '&&',
+        'git',
+        'config',
+        '--system',
+        'user.email',
+        'data.allECS@email.com',
+        '&&',
+        'cd',
+        'dataall/cdkproxy/stacks',
+        '&&',
+        'mkdir',
+        f'{pipeline.repo}',
+        '&&'
         'git',
         'clone',
         f"codecommit::{pipeline_environment.region}://{pipeline.repo}",
-        '&&',
-        'cd',
-        pipeline.repo
+        f'{pipeline.repo}'
     ]
-    print(env)
     process = subprocess.run(
         ' '.join(cmd),
         text=True,
         shell=True,  # nosec
-        env=env,
         encoding='utf-8',
         capture_output=True,
-        cwd=os.path.dirname(os.path.abspath(__file__)),
+        env=env
     )
     if process.returncode == 0:
-        print(f"Successfully cloned repo: {str(process.stdout)}")
+        print(f"Successfully cloned repo {pipeline.repo}: {str(process.stdout)}")
     else:
-        print(f"Unsuccessfully cloned repo: {str(process.stdout)}")
         logger.error(
-            f'Failed to clone repo due to {str(process.stderr)}'
+            f'Failed to clone repo {pipeline.repo} due to {str(process.stderr)}'
         )
-
     return
 
 
@@ -204,6 +141,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     with engine.scoped_session() as session:
         try:
             stack: models.Stack = session.query(models.Stack).get(stackid)
+            logger.warning(f"stackuri = {stack.stackUri}, stackId = {stack.stackid}")
             stack.status = 'PENDING'
             session.commit()
 
@@ -212,6 +150,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
             logger.info(f'app_path: {app_path}')
 
             cmd = [
+                ''
                 '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy',
@@ -233,6 +172,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                 f"target_uri='{stack.targetUri}'",
                 '-c',
                 "data='{}'",
+                # skips synth step when no changes apply
                 '--app',
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
@@ -259,26 +199,27 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     }
                 )
 
-            # process = subprocess.run(
-            #     ' '.join(cmd),
-            #     text=True,
-            #     shell=True,  # nosec
-            #     encoding='utf-8',
-            #     env=env,
-            #     cwd=os.path.dirname(os.path.abspath(__file__)),
-            # )
-            #
-            # if process.returncode == 0:
-                #meta = describe_stack(stack)
-                #stack.stackid = meta['StackId']
-                #stack.status = meta['StackStatus']
-                #update_stack_output(session, stack)
+            process = subprocess.run(
+                ' '.join(cmd),
+                text=True,
+                shell=True,  # nosec
+                encoding='utf-8',
+                env=env,
+                cwd=os.path.dirname(os.path.abspath(__file__)),
+            )
+
+            if process.returncode == 0:
+                meta = describe_stack(stack)
+                stack.stackid = meta['StackId']
+                stack.status = meta['StackStatus']
+                update_stack_output(session, stack)
                 if stack.stack == 'pipeline':
+                    logger.warning(f'Starting new remote stack from  targetUri {stack.targetUri}pip')
+                    cicdstack: models.Stack = Stack.get_stack_by_target_uri(session, target_uri=f"{stack.targetUri}pip")
                     pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-                    initialize_ddk(pipeline, pipeline_environment)
-                    stack = Stack.get_stack_by_target_uri(session=session, target_uri=f"{stack.targetUri}pip")
-                    #deploy_cdk_stack(engine=engine, stackid=stack.stackid)
+                    clone_remote_stack(pipeline, pipeline_environment)
+                    deploy_cdk_stack(engine, cicdstack.stackUri, f"./stacks/{pipeline.repo}/app.py")
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(
