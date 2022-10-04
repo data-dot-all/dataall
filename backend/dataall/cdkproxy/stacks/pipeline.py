@@ -232,7 +232,7 @@ config = Config()
 (
     CICDPipelineStack(
         app,
-        id="{pipeline.label}-CICD",
+        id="dataall-pipelinepip-{pipeline.DataPipelineUri}pip",
         environment_id="cicd",
         pipeline_name="{pipeline.label}",
     )
