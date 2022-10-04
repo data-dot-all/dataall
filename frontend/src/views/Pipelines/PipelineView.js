@@ -42,7 +42,7 @@ import FeedComments from '../Feed/FeedComments';
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-  { label: 'Repo Stack', value: 'stack', icon: <FaAws size={20} /> }
+  { label: 'Repo Stack', value: 'stack', icon: <FaAws size={20} /> },
   { label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20} /> }
 ];
 
@@ -163,7 +163,7 @@ const PipelineView = () => {
         setStack(response.data.getDataPipeline.stack);
       }
       if (cicdStack) {
-        setCicdStack(response.data.getDataPipeline.stack);
+        setCicdStack(response.data.getDataPipeline.cicdStack);
       }
     } else {
       const error = response.errors

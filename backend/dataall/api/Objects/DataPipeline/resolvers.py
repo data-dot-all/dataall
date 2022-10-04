@@ -380,9 +380,7 @@ def delete_pipeline(
             session, pipeline.environmentUri
         )
 
-        deleted = Pipeline.delete_pipeline_environments(
-            session, DataPipelineUri
-        )
+        Pipeline.delete_pipeline_environments(session, DataPipelineUri)
 
         KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
@@ -402,6 +400,14 @@ def delete_pipeline(
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
             target_type='pipeline',
+        )
+        stack_helper.delete_stack(
+            context=context,
+            target_uri=f"{DataPipelineUri}pip",
+            accountid=env.AwsAccountId,
+            cdk_role_arn=env.CDKRoleArn,
+            region=env.region,
+            target_type='pipelinePip',
         )
 
     return True
