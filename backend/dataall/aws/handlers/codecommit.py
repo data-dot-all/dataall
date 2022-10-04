@@ -12,7 +12,6 @@ class CodeCommit:
         session = SessionHelper.remote_session(AwsAccountId)
         return session.client('codecommit', region_name=region)
 
-
     @staticmethod
     def _unpack(session, task):
         pipe: models.DataPipeline = session.query(models.DataPipeline).get(task.targetUri)
@@ -88,4 +87,3 @@ class CodeCommit:
             (pipe, env, client) = CodeCommit._unpack(session, task)
             response = client.list_branches(repositoryName=pipe.repo)
             return response['branches']
-
