@@ -586,10 +586,12 @@ Resources:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
           - Sid: QuickSightSession
             Effect: Allow
             Action:
               - 'quicksight:GetSessionEmbedUrl'
+              - "quicksight:DescribeAccountSubscription"
             Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-2
       Roles:

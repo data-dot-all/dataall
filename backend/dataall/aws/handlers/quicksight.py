@@ -80,21 +80,25 @@ class Quicksight:
         client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId)
         try:
             response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
-            if response['AccountInfo']['Edition'] == 'ENTERPRISE':
-                return True
-            elif response['AccountInfo']:
-                logger.info(
-                    f"Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response['AccountInfo']['Edition']})"
-                )
-                raise Exception('Quicksight Enterprise Subscription not found')
+            if not response['AccountInfo']:
+                raise Exception(f'Quicksight Enterprise Subscription not found in Account: {AwsAccountId}')
             else:
-                logger.info(
-                    f'Quicksight Enterprise Subscription not found in Account: {AwsAccountId})'
-                )
-                raise Exception('Quicksight Enterprise Subscription not found')
+                if response['AccountInfo']['Edition'] not in ['ENTERPRISE', 'ENTERPRISE_AND_Q']:
+                    raise Exception(
+                        f"Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response['AccountInfo']['Edition']}")
+                else:
+                    if response['AccountInfo']['AccountSubscriptionStatus'] == 'ACCOUNT_CREATED':
+                        return True
+                    else:
+                        raise Exception(
+                            f"Quicksight Subscription found in Account: {AwsAccountId} not active. Status = {response['AccountInfo']['AccountSubscriptionStatus']}")
+
 
         except client.exceptions.ResourceNotFoundException:
             raise Exception('Quicksight Enterprise Subscription not found')
+
+        except client.exceptions.AccessDeniedException:
+            raise Exception('Access denied to Quicksight for data.all PivotRole')
 
     @staticmethod
     def create_quicksight_default_group(AwsAccountId):
