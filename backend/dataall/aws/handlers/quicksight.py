@@ -15,6 +15,7 @@ logger.setLevel(logging.DEBUG)
 class Quicksight:
     def __init__(self):
         pass
+
     @staticmethod
     def get_quicksight_client(AwsAccountId, region='eu-west-1'):
         """Returns a boto3 quicksight client in the provided account/region
@@ -68,10 +69,7 @@ class Quicksight:
 
     @staticmethod
     def check_quicksight_enterprise_subscription(AwsAccountId):
-        """
-        Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's 
-        subscription. A successful API call returns an AccountInfo object that includes an account's name, 
-        subscription status, authentication type, edition, and notification email address.
+        """Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's subscription. A successful API call returns an AccountInfo object that includes an account's name, subscription status, authentication type, edition, and notification email address.
         Args:
             AwsAccountId(str) : aws account id
         Returns: bool
@@ -92,7 +90,6 @@ class Quicksight:
                     else:
                         raise Exception(
                             f"Quicksight Subscription found in Account: {AwsAccountId} not active. Status = {response['AccountInfo']['AccountSubscriptionStatus']}")
-
 
         except client.exceptions.ResourceNotFoundException:
             raise Exception('Quicksight Enterprise Subscription not found')

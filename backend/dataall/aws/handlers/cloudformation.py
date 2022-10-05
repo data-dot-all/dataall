@@ -14,11 +14,12 @@ log = logging.getLogger(__name__)
 class CloudFormation:
     def __init__(self):
         pass
+
     @staticmethod
     def client(AwsAccountId, region):
         session = SessionHelper.remote_session(AwsAccountId)
         return session.client('cloudformation', region_name=region)
-        
+
     @staticmethod
     def check_existing_cdk_toolkit_stack(AwsAccountId, region):
         cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region)
