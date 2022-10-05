@@ -49,22 +49,15 @@ is deployed.
 
 ![create_pipeline](pictures/pipelines/pip_create_form.png#zoom#shadow)
 
-### data.all CICD
+### data.all and DDK multi-account
 
-When a pipeline is created, a CICD CloudFormation stack is deployed in the CICD environment AWS account. 
-It contains a CodePipeline pipeline (or more for GitFlow development strategy) that reads from an AWS CodeCommit repository. 
-The shape of the pipeline depends on the development strategy chosen and in the amount of development stages.
+#### CodeCommit repository
 
-In the first run of the CodePipeline Pipeline a DDK application is initialized in the Pipeline repository. This DDK app is deployed in the subsequent runs.
-If you want to change the commands that are run in the AWS CodeBuild deploy stage, note that the buildspec of the CodeBuild step is part of the CodeCommit repository.
+When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. 
+It contains an AWS CodeCommit repository with the code of an AWS DDK application set up for a multi-account deployment,
+as explained in its [documentation](https://awslabs.github.io/aws-ddk/release/latest/how-to/multi-account-deployment.html).
 
-!!!warning "GitFlow and CodeCommit branches"
-      If you selected GitFlow as development strategy, you probably noticed that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
-      After the first successful run of the prod-CodePipeline pipeline, just create branches in the CodeCommit repository for the other stages and you are ready to go.
 
-![create_pipeline](pictures/pipelines/pip_codepipeline.png#zoom#shadow)
-
-### Multi-env configuration
 In the deployed repository, data.all pushes a `ddk.json` file with the details of the selected development environments:
 
 ```json
@@ -91,66 +84,15 @@ In the deployed repository, data.all pushes a `ddk.json` file with the details o
     }
 }
 ```
-
-We also modified the default DDK `app.py` to read the Config from the `ddk.json` file and select the environment 
-matching the stage defined in the CodeBuild environment variables.
+In addition, the `app.py` file is also written accordingly to the development environments selected in data.all UI.
 
 ```
-#!/usr/bin/env python3
-import os
-import aws_cdk as cdk
-from aws_ddk_core.config.config import Config
-from ddk_app.ddk_app_stack import DdkApplicationStack
 
-stage_id = os.environ.get('STAGE', None)
-pipeline_name = os.environ.get('PIPELINE_NAME')
-
-app = cdk.App()
-
-config = Config()
-environment = config.get_env(stage_id)
-
-if not environment:
-    raise ValueError(f'Environment id with stage_id {stage_id} was not found!')
-
-# We can also add environment variables, read them and pass them to the stack
-# env_config = config.get_env_config(stage_id)
-
-DdkApplicationStack(app,
-                    f"{pipeline_name}-DdkApplicationStack",
-                    stage_id)
-
-app.synth()
 ```
-
-!!! success "Parameters and account-dependent variables"
-      You can use the `ddk.json` file not only to configure the AWS accounts and deployment details, but also to 
-      configure parameters on the stacks, for example S3 Bucket names or Glue database names! You can read those
-      variables using the get_env_config built-in function: `env_config = config.get_env_config(stage_id)`
-
-### Note on DDK multi-environment deployment
-
-From data.all we offer a simple ready-to-use multi-account deployment, but there are other ways of implementing the same logic. 
-An alternative is the one proposed in the <a href="https://awslabs.github.io/aws-ddk/release/stable/how-to/multi-account-deployment.html">DDK guide for multi-account deployments</a>. 
-From the guide, we need to bootstrap the accounts and modify the `app.py`. Once you push the changes a new CICD pipeline is deployed in a new CloudFormation stack.
-
-!!! warning "Naming!"
-      Don't forget to change the repository name to the one of our pipeline. Also, be careful with the name of the CICD pipeline stack, 
-      you might update previously created stacks instead of creating a new one. Check the example below.
-
-**Comparison**
-
-- data.all default pipelines are simpler to implement: in the default data.all CICD, we define CICD infrastructure from data.all code; with DDK CICDPipelines 2 we let users define the CICD resources. With the data.all default pipelines, users don't have to modify the DDK code to create CICD resources, they can directly start working on the data pipeline stack. 
-- DDK CICDPipeline offers additional methods and flexibility: the DDK construct comes with some interesting features, such as testing stages or monitoring. Users can define their own pipelines from scratch.
-- DDK CICDPipeline creates an extra new CloudFormation stack and the existing deployed CICD pipeline(s) is obsolete. 
-- The DDK CICDPipeline construct is an opinionated construct that follows trunk-based development strategy only. Hence, you would typically use data.all default pipelines if GitFlow adapts better to your needs.
-
-## Single-environment pipelines
-Maybe you don't want to use multiple accounts for your code and your infrastructure. In such case, in the pipeline creation form 
-select the same data.all Environment as the CICD environment and for the development stages.
-
-You still need to bootstrap the AWS account with the following command: `ddk bootstrap`
-
+#### CICD deployment
+data.all backend performs the first deployment of the CICD stack defined in the CodeCommit repository. The result is a
+CloudFormation template deploying a CICD pipeline having the aforementioned CodeCommit repository as source.
+This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html)
 
 ## Cloning the repository
 Pre-requisites:
