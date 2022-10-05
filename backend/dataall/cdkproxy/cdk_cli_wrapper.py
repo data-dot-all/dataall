@@ -54,7 +54,7 @@ def update_stack_output(session, stack):
         stack.outputs = outputs
 
 
-def clone_remote_stack(pipeline, pipeline_environment):
+def clone_remote_stack(pipeline, pipeline_environment): #, development_environments):
     print('..................................................')
     print('     Configure remote CDK app                     ')
     print('..................................................')
@@ -217,11 +217,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     cicdstack: models.Stack = Stack.get_stack_by_target_uri(session, target_uri=f"{stack.targetUri}pip")
                     cicdstack.EcsTaskArn = stack.EcsTaskArn
                     session.commit()
-                    logger.warning(cicdstack.EcsTaskArn)
                     pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-                    clone_remote_stack(pipeline, pipeline_environment)
-                    deploy_cdk_stack(engine, cicdstack.stackUri, f"./stacks/{pipeline.repo}/app.py")
+                    #development_environments = Pipeline.query_pipeline_environments(session, pipeline.DataPipelineUri)
+                    clone_remote_stack(pipeline, pipeline_environment) #, development_environments)
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(

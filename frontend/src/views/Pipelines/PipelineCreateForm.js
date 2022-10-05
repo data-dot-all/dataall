@@ -280,7 +280,7 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: '',
                 environment: '',
                 tags: [],
-                devStrategy: '',
+                devStrategy: 'trunk',
                 template: '',
               }}
               validationSchema={Yup.object().shape({
@@ -473,42 +473,29 @@ const PipelineCrateForm = (props) => {
                             variant="outlined"
                           />
                         </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.devStrategy && errors.devStrategy
-                            )}
-                            helperText={
-                              touched.devStrategy && errors.devStrategy
-                            }
-                            label="CICD strategy"
-                            name="devStrategy"
-                            onChange={handleChange}
-                            select
-                            value={values.devStrategy}
-                            variant="outlined"
-                          >
-                            {devOptions.map((dev) => (
-                              <MenuItem key={dev.value} value={dev.value}>
-                                {dev.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            error={Boolean(touched.template && errors.template)}
-                            fullWidth
-                            helperText={touched.template && errors.template}
-                            label="URL to a git repository (ddk init --template)"
-                            name="template"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.template}
-                            variant="outlined"
-                          />
-                        </CardContent>
+                        {/*<CardContent>*/}
+                        {/*  <TextField*/}
+                        {/*    fullWidth*/}
+                        {/*    error={Boolean(*/}
+                        {/*      touched.devStrategy && errors.devStrategy*/}
+                        {/*    )}*/}
+                        {/*    helperText={*/}
+                        {/*      touched.devStrategy && errors.devStrategy*/}
+                        {/*    }*/}
+                        {/*    label="CICD strategy"*/}
+                        {/*    name="devStrategy"*/}
+                        {/*    onChange={handleChange}*/}
+                        {/*    select*/}
+                        {/*    value={values.devStrategy}*/}
+                        {/*    variant="outlined"*/}
+                        {/*  >*/}
+                        {/*    {devOptions.map((dev) => (*/}
+                        {/*      <MenuItem key={dev.value} value={dev.value}>*/}
+                        {/*        {dev.label}*/}
+                        {/*      </MenuItem>*/}
+                        {/*    ))}*/}
+                        {/*  </TextField>*/}
+                        {/*</CardContent>*/}
                       </Card>
                     </Grid>
                     <Grid item lg={12} md={6} xs={12}>
