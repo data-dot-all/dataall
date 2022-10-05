@@ -15,18 +15,18 @@ class ApplicationStage(cdk.Stage):
             environment_id: str,
             **kwargs,
     ) -> None:
-        super().__init__(scope, f"po3-{environment_id.title()}", **kwargs)
-        DDKApplicationStack(self, "DataPipeline-po3", environment_id)
+        super().__init__(scope, f"pip9-{environment_id.title()}", **kwargs)
+        DDKApplicationStack(self, "DataPipeline-pip9", environment_id)
 
 config = Config()
 (
     CICDPipelineStack(
         app,
-        id="dataall-pipelinepip-tec01ypopip",
+        id="dataall-pipelinepip-uofqalexpip",
         environment_id="cicd",
-        pipeline_name="po3",
+        pipeline_name="pip9",
     )
-        .add_source_action(repository_name="dataall-po3-tec01ypo")
+        .add_source_action(repository_name="dataall-pip9-uofqalex")
         .add_synth_action()
         .build().add_stage("dev", ApplicationStage(app, "dev", env=config.get_env("dev")))
         .synth()

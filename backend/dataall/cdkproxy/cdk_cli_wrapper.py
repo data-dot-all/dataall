@@ -221,6 +221,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
                     #development_environments = Pipeline.query_pipeline_environments(session, pipeline.DataPipelineUri)
                     clone_remote_stack(pipeline, pipeline_environment) #, development_environments)
+                    deploy_cdk_stack(engine, cicdstack.stackUri, f"./stacks/{pipeline.repo}/app.py")
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(

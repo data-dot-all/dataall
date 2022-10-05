@@ -202,6 +202,7 @@ const PipelineEnvironmentCreateForm = (props) => {
                                 name="stage"
                                 value={kvEnvs[idx].stage}
                                 onChange={handleChange(idx, 'stage')}
+                                select
                                 variant="outlined"
                               >
                                 {stageOps.map((stage) => (
