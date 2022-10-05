@@ -124,8 +124,7 @@ class PipelineStack(Stack):
                 path=code_dir_path,
                 output_file="app.py",
                 pipeline=pipeline,
-                development_environments=development_environments,
-                branch=", main"
+                development_environments=development_environments
             )
 
         else:
@@ -225,7 +224,7 @@ class PipelineStack(Stack):
             print(json, file=text_file)
 
     @staticmethod
-    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments, branch):
+    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
         header = f"""
 # !/usr/bin/env python3
 
@@ -254,7 +253,7 @@ config = Config()
         environment_id="cicd",
         pipeline_name="{pipeline.label}",
     )
-        .add_source_action(repository_name="{pipeline.repo}"{branch})
+        .add_source_action(repository_name="{pipeline.repo}")
         .add_synth_action()
         .build()"""
 
