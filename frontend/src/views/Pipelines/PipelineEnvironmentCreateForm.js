@@ -35,6 +35,7 @@ const PipelineEnvironmentCreateForm = (props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map())
+  const stageOps =[{value:"dev", label:"DEV"},{value:"test", label:"TEST"},{value:"val", label:"VAL"},{value:"prod", label:"PROD"},{value:"other", label:"OTHER"}];
   const [environmentOps, setEnvironmentOps] = useState(
     environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
   );
@@ -202,7 +203,16 @@ const PipelineEnvironmentCreateForm = (props) => {
                                 value={kvEnvs[idx].stage}
                                 onChange={handleChange(idx, 'stage')}
                                 variant="outlined"
-                              />
+                              >
+                                {stageOps.map((stage) => (
+                                  <MenuItem
+                                    key={stage.value}
+                                    value={stage.value}
+                                  >
+                                    {stage.label}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
                             </TableCell>
                             <TableCell>
                               <TextField

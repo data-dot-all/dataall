@@ -119,10 +119,34 @@ class PipelineStack(Stack):
             )
         )
 
-        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+        if pipeline.devStrategy == "trunk":
+            PipelineStack.write_ddk_app_multienvironment(
+                path=code_dir_path,
+                output_file="app.py",
+                pipeline=pipeline,
+                development_environments=development_environments,
+                branch=", main"
+            )
 
-        PipelineStack.write_ddk_app_multienvironment(path=code_dir_path, output_file="app.py", pipeline=pipeline, development_environments=development_environments)
+        else:
+            # Gitflow implementation (currently disabled)
+            for env in development_environments:
+                stage = f"{env.stage}-" if env.stage != 'prod' else ""
+                branch_name = env.stage if env.stage != 'prod' else "main"
+                PipelineStack.write_ddk_app_multienvironment(
+                    path=code_dir_path,
+                    output_file=f"{stage}app.py",
+                    pipeline=pipeline,
+                    development_environments=[env],
+                    branch=f", branch={branch_name}"
+                )
 
+        PipelineStack.write_ddk_json_multienvironment(
+            path=code_dir_path,
+            output_file="ddk.json",
+            pipeline_environment=pipeline_environment,
+            development_environments=development_environments
+        )
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
         PipelineStack.zip_directory(code_dir_path)
@@ -201,7 +225,7 @@ class PipelineStack(Stack):
             print(json, file=text_file)
 
     @staticmethod
-    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
+    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments, branch):
         header = f"""
 # !/usr/bin/env python3
 
@@ -230,7 +254,7 @@ config = Config()
         environment_id="cicd",
         pipeline_name="{pipeline.label}",
     )
-        .add_source_action(repository_name="{pipeline.repo}")
+        .add_source_action(repository_name="{pipeline.repo}"{branch})
         .add_synth_action()
         .build()"""
 

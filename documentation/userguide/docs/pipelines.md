@@ -38,15 +38,13 @@ data.all pipelines are created from the UI, under Pipelines. We need to fill the
 - Name, Description and tags
 - CICD Environment: AWS account and region where the CICD resources will be deployed.
 - Team, this is the Admin team of the pipeline. It belongs to the specified CICD Environment where the pipeline is defined as IaC
-- Development strategy: GitFlow or Trunk-based
-- Template: it corresponds with the --template parameter that can be passed to DDK init command. See the <a href="https://awslabs.github.io/aws-ddk/release/latest/api/cli/aws_ddk.html#ddk-init">docs</a> for more details.
 
 Finally, we need to add **Development environments**. These are the AWS accounts and regions where the infrastructure defined in the CICD pipeline
 is deployed. 
 
 !!! warning "environment ID = data.all environment stage"
       When creating the pipeline and adding development environments, you define the stage of the environment. The bootstrap `e` parameter needs to match the one that you define in the data.all UI.
-      In our example, we boostraped with the parameters "dev" and "prod" and then we defined the stages as "dev" and "prod" correspondingly.
+      In our example, we bootstraped with the parameters "dev" and "prod" and then we defined the stages as "dev" and "prod" correspondingly.
 
 
 ![create_pipeline](pictures/pipelines/pip_create_form.png#zoom#shadow)
