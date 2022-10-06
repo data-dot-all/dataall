@@ -38,6 +38,7 @@ def aws_configure(profile_name='default'):
         encoding='utf-8',
         capture_output=True
     )
+    creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
         print(creds)
