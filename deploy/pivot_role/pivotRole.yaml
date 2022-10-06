@@ -2,16 +2,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM Role used by dataall platform to run AWS short running tasks
 Parameters:
   AwsAccountId:
-    Description: AWS AccountId of the dataall environment
+    Description: AWS AccountId of the dataall INFRASTRUCTURE account that we wish to link this environment with.
     Type: String
   ExternalId:
-    Description: ExternalId to secure dataall assume role
+    Description: ExternalId to secure dataall assume role (copy/paste from the UI)
     Type: String
   PivotRoleName:
-    Description: IAM role name
+    Description: IAM role name (copy/paste from the UI)
     Type: String
   EnvironmentResourcePrefix:
-    Description: The resource prefix value of the dataall environment
+    Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
     Type: String
 Resources:
   PivotRole:
