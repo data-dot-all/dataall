@@ -24,6 +24,7 @@ from aws_cdk import (
     CustomResource,
     Tags,
 )
+from constructs import DependencyGroup
 
 from .manager import stack
 from .policies.data_policy import DataPolicy
@@ -169,6 +170,8 @@ class EnvironmentSetup(Stack):
 
         self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
 
+        roles_sagemaker_dependency_group = DependencyGroup()
+
         if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
 
             sagemaker_domain_role = iam.Role(
@@ -208,6 +211,7 @@ class EnvironmentSetup(Stack):
                     ],
                 ),
             )
+            sagemaker_domain_key.node.add_dependency(roles_sagemaker_dependency_group)
 
             try:
                 default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
@@ -253,7 +257,10 @@ class EnvironmentSetup(Stack):
             logger.warning('ensure_quicksight_default_group')
             self.init_quicksight(environment=self._environment)
 
-        self.create_or_import_environment_groups_roles()
+        group_roles = self.create_or_import_environment_groups_roles()
+
+        for group_role in group_roles:
+            roles_sagemaker_dependency_group.add(group_role)
 
         central_account = SessionHelper.get_account()
 
@@ -330,7 +337,8 @@ class EnvironmentSetup(Stack):
             destination_key_prefix='profiling/code',
         )
 
-        self.create_or_import_environment_default_role()
+        default_role = self.create_or_import_environment_default_role()
+        roles_sagemaker_dependency_group.add(default_role)
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -635,15 +643,18 @@ class EnvironmentSetup(Stack):
 
     def create_or_import_environment_groups_roles(self):
         group: models.EnvironmentGroup
+        group_roles = []
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
-                self.create_group_environment_role(group)
+                group_role = self.create_group_environment_role(group)
+                group_roles.append(group_role)
             else:
                 iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
                     role_arn=f'arn:aws:iam::{self.environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
                 )
+        return group_roles
 
     def create_group_environment_role(self, group):
 
