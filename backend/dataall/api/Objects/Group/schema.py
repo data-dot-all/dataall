@@ -46,3 +46,10 @@ GroupSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(Group)),
     ],
 )
+
+CognitoGroup = gql.ObjectType(
+    name='CognitoGroup',
+    fields=[
+        gql.Field(name='groupName', type=gql.String),
+    ],
+)
