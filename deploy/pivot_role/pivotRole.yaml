@@ -602,6 +602,13 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
+          - Sid: ParameterStore
+            Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
           - Sid: Secretsmanager
             Effect: Allow
             Action:

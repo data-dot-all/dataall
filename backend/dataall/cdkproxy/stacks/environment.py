@@ -25,12 +25,14 @@ from aws_cdk import (
     Tags,
 )
 from constructs import DependencyGroup
+from botocore.exceptions import ClientError
 
 from .manager import stack
 from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
+from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sagemaker_studio import (
     SagemakerStudio,
 )
@@ -68,12 +70,23 @@ class EnvironmentSetup(Stack):
 
     def check_sagemaker_studio(self, engine, environment: models.Environment):
         logger.info('check sagemaker studio domain creation')
-        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-            environment.AwsAccountId, environment.region
-        )
-        existing_domain_id = existing_domain.get('DomainId', False)
-        if existing_domain_id:
-            return existing_domain_id
+
+        try:
+            dataall_created_domain = ParameterStoreManager.client(
+                AwsAccountId=environment.AwsAccountId,
+                region=environment.region
+            ).get_parameter(
+                Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id'
+            )
+            return None
+        except ClientError as e:
+            logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
+            existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
+                environment.AwsAccountId, environment.region
+            )
+            existing_domain_id = existing_domain.get('DomainId', False)
+            if existing_domain_id:
+                return existing_domain_id
 
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
@@ -167,8 +180,6 @@ class EnvironmentSetup(Stack):
         self.all_environment_datasets = self.get_all_environment_datasets(
             self.engine, self._environment
         )
-
-        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
 
         roles_sagemaker_dependency_group = DependencyGroup()
 
@@ -495,6 +506,8 @@ class EnvironmentSetup(Stack):
                 self._environment,
             )
 
+        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
+
         if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
 
             sagemaker_domain_role = iam.Role(
@@ -573,7 +586,7 @@ class EnvironmentSetup(Stack):
                 self,
                 'SagemakerStudioDomainId',
                 string_value=sagemaker_domain.attr_domain_id,
-                parameter_name=f'/datahub/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
+                parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 
         TagsUtil.add_tags(self)
