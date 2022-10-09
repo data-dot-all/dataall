@@ -36,6 +36,6 @@ listDataItemsSharedWithEnvGroup = gql.QueryField(
 
 listCognitoGroups = gql.QueryField(
     name='listCognitoGroups',
-    type=gql.Ref('CognitoGroup'),
+    type=gql.ArrayType(gql.Ref('CognitoGroup')),
     resolver=list_cognito_groups
 )

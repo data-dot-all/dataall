@@ -86,5 +86,6 @@ def list_cognito_groups(context, source):
     groups = Cognito.list_cognito_groups(current_account, current_region, user_pool_id)
     res = []
     for group in groups:
-        res.append(group['GroupName'])
+        res.append({"groupName": group['GroupName']})
+
     return res
