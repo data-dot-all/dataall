@@ -28,6 +28,7 @@ import useClient from '../../hooks/useClient';
 import listEnvironmentGroupInvitationPermissions from '../../api/Environment/listEnvironmentPermissions';
 import inviteGroupOnEnvironment from '../../api/Environment/inviteGroup';
 import listEnvironmentNotInvitedGroups from '../../api/Environment/listNotInvitedGroups';
+import listCognitoGroups from '../../api/Groups/listCognitoGroups';
 
 const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;
@@ -45,16 +46,16 @@ const EnvironmentTeamInviteForm = (props) => {
     try {
       setLoadingGroups(true);
       const response = await client.query(
-        listEnvironmentNotInvitedGroups({
+        listCognitoGroups({
           environmentUri: environment.environmentUri
         })
       );
       if (!response.errors) {
         setGroupOptions(
-          response.data.listEnvironmentNotInvitedGroups.nodes.map((g) => ({
+          response.data.listCognitoGroups.map((g) => ({
             ...g,
-            value: g.groupUri,
-            label: g.groupUri
+            value: g.groupName,
+            label: g.groupName
           }))
         );
       } else {
