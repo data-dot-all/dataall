@@ -80,7 +80,7 @@ def list_cognito_groups(context, source):
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
     envname = os.getenv('envname', 'local')
     if envname in ['local', 'dkrcompose']:
-        return ['DAAdministrators']
+        return [{"groupName": 'DAAdministrators'}, {"groupName": 'Engineers'}, {"groupName": 'Scientists'}]
     parameter_path = f'/dataall/{envname}/cognito/userpool'
     user_pool_id = ParameterStoreManager.get_parameter_value(current_account, current_region, parameter_path)
     groups = Cognito.list_cognito_groups(current_account, current_region, user_pool_id)
