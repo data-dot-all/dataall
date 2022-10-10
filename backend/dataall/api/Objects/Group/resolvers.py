@@ -75,6 +75,7 @@ def list_data_items_shared_with_env_group(
             check_perm=True,
         )
 
+
 def list_cognito_groups(context, source):
     current_account = SessionHelper.get_account()
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
