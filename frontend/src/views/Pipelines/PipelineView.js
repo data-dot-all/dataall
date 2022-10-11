@@ -39,12 +39,6 @@ import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import FeedComments from '../Feed/FeedComments';
 
-const tabs = [
-  { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-  { label: 'Repo Stack', value: 'stack', icon: <FaAws size={20} /> },
-  { label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20} /> }
-];
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
@@ -146,7 +140,11 @@ const PipelineView = () => {
   const [stack, setStack] = useState(null);
   const [cicdStack, setCicdStack] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const handleDeleteObjectModalOpen = () => {
+  const [tabs, setTabs] = useState([
+    { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+    { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
+    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }]);
+    const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
   };
 
@@ -159,10 +157,19 @@ const PipelineView = () => {
     const response = await client.query(getDataPipeline(params.uri));
     if (!response.errors && response.data.getDataPipeline !== null) {
       setPipeline(response.data.getDataPipeline);
+      if (response.data.getDataPipeline.devStrategy =="cdk-trunk") {
+        setTabs([
+          {label: 'Overview', value: 'overview', icon: <Info fontSize="small"/>},
+          {label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small"/>},
+          {label: 'Repo Stack', value: 'stack', icon: <FaAws size={20}/>},
+          {label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20}/>}
+        ]);
+      }
       if (stack) {
         setStack(response.data.getDataPipeline.stack);
       }
       if (cicdStack) {
+        console.log("setCicdStack")
         setCicdStack(response.data.getDataPipeline.cicdStack);
       }
     } else {
@@ -182,6 +189,10 @@ const PipelineView = () => {
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
+    console.log("inside tab change")
+    console.log(pipeline)
+    console.log(cicdStack)
+    console.log(tabs)
   };
 
   const deletePipeline = async (deleteFromAWS = false) => {
@@ -223,6 +234,13 @@ const PipelineView = () => {
         setStack={setStack}
         environmentUri={pipeline.environment?.environmentUri}
       />
+      {cicdStack && (
+        <StackStatus
+          cicdStack={cicdStack}
+          setCicdStack={setCicdStack}
+          environmentUri={pipeline.environment?.environmentUri}
+        />
+      )}
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -271,7 +289,15 @@ const PipelineView = () => {
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
-                targetType="pipeline"
+                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkrepo" : "pipeline"}
+              />
+            )}
+            {currentTab === 'cicdstack' && (
+              <Stack
+                environmentUri={pipeline.environment.environmentUri}
+                stackUri={pipeline.cicdstack.stackUri}
+                targetUri={pipeline.DataPipelineUri}
+                targetType="cdkpipeline"
               />
             )}
           </Box>

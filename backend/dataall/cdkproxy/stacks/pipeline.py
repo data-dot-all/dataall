@@ -3,6 +3,7 @@ import os
 import shutil
 from typing import List
 
+
 from aws_cdk import aws_codebuild as codebuild, Stack, RemovalPolicy, CfnOutput
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_codepipeline as codepipeline
@@ -110,6 +111,54 @@ class PipelineStack(Stack):
         # Development environments
         development_environments = self.get_pipeline_environments(targer_uri=target_uri)
 
+        # Support resources
+        build_role_policy = iam.Policy(
+            self,
+            f"{pipeline.name}-policy",
+            policy_name=f"{pipeline.name}-policy",
+            statements=self.make_codebuild_policy_statements(
+                pipeline_environment=pipeline_environment,
+                pipeline_env_team=pipeline_env_team,
+                pipeline=pipeline
+            ),
+        )
+
+        build_project_role = iam.Role(
+            self,
+            "PipelineRole",
+            role_name=pipeline.name,
+            inline_policies={f"Inline{pipeline.name}": build_role_policy.document},
+            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
+        )
+
+        self.codebuild_key = kms.Key(
+            self,
+            f"{pipeline.name}-codebuild-key",
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f"{pipeline.name}-codebuild-key",
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=["*"],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=["kms:*"],
+                    ),
+                    iam.PolicyStatement(
+                        resources=["*"],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service="codebuild.amazonaws.com"),
+                        ],
+                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
+                    ),
+                ],
+            ),
+        )
+
         # Create CodeCommit repository and mirror blueprint code
         code_dir_path = os.path.realpath(
             os.path.abspath(
@@ -119,33 +168,16 @@ class PipelineStack(Stack):
             )
         )
 
+        PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file="deploy_buildspec.yaml")
+
         if pipeline.devStrategy == "trunk":
-            PipelineStack.write_ddk_app_multienvironment(
-                path=code_dir_path,
-                output_file="app.py",
-                pipeline=pipeline,
-                development_environments=development_environments
-            )
+            PipelineStack.write_init_deploy_buildspec(path=code_dir_path, output_file="init_deploy_buildspec.yaml")
 
         else:
-            # Gitflow implementation (currently disabled)
-            for env in development_environments:
-                stage = f"{env.stage}-" if env.stage != 'prod' else ""
-                branch_name = env.stage if env.stage != 'prod' else "main"
-                PipelineStack.write_ddk_app_multienvironment(
-                    path=code_dir_path,
-                    output_file=f"{stage}app.py",
-                    pipeline=pipeline,
-                    development_environments=[env],
-                    branch=f", branch={branch_name}"
-                )
+            PipelineStack.write_init_branches_deploy_buildspec(path=code_dir_path, output_file="init_branches_deploy_buildspec.yaml")
 
-        PipelineStack.write_ddk_json_multienvironment(
-            path=code_dir_path,
-            output_file="ddk.json",
-            pipeline_environment=pipeline_environment,
-            development_environments=development_environments
-        )
+        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="dataall_ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+
         PipelineStack.cleanup_zip_directory(code_dir_path)
 
         PipelineStack.zip_directory(code_dir_path)
@@ -168,12 +200,147 @@ class PipelineStack(Stack):
             repository_name=pipeline.repo,
         )
 
+        if pipeline.devStrategy == "trunk":
+            codepipeline_pipeline = codepipeline.Pipeline(
+                scope=self,
+                id=pipeline.name,
+                pipeline_name=pipeline.name,
+                restart_execution_on_update=True,
+            )
+            self.codepipeline_pipeline = codepipeline_pipeline
+            self.source_artifact = codepipeline.Artifact()
+
+            codepipeline_pipeline.add_stage(
+                stage_name='Source',
+                actions=[
+                    codepipeline_actions.CodeCommitSourceAction(
+                        action_name='CodeCommit',
+                        branch='main',
+                        output=self.source_artifact,
+                        trigger=codepipeline_actions.CodeCommitTrigger.POLL,
+                        repository=codecommit.Repository.from_repository_name(
+                            self, 'source_blueprint_repo', repository_name=pipeline.repo
+                        ),
+                    )
+                ],
+            )
+
+            for env in sorted(development_environments, key=lambda env: env.order):
+
+                buildspec = "init_deploy_buildspec.yaml" if env.order == 1 else "deploy_buildspec.yaml"
+
+                build_project = codebuild.PipelineProject(
+                    scope=self,
+                    id=f'{pipeline.name}-build-{env.stage}',
+                    environment=codebuild.BuildEnvironment(
+                        privileged=True,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        environment_variables=PipelineStack.make_environment_variables(
+                            pipeline=pipeline,
+                            pipeline_environment=env,
+                            pipeline_env_team=env.samlGroupName,
+                            stage=env.stage
+                        ),
+                    ),
+                    role=build_project_role,
+                    build_spec=codebuild.BuildSpec.from_source_filename(buildspec),
+                    encryption_key=self.codebuild_key,
+                )
+
+                self.codepipeline_pipeline.add_stage(
+                    stage_name=f'Deploy-Stage-{env.stage}',
+                    actions=[
+                        codepipeline_actions.CodeBuildAction(
+                            action_name=f'deploy-{env.stage}',
+                            input=self.source_artifact,
+                            project=build_project,
+                            outputs=[codepipeline.Artifact()],
+                        )
+                    ],
+                )
+
+                # Skip manual approval for one stage pipelines and for last stage
+                if env.order < development_environments.count():
+                    self.codepipeline_pipeline.add_stage(
+                        stage_name=f'ManualApproval-{env.stage}',
+                        actions=[
+                            codepipeline_actions.ManualApprovalAction(
+                                action_name=f'ManualApproval-{env.stage}'
+                            )
+                        ],
+                    )
+
+        else:
+            for env in development_environments:
+                branch_name = 'main' if (env.stage == 'prod' or development_environments.count() == 1) else env.stage
+                buildspec = "init_branches_deploy_buildspec.yaml" if (env.stage == 'prod' or development_environments.count() == 1) else "deploy_buildspec.yaml"
+                codepipeline_pipeline = codepipeline.Pipeline(
+                    scope=self,
+                    id=f"{pipeline.name}-{env.stage}",
+                    pipeline_name=f"{pipeline.name}-{env.stage}",
+                    restart_execution_on_update=True,
+                )
+                self.codepipeline_pipeline = codepipeline_pipeline
+                self.source_artifact = codepipeline.Artifact()
+
+                codepipeline_pipeline.add_stage(
+                    stage_name=f'Source-{env.stage}',
+                    actions=[
+                        codepipeline_actions.CodeCommitSourceAction(
+                            action_name='CodeCommit',
+                            branch=branch_name,
+                            output=self.source_artifact,
+                            trigger=codepipeline_actions.CodeCommitTrigger.POLL,
+                            repository=codecommit.Repository.from_repository_name(
+                                self, f'source_blueprint_repo_{env.stage}', repository_name=pipeline.repo
+                            ),
+                        )
+                    ],
+                )
+
+                build_project = codebuild.PipelineProject(
+                    scope=self,
+                    id=f'{pipeline.name}-build-{env.stage}',
+                    environment=codebuild.BuildEnvironment(
+                        privileged=True,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        environment_variables=PipelineStack.make_environment_variables(
+                            pipeline=pipeline,
+                            pipeline_environment=env,
+                            pipeline_env_team=env.samlGroupName,
+                            stage=env.stage
+                        ),
+                    ),
+                    role=build_project_role,
+                    build_spec=codebuild.BuildSpec.from_source_filename(buildspec),
+                    encryption_key=self.codebuild_key,
+                )
+
+                self.codepipeline_pipeline.add_stage(
+                    stage_name=f'Deploy-Stage-{env.stage}',
+                    actions=[
+                        codepipeline_actions.CodeBuildAction(
+                            action_name=f'deploy-{env.stage}',
+                            input=self.source_artifact,
+                            project=build_project,
+                            outputs=[codepipeline.Artifact()],
+                        )
+                    ],
+                )
+
         # CloudFormation output
+
         CfnOutput(
             self,
             "RepoNameOutput",
             export_name=f"{pipeline.DataPipelineUri}-RepositoryName",
             value=pipeline.repo,
+        )
+        CfnOutput(
+            self,
+            "PipelineNameOutput",
+            export_name=f"{pipeline.DataPipelineUri}-PipelineName",
+            value=codepipeline_pipeline.pipeline_name,
         )
 
         TagsUtil.add_tags(self)
@@ -196,6 +363,192 @@ class PipelineStack(Stack):
             os.remove(f"{path}/code.zip")
         else:
             logger.info("Info: %s Zip not found" % f"{path}/code.zip")
+
+    @staticmethod
+    def make_environment_variables(
+        pipeline,
+        pipeline_environment,
+        pipeline_env_team,
+        stage
+    ):
+
+        env_vars_1 = {
+            "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
+            "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
+            "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
+            "DEV_STRATEGY": codebuild.BuildEnvironmentVariable(value=pipeline.devStrategy),
+            "TEMPLATE": codebuild.BuildEnvironmentVariable(value=pipeline.template),
+            "ENVIRONMENT_URI": codebuild.BuildEnvironmentVariable(value=pipeline_environment.environmentUri),
+            "AWSACCOUNTID": codebuild.BuildEnvironmentVariable(value=pipeline_environment.AwsAccountId),
+            "AWSREGION": codebuild.BuildEnvironmentVariable(value=pipeline_environment.region),
+            "ENVTEAM_ROLENAME": codebuild.BuildEnvironmentVariable(value=pipeline_env_team),
+        }
+        env_vars = dict(env_vars_1)
+        return env_vars
+
+    @staticmethod
+    def write_init_deploy_buildspec(path, output_file):
+        yaml = """
+            version: '0.2'
+            env:
+                git-credential-helper: yes
+            phases:
+              pre_build:
+                commands:
+                - n 16.15.1
+                - npm install -g aws-cdk
+                - pip install aws-ddk
+                - |
+                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
+                    echo "first build";
+                  else
+                    echo "not first build";
+                  fi
+                - git config --global user.email "codebuild@example.com"
+                - git config --global user.name "CodeBuild"
+                - |
+                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then 
+                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; 
+                    cd $PIPELINE_NAME; 
+                    git checkout main; 
+                    ddk init --generate-only ddk-app; 
+                    cp -R ddk-app/* ./; 
+                    rm -r ddk-app; 
+                    cp dataall_ddk.json ./ddk.json; 
+                    cp app_multiaccount.py ./app.py; 
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/app.py; 
+                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
+                    git add .; 
+                    git commit -m "First Commit from CodeBuild - DDK application"; 
+                    git push --set-upstream origin main; 
+                  else 
+                    echo "not first build"; 
+                  fi
+                - pip install -r requirements.txt
+              build:
+                commands:
+                    - aws sts get-caller-identity
+                    - ddk deploy
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(yaml, file=text_file)
+
+    @staticmethod
+    def write_init_branches_deploy_buildspec(path, output_file):
+        yaml = """
+            version: '0.2'
+            env:
+                git-credential-helper: yes
+            phases:
+              install:
+                commands:
+                - 'n 16.15.1'
+              pre_build:
+                commands:
+                - n 16.15.1
+                - npm install -g aws-cdk
+                - pip install aws-ddk
+                - |
+                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
+                    echo "first build";
+                  else
+                    echo "not first build";
+                  fi
+                - git config --global user.email "codebuild@example.com"
+                - git config --global user.name "CodeBuild"
+                - |
+                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
+                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; 
+                    cd $PIPELINE_NAME; 
+                    git checkout main; 
+                    ddk init --generate-only ddk-app; 
+                    cp -R ddk-app/* ./; 
+                    rm -r ddk-app; 
+                    cp dataall_ddk.json ./ddk.json; 
+                    cp app_multiaccount.py ./app.py; 
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/app.py; 
+                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
+                    git add .; 
+                    git commit -m "First Commit from CodeBuild - DDK application"; 
+                    git push --set-upstream origin main; 
+                    IFS=','
+                    for stage in $DEV_STAGES; do
+                      if [ $stage != "prod" ]; then
+                        git checkout -b $stage;
+                        git push --set-upstream origin $stage;
+                      fi;
+                    done;
+                  else 
+                    echo "not first build"; 
+                  fi
+                - pip install -r requirements.txt
+              build:
+                commands:
+                    - aws sts get-caller-identity
+                    - ddk deploy
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(yaml, file=text_file)
+
+    @staticmethod
+    def write_deploy_buildspec(path, output_file):
+        yaml = """
+            version: '0.2'
+            env:
+                git-credential-helper: yes
+            phases:
+              pre_build:
+                commands:
+                - n 16.15.1
+                - npm install -g aws-cdk
+                - pip install aws-ddk
+                - pip install -r requirements.txt
+              build:
+                commands:
+                    - aws sts get-caller-identity
+                    - ddk deploy
+        """
+        with open(f'{path}/{output_file}', 'w') as text_file:
+            print(yaml, file=text_file)
+
+    @staticmethod
+    def make_codebuild_policy_statements(
+            pipeline_environment,
+            pipeline_env_team,
+            pipeline
+    ) -> List[iam.PolicyStatement]:
+        return[
+            iam.PolicyStatement(
+                actions=[
+                    "ec2:DescribeAvailabilityZones",
+                    "kms:Decrypt",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey",
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:DescribeSecret",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "codebuild:CreateReportGroup",
+                    "codebuild:CreateReport",
+                    "codebuild:UpdateReport",
+                    "codebuild:BatchPutTestCases",
+                    "codebuild:BatchPutCodeCoverages",
+                    "codecommit:ListRepositories",
+                    "sts:AssumeRole",
+                    "cloudformation:DescribeStacks"
+                ],
+                resources=["*"],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    "codecommit:*"
+                ],
+                resources=[f"arn:aws:codecommit:{pipeline_environment.region}:{pipeline_environment.AwsAccountId}:{pipeline.repo}"],
+            )
+
+
+        ]
 
     @staticmethod
     def write_ddk_json_multienvironment(path, output_file, pipeline_environment, development_environments):
@@ -223,50 +576,3 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
-    @staticmethod
-    def write_ddk_app_multienvironment(path, output_file, pipeline, development_environments):
-        header = f"""
-# !/usr/bin/env python3
-
-import aws_cdk as cdk
-from aws_ddk_core.cicd import CICDPipelineStack
-from ddk_app.ddk_app_stack import DDKApplicationStack
-from aws_ddk_core.config import Config
-
-app = cdk.App()
-
-class ApplicationStage(cdk.Stage):
-    def __init__(
-            self,
-            scope,
-            environment_id: str,
-            **kwargs,
-    ) -> None:
-        super().__init__(scope, f"{pipeline.label}-{{environment_id.title()}}", **kwargs)
-        DDKApplicationStack(self, "DataPipeline-{pipeline.label}", environment_id)
-
-config = Config()
-(
-    CICDPipelineStack(
-        app,
-        id="dataall-pipelinepip-{pipeline.DataPipelineUri}pip",
-        environment_id="cicd",
-        pipeline_name="{pipeline.label}",
-    )
-        .add_source_action(repository_name="{pipeline.repo}")
-        .add_synth_action()
-        .build()"""
-
-        stages = ""
-        for env in development_environments:
-            stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
-            stages = stages + stage
-        footer = """
-        .synth()
-)
-
-app.synth()
-"""
-        app = header + stages + footer
-        with open(f'{path}/{output_file}', 'w') as text_file:
-            print(app, file=text_file)

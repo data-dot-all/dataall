@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -35,15 +34,13 @@ const PipelineEnvironmentCreateForm = (props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map())
-  const stageOps =[{value:"dev", label:"DEV"},{value:"test", label:"TEST"},{value:"val", label:"VAL"},{value:"prod", label:"PROD"},{value:"other", label:"OTHER"}];
+  const stageOps =[{value:"dev", label:"dev"},{value:"test", label:"test"},{value:"val", label:"val"},{value:"prod", label:"prod"},{value:"other", label:"other"}];
   const [environmentOps, setEnvironmentOps] = useState(
     environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
   );
 
   const fetchGroups = async (environment) => {
   try {
-    console.log("FetchGroups")
-    console.log(environment)
     const response = await client.query(
       listEnvironmentGroups({
         filter: Defaults.SelectListFilter,
@@ -53,8 +50,6 @@ const PipelineEnvironmentCreateForm = (props) => {
 
     if (!response.errors) {
       setMapGroups(new Map(mapGroups.set(environment.environmentUri, response.data.listEnvironmentGroups.nodes)) )//Array of groups (Objects)
-      console.log("Mapgroups")
-      console.log(mapGroups)
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -80,7 +75,6 @@ const PipelineEnvironmentCreateForm = (props) => {
   };
 
   const handleChange = (idx, field) => (e) => {
-    console.log("inside handle change")
     const { value } = e.target;
 
     setKeyValueEnvs((prevstate) => {
@@ -90,18 +84,11 @@ const PipelineEnvironmentCreateForm = (props) => {
       } else if (field === 'env'){
         rows[idx].environmentLabel = value.label;
         rows[idx].environmentUri = value.environmentUri;
-        console.log("env")
-        console.log(kvEnvs[idx].environmentUri)
-        console.log(mapGroups)
-        console.log(mapGroups.keys())
-        console.log(mapGroups.get(kvEnvs[idx].environmentUri))
       } else{
         rows[idx].samlGroupName = value;
       }
       return rows;
     });
-    console.log(kvEnvs)
-    console.log(kvEnvs[idx])
   };
 
   const handleRemoveEnvRow = (idx) => {
@@ -113,9 +100,6 @@ const PipelineEnvironmentCreateForm = (props) => {
   };
 
   async function submit(element, index) {
-    console.log("element")
-    console.log(element)
-    console.log(pipelineUri)
     try {
       const response = await client.mutate(
         createDataPipelineEnvironment({
@@ -131,7 +115,6 @@ const PipelineEnvironmentCreateForm = (props) => {
         })
       );
       if (!response.errors) {
-        console.log("submited env")
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -143,19 +126,13 @@ const PipelineEnvironmentCreateForm = (props) => {
 
   useEffect(() => {
       if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
-        console.log("triggerNOW")
-        console.log(pipelineUri)
-        console.log(kvEnvs.length)
-        console.log(kvEnvs)
         kvEnvs.forEach((element, index) => submit(element, index))
       }
       if (client && environmentOptions.length > 0) {
-        console.log("initial fetch use effect")
         environmentOptions.forEach((element) => fetchGroups(element))
       }
     }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
 
-  console.log(kvEnvs)
 
   return (
     <>
