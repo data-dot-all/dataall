@@ -15,12 +15,6 @@ from stacks.pipeline import PipelineStack
 
 ssmc = boto3.client('ssm')
 
-def get_cdk_json_from_ssm(git_branch):
-    try:
-        return ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
-    except ssmc.exceptions.ParameterNotFound as err:
-        raise Exception(err)
-
 account_id = boto3.client('sts').get_caller_identity().get('Account') or os.getenv(
     'CDK_DEFAULT_ACCOUNT'
 )
