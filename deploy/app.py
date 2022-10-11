@@ -23,7 +23,7 @@ if not os.environ.get("DATAALL_REPO_BRANCH", None):
         .stdout.read().decode('utf-8').removesuffix('\n')
     )
 else:
-    git_branch = os.environ().get("DATAALL_REPO_BRANCH")
+    git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
 # Configuration of the cdk.json SSM or in Repository
 try:
