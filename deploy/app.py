@@ -2,11 +2,9 @@
 
 import json
 import os
-import re
 import subprocess
 
 import boto3
-from aws_cdk import aws_ssm as ssm
 from aws_cdk import App, Environment, Aspects
 from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
 
@@ -35,7 +33,6 @@ try:
     print(f"context = {str(cdkjson)}")
 
     app = App(context=cdkjson)
-
 
 except ssmc.exceptions.ParameterNotFound:
     print("SSM parameter not found - Proceeding with cdk.json and cdk.context.json in code")
