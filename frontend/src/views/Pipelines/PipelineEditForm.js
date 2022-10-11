@@ -254,7 +254,7 @@ const PipelineEditForm = (props) => {
                             variant="outlined"
                             value={pipeline.SamlGroupName}
                           />
-                        </CardContent>{/*
+                        </CardContent>
                         <CardContent>
                           <TextField
                             disabled
@@ -266,7 +266,7 @@ const PipelineEditForm = (props) => {
                             variant="outlined"
                             value={pipeline.devStrategy}
                           />
-                        </CardContent>*/}
+                        </CardContent>
                         <CardContent>
                           <Box>
                             <ChipInput

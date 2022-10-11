@@ -10,6 +10,13 @@
             "resources": {
                 "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
             }
+        },
+        "prod": {
+            "account": "227670588337",
+            "region": "eu-west-2",
+            "resources": {
+                "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
+            }
         }
     }
 }

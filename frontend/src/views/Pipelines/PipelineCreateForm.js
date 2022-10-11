@@ -41,8 +41,7 @@ import * as Defaults from '../../components/defaults';
 import listDatasetsOwnedByEnvGroup from "../../api/Environment/listDatasetsOwnedByEnvGroup";
 import listDataItemsSharedWithEnvGroup from "../../api/Environment/listDataItemsSharedWithEnvGroup";
 import PipelineEnvironmentCreateForm from "./PipelineEnvironmentCreateForm";
-import PencilAlt from "../../icons/PencilAlt";
-import Scrollbar from "../../components/Scrollbar";
+
 
 const PipelineCrateForm = (props) => {
   const navigate = useNavigate();
@@ -52,11 +51,10 @@ const PipelineCrateForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [currentEnv, setCurrentEnv] = useState('');
-  const [finalEnvs, setFinalEnvs] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
-  const devOptions =[{value:"trunk", label:"Trunk-based"},{value:"gitflow", label:"Gitflow"}];
+  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
   
@@ -179,7 +177,6 @@ const PipelineCrateForm = (props) => {
       );
       if (!response.errors) {
         setStatus({ success: true });
-        console.log("submitting environments from pipeline")
         setTriggerEnvSubmit(true);
         setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
         setSubmitting(false);
@@ -280,7 +277,7 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: '',
                 environment: '',
                 tags: [],
-                devStrategy: 'trunk',
+                devStrategy: 'cdk-trunk',
                 template: '',
               }}
               validationSchema={Yup.object().shape({
@@ -425,13 +422,6 @@ const PipelineCrateForm = (props) => {
                             label="Team"
                             name="SamlGroupName"
                             onChange={(event) => {
-                              /*setFieldValue('inputDatasetUri', '');
-                              setFieldValue('outputDatasetUri', '');
-                              fetchDatasets(
-                                event.target.value
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );*/
                               setFieldValue('SamlGroupName', event.target.value);
                             }}
                             select
@@ -473,29 +463,29 @@ const PipelineCrateForm = (props) => {
                             variant="outlined"
                           />
                         </CardContent>
-                        {/*<CardContent>*/}
-                        {/*  <TextField*/}
-                        {/*    fullWidth*/}
-                        {/*    error={Boolean(*/}
-                        {/*      touched.devStrategy && errors.devStrategy*/}
-                        {/*    )}*/}
-                        {/*    helperText={*/}
-                        {/*      touched.devStrategy && errors.devStrategy*/}
-                        {/*    }*/}
-                        {/*    label="CICD strategy"*/}
-                        {/*    name="devStrategy"*/}
-                        {/*    onChange={handleChange}*/}
-                        {/*    select*/}
-                        {/*    value={values.devStrategy}*/}
-                        {/*    variant="outlined"*/}
-                        {/*  >*/}
-                        {/*    {devOptions.map((dev) => (*/}
-                        {/*      <MenuItem key={dev.value} value={dev.value}>*/}
-                        {/*        {dev.label}*/}
-                        {/*      </MenuItem>*/}
-                        {/*    ))}*/}
-                        {/*  </TextField>*/}
-                        {/*</CardContent>*/}
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.devStrategy && errors.devStrategy
+                            )}
+                            helperText={
+                              touched.devStrategy && errors.devStrategy
+                            }
+                            label="CICD strategy"
+                            name="devStrategy"
+                            onChange={handleChange}
+                            select
+                            value={values.devStrategy}
+                            variant="outlined"
+                          >
+                            {devOptions.map((dev) => (
+                              <MenuItem key={dev.value} value={dev.value}>
+                                {dev.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
                       </Card>
                     </Grid>
                     <Grid item lg={12} md={6} xs={12}>
