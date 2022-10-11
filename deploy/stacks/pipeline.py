@@ -213,7 +213,7 @@ class PipelineStack(Stack):
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
-                        "DATAALL_GITHUB_BRANCH": codebuild.BuildEnvironmentVariable(
+                        "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
                             value=git_branch
                         ),
                     }

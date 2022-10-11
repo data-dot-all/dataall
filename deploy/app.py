@@ -19,13 +19,13 @@ account_id = boto3.client('sts').get_caller_identity().get('Account') or os.gete
     'CDK_DEFAULT_ACCOUNT'
 )
 
-if not os.environ.get("DATAALL_GITHUB_BRANCH", None):
+if not os.environ.get("DATAALL_REPO_BRANCH", None):
     git_branch = (
         subprocess.Popen(['git', 'branch', '--show-current'], stdout=subprocess.PIPE)
         .stdout.read().decode('utf-8').removesuffix('\n')
     )
 else:
-    git_branch = os.environ().get("DATAALL_GITHUB_BRANCH")
+    git_branch = os.environ().get("DATAALL_REPO_BRANCH")
 
 # Configuration of the cdk.json SSM or in Repository
 try:
