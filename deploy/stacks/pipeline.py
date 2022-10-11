@@ -210,6 +210,15 @@ class PipelineStack(Stack):
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
+            code_build_defaults=pipelines.CodeBuildOptions(
+                build_environment=codebuild.BuildEnvironment(
+                    environment_variables={
+                        "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
+                            value=git_branch
+                        ),
+                    }
+                )
+            )
         )
 
         self.pipeline.node.add_dependency(self.aurora_devdb)
