@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import subprocess
 
 import boto3
 from aws_cdk import aws_ssm as ssm
@@ -12,12 +13,11 @@ from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
 from stacks.cdk_nag_exclusions import PIPELINE_STACK_CDK_NAG_EXCLUSIONS
 from stacks.pipeline import PipelineStack
 
+ssmc = boto3.client('ssm')
 
-def get_cdk_json_from_ssm():
-    ssmc = boto3.client('ssm')
-
+def get_cdk_json_from_ssm(git_branch):
     try:
-        return ssmc.get_parameter(Name="/dataall/v1m1m0/cdkjson")
+        return ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
     except ssmc.exceptions.ParameterNotFound as err:
         raise Exception(err)
 
@@ -25,12 +25,18 @@ account_id = boto3.client('sts').get_caller_identity().get('Account') or os.gete
     'CDK_DEFAULT_ACCOUNT'
 )
 
+if not os.environ.get("DATAALL_GITHUB_BRANCH", None):
+    git_branch = (
+        subprocess.Popen(['git', 'branch', '--show-current'], stdout=subprocess.PIPE)
+        .stdout.read().decode('utf-8').removesuffix('\n')
+    )
+else:
+    git_branch = os.environ().get("DATAALL_GITHUB_BRANCH")
 
 # Configuration of the cdk.json SSM or in Repository
-ssmc = boto3.client('ssm')
 try:
     print("Trying to get cdkjson parameter from SSM")
-    response = ssmc.get_parameter(Name="/dataall/v1m1m0/cdkjson")
+    response = ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
     cdkjson = json.loads(response['Parameter']['Value']).get('context')
     print(f"context = {str(cdkjson)}")
 
@@ -40,9 +46,6 @@ try:
 except ssmc.exceptions.ParameterNotFound:
     print("SSM parameter not found - Proceeding with cdk.json and cdk.context.json in code")
     app = App()
-
-git_branch = app.node.try_get_context('git_branch') or 'main'
-print("git_branch")
 
 cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION')
 
