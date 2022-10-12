@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 
 import json
+import logging
 import os
 import subprocess
 
 import boto3
+import botocore
 from aws_cdk import App, Environment, Aspects
 from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
 
 from stacks.cdk_nag_exclusions import PIPELINE_STACK_CDK_NAG_EXCLUSIONS
 from stacks.pipeline import PipelineStack
+
+LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
+logger = logging.getLogger(__name__)
 
 ssmc = boto3.client('ssm')
 
@@ -27,16 +33,21 @@ else:
 
 # Configuration of the cdk.json SSM or in Repository
 try:
-    print("Trying to get cdkjson parameter from SSM")
+    logger.info("Trying to get cdkjson parameter from SSM")
     response = ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
     cdkjson = json.loads(response['Parameter']['Value']).get('context')
-    print(f"context = {str(cdkjson)}")
 
     app = App(context=cdkjson)
+    logger.info("Loaded context from SSM")
 
-except ssmc.exceptions.ParameterNotFound:
-    print("SSM parameter not found - Proceeding with cdk.json and cdk.context.json in code")
+except (ssmc.exceptions.ParameterNotFound, botocore.exceptions.ClientError) as err:
+    if isinstance(err, ssmc.exceptions.ParameterNotFound):
+        logger.warning("SSM parameter not found - Proceeding with cdk.json and cdk.context.json in code")
+    else:
+        logger.error(err)
+
     app = App()
+    logger.info("Loaded context from file")
 
 cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION')
 
