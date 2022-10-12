@@ -66,7 +66,7 @@ env = Environment(account=account_id, region=cdk_pipeline_region)
 
 pipeline = PipelineStack(
     app,
-    "{resource_prefix}-{git_branch}-cicd-stack".format(resource_prefix=resource_prefix,git_branch=git_branch),
+    "{resource_prefix}-{git_branch}-cicd-stack".format(resource_prefix=resource_prefix, git_branch=git_branch),
     env=env,
     target_envs=target_envs,
     git_branch=git_branch,

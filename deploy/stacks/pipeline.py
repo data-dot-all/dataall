@@ -217,8 +217,7 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
-                    'echo ${CODEBUILD_SOURCE_VERSION}',
-                    'echo ${CODEBUILD_SOURCE_REPO_URL}'
+                    'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
