@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import List
 
-from aws_cdk import Stack, Tags, RemovalPolicy
+from aws_cdk import SecretValue, Stack, Tags, RemovalPolicy
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
@@ -188,11 +188,10 @@ class PipelineStack(Stack):
             publish_assets_in_parallel=False,
             synth=pipelines.CodeBuildStep(
                 'Synth',
-                input=CodePipelineSource.code_commit(
-                    repository=codecommit.Repository.from_repository_name(
-                        self, 'sourcerepo', repository_name='dataall'
-                    ),
+                input=CodePipelineSource.git_hub(
+                    repo_string="awslabs/aws-dataall",
                     branch=self.git_branch,
+                    authentication=SecretValue.secrets_manager(secret_id="github-access-token-secret")
                 ),
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
