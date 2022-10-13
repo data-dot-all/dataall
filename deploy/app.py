@@ -23,16 +23,13 @@ account_id = boto3.client('sts').get_caller_identity().get('Account') or os.gete
     'CDK_DEFAULT_ACCOUNT'
 )
 
-if not os.environ.get("CODEBUILD_SOURCE_VERSION", None):
+if not os.environ.get("DATAALL_REPO_BRANCH", None):
     git_branch = (
         subprocess.Popen(['git', 'branch', '--show-current'], stdout=subprocess.PIPE)
         .stdout.read().decode('utf-8').removesuffix('\n')
     )
 else:
-    codebuild_source = os.environ.get("CODEBUILD_SOURCE_VERSION")
-    git_branch = codebuild_source.replace("arn:aws:s3:::dataall-","").split("-cicd")[0]
-
-git_branch = git_branch if git_branch != "" else "main"
+    git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
 # Configuration of the cdk.json SSM or in Repository
 try:
