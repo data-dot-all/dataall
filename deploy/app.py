@@ -31,14 +31,19 @@ if not os.environ.get("DATAALL_REPO_BRANCH", None):
 else:
     git_branch = os.environ.get("DATAALL_REPO_BRANCH")
 
+logger.info(f"Deployment branch: {git_branch}")
+
 # Configuration of the cdk.json SSM or in Repository
 try:
-    logger.info("Trying to get cdkjson parameter from SSM")
-    response = ssmc.get_parameter(Name=f"/dataall/{git_branch}/cdkjson")
+    ssm_param = f"/dataall/{git_branch}/cdkjson"
+    logger.info(f"Trying to get cdkjson parameter from SSM: {ssm_param}")
+    response = ssmc.get_parameter(Name=ssm_param)
     cdkjson = json.loads(response['Parameter']['Value']).get('context')
 
     app = App(context=cdkjson)
+
     logger.info("Loaded context from SSM")
+    logger.info(f"Context: {cdkjson}")
 
 except (ssmc.exceptions.ParameterNotFound, botocore.exceptions.ClientError) as err:
     if isinstance(err, ssmc.exceptions.ParameterNotFound):
