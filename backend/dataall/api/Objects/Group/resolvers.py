@@ -76,7 +76,10 @@ def list_data_items_shared_with_env_group(
         )
 
 
-def list_cognito_groups(context, source):
+def list_cognito_groups(context, source, filter: dict = None):
+    # filter:
+    # filter.get("type") = 'organization' or 'environment'
+    # filter.get("uri") = 'organizationUri' or 'environmentUri' correspondingly
     current_account = SessionHelper.get_account()
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
     envname = os.getenv('envname', 'local')

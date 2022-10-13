@@ -27,7 +27,6 @@ import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import listEnvironmentGroupInvitationPermissions from '../../api/Environment/listEnvironmentPermissions';
 import inviteGroupOnEnvironment from '../../api/Environment/inviteGroup';
-import listEnvironmentNotInvitedGroups from '../../api/Environment/listNotInvitedGroups';
 import listCognitoGroups from '../../api/Groups/listCognitoGroups';
 
 const EnvironmentTeamInviteForm = (props) => {
@@ -45,9 +44,7 @@ const EnvironmentTeamInviteForm = (props) => {
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      console.log("fetchgroups")
-      const response = await client.query(listCognitoGroups());
-      console.log(response)
+      const response = await client.query(listCognitoGroups({type: "environment", uri: environment.environmentUri}));
       if (!response.errors) {
         setGroupOptions(
           response.data.listCognitoGroups.map((g) => ({

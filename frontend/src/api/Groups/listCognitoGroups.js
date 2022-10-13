@@ -1,9 +1,16 @@
 import { gql } from 'apollo-boost';
 
-const listCognitoGroups = () => ({
+const listCognitoGroups ({ filter }) => ({
+  variables: {
+    filter
+  },
   query: gql`
-    query listCognitoGroups {
-      listCognitoGroups{
+    query listCognitoGroups (
+      $filter: CognitoGroupFilter
+    ) {
+      listCognitoGroups (
+        filter: $filter
+      ){
         groupName
       }
     }
