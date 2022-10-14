@@ -134,7 +134,7 @@ data.all backend performs the first deployment of the CICD stack defined in the 
 CloudFormation template deploying a CICD pipeline having the aforementioned CodeCommit repository as source.
 This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html). 
 
-![create_pipeline](pictures/pipelines/pip_cdk_pipeline.png#zoom#shadow)
+![create_pipeline](pictures/pipelines/pip_cdk_trunk.png#zoom#shadow)
 
 ### CodePipeline pipelines - Trunk-based or GitFlow
 
@@ -146,7 +146,7 @@ use [aws-codepipeline](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.a
 When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. It contains:
 
 - an AWS CodeCommit repository with the code of an AWS DDK application where we made some modifications to allow cross-account deployments.
-- CICD CodePipeline pipeline that deploys the application
+- CICD CodePipeline(s) pipeline that deploys the application
 
 In the first run of the pipeline we will perform some initialization actions from the pipeline itself (you don't need to do anything). In short, we initialize the DDK application by running `ddk init` 
 and we push the code back to our repository.
@@ -162,11 +162,17 @@ This is the repository once it has been initialized in the commit "First Commit 
 We added the `Multiaccount` configuration class that allows us to define the deployment environment based on the `ddk.json`. 
 Go ahead and customize this configuration further, for example you can set additional `env_vars`.
 
-!!!abstract "GitFlow and branches"
-      If you selected GitFlow as development strategy, you probably noticed that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
-      After the first successful run of the prod-CodePipeline pipeline, just create branches in the CodeCommit repository for the other stages and you are ready to go.
+Trunk-based pipelines append one stage after the other and read from the main branch of our repository:
 
-![created_pipeline](pictures/pipelines/pip_create_branch.png#zoom#shadow)
+![created_pipeline](pictures/pipelines/pip_cp_trunk.png#zoom#shadow)
+
+Gitflow strategy uses multiple CodePipeline pipelines for each of the stages. For example if you selected `dev` and `prod`:
+
+![created_pipeline](pictures/pipelines/pip_cp_gitflow.png#zoom#shadow)
+
+The `dev` pipeline reads from the `dev` branch of the repository:
+
+![created_pipeline](pictures/pipelines/pip_cp_gitflow2.png#zoom#shadow)
 
 ## Which development strategy should I choose?
 
