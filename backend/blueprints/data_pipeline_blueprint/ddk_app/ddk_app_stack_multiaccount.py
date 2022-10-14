@@ -1,10 +1,12 @@
-from typing import Any
+from typing import Any, Optional
 
+from aws_cdk import Environment
 from aws_ddk_core.base import BaseStack
+from aws_ddk_core.config import Config
 from constructs import Construct
 
 
-class DDKApplicationStack(BaseStack):
+class DdkApplicationStack(BaseStack):
 
 
     def __init__(self, scope: Construct,

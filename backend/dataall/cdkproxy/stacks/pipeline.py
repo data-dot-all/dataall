@@ -416,7 +416,7 @@ class PipelineStack(Stack):
                     rm -r ddk-app; 
                     cp dataall_ddk.json ./ddk.json; 
                     cp app_multiaccount.py ./app.py; 
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/app.py; 
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py; 
                     rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
                     git add .; 
                     git commit -m "First Commit from CodeBuild - DDK application"; 
@@ -466,7 +466,7 @@ class PipelineStack(Stack):
                     rm -r ddk-app; 
                     cp dataall_ddk.json ./ddk.json; 
                     cp app_multiaccount.py ./app.py; 
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/app.py; 
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py; 
                     rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
                     git add .; 
                     git commit -m "First Commit from CodeBuild - DDK application"; 
@@ -558,8 +558,9 @@ class PipelineStack(Stack):
         "{env.stage}": {{
             "account": "{env.AwsAccountId}",
             "region": "{env.region}",
-            "resources": {{
-                "ddk-bucket": {{"versioned": false, "removal_policy": "destroy"}}
+            "stage": "{env.stage}",
+            "env_vars": {{
+                "database": "example_database"
             }}
         }}"""
             json_envs = json_envs + json_env
@@ -568,7 +569,8 @@ class PipelineStack(Stack):
     "environments": {{
         "cicd": {{
             "account": "{pipeline_environment.AwsAccountId}",
-            "region": "{pipeline_environment.region}"
+            "region": "{pipeline_environment.region}",
+            "stage": "cicd"
         }}{json_envs}
     }}
 }}"""

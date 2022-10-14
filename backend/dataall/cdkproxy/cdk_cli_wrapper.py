@@ -127,6 +127,12 @@ def clone_remote_stack(pipeline, pipeline_environment):
         )
     return
 
+def clean_up_repo(path):
+    if os.path.isfile(f"{path}/code.zip"):
+        os.remove(f"{path}/code.zip")
+    else:
+        logger.info("Info: %s Zip not found" % f"{path}/code.zip")
+    return
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
@@ -221,6 +227,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
                     clone_remote_stack(pipeline, pipeline_environment)
                     deploy_cdk_stack(engine, cicdstack.stackUri, f"./stacks/{pipeline.repo}/app.py")
+                    clean_up_repo(f"./stacks/{pipeline.repo}")
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(

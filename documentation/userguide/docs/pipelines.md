@@ -19,7 +19,7 @@ In order to distribute data ingestion and processing, data.all introduces data.a
 In some cases, enterprises decide to separate CICD resources from data application resources, which at the same time, need to be deployed to multiple accounts.
 Data.all allows users to easily define their CICD environment and other infrastructure environments in a flexible, robust way.
 
-Let's see it with an example. In your enterprise, the Research team has 3 AWS accounts: Research-CICD, Research-DEV and Research-PROD. They want to ingest data with a data pipeline that is written in Infrastructure-As-Code
+Let's see it with an example. In your enterprise, the Research team has 3 AWS accounts: Research-CICD, Research-DEV and Research-PROD. They want to ingest data with a data pipeline that is written in Infrastructure as Code (IaC)
 in the Research-CICD account. The actual data pipeline is deployed in 2 data accounts. First, in Research-DEV for development and testing and once it is ready it is deployed to Research-PROD.
 
 
@@ -92,46 +92,98 @@ In addition, the `app.py` file is also written accordingly to the development en
 
 ```
 
+# !/usr/bin/env python3
+
+import aws_cdk as cdk
+from aws_ddk_core.cicd import CICDPipelineStack
+from ddk_app.ddk_app_stack import DDKApplicationStack
+from aws_ddk_core.config import Config
+
+app = cdk.App()
+
+class ApplicationStage(cdk.Stage):
+    def __init__(
+            self,
+            scope,
+            environment_id: str,
+            **kwargs,
+    ) -> None:
+        super().__init__(scope, f"dataall-{environment_id.title()}", **kwargs)
+        DDKApplicationStack(self, "DataPipeline-PIPELINENAME-PIPELINEURI", environment_id)
+
+config = Config()
+(
+    CICDPipelineStack(
+        app,
+        id="dataall-pipeline-PIPELINENAME-PIPELINEURI",
+        environment_id="cicd",
+        pipeline_name="PIPELINENAME",
+    )
+        .add_source_action(repository_name="dataall-PIPELINENAME-PIPELINEURI")
+        .add_synth_action()
+        .build().add_stage("dev", ApplicationStage(app, "dev", env=config.get_env("dev"))).add_stage("prod", ApplicationStage(app, "prod", env=config.get_env("prod")))
+        .synth()
+)
+
+app.synth()
+
+
 ```
 #### CICD deployment
 data.all backend performs the first deployment of the CICD stack defined in the CodeCommit repository. The result is a
 CloudFormation template deploying a CICD pipeline having the aforementioned CodeCommit repository as source.
-This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html)
+This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html). 
+
+![create_pipeline](pictures/pipelines/pip_cdk_pipeline.png#zoom#shadow)
 
 ### CodePipeline pipelines - Trunk-based or GitFlow
 
 For cases in which we need more control  over the CICD pipeline, instead of using [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html) we can
-use `aws-codepipeline` construct library directly. 
+use [aws-codepipeline](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codepipeline-readme.html) construct library directly. 
 
 
 #### CodeCommit repository and CICD deployment
-When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. 
-It contains an AWS CodeCommit repository with the code of an AWS DDK application set up for a multi-account deployment,
-as explained in its [documentation](https://awslabs.github.io/aws-ddk/release/latest/how-to/multi-account-deployment.html).
+When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. It contains:
 
-In addition, the CloudFormation stack also contains the CICD CodePipeline pipeline that deploys the application. 
+- an AWS CodeCommit repository with the code of an AWS DDK application where we made some modifications to allow cross-account deployments.
+- CICD CodePipeline pipeline that deploys the application
 
+In the first run of the pipeline we will perform some initialization actions from the pipeline itself (you don't need to do anything). In short, we initialize the DDK application by running `ddk init` 
+and we push the code back to our repository.
 
+This is the original repository:
+
+![created_pipeline](pictures/pipelines/pip_cp_init.png#zoom#shadow)
+
+This is the repository once it has been initialized in the commit "First Commit from CodeBuild - DDK application":
+
+![created_pipeline](pictures/pipelines/pip_cp_init2.png#zoom#shadow)
+
+We added the `Multiaccount` configuration class that allows us to define the deployment environment based on the `ddk.json`. 
+Go ahead and customize this configuration further, for example you can set additional `env_vars`.
 
 !!!abstract "GitFlow and branches"
-      If you selected GitFlow as development strategy, you probably notices that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
+      If you selected GitFlow as development strategy, you probably noticed that the CodePipelines for non-prod stages fail in the first run because they cannot find their source.
       After the first successful run of the prod-CodePipeline pipeline, just create branches in the CodeCommit repository for the other stages and you are ready to go.
+
+![created_pipeline](pictures/pipelines/pip_create_branch.png#zoom#shadow)
 
 ## Which development strategy should I choose?
 
 **CDK pipelines - Trunk-based**
 
-1. The `CDK-pipelines` construct handles cross-account deployments seamlessly and robustly. Instead of assuming roles for deployment, it deploys CloudFormation stacks already synthesized.
-2. It also allows developers to modify the CICD stack as it is self-mutating. It allows them to add monitoring, tests, manual approvals directly in the repository.
+1. The `CDK-pipelines` construct handles cross-account deployments seamlessly and robustly. It synthesizes CDK stacks as CloudFormation stacks and performs the deployment cross-account. Which means that we don't manually assume IAM roles in the target accounts, all is handled by CDK :)
+2. It also allows developers to modify the CICD stack as it is self-mutating. It is easy to customize having several typical CodePipeline stages out-of-the-bix. For example, developers can add monitoring, tests, manual approvals directly in the repository with single-line changes.
 
 **CodePipeline pipelines - Trunk-based or GitFlow**
 
 1. The `aws-codepipelines` construct uses AWS CodePipelines directly. We are able to define any type of CICD architecture, such as in this case Trunk-based and GitFlow.
 2. Developers working on the pipeline cannot modify the CICD pipeline
-3. Cross-account deployments
+3. Cross-account deployments require specific definition of the environment in the code.
 
 **Summary**
-CDK pipelines are recommended from a cross-account deployment point of view, whereas CodePipeline pipelines are recommended if you need to provide an immutable pipeline architecture or if you want to implement a GitFlow strategy.
+CDK pipelines are recommended for flexibility and for a robust cross-account application deployment, 
+whereas CodePipeline pipelines are recommended if you need to provide an immutable pipeline architecture or if you want to implement a GitFlow strategy.
 
 
 

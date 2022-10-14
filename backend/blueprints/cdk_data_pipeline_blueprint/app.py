@@ -16,19 +16,19 @@ class ApplicationStage(cdk.Stage):
             **kwargs,
     ) -> None:
         super().__init__(scope, f"dataall-{environment_id.title()}", **kwargs)
-        DDKApplicationStack(self, "DataPipeline-reina1-yg0jvyp9", environment_id)
+        DDKApplicationStack(self, "DataPipeline-MyPipeline-cdktrunk-l747ulgq", environment_id)
 
 config = Config()
 (
     CICDPipelineStack(
         app,
-        id="dataall-pipeline-reina1-yg0jvyp9",
+        id="dataall-pipeline-MyPipeline-cdktrunk-l747ulgq",
         environment_id="cicd",
-        pipeline_name="reina1",
+        pipeline_name="MyPipeline-cdktrunk",
     )
-        .add_source_action(repository_name="dataall-reina1-yg0jvyp9")
+        .add_source_action(repository_name="dataall-mypipeline-cdktrunk-l747ulgq")
         .add_synth_action()
-        .build().add_stage("dev", ApplicationStage(app, "dev", env=config.get_env("dev"))).add_stage("prod", ApplicationStage(app, "prod", env=config.get_env("prod")))
+        .build().add_stage("prod", ApplicationStage(app, "prod", env=config.get_env("prod"))).add_stage("dev", ApplicationStage(app, "dev", env=config.get_env("dev")))
         .synth()
 )
 
