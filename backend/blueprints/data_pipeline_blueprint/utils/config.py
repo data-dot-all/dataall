@@ -46,5 +46,5 @@ class MultiaccountConfig(Config):
         config : Dict[str, Any]
             Dictionary that contains environmental variables for the given environment
         """
-        env_vars = self.get_env_config(environment_id) | self._config_strategy.get_config('global')
+        env_vars = self.get_env_config(environment_id)
         return env_vars
