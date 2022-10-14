@@ -38,6 +38,7 @@ def aws_configure(profile_name='default'):
         encoding='utf-8',
         capture_output=True
     )
+    creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
         print(creds)
@@ -67,7 +68,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     idnty = sts.get_caller_identity()
     this_aws_account = idnty['Account']
     creds = None
-    if ENVNAME != 'local':
+    if ENVNAME not in ['local', 'dkrcompose']:
         creds = aws_configure()
 
     with engine.scoped_session() as session:
