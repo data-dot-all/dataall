@@ -12,6 +12,7 @@ RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION
 RUN yum -y install python38-devel
+RUN yum -y install git
 
 RUN useradd -m app
 
@@ -45,10 +46,6 @@ $PATH" >> ~/.bashrc && \
      echo "nvm use ${NODE_VERSION} 1> /dev/null" >> ~/.bashrc
 
 RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
-
-RUN yum update && \
-    yum upgrade -y && \
-    yum install -y git
 
 COPY ./requirements.txt dh.requirements.txt
 COPY ./dataall/cdkproxy/requirements.txt cdk.requirements.txt
