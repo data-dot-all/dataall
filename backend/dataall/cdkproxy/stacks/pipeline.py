@@ -412,22 +412,22 @@ class PipelineStack(Stack):
                 - git config --global user.email "codebuild@example.com"
                 - git config --global user.name "CodeBuild"
                 - |
-                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then 
-                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; 
-                    cd $PIPELINE_NAME; 
-                    git checkout main; 
-                    ddk init --generate-only ddk-app; 
-                    cp -R ddk-app/* ./; 
-                    rm -r ddk-app; 
-                    cp dataall_ddk.json ./ddk.json; 
-                    cp app_multiaccount.py ./app.py; 
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py; 
-                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
-                    git add .; 
-                    git commit -m "First Commit from CodeBuild - DDK application"; 
-                    git push --set-upstream origin main; 
-                  else 
-                    echo "not first build"; 
+                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
+                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}";
+                    cd $PIPELINE_NAME;
+                    git checkout main;
+                    ddk init --generate-only ddk-app;
+                    cp -R ddk-app/* ./;
+                    rm -r ddk-app;
+                    cp dataall_ddk.json ./ddk.json;
+                    cp app_multiaccount.py ./app.py;
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py;
+                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py;
+                    git add .;
+                    git commit -m "First Commit from CodeBuild - DDK application";
+                    git push --set-upstream origin main;
+                  else
+                    echo "not first build";
                   fi
                 - pip install -r requirements.txt
               build:
@@ -463,19 +463,19 @@ class PipelineStack(Stack):
                 - git config --global user.name "CodeBuild"
                 - |
                   if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}"; 
-                    cd $PIPELINE_NAME; 
-                    git checkout main; 
-                    ddk init --generate-only ddk-app; 
-                    cp -R ddk-app/* ./; 
-                    rm -r ddk-app; 
-                    cp dataall_ddk.json ./ddk.json; 
-                    cp app_multiaccount.py ./app.py; 
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py; 
-                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py; 
-                    git add .; 
-                    git commit -m "First Commit from CodeBuild - DDK application"; 
-                    git push --set-upstream origin main; 
+                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}";
+                    cd $PIPELINE_NAME;
+                    git checkout main;
+                    ddk init --generate-only ddk-app;
+                    cp -R ddk-app/* ./;
+                    rm -r ddk-app;
+                    cp dataall_ddk.json ./ddk.json;
+                    cp app_multiaccount.py ./app.py;
+                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py;
+                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py;
+                    git add .;
+                    git commit -m "First Commit from CodeBuild - DDK application";
+                    git push --set-upstream origin main;
                     IFS=','
                     for stage in $DEV_STAGES; do
                       if [ $stage != "prod" ]; then
@@ -483,8 +483,8 @@ class PipelineStack(Stack):
                         git push --set-upstream origin $stage;
                       fi;
                     done;
-                  else 
-                    echo "not first build"; 
+                  else
+                    echo "not first build";
                   fi
                 - pip install -r requirements.txt
               build:
@@ -582,4 +582,3 @@ class PipelineStack(Stack):
 
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
-

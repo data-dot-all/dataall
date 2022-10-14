@@ -127,12 +127,14 @@ def clone_remote_stack(pipeline, pipeline_environment):
         )
     return
 
+
 def clean_up_repo(path):
     if os.path.isfile(f"{path}/code.zip"):
         os.remove(f"{path}/code.zip")
     else:
         logger.info("Info: %s Zip not found" % f"{path}/code.zip")
     return
+
 
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
