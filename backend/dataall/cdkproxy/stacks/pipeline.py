@@ -110,6 +110,7 @@ class PipelineStack(Stack):
         pipeline_env_team = self.get_env_team(pipeline=pipeline)
         # Development environments
         development_environments = self.get_pipeline_environments(targer_uri=target_uri)
+        self.devStages = [env.stage for env in development_environments]
 
         # Support resources
         build_role_policy = iam.Policy(
@@ -239,7 +240,8 @@ class PipelineStack(Stack):
                             pipeline=pipeline,
                             pipeline_environment=env,
                             pipeline_env_team=env.samlGroupName,
-                            stage=env.stage
+                            stage=env.stage,
+                            stages=self.devStages
                         ),
                     ),
                     role=build_project_role,
@@ -308,7 +310,8 @@ class PipelineStack(Stack):
                             pipeline=pipeline,
                             pipeline_environment=env,
                             pipeline_env_team=env.samlGroupName,
-                            stage=env.stage
+                            stage=env.stage,
+                            stages=self.devStages
                         ),
                     ),
                     role=build_project_role,
@@ -369,13 +372,15 @@ class PipelineStack(Stack):
         pipeline,
         pipeline_environment,
         pipeline_env_team,
-        stage
+        stage,
+        stages
     ):
 
         env_vars_1 = {
             "PIPELINE_URI": codebuild.BuildEnvironmentVariable(value=pipeline.DataPipelineUri),
             "PIPELINE_NAME": codebuild.BuildEnvironmentVariable(value=pipeline.name),
             "STAGE": codebuild.BuildEnvironmentVariable(value=stage),
+            "DEV_STAGES": codebuild.BuildEnvironmentVariable(value=stages),
             "DEV_STRATEGY": codebuild.BuildEnvironmentVariable(value=pipeline.devStrategy),
             "TEMPLATE": codebuild.BuildEnvironmentVariable(value=pipeline.template),
             "ENVIRONMENT_URI": codebuild.BuildEnvironmentVariable(value=pipeline_environment.environmentUri),
