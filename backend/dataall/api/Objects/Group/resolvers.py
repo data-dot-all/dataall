@@ -1,12 +1,13 @@
 import os
+import logging
+import boto3
 from .... import db
 from ....db import exceptions
 from ....db.models import Group
 from ...constants import *
-from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.cognito import Cognito
 
+
+log = logging.getLogger()
 
 def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
@@ -77,19 +78,37 @@ def list_data_items_shared_with_env_group(
 
 
 def list_cognito_groups(context, source, filter: dict = None):
-    # filter:
-    # filter.get("type") = 'organization' or 'environment'
-    # filter.get("uri") = 'organizationUri' or 'environmentUri' correspondingly
-    current_account = SessionHelper.get_account()
-    current_region = os.getenv('AWS_REGION', 'eu-west-1')
     envname = os.getenv('envname', 'local')
     if envname in ['local', 'dkrcompose']:
         return [{"groupName": 'DAAdministrators'}, {"groupName": 'Engineers'}, {"groupName": 'Scientists'}]
+    current_region = os.getenv('AWS_REGION', 'eu-west-1')
     parameter_path = f'/dataall/{envname}/cognito/userpool'
-    user_pool_id = ParameterStoreManager.get_parameter_value(current_account, current_region, parameter_path)
-    groups = Cognito.list_cognito_groups(current_account, current_region, user_pool_id)
+    ssm = boto3.client('ssm', region_name=current_region)
+    cognito = boto3.client('cognito-idp', region_name=current_region)
+    user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
+    groups = cognito.list_groups(UserPoolId=user_pool_id)['Groups']
+    category, category_uri = filter.get("type"), filter.get("uri")
+    if category and category_uri:
+        if category == 'environment':
+            with context.engine.scoped_session() as session:
+                invited_groups = db.api.Environment.query_all_environment_groups(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    uri=category_uri,
+                    filter=None,
+                ).all()
+        if category == 'organization':
+            with context.engine.scoped_session() as session:
+                organization = db.api.Organization.get_organization_by_uri(session, category_uri)
+                invited_groups = db.api.Organization.query_organization_groups(
+                    session=session,
+                    uri=organization.organizationUri,
+                    filter=None,
+                ).all()
+    invited_group_uris = [item.groupUri for item in invited_groups]
     res = []
     for group in groups:
-        res.append({"groupName": group['GroupName']})
-
+        if group['GroupName'] not in invited_group_uris:
+            res.append({"groupName": group['GroupName']})
     return res

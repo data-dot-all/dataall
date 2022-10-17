@@ -16,7 +16,7 @@ class Cognito:
     def list_cognito_groups(account_id: str, region: str, user_pool_id: str):
         try:
             cognitoCli = Cognito.client(account_id, region, "cognito-idp")
-            response = cognitoCli.list_groups(UsePoolId=user_pool_id)
+            response = cognitoCli.list_groups(UserPoolId=user_pool_id)
         except Exception as e:
             log.error(
                 f'Failed to list groups of user pool {user_pool_id} due to {e}'

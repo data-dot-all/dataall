@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listCognitoGroups ({ filter }) => ({
+const listCognitoGroups = ({ filter }) => ({
   variables: {
     filter
   },

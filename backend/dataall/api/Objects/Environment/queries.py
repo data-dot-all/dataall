@@ -116,16 +116,6 @@ listEnvironmentInvitedGroups = gql.QueryField(
     resolver=list_environment_invited_groups,
 )
 
-listEnvironmentNotInvitedGroups = gql.QueryField(
-    name='listEnvironmentNotInvitedGroups',
-    type=gql.Ref('GroupSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
-    ],
-    resolver=list_environment_not_invited_groups,
-)
-
 listEnvironmentGroups = gql.QueryField(
     name='listEnvironmentGroups',
     type=gql.Ref('GroupSearchResult'),

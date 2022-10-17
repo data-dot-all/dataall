@@ -37,16 +37,21 @@ const OrganizationTeamInviteForm = (props) => {
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
 
+  const filter = {
+    type: "organization",
+    uri: organization.organizationUri
+  }
+
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({type: "organization", uri: organization.organizationUri}));
+      const response = await client.query(listCognitoGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
           response.data.listCognitoGroups.map((g) => ({
             ...g,
-            value: g.groupUri,
-            label: g.groupUri
+            value: g.groupName,
+            label: g.groupName
           }))
         );
       } else {

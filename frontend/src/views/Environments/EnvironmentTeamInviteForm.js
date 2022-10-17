@@ -41,10 +41,15 @@ const EnvironmentTeamInviteForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [permissionsError, setPermissionsError] = useState(null);
 
+  const filter = {
+    type: "environment",
+    uri: environment.environmentUri
+  }
+
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({type: "environment", uri: environment.environmentUri}));
+      const response = await client.query(listCognitoGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
           response.data.listCognitoGroups.map((g) => ({
