@@ -1,21 +1,21 @@
 {
     "environments": {
         "cicd": {
-            "account": "227670588337",
-            "region": "eu-west-2"
+            "account": "111111111111",
+            "region": "eu-west-1"
         },
         "dev": {
-            "account": "467173892793",
-            "region": "eu-west-2",
+            "account": "222222222222",
+            "region": "eu-west-1",
             "resources": {
                 "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
             }
         },
         "prod": {
-            "account": "467173892793",
-            "region": "eu-west-2",
+            "account": "333333333333",
+            "region": "eu-west-1",
             "resources": {
-                "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
+                "ddk-bucket": {"versioned": true, "removal_policy": "retain"}
             }
         }
     }
