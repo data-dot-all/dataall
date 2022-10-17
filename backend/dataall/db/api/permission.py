@@ -128,76 +128,41 @@ class Permission:
             .filter(models.Permission.type == PermissionType.RESOURCE.name)
             .count()
         )
-        if count_resource_permissions < len(permissions.RESOURCES_ALL):
-            for p in permissions.RESOURCES_ALL:
-                description = p
-                if p == permissions.CREATE_DATASET:
-                    description = 'Create datasets on this environment'
-                if p == permissions.CREATE_DASHBOARD:
-                    description = 'Create dashboards on this environment'
-                if p == permissions.CREATE_NOTEBOOK:
-                    description = 'Create notebooks on this environment'
-                if p == permissions.CREATE_REDSHIFT_CLUSTER:
-                    description = 'Create Redshift clusters on this environment'
-                if p == permissions.CREATE_SGMSTUDIO_NOTEBOOK:
-                    description = 'Manage ML Studio profiles on this environment'
-                if p == permissions.INVITE_ENVIRONMENT_GROUP:
-                    description = 'Invite other teams to this environment'
-                if p == permissions.CREATE_SHARE_OBJECT:
-                    description = 'Request datasets access for this environment'
-                if p == permissions.CREATE_PIPELINE:
-                    description = 'Create pipelines on this environment'
-                if p == permissions.CREATE_NETWORK:
-                    description = 'Create networks on this environment'
+
+        logger.debug(f'count_resource_permissions: {count_resource_permissions}, RESOURCES_ALL: {len(permissions.RESOURCES_ALL_WITH_DESC)}')
+
+        if count_resource_permissions < len(permissions.RESOURCES_ALL_WITH_DESC):
+            for name, desc in permissions.RESOURCES_ALL_WITH_DESC.items():
                 perms.append(
                     Permission.save_permission(
                         session,
-                        name=p,
-                        description=description,
+                        name=name,
+                        description=desc,
                         permission_type=PermissionType.RESOURCE.name,
                     )
                 )
-                print(f'Saved permission {p} successfully')
-
-        print(f'Saved {len(perms)} resource permissions successfully')
+                logger.info(f'Saved permission {name} successfully')
+            logger.info(f'Saved {len(perms)} resource permissions successfully')
 
         count_tenant_permissions = (
             session.query(models.Permission)
             .filter(models.Permission.type == PermissionType.TENANT.name)
             .count()
         )
-        if count_tenant_permissions < len(permissions.TENANT_ALL):
-            for p in permissions.TENANT_ALL:
-                description = p
-                if p == permissions.MANAGE_DASHBOARDS:
-                    description = 'Manage dashboards'
-                if p == permissions.MANAGE_DATASETS:
-                    description = 'Manage datasets'
-                if p == permissions.MANAGE_NOTEBOOKS:
-                    description = 'Manage notebooks'
-                if p == permissions.MANAGE_REDSHIFT_CLUSTERS:
-                    description = 'Manage Redshift clusters'
-                if p == permissions.MANAGE_GLOSSARIES:
-                    description = 'Manage glossaries'
-                if p == permissions.MANAGE_WORKSHEETS:
-                    description = 'Manage worksheets'
-                if p == permissions.MANAGE_ENVIRONMENTS:
-                    description = 'Manage environments'
-                if p == permissions.MANAGE_GROUPS:
-                    description = 'Manage teams'
-                if p == permissions.MANAGE_PIPELINES:
-                    description = 'Manage pipelines'
-                if p == permissions.MANAGE_ORGANIZATIONS:
-                    description = 'Manage organizations'
+
+        logger.debug(f'count_tenant_permissions: {count_tenant_permissions}, TENANT_ALL: {len(permissions.TENANT_ALL_WITH_DESC)}')
+
+        if count_tenant_permissions < len(permissions.TENANT_ALL_WITH_DESC):
+            for name, desc in permissions.TENANT_ALL_WITH_DESC.items():
                 perms.append(
                     Permission.save_permission(
                         session,
-                        name=p,
-                        description=description,
+                        name=name,
+                        description=desc,
                         permission_type=PermissionType.TENANT.name,
                     )
                 )
-                print(f'Saved permission {p} successfully')
-            print(f'Saved {len(perms)} permissions successfully')
+                logger.info(f'Saved permission {name} successfully')
+            logger.info(f'Saved {len(perms)} permissions successfully')
             session.commit()
         return perms

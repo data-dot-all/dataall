@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { SET_ERROR } from '../store/errorReducer';
 import { useDispatch } from '../store';
+import useAuth from "./useAuth";
 
 const useToken = () => {
   const dispatch = useDispatch();
+  const auth = useAuth();
   const [token, setToken] = useState(null);
   const fetchAuthToken = async () => {
     if (
@@ -13,9 +15,15 @@ const useToken = () => {
     ) {
       setToken('localToken');
     } else {
-      const session = await Auth.currentSession();
-      const t = await session.getIdToken().getJwtToken();
-      setToken(t);
+      try {
+        const session = await Auth.currentSession();
+        const t = await session.getIdToken().getJwtToken();
+        setToken(t);
+      } catch (error) {
+        auth.dispatch({
+          type: 'LOGOUT'
+        });
+      }
     }
   };
 

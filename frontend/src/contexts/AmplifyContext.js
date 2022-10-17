@@ -19,7 +19,7 @@ Auth.configure({
     domain: process.env.REACT_APP_COGNITO_DOMAIN,
     redirectSignIn: process.env.REACT_APP_COGNITO_REDIRECT_SIGNIN,
     redirectSignOut: process.env.REACT_APP_COGNITO_REDIRECT_SIGNOUT,
-    responseType: 'token'
+    responseType: 'code'
   }
 });
 
@@ -129,6 +129,7 @@ export const AuthProvider = (props) => {
     <AuthContext.Provider
       value={{
         ...state,
+        dispatch,
         platform: 'Amplify',
         login,
         logout

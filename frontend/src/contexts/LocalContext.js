@@ -97,6 +97,7 @@ export const AuthProvider = (props) => {
     <LocalContext.Provider
       value={{
         ...state,
+        dispatch,
         platform: 'local',
         login,
         logout

@@ -29,9 +29,7 @@ class Organization:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    def create_organization(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Organization:
+    def create_organization(session, username, groups, uri, data=None, check_perm=None) -> models.Organization:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('SamlGroupName'):
@@ -107,8 +105,7 @@ class Organization:
             session.query(models.Organization)
             .outerjoin(
                 models.OrganizationGroup,
-                models.Organization.organizationUri
-                == models.OrganizationGroup.organizationUri,
+                models.Organization.organizationUri == models.OrganizationGroup.organizationUri,
             )
             .filter(
                 or_(
@@ -121,36 +118,28 @@ class Organization:
             query = query.filter(
                 or_(
                     models.Organization.label.ilike('%' + filter.get('term') + '%'),
-                    models.Organization.description.ilike(
-                        '%' + filter.get('term') + '%'
-                    ),
+                    models.Organization.description.ilike('%' + filter.get('term') + '%'),
                     models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
                 )
             )
         return query
 
     @staticmethod
-    def paginated_user_organizations(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_organizations(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
-            query=Organization.query_user_organizations(
-                session, username, groups, data
-            ),
+            query=Organization.query_user_organizations(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
     def query_organization_environments(session, uri, filter) -> Query:
-        query = session.query(models.Environment).filter(
-            models.Environment.organizationUri == uri
-        )
+        query = session.query(models.Environment).filter(models.Environment.organizationUri == uri)
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.Group.label.ilike('%' + filter.get('term') + '%'),
-                    models.Group.description.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.label.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.description.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -158,9 +147,7 @@ class Organization:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_environments(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_organization_environments(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=Organization.query_organization_environments(session, uri, data),
             page=data.get('page', 1),
@@ -170,16 +157,10 @@ class Organization:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_perm(permissions.DELETE_ORGANIZATION)
-    def archive_organization(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
+    def archive_organization(session, username, groups, uri, data=None, check_perm=None) -> bool:
 
         org = Organization.get_organization_by_uri(session, uri)
-        environments = (
-            session.query(models.Environment)
-            .filter(models.Environment.organizationUri == uri)
-            .count()
-        )
+        environments = session.query(models.Environment).filter(models.Environment.organizationUri == uri).count()
         if environments:
             raise exceptions.UnauthorizedOperation(
                 action='ARCHIVE_ORGANIZATION',
@@ -208,9 +189,7 @@ class Organization:
 
         organization = Organization.get_organization_by_uri(session, uri)
 
-        group_membership = Organization.find_group_membership(
-            session, group, organization
-        )
+        group_membership = Organization.find_group_membership(session, group, organization)
         if group_membership:
             raise exceptions.UnauthorizedOperation(
                 action='INVITE_TEAM',
@@ -239,8 +218,7 @@ class Organization:
                 (
                     and_(
                         models.OrganizationGroup.groupUri == group,
-                        models.OrganizationGroup.organizationUri
-                        == organization.organizationUri,
+                        models.OrganizationGroup.organizationUri == organization.organizationUri,
                     )
                 )
             )
@@ -290,9 +268,7 @@ class Organization:
                 message=f'Team: {group} has {group_env_objects_count} linked environments on this environment.',
             )
 
-        group_membership = Organization.find_group_membership(
-            session, group, organization
-        )
+        group_membership = Organization.find_group_membership(session, group, organization)
         if group_membership:
             session.delete(group_membership)
             session.commit()
@@ -307,15 +283,11 @@ class Organization:
 
     @staticmethod
     def query_organization_groups(session, uri, filter) -> Query:
-        query = session.query(models.OrganizationGroup).filter(
-            models.OrganizationGroup.organizationUri == uri
-        )
+        query = session.query(models.OrganizationGroup).filter(models.OrganizationGroup.organizationUri == uri)
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.OrganizationGroup.groupUri.ilike(
-                        '%' + filter.get('term') + '%'
-                    ),
+                    models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -323,9 +295,7 @@ class Organization:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_organization_groups(session, username, groups, uri, data=None, check_perm=None) -> dict:
         return paginate(
             query=Organization.query_organization_groups(session, uri, data),
             page=data.get('page', 1),
@@ -338,23 +308,19 @@ class Organization:
             session.query(models.OrganizationGroup)
             .join(
                 models.Organization,
-                models.OrganizationGroup.organizationUri
-                == models.Organization.organizationUri,
+                models.OrganizationGroup.organizationUri == models.Organization.organizationUri,
             )
             .filter(
                 and_(
                     models.Organization.organizationUri == organization.organizationUri,
-                    models.OrganizationGroup.groupUri
-                    != models.Organization.SamlGroupName,
+                    models.OrganizationGroup.groupUri != models.Organization.SamlGroupName,
                 )
             )
         )
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.OrganizationGroup.groupUri.ilike(
-                        '%' + filter.get('term') + '%'
-                    ),
+                    models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -362,14 +328,10 @@ class Organization:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_perm(permissions.GET_ORGANIZATION)
-    def paginated_organization_invited_groups(
-        session, username, groups, uri, data=None, check_perm=False
-    ) -> dict:
+    def paginated_organization_invited_groups(session, username, groups, uri, data=None, check_perm=False) -> dict:
         organization = Organization.get_organization_by_uri(session, uri)
         return paginate(
-            query=Organization.query_organization_invited_groups(
-                session, organization, data
-            ),
+            query=Organization.query_organization_invited_groups(session, organization, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -377,9 +339,7 @@ class Organization:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_perm(permissions.GET_ORGANIZATION)
-    def not_organization_groups(
-        session, username, groups, uri, data=None, check_perm=False
-    ) -> dict:
+    def not_organization_groups(session, username, groups, uri, data=None, check_perm=False) -> dict:
         org_groups: [] = (
             session.query(models.OrganizationGroup).filter(
                 and_(
@@ -389,9 +349,7 @@ class Organization:
             )
         ).all()
         org_groups = [g.groupUri for g in org_groups]
-        not_invited_groups = [
-            {'groupUri': group} for group in groups if group not in org_groups
-        ]
+        not_invited_groups = [{'groupUri': group} for group in groups if group not in org_groups]
         return Page(not_invited_groups, 1, 1000, len(not_invited_groups)).to_dict()
 
     @staticmethod

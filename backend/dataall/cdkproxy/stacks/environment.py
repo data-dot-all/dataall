@@ -24,12 +24,15 @@ from aws_cdk import (
     CustomResource,
     Tags,
 )
+from constructs import DependencyGroup
+from botocore.exceptions import ClientError
 
 from .manager import stack
 from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
+from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sagemaker_studio import (
     SagemakerStudio,
 )
@@ -67,12 +70,23 @@ class EnvironmentSetup(Stack):
 
     def check_sagemaker_studio(self, engine, environment: models.Environment):
         logger.info('check sagemaker studio domain creation')
-        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-            environment.AwsAccountId, environment.region
-        )
-        existing_domain_id = existing_domain.get('DomainId', False)
-        if existing_domain_id:
-            return existing_domain_id
+
+        try:
+            dataall_created_domain = ParameterStoreManager.client(
+                AwsAccountId=environment.AwsAccountId,
+                region=environment.region
+            ).get_parameter(
+                Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id'
+            )
+            return None
+        except ClientError as e:
+            logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
+            existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
+                environment.AwsAccountId, environment.region
+            )
+            existing_domain_id = existing_domain.get('DomainId', False)
+            if existing_domain_id:
+                return existing_domain_id
 
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
@@ -167,93 +181,16 @@ class EnvironmentSetup(Stack):
             self.engine, self._environment
         )
 
-        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
-
-        if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
-
-            sagemaker_domain_role = iam.Role(
-                self,
-                'RoleForSagemakerStudioUsers',
-                assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                role_name="RoleSagemakerStudioUsers",
-                managed_policies=[iam.ManagedPolicy.from_managed_policy_arn(
-                    self,
-                    id="SagemakerFullAccess",
-                    managed_policy_arn="arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"),
-                    iam.ManagedPolicy.from_managed_policy_arn(
-                    self,
-                        id="S3FullAccess",
-                        managed_policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess")
-                ]
-            )
-
-            sagemaker_domain_key = kms.Key(
-                self,
-                'SagemakerDomainKmsKey',
-                alias="SagemakerStudioDomain",
-                enable_key_rotation=True,
-                policy=iam.PolicyDocument(
-                    assign_sids=True,
-                    statements=[
-                        iam.PolicyStatement(
-                            resources=['*'],
-                            effect=iam.Effect.ALLOW,
-                            principals=[
-                                iam.AccountPrincipal(account_id=self._environment.AwsAccountId),
-                                iam.Role.from_role_arn(self, 'DomainRole', role_arn=sagemaker_domain_role.role_arn),
-                                iam.Role.from_role_arn(self, 'EnvironmentDefaultRole', role_arn=self.environment_admins_group.environmentIAMRoleArn),
-                            ] + [iam.Role.from_role_arn(self, f'{group.groupUri}Role', role_arn=group.environmentIAMRoleArn) for group in self.environment_groups],
-                            actions=['kms:*'],
-                        )
-                    ],
-                ),
-            )
-
-            try:
-                default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
-                vpc_id = default_vpc.vpc_id
-                subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
-                subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
-                subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
-            except Exception as e:
-                logger.error(f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation.")
-
-            sagemaker_domain = sagemaker.CfnDomain(
-                self,
-                "SagemakerStudioDomain",
-                domain_name=f"SagemakerStudioDomain-{self._environment.region}-{self._environment.AwsAccountId}",
-                auth_mode="IAM",
-
-                default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
-                    execution_role=sagemaker_domain_role.role_arn,
-
-                    security_groups=[],
-
-                    sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
-                        notebook_output_option="Allowed",
-                        s3_kms_key_id=sagemaker_domain_key.key_id,
-                        s3_output_path=f"s3://sagemaker-{self._environment.region}-{self._environment.AwsAccountId}",
-                    )
-                ),
-
-                vpc_id=vpc_id,
-                subnet_ids=subnet_ids,
-                app_network_access_type="VpcOnly",
-                kms_key_id=sagemaker_domain_key.key_id,
-            )
-
-            ssm.StringParameter(
-                self,
-                'SagemakerStudioDomainId',
-                string_value=sagemaker_domain.attr_domain_id,
-                parameter_name=f'/datahub/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
-            )
+        roles_sagemaker_dependency_group = DependencyGroup()
 
         if self._environment.dashboardsEnabled:
             logger.warning('ensure_quicksight_default_group')
             self.init_quicksight(environment=self._environment)
 
-        self.create_or_import_environment_groups_roles()
+        group_roles = self.create_or_import_environment_groups_roles()
+
+        for group_role in group_roles:
+            roles_sagemaker_dependency_group.add(group_role)
 
         central_account = SessionHelper.get_account()
 
@@ -330,7 +267,8 @@ class EnvironmentSetup(Stack):
             destination_key_prefix='profiling/code',
         )
 
-        self.create_or_import_environment_default_role()
+        default_role = self.create_or_import_environment_default_role()
+        roles_sagemaker_dependency_group.add(default_role)
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -568,6 +506,89 @@ class EnvironmentSetup(Stack):
                 self._environment,
             )
 
+        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
+
+        if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
+
+            sagemaker_domain_role = iam.Role(
+                self,
+                'RoleForSagemakerStudioUsers',
+                assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
+                role_name="RoleSagemakerStudioUsers",
+                managed_policies=[iam.ManagedPolicy.from_managed_policy_arn(
+                    self,
+                    id="SagemakerFullAccess",
+                    managed_policy_arn="arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"),
+                    iam.ManagedPolicy.from_managed_policy_arn(
+                    self,
+                        id="S3FullAccess",
+                        managed_policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess")
+                ]
+            )
+
+            sagemaker_domain_key = kms.Key(
+                self,
+                'SagemakerDomainKmsKey',
+                alias="SagemakerStudioDomain",
+                enable_key_rotation=True,
+                policy=iam.PolicyDocument(
+                    assign_sids=True,
+                    statements=[
+                        iam.PolicyStatement(
+                            resources=['*'],
+                            effect=iam.Effect.ALLOW,
+                            principals=[
+                                iam.AccountPrincipal(account_id=self._environment.AwsAccountId),
+                                sagemaker_domain_role,
+                                default_role,
+                            ] + group_roles,
+                            actions=['kms:*'],
+                        )
+                    ],
+                ),
+            )
+            sagemaker_domain_key.node.add_dependency(roles_sagemaker_dependency_group)
+
+            try:
+                default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
+                vpc_id = default_vpc.vpc_id
+                subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
+                subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
+                subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
+            except Exception as e:
+                logger.error(f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation.")
+
+            sagemaker_domain = sagemaker.CfnDomain(
+                self,
+                "SagemakerStudioDomain",
+                domain_name=f"SagemakerStudioDomain-{self._environment.region}-{self._environment.AwsAccountId}",
+                auth_mode="IAM",
+
+                default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
+                    execution_role=sagemaker_domain_role.role_arn,
+
+                    security_groups=[],
+
+                    sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
+                        notebook_output_option="Allowed",
+                        s3_kms_key_id=sagemaker_domain_key.key_id,
+                        s3_output_path=f"s3://sagemaker-{self._environment.region}-{self._environment.AwsAccountId}",
+                    )
+                ),
+
+                vpc_id=vpc_id,
+                subnet_ids=subnet_ids,
+                app_network_access_type="VpcOnly",
+                kms_key_id=sagemaker_domain_key.key_id,
+            )
+
+            ssm.StringParameter(
+                self,
+                'SagemakerStudioDomainId',
+                string_value=sagemaker_domain.attr_domain_id,
+                parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
+            )
+
         TagsUtil.add_tags(self)
 
         CDKNagUtil.check_rules(self)
@@ -635,15 +656,18 @@ class EnvironmentSetup(Stack):
 
     def create_or_import_environment_groups_roles(self):
         group: models.EnvironmentGroup
+        group_roles = []
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
-                self.create_group_environment_role(group)
+                group_role = self.create_group_environment_role(group)
+                group_roles.append(group_role)
             else:
                 iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
                     role_arn=f'arn:aws:iam::{self.environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
                 )
+        return group_roles
 
     def create_group_environment_role(self, group):
 
