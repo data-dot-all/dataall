@@ -11,6 +11,8 @@ from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
 from ....aws.handlers.sts import SessionHelper
+from ....aws.handlers.quicksight import Quicksight
+from ....aws.handlers.cloudformation import CloudFormation
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -33,26 +35,12 @@ def check_environment(context: Context, source, input=None):
         return 'CdkRoleName'
     account = input.get('AwsAccountId')
     region = input.get('region')
-    aws = SessionHelper.remote_session(accountid=account)
-    cfn = aws.client('cloudformation', region_name=region)
-    try:
-        response = cfn.describe_stacks(StackName='CDKToolkit')
-    except cfn.exceptions.ClientError as e:
-        print(e)
-        raise Exception('CDKToolkitNotFound')
+    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region)
 
-    stacks = response['Stacks']
-    if not len(stacks):
-        raise Exception('CDKToolkitNotFound')
+    if input.get('dashboardsEnabled'):
+        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account)
 
-    try:
-        response = cfn.describe_stack_resource(
-            StackName='CDKToolkit', LogicalResourceId='CloudFormationExecutionRole'
-        )
-        cdk_role_name = response['StackResourceDetail']['PhysicalResourceId']
-        return cdk_role_name
-    except cfn.exceptions.ClientError as e:
-        raise Exception('CDKToolkitDeploymentActionRoleNotFound')
+    return cdk_role_name
 
 
 def create_environment(context: Context, source, input=None):

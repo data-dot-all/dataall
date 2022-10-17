@@ -119,7 +119,7 @@ class ShareObject:
                     GlueTableName=item.GlueTableName
                     if itemType == ShareableType.Table.value
                     else '',
-                    S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.principalId}'.lower()
+                    S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                     if itemType == ShareableType.StorageLocation.value
                     else '',
                 )
@@ -424,7 +424,7 @@ class ShareObject:
                 GlueTableName=item.GlueTableName
                 if itemType == ShareableType.Table.value
                 else '',
-                S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.environmentUri}'.lower()
+                S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                 if itemType == ShareableType.StorageLocation.value
                 else '',
             )
@@ -467,13 +467,6 @@ class ShareObject:
                 action='Delete share object',
                 message='Delete all shared items before proceeding',
             )
-        history = models.ShareObjectHistory(
-            owner=username,
-            label=f'{username} has cancelled share object',
-            shareUri=uri,
-            actionName='CANCEL',
-        )
-        session.add(history)
         session.delete(share)
         return True
 

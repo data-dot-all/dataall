@@ -10,7 +10,7 @@ const Logo = () => (
             component="img"
             sx={{
               height: '25px',
-              width: '25px'
+              width: '35px'
             }}
           />
         </Box>

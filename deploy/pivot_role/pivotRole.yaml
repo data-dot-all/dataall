@@ -2,16 +2,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM Role used by dataall platform to run AWS short running tasks
 Parameters:
   AwsAccountId:
-    Description: AWS AccountId of the dataall environment
+    Description: AWS AccountId of the dataall INFRASTRUCTURE account that we wish to link this environment with.
     Type: String
   ExternalId:
-    Description: ExternalId to secure dataall assume role
+    Description: ExternalId to secure dataall assume role (copy/paste from the UI)
     Type: String
   PivotRoleName:
-    Description: IAM role name
+    Description: IAM role name (copy/paste from the UI)
     Type: String
   EnvironmentResourcePrefix:
-    Description: The resource prefix value of the dataall environment
+    Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
     Type: String
 Resources:
   PivotRole:
@@ -69,6 +69,19 @@ Resources:
             Action: 's3:GetObject'
             Resource:
               - 'arn:aws:s3:::crawler-public*'
+          - Sid: ManagedAccessPoints
+            Action:
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: ManagedBuckets
             Action:
               - 's3:List*'
@@ -165,6 +178,7 @@ Resources:
               - 'glue:UpdateTrigger'
               - 'glue:UpdateJob'
               - 'glue:TagResource'
+              - 'glue:UpdateCrawler'
             Effect: Allow
             Resource: '*'
           - Sid: KMS
@@ -586,10 +600,12 @@ Resources:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
           - Sid: QuickSightSession
             Effect: Allow
             Action:
               - 'quicksight:GetSessionEmbedUrl'
+              - "quicksight:DescribeAccountSubscription"
             Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-2
       Roles:
@@ -602,6 +618,13 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
+          - Sid: ParameterStore
+            Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
           - Sid: Secretsmanager
             Effect: Allow
             Action:
@@ -618,6 +641,12 @@ Resources:
           - Sid: IAMList
             Action:
               - 'iam:ListRoles'
+            Effect: Allow
+            Resource: '*'
+          - Sid: IAMRolePolicy
+            Action:
+              - 'iam:PutRolePolicy'
+              - 'iam:DeleteRolePolicy'
             Effect: Allow
             Resource: '*'
           - Sid: IAMPassRole

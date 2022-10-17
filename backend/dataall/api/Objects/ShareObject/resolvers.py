@@ -84,7 +84,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
         session.add(approve_share_task)
 
     # call cdk to update bucket policy of the dataset for folder shares
-    stack_helper.deploy_stack(context, share.datasetUri)
+    # stack_helper.deploy_stack(context, share.datasetUri)
 
     Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
 
@@ -109,7 +109,7 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         )
         session.add(reject_share_task)
 
-    stack_helper.deploy_stack(context, share.datasetUri)
+    # stack_helper.deploy_stack(context, share.datasetUri)
 
     Worker.queue(engine=context.engine, task_ids=[reject_share_task.taskUri])
 

@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import ast
 
 import boto3
 from botocore.exceptions import ClientError
@@ -26,14 +27,22 @@ def aws_configure(profile_name='default'):
     print('..............................................')
     print('        Running configure                     ')
     print('..............................................')
-    sts = boto3.client('sts')
-    idnty = sts.get_caller_identity()
-    this_aws_account = idnty['Account']
-    role_name = idnty.get('Arn').split('/')[1]
-    role_arn = f'arn:aws:iam::{this_aws_account}:role/{role_name}'
-    creds = sts.assume_role(
-        RoleArn=role_arn, RoleSessionName='CdkSession', DurationSeconds=900
-    ).get('Credentials', {})
+    print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
+    cmd = [
+        'curl',
+        '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI'
+    ]
+    process = subprocess.run(
+        ' '.join(cmd),
+        text=True,
+        shell=True,  # nosec
+        encoding='utf-8',
+        capture_output=True
+    )
+    creds = None
+    if process.returncode == 0:
+        creds = ast.literal_eval(process.stdout)
+        print(creds)
     return creds
 
 
@@ -142,7 +151,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
     idnty = sts.get_caller_identity()
     this_aws_account = idnty['Account']
     creds = None
-    if ENVNAME != 'local':
+    if ENVNAME not in ['local', 'dkrcompose']:
         creds = aws_configure()
 
     with engine.scoped_session() as session:
@@ -202,7 +211,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     {
                         'AWS_ACCESS_KEY_ID': creds.get('AccessKeyId'),
                         'AWS_SECRET_ACCESS_KEY': creds.get('SecretAccessKey'),
-                        'AWS_SESSION_TOKEN': creds.get('SessionToken'),
+                        'AWS_SESSION_TOKEN': creds.get('Token'),
                     }
                 )
 
