@@ -9,7 +9,7 @@ from dataall.cdkproxy.stacks.cdk_pipeline import CDKPipelineStack
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, pipeline1, env, pip_envs, org):
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_engine',
+        'dataall.cdkproxy.stacks.cdk_pipeline.CDKPipelineStack.get_engine',
         return_value=db,
     )
     mocker.patch(
@@ -17,15 +17,15 @@ def patch_methods(mocker, db, pipeline1, env, pip_envs, org):
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_target',
+        'dataall.cdkproxy.stacks.cdk_pipeline.CDKPipelineStack.get_target',
         return_value=pipeline1,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_cicd_environment',
+        'dataall.cdkproxy.stacks.cdk_pipeline.CDKPipelineStack.get_pipeline_cicd_environment',
         return_value=env,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_environments',
+        'dataall.cdkproxy.stacks.cdk_pipeline.CDKPipelineStack.get_pipeline_environments',
         return_value=pip_envs,
     )
     mocker.patch(
