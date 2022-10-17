@@ -179,7 +179,24 @@ def notebook(db, env: models.Environment) -> models.SagemakerNotebook:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline(db, env: models.Environment) -> models.DataPipeline:
+def pipeline_1(db, env: models.Environment) -> models.DataPipeline:
+    with db.scoped_session() as session:
+        pipeline = models.DataPipeline(
+            label='thistable',
+            owner='me',
+            AwsAccountId=env.AwsAccountId,
+            region=env.region,
+            environmentUri=env.environmentUri,
+            repo='pipeline',
+            SamlGroupName='admins',
+            devStrategy='cdk-trunk'
+        )
+        session.add(pipeline)
+    yield pipeline
+
+
+@pytest.fixture(scope='module', autouse=True)
+def pipeline_2(db, env: models.Environment) -> models.DataPipeline:
     with db.scoped_session() as session:
         pipeline = models.DataPipeline(
             label='thistable',
@@ -193,6 +210,7 @@ def pipeline(db, env: models.Environment) -> models.DataPipeline:
         )
         session.add(pipeline)
     yield pipeline
+
 
 @pytest.fixture(scope='module', autouse=True)
 def pip_envs(db, env: models.Environment, pipeline: models.DataPipeline) -> models.DataPipelineEnvironment:

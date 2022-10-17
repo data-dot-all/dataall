@@ -4,15 +4,15 @@
             "account": "227670588337",
             "region": "eu-west-2"
         },
-        "prod": {
-            "account": "227670588337",
+        "dev": {
+            "account": "467173892793",
             "region": "eu-west-2",
             "resources": {
                 "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}
             }
         },
-        "dev": {
-            "account": "227670588337",
+        "prod": {
+            "account": "467173892793",
             "region": "eu-west-2",
             "resources": {
                 "ddk-bucket": {"versioned": false, "removal_policy": "destroy"}

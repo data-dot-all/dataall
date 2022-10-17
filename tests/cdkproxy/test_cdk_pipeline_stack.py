@@ -3,11 +3,11 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.cdkproxy.stacks.pipeline import PipelineStack
+from dataall.cdkproxy.stacks.pipeline import CDKPipelineStack
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
+def patch_methods(mocker, db, pipeline1, env, pip_envs, org):
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_engine',
         return_value=db,
@@ -18,7 +18,7 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_target',
-        return_value=pipeline2,
+        return_value=pipeline1,
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.pipeline.PipelineStack.get_pipeline_cicd_environment',
@@ -33,7 +33,7 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
     )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
-        return_value=pipeline2,
+        return_value=pipeline1,
     )
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_environment',
@@ -44,14 +44,14 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=org,
     )
 
+
 @pytest.fixture(scope='function', autouse=True)
-def template2(pipeline2):
+def template1(pipeline1):
     app = App()
-    PipelineStack(app, 'Pipeline', target_uri=pipeline2.DataPipelineUri)
+    CDKPipelineStack(app, 'Pipeline', target_uri=pipeline1.DataPipelineUri)
     return json.dumps(app.synth().get_stack_by_name('Pipeline').template)
 
 
-def test_resources_created_cp_trunk(template2):
-    assert 'AWS::CodeCommit::Repository' in template2
-    assert 'AWS::CodePipeline::Pipeline' in template2
-    assert 'AWS::CodeBuild::Project' in template2
+def test_resources_created_cdk_trunk(template1):
+    assert 'AWS::CodeCommit::Repository' in template1
+
