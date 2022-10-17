@@ -179,7 +179,7 @@ def notebook(db, env: models.Environment) -> models.SagemakerNotebook:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline_1(db, env: models.Environment) -> models.DataPipeline:
+def pipeline1(db, env: models.Environment) -> models.DataPipeline:
     with db.scoped_session() as session:
         pipeline = models.DataPipeline(
             label='thistable',
@@ -196,7 +196,7 @@ def pipeline_1(db, env: models.Environment) -> models.DataPipeline:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline_2(db, env: models.Environment) -> models.DataPipeline:
+def pipeline2(db, env: models.Environment) -> models.DataPipeline:
     with db.scoped_session() as session:
         pipeline = models.DataPipeline(
             label='thistable',
@@ -213,16 +213,16 @@ def pipeline_2(db, env: models.Environment) -> models.DataPipeline:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pip_envs(db, env: models.Environment, pipeline: models.DataPipeline) -> models.DataPipelineEnvironment:
+def pip_envs(db, env: models.Environment, pipeline1: models.DataPipeline) -> models.DataPipelineEnvironment:
     with db.scoped_session() as session:
         pipeline_env1 = models.DataPipelineEnvironment(
             owner='me',
-            label=f"{pipeline.label}-{env.label}",
+            label=f"{pipeline1.label}-{env.label}",
             environmentUri=env.environmentUri,
             environmentLabel=env.label,
-            pipelineUri=pipeline.DataPipelineUri,
-            pipelineLabel=pipeline.label,
-            envPipelineUri=f"{pipeline.DataPipelineUri}{env.environmentUri}",
+            pipelineUri=pipeline1.DataPipelineUri,
+            pipelineLabel=pipeline1.label,
+            envPipelineUri=f"{pipeline1.DataPipelineUri}{env.environmentUri}",
             AwsAccountId=env.AwsAccountId,
             region=env.region,
             stage='dev',
@@ -232,7 +232,7 @@ def pip_envs(db, env: models.Environment, pipeline: models.DataPipeline) -> mode
 
         session.add(pipeline_env1)
 
-    yield api.Pipeline.query_pipeline_environments(session=session, uri=pipeline.DataPipelineUri)
+    yield api.Pipeline.query_pipeline_environments(session=session, uri=pipeline1.DataPipelineUri)
 
 @pytest.fixture(scope='module', autouse=True)
 def redshift_cluster(db, env: models.Environment) -> models.RedshiftCluster:
