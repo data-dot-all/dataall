@@ -79,8 +79,8 @@ def list_data_items_shared_with_env_group(
 
 def list_cognito_groups(context, source, filter: dict = None):
     envname = os.getenv('envname', 'local')
-    if envname in ['local', 'dkrcompose']:
-        return [{"groupName": 'DAAdministrators'}, {"groupName": 'Engineers'}, {"groupName": 'Scientists'}]
+    if envname in ['dkrcompose']:
+        return [{"groupName": 'Docker'}]
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
     groups = Cognito.list_cognito_groups(envname=envname, region=current_region)
     category, category_uri = filter.get("type"), filter.get("uri")
