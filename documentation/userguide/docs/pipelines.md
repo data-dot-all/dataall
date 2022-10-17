@@ -52,7 +52,7 @@ is deployed.
 
 ### CDK pipelines - Trunk-based
 
-This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html)
+This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html).
 As stated in the documentation, CDK Pipelines is an opinionated construct library. It is purpose-built to deploy one or more copies of your CDK applications using CloudFormation with a minimal amount of effort on your part.
 
 #### CodeCommit repository
@@ -138,15 +138,15 @@ This CodePipeline pipeline is based on the [CDK Pipelines library](https://docs.
 
 ### CodePipeline pipelines - Trunk-based or GitFlow
 
-For cases in which we need more control  over the CICD pipeline, instead of using [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html) we can
-use [aws-codepipeline](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codepipeline-readme.html) construct library directly. 
+For cases in which we need more control over the CICD pipeline, instead of using [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html) we can
+use [aws-codepipeline](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codepipeline-readme.html) construct library. 
 
 
 #### CodeCommit repository and CICD deployment
 When a pipeline is created, a CloudFormation stack is deployed in the CICD environment AWS account. It contains:
 
 - an AWS CodeCommit repository with the code of an AWS DDK application where we made some modifications to allow cross-account deployments.
-- CICD CodePipeline(s) pipeline that deploys the application
+- CICD CodePipeline(s) pipeline that deploy(s) the application
 
 In the first run of the pipeline we will perform some initialization actions from the pipeline itself (you don't need to do anything). In short, we initialize the DDK application by running `ddk init` 
 and we push the code back to our repository.
@@ -188,6 +188,7 @@ The `dev` pipeline reads from the `dev` branch of the repository:
 3. Cross-account deployments require specific definition of the environment in the code.
 
 **Summary**
+
 CDK pipelines are recommended for flexibility and for a robust cross-account application deployment, 
 whereas CodePipeline pipelines are recommended if you need to provide an immutable pipeline architecture or if you want to implement a GitFlow strategy.
 
