@@ -1,13 +1,13 @@
 import os
 import logging
-import boto3
 from .... import db
 from ....db import exceptions
 from ....db.models import Group
-from ...constants import *
+from ....aws.handlers.cognito import Cognito
 
 
 log = logging.getLogger()
+
 
 def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
@@ -82,11 +82,7 @@ def list_cognito_groups(context, source, filter: dict = None):
     if envname in ['local', 'dkrcompose']:
         return [{"groupName": 'DAAdministrators'}, {"groupName": 'Engineers'}, {"groupName": 'Scientists'}]
     current_region = os.getenv('AWS_REGION', 'eu-west-1')
-    parameter_path = f'/dataall/{envname}/cognito/userpool'
-    ssm = boto3.client('ssm', region_name=current_region)
-    cognito = boto3.client('cognito-idp', region_name=current_region)
-    user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
-    groups = cognito.list_groups(UserPoolId=user_pool_id)['Groups']
+    groups = Cognito.list_cognito_groups(envname=envname, region=current_region)
     category, category_uri = filter.get("type"), filter.get("uri")
     if category and category_uri:
         if category == 'environment':

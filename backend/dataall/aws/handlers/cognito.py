@@ -1,4 +1,5 @@
 import logging
+import boto3
 
 from .sts import SessionHelper
 
@@ -13,13 +14,16 @@ class Cognito:
         return session.client(client_type, region_name=region_name)
 
     @staticmethod
-    def list_cognito_groups(account_id: str, region: str, user_pool_id: str):
+    def list_cognito_groups(envname: str, region: str):
         try:
-            cognitoCli = Cognito.client(account_id, region, "cognito-idp")
-            response = cognitoCli.list_groups(UserPoolId=user_pool_id)
+            parameter_path = f'/dataall/{envname}/cognito/userpool'
+            ssm = boto3.client('ssm', region_name=region)
+            user_pool_id = ssm.get_parameter(Name=parameter_path)['Parameter']['Value']
+            cognito = boto3.client('cognito-idp', region_name=region)
+            groups = cognito.list_groups(UserPoolId=user_pool_id)['Groups']
         except Exception as e:
             log.error(
                 f'Failed to list groups of user pool {user_pool_id} due to {e}'
             )
         else:
-            return response['Groups']
+            return groups
