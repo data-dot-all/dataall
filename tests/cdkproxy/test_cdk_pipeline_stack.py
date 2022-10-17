@@ -48,8 +48,8 @@ def patch_methods(mocker, db, pipeline1, env, pip_envs, org):
 @pytest.fixture(scope='function', autouse=True)
 def template1(pipeline1):
     app = App()
-    CDKPipelineStack(app, 'Pipeline', target_uri=pipeline1.DataPipelineUri)
-    return json.dumps(app.synth().get_stack_by_name('Pipeline').template)
+    CDKPipelineStack(app, 'CDKPipeline', target_uri=pipeline1.DataPipelineUri)
+    return json.dumps(app.synth().get_stack_by_name('CDKPipeline').template)
 
 
 def test_resources_created_cdk_trunk(template1):
