@@ -3,7 +3,7 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.cdkproxy.stacks.pipeline import CDKPipelineStack
+from dataall.cdkproxy.stacks.cdk_pipeline import CDKPipelineStack
 
 
 @pytest.fixture(scope='function', autouse=True)
