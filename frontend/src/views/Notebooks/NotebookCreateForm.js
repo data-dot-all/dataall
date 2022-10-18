@@ -242,8 +242,8 @@ const NotebookCreateForm = (props) => {
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().nullable(),
-                VpcId: Yup.string().nullable().required('*VPC ID is required'),
-                SubnetId: Yup.string().nullable().required('*Subnet ID is required'),
+                VpcId: Yup.string().min(1).required('*VPC ID is required'),
+                SubnetId: Yup.string().min(1).required('*Subnet ID is required'),
                 InstanceType: Yup.string()
                   .min(1)
                   .required('*Instance type is required'),
