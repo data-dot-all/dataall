@@ -8,11 +8,12 @@ alembic -c backend/alembic.ini revision -m "_release_vX.X.X"
 
 To run the upgrade (this is part of the deployment pipeline)
 ```bash
-envname=local alembic revision --autogenerate -m "my migration"
+alembic -c backend/alembic.ini upgrade head
 ```
 
 To run migrations locally
 ```bash
-envname=local alembic -c backend/alembic.ini upgrade head
+envname=local
+alembic revision upgrade head
 ```
 https://alembic.sqlalchemy.org/en/latest/
