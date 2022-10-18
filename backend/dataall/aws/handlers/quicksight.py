@@ -4,7 +4,6 @@ import os
 import ast
 
 from botocore.exceptions import ClientError
-
 from .sts import SessionHelper
 from .secrets_manager import SecretsManager
 from .parameter_store import ParameterStoreManager
@@ -14,6 +13,20 @@ logger.setLevel(logging.DEBUG)
 
 
 class Quicksight:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
+        """Returns a boto3 quicksight client in the provided account/region
+        Args:
+            AwsAccountId(str) : aws account id
+            region(str) : aws region
+        Returns : boto3.client ("quicksight")
+        """
+        session = SessionHelper.remote_session(AwsAccountId)
+        return session.client('quicksight', region_name=region)
+
     @staticmethod
     def get_identity_region(AwsAccountId):
         """Quicksight manages identities in one region, and there is no API to retrieve it
@@ -26,9 +39,8 @@ class Quicksight:
             the region quicksight uses as identity region
         """
         identity_region_rex = re.compile('Please use the (?P<region>.*) endpoint.')
-        session = SessionHelper.remote_session(AwsAccountId)
         identity_region = 'us-east-1'
-        client = session.client('quicksight', region_name=identity_region)
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
@@ -56,16 +68,34 @@ class Quicksight:
         return session.client('quicksight', region_name=identity_region)
 
     @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
-        """Returns a boto3 quicksight client in the provided account/region
+    def check_quicksight_enterprise_subscription(AwsAccountId):
+        """Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's subscription. A successful API call returns an AccountInfo object that includes an account's name, subscription status, authentication type, edition, and notification email address.
         Args:
             AwsAccountId(str) : aws account id
-            region(str) : aws region
-        Returns : boto3.client ("quicksight")
+        Returns: bool
+            True if Quicksight Enterprise Edition is enabled in the AWS Account
         """
-        identity_region = Quicksight.get_identity_region(AwsAccountId)
-        session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('quicksight', region_name=region)
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId)
+        try:
+            response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
+            if not response['AccountInfo']:
+                raise Exception(f'Quicksight Enterprise Subscription not found in Account: {AwsAccountId}')
+            else:
+                if response['AccountInfo']['Edition'] not in ['ENTERPRISE', 'ENTERPRISE_AND_Q']:
+                    raise Exception(
+                        f"Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response['AccountInfo']['Edition']}")
+                else:
+                    if response['AccountInfo']['AccountSubscriptionStatus'] == 'ACCOUNT_CREATED':
+                        return True
+                    else:
+                        raise Exception(
+                            f"Quicksight Subscription found in Account: {AwsAccountId} not active. Status = {response['AccountInfo']['AccountSubscriptionStatus']}")
+
+        except client.exceptions.ResourceNotFoundException:
+            raise Exception('Quicksight Enterprise Subscription not found')
+
+        except client.exceptions.AccessDeniedException:
+            raise Exception('Access denied to Quicksight for data.all PivotRole')
 
     @staticmethod
     def create_quicksight_default_group(AwsAccountId):

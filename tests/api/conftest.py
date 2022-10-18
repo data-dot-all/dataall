@@ -18,9 +18,7 @@ def patch_check_env(module_mocker):
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_env(module_mocker):
-    module_mocker.patch(
-        'dataall.utils.Parameter.get_parameter', return_value='unknownvalue'
-    )
+    module_mocker.patch('dataall.utils.Parameter.get_parameter', return_value='unknownvalue')
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -28,15 +26,11 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
     module_mocker.patch('dataall.searchproxy.upsert', return_value={})
-    module_mocker.patch(
-        'dataall.searchproxy.indexers.upsert_dataset_tables', return_value={}
-    )
+    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset_tables', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.upsert_table', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.upsert_folder', return_value={})
-    module_mocker.patch(
-        'dataall.searchproxy.indexers.upsert_dashboard', return_value={}
-    )
+    module_mocker.patch('dataall.searchproxy.indexers.upsert_dashboard', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
 
 
@@ -73,9 +67,7 @@ def user(db):
 @pytest.fixture(scope='module')
 def group(db, user):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
-            name='testadmins', label='testadmins', owner='alice'
-        )
+        group = dataall.db.models.Group(name='testadmins', label='testadmins', owner='alice')
         session.add(group)
         session.commit()
         member = dataall.db.models.GroupMember(
@@ -98,9 +90,7 @@ def user2(db):
 @pytest.fixture(scope='module')
 def group2(db, user2):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
-            name='dataengineers', label='dataengineers', owner=user2.userName
-        )
+        group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner=user2.userName)
         session.add(group)
         session.commit()
         member = dataall.db.models.GroupMember(
@@ -123,9 +113,7 @@ def user3(db):
 @pytest.fixture(scope='module')
 def group3(db, user3):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
-            name='datascientists', label='datascientists', owner=user3.userName
-        )
+        group = dataall.db.models.Group(name='datascientists', label='datascientists', owner=user3.userName)
         session.add(group)
         session.commit()
         member = dataall.db.models.GroupMember(
@@ -140,9 +128,7 @@ def group3(db, user3):
 @pytest.fixture(scope='module')
 def group4(db, user3):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
-            name='externals', label='externals', owner=user3.userName
-        )
+        group = dataall.db.models.Group(name='externals', label='externals', owner=user3.userName)
         session.add(group)
         session.commit()
         member = dataall.db.models.GroupMember(
@@ -157,9 +143,7 @@ def group4(db, user3):
 @pytest.fixture(scope='module')
 def tenant(db, group, group2, permissions, user, user2, user3, group3, group4):
     with db.scoped_session() as session:
-        tenant = dataall.db.api.Tenant.save_tenant(
-            session, name='dataall', description='Tenant dataall'
-        )
+        tenant = dataall.db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
         dataall.db.api.TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
@@ -312,7 +296,7 @@ def dataset(client, patch_es):
 def env(client):
     cache = {}
 
-    def factory(org, envname, owner, group, account, region):
+    def factory(org, envname, owner, group, account, region, desc='test'):
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
             return cache[key]
@@ -335,7 +319,7 @@ def env(client):
             groups=[group],
             input={
                 'label': f'{envname}',
-                'description': f'test',
+                'description': f'{desc}',
                 'organizationUri': org.organizationUri,
                 'AwsAccountId': account,
                 'tags': ['a', 'b', 'c'],
@@ -355,9 +339,7 @@ def env(client):
 def location(db):
     cache = {}
 
-    def factory(
-        dataset: models.Dataset, name, username
-    ) -> models.DatasetStorageLocation:
+    def factory(dataset: models.Dataset, name, username) -> models.DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -448,17 +430,13 @@ def org_fixture(org, user, group, tenant):
 @pytest.fixture(scope='module')
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(
-    env_fixture, org_fixture, dataset, group
-) -> dataall.db.models.Dataset:
+def dataset_fixture(env_fixture, org_fixture, dataset, group) -> dataall.db.models.Dataset:
     yield dataset(
         org=org_fixture,
         env=env_fixture,
@@ -520,9 +498,7 @@ def cluster(env_fixture, org_fixture, client, group):
 
 
 @pytest.fixture(scope='module')
-def sgm_notebook(
-    client, tenant, group, env_fixture
-) -> dataall.db.models.SagemakerNotebook:
+def sgm_notebook(client, tenant, group, env_fixture) -> dataall.db.models.SagemakerNotebook:
     response = client.query(
         """
         mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){
@@ -591,9 +567,7 @@ def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
 
 
 @pytest.fixture(scope='module')
-def sgm_studio(
-    client, tenant, group, env_fixture, module_mocker
-) -> models.SagemakerStudioUserProfile:
+def sgm_studio(client, tenant, group, env_fixture, module_mocker) -> models.SagemakerStudioUserProfile:
     module_mocker.patch(
         'dataall.aws.handlers.sagemaker_studio.SagemakerStudio.get_sagemaker_studio_domain',
         return_value={'DomainId': 'test'},

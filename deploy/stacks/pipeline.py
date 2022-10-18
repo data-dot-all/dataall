@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import List
 
-from aws_cdk import Stack, Tags, RemovalPolicy
+from aws_cdk import SecretValue, Stack, Tags, RemovalPolicy
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
@@ -28,12 +28,14 @@ class PipelineStack(Stack):
         target_envs: List = None,
         git_branch='main',
         resource_prefix='dataall',
+        source='codecommit',
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
 
         self.validate_deployment_params(git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
+        self.source = source
         self.resource_prefix = resource_prefix
         self.target_envs = target_envs
 
@@ -180,6 +182,21 @@ class PipelineStack(Stack):
         )
         for policy in self.codebuild_policy:
             self.pipeline_iam_role.add_to_policy(policy)
+            
+        if self.source == "github":
+            source = CodePipelineSource.git_hub(
+                repo_string="awslabs/aws-dataall",
+                branch=self.git_branch,
+                authentication=SecretValue.secrets_manager(secret_id="github-access-token-secret")
+            )
+            
+        else:
+            source = CodePipelineSource.code_commit(
+                        repository=codecommit.Repository.from_repository_name(
+                            self, 'sourcerepo', repository_name='dataall'
+                        ),
+                        branch=self.git_branch,
+                    )
 
         self.pipeline = pipelines.CodePipeline(
             self,
@@ -188,12 +205,7 @@ class PipelineStack(Stack):
             publish_assets_in_parallel=False,
             synth=pipelines.CodeBuildStep(
                 'Synth',
-                input=CodePipelineSource.code_commit(
-                    repository=codecommit.Repository.from_repository_name(
-                        self, 'sourcerepo', repository_name='dataall'
-                    ),
-                    branch=self.git_branch,
-                ),
+                input=source,
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                 ),
@@ -205,11 +217,21 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
+                    'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
+            code_build_defaults=pipelines.CodeBuildOptions(
+                build_environment=codebuild.BuildEnvironment(
+                    environment_variables={
+                        "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
+                            value=git_branch
+                        ),
+                    }
+                )
+            )
         )
 
         self.pipeline.node.add_dependency(self.aurora_devdb)
