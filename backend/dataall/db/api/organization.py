@@ -337,22 +337,6 @@ class Organization:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    @has_resource_perm(permissions.GET_ORGANIZATION)
-    def not_organization_groups(session, username, groups, uri, data=None, check_perm=False) -> dict:
-        org_groups: [] = (
-            session.query(models.OrganizationGroup).filter(
-                and_(
-                    models.OrganizationGroup.groupUri.in_(groups),
-                    models.OrganizationGroup.organizationUri == uri,
-                ),
-            )
-        ).all()
-        org_groups = [g.groupUri for g in org_groups]
-        not_invited_groups = [{'groupUri': group} for group in groups if group not in org_groups]
-        return Page(not_invited_groups, 1, 1000, len(not_invited_groups)).to_dict()
-
-    @staticmethod
     def count_organization_invited_groups(session, uri, group) -> int:
         groups = (
             session.query(models.OrganizationGroup)

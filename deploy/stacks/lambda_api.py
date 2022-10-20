@@ -240,6 +240,7 @@ class LambdaApiStack(pyNestedClass):
                         'xray:GetSamplingRules',
                         'xray:GetSamplingTargets',
                         'xray:GetSamplingStatisticSummaries',
+                        'cognito-idp:ListGroups'
                     ],
                     resources=['*'],
                 ),
