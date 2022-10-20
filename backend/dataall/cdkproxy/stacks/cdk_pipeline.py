@@ -238,7 +238,7 @@ config = Config()
         .build()"""
 
         stages = ""
-        for env in development_environments:
+        for env in sorted(development_environments, key=lambda env: env.order):
             stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
             stages = stages + stage
         footer = """
