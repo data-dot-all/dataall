@@ -678,6 +678,8 @@ Resources:
               - 'codecommit:ListBranches'
               - 'codecommit:GetFolder'
               - 'codecommit:GetCommit'
+              - 'codecommit:GitPull'
+              - 'codecommit:GetRepository'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
