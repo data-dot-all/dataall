@@ -114,7 +114,7 @@ def clone_remote_stack(pipeline, pipeline_environment):
         '&&',
         'mkdir',
         f'{pipeline.repo}',
-        '&&'
+        '&&',
         'git',
         'clone',
         f"codecommit::{pipeline_environment.region}://{pipeline.repo}",
@@ -138,14 +138,31 @@ def clone_remote_stack(pipeline, pipeline_environment):
 
 
 def clean_up_repo(path):
-    if os.path.isfile(f"{path}/code.zip"):
-        os.remove(f"{path}/code.zip")
+    if path:
+        precmd = [
+            'rm',
+            '-r',
+            f"{path}"
+        ]
+        process = subprocess.run(
+            ' '.join(precmd),
+            text=True,
+            shell=True,  # nosec
+            encoding='utf-8',
+            capture_output=True
+        )
+        if process.returncode == 0:
+            print(f"Successfully cd into path: {path}. {str(process.stdout)}")
+        else:
+            logger.error(
+                f'Failed to cd into path: {path} due to {str(process.stderr)}'
+            )
     else:
-        logger.info("Info: %s Zip not found" % f"{path}/code.zip")
+        logger.info(f"Info:Path {path} not found")
     return
 
 
-def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
+def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
     sts = boto3.client('sts')
     idnty = sts.get_caller_identity()
@@ -215,13 +232,15 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     }
                 )
 
+            cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
+
             process = subprocess.run(
                 ' '.join(cmd),
                 text=True,
                 shell=True,  # nosec
                 encoding='utf-8',
                 env=env,
-                cwd=os.path.dirname(os.path.abspath(__file__)),
+                cwd=cwd,
             )
 
             if process.returncode == 0:
@@ -237,7 +256,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None):
                     pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                     pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
                     clone_remote_stack(pipeline, pipeline_environment)
-                    deploy_cdk_stack(engine, cicdstack.stackUri, f"./stacks/{pipeline.repo}/app.py")
+                    deploy_cdk_stack(engine, cicdstack.stackUri, app_path=f"app.py", path=f"./stacks/{pipeline.repo}/")
                     clean_up_repo(f"./stacks/{pipeline.repo}")
             else:
                 stack.status = 'CREATE_FAILED'
