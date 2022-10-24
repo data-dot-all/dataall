@@ -565,7 +565,8 @@ class PipelineStack(Stack):
             "region": "{env.region}",
             "stage": "{env.stage}",
             "env_vars": {{
-                "database": "example_database"
+                "database": "example_database",
+                "Team": "{env.samlGroupName}"
             }}
         }}"""
             json_envs = json_envs + json_env
