@@ -141,7 +141,7 @@ def clean_up_repo(path):
             '-rf',
             f"{path}"
         ]
-        
+
         cwd = os.path.dirname(os.path.abspath(__file__))
         logger.info(f"Running command : \n {' '.join(precmd)}")
 
@@ -247,7 +247,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             )
 
             if process.returncode == 0:
-                meta = describe_stack(stack) 
+                meta = describe_stack(stack)
                 stack.stackid = meta['StackId']
                 stack.status = meta['StackStatus']
                 update_stack_output(session, stack)
