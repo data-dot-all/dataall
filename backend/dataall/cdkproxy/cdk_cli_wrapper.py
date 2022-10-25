@@ -69,9 +69,8 @@ def clone_remote_stack(pipeline, pipeline_environment):
     print('..................................................')
     role_arn = f'arn:aws:iam::{pipeline_environment.AwsAccountId}:role/dataallPivotRole'
     sts = boto3.client('sts')
-    env_creds = sts.assume_role(
-        RoleArn=role_arn, RoleSessionName='CdkSession', DurationSeconds=900
-    ).get('Credentials', {})
+    aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
+    env_creds = aws.get_credentials()
 
     python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')
 
@@ -86,9 +85,9 @@ def clone_remote_stack(pipeline, pipeline_environment):
     if env_creds:
         env.update(
             {
-                'AWS_ACCESS_KEY_ID': env_creds.get('AccessKeyId'),
-                'AWS_SECRET_ACCESS_KEY': env_creds.get('SecretAccessKey'),
-                'AWS_SESSION_TOKEN': env_creds.get('SessionToken'),
+                'AWS_ACCESS_KEY_ID': env_creds.access_key,
+                'AWS_SECRET_ACCESS_KEY': env_creds.secret_key,
+                'AWS_SESSION_TOKEN': env_creds.token,
             }
         )
     print(f"ENVIRONMENT = {env}")
@@ -141,16 +140,22 @@ def clean_up_repo(path):
     if path:
         precmd = [
             'rm',
-            '-r',
+            '-rf',
             f"{path}"
         ]
+        
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        logger.info(f"Running command : \n {' '.join(precmd)}")
+
         process = subprocess.run(
             ' '.join(precmd),
             text=True,
             shell=True,  # nosec
             encoding='utf-8',
-            capture_output=True
+            capture_output=True,
+            cwd=cwd
         )
+
         if process.returncode == 0:
             print(f"Successfully cd into path: {path}. {str(process.stdout)}")
         else:
@@ -244,7 +249,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             )
 
             if process.returncode == 0:
-                meta = describe_stack(stack)
+                meta = describe_stack(stack) 
                 stack.stackid = meta['StackId']
                 stack.status = meta['StackStatus']
                 update_stack_output(session, stack)

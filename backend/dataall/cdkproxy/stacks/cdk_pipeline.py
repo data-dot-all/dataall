@@ -225,11 +225,12 @@ class ApplicationStage(cdk.Stage):
         super().__init__(scope, f"dataall-{{environment_id.title()}}", **kwargs)
         DDKApplicationStack(self, "DataPipeline-{pipeline.label}-{pipeline.DataPipelineUri}", environment_id)
 
+id = f"dataall-cdkpipeline-{pipeline.DataPipelineUri}pip"
 config = Config()
 (
     CICDPipelineStack(
         app,
-        id="dataall-pipeline-{pipeline.label}-{pipeline.DataPipelineUri}",
+        id=id,
         environment_id="cicd",
         pipeline_name="{pipeline.label}",
     )
