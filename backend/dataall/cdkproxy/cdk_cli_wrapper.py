@@ -42,7 +42,7 @@ def aws_configure(profile_name='default'):
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
-        print(creds)
+
     return creds
 
 
@@ -67,8 +67,6 @@ def clone_remote_stack(pipeline, pipeline_environment):
     print('..................................................')
     print('     Configure remote CDK app                     ')
     print('..................................................')
-    role_arn = f'arn:aws:iam::{pipeline_environment.AwsAccountId}:role/dataallPivotRole'
-    sts = boto3.client('sts')
     aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
     env_creds = aws.get_credentials()
 
@@ -157,10 +155,10 @@ def clean_up_repo(path):
         )
 
         if process.returncode == 0:
-            print(f"Successfully cd into path: {path}. {str(process.stdout)}")
+            print(f"Successfully cleaned cloned repo: {path}. {str(process.stdout)}")
         else:
             logger.error(
-                f'Failed to cd into path: {path} due to {str(process.stderr)}'
+                f'Failed clean cloned repo: {path} due to {str(process.stderr)}'
             )
     else:
         logger.info(f"Info:Path {path} not found")
