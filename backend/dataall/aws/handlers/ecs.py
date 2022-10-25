@@ -9,7 +9,7 @@ from .service_handlers import Worker
 from ... import db
 from ...db import models
 from ...utils import Parameter
-from ...tasks.share_manager import ShareManager
+from ...tasks.data_sharing.data_sharing_service import DataSharingService
 
 log = logging.getLogger('aws:ecs')
 
@@ -23,7 +23,7 @@ class Ecs:
     def approve_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
-            return ShareManager.approve_share(engine, task.targetUri)
+            return DataSharingService.approve_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
                 envname, task.targetUri, 'approve_share'
@@ -34,7 +34,7 @@ class Ecs:
     def reject_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
-            return ShareManager.reject_share(engine, task.targetUri)
+            return DataSharingService.reject_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
                 envname, task.targetUri, 'reject_share'
