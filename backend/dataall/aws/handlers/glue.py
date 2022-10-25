@@ -15,7 +15,7 @@ class Glue:
         pass
 
     @staticmethod
-    def _create_database(accountid, database, region, location):
+    def create_database(accountid, database, region, location):
         try:
             existing_database = Glue.database_exists(
                 accountid=accountid, database=database, region=region
@@ -27,7 +27,9 @@ class Glue:
                 glue_database_created = True
             return glue_database_created
         except ClientError as e:
-            log.debug(f'Failed to create database {database}', e)
+            log.error(
+                f'Failed to create database {database} on account {accountid} due to {e}'
+            )
             raise e
 
     @staticmethod
@@ -64,15 +66,11 @@ class Glue:
         session = SessionHelper.remote_session(accountid)
         try:
             glue_client = session.client('glue', region_name=region)
-            response = glue_client.get_database(
-                CatalogId=data['accountid'], Name=database
-            )
-            if response.get('Database'):
-                return response
-            else:
-                return None
-        except ClientError as e:
-            log.debug(f'Database already exists in Glue{database}', e)
+            glue_client.get_database(CatalogId=data['accountid'], Name=database)
+            return True
+        except ClientError:
+            log.info(f'Database {database} does not exist on account {accountid}...')
+            return False
 
     @staticmethod
     @Worker.handler(path='glue.dataset.database.tables')
@@ -140,12 +138,13 @@ class Glue:
             log.info(f'Glue table not found: {data}')
             return None
 
+    @staticmethod
     def _create_table(**data):
         accountid = data['accountid']
-        session = SessionHelper.remote_session(accountid=accountid)
         region = data.get('region', 'eu-west-1')
         database = data.get('database', 'UnknownDatabaseName')
 
+        session = SessionHelper.remote_session(accountid=accountid)
         glue = session.client('glue', region_name=region)
         log.info(
             'Creating table {} in database {}'.format(
@@ -155,7 +154,7 @@ class Glue:
         if not Glue.database_exists(
             database=database, region=region, accountid=accountid
         ):
-            Glue._create_database(accountid, database, region, None)
+            Glue.create_database(accountid, database, region, None)
         if 'table_input' not in data:
             table_input = {
                 'Name': data['tablename'],
@@ -223,6 +222,47 @@ class Glue:
                 return response
 
     @staticmethod
+    def create_resource_link(**data):
+        accountid = data['accountid']
+        region = data['region']
+        database = data['database']
+        resource_link_name = data['resource_link_name']
+        resource_link_input = data['resource_link_input']
+        log.info(
+            f'Creating ResourceLink {resource_link_name} in database {accountid}://{database}'
+        )
+        try:
+            session = SessionHelper.remote_session(accountid=accountid)
+            glue = session.client('glue', region_name=region)
+            resource_link = Glue.table_exists(
+                accountid=accountid,
+                region=region,
+                database=database,
+                tablename=resource_link_name,
+            )
+            if resource_link:
+                log.info(
+                    f'ResourceLink {resource_link_name} already exists in database {accountid}://{database}'
+                )
+            else:
+                resource_link = glue.create_table(
+                    CatalogId=accountid,
+                    DatabaseName=database,
+                    TableInput=resource_link_input,
+                )
+                log.info(
+                    f'Successfully created ResourceLink {resource_link_name} in database {accountid}://{database}'
+                )
+            return resource_link
+        except ClientError as e:
+            log.error(
+                f'Could not create ResourceLink {resource_link_name} '
+                f'in database {accountid}://{database} '
+                f'due to: {e}'
+            )
+            raise e
+
+    @staticmethod
     def is_resource_link(table_input: dict):
         """
         Verifies if a Glue table or Glue table input contains the block "TargetTable"
@@ -269,20 +309,63 @@ class Glue:
             raise e
 
     @staticmethod
+    def delete_database(**data):
+        accountid = data['accountid']
+        region = data['region']
+        database = data['database']
+        log.info(f'Deleting database {accountid}://{database} ...')
+        try:
+            session = SessionHelper.remote_session(accountid=accountid)
+            glue = session.client('glue', region_name=region)
+            if Glue.database_exists(
+                accountid=accountid,
+                region=region,
+                database=database,
+            ):
+                glue.delete_database(CatalogId=accountid, Name=database)
+            return True
+        except ClientError as e:
+            log.error(
+                f'Could not delete database {database} '
+                f'in account {accountid} '
+                f'due to: {e}'
+            )
+            raise e
+
+    @staticmethod
     def batch_delete_tables(**data):
         accountid = data['accountid']
-        session = SessionHelper.remote_session(accountid=accountid)
-        glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
+        region = data['region']
         database = data['database']
         tables = data['tables']
-        log.debug(f'Batch deleting tables: {tables}')
-        response = glue.batch_delete_table(
-            CatalogId=accountid, DatabaseName=database, TablesToDelete=tables
-        )
-        log.debug(
-            f'Batch deleted tables {len(tables)} from database {database} successfully'
-        )
-        return response
+
+        if not tables:
+            log.info('No tables to delete exiting method...')
+            return
+
+        log.info(f'Batch deleting tables: {tables}')
+        try:
+            session = SessionHelper.remote_session(accountid=accountid)
+            glue = session.client('glue', region_name=region)
+            if Glue.database_exists(
+                accountid=accountid,
+                region=region,
+                database=database,
+            ):
+                glue.batch_delete_table(
+                    CatalogId=accountid, DatabaseName=database, TablesToDelete=tables
+                )
+                log.debug(
+                    f'Batch deleted tables {len(tables)} from database {database} successfully'
+                )
+            return True
+        except ClientError as e:
+            log.error(
+                f'Could not batch delete tables {tables} '
+                f'in database {accountid}://{database} '
+                f'due to: {e}'
+            )
+            raise e
 
     @staticmethod
     @Worker.handler(path='glue.dataset.crawler.create')
