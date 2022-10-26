@@ -253,14 +253,14 @@ def __update_to_rejected_status(db, share):
 
 
 def test_cross_account_sharing(db, cross_account_share, dataset, mocker):
-    """mocker.patch(
+    mocker.patch(
         'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share',
         return_value=True,
     )
     mocker.patch(
         'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.reject_share',
         return_value=True,
-    )"""
+    )
     dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share(
         db, cross_account_share.shareUri
     )
