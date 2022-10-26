@@ -682,15 +682,15 @@ class ShareObject:
 
         shared_tables = (
             session.query(models.DatasetTable)
-                .join(
+            .join(
                 models.ShareObjectItem,
                 models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
             )
-                .join(
+            .join(
                 models.ShareObject,
                 models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
             )
-                .filter(
+            .filter(
                 and_(
                     models.ShareObject.datasetUri == dataset.datasetUri,
                     models.ShareObject.environmentUri
@@ -699,18 +699,18 @@ class ShareObject:
                     models.ShareObject.shareUri == share_uri,
                 )
             )
-                .all()
+            .all()
         )
 
         env_group: models.EnvironmentGroup = (
             session.query(models.EnvironmentGroup)
-                .filter(
+            .filter(
                 and_(
                     models.EnvironmentGroup.environmentUri == share.environmentUri,
                     models.EnvironmentGroup.groupUri == share.principalId,
                 )
             )
-                .first()
+            .first()
         )
         if not env_group:
             raise Exception(
@@ -730,7 +730,7 @@ class ShareObject:
     def other_approved_share_object_exists(session, environment_uri, dataset_uri):
         return (
             session.query(models.ShareObject)
-                .filter(
+            .filter(
                 and_(
                     models.Environment.environmentUri == environment_uri,
                     models.ShareObject.status
@@ -738,18 +738,18 @@ class ShareObject:
                     models.ShareObject.datasetUri == dataset_uri,
                 )
             )
-                .all()
+            .all()
         )
 
     @staticmethod
     def is_shared_table(session, environment_uri, dataset_uri, table_name):
         return (
             session.query(models.ShareObjectItem)
-                .join(
+            .join(
                 models.ShareObject,
                 models.ShareObjectItem.shareUri == models.ShareObject.shareUri,
             )
-                .filter(
+            .filter(
                 and_(
                     models.ShareObjectItem.GlueTableName == table_name,
                     models.ShareObject.datasetUri == dataset_uri,
@@ -757,5 +757,5 @@ class ShareObject:
                     models.ShareObject.environmentUri == environment_uri,
                 )
             )
-                .first()
+            .first()
         )
