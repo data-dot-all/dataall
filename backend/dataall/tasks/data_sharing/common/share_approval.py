@@ -1,6 +1,5 @@
 import abc
 import logging
-import uuid
 
 from botocore.exceptions import ClientError
 
@@ -191,26 +190,10 @@ class ShareApproval:
             )
             raise e
 
-    @classmethod
-    def clean_shared_database(
-        cls,
-        session,
-        dataset: models.Dataset,
-        shared_tables: [models.DatasetTable],
-        target_environment: models.Environment,
-        shared_db_name: str,
-    ) -> [str]:
+    def clean_shared_database(self) -> [str]:
         """
         After share approval verify that the shared database
         do not have any removed items from the share request.
-
-        Parameters
-        ----------
-        session : db
-        dataset : models.Dataset
-        shared_tables : [models.DatasetTable]
-        target_environment : models.Environment
-        shared_db_name : shared database name
 
         Returns
         -------
@@ -219,76 +202,44 @@ class ShareApproval:
         tables_to_delete = []
 
         shared_glue_tables = Glue.list_glue_database_tables(
-            accountid=target_environment.AwsAccountId,
-            database=shared_db_name,
-            region=target_environment.region,
+            accountid=self.target_environment.AwsAccountId,
+            database=self.shared_db_name,
+            region=self.target_environment.region,
         )
         logger.info(
-            f'Shared database {shared_db_name} glue tables: {shared_glue_tables}'
+            f'Shared database {self.shared_db_name} glue tables: {shared_glue_tables}'
         )
 
-        shared_tables = [t.GlueTableName for t in shared_tables]
-        logger.info(f'Share items of the share object {shared_tables}')
-
-        aws_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId)
-        client = aws_session.client('lakeformation', region_name=dataset.region)
+        shared_tables = [t.GlueTableName for t in self.shared_tables]
+        logger.info(f'Share items of the share object {self.shared_tables}')
 
         for table in shared_glue_tables:
             if table['Name'] not in shared_tables:
                 logger.info(
-                    f'Found a table not part of the share: {dataset.GlueDatabaseName}//{table["Name"]}'
+                    f'Found a table not part of the share: {self.dataset.GlueDatabaseName}//{table["Name"]}'
                 )
-                is_shared = api.ShareObject.is_shared_table(
-                    session,
-                    target_environment.environmentUri,
-                    dataset.datasetUri,
-                    table['Name'],
-                )
-                if not is_shared:
-                    logger.info(
-                        f'Access to table {dataset.AwsAccountId}//{dataset.GlueDatabaseName}//{table["Name"]} '
-                        f'will be removed for account {target_environment.AwsAccountId}'
+                try:
+                    LakeFormation.revoke_source_table_access(
+                        target_accountid=self.target_environment.AwsAccountId,
+                        region=self.target_environment.region,
+                        source_database=self.dataset.GlueDatabaseName,
+                        source_table=table['Name'],
+                        target_principal=self.env_group.environmentIAMRoleArn,
+                        source_accountid=self.source_environment.AwsAccountId,
                     )
-                    if Glue.table_exists(
-                        **{
-                            'accountid': dataset.AwsAccountId,
-                            'region': dataset.region,
-                            'database': dataset.GlueDatabaseName,
-                            'tablename': table['Name'],
-                        }
-                    ):
-                        LakeFormation.batch_revoke_permissions(
-                            client,
-                            target_environment.AwsAccountId,
-                            [
-                                {
-                                    'Id': str(uuid.uuid4()),
-                                    'Principal': {
-                                        'DataLakePrincipalIdentifier': target_environment.AwsAccountId
-                                    },
-                                    'Resource': {
-                                        'TableWithColumns': {
-                                            'DatabaseName': dataset.GlueDatabaseName,
-                                            'Name': table['Name'],
-                                            'ColumnWildcard': {},
-                                            'CatalogId': dataset.AwsAccountId,
-                                        }
-                                    },
-                                    'Permissions': ['DESCRIBE', 'SELECT'],
-                                    'PermissionsWithGrantOption': [
-                                        'DESCRIBE',
-                                        'SELECT',
-                                    ],
-                                }
-                            ],
-                        )
+                except ClientError as e:
+                    # error not raised due to multiple failure reasons
+                    # cleanup failure does not impact share request items access
+                    logger.error(
+                        f'Revoking permission on source table failed due to: {e}'
+                    )
 
                 tables_to_delete.append(table['Name'])
 
         Glue.batch_delete_tables(
-            accountid=target_environment.AwsAccountId,
-            region=target_environment.region,
-            database=shared_db_name,
+            accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
             tables=tables_to_delete,
         )
 
@@ -299,7 +250,7 @@ class ShareApproval:
         table: models.DatasetTable,
         share_item: models.ShareObjectItem,
         error: Exception,
-    ) -> None:
+    ) -> bool:
         """
         Handles share failure by raising an alarm to alarmsTopic
         Parameters
@@ -310,7 +261,7 @@ class ShareApproval:
 
         Returns
         -------
-        None
+        True if alarm published successfully
         """
         logging.error(
             f'Failed to share table {table.GlueTableName} '
@@ -326,6 +277,7 @@ class ShareApproval:
         AlarmService().trigger_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
+        return True
 
     def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
         """
@@ -363,7 +315,7 @@ class ShareApproval:
         True if delete is successful
         """
         return Glue.delete_database(
-            accountid=self.dataset.AwsAccountId,
-            region=self.dataset.region,
+            accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
             database=f'{self.dataset.GlueDatabaseName}shared',
         )

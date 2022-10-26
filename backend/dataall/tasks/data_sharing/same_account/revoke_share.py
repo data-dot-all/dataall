@@ -33,13 +33,14 @@ class SameAccountShareRevoke(ShareRevoke):
         """
         Revokes a share on same account
         1) revoke resource link access
-        2) delete shared database on target account
+        2) revoke source table access
+        3) delete shared database
         Returns
         -------
         True if revoke is successful
         """
 
-        self.revoke_resource_links_access()
+        self.revoke_shared_tables_access()
 
         self.delete_shared_database()
 

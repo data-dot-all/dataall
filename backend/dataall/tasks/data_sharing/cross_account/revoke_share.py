@@ -37,19 +37,22 @@ class CrossAccountShareRevoke(ShareRevoke):
         """
         Revokes a share cross account
         1) revoke resource link access on target account
-        2) delete shared database on target account
-        3) revoke resource link access on source account
+        2) revoke table access on source account
+        3) delete shared database on target account
+        4) revoke external account sharing on source account
         Returns
         -------
         True if revoke is successful
         """
 
-        self.revoke_resource_links_access()
+        self.revoke_shared_tables_access()
 
         self.delete_shared_database()
 
         if not api.ShareObject.other_approved_share_object_exists(
-            self.session, self.target_environment.environmentUri
+            self.session,
+            self.target_environment.environmentUri,
+            self.dataset.datasetUri,
         ):
             self.revoke_external_account_access_on_source_account()
 
