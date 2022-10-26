@@ -13,6 +13,26 @@ class LakeFormation:
         pass
 
     @staticmethod
+    def describe_resource(resource_arn, accountid, region):
+        """
+        Describes a LF data location
+        """
+        try:
+            session = SessionHelper.remote_session(accountid)
+            lf_client = session.client('lakeformation', region_name=region)
+
+            response = lf_client.describe_resource(ResourceArn=resource_arn)
+
+            log.debug(f'LF data location already registered: {response}')
+
+            return response['ResourceInfo']
+
+        except ClientError as e:
+            log.error(
+                f'LF data location for resource {resource_arn} not found due to {e}'
+            )
+
+    @staticmethod
     def grant_pivot_role_all_database_permissions(accountid, region, database):
         LakeFormation.grant_permissions_to_database(
             client=SessionHelper.remote_session(accountid=accountid).client(
@@ -141,6 +161,7 @@ class LakeFormation:
         :param entries:
         :return:
         """
+        log.info(f'Batch Revoking {entries}')
         entries_chunks: list = [entries[i : i + 20] for i in range(0, len(entries), 20)]
         failures = []
         try:
@@ -148,19 +169,31 @@ class LakeFormation:
                 response = client.batch_revoke_permissions(
                     CatalogId=accountid, Entries=entries_chunk
                 )
-                log.info(f'Batch Revoke {entries_chunk} response: {response}')
+                log.info(f'Batch Revoke response: {response}')
                 failures.extend(response.get('Failures'))
-        except ClientError as e:
+
             for failure in failures:
                 if not (
                     failure['Error']['ErrorCode'] == 'InvalidInputException'
                     and (
                         'Grantee has no permissions' in failure['Error']['ErrorMessage']
                         or 'No permissions revoked' in failure['Error']['ErrorMessage']
+                        or 'not found' in failure['Error']['ErrorMessage']
                     )
                 ):
-                    log.warning(f'Batch Revoke ended with failures: {failures}')
-                    raise e
+                    raise ClientError(
+                        error_response={
+                            'Error': {
+                                'Code': 'LakeFormation.batch_revoke_permissions',
+                                'Message': f'Operation ended with failures: {failures}',
+                            }
+                        },
+                        operation_name='LakeFormation.batch_revoke_permissions',
+                    )
+
+        except ClientError as e:
+            log.warning(f'Batch Revoke ended with failures: {failures}')
+            raise e
 
     @staticmethod
     def grant_resource_link_permission_on_target(client, source, target):
@@ -221,3 +254,66 @@ class LakeFormation:
                     f'due to: {e}'
                 )
                 raise e
+
+    @staticmethod
+    def revoke_source_table_access(**data):
+        """
+        Revokes permissions for a principal in a cross account sharing setup
+        Parameters
+        ----------
+        data :
+
+        Returns
+        -------
+
+        """
+        logging.info(f'Revoking source table access: {data} ...')
+        target_accountid = data['target_accountid']
+        region = data['region']
+        target_principal = data['target_principal']
+        source_database = data['source_database']
+        source_table = data['source_table']
+        source_accountid = data['source_accountid']
+
+        try:
+            aws_session = SessionHelper.remote_session(target_accountid)
+            lakeformation = aws_session.client('lakeformation', region_name=region)
+
+            logging.info('Revoking DESCRIBE permission...')
+            lakeformation.revoke_permissions(
+                Principal=dict(DataLakePrincipalIdentifier=target_principal),
+                Resource=dict(
+                    Table=dict(
+                        CatalogId=source_accountid,
+                        DatabaseName=source_database,
+                        Name=source_table,
+                    )
+                ),
+                Permissions=['DESCRIBE'],
+                PermissionsWithGrantOption=[],
+            )
+            logging.info('Successfully revoked DESCRIBE permissions')
+
+            logging.info('Revoking SELECT permission...')
+            lakeformation.revoke_permissions(
+                Principal=dict(DataLakePrincipalIdentifier=target_principal),
+                Resource=dict(
+                    TableWithColumns=dict(
+                        CatalogId=source_accountid,
+                        DatabaseName=source_database,
+                        Name=source_table,
+                        ColumnWildcard={},
+                    )
+                ),
+                Permissions=['SELECT'],
+                PermissionsWithGrantOption=[],
+            )
+            logging.info('Successfully revoked DESCRIBE permissions')
+
+        except ClientError as e:
+            logging.error(
+                f'Failed to revoke permissions for {target_principal} '
+                f'on source table {source_accountid}/{source_database}/{source_table} '
+                f'due to: {e}'
+            )
+            raise e
