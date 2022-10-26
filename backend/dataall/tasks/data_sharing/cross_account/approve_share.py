@@ -68,12 +68,6 @@ class CrossAccountShareApproval(ShareApproval):
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
             )
-            if not share_item:
-                log.warning(
-                    f'Share Item not found for {self.share.shareUri} '
-                    f'and Dataset Table {table.GlueTableName} continuing loop...'
-                )
-                continue
 
             api.ShareObject.update_share_item_status(
                 self.session,
@@ -109,13 +103,7 @@ class CrossAccountShareApproval(ShareApproval):
             except Exception as e:
                 self.handle_share_failure(table, share_item, e)
 
-        self.clean_shared_database(
-            self.session,
-            self.dataset,
-            self.shared_tables,
-            self.target_environment,
-            self.shared_db_name,
-        )
+        self.clean_shared_database()
 
         self.delete_deprecated_shared_database()
 

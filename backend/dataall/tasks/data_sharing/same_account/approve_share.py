@@ -89,13 +89,7 @@ class SameAccountShareApproval(ShareApproval):
             except Exception as e:
                 self.handle_share_failure(table, share_item, e)
 
-        self.clean_shared_database(
-            self.session,
-            self.dataset,
-            self.shared_tables,
-            self.target_environment,
-            self.shared_db_name,
-        )
+        self.clean_shared_database()
 
         self.delete_deprecated_shared_database()
 

@@ -48,7 +48,7 @@ class DataSharingService:
                 shared_tables,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri, [models.Enums.ShareObjectStatus.Approved.value])
+            ) = api.ShareObject.get_share_data(session, share_uri, ['Approved'])
 
         shared_db_name = cls.build_shared_db_name(dataset, share)
 
@@ -107,7 +107,7 @@ class DataSharingService:
                 shared_tables,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri, [models.Enums.ShareObjectStatus.Rejected.value])
+            ) = api.ShareObject.get_share_data(session, share_uri, ['Rejected'])
 
             log.info(f'Revoking permissions for tables : {shared_tables}')
 
@@ -123,23 +123,23 @@ class DataSharingService:
                 return CrossAccountShareRevoke(
                     session,
                     shared_db_name,
-                    env_group,
                     dataset,
                     share,
                     shared_tables,
                     source_environment,
                     target_environment,
+                    env_group,
                 ).revoke_share()
 
             return SameAccountShareRevoke(
                 session,
                 shared_db_name,
-                env_group,
                 dataset,
                 share,
                 shared_tables,
                 source_environment,
                 target_environment,
+                env_group,
             ).revoke_share()
 
     @classmethod
