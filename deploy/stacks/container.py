@@ -251,7 +251,7 @@ class ContainerStack(pyNestedClass):
         ssm.StringParameter(
             self,
             f'RamCleanUpToggle{envname}',
-            parameter_name=f'/datahubsa/{envname}/shares/cleanlfv1ram',
+            parameter_name=f'/dataall/{envname}/shares/cleanlfv1ram',
             string_value='False',
         )
 
