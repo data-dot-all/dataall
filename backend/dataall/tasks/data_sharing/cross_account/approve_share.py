@@ -135,7 +135,7 @@ class CrossAccountShareApproval(ShareApproval):
                 data['source']['database'],
                 data['source']['tablename'],
             )
-            time(1)
+            time.sleep(1)
 
             LakeFormation.grant_permissions_to_table(
                 source_lf_client,
@@ -145,7 +145,7 @@ class CrossAccountShareApproval(ShareApproval):
                 ['DESCRIBE', 'SELECT'],
                 ['DESCRIBE', 'SELECT'],
             )
-            time(2)
+            time.sleep(2)
 
             log.info(
                 f"Granted access to table {data['source']['tablename']} "
