@@ -11,16 +11,10 @@ import {
   CardHeader,
   CircularProgress,
   Container,
-  Divider,
   FormHelperText,
   Grid,
   Link,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography
 } from '@mui/material';
@@ -38,8 +32,6 @@ import ChipInput from '../../components/TagsInput';
 import createDataPipeline from '../../api/DataPipeline/createDataPipeline';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
-import listDatasetsOwnedByEnvGroup from "../../api/Environment/listDatasetsOwnedByEnvGroup";
-import listDataItemsSharedWithEnvGroup from "../../api/Environment/listDataItemsSharedWithEnvGroup";
 import PipelineEnvironmentCreateForm from "./PipelineEnvironmentCreateForm";
 
 
@@ -50,13 +42,16 @@ const PipelineCrateForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
-  const [currentEnv, setCurrentEnv] = useState('');
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [datasetOptions, setDatasetOptions] = useState([]);
   const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
+  const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
+
+  const handleCountEnvironmentValid = state => {
+    setCountEnvironmentsValid(state);
+      };
   
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -78,7 +73,6 @@ const PipelineCrateForm = (props) => {
   }, [client, dispatch]);
 
   const fetchGroups = async (environmentUri) => {
-    setCurrentEnv(environmentUri)
     try {
       const response = await client.query(
         listEnvironmentGroups({
@@ -101,57 +95,6 @@ const PipelineCrateForm = (props) => {
     }
   };
 
-  const fetchDatasets = async (groupUri) => {
-    let ownedDatasets = [];
-    let sharedWithDatasets = [];
-    try {
-      const response = await client.query(
-        listDatasetsOwnedByEnvGroup({
-          filter: Defaults.SelectListFilter,
-          environmentUri: currentEnv,
-          groupUri: groupUri,
-        })
-      );
-      if (!response.errors) {
-        ownedDatasets =
-          response.data.listDatasetsOwnedByEnvGroup.nodes?.map((dataset) => ({
-            value: dataset.datasetUri,
-            label: dataset.label
-          }))
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-    try {
-      const response = await client.query(
-        listDataItemsSharedWithEnvGroup({
-          filter: {
-            page: 1,
-            pageSize: 10000,
-            term: '',
-            itemTypes: 'DatasetTable'
-          },
-          environmentUri: currentEnv,
-          groupUri: groupUri,
-        })
-      );
-      if (!response.errors) {
-        sharedWithDatasets =
-          response.data.listDataItemsSharedWithEnvGroup.nodes?.map((dataset) => ({
-            value: dataset.datasetUri,
-            label: dataset.label
-          }))
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-    setDatasetOptions(ownedDatasets.concat(sharedWithDatasets));
-  };
-
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -161,48 +104,53 @@ const PipelineCrateForm = (props) => {
   }, [client, dispatch, fetchEnvironments]);
   
   async function submit(values, setStatus, setSubmitting, setErrors) {
-    try {
-      const response = await client.mutate(
-        createDataPipeline({
-          input: {
-            label: values.label,
-            environmentUri: values.environment.environmentUri,
-            description: values.description,
-            SamlGroupName: values.SamlGroupName,
-            tags: values.tags,
-            devStrategy: values.devStrategy,
-            template: values.template
+      if (!countEnvironmentsValid){
+        dispatch({ type: SET_ERROR, error: "At least one deployment environment is required" })
+      }else{
+         try {
+          const response = await client.mutate(
+            createDataPipeline({
+              input: {
+                label: values.label,
+                environmentUri: values.environment.environmentUri,
+                description: values.description,
+                SamlGroupName: values.SamlGroupName,
+                tags: values.tags,
+                devStrategy: values.devStrategy,
+                template: values.template
+              }
+            })
+          );
+          if (!response.errors) {
+            setStatus({ success: true });
+            setTriggerEnvSubmit(true);
+            setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
+            setSubmitting(false);
+            enqueueSnackbar('Pipeline creation started', {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            });
+            navigate(
+              `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
+            );
+          } else {
+            setTriggerEnvSubmit(false);
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
           }
-        })
-      );
-      if (!response.errors) {
-        setStatus({ success: true });
-        setTriggerEnvSubmit(true);
-        setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
-        setSubmitting(false);
-        enqueueSnackbar('Pipeline creation started', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        navigate(
-          `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
-        );
-      } else {
-        setTriggerEnvSubmit(false);
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        } catch (err) {
+          console.error(err);
+          setStatus({ success: false });
+          setTriggerEnvSubmit(false);
+          setErrors({ submit: err.message });
+          setSubmitting(false);
+          dispatch({ type: SET_ERROR, error: err.message });
+        }
       }
-    } catch (err) {
-      console.error(err);
-      setStatus({ success: false });
-      setTriggerEnvSubmit(false);
-      setErrors({ submit: err.message });
-      setSubmitting(false);
-      dispatch({ type: SET_ERROR, error: err.message });
-    }
   }
+
 
   if (loading) {
     return <CircularProgress />;
@@ -494,6 +442,7 @@ const PipelineCrateForm = (props) => {
                           environmentOptions={environmentOptions}
                           triggerEnvSubmit={triggerEnvSubmit}
                           pipelineUri={pipelineUri}
+                          handleCountEnvironmentValid={handleCountEnvironmentValid}
                         />
                       </Box>
                       {errors.submit && (

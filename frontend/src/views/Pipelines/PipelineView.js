@@ -139,6 +139,7 @@ const PipelineView = () => {
   const [pipeline, setPipeline] = useState(null);
   const [stack, setStack] = useState(null);
   const [cicdStack, setCicdStack] = useState(null);
+  const [cdkTrunk, setCdkTrunk] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [tabs, setTabs] = useState([
     { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -164,13 +165,7 @@ const PipelineView = () => {
           {label: 'Repo Stack', value: 'stack', icon: <FaAws size={20}/>},
           {label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20}/>}
         ]);
-      }
-      if (stack) {
-        setStack(response.data.getDataPipeline.stack);
-      }
-      if (cicdStack) {
-        console.log("setCicdStack")
-        setCicdStack(response.data.getDataPipeline.cicdStack);
+        setCdkTrunk(true);
       }
     } else {
       const error = response.errors
@@ -191,6 +186,7 @@ const PipelineView = () => {
     setCurrentTab(value);
     console.log("inside tab change")
     console.log(pipeline)
+    console.log(stack)
     console.log(cicdStack)
     console.log(tabs)
   };
@@ -234,10 +230,10 @@ const PipelineView = () => {
         setStack={setStack}
         environmentUri={pipeline.environment?.environmentUri}
       />
-      {cicdStack && (
+      {cdkTrunk && (
         <StackStatus
-          cicdStack={cicdStack}
-          setCicdStack={setCicdStack}
+          stack={cicdStack}
+          setStack={setCicdStack}
           environmentUri={pipeline.environment?.environmentUri}
         />
       )}
@@ -295,7 +291,7 @@ const PipelineView = () => {
             {currentTab === 'cicdstack' && (
               <Stack
                 environmentUri={pipeline.environment.environmentUri}
-                stackUri={pipeline.cicdstack.stackUri}
+                stackUri={pipeline.cicdStack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
                 targetType="cdkpipeline"
               />
