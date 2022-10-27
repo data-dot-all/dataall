@@ -27,11 +27,10 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 
 const PipelineEnvironmentCreateForm = (props) => {
-  const { environmentOptions, triggerEnvSubmit, pipelineUri } = props;
+  const { environmentOptions, triggerEnvSubmit, pipelineUri, handleCountEnvironmentValid } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map())
   const stageOps =[{value:"dev", label:"dev"},{value:"test", label:"test"},{value:"val", label:"val"},{value:"prod", label:"prod"},{value:"other", label:"other"}];
@@ -133,6 +132,13 @@ const PipelineEnvironmentCreateForm = (props) => {
       }
     }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
 
+  useEffect(() => {
+    if  (kvEnvs.length > 0){
+      handleCountEnvironmentValid(true)
+    }else{
+      handleCountEnvironmentValid(false)
+    }
+  }, [kvEnvs.length]);
 
   return (
     <>
@@ -262,5 +268,6 @@ PipelineEnvironmentCreateForm.propTypes = {
   environmentOptions: PropTypes.array.isRequired,
   triggerEnvSubmit: PropTypes.bool.isRequired,
   pipelineUri: PropTypes.string.isRequired,
+  handleCountEnvironmentValid: PropTypes.func.isRequired
 };
 export default PipelineEnvironmentCreateForm;
