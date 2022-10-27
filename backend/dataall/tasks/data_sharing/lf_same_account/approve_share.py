@@ -1,12 +1,12 @@
 import logging
 
-from ..common.share_approval import ShareApproval
+from ..common.lf_share_approval import LFShareApproval
 from ....db import models, api
 
 log = logging.getLogger(__name__)
 
 
-class SameAccountShareApproval(ShareApproval):
+class SameAccountShareApproval(LFShareApproval):
     def __init__(
         self,
         session,

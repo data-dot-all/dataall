@@ -1,16 +1,25 @@
 import logging
 import os
 
-from .cross_account.approve_share import (
+from .lf_cross_account.approve_share import (
     CrossAccountShareApproval,
 )
-from .cross_account.revoke_share import (
+from .lf_cross_account.revoke_share import (
     CrossAccountShareRevoke,
 )
-from .same_account.approve_share import (
+from .lf_same_account.approve_share import (
     SameAccountShareApproval,
 )
-from .same_account.revoke_share import SameAccountShareRevoke
+from .lf_same_account.revoke_share import (
+    SameAccountShareRevoke,
+)
+from .common.s3_approve_share import (
+    S3ShareApproval
+)
+from .common.s3_revoke_share import (
+    S3ShareRevoke
+)
+
 from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.ram import Ram
 from ...aws.handlers.sts import SessionHelper
@@ -42,10 +51,12 @@ class DataSharingService:
         """
         with engine.scoped_session() as session:
             (
+                source_env_group,
                 env_group,
                 dataset,
                 share,
                 shared_tables,
+                shared_folders,
                 source_environment,
                 target_environment,
             ) = api.ShareObject.get_share_data(session, share_uri, ['Approved'])
@@ -81,6 +92,17 @@ class DataSharingService:
             env_group,
         ).approve_share()
 
+        S3ShareApproval(
+            session,
+            dataset,
+            share,
+            shared_folders,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group,
+        ).approve_share()
+
     @classmethod
     def reject_share(cls, engine: Engine, share_uri: str):
         """
@@ -101,10 +123,12 @@ class DataSharingService:
 
         with engine.scoped_session() as session:
             (
+                source_env_group,
                 env_group,
                 dataset,
                 share,
                 shared_tables,
+                shared_folders,
                 source_environment,
                 target_environment,
             ) = api.ShareObject.get_share_data(session, share_uri, ['Rejected'])
@@ -139,6 +163,17 @@ class DataSharingService:
                 shared_tables,
                 source_environment,
                 target_environment,
+                env_group,
+            ).revoke_share()
+
+            S3ShareRevoke(
+                session,
+                dataset,
+                share,
+                shared_folders,
+                source_environment,
+                target_environment,
+                source_env_group,
                 env_group,
             ).revoke_share()
 

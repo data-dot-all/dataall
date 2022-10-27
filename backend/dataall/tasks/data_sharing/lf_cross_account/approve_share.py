@@ -3,7 +3,7 @@ import time
 
 from botocore.exceptions import ClientError
 
-from ..common.share_approval import ShareApproval
+from ..common.lf_share_approval import LFShareApproval
 from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.ram import Ram
 from ....aws.handlers.sts import SessionHelper
@@ -12,7 +12,7 @@ from ....db import models, api
 log = logging.getLogger(__name__)
 
 
-class CrossAccountShareApproval(ShareApproval):
+class CrossAccountShareApproval(LFShareApproval):
     def __init__(
         self,
         session,

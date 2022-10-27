@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from ..common.share_revoke import ShareRevoke
+from ..common.lf_share_revoke import LFShareRevoke
 from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.ram import Ram
 from ....aws.handlers.sts import SessionHelper
@@ -10,7 +10,7 @@ from ....db import api, models
 log = logging.getLogger(__name__)
 
 
-class CrossAccountShareRevoke(ShareRevoke):
+class CrossAccountShareRevoke(LFShareRevoke):
     def __init__(
         self,
         session,

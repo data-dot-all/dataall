@@ -13,7 +13,7 @@ from ....utils.alarm_service import AlarmService
 logger = logging.getLogger(__name__)
 
 
-class ShareApproval:
+class LFShareApproval:
     def __init__(
         self,
         session,

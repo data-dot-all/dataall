@@ -1,12 +1,12 @@
 import logging
 
-from ..common.share_revoke import ShareRevoke
+from ..common.lf_share_revoke import LFShareRevoke
 from ....db import models
 
 log = logging.getLogger(__name__)
 
 
-class SameAccountShareRevoke(ShareRevoke):
+class SameAccountShareRevoke(LFShareRevoke):
     def __init__(
         self,
         session,

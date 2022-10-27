@@ -11,7 +11,7 @@ from ....utils.alarm_service import AlarmService
 log = logging.getLogger(__name__)
 
 
-class ShareRevoke:
+class LFShareRevoke:
     def __init__(
         self,
         session,
