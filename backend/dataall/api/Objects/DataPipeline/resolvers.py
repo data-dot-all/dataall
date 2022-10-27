@@ -405,21 +405,32 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
-        stack_helper.delete_stack(
-            context=context,
-            target_uri=DataPipelineUri,
-            accountid=env.AwsAccountId,
-            cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='pipeline',
-        )
-        stack_helper.delete_stack(
-            context=context,
-            target_uri=f"{DataPipelineUri}pip",
-            accountid=env.AwsAccountId,
-            cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='pipelinePip',
-        )
+        if pipeline.devStrategy == "cdk-trunk":
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=f"{DataPipelineUri}",
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='cdkrepo',
+            )
+
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=f"{DataPipelineUri}pip",
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='pipelinePip',
+            )
+        else:
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=DataPipelineUri,
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='pipeline',
+            )
 
     return True
