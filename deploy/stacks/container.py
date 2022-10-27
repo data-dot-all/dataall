@@ -220,41 +220,6 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
 
-        shares_refresh_task = self.set_scheduled_task(
-            cluster=cluster,
-            command=[
-                'python3.8',
-                '-m',
-                'datahub.tasks.shares_refresh',
-            ],
-            container_id='container',
-            ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='shares-refresh'
-            ),
-            schedule_expression=Schedule.expression('cron(0 2 * * ? *)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-shares-refresh-schedule',
-            task_id=f'{resource_prefix}-{envname}-shares-refresh',
-            task_role=task_role,
-            vpc=vpc,
-            security_group=scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-        self.ecs_security_groups.extend(shares_refresh_task.task.security_groups)
-
-        ssm.StringParameter(
-            self,
-            f'RamCleanUpToggle{envname}',
-            parameter_name=f'/datahubsa/{envname}/shares/cleanlfv1ram',
-            string_value='False',
-        )
-
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
             f'{resource_prefix}-{envname}-share-manager',
