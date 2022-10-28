@@ -34,7 +34,6 @@ class S3ShareRevoke:
         self.source_environment = source_environment
         self.target_environment = target_environment
 
-
     def revoke_share(
             self,
     ) -> bool:
@@ -58,7 +57,6 @@ class S3ShareRevoke:
         )
 
         return True
-
 
     @classmethod
     def revoke_shared_folders(
@@ -119,8 +117,6 @@ class S3ShareRevoke:
                 )
             except Exception as e:
                 S3ShareRevoke.handle_share_failure(folder, rejected_item, e)
-
-
 
     @staticmethod
     def delete_access_point_policy(
@@ -208,7 +204,6 @@ class S3ShareRevoke:
                 "default",
                 json.dumps(policy)
             )
-
 
     def handle_share_failure(
         self,
