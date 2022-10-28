@@ -34,7 +34,6 @@ class S3ShareApproval:
         self.source_environment = source_environment
         self.target_environment = target_environment
 
-
     def approve_share(
             self,
     ) -> bool:
@@ -200,7 +199,7 @@ class S3ShareApproval:
                             f'with target account {target_account_id}//{target_environment.region} '
                             f'due to: {e}'
                         )
-                        location = db.api.DatasetStorageLocation.get_location_by_s3_prefix(
+                        location = api.DatasetStorageLocation.get_location_by_s3_prefix(
                             session,
                             prefix,
                             dataset.AwsAccountId,
@@ -450,4 +449,3 @@ class S3ShareApproval:
             folder, self.share, self.target_environment
         )
         return True
-
