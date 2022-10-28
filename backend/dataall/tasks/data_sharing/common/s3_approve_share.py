@@ -154,7 +154,7 @@ class S3ShareApproval:
                     models.ShareObjectStatus.Share_Succeeded.value,
                 )
             except Exception as e:
-                S3ShareApproval.handle_share_failure(folder, share_item, e)
+                S3ShareApproval.handle_share_failure(folder=folder, share_item=share_item, error=e)
 
     @classmethod
     def clean_shared_folders(
@@ -472,8 +472,8 @@ class S3ShareApproval:
                 json.dumps(policy)
             )
 
+    @staticmethod
     def handle_share_failure(
-        self,
         folder: models.DatasetStorageLocation,
         share_item: models.ShareObjectItem,
         error: Exception,
