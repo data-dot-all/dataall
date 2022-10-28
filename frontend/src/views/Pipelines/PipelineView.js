@@ -184,11 +184,6 @@ const PipelineView = () => {
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
-    console.log("inside tab change")
-    console.log(pipeline)
-    console.log(stack)
-    console.log(cicdStack)
-    console.log(tabs)
   };
 
   const deletePipeline = async (deleteFromAWS = false) => {
@@ -288,7 +283,7 @@ const PipelineView = () => {
                 targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkrepo" : "pipeline"}
               />
             )}
-            {currentTab === 'cicdstack' && (
+            {currentTab === 'cicdStack' && (
               <Stack
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.cicdStack.stackUri}
