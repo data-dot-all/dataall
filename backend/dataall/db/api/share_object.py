@@ -118,7 +118,7 @@ class ShareObject:
                     GlueTableName=item.GlueTableName
                     if itemType == ShareableType.Table.value
                     else '',
-                    S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.principalId}'.lower()
+                    S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                     if itemType == ShareableType.StorageLocation.value
                     else '',
                 )
@@ -423,7 +423,7 @@ class ShareObject:
                 GlueTableName=item.GlueTableName
                 if itemType == ShareableType.Table.value
                 else '',
-                S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.environmentUri}'.lower()
+                S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                 if itemType == ShareableType.StorageLocation.value
                 else '',
             )
@@ -659,6 +659,24 @@ class ShareObject:
         return share_item
 
     @staticmethod
+    def find_share_item_by_folder(
+        session,
+        share: models.ShareObject,
+        folder: models.DatasetStorageLocation,
+    ) -> models.ShareObjectItem:
+        share_item: models.ShareObjectItem = (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.itemUri == folder.locationUri,
+                    models.ShareObjectItem.shareUri == share.shareUri,
+                )
+            )
+            .first()
+        )
+        return share_item
+
+    @staticmethod
     def get_share_data(session, share_uri, status):
         share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
         if not share:
@@ -702,6 +720,28 @@ class ShareObject:
             .all()
         )
 
+        shared_folders = (
+            session.query(models.DatasetStorageLocation)
+            .join(
+                models.ShareObjectItem,
+                models.ShareObjectItem.itemUri == models.DatasetStorageLocation.locationUri,
+            )
+            .join(
+                models.ShareObject,
+                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+            )
+            .filter(
+                and_(
+                    models.ShareObject.datasetUri == dataset.datasetUri,
+                    models.ShareObject.environmentUri
+                    == target_environment.environmentUri,
+                    models.ShareObject.status.in_(status),
+                    models.ShareObject.shareUri == share_uri,
+                )
+            )
+            .all()
+        )
+
         env_group: models.EnvironmentGroup = (
             session.query(models.EnvironmentGroup)
             .filter(
@@ -717,11 +757,30 @@ class ShareObject:
                 f'Share object Team {share.principalId} is not a member of the '
                 f'environment {target_environment.name}/{target_environment.AwsAccountId}'
             )
+
+        source_env_group: models.EnvironmentGroup = (
+            session.query(models.EnvironmentGroup)
+            .filter(
+                and_(
+                    models.EnvironmentGroup.environmentUri == dataset.environmentUri,
+                    models.EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
+                )
+            )
+            .first()
+        )
+        if not source_env_group:
+            raise Exception(
+                f'Share object Team {dataset.SamlAdminGroupName} is not a member of the '
+                f'environment {dataset.environmentUri}'
+            )
+
         return (
+            source_env_group,
             env_group,
             dataset,
             share,
             shared_tables,
+            shared_folders,
             source_environment,
             target_environment,
         )
