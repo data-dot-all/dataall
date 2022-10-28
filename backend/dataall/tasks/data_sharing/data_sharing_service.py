@@ -36,10 +36,18 @@ class DataSharingService:
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
         """
+        Share tables
         1) Retrieves share related model objects
         2) Build shared database name (unique db per team for a dataset)
         3) Grants pivot role ALL permissions on dataset db and its tables
         4) Calls sharing approval service
+
+        Share folders
+        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
+        2) grant_target_role_access_policy
+        3) manage_access_point_and_policy
+        4) update_dataset_bucket_key_policy
+        5) update_share_item_status
         Parameters
         ----------
         engine : db.engine
@@ -61,6 +69,9 @@ class DataSharingService:
                 target_environment,
             ) = api.ShareObject.get_share_data(session, share_uri, ['Approved'])
 
+        log.info(f'Granting permissions to tables : {shared_tables}')
+        log.info(f'Granting permissions to folders : {shared_folders}')
+
         shared_db_name = cls.build_shared_db_name(dataset, share)
 
         LakeFormation.grant_pivot_role_all_database_permissions(
@@ -68,6 +79,17 @@ class DataSharingService:
             source_environment.region,
             dataset.GlueDatabaseName,
         )
+
+        share_folders_succeed = S3ShareApproval(
+            session,
+            dataset,
+            share,
+            shared_folders,
+            source_environment,
+            target_environment,
+            source_env_group,
+            env_group,
+        ).approve_share()
 
         if source_environment.AwsAccountId != target_environment.AwsAccountId:
             return CrossAccountShareApproval(
@@ -79,7 +101,7 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 env_group,
-            ).approve_share()
+            ).approve_share() if share_folders_succeed else False
 
         return SameAccountShareApproval(
             session,
@@ -90,18 +112,7 @@ class DataSharingService:
             source_environment,
             target_environment,
             env_group,
-        ).approve_share()
-
-        S3ShareApproval(
-            session,
-            dataset,
-            share,
-            shared_folders,
-            source_environment,
-            target_environment,
-            source_env_group,
-            env_group,
-        ).approve_share()
+        ).approve_share() if share_folders_succeed else False
 
     @classmethod
     def reject_share(cls, engine: Engine, share_uri: str):
@@ -134,6 +145,7 @@ class DataSharingService:
             ) = api.ShareObject.get_share_data(session, share_uri, ['Rejected'])
 
             log.info(f'Revoking permissions for tables : {shared_tables}')
+            log.info(f'Revoking permissions for folders : {shared_folders}')
 
             shared_db_name = cls.build_shared_db_name(dataset, share)
 
@@ -142,6 +154,17 @@ class DataSharingService:
                 source_environment.region,
                 dataset.GlueDatabaseName,
             )
+
+            revoke_folders_succeed = S3ShareRevoke(
+                session,
+                dataset,
+                share,
+                shared_folders,
+                source_environment,
+                target_environment,
+                source_env_group,
+                env_group,
+            ).revoke_share()
 
             if source_environment.AwsAccountId != target_environment.AwsAccountId:
                 return CrossAccountShareRevoke(
@@ -153,7 +176,7 @@ class DataSharingService:
                     source_environment,
                     target_environment,
                     env_group,
-                ).revoke_share()
+                ).revoke_share() if revoke_folders_succeed else False
 
             return SameAccountShareRevoke(
                 session,
@@ -164,18 +187,7 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 env_group,
-            ).revoke_share()
-
-            S3ShareRevoke(
-                session,
-                dataset,
-                share,
-                shared_folders,
-                source_environment,
-                target_environment,
-                source_env_group,
-                env_group,
-            ).revoke_share()
+            ).revoke_share() if revoke_folders_succeed else False
 
     @classmethod
     def build_shared_db_name(

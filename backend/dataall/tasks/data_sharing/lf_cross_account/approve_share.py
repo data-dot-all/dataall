@@ -57,6 +57,9 @@ class CrossAccountShareApproval(LFShareApproval):
         -------
         True if share is approved successfully
         """
+        log.info(
+            '##### Starting Sharing tables cross account #######'
+        )
         principals = self.get_share_principals()
 
         self.create_shared_database(

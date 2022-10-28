@@ -47,6 +47,9 @@ class SameAccountShareApproval(LFShareApproval):
         -------
         True if share is successful
         """
+        log.info(
+            '##### Starting Sharing tables same account #######'
+        )
 
         principals = self.get_share_principals()
 

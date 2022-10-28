@@ -38,14 +38,19 @@ class S3ShareApproval:
             self,
     ) -> bool:
         """
-        1) Shares folders, for each shared folder:
-            a) ....
-        2) Cleans un-shared folders
+        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
+        2) grant_target_role_access_policy
+        3) manage_access_point_and_policy
+        4) update_dataset_bucket_key_policy
+        5) update_share_item_status
 
         Returns
         -------
         True if share is approved successfully
         """
+        log.info(
+            '##### Starting Sharing folders #######'
+        )
         self.share_folders(
             self.session,
             self.share,
@@ -79,6 +84,17 @@ class S3ShareApproval:
         shared_folders: [models.DatasetStorageLocation],
         dataset: models.Dataset,
     ):
+        """
+
+        :param session:
+        :param share:
+        :param source_env_group:
+        :param target_env_group:
+        :param target_environment:
+        :param shared_folders:
+        :param dataset:
+        :return:
+        """
         for folder in shared_folders:
             share_item = api.ShareObject.find_share_item_by_folder(
                 session, share, folder
@@ -151,6 +167,17 @@ class S3ShareApproval:
         dataset: models.Dataset,
         shared_folders: [models.DatasetStorageLocation],
     ):
+        """
+
+        :param session:
+        :param share:
+        :param source_env_group:
+        :param target_env_group:
+        :param target_environment:
+        :param dataset:
+        :param shared_folders:
+        :return:
+        """
         source_account_id = dataset.AwsAccountId
         access_point_name = f"{dataset.datasetUri}-{share.principalId}".lower()
         target_account_id = target_environment.AwsAccountId
@@ -208,6 +235,9 @@ class S3ShareApproval:
                         AlarmService().trigger_revoke_folder_sharing_failure_alarm(
                             location, share, target_environment
                         )
+                    except Exception as e:
+                        S3ShareApproval.handle_share_failure(prefix, share_item, e)
+
 
     @staticmethod
     def manage_bucket_policy(
@@ -216,10 +246,15 @@ class S3ShareApproval:
         bucket_name: str,
         source_env_admin: str,
     ):
-        '''
+        """
         This function will manage bucket policy by grant admin access to dataset admin, pivot role
         and environment admin. All of the policies will only be added once.
-        '''
+        :param dataset_admin: data.all team IAM role of Dataset Owners
+        :param source_account_id:
+        :param bucket_name:
+        :param source_env_admin: data.all team IAM role of Environment Admins
+        :return:
+        """
         bucket_policy = json.loads(S3.get_bucket_policy(source_account_id, bucket_name))
         for statement in bucket_policy["Statement"]:
             if statement.get("Sid") in ["AllowAllToAdmin", "DelegateAccessToAccessPoint"]:
@@ -270,6 +305,15 @@ class S3ShareApproval:
         target_env_admin: str,
         dataset: models.Dataset,
     ):
+        """
+        Updates requester IAM role policy to include requested S3 bucket and access point
+        :param bucket_name:
+        :param access_point_name:
+        :param target_account_id:
+        :param target_env_admin:
+        :param dataset:
+        :return:
+        """
         existing_policy = IAM.get_role_policy(
             target_account_id,
             target_env_admin,
@@ -322,6 +366,18 @@ class S3ShareApproval:
         s3_prefix: str,
         access_point_name: str,
     ):
+        """
+
+        :param dataset_admin:
+        :param source_account_id:
+        :param target_account_id:
+        :param source_env_admin:
+        :param target_env_admin:
+        :param bucket_name:
+        :param s3_prefix:
+        :param access_point_name:
+        :return:
+        """
         access_point_arn = S3.get_bucket_access_point_arn(source_account_id, access_point_name)
         if not access_point_arn:
             access_point_arn = S3.create_bucket_access_point(source_account_id, bucket_name, access_point_name)
