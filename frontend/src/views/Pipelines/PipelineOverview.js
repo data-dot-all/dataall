@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 import PipelineCICD from './PipelineCICD';
-import PipelineDatasets from './PipelineDatasets';
 import PipelineEnvironments from './PipelineEnvironments';
 
 const PipelineOverview = (props) => {
@@ -32,7 +31,7 @@ const PipelineOverview = (props) => {
                owner={pipeline.owner}
                admins={pipeline.SamlGroupName || '-'}
                created={pipeline.created}
-               status={pipeline.cicdStack?.status}
+               status={pipeline.cicdStack?.status || pipeline.stack.status}
              />
             </Box>
           </Grid>
