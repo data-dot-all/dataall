@@ -7,10 +7,12 @@ ARG PYTHON_VERSION=python3.8
 RUN mkdir /code
 RUN mkdir /build
 
+RUN yum clean all
 RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION
 RUN yum -y install python38-devel
+RUN yum -y install git
 
 RUN useradd -m app
 
@@ -39,6 +41,7 @@ RUN echo export PATH="\
 /root/.nvm/versions/node/${NODE_VERSION}/bin:\
 $(${PYTHON_VERSION} -m site --user-base)/bin:\
 $(python3 -m site --user-base)/bin:\
+$(python -m site --user-base)/bin:\
 $PATH" >> ~/.bashrc && \
      echo "nvm use ${NODE_VERSION} 1> /dev/null" >> ~/.bashrc
 
@@ -50,5 +53,6 @@ COPY ./dataall/cdkproxy/requirements.txt cdk.requirements.txt
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -U pip "
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r dh.requirements.txt"
 RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt"
+
 
 ENTRYPOINT [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]

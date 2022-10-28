@@ -24,19 +24,49 @@ def create_pipeline(context: Context, source, input=None):
             data=input,
             check_perm=True,
         )
+        if input['devStrategy'] == 'cdk-trunk':
+            Stack.create_stack(
+                session=session,
+                environment_uri=pipeline.environmentUri,
+                target_type='cdkrepo',
+                target_uri=pipeline.DataPipelineUri,
+                target_label=pipeline.label,
+                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+            )
 
-        Stack.create_stack(
-            session=session,
-            environment_uri=pipeline.environmentUri,
-            target_type='pipeline',
-            target_uri=pipeline.DataPipelineUri,
-            target_label=pipeline.label,
-            payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-        )
+            Stack.create_stack(
+                session=session,
+                environment_uri=pipeline.environmentUri,
+                target_type='cdkpipeline',
+                target_uri=f"{pipeline.DataPipelineUri}pip",
+                target_label=pipeline.label,
+                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+            )
+        else:
+            Stack.create_stack(
+                session=session,
+                environment_uri=pipeline.environmentUri,
+                target_type='pipeline',
+                target_uri=pipeline.DataPipelineUri,
+                target_label=pipeline.label,
+                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+            )
 
     stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
 
     return pipeline
+
+
+def create_pipeline_environment(context: Context, source, input=None):
+    with context.engine.scoped_session() as session:
+        pipeline_env = Pipeline.create_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            data=input,
+            check_perm=True,
+        )
+    return pipeline_env
 
 
 def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict = None):
@@ -78,6 +108,14 @@ def get_pipeline(context: Context, source, DataPipelineUri: str = None):
         )
 
 
+def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        env = session.query(models.Environment).get(source.environmentUri)
+    return env
+
+
 def resolve_user_role(context: Context, source: models.DataPipeline):
     if not source:
         return None
@@ -88,12 +126,30 @@ def resolve_user_role(context: Context, source: models.DataPipeline):
     return DataPipelineRole.NoPermission.value
 
 
-def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
+def get_pipeline_environment(context: Context, source: models.DataPipelineEnvironment, **kwargs):
     with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-    return env
+        return Pipeline.get_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=source.envPipelineUri,
+            data=None,
+            check_perm=True,
+        )
+
+
+def list_pipeline_environments(context: Context, source: models.DataPipeline, filter: dict = None):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return Pipeline.paginated_pipeline_environments(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=source.DataPipelineUri,
+            data=filter,
+            check_perm=None,
+        )
 
 
 def get_pipeline_org(context: Context, source: models.DataPipeline, **kwargs):
@@ -192,6 +248,16 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
         context=context,
         targetUri=source.DataPipelineUri,
+        environmentUri=source.environmentUri,
+    )
+
+
+def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
+    if not source:
+        return None
+    return stack_helper.get_stack_with_cfn_resources(
+        context=context,
+        targetUri=f"{source.DataPipelineUri}pip",
         environmentUri=source.environmentUri,
     )
 
@@ -326,6 +392,8 @@ def delete_pipeline(
             session, pipeline.environmentUri
         )
 
+        Pipeline.delete_pipeline_environments(session, DataPipelineUri)
+
         KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
         session.delete(pipeline)
@@ -337,13 +405,32 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
-        stack_helper.delete_stack(
-            context=context,
-            target_uri=DataPipelineUri,
-            accountid=env.AwsAccountId,
-            cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='pipeline',
-        )
+        if pipeline.devStrategy == "cdk-trunk":
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=f"{DataPipelineUri}",
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='cdkrepo',
+            )
+
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=f"{DataPipelineUri}pip",
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='pipelinePip',
+            )
+        else:
+            stack_helper.delete_stack(
+                context=context,
+                target_uri=DataPipelineUri,
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='pipeline',
+            )
 
     return True

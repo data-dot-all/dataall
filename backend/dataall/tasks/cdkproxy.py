@@ -16,7 +16,6 @@ if __name__ == '__main__':
     engine = get_engine(envname=envname)
 
     stack_uri = os.getenv('stackUri')
-
     logger.info(f'Starting deployment task for stack : {stack_uri}')
 
     deploy_cdk_stack(engine=engine, stackid=stack_uri, app_path='../cdkproxy/app.py')

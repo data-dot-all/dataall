@@ -15,6 +15,7 @@ RUN yum -y install shadow-utils wget
 RUN yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel gcc unzip tar gzip
 RUN amazon-linux-extras install $PYTHON_VERSION
 RUN yum -y install python38-devel
+RUN yum -y install git
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip

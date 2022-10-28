@@ -8,14 +8,22 @@ NewDataPipelineInput = gql.InputType(
         gql.Argument(name='description', type=gql.String),
         gql.Argument(name='SamlGroupName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
-        gql.Argument(name='devStages', type=gql.ArrayType(gql.String)),
         gql.Argument(name='devStrategy', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='inputDatasetUri', type=gql.String),
-        gql.Argument(name='outputDatasetUri', type=gql.String),
-        gql.Argument(name='template', type=gql.String),
+        gql.Argument(name='template', type=gql.String)
     ],
 )
 
+NewDataPipelineEnvironmentInput = gql.InputType(
+    name='NewDataPipelineEnvironmentInput',
+    arguments=[
+        gql.Argument(name='stage', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='order', type=gql.NonNullableType(gql.Integer)),
+        gql.Argument(name='pipelineUri', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='environmentLabel', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='samlGroupName', type=gql.NonNullableType(gql.String)),
+    ],
+)
 
 UpdateDataPipelineInput = gql.InputType(
     name='UpdateDataPipelineInput',
@@ -32,6 +40,16 @@ DataPipelineFilter = gql.InputType(
         gql.Argument(name='term', type=gql.String),
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
+    ],
+)
+
+DataPipelineEnvironmentFilter = gql.InputType(
+    name='DataPipelineEnvironmentFilter',
+    arguments=[
+        gql.Argument(name='term', type=gql.String),
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument(name='pipelineUri', type=gql.String),
     ],
 )
 

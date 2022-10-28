@@ -1,5 +1,6 @@
 from .dataset import Dataset
 from .environment import EnvironmentSetup
+from .cdk_pipeline import CDKPipelineStack
 from .pipeline import PipelineStack
 from .manager import stack, instanciate_stack, StackManager
 from .notebook import SagemakerNotebook

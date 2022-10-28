@@ -35,16 +35,10 @@ import PencilAltIcon from '../../icons/PencilAlt';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
 import deleteDataPipeline from '../../api/DataPipeline/deleteDataPipeline';
 import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
-import PipelineRuns from './PipelineRuns';
 import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import FeedComments from '../Feed/FeedComments';
 
-const tabs = [
-  { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-  { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
-];
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
@@ -144,8 +138,14 @@ const PipelineView = () => {
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState(null);
   const [stack, setStack] = useState(null);
+  const [cicdStack, setCicdStack] = useState(null);
+  const [cdkTrunk, setCdkTrunk] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const handleDeleteObjectModalOpen = () => {
+  const [tabs, setTabs] = useState([
+    { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+    { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
+    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }]);
+    const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
   };
 
@@ -158,8 +158,14 @@ const PipelineView = () => {
     const response = await client.query(getDataPipeline(params.uri));
     if (!response.errors && response.data.getDataPipeline !== null) {
       setPipeline(response.data.getDataPipeline);
-      if (stack) {
-        setStack(response.data.getDataPipeline.stack);
+      if (response.data.getDataPipeline.devStrategy =="cdk-trunk") {
+        setTabs([
+          {label: 'Overview', value: 'overview', icon: <Info fontSize="small"/>},
+          {label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small"/>},
+          {label: 'Repo Stack', value: 'stack', icon: <FaAws size={20}/>},
+          {label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20}/>}
+        ]);
+        setCdkTrunk(true);
       }
     } else {
       const error = response.errors
@@ -168,7 +174,8 @@ const PipelineView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack]);
+  }, [client, dispatch, params.uri, stack, cicdStack]);
+  
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -218,6 +225,13 @@ const PipelineView = () => {
         setStack={setStack}
         environmentUri={pipeline.environment?.environmentUri}
       />
+      {cdkTrunk && (
+        <StackStatus
+          stack={cicdStack}
+          setStack={setCicdStack}
+          environmentUri={pipeline.environment?.environmentUri}
+        />
+      )}
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -266,7 +280,15 @@ const PipelineView = () => {
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
-                targetType="pipeline"
+                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkrepo" : "pipeline"}
+              />
+            )}
+            {currentTab === 'cicdStack' && (
+              <Stack
+                environmentUri={pipeline.environment.environmentUri}
+                stackUri={pipeline.cicdStack.stackUri}
+                targetUri={pipeline.DataPipelineUri}
+                targetType="cdkpipeline"
               />
             )}
           </Box>
