@@ -174,8 +174,8 @@ class S3ShareManager:
                 existing_policy["Statement"] = list(statements.values())
             else:
                 additional_policy = S3.generate_access_point_policy_template(
-                    self.target_env_admin_id,
-                    self.access_point_arn,
+                    target_env_admin_id,
+                    access_point_arn,
                     self.s3_prefix,
                 )
                 existing_policy["Statement"].extend(additional_policy["Statement"])
@@ -183,8 +183,8 @@ class S3ShareManager:
         else:
             # First time to create access point policy
             access_point_policy = S3.generate_access_point_policy_template(
-                self.target_env_admin_id,
-                self.access_point_arn,
+                target_env_admin_id,
+                access_point_arn,
                 self.s3_prefix,
             )
             exceptions_roleId = [f'{item}:*' for item in SessionHelper.get_role_ids(
@@ -312,7 +312,7 @@ class S3ShareManager:
         logging.error(
             f'Failed to share folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
+            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
         api.ShareObject.update_share_item_status(
@@ -335,7 +335,7 @@ class S3ShareManager:
         logging.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
-            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
+            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
         api.ShareObject.update_share_item_status(

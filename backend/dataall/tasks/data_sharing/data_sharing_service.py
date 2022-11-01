@@ -80,7 +80,7 @@ class DataSharingService:
             dataset.GlueDatabaseName,
         )
 
-        share_folders_succeed = S3ShareApproval(
+        share_folders_succeed = S3ShareApproval.approve_share(
             session,
             dataset,
             share,
@@ -89,7 +89,7 @@ class DataSharingService:
             target_environment,
             source_env_group,
             env_group,
-        ).approve_share()
+        )
 
         if source_environment.AwsAccountId != target_environment.AwsAccountId:
             return CrossAccountShareApproval(
@@ -155,7 +155,7 @@ class DataSharingService:
                 dataset.GlueDatabaseName,
             )
 
-            revoke_folders_succeed = S3ShareRevoke(
+            revoke_folders_succeed = S3ShareRevoke.revoke_share(
                 session,
                 dataset,
                 share,
@@ -164,7 +164,7 @@ class DataSharingService:
                 target_environment,
                 source_env_group,
                 env_group,
-            ).revoke_share()
+            )
 
             if source_environment.AwsAccountId != target_environment.AwsAccountId:
                 return CrossAccountShareRevoke(

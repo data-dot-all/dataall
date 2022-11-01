@@ -1,8 +1,8 @@
 import logging
 
 
-from s3_share_manager import S3ShareManager
 from ....db import models, api
+from .s3_share_manager import S3ShareManager
 
 
 log = logging.getLogger(__name__)

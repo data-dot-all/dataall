@@ -2,8 +2,8 @@ import logging
 import json
 
 
-from s3_share_manager import S3ShareManager
 from ....db import models, api
+from .s3_share_manager import S3ShareManager
 from ....aws.handlers.s3 import S3
 from ....aws.handlers.sts import SessionHelper
 
@@ -98,6 +98,7 @@ class S3ShareApproval(S3ShareManager):
                 sharing_folder.handle_share_failure(e)
 
         removed_folders = S3ShareApproval.get_removed_prefixes(
+            session,
             dataset,
             share,
             share_folders,
