@@ -25,20 +25,12 @@ def create_pipeline(context: Context, source, input=None):
             check_perm=True,
         )
         if input['devStrategy'] == 'cdk-trunk':
-            Stack.create_stack(
-                session=session,
-                environment_uri=pipeline.environmentUri,
-                target_type='cdkrepo',
-                target_uri=pipeline.DataPipelineUri,
-                target_label=pipeline.label,
-                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-            )
 
             Stack.create_stack(
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='cdkpipeline',
-                target_uri=f"{pipeline.DataPipelineUri}pip",
+                target_uri=f"{pipeline.DataPipelineUri}",
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )

@@ -31,7 +31,7 @@ const PipelineOverview = (props) => {
                owner={pipeline.owner}
                admins={pipeline.SamlGroupName || '-'}
                created={pipeline.created}
-               status={pipeline.cicdStack?.status || pipeline.stack.status}
+               status={pipeline.stack.status}
              />
             </Box>
           </Grid>

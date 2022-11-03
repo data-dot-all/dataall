@@ -434,6 +434,19 @@ const PipelineCrateForm = (props) => {
                             ))}
                           </TextField>
                         </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(touched.template && errors.template)}
+                            fullWidth
+                            helperText={touched.template && errors.template}
+                            label="Pipeline Template (optional)"
+                            name="template"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.template}
+                            variant="outlined"
+                          />
+                        </CardContent>
                       </Card>
                     </Grid>
                     <Grid item lg={12} md={6} xs={12}>

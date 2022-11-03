@@ -17,6 +17,7 @@ from ..db import Engine
 from ..db import models
 from ..db.api import Pipeline, Environment, Stack
 from ..utils.alarm_service import AlarmService
+from dataall.cdkproxy.stacks.cdk_pipeline import CDKPipelineStack
 
 logger = logging.getLogger('cdksass')
 
@@ -63,108 +64,6 @@ def update_stack_output(session, stack):
         stack.outputs = outputs
 
 
-def clone_remote_stack(pipeline, pipeline_environment):
-    print('..................................................')
-    print('     Configure remote CDK app                     ')
-    print('..................................................')
-    aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
-    env_creds = aws.get_credentials()
-
-    python_path = '/:'.join(sys.path)[1:] + ':/code' + os.getenv('PATH')
-
-    env = {
-        'AWS_REGION': pipeline_environment.region,
-        'AWS_DEFAULT_REGION': pipeline_environment.region,
-        'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
-        'PYTHONPATH': python_path,
-        'PATH': python_path,
-        'envname': os.environ.get('envname', 'local'),
-    }
-    if env_creds:
-        env.update(
-            {
-                'AWS_ACCESS_KEY_ID': env_creds.access_key,
-                'AWS_SECRET_ACCESS_KEY': env_creds.secret_key,
-                'AWS_SESSION_TOKEN': env_creds.token,
-            }
-        )
-    print(f"ENVIRONMENT = {env}")
-    print('..................................................')
-    print('        Clone remote CDK app                      ')
-    print('..................................................')
-
-    cmd = [
-        'git',
-        'config',
-        '--system',
-        'user.name',
-        'data.allECS',
-        '&&',
-        'git',
-        'config',
-        '--system',
-        'user.email',
-        'data.allECS@email.com',
-        '&&',
-        'cd',
-        'dataall/cdkproxy/stacks',
-        '&&',
-        'mkdir',
-        f'{pipeline.repo}',
-        '&&',
-        'git',
-        'clone',
-        f"codecommit::{pipeline_environment.region}://{pipeline.repo}",
-        f'{pipeline.repo}'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True,
-        env=env
-    )
-    if process.returncode == 0:
-        print(f"Successfully cloned repo {pipeline.repo}: {str(process.stdout)}")
-    else:
-        logger.error(
-            f'Failed to clone repo {pipeline.repo} due to {str(process.stderr)}'
-        )
-    return
-
-
-def clean_up_repo(path):
-    if path:
-        precmd = [
-            'rm',
-            '-rf',
-            f"{path}"
-        ]
-
-        cwd = os.path.dirname(os.path.abspath(__file__))
-        logger.info(f"Running command : \n {' '.join(precmd)}")
-
-        process = subprocess.run(
-            ' '.join(precmd),
-            text=True,
-            shell=True,  # nosec
-            encoding='utf-8',
-            capture_output=True,
-            cwd=cwd
-        )
-
-        if process.returncode == 0:
-            print(f"Successfully cleaned cloned repo: {path}. {str(process.stdout)}")
-        else:
-            logger.error(
-                f'Failed clean cloned repo: {path} due to {str(process.stderr)}'
-            )
-    else:
-        logger.info(f"Info:Path {path} not found")
-    return
-
-
 def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: str = None):
     logger.warning(f'Starting new stack from  stackid {stackid}')
     sts = boto3.client('sts')
@@ -180,6 +79,11 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.warning(f"stackuri = {stack.stackUri}, stackId = {stack.stackid}")
             stack.status = 'PENDING'
             session.commit()
+
+            if stack.stack == "cdkpipeline":
+                cdkpipeline = CDKPipelineStack(stack)
+                pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
+                path = f"./stacks/{pipeline.repo}/"
 
             app_path = app_path or './app.py'
 
@@ -246,21 +150,14 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 cwd=cwd,
             )
 
+            if stack.stack == "cdkpipeline":
+                CDKPipelineStack.clean_up_repo(path=f"./{pipeline.repo}")
+
             if process.returncode == 0:
-                meta = describe_stack(stack)
+                meta = describe_stack(stack) 
                 stack.stackid = meta['StackId']
                 stack.status = meta['StackStatus']
                 update_stack_output(session, stack)
-                if stack.stack == 'cdkrepo':
-                    logger.warning(f'Starting new remote stack from  targetUri {stack.targetUri}pip')
-                    cicdstack: models.Stack = Stack.get_stack_by_target_uri(session, target_uri=f"{stack.targetUri}pip")
-                    cicdstack.EcsTaskArn = stack.EcsTaskArn
-                    session.commit()
-                    pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
-                    pipeline_environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-                    clone_remote_stack(pipeline, pipeline_environment)
-                    deploy_cdk_stack(engine, cicdstack.stackUri, app_path="app.py", path=f"./stacks/{pipeline.repo}/")
-                    clean_up_repo(f"./stacks/{pipeline.repo}")
             else:
                 stack.status = 'CREATE_FAILED'
                 logger.error(
