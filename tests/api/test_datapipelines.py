@@ -13,8 +13,17 @@ def env1(env, org1, user, group, tenant, module_mocker):
     module_mocker.patch(
         'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
     )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'cicd', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
+
+@pytest.fixture(scope='module')
+def env2(env, org1, user, group, tenant, module_mocker):
+    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
+    )
+    env2 = env(org1, 'dev', user.userName, group.name, '222222222222', 'eu-west-1')
+    yield env2
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -38,10 +47,7 @@ def pipeline(client, tenant, group, env1):
             'SamlGroupName': group.name,
             'tags': [group.name],
             'environmentUri': env1.environmentUri,
-            'devStages': ['test','prod'],
             'devStrategy': 'trunk',
-            'inputDatasetUri': '',
-            'outputDatasetUri': '',
             'template': ''
         },
         username='alice',
@@ -50,6 +56,41 @@ def pipeline(client, tenant, group, env1):
     assert response.data.createDataPipeline.repo
     assert response.data.createDataPipeline.DataPipelineUri
     return response.data.createDataPipeline
+
+
+def test_create_pipeline_environment(client, tenant, group, env2, pipeline):
+    response = client.query(
+        """
+        mutation createDataPipelineEnvironment($input: NewDataPipelineEnvironmentInput) {
+          createDataPipelineEnvironment(input: $input) {
+            envPipelineUri
+            environmentUri
+            environmentLabel
+            pipelineUri
+            pipelineLabel
+            stage
+            region
+            AwsAccountId
+            samlGroupName
+          }
+        }
+        """,
+        input={
+            'stage': 'dev',
+            'order': 1,
+            'pipelineUri': pipeline.DataPipelineUri,
+            'environmentUri': env2.environmentUri,
+            'environmentLabel': env2.label,
+            'samlGroupName': group.name
+        },
+        username='alice',
+        groups=[group.name],
+    )
+    assert response.data.createDataPipelineEnvironment.envPipelineUri
+    assert response.data.createDataPipelineEnvironment.stage == 'dev'
+    assert response.data.createDataPipelineEnvironment.AwsAccountId == env2.AwsAccountId
+
+
 
 
 def test_update_pipeline(client, tenant, group, pipeline):

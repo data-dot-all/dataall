@@ -168,22 +168,6 @@ def list_environment_invited_groups(
         )
 
 
-def list_environment_not_invited_groups(
-    context: Context, source, environmentUri=None, filter=None
-):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.Environment.not_environment_groups(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def list_environment_groups(context: Context, source, environmentUri=None, filter=None):
     if filter is None:
         filter = {}

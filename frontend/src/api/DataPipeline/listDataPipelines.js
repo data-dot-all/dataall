@@ -45,6 +45,18 @@ const searchDataPipelines = (filter) => ({
             outputs
             resources
           }
+          cicdStack {
+            stack
+            status
+            stackUri
+            targetUri
+            accountid
+            region
+            stackid
+            link
+            outputs
+            resources
+          }
         }
       }
     }

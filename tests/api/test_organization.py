@@ -248,26 +248,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, dataset
 
     response = client.query(
         """
-        query listOrganizationNotInvitedGroups($organizationUri: String!, $filter:GroupFilter){
-            listOrganizationNotInvitedGroups(organizationUri:$organizationUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name, group3.name],
-        organizationUri=org1.organizationUri,
-        filter={},
-    )
-
-    assert response.data.listOrganizationNotInvitedGroups.count == 1
-
-    response = client.query(
-        """
         query listOrganizationGroups($organizationUri: String!, $filter:GroupFilter){
             listOrganizationGroups(organizationUri:$organizationUri, filter:$filter){
                 count
@@ -347,26 +327,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, dataset
     )
 
     assert response.data.listOrganizationInvitedGroups.count == 0
-
-    response = client.query(
-        """
-        query listOrganizationNotInvitedGroups($organizationUri: String!, $filter:GroupFilter){
-            listOrganizationNotInvitedGroups(organizationUri:$organizationUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name, group3.name],
-        organizationUri=org1.organizationUri,
-        filter={},
-    )
-
-    assert response.data.listOrganizationNotInvitedGroups.count == 2
 
     response = client.query(
         """

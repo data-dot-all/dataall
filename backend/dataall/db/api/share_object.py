@@ -1,15 +1,14 @@
 import logging
-from datetime import datetime
 
 from sqlalchemy import and_, or_, func, case
 
-from .. import models, exceptions, permissions, paginate
-from .. import api
 from . import (
     has_resource_perm,
     ResourcePolicy,
     Environment,
 )
+from .. import api
+from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareableType, PrincipalType
 
 logger = logging.getLogger(__name__)
@@ -119,7 +118,7 @@ class ShareObject:
                     GlueTableName=item.GlueTableName
                     if itemType == ShareableType.Table.value
                     else '',
-                    S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.principalId}'.lower()
+                    S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                     if itemType == ShareableType.StorageLocation.value
                     else '',
                 )
@@ -424,7 +423,7 @@ class ShareObject:
                 GlueTableName=item.GlueTableName
                 if itemType == ShareableType.Table.value
                 else '',
-                S3AccessPointName=f'{share.datasetUri}{item.locationUri}{share.environmentUri}'.lower()
+                S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
                 if itemType == ShareableType.StorageLocation.value
                 else '',
             )
@@ -611,3 +610,211 @@ class ShareObject:
             )
         )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+
+    @staticmethod
+    def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
+        environment_groups = session.query(models.EnvironmentGroup).filter(
+            models.EnvironmentGroup.environmentUri == environment_uri
+        )
+        groups = [g.groupUri for g in environment_groups]
+        share = session.query(models.ShareObject).filter(
+            and_(
+                models.ShareObject.datasetUri == dataset_uri,
+                models.ShareObject.environmentUri == environment_uri,
+                models.ShareObject.principalId.in_(groups),
+            )
+        )
+        if not share:
+            raise exceptions.ObjectNotFound('Share', f'{dataset_uri}/{environment_uri}')
+        return share
+
+    @staticmethod
+    def update_share_item_status(
+        session,
+        share_item: models.ShareObjectItem,
+        status: str,
+    ) -> models.ShareObjectItem:
+
+        logger.info(f'Updating share item status to {status}')
+        share_item.status = status
+        session.commit()
+        return share_item
+
+    @staticmethod
+    def find_share_item_by_table(
+        session,
+        share: models.ShareObject,
+        table: models.DatasetTable,
+    ) -> models.ShareObjectItem:
+        share_item: models.ShareObjectItem = (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.itemUri == table.tableUri,
+                    models.ShareObjectItem.shareUri == share.shareUri,
+                )
+            )
+            .first()
+        )
+        return share_item
+
+    @staticmethod
+    def find_share_item_by_folder(
+        session,
+        share: models.ShareObject,
+        folder: models.DatasetStorageLocation,
+    ) -> models.ShareObjectItem:
+        share_item: models.ShareObjectItem = (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.itemUri == folder.locationUri,
+                    models.ShareObjectItem.shareUri == share.shareUri,
+                )
+            )
+            .first()
+        )
+        return share_item
+
+    @staticmethod
+    def get_share_data(session, share_uri, status):
+        share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
+        if not share:
+            raise exceptions.ObjectNotFound('Share', share_uri)
+
+        dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
+        if not dataset:
+            raise exceptions.ObjectNotFound('Dataset', share.datasetUri)
+
+        source_environment: models.Environment = session.query(models.Environment).get(
+            dataset.environmentUri
+        )
+        if not source_environment:
+            raise exceptions.ObjectNotFound('SourceEnvironment', dataset.environmentUri)
+
+        target_environment: models.Environment = session.query(models.Environment).get(
+            share.environmentUri
+        )
+        if not target_environment:
+            raise exceptions.ObjectNotFound('TargetEnvironment', share.environmentUri)
+
+        shared_tables = (
+            session.query(models.DatasetTable)
+            .join(
+                models.ShareObjectItem,
+                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+            )
+            .join(
+                models.ShareObject,
+                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+            )
+            .filter(
+                and_(
+                    models.ShareObject.datasetUri == dataset.datasetUri,
+                    models.ShareObject.environmentUri
+                    == target_environment.environmentUri,
+                    models.ShareObject.status.in_(status),
+                    models.ShareObject.shareUri == share_uri,
+                )
+            )
+            .all()
+        )
+
+        shared_folders = (
+            session.query(models.DatasetStorageLocation)
+            .join(
+                models.ShareObjectItem,
+                models.ShareObjectItem.itemUri == models.DatasetStorageLocation.locationUri,
+            )
+            .join(
+                models.ShareObject,
+                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+            )
+            .filter(
+                and_(
+                    models.ShareObject.datasetUri == dataset.datasetUri,
+                    models.ShareObject.environmentUri
+                    == target_environment.environmentUri,
+                    models.ShareObject.status.in_(status),
+                    models.ShareObject.shareUri == share_uri,
+                )
+            )
+            .all()
+        )
+
+        env_group: models.EnvironmentGroup = (
+            session.query(models.EnvironmentGroup)
+            .filter(
+                and_(
+                    models.EnvironmentGroup.environmentUri == share.environmentUri,
+                    models.EnvironmentGroup.groupUri == share.principalId,
+                )
+            )
+            .first()
+        )
+        if not env_group:
+            raise Exception(
+                f'Share object Team {share.principalId} is not a member of the '
+                f'environment {target_environment.name}/{target_environment.AwsAccountId}'
+            )
+
+        source_env_group: models.EnvironmentGroup = (
+            session.query(models.EnvironmentGroup)
+            .filter(
+                and_(
+                    models.EnvironmentGroup.environmentUri == dataset.environmentUri,
+                    models.EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
+                )
+            )
+            .first()
+        )
+        if not source_env_group:
+            raise Exception(
+                f'Share object Team {dataset.SamlAdminGroupName} is not a member of the '
+                f'environment {dataset.environmentUri}'
+            )
+
+        return (
+            source_env_group,
+            env_group,
+            dataset,
+            share,
+            shared_tables,
+            shared_folders,
+            source_environment,
+            target_environment,
+        )
+
+    @staticmethod
+    def other_approved_share_object_exists(session, environment_uri, dataset_uri):
+        return (
+            session.query(models.ShareObject)
+            .filter(
+                and_(
+                    models.Environment.environmentUri == environment_uri,
+                    models.ShareObject.status
+                    == models.Enums.ShareObjectStatus.Approved.value,
+                    models.ShareObject.datasetUri == dataset_uri,
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
+    def is_shared_table(session, environment_uri, dataset_uri, table_name):
+        return (
+            session.query(models.ShareObjectItem)
+            .join(
+                models.ShareObject,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri,
+            )
+            .filter(
+                and_(
+                    models.ShareObjectItem.GlueTableName == table_name,
+                    models.ShareObject.datasetUri == dataset_uri,
+                    models.ShareObject.status == models.Enums.ShareObjectStatus.Approved.value,
+                    models.ShareObject.environmentUri == environment_uri,
+                )
+            )
+            .first()
+        )

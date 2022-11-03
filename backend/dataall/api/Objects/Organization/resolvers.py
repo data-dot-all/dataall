@@ -161,22 +161,6 @@ def list_organization_invited_groups(
         )
 
 
-def list_organization_not_invited_groups(
-    context: Context, source, organizationUri=None, filter=None
-):
-    if filter is None:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.Organization.not_organization_groups(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=organizationUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def list_organization_groups(
     context: Context, source, organizationUri=None, filter=None
 ):

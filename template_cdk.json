@@ -1,0 +1,36 @@
+{
+  "app": "python ./deploy/app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
+    "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
+    "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
+    "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
+    "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
+    "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
+    "repository_source": "string_VERSION_CONTROL_SERVICE|DEFAULT=codecommit",
+    "DeploymentEnvironments": [
+      {
+        "envname": "string_ENVIRONMENT_NAME|REQUIRED",
+        "account": "string_DEPLOYMENT_ACCOUNT|REQUIRED",
+        "region": "string_DEPLOYMENT_REGION|REQUIRED",
+        "with_approval": "boolean_ADD_CODEPIPELINE_APPROVAL_STEP|DEFAULT=false",
+        "vpc_id": "string_DEPLOY_WITHIN_AN_EXISTING_VPC|DEFAULT=None",
+        "vpc_endpoints_sg": "string_DEPLOY_WITHIN_EXISTING_VPC_SG|DEFAULT=None",
+        "internet_facing": "boolean_CLOUDFRONT_IF_TRUE_ELSE_ECS_BEHIND_INTERNAL_ALB|DEFAULT=true",
+        "custom_domain": {
+          "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
+          "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false"
+        },
+        "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
+        "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
+        "prod_sizing": "boolean_SET_INFRA_SIZING_TO_PROD_VALUES_IF_TRUE|DEFAULT=true",
+        "enable_cw_rum":  "boolean_SET_CLOUDWATCH_RUM_APP_MONITOR|DEFAULT=false",
+        "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false"
+      }
+    ]
+  }
+}

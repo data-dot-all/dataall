@@ -33,16 +33,6 @@ listOrganizationInvitedGroups = gql.QueryField(
     resolver=list_organization_invited_groups,
 )
 
-listOrganizationNotInvitedGroups = gql.QueryField(
-    name='listOrganizationNotInvitedGroups',
-    type=gql.Ref('GroupSearchResult'),
-    args=[
-        gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
-    ],
-    resolver=list_organization_not_invited_groups,
-)
-
 listOrganizationGroups = gql.QueryField(
     name='listOrganizationGroups',
     type=gql.Ref('GroupSearchResult'),

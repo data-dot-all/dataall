@@ -158,6 +158,20 @@ class Quicksight:
         return response.get('User')
 
     @staticmethod
+    def get_quicksight_group_arn(AwsAccountId):
+        default_group_arn = None
+        group = Quicksight.describe_group(
+            client=Quicksight.get_quicksight_client_in_identity_region(
+                AwsAccountId=AwsAccountId
+            ),
+            AwsAccountId=AwsAccountId,
+        )
+        if group and group.get('Group', {}).get('Arn'):
+            default_group_arn = group.get('Group', {}).get('Arn')
+
+        return default_group_arn
+
+    @staticmethod
     def list_user_groups(AwsAccountId, UserName):
         client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
         user = Quicksight.describe_user(AwsAccountId, UserName)

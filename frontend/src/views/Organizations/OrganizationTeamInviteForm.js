@@ -25,7 +25,7 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import inviteGroupToOrganization from '../../api/Organization/inviteGroup';
-import listOrganizationNotInvitedGroups from '../../api/Organization/listNotInvitedGroups';
+import listCognitoGroups from '../../api/Groups/listCognitoGroups';
 
 const OrganizationTeamInviteForm = (props) => {
   const { organization, onClose, open, reloadTeams, ...other } = props;
@@ -37,20 +37,21 @@ const OrganizationTeamInviteForm = (props) => {
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
 
+  const filter = {
+    type: "organization",
+    uri: organization.organizationUri
+  }
+
   const fetchGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
-      const response = await client.query(
-        listOrganizationNotInvitedGroups({
-          organizationUri: organization.organizationUri
-        })
-      );
+      const response = await client.query(listCognitoGroups({ filter }));
       if (!response.errors) {
         setGroupOptions(
-          response.data.listOrganizationNotInvitedGroups.nodes.map((g) => ({
+          response.data.listCognitoGroups.map((g) => ({
             ...g,
-            value: g.groupUri,
-            label: g.groupUri
+            value: g.groupName,
+            label: g.groupName
           }))
         );
       } else {

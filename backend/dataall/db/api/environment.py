@@ -631,25 +631,6 @@ class Environment:
         ).all()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def not_environment_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        environment_groups: [] = (
-            session.query(models.EnvironmentGroup).filter(
-                and_(
-                    models.EnvironmentGroup.groupUri.in_(groups),
-                    models.EnvironmentGroup.environmentUri == uri,
-                ),
-            )
-        ).all()
-        environment_groups = [g.groupUri for g in environment_groups]
-        not_invited_groups = [
-            {'groupUri': group} for group in groups if group not in environment_groups
-        ]
-        return Page(not_invited_groups, 1, 1000, len(not_invited_groups)).to_dict()
-
-    @staticmethod
     def query_environment_datasets(session, username, groups, uri, filter) -> Query:
         query = session.query(models.Dataset).filter(
             and_(

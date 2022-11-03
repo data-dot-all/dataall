@@ -8,3 +8,11 @@ GroupFilter = gql.InputType(
         gql.Argument(name='pageSize', type=gql.Integer),
     ],
 )
+
+CognitoGroupFilter = gql.InputType(
+    name='CognitoGroupFilter',
+    arguments=[
+        gql.Argument(name='type', type=gql.String),
+        gql.Argument(name='uri', type=gql.String),
+    ],
+)

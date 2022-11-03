@@ -345,6 +345,7 @@ class ContainerStack(pyNestedClass):
                     resources=[
                         f"arn:aws:iam::*:role/{self.node.try_get_context('pivot_role_name') or 'dataallPivotRole'}",
                         f'arn:aws:iam::*:role/cdk*',
+                        'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
                     ],
                 ),

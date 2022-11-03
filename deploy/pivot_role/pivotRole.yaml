@@ -69,6 +69,19 @@ Resources:
             Action: 's3:GetObject'
             Resource:
               - 'arn:aws:s3:::crawler-public*'
+          - Sid: ManagedAccessPoints
+            Action:
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: ManagedBuckets
             Action:
               - 's3:List*'
@@ -165,6 +178,7 @@ Resources:
               - 'glue:UpdateTrigger'
               - 'glue:UpdateJob'
               - 'glue:TagResource'
+              - 'glue:UpdateCrawler'
             Effect: Allow
             Resource: '*'
           - Sid: KMS
@@ -629,6 +643,12 @@ Resources:
               - 'iam:ListRoles'
             Effect: Allow
             Resource: '*'
+          - Sid: IAMRolePolicy
+            Action:
+              - 'iam:PutRolePolicy'
+              - 'iam:DeleteRolePolicy'
+            Effect: Allow
+            Resource: '*'
           - Sid: IAMPassRole
             Action:
               - 'iam:Get*'
@@ -658,6 +678,8 @@ Resources:
               - 'codecommit:ListBranches'
               - 'codecommit:GetFolder'
               - 'codecommit:GetCommit'
+              - 'codecommit:GitPull'
+              - 'codecommit:GetRepository'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'

@@ -474,26 +474,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
 
     response = client.query(
         """
-        query listEnvironmentNotInvitedGroups($environmentUri: String!, $filter:GroupFilter){
-            listEnvironmentNotInvitedGroups(environmentUri:$environmentUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name, group3.name],
-        environmentUri=env1.environmentUri,
-        filter={},
-    )
-
-    assert response.data.listEnvironmentNotInvitedGroups.count == 1
-
-    response = client.query(
-        """
         query listEnvironmentGroups($environmentUri: String!, $filter:GroupFilter){
             listEnvironmentGroups(environmentUri:$environmentUri, filter:$filter){
                 count
@@ -617,26 +597,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     )
 
     assert response.data.listEnvironmentInvitedGroups.count == 0
-
-    response = client.query(
-        """
-        query listEnvironmentNotInvitedGroups($environmentUri: String!, $filter:GroupFilter){
-            listEnvironmentNotInvitedGroups(environmentUri:$environmentUri, filter:$filter){
-                count
-                nodes{
-                    groupUri
-                    name
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name, group3.name],
-        environmentUri=env1.environmentUri,
-        filter={},
-    )
-
-    assert response.data.listEnvironmentNotInvitedGroups.count == 2
 
     response = client.query(
         """

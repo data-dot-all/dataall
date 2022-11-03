@@ -4,16 +4,19 @@ from ...db import models, Engine
 
 
 class CodeCommit:
-
     def __init__(self):
         pass
+
+    @staticmethod
+    def client(AwsAccountId, region):
+        session = SessionHelper.remote_session(AwsAccountId)
+        return session.client('codecommit', region_name=region)
 
     @staticmethod
     def _unpack(session, task):
         pipe: models.DataPipeline = session.query(models.DataPipeline).get(task.targetUri)
         env: models.Environment = session.query(models.Environment).get(pipe.environmentUri)
-        remote_session = SessionHelper.remote_session(env.AwsAccountId)
-        client = remote_session.client('codecommit', region_name=env.region)
+        client = CodeCommit.client(AwsAccountId=env.AwsAccountId, region=env.region)
         return (pipe, env, client)
 
     @staticmethod

@@ -62,11 +62,8 @@ class Pipeline:
             AwsAccountId=environment.AwsAccountId,
             region=environment.region,
             repo=slugify(data['label']),
-            devStages=data.get('devStages', []),
             devStrategy=data['devStrategy'],
-            inputDatasetUri=data['inputDatasetUri'],
-            outputDatasetUri=data['outputDatasetUri'],
-            template=data['template'],
+            template=data['template'] if data['template'] != '' else data['label'],
         )
 
         session.add(pipeline)
@@ -110,6 +107,54 @@ class Pipeline:
             )
 
         return pipeline
+
+    @staticmethod
+    def create_pipeline_environment(
+        session,
+        username: str,
+        groups: [str],
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.DataPipelineEnvironment:
+
+        Environment.check_group_environment_permission(
+            session=session,
+            username=username,
+            groups=groups,
+            uri=data['environmentUri'],
+            group=data['samlGroupName'],
+            permission_name=permissions.CREATE_PIPELINE,
+        )
+
+        environment = Environment.get_environment_by_uri(session, data['environmentUri'])
+
+        if not environment.pipelinesEnabled:
+            raise exceptions.UnauthorizedOperation(
+                action=permissions.CREATE_PIPELINE,
+                message=f'Pipelines feature is disabled for the environment {environment.label}',
+            )
+
+        pipeline = Pipeline.get_pipeline_by_uri(session, data['pipelineUri'])
+
+        pipeline_env: models.DataPipelineEnvironment = models.DataPipelineEnvironment(
+            owner=username,
+            label=f"{pipeline.label}-{environment.label}",
+            environmentUri=environment.environmentUri,
+            environmentLabel=environment.label,
+            pipelineUri=pipeline.DataPipelineUri,
+            pipelineLabel=pipeline.label,
+            envPipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}{data['stage']}",
+            AwsAccountId=environment.AwsAccountId,
+            region=environment.region,
+            stage=data['stage'],
+            order=data['order'],
+            samlGroupName=data['samlGroupName']
+        )
+
+        session.add(pipeline_env)
+        session.commit()
+
+        return pipeline_env
 
     @staticmethod
     def _validate_input(data):
@@ -213,3 +258,49 @@ class Pipeline:
         session.delete(pipeline)
         session.commit()
         return True
+
+    @staticmethod
+    @has_tenant_perm(permissions.MANAGE_PIPELINES)
+    @has_resource_perm(permissions.GET_PIPELINE)
+    def get_pipeline_environment(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.DataPipeline:
+        return Pipeline.get_pipeline_environment_by_uri(session, uri)
+
+    @staticmethod
+    def get_pipeline_environment_by_uri(session, uri):
+        pipeline_env: models.DataPipelineEnvironment = session.query(models.DataPipelineEnvironment).get(uri)
+        if not pipeline_env:
+            raise exceptions.ObjectNotFound('PipelineEnvironment', uri)
+        return pipeline_env
+
+    @staticmethod
+    def query_pipeline_environments(session, uri) -> Query:
+        query = session.query(models.DataPipelineEnvironment).filter(
+            models.DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
+        )
+        return query
+
+    @staticmethod
+    def delete_pipeline_environments(session, uri) -> bool:
+        deletedItems = (
+            session.query(models.DataPipelineEnvironment).filter(
+                models.DataPipelineEnvironment.pipelineUri == uri).delete()
+        )
+        session.commit()
+        return True
+
+    @staticmethod
+    def paginated_pipeline_environments(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return paginate(
+            query=Pipeline.query_pipeline_environments(session, uri),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()

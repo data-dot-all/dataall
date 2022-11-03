@@ -72,7 +72,6 @@ class Dataset(Stack):
 
     def get_shared_tables(self) -> typing.List[models.ShareObjectItem]:
         engine = self.get_engine()
-        dataset = self.get_target()
         with engine.scoped_session() as session:
             tables = (
                 session.query(
@@ -261,13 +260,13 @@ class Dataset(Stack):
                 bucket_key_enabled=True,
             )
 
-            dataset_bucket.add_to_resource_policy(
-                permission=iam.PolicyStatement(
-                    actions=['s3:*'],
-                    resources=[dataset_bucket.bucket_arn],
-                    principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
-                )
-            )
+            # dataset_bucket.add_to_resource_policy(
+            #     permission=iam.PolicyStatement(
+            #         actions=['s3:*'],
+            #         resources=[dataset_bucket.bucket_arn],
+            #         principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
+            #     )
+            # )
 
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -292,15 +291,6 @@ class Dataset(Stack):
                     ),
                 ],
                 enabled=True,
-            )
-        shared_locations = self.get_shared_folders()
-        for location in shared_locations:
-            dataset_bucket.grant_read(
-                identity=iam.AccountPrincipal(location.AwsAccountId),
-                objects_key_pattern=f'{location.S3Prefix}/*',
-            )
-            dataset_bucket.encryption_key.grant_decrypt(
-                grantee=iam.AccountPrincipal(location.AwsAccountId)
             )
 
         # Dataset Admin and ETL User
@@ -327,6 +317,22 @@ class Dataset(Stack):
                     actions=['s3:*'],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        's3:GetAccessPoint',
+                        's3:GetAccessPointPolicy',
+                        's3:ListAccessPoints',
+                        's3:CreateAccessPoint',
+                        's3:DeleteAccessPoint',
+                        's3:GetAccessPointPolicyStatus',
+                        's3:DeleteAccessPointPolicy',
+                        's3:PutAccessPointPolicy',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/*',
+                    ],
                 ),
                 iam.PolicyStatement(
                     actions=['s3:List*', 's3:Get*'],
