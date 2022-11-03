@@ -12,6 +12,7 @@ from ....utils.alarm_service import AlarmService
 
 log = logging.getLogger(__name__)
 
+
 class S3ShareManager:
     def __init__(
         self,
