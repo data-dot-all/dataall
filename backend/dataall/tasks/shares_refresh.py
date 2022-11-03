@@ -18,17 +18,8 @@ if __name__ == '__main__':
         ENVNAME = os.environ.get('envname', 'local')
         ENGINE = get_engine(envname=ENVNAME)
 
-        share_uri = os.getenv('shareUri')
-        share_item_uri = os.getenv('shareItemUri')
-        handler = os.getenv('handler')
-
-        if handler == 'approve_share':
-            log.info(f'Starting approval task for share : {share_uri}...')
-            DataSharingService.approve_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'reject_share':
-            log.info(f'Starting revoke task for share : {share_uri}...')
-            DataSharingService.reject_share(engine=ENGINE, share_uri=share_uri)
+        log.info('Starting refresh shares task...')
+        DataSharingService.refresh_shares(engine=ENGINE)
 
         log.info('Sharing task finished successfully')
 
