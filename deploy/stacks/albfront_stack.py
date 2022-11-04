@@ -141,13 +141,17 @@ class AlbFrontStack(Stack):
             zone_name=custom_domain['hosted_zone_name'],
         )
 
-        certificate = acm.Certificate(
-            self,
-            'CustomDomainCertificate',
-            domain_name=custom_domain['hosted_zone_name'],
-            subject_alternative_names=[f'*.{custom_domain["hosted_zone_name"]}'],
-            validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
-        )
+        if custom_domain and custom_domain.get('certificate_arn'):
+            certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
+                                                               custom_domain.get('certificate_arn'))
+        else:
+            certificate = acm.Certificate(
+                self,
+                'CustomDomainCertificate',
+                domain_name=custom_domain['hosted_zone_name'],
+                subject_alternative_names=[f'*.{custom_domain["hosted_zone_name"]}'],
+                validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
+            )
 
         frontend_sg = ec2.SecurityGroup(
             self,
@@ -164,7 +168,7 @@ class AlbFrontStack(Stack):
             memory_limit_mib=2048,
             service_name=f'frontend-{envname}',
             desired_count=2,
-            certificate=certificate,
+            certificate=certificate if (custom_domain and custom_domain.get('certificate_arn')) else None,
             domain_name=frontend_alternate_domain,
             domain_zone=hosted_zone,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
@@ -224,7 +228,7 @@ class AlbFrontStack(Stack):
             memory_limit_mib=2048,
             service_name=f'userguide-{envname}',
             desired_count=1,
-            certificate=certificate,
+            certificate=certificate if (custom_domain and custom_domain.get('certificate_arn')) else None,
             domain_name=userguide_alternate_domain,
             domain_zone=hosted_zone,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
