@@ -680,6 +680,7 @@ Resources:
               - 'codecommit:GetCommit'
               - 'codecommit:GitPull'
               - 'codecommit:GetRepository'
+              - 'codecommit:TagResource'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
