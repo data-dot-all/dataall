@@ -54,11 +54,59 @@ class KeyValueTag:
                 targetType=data['targetType'],
                 key=tag['key'],
                 value=tag['value'],
+                cascade=tag['cascade']
             )
             tags.append(kv_tag)
             session.add(kv_tag)
 
         return tags
+
+    @staticmethod
+    def update_cascading_key_value_tag(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        targetUri: str,
+        targetType: str,
+        cascade: bool = False,
+        check_perm: bool = False,
+    ) -> [models.KeyValueTag]:
+
+        if not uri:
+            raise exceptions.RequiredParameter('tagUri')
+        if not cascade:
+            raise exceptions.RequiredParameter('cascade')
+        if not targetUri:
+            raise exceptions.RequiredParameter('targetUri')
+        if not targetType:
+            raise exceptions.RequiredParameter('targetType')
+
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=username,
+            groups=groups,
+            resource_uri=targetUri,
+            permission_name=TargetType.get_resource_update_permission_name(
+                targetType
+            ),
+        )
+
+        tag = KeyValueTag.get_tag_by_uri(session=session, uri=uri)
+        tag.cascade = cascade
+        session.commit()
+
+        return True
+
+    @staticmethod
+    def get_tag_by_uri(session, uri) -> models.KeyValueTag:
+        if not uri:
+            raise exceptions.RequiredParameter('tagUri')
+        tag: models.KeyValueTag = session.query(models.KeyValueTag).get(uri)
+
+        if not tag:
+            raise exceptions.ObjectNotFound(models.KeyValueTag.__name__, uri)
+        return tag
 
     @staticmethod
     def list_key_value_tags(

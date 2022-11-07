@@ -20,6 +20,7 @@ import { useDispatch } from '../../store';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 import listKeyValueTags from '../../api/KeyValueTags/listKeyValueTags';
 import PencilAlt from '../../icons/PencilAlt';
+import updateCascadingKeyValueTag from "../../api/KeyValueTags/updateCascadingKeyValueTag";
 
 const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();
@@ -97,6 +98,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                           <TableRow>
                             <TableCell>Key</TableCell>
                             <TableCell>Value</TableCell>
+                            {targetType == 'environment' && (<TableCell>Cascade enabled</TableCell>)}
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -104,6 +106,16 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                             <TableRow>
                               <TableCell>{tag.key || '-'}</TableCell>
                               <TableCell>{tag.value || '-'}</TableCell>
+                              {targetType == 'environment' && (<TableCell>
+                                <Switch
+                                      defaultChecked={tag.cascade}
+                                      color="primary"
+                                      onChange={updateCascadingKeyValueTag(tag.tagUri, tag.targetUri, tag.targetType, tag.cascade)}
+                                      edge="start"
+                                      name="cascade"
+                                      value={tag.cascade}
+                                    />
+                              </TableCell>)}
                             </TableRow>
                           ))}
                         </TableBody>
