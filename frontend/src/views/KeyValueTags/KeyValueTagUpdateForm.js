@@ -111,7 +111,7 @@ const KeyValueTagUpdateForm = (props) => {
         <Grid item lg={12} xl={12} xs={12}>
           <Box>
             <Card>
-              <CardHeader title="Key-Value Tags" />
+              <CardHeader title="Key-Value Stack Tags" />
               <Divider />
               <CardContent>
                 <Box>
@@ -162,7 +162,7 @@ const KeyValueTagUpdateForm = (props) => {
                   </Table>
                   <Box>
                     <Button type="button" onClick={handleAddKeyValueRow}>
-                      Add Tag
+                      Add Stack Tag
                     </Button>
                   </Box>
                   <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>

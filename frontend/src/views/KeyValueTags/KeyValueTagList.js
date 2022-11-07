@@ -83,7 +83,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                   variant="outlined"
                   onClick={openUpdate}
                 >
-                  Add/Edit Tags
+                  Add/Edit Stack Tags
                 </Button>
               </Box>
               {items && items.length > 0 && (
