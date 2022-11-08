@@ -490,7 +490,7 @@ const EnvironmentEditForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            <Box sx={{ ml: 2 }}>
+{/*                            <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
@@ -520,7 +520,7 @@ const EnvironmentEditForm = (props) => {
                                   value={values.warehousesEnabled}
                                 />
                               </FormGroup>
-                            </Box>
+                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>
