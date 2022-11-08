@@ -54,7 +54,7 @@ class KeyValueTag:
                 targetType=data['targetType'],
                 key=tag['key'],
                 value=tag['value'],
-                cascade=tag['cascade']
+                cascade=False
             )
             tags.append(kv_tag)
             session.add(kv_tag)
@@ -130,6 +130,18 @@ class KeyValueTag:
             .filter(
                 models.KeyValueTag.targetUri == target_uri,
                 models.KeyValueTag.targetType == target_type,
+            )
+            .all()
+        )
+
+    @staticmethod
+    def find_environment_cascade_key_value_tags(session, target_uri) -> [models.KeyValueTag]:
+        return (
+            session.query(models.KeyValueTag)
+            .filter(
+                models.KeyValueTag.targetUri == target_uri,
+                models.KeyValueTag.targetType == 'environment',
+                models.KeyValueTag.cascade.is_(True),
             )
             .all()
         )

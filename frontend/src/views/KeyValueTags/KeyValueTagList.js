@@ -11,12 +11,14 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  Switch
 } from '@mui/material';
 import useClient from '../../hooks/useClient';
 import Scrollbar from '../../components/Scrollbar';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
+import { useSnackbar } from 'notistack';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 import listKeyValueTags from '../../api/KeyValueTags/listKeyValueTags';
 import PencilAlt from '../../icons/PencilAlt';
@@ -25,6 +27,7 @@ import updateCascadingKeyValueTag from "../../api/KeyValueTags/updateCascadingKe
 const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState([]);
   const [openUpdateForm, setOpenUpdateForm] = useState(false);
   const [loading, setLoading] = useState(null);
@@ -50,6 +53,30 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
     fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     setOpenUpdateForm(false);
   };
+
+  const handleUpdateCascadingKeyValueTag = useCallback(
+    async (tag) => {
+      const response = await client.mutate(
+        updateCascadingKeyValueTag(tag.tagUri, tag.targetUri, tag.targetType, tag.cascade)
+      );
+      if (!response.errors) {
+        enqueueSnackbar('This tag will be added to all data.all stacks created in this environment', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    },
+    [
+      client,
+      dispatch,
+      enqueueSnackbar,
+    ]
+  );
 
   useEffect(() => {
     if (client) {
@@ -110,7 +137,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                                 <Switch
                                       defaultChecked={tag.cascade}
                                       color="primary"
-                                      onChange={updateCascadingKeyValueTag(tag.tagUri, tag.targetUri, tag.targetType, tag.cascade)}
+                                      onChange={handleUpdateCascadingKeyValueTag(tag)}
                                       edge="start"
                                       name="cascade"
                                       value={tag.cascade}
