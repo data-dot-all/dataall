@@ -60,7 +60,7 @@ const tabs = [
     icon: <FolderOpen fontSize="small" />
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
-  { label: 'Warehouses', value: 'warehouses', icon: <GoDatabase size={20} /> },
+  /*{ label: 'Warehouses', value: 'warehouses', icon: <GoDatabase size={20} /> },*/
   {
     label: 'Subscriptions',
     value: 'subscriptions',

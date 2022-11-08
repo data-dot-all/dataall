@@ -90,7 +90,7 @@ const EnvironmentFeatures = (props) => {
               </Label>
             </Typography>
           </ListItem>
-          <ListItem
+{/*          <ListItem
             disableGutters
             divider
             sx={{
@@ -108,7 +108,7 @@ const EnvironmentFeatures = (props) => {
                 {environment.warehousesEnabled ? 'Enabled' : 'Disabled'}
               </Label>
             </Typography>
-          </ListItem>
+          </ListItem>*/}
         </List>
       </CardContent>
     </Card>

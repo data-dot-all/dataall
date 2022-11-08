@@ -26,7 +26,7 @@ account_id = boto3.client('sts').get_caller_identity().get('Account') or os.gete
 if not os.environ.get("CODEBUILD_SOURCE_VERSION", None):
     git_branch = (
         subprocess.Popen(['git', 'branch', '--show-current'], stdout=subprocess.PIPE)
-        .stdout.read().decode('utf-8').removesuffix('\n')
+        .stdout.read().decode('utf-8').rstrip('\n')
     )
 else:
     codebuild_source = os.environ.get("CODEBUILD_SOURCE_VERSION")
