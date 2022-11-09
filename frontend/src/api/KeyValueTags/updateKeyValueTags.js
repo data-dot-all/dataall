@@ -12,6 +12,7 @@ const updateKeyValueTags = (input) => ({
         targetType
         key
         value
+        cascade
       }
     }
   `

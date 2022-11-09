@@ -13,6 +13,7 @@ const listKeyValueTags = (targetUri, targetType) => ({
         targetType
         key
         value
+        cascade
       }
     }
   `
