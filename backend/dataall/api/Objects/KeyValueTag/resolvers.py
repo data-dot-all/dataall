@@ -30,16 +30,3 @@ def update_key_value_tags(context: Context, source, input=None):
         stack_helper.deploy_stack(context=context, targetUri=input['targetUri'])
         return kv_tags
 
-def update_cascading_key_value_tag(context: Context, source, tagUri, targetUri, targetType, cascade):
-    with context.engine.scoped_session() as session:
-        cascade = db.api.KeyValueTag.update_cascading_key_value_tag(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=tagUri,
-            targetUri=targetUri,
-            targetType=targetType,
-            cascade=cascade,
-            check_perm=True,
-        )
-        return cascade

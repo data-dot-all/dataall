@@ -22,12 +22,10 @@ import { useSnackbar } from 'notistack';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 import listKeyValueTags from '../../api/KeyValueTags/listKeyValueTags';
 import PencilAlt from '../../icons/PencilAlt';
-import updateCascadingKeyValueTag from "../../api/KeyValueTags/updateCascadingKeyValueTag";
 
 const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState([]);
   const [openUpdateForm, setOpenUpdateForm] = useState(false);
   const [loading, setLoading] = useState(null);
@@ -54,29 +52,6 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
     setOpenUpdateForm(false);
   };
 
-  const handleUpdateCascadingKeyValueTag = useCallback(
-    async (tag) => {
-      const response = await client.mutate(
-        updateCascadingKeyValueTag(tag.tagUri, tag.targetUri, tag.targetType, tag.cascade)
-      );
-      if (!response.errors) {
-        enqueueSnackbar('This tag will be added to all data.all stacks created in this environment', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    },
-    [
-      client,
-      dispatch,
-      enqueueSnackbar,
-    ]
-  );
 
   useEffect(() => {
     if (client) {
@@ -137,10 +112,9 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                                 <Switch
                                       defaultChecked={tag.cascade}
                                       color="primary"
-                                      onChange={handleUpdateCascadingKeyValueTag(tag)}
                                       edge="start"
                                       name="cascade"
-                                      value={tag.cascade}
+                                      disabled={true}
                                     />
                               </TableCell>)}
                             </TableRow>

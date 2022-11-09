@@ -54,7 +54,7 @@ class KeyValueTag:
                 targetType=data['targetType'],
                 key=tag['key'],
                 value=tag['value'],
-                cascade=False
+                cascade=tag['cascade']
             )
             tags.append(kv_tag)
             session.add(kv_tag)

@@ -112,7 +112,7 @@ class TagsUtil:
         # ..and any additional key value tags
         _stack_tags.extend(key_value_tags)
 
-        # and cascade tags inherited form the environment
+        # .. and cascade tags inherited form the environment
         _stack_tags.extend(cascaded_tags)
 
         # Duplicate tag keys are not allowed on CloudFormation. Also Tag keys are case insensitive
