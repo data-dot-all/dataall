@@ -17,6 +17,8 @@ RUN amazon-linux-extras install $PYTHON_VERSION
 RUN yum -y install python38-devel
 RUN yum -y install git
 
+RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"
+
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
