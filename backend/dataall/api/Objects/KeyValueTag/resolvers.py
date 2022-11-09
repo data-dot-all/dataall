@@ -29,4 +29,3 @@ def update_key_value_tags(context: Context, source, input=None):
         )
         stack_helper.deploy_stack(context=context, targetUri=input['targetUri'])
         return kv_tags
-
