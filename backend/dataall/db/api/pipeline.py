@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from . import (
@@ -294,6 +294,37 @@ class Pipeline:
         )
         session.commit()
         return True
+
+    @staticmethod
+    def delete_pipeline_environment(
+        session, username, groups, dataPipelineUri, environmentUri, stage, check_perm=None
+    ) -> bool:
+        deletedItem = session.query(models.DataPipelineEnvironment).filter(
+            and_(
+                models.DataPipelineEnvironment.pipelineUri == dataPipelineUri,
+                models.DataPipelineEnvironment.environmentUri == environmentUri,
+                models.DataPipelineEnvironment.stage == stage
+            )
+        ).delete()
+        session.commit()
+        return True
+
+    @staticmethod
+    def update_pipeline_environment(
+        session, username, groups, data=None, check_perm=None
+    ) -> models.DataPipelineEnvironment:
+        pipeline_env = session.query(models.DataPipelineEnvironment).filter(
+            and_(
+                models.DataPipelineEnvironment.pipelineUri == data['pipelineUri'],
+                models.DataPipelineEnvironment.environmentUri == data['environmentUri'],
+                models.DataPipelineEnvironment.stage == data['stage']
+            )
+        )
+        if data:
+            if isinstance(data, dict):
+                for k in data.keys():
+                    setattr(pipeline_env, k, data.get(k))
+        return pipeline_env
 
     @staticmethod
     def paginated_pipeline_environments(

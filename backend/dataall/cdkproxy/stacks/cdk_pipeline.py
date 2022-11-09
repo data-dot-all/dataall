@@ -71,13 +71,16 @@ class CDKPipelineStack:
         
         template = self.pipeline.template if (self.pipeline.template != self.pipeline.label) else ""
 
-        self.initialize_repo(template)
+        self.venv_name = self.initialize_repo(template)
         if not len(template):
             self.write_ddk_app_multienvironment(output_file="app.py")
             self.write_ddk_json_multienvironment(output_file="ddk.json")
         self.git_push_repo()
+        
 
     def initialize_repo(self, template):
+
+        venv_name = ".venv"
 
         template_cmds = [ 
             f"git clone {template} {self.pipeline.repo}",
@@ -90,8 +93,8 @@ class CDKPipelineStack:
         ]
         repo_cmds = [
             "git init --initial-branch main",
-            "virtualenv .venv && source .venv/bin/activate",
-            "pip install -q -r requirements.txt",
+            f"python3 -m venv {venv_name} && source {venv_name}/bin/activate",
+            "pip install -r requirements.txt",
             f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
         ]
 
@@ -109,6 +112,8 @@ class CDKPipelineStack:
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
+
+            return venv_name
 
 
     def write_ddk_json_multienvironment(self, output_file):

@@ -404,16 +404,7 @@ def delete_pipeline(
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='cdkrepo',
-            )
-
-            stack_helper.delete_stack(
-                context=context,
-                target_uri=f"{DataPipelineUri}pip",
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region,
-                target_type='pipelinePip',
+                target_type='cdkpipeline',
             )
         else:
             stack_helper.delete_stack(
@@ -426,3 +417,27 @@ def delete_pipeline(
             )
 
     return True
+
+def delete_pipeline_environment(context: Context, source, dataPipelineUri: str = None, environmentUri: str = None, stage: str = None):
+    with context.engine.scoped_session() as session:
+        Pipeline.delete_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            dataPipelineUri=dataPipelineUri,
+            environmentUri=environmentUri,
+            stage=stage,
+            check_perm=True,
+        )
+    return True
+
+def update_pipeline_environment(context: Context, source, input=None):
+    with context.engine.scoped_session() as session:
+        pipeline_env = Pipeline.update_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            data=input,
+            check_perm=True,
+        )
+    return pipeline_env

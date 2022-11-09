@@ -82,6 +82,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
 
             if stack.stack == "cdkpipeline":
                 cdkpipeline = CDKPipelineStack(stack)
+                venv_name = cdkpipeline.venv_name
                 pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                 path = f"./stacks/{pipeline.repo}/"
 
@@ -93,7 +94,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 ''
                 '. ~/.nvm/nvm.sh &&',
                 'cdk',
-                'deploy',
+                'deploy --all',
                 '--require-approval',
                 ' never',
                 '-c',
@@ -117,10 +118,8 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            logger.info(f"Running command : \n {' '.join(cmd)}")
 
             python_path = '/:'.join(sys.path)[1:] + ':/code'
-
             logger.info(f'python path = {python_path}')
 
             env = {
@@ -140,6 +139,24 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 )
 
             cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
+
+            if stack.stack == "cdkpipeline":
+                cmd.insert(0, f"source {venv_name}/bin/activate;") 
+                aws = SessionHelper.remote_session(stack.accountid)
+                creds = aws.get_credentials()
+                env.update(
+                    {
+                        'CDK_DEFAULT_REGION': stack.region,
+                        'AWS_REGION': stack.region,
+                        'AWS_DEFAULT_REGION': stack.region,
+                        'CDK_DEFAULT_ACCOUNT': stack.accountid,
+                        'AWS_ACCESS_KEY_ID': creds.access_key,
+                        'AWS_SECRET_ACCESS_KEY': creds.secret_key,
+                        'AWS_SESSION_TOKEN': creds.token
+                    }
+                )
+
+            logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
                 ' '.join(cmd),
