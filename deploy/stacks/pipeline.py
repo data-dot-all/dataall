@@ -819,11 +819,20 @@ class PipelineStack(Stack):
                     vpc=self.vpc,
                 ),
             ],
+            post=self.evaluate_post_albfront_stage(target_env)
+        )
+
+    def evaluate_post_albfront_stage(self, target_env):
+        if target_env.get("enable_cw_rum", False):
             post=[
                 self.cognito_config_action(target_env),
                 self.cw_rum_config_action(target_env),
             ],
-        )
+        else:
+            post=[
+                self.cognito_config_action(target_env),
+            ]
+        return post
 
     def set_release_stage(
         self,

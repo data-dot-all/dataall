@@ -606,7 +606,7 @@ const EnvironmentCreateForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            <Box sx={{ ml: 2 }}>
+{/*                            <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
@@ -636,7 +636,7 @@ const EnvironmentCreateForm = (props) => {
                                   value={values.warehousesEnabled}
                                 />
                               </FormGroup>
-                            </Box>
+                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>
