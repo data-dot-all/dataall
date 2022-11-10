@@ -43,6 +43,7 @@ def list_tags_query(client, dataset1, target_type=None):
                 targetType
                 key
                 value
+                cascade
             }
         }
         """,
