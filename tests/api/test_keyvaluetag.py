@@ -75,13 +75,14 @@ def test_update_key_value_tags(client, dataset1):
                 targetType
                 key
                 value
+                cascade
             }
         }
         """,
         input=dict(
             targetUri=dataset1.datasetUri,
             targetType='dataset',
-            tags=[{'key': 'tag1', 'value': 'value1'}],
+            tags=[{'key': 'tag1', 'value': 'value1', 'cascade': False}],
         ),
         username='alice',
         groups=[dataset1.SamlAdminGroupName],
@@ -91,6 +92,7 @@ def test_update_key_value_tags(client, dataset1):
     response = list_tags_query(client, dataset1)
     assert response.data.listKeyValueTags[0].key == 'tag1'
     assert response.data.listKeyValueTags[0].value == 'value1'
+    assert response.data.listKeyValueTags[0].cascade == False
 
     response = client.query(
         """
@@ -101,6 +103,7 @@ def test_update_key_value_tags(client, dataset1):
                 targetType
                 key
                 value
+                cascade
             }
         }
         """,
