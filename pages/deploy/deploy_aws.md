@@ -100,7 +100,8 @@ of our repository. Open it, you should be seen something like:
         "internet_facing": "boolean_CLOUDFRONT_IF_TRUE_ELSE_ECS_BEHIND_INTERNAL_ALB|DEFAULT=true",
         "custom_domain": {
           "hosted_zone_name": "string_ROUTE_53_EXISTING_DOMAIN_NAME|DEFAULT=None, REQUIRED if internet_facing=false",
-          "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false"
+          "hosted_zone_id": "string_ROUTE_53_EXISTING_HOSTED_ZONE_ID|DEFAULT=None, REQUIRED if internet_facing=false",
+          "certificate_arn": "string_AWS_CERTIFICATE_MANAGER_EXISTING_CERTIFICATE_ARN|DEFAULT=None, REQUIRED if internet_facing=false"
         },
         "ip_ranges": "list_of_strings_IP_RANGES_TO_ALLOW_IF_NOT_INTERNET_FACING|DEFAULT=None",
         "apig_vpce": "string_USE_AN_EXISTING_VPCE_FOR_APIG_IF_NOT_INTERNET_FACING|DEFAULT=None",
@@ -134,7 +135,7 @@ and find 2 examples of cdk.json files.
 | vpc_id                                 | Optional              | The VPC ID for the deployment account. If not provided, **a new VPC** will be created.                                                                                                                                                      |
 | vpc_endpoints_sg                       | Optional              | The VPC endpoints security groups to be use by AWS services to connect to VPC endpoints. If not assigned, NAT outbound rule is used.                                                                                                        |
 | internet_facing                        | Optional              | If set to **true**  CloudFront is used for hosting data.all UI and Docs and APIs are public. If false, ECS is used to host static sites and APIs are private. (default: true)                                                               |
-| custom_domain                          | Optional*             | Custom domain configuration: hosted_zone_name and hosted_zone_id. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.         |
+| custom_domain                          | Optional*             | Custom domain configuration: hosted_zone_name, hosted_zone_id, and certificate_arn. If internet_facing parameter is **false** then custom_domain is REQUIRED for ECS ALB integration with ACM and HTTPS. It is optional when internet_facing is true.         |
 | ip_ranges                              | Optional              | Used only when internet_facing parameter is **false**  to allow API Gateway resource policy to allow these IP ranges in addition to the VPC's CIDR block.                                                                                   |
 | apig_vpce                              | Optional              | Used only when internet_facing parameter is **false**. If provided, it will be used for API Gateway otherwise a new VPCE will be created.                                                                                                   |
 | prod_sizing                            | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                            |
@@ -203,7 +204,8 @@ deploy to 2 deployments accounts.
             "vpc_endpoints_sg": "sg-xxxxxxxxxxxxxx",
             "custom_domain": {
               "hosted_zone_name":"example.com",
-              "hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID"
+              "hosted_zone_id":"ROUTE_53_HOSTED_ZONE_ID",
+              "certificate_arn":"arn:aws:acm:AWS_REGION:AWS_ACCOUNT_ID:certificate/CERTIFICATE_ID"
             },
             "ip_ranges": ["IP_RANGE1", "IP_RANGE2"],
             "apig_vpce": "vpc-xxxxxxxxxxxxxx"
