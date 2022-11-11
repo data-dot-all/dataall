@@ -63,7 +63,7 @@ class Pipeline:
             region=environment.region,
             repo=slugify(data['label']),
             devStrategy=data['devStrategy'],
-            template=data['template'] if data['template'] != '' else data['label'],
+            template=data['template'] if data['devStrategy'] == 'template' else "",
         )
 
         session.add(pipeline)
@@ -310,8 +310,10 @@ class Pipeline:
         return True
 
     @staticmethod
+    @has_tenant_perm(permissions.MANAGE_PIPELINES)
+    @has_resource_perm(permissions.UPDATE_PIPELINE)
     def update_pipeline_environment(
-        session, username, groups, data=None, check_perm=None
+        session, username, groups, uri, data=None, check_perm=None
     ) -> models.DataPipelineEnvironment:
         pipeline_env = session.query(models.DataPipelineEnvironment).filter(
             and_(
@@ -319,7 +321,7 @@ class Pipeline:
                 models.DataPipelineEnvironment.environmentUri == data['environmentUri'],
                 models.DataPipelineEnvironment.stage == data['stage']
             )
-        )
+        ).first()
         if data:
             if isinstance(data, dict):
                 for k in data.keys():

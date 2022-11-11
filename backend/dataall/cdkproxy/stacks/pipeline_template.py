@@ -3,7 +3,9 @@ import os
 import sys
 import subprocess
 
+# from .manager import stack
 from ... import db
+# from ...db import models
 from ...db.api import Environment, Pipeline
 # from ...utils.cdk_nag_utils import CDKNagUtil
 # from ...utils.runtime_stacks_tagging import TagsUtil
@@ -12,7 +14,7 @@ from ...aws.handlers.sts import SessionHelper
 logger = logging.getLogger(__name__)
 
 # @stack(stack='cdkrepo')
-class CDKPipelineStack:
+class PipelineTemplateStack:
     """
     Create a stack that contains CDK Continuous Integration and Delivery (CI/CD) pipeline.
 
@@ -67,36 +69,24 @@ class CDKPipelineStack:
 
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
         
-        template = self.pipeline.template if (self.pipeline.template != self.pipeline.label) else ""
+        template = self.pipeline.template
 
         self.venv_name = self.initialize_repo(template)
-        if not len(template):
-            self.write_ddk_app_multienvironment(output_file="app.py")
-            self.write_ddk_json_multienvironment(output_file="ddk.json")
         self.git_push_repo()
         
 
     def initialize_repo(self, template):
-
         venv_name = ".venv"
-
-        template_cmds = [ 
+        cmd_init = [ 
+            "pip install aws-ddk",
             f"git clone {template} {self.pipeline.repo}",
             f"cd {self.pipeline.repo}",
-            "rm -rf .git"
-        ]
-        no_template_cmds = [
-            f"ddk init {self.pipeline.repo} --generate-only",
-            f"cd {self.pipeline.repo}"
-        ]
-        repo_cmds = [
+            "rm -rf .git",
             "git init --initial-branch main",
             f"python3 -m venv {venv_name} && source {venv_name}/bin/activate",
             "pip install -r requirements.txt",
             f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
         ]
-
-        cmd_init = [ "pip install aws-ddk"] + (template_cmds if (self.pipeline.template != self.pipeline.label) else no_template_cmds ) + repo_cmds
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
 
@@ -112,82 +102,6 @@ class CDKPipelineStack:
             logger.info("Successfully Initialized New CDK/DDK App")
 
             return venv_name
-
-
-    def write_ddk_json_multienvironment(self, output_file):
-        json_envs = ""
-        for env in self.development_environments:
-            json_env = f""",
-        "{env.stage}": {{
-            "account": "{env.AwsAccountId}",
-            "region": "{env.region}",
-            "resources": {{
-                "ddk-bucket": {{"versioned": false, "removal_policy": "destroy"}}
-            }}
-        }}"""
-            json_envs = json_envs + json_env
-
-        json = f"""{{
-    "environments": {{
-        "cicd": {{
-            "account": "{self.pipeline_environment.AwsAccountId}",
-            "region": "{self.pipeline_environment.region}"
-        }}{json_envs}
-    }}
-}}"""
-
-        with open(f'{self.code_dir_path}/{self.pipeline.repo}/{output_file}', 'w') as text_file:
-            print(json, file=text_file)
-
-    
-    def write_ddk_app_multienvironment(self, output_file):
-        header = f"""
-# !/usr/bin/env python3
-
-import aws_cdk as cdk
-from aws_ddk_core.cicd import CICDPipelineStack
-from ddk_app.ddk_app_stack import DdkApplicationStack
-from aws_ddk_core.config import Config
-
-app = cdk.App()
-
-class ApplicationStage(cdk.Stage):
-    def __init__(
-            self,
-            scope,
-            environment_id: str,
-            **kwargs,
-    ) -> None:
-        super().__init__(scope, f"dataall-{{environment_id.title()}}", **kwargs)
-        DdkApplicationStack(self, "DataPipeline-{self.pipeline.label}-{self.pipeline.DataPipelineUri}", environment_id)
-
-id = f"dataall-cdkpipeline-{self.pipeline.DataPipelineUri}"
-config = Config()
-(
-    CICDPipelineStack(
-        app,
-        id=id,
-        environment_id="cicd",
-        pipeline_name="{self.pipeline.label}",
-    )
-        .add_source_action(repository_name="{self.pipeline.repo}")
-        .add_synth_action()
-        .build()"""
-
-        stages = ""
-        for env in sorted(self.development_environments, key=lambda env: env.order):
-            stage = f""".add_stage("{env.stage}", ApplicationStage(app, "{env.stage}", env=config.get_env("{env.stage}")))"""
-            stages = stages + stage
-        footer = """
-        .synth()
-)
-
-app.synth()
-"""
-        app = header + stages + footer
-        with open(f'{self.code_dir_path}/{self.pipeline.repo}/{output_file}', 'w') as text_file:
-            print(app, file=text_file)
-
 
     def git_push_repo(self):
         git_cmds = [

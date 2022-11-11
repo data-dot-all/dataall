@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import subprocess
 from typing import List
 
 
@@ -179,27 +180,52 @@ class PipelineStack(Stack):
 
         PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="dataall_ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
-        PipelineStack.cleanup_zip_directory(code_dir_path)
-
-        PipelineStack.zip_directory(code_dir_path)
-
-        code_asset = Asset(
-            scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/code.zip"
-        )
-
-        code = codecommit.CfnRepository.CodeProperty(
-            s3=codecommit.CfnRepository.S3Property(
-                bucket=code_asset.s3_bucket_name,
-                key=code_asset.s3_object_key,
+        try:
+            repository = codecommit.from_repository_name(
+                self,
+                id="PipelineRepository",
+                repository_name=pipeline.repo
             )
-        )
+            logger.info(f"Pipeline Repo {pipeline.repo} Exists...Handling Update")
+            update_cmds = [
+                f'REPO_NAME={pipeline.repo}',
+                'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
+                'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://dataall_ddk.json --file-path dataall_ddk.json --parent-commit-id ${COMMITID}',
+            #     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
+            #     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://deploy_buildspec.yaml --file-path deploy_buildspec.yaml --parent-commit-id ${COMMITID}',
+            ]
+            process = subprocess.run(
+                "; ".join(update_cmds),
+                text=True,
+                shell=True,  # nosec
+                encoding='utf-8',
+                cwd=code_dir_path
+            )
+        
+        except:
+            logger.info(f"Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository")
 
-        repository = codecommit.CfnRepository(
-            scope=self,
-            code=code,
-            id="CodecommitRepository",
-            repository_name=pipeline.repo,
-        )
+            PipelineStack.cleanup_zip_directory(code_dir_path)
+
+            PipelineStack.zip_directory(code_dir_path)
+
+            code_asset = Asset(
+                scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/code.zip"
+            )
+
+            code = codecommit.CfnRepository.CodeProperty(
+                s3=codecommit.CfnRepository.S3Property(
+                    bucket=code_asset.s3_bucket_name,
+                    key=code_asset.s3_object_key,
+                )
+            )
+
+            repository = codecommit.CfnRepository(
+                scope=self,
+                code=code,
+                id="CodecommitRepository",
+                repository_name=pipeline.repo,
+            )
 
         if pipeline.devStrategy == "trunk":
             codepipeline_pipeline = codepipeline.Pipeline(

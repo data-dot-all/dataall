@@ -18,6 +18,7 @@ from ..db import models
 from ..db.api import Pipeline, Environment, Stack
 from ..utils.alarm_service import AlarmService
 from dataall.cdkproxy.stacks.cdk_pipeline import CDKPipelineStack
+from dataall.cdkproxy.stacks.pipeline_template import PipelineTemplateStack
 
 logger = logging.getLogger('cdksass')
 
@@ -79,13 +80,24 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.warning(f"stackuri = {stack.stackUri}, stackId = {stack.stackid}")
             stack.status = 'PENDING'
             session.commit()
-
+            
             if stack.stack == "cdkpipeline":
                 cdkpipeline = CDKPipelineStack(stack)
                 venv_name = cdkpipeline.venv_name
                 pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
                 path = f"./stacks/{pipeline.repo}/"
+            elif stack.stack == "template":
+                pipeline_template = PipelineTemplateStack(stack)
+                venv_name = pipeline_template.venv_name
+                pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
+                path = f"./stacks/{pipeline.repo}/"
 
+            cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
+            
+            if stack.stack == "template":
+                resp = subprocess.run(['cdk','ls'], cwd=cwd, stdout=subprocess.PIPE)
+                stack.name = resp.stdout.decode('utf-8').split('\n')[0]
+            
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
@@ -138,9 +150,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                     }
                 )
 
-            cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
-
-            if stack.stack == "cdkpipeline":
+            if stack.stack == "template":
                 cmd.insert(0, f"source {venv_name}/bin/activate;") 
                 aws = SessionHelper.remote_session(stack.accountid)
                 creds = aws.get_credentials()
@@ -166,9 +176,10 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 env=env,
                 cwd=cwd,
             )
-
             if stack.stack == "cdkpipeline":
                 CDKPipelineStack.clean_up_repo(path=f"./{pipeline.repo}")
+            if stack.stack == "template":
+                PipelineTemplateStack.clean_up_repo(path=f"./{pipeline.repo}")
 
             if process.returncode == 0:
                 meta = describe_stack(stack) 

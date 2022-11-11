@@ -25,11 +25,19 @@ def create_pipeline(context: Context, source, input=None):
             check_perm=True,
         )
         if input['devStrategy'] == 'cdk-trunk':
-
             Stack.create_stack(
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='cdkpipeline',
+                target_uri=f"{pipeline.DataPipelineUri}",
+                target_label=pipeline.label,
+                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
+            )
+        elif input['devStrategy'] == 'template':
+            Stack.create_stack(
+                session=session,
+                environment_uri=pipeline.environmentUri,
+                target_type='template',
                 target_uri=f"{pipeline.DataPipelineUri}",
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
@@ -71,6 +79,9 @@ def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict 
             data=input,
             check_perm=True,
         )
+    if (pipeline.template == ""):
+        stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+
     return pipeline
 
 
@@ -438,6 +449,7 @@ def update_pipeline_environment(context: Context, source, input=None):
             username=context.username,
             groups=context.groups,
             data=input,
+            uri=input['pipelineUri'],
             check_perm=True,
         )
     return pipeline_env
