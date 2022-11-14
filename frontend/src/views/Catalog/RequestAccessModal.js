@@ -21,6 +21,7 @@ import useClient from '../../hooks/useClient';
 import listEnvironments from '../../api/Environment/listEnvironments';
 import createShareObject from '../../api/ShareObject/createShareObject';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
+import listEnvironmentConsumptionRoles from '../../api/Environment/listEnvironmentConsumptionRoles';
 import requestDashboardShare from '../../api/Dashboard/requestDashboardShare';
 import * as Defaults from '../../components/defaults';
 
@@ -32,6 +33,8 @@ const RequestAccessModal = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [roleOptions, setRoleOptions] = useState([]);
 
   const fetchEnvironments = useCallback(async () => {
     const response = await client.query(
@@ -78,6 +81,32 @@ const RequestAccessModal = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
       setLoadingGroups(false);
+    }
+  };
+
+  const fetchRoles = async (environmentUri) => {
+    setLoadingRoles(true);
+    try {
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
+      if (!response.errors) {
+        setGroupOptions(
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoadingRoles(false);
     }
   };
 
@@ -178,7 +207,7 @@ const RequestAccessModal = (props) => {
           Request Access
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          Your request will be submitted to the data owners
+          Your request will be submitted to the data owners. Track its progress in the Shares menu on the left.
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -189,6 +218,7 @@ const RequestAccessModal = (props) => {
             validationSchema={Yup.object().shape({
               environment: Yup.object().required('*Environment is required'),
               groupUri: Yup.string().required('*Team is required'),
+              consumptionRole: Yup.string(),
               comment: Yup.string().max(5000)
             })}
             onSubmit={async (
@@ -324,6 +354,50 @@ const RequestAccessModal = (props) => {
                                 disabled
                                 label="Team"
                                 value="No teams found for this environment"
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                        )}
+                      </CardContent>
+                      <CardContent>
+                        {loadingRoles ? (
+                          <CircularProgress size={10} />
+                        ) : (
+                          <Box>
+                            {roleOptions.length > 0 ? (
+                              <TextField
+                                error={Boolean(
+                                  touched.consumptionRole && errors.consumptionRole
+                                )}
+                                helperText={touched.consumptionRole && errors.consumptionRole}
+                                fullWidth
+                                label="Consumption Role (optional)"
+                                name="consumptionRole"
+                                onChange={handleChange}
+                                select
+                                value={values.consumptionRole}
+                                variant="outlined"
+                              >
+                                {roleOptions.map((role) => (
+                                  <MenuItem
+                                    key={role.value}
+                                    value={role.value}
+                                  >
+                                    {role.label}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            ) : (
+                              <TextField
+                                error={Boolean(
+                                  touched.consumptionRole && errors.consumptionRole
+                                )}
+                                helperText={touched.consumptionRole && errors.consumptionRole}
+                                fullWidth
+                                disabled
+                                label="Consumption Role (optional)"
+                                value="No additional consumption roles owned by this Team in this Environment."
                                 variant="outlined"
                               />
                             )}

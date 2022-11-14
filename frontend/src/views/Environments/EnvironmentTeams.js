@@ -8,6 +8,7 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   InputAdornment,
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
 import CircularProgress from '@mui/material/CircularProgress';
 import {
   CopyAllOutlined,
+  DeleteOutlined,
   GroupAddOutlined,
   SupervisedUserCircleRounded
 } from '@mui/icons-material';
@@ -61,6 +63,7 @@ function TeamRow({ team, environment, fetchItems }) {
   const handleTeamEditModalOpen = () => {
     setIsTeamEditModalOpen(true);
   };
+
   const removeGroup = async (groupUri) => {
     try {
       const response = await client.mutate(
@@ -87,6 +90,26 @@ function TeamRow({ team, environment, fetchItems }) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
+
+  const removeConsumptionRole = async () => {
+      setIsRemovingRole(true);
+      const response = await client.mutate(
+        removeSharedItem({ shareItemUri: item.shareItemUri })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Item removed', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        await fetchRoles();
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      setIsRemovingRole(false);
+    };
 
   const getConsoleLink = async (groupUri) => {
     setAccessingConsole(true);
@@ -506,7 +529,6 @@ const EnvironmentTeams = ({ environment }) => {
               <EnvironmentRoleAddForm
                 environment={environment}
                 open
-                reloadRoles={fetchRoles}
                 onClose={handleAddRoleModalClose}
               />
             )}
@@ -520,6 +542,7 @@ const EnvironmentTeams = ({ environment }) => {
                   <TableCell>Name</TableCell>
                   <TableCell>IAM Role</TableCell>
                   <TableCell>Role Owner</TableCell>
+                  <TableCell>Action</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
@@ -530,7 +553,13 @@ const EnvironmentTeams = ({ environment }) => {
                     roles.nodes.map((role) => (
                       <TableRow hover key={role.groupConsumptionRoleUri}>
                         <TableCell>{role.consumptionRoleName}</TableCell>
+                        <TableCell>{role.IAMRoleArn}</TableCell>
                         <TableCell>{role.groupUri}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => removeConsumptionRole(role.consumptionRoleUri)}>
+                            <DeleteOutlined fontSize="small" />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
+  Autocomplete,
   Box,
   Card,
   CardContent,
@@ -17,7 +18,6 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import Autocomplete from '@mui/lab/Autocomplete';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { LoadingButton } from '@mui/lab';
@@ -25,10 +25,11 @@ import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
-import listCognitoGroups from '../../api/Groups/listCognitoGroups';
+import * as Defaults from '../../components/defaults';
+import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import addConsumptionRoleToEnvironment from '../../api/Environment/addConsumptionRoleToEnvironment'
 const EnvironmentRoleAddForm = (props) => {
-  const { environment, onClose, open, reloadRoles, ...other } = props;
+  const { environment, onClose, open, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
@@ -39,21 +40,19 @@ const EnvironmentRoleAddForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [roleError, setRoleError] = useState(null);
 
-  const filter = {
-    type: "environment",
-    uri: environment.environmentUri
-  }
-
-  const fetchGroups = useCallback(async () => {
+  const fetchGroups = async (environmentUri) => {
     try {
-      setLoadingGroups(true);
-      const response = await client.query(listCognitoGroups({ filter }));
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri
+        })
+      );
       if (!response.errors) {
         setGroupOptions(
-          response.data.listCognitoGroups.map((g) => ({
-            ...g,
-            value: g.groupName,
-            label: g.groupName
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
+            value: g.groupUri,
+            label: g.groupUri
           }))
         );
       } else {
@@ -61,50 +60,44 @@ const EnvironmentRoleAddForm = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoadingGroups(false);
     }
-  }, [client, dispatch, environment]);
+  };
 
   useEffect(() => {
-    if (client) {
-      fetchGroups().catch((e) =>
+    if (client && environment) {
+      console.log("inside useeffect")
+      fetchGroups(
+        environment.environmentUri
+      ).catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, fetchGroups, dispatch]);
+  }, [client, environment, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      if (!roleArn) {
-        setRoleError('* Role Arn is required');
-      } else {
-        const response = await client.mutate(addConsumptionRoleToEnvironment
-          ({
-            groupUri: values.groupUri,
-            consumptionRoleName: values.consumptionRoleName,
-            IAMRoleArn: values.IAMRoleArn,
-          })
-        );
-        if (!response.errors) {
-          setStatus({ success: true });
-          setSubmitting(false);
-          enqueueSnackbar('IAM role added to environment', {
-            anchorOrigin: {
-              horizontal: 'right',
-              vertical: 'top'
-            },
-            variant: 'success'
-          });
-          if (reloadRoles) {
-            reloadRoles();
-          }
-          if (onClose) {
-            onClose();
-          }
-        } else {
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      const response = await client.mutate(addConsumptionRoleToEnvironment
+        ({
+          groupUri: values.groupUri,
+          consumptionRoleName: values.consumptionRoleName,
+          IAMRoleArn: values.IAMRoleArn,
+        })
+      );
+      if (!response.errors) {
+        setStatus({ success: true });
+        setSubmitting(false);
+        enqueueSnackbar('IAM role added to environment', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        if (onClose) {
+          onClose();
         }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
       console.error(err);
@@ -255,7 +248,6 @@ const EnvironmentRoleAddForm = (props) => {
 EnvironmentRoleAddForm.propTypes = {
   environment: PropTypes.object.isRequired,
   onClose: PropTypes.func,
-  reloadRoles: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
 
