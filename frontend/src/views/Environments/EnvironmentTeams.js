@@ -336,7 +336,8 @@ const EnvironmentTeams = ({ environment }) => {
 
   return (
     <Box>
-      <Card>
+      <Box>
+        <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
           title={
@@ -444,7 +445,9 @@ const EnvironmentTeams = ({ environment }) => {
           </Box>
         </Scrollbar>
       </Card>
-      <Card>
+      </Box>
+      <Box sx={{ mt: 3 }}>
+        <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchRoles} />}
           title={
@@ -549,6 +552,7 @@ const EnvironmentTeams = ({ environment }) => {
           </Box>
         </Scrollbar>
       </Card>
+      </Box>
     </Box>
   );
 };

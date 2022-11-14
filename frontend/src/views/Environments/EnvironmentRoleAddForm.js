@@ -25,10 +25,8 @@ import { GroupAddOutlined } from '@mui/icons-material';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
-import listEnvironmentGroupInvitationPermissions from '../../api/Environment/listEnvironmentPermissions';
-import inviteGroupOnEnvironment from '../../api/Environment/inviteGroup';
 import listCognitoGroups from '../../api/Groups/listCognitoGroups';
-
+import addConsumptionRoleToEnvironment from '../../api/Environment/addConsumptionRoleToEnvironment'
 const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -39,7 +37,7 @@ const EnvironmentRoleAddForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
-  const [permissionsError, setPermissionsError] = useState(null);
+  const [roleError, setRoleError] = useState(null);
 
   const filter = {
     type: "environment",
@@ -68,59 +66,30 @@ const EnvironmentRoleAddForm = (props) => {
     }
   }, [client, dispatch, environment]);
 
-  const fetchItems = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await client.query(
-        listEnvironmentGroupInvitationPermissions({
-          environmentUri: environment.environmentUri
-        })
-      );
-      if (!response.errors) {
-        setPermissions(
-          response.data.listEnvironmentGroupInvitationPermissions.map(
-            (perm) => perm.name
-          )
-        );
-        setItems(response.data.listEnvironmentGroupInvitationPermissions);
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [client, dispatch, environment]);
-
   useEffect(() => {
     if (client) {
       fetchGroups().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
-  }, [client, fetchGroups, fetchItems, dispatch]);
+  }, [client, fetchGroups, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      if (!permissions || permissions.length < 1) {
-        setPermissionsError('* At least one permission is required');
+      if (!roleArn) {
+        setRoleError('* Role Arn is required');
       } else {
-        const response = await client.mutate(
-          inviteGroupOnEnvironment({
+        const response = await client.mutate(addConsumptionRoleToEnvironment
+          ({
             groupUri: values.groupUri,
-            environmentUri: environment.environmentUri,
-            environmentIAMRoleName: values.environmentIAMRoleName,
-            permissions
+            consumptionRoleName: values.consumptionRoleName,
+            IAMRoleArn: values.IAMRoleArn,
           })
         );
         if (!response.errors) {
           setStatus({ success: true });
           setSubmitting(false);
-          enqueueSnackbar('Team invited to environment', {
+          enqueueSnackbar('IAM role added to environment', {
             anchorOrigin: {
               horizontal: 'right',
               vertical: 'top'
@@ -163,22 +132,11 @@ const EnvironmentRoleAddForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Invite a team to environment {environment.label}
+          Add a consumption IAM role to environment {environment.label}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          A Team is a group from your identity provider that you are a member
-          of. All members of that group will be able to access your environment.
+          An IAM consumption role is owned by the selected Team. The owners team request access on behalf of this IAM role that can be used by downstream applications.
         </Typography>
-        {loadingGroups ? (
-          <Card sx={{ mt: 2 }}>
-            <CardContent>
-              <Typography color="textPrimary" variant="subtitle2">
-                All your teams (IDP groups) are already invited to this
-                environment.
-              </Typography>
-            </CardContent>
-          </Card>
-        ) : (
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
@@ -187,7 +145,12 @@ const EnvironmentRoleAddForm = (props) => {
               validationSchema={Yup.object().shape({
                 groupUri: Yup.string()
                   .max(255)
-                  .required('*Team name is required')
+                  .required('*Owners Team is required'),
+                consumptionRoleName: Yup.string()
+                  .max(255)
+                  .required('*Consumption Role Name is required'),
+                IAMRoleArn: Yup.string()
+                  .required('*IAM Role Arn is required'),
               })}
               onSubmit={async (
                 values,
@@ -207,6 +170,44 @@ const EnvironmentRoleAddForm = (props) => {
               }) => (
                 <form onSubmit={handleSubmit}>
                   <CardContent>
+                    <TextField
+                      error={Boolean(
+                        touched.consumptionRoleName &&
+                          errors.consumptionRoleName
+                      )}
+                      fullWidth
+                      helperText={
+                        touched.consumptionRoleName &&
+                        errors.consumptionRoleName
+                      }
+                      label="Consumption Role Name"
+                      placeholder="Name to identify your IAM role in data.all"
+                      name="consumptionRoleName"
+                      onChange={handleChange}
+                      value={values.consumptionRoleName}
+                      variant="outlined"
+                    />
+                  </CardContent>
+                  <CardContent>
+                    <TextField
+                      error={Boolean(
+                        touched.IAMRoleArn &&
+                          errors.IAMRoleArn
+                      )}
+                      fullWidth
+                      helperText={
+                        touched.IAMRoleArn &&
+                        errors.IAMRoleArn
+                      }
+                      label="IAM Role ARN"
+                      placeholder="IAM Role ARN"
+                      name="IAMRoleArn"
+                      onChange={handleChange}
+                      value={values.IAMRoleArn}
+                      variant="outlined"
+                    />
+                  </CardContent>
+                  <CardContent>
                     <Autocomplete
                       id="groupUri"
                       freeSolo
@@ -217,7 +218,7 @@ const EnvironmentRoleAddForm = (props) => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Team"
+                          label="Responsible Team"
                           margin="normal"
                           error={Boolean(touched.groupUri && errors.groupUri)}
                           helperText={touched.groupUri && errors.groupUri}
@@ -227,85 +228,6 @@ const EnvironmentRoleAddForm = (props) => {
                         />
                       )}
                     />
-                  </CardContent>
-                  <CardContent>
-                    <TextField
-                      error={Boolean(
-                        touched.environmentIAMRoleName &&
-                          errors.environmentIAMRoleName
-                      )}
-                      fullWidth
-                      helperText={
-                        touched.environmentIAMRoleName &&
-                        errors.environmentIAMRoleName
-                      }
-                      label="IAM Role Name"
-                      placeholder="Bring your own IAM role (Optional)"
-                      name="environmentIAMRoleName"
-                      onChange={handleChange}
-                      value={values.environmentIAMRoleName}
-                      variant="outlined"
-                    />
-                  </CardContent>
-                  <CardContent>
-                    <Paper>
-                      <CardHeader title="Environment Permissions" />
-                      <Divider />
-                      <CardContent sx={{ ml: 2 }}>
-                        {items.length > 0 ? (
-                          items.map((perm) => (
-                            <Box>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
-                                      color="primary"
-                                      onChange={(event) => {
-                                        const newPerms = permissions;
-                                        if (event.target.checked) {
-                                          newPerms.push(event.target.value);
-                                        } else {
-                                          const index = newPerms.indexOf(
-                                            event.target.value
-                                          );
-                                          if (index > -1) {
-                                            newPerms.splice(index, 1);
-                                          }
-                                        }
-                                        setPermissions(newPerms);
-                                        setFieldValue(
-                                          'permissions',
-                                          permissions
-                                        );
-                                      }}
-                                      edge="start"
-                                      name={perm.name}
-                                      value={perm.name}
-                                    />
-                                  }
-                                  label={perm.description}
-                                  labelPlacement="end"
-                                  value={perm.name}
-                                />
-                              </FormGroup>
-                            </Box>
-                          ))
-                        ) : (
-                          <Typography color="textPrimary" variant="subtitle2">
-                            Failed to load permissions.
-                          </Typography>
-                        )}
-                        {permissionsError && (
-                          <Box sx={{ mt: 2 }}>
-                            <FormHelperText error>
-                              {permissionsError}
-                            </FormHelperText>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Paper>
                   </CardContent>
                   <Box>
                     <CardContent>
@@ -325,7 +247,6 @@ const EnvironmentRoleAddForm = (props) => {
               )}
             </Formik>
           </Box>
-        )}
       </Box>
     </Dialog>
   );
