@@ -686,6 +686,15 @@ class Environment:
         ).to_dict()
 
     @staticmethod
+    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
+    def list_environment_invited_groups(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return Environment.query_environment_invited_groups(
+            session, username, groups, uri, data
+        ).all()
+
+    @staticmethod
     def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
         query = (
             session.query(models.GroupConsumptionRole)

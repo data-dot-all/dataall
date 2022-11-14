@@ -136,6 +136,16 @@ listAllEnvironmentGroups = gql.QueryField(
     resolver=list_all_environment_groups,
 )
 
+listAllEnvironmentConsumptionRoles = gql.QueryField(
+    name='listAllEnvironmentConsumptionRoles',
+    type=gql.Ref('ConsumptionRoleSearchResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
+    ],
+    resolver=list_all_environment_consumption_roles,
+)
+
 listEnvironmentGroupInvitationPermissions = gql.QueryField(
     name='listEnvironmentGroupInvitationPermissions',
     args=[
