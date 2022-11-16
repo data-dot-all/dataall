@@ -173,3 +173,11 @@ ConsumptionRoleSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(ConsumptionRole)),
     ],
 )
+
+ValueLabel = gql.ObjectType(
+    name='ValueLabel',
+    fields=[
+        gql.Field(name='value', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+    ],
+)

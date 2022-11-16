@@ -7,7 +7,7 @@ const listAllEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
   },
   query: gql`
     query listAllEnvironmentConsumptionRoles(
-      $filter: GroupFilter
+      $filter: ConsumptionRoleFilter
       $environmentUri: String!
     ) {
       listAllEnvironmentConsumptionRoles(

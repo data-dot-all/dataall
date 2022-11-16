@@ -7,21 +7,13 @@ const listEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
   },
   query: gql`
     query listEnvironmentConsumptionRoles(
-      $filter: GroupFilter
+      $filter: ConsumptionRoleFilter
       $environmentUri: String!
     ) {
       listEnvironmentConsumptionRoles(environmentUri: $environmentUri, filter: $filter) {
-        count
-        page
-        pages
-        hasNext
-        hasPrevious
-        nodes {
-          groupConsumptionRoleUri
-          consumptionRoleName
-          environmentUri
-          groupUri
-          IAMRoleArn
+        {
+          value
+          label
         }
       }
     }

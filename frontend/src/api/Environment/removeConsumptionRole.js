@@ -1,9 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const removeConsumptionRoleFromEnvironment = ({ environmentUri, groupUri }) => ({
+const removeConsumptionRoleFromEnvironment = ({ environmentUri, groupConsumptionRoleUri }) => ({
   variables: {
     environmentUri,
-    groupUri
+    groupConsumptionRoleUri
   },
   mutation: gql`
     mutation removeConsumptionRoleFromEnvironment(

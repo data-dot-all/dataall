@@ -522,7 +522,7 @@ class Environment:
         if not data.get('groupConsumptionRoleUri'):
             raise exceptions.RequiredParameter('groupConsumptionRoleUri')
 
-        consumption_role = Environment.get_environment_consumption_role(session, uri)
+        consumption_role = Environment.get_environment_consumption_role(session, data.get('groupConsumptionRoleUri'), uri)
 
         if consumption_role:
             session.delete(consumption_role)
@@ -532,7 +532,6 @@ class Environment:
             session=session,
             group=consumption_role.groupUri,
             resource_uri=consumption_role.groupConsumptionRoleUri,
-            permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=models.GroupConsumptionRole.__name__,
         )
         return True
@@ -707,6 +706,14 @@ class Environment:
                     models.GroupConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
+        if filter and filter.get('groupUri'):
+            print("filter group")
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    models.GroupConsumptionRole.groupUri == group,
+                )
+            )
         return query
 
     @staticmethod
@@ -734,6 +741,13 @@ class Environment:
                     models.GroupConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
+        if filter and filter.get('groupUri'):
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    models.GroupConsumptionRole.groupUri == group,
+                )
+            )
         return query
 
     @staticmethod
@@ -755,7 +769,7 @@ class Environment:
         session, username, groups, uri, data=None, check_perm=None
     ) -> [str]:
         return [
-            g.groupUri
+            {"value": g.IAMRoleArn, "label": g.consumptionRoleName}
             for g in Environment.query_user_environment_consumption_roles(
                 session, username, groups, uri, data
             ).all()
@@ -766,12 +780,11 @@ class Environment:
             session, uri, arn
     ) -> Query:
         return session.query(models.GroupConsumptionRole).filter(
-                and_(
-                    models.GroupConsumptionRole.environmentUri == uri,
-                    models.GroupConsumptionRole.IAMRoleArn == arn,
-                )
-            ).first()
-
+            and_(
+                models.GroupConsumptionRole.environmentUri == uri,
+                models.GroupConsumptionRole.IAMRoleArn == arn
+            )
+        ).first()
 
     @staticmethod
     def query_environment_datasets(session, username, groups, uri, filter) -> Query:
@@ -1188,6 +1201,26 @@ class Environment:
                 'EnvironmentGroup', f'({group_uri},{environment_uri})'
             )
         return env_group
+
+    @staticmethod
+    def get_environment_consumption_role(session, role_uri, environment_uri):
+        role = (
+            session.query(models.GroupConsumptionRole)
+            .filter(
+                (
+                    and_(
+                        models.GroupConsumptionRole.groupConsumptionRoleUri == role_uri,
+                        models.GroupConsumptionRole.environmentUri == environment_uri,
+                    )
+                )
+            )
+            .first()
+        )
+        if not role:
+            raise exceptions.ObjectNotFound(
+                'GroupConsumptionRole', f'({role_uri},{environment_uri})'
+            )
+        return role
 
     @staticmethod
     def get_environment_by_uri(session, uri) -> models.Environment:

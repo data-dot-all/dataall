@@ -226,6 +226,22 @@ def list_all_environment_groups(
         )
 
 
+def list_environment_consumption_roles(
+    context: Context, source, environmentUri=None, filter=None
+):
+    if filter is None:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.Environment.list_environment_consumption_roles(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environmentUri,
+            data=filter,
+            check_perm=True,
+        )
+
+
 def list_all_environment_consumption_roles(
     context: Context, source, environmentUri=None, filter=None
 ):

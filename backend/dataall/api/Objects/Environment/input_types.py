@@ -121,3 +121,13 @@ AddConsumptionRoleToEnvironmentInput = gql.InputType(
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
     ],
 )
+
+ConsumptionRoleFilter = gql.InputType(
+    name='ConsumptionRoleFilter',
+    arguments=[
+        gql.Argument('term', gql.String),
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+    ],
+)

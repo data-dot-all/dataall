@@ -5,6 +5,7 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
+  Divider,
   FormHelperText,
   MenuItem,
   TextField,
@@ -69,7 +70,7 @@ const RequestAccessModal = (props) => {
       );
       if (!response.errors) {
         setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
+          response.data.listEnvironmentGroups.map((g) => ({
             value: g.groupUri,
             label: g.groupUri
           }))
@@ -84,21 +85,23 @@ const RequestAccessModal = (props) => {
     }
   };
 
-  const fetchRoles = async (environmentUri) => {
+  const fetchRoles = async (environmentUri, groupUri) => {
     setLoadingRoles(true);
     try {
       const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
-          environmentUri
+        listEnvironmentConsumptionRoles({
+          filter: {
+            page: 1,
+            pageSize: 10,
+            term: '',
+            groupUri: groupUri
+          },
+          environmentUri,
         })
       );
       if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
+        setRoleOptions(
+          response.data.listEnvironmentConsumptionRoles
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -121,14 +124,18 @@ const RequestAccessModal = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       let response;
+      let type = values.consumptionRole? 'ConsumptionRole' : 'Group';
+      let principal = values.consumptionRole? values.consumptionRole : values.groupUri;
+      console.log(type)
       if (hit.resourceKind === 'dataset') {
         response = await client.mutate(
           createShareObject({
             datasetUri: hit._id,
             input: {
               environmentUri: values.environment.environmentUri,
-              principalId: values.groupUri,
-              principalType: 'Group'
+              groupUri: values.groupUri,
+              principalId: principal,
+              principalType: type
             }
           })
         );
@@ -141,8 +148,9 @@ const RequestAccessModal = (props) => {
             itemType: 'DatasetTable',
             input: {
               environmentUri: values.environment.environmentUri,
-              principalId: values.groupUri,
-              principalType: 'Group'
+              groupUri: values.groupUri,
+              principalId: principal,
+              principalType: type
             }
           })
         );
@@ -155,8 +163,9 @@ const RequestAccessModal = (props) => {
             itemType: 'DatasetStorageLocation',
             input: {
               environmentUri: values.environment.environmentUri,
-              principalId: values.groupUri,
-              principalType: 'Group'
+              groupUri: values.groupUri,
+              principalId: principal,
+              principalType: type
             }
           })
         );
@@ -207,7 +216,7 @@ const RequestAccessModal = (props) => {
           Request Access
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          Your request will be submitted to the data owners. Track its progress in the Shares menu on the left.
+          Data access is requested for the whole requester Team or for the selected Consumption role. The request will be submitted to the data owners, track its progress in the Shares menu on the left.
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -328,9 +337,17 @@ const RequestAccessModal = (props) => {
                                 )}
                                 helperText={touched.groupUri && errors.groupUri}
                                 fullWidth
-                                label="Team"
+                                label="Requesters Team"
                                 name="groupUri"
-                                onChange={handleChange}
+                                onChange={(event) => {
+                                  setFieldValue('consumptionRole', '');
+                                  fetchRoles(
+                                    values.environment.environmentUri, event.target.value
+                                  ).catch((e) =>
+                                    dispatch({ type: SET_ERROR, error: e.message })
+                                  );
+                                  setFieldValue('groupUri', event.target.value);
+                                }}
                                 select
                                 value={values.groupUri}
                                 variant="outlined"
@@ -384,7 +401,7 @@ const RequestAccessModal = (props) => {
                                     key={role.value}
                                     value={role.value}
                                   >
-                                    {role.label}
+                                    {role.label}-: {role.value}
                                   </MenuItem>
                                 ))}
                               </TextField>

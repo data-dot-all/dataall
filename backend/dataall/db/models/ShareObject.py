@@ -23,6 +23,7 @@ class ShareObject(Base):
     )
     datasetUri = Column(String, nullable=False)
     environmentUri = Column(String)
+    groupUri = Column(String)
     principalId = Column(String, nullable=True)
     principalType = Column(String, nullable=True, default='GROUP')
     status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
