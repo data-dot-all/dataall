@@ -480,14 +480,13 @@ class Environment:
     def add_consumption_role(
         session, username, groups, uri, data=None, check_perm=None
     ) -> (models.Environment, models.EnvironmentGroup):
-        Environment.validate_invite_params(data)
 
         group: str = data['groupUri']
         IAMRoleArn: str = data['IAMRoleArn']
         environment = Environment.get_environment_by_uri(session, uri)
 
         alreadyAdded = Environment.find_consumption_roles_by_IAMArn(
-            session, IAMRoleArn, environment.environmentUri
+            session, environment.environmentUri, IAMRoleArn
         )
         if alreadyAdded:
             raise exceptions.UnauthorizedOperation(
@@ -761,6 +760,18 @@ class Environment:
                 session, username, groups, uri, data
             ).all()
         ]
+
+    @staticmethod
+    def find_consumption_roles_by_IAMArn(
+            session, uri, arn
+    ) -> Query:
+        return session.query(models.GroupConsumptionRole).filter(
+                and_(
+                    models.GroupConsumptionRole.environmentUri == uri,
+                    models.GroupConsumptionRole.IAMRoleArn == arn,
+                )
+            ).first()
+
 
     @staticmethod
     def query_environment_datasets(session, username, groups, uri, filter) -> Query:

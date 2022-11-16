@@ -13,6 +13,7 @@ import {
   FormControlLabel,
   FormGroup,
   FormHelperText,
+  MenuItem,
   Paper,
   Switch,
   TextField,
@@ -29,19 +30,18 @@ import * as Defaults from '../../components/defaults';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import addConsumptionRoleToEnvironment from '../../api/Environment/addConsumptionRoleToEnvironment'
 const EnvironmentRoleAddForm = (props) => {
-  const { environment, onClose, open, ...other } = props;
+  const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [permissions, setPermissions] = useState([]);
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [roleError, setRoleError] = useState(null);
 
   const fetchGroups = async (environmentUri) => {
     try {
+      setLoadingGroups(true)
       const response = await client.query(
         listEnvironmentGroups({
           filter: Defaults.SelectListFilter,
@@ -60,12 +60,13 @@ const EnvironmentRoleAddForm = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoadingGroups(false);
     }
   };
 
   useEffect(() => {
     if (client && environment) {
-      console.log("inside useeffect")
       fetchGroups(
         environment.environmentUri
       ).catch((e) =>
@@ -81,6 +82,7 @@ const EnvironmentRoleAddForm = (props) => {
           groupUri: values.groupUri,
           consumptionRoleName: values.consumptionRoleName,
           IAMRoleArn: values.IAMRoleArn,
+          environmentUri: environment.environmentUri
         })
       );
       if (!response.errors) {
@@ -93,6 +95,9 @@ const EnvironmentRoleAddForm = (props) => {
           },
           variant: 'success'
         });
+        if (reloadRoles) {
+            reloadRoles();
+          }
         if (onClose) {
           onClose();
         }
@@ -112,7 +117,7 @@ const EnvironmentRoleAddForm = (props) => {
     return null;
   }
 
-  if (loading || loadingGroups) {
+  if (loadingGroups) {
     return <CircularProgress size={10} />;
   }
 
@@ -128,7 +133,7 @@ const EnvironmentRoleAddForm = (props) => {
           Add a consumption IAM role to environment {environment.label}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          An IAM consumption role is owned by the selected Team. The owners team request access on behalf of this IAM role that can be used by downstream applications.
+          An IAM consumption role is owned by the selected Team. The owners team request access on behalf of this IAM role, which can be used by downstream applications.
         </Typography>
           <Box sx={{ p: 3 }}>
             <Formik
@@ -201,26 +206,23 @@ const EnvironmentRoleAddForm = (props) => {
                     />
                   </CardContent>
                   <CardContent>
-                    <Autocomplete
-                      id="groupUri"
-                      freeSolo
-                      options={groupOptions.map((option) => option.value)}
-                      onChange={(event, value) => {
-                        setFieldValue('groupUri', value);
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Responsible Team"
-                          margin="normal"
-                          error={Boolean(touched.groupUri && errors.groupUri)}
-                          helperText={touched.groupUri && errors.groupUri}
-                          onChange={handleChange}
-                          value={values.groupUri}
-                          variant="outlined"
-                        />
-                      )}
-                    />
+                    <TextField
+                      fullWidth
+                      error={Boolean(touched.groupUri && errors.groupUri)}
+                      helperText={touched.groupUri && errors.groupUri}
+                      label="Owners"
+                      name="groupUri"
+                      onChange={handleChange}
+                      select
+                      value={values.groupUri}
+                      variant="outlined"
+                    >
+                      {groupOptions.map((group) => (
+                        <MenuItem key={group.value} value={group.value}>
+                          {group.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </CardContent>
                   <Box>
                     <CardContent>
@@ -248,7 +250,8 @@ const EnvironmentRoleAddForm = (props) => {
 EnvironmentRoleAddForm.propTypes = {
   environment: PropTypes.object.isRequired,
   onClose: PropTypes.func,
-  open: PropTypes.bool.isRequired
+  open: PropTypes.bool.isRequired,
+  reloadRoles: PropTypes.func
 };
 
 export default EnvironmentRoleAddForm;

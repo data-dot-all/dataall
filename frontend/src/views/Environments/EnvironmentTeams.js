@@ -42,6 +42,7 @@ import Label from '../../components/Label';
 import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';
 import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
 import removeGroupFromEnvironment from '../../api/Environment/removeGroup';
+import removeConsumptionRoleFromEnvironment from '../../api/Environment/removeConsumptionRole';
 import getEnvironmentAssumeRoleUrl from '../../api/Environment/getEnvironmentAssumeRoleUrl';
 import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
 import generateEnvironmentAccessToken from '../../api/Environment/generateEnvironmentAccessToken';
@@ -90,26 +91,6 @@ function TeamRow({ team, environment, fetchItems }) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
-
-  const removeConsumptionRole = async () => {
-      setIsRemovingRole(true);
-      const response = await client.mutate(
-        removeSharedItem({ shareItemUri: item.shareItemUri })
-      );
-      if (!response.errors) {
-        enqueueSnackbar('Item removed', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        await fetchRoles();
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-      setIsRemovingRole(false);
-    };
 
   const getConsoleLink = async (groupUri) => {
     setAccessingConsole(true);
@@ -243,9 +224,11 @@ TeamRow.propTypes = {
   environment: PropTypes.any,
   fetchItems: PropTypes.any
 };
+
 const EnvironmentTeams = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.PagedResponseDefault);
   const [roles, setRoles] = useState(Defaults.PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
@@ -307,6 +290,33 @@ const EnvironmentTeams = ({ environment }) => {
       setLoading(false);
     }
   }, [client, dispatch, environment, filterRoles]);
+
+  const removeConsumptionRole = async (consumptionGroupUri) => {
+    console.log(consumptionGroupUri)
+    try {
+      const response = await client.mutate(
+        removeConsumptionRoleFromEnvironment({
+          environmentUri: environment.environmentUri,
+          groupConsumptionRoleUri: consumptionGroupUri
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Consumption Role removed from environment', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        fetchRoles();
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
 
   useEffect(() => {
     if (client) {
@@ -529,6 +539,7 @@ const EnvironmentTeams = ({ environment }) => {
               <EnvironmentRoleAddForm
                 environment={environment}
                 open
+                reloadRoles={fetchRoles}
                 onClose={handleAddRoleModalClose}
               />
             )}
@@ -556,7 +567,7 @@ const EnvironmentTeams = ({ environment }) => {
                         <TableCell>{role.IAMRoleArn}</TableCell>
                         <TableCell>{role.groupUri}</TableCell>
                         <TableCell>
-                          <IconButton onClick={() => removeConsumptionRole(role.consumptionRoleUri)}>
+                          <IconButton onClick={() => removeConsumptionRole(role.groupConsumptionRoleUri)}>
                             <DeleteOutlined fontSize="small" />
                           </IconButton>
                         </TableCell>
