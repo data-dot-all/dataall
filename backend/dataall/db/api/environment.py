@@ -600,7 +600,7 @@ class Environment:
                 session, username, groups, uri, data
             ),
             page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod
@@ -726,7 +726,7 @@ class Environment:
                 session, username, groups, uri, data
             ),
             page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod

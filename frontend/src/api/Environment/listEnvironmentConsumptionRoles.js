@@ -10,10 +10,21 @@ const listEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
       $filter: ConsumptionRoleFilter
       $environmentUri: String!
     ) {
-      listEnvironmentConsumptionRoles(environmentUri: $environmentUri, filter: $filter) {
-        {
-          value
-          label
+      listEnvironmentConsumptionRoles(
+        environmentUri: $environmentUri
+        filter: $filter
+      ) {
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {
+          groupConsumptionRoleUri
+          consumptionRoleName
+          environmentUri
+          groupUri
+          IAMRoleArn
         }
       }
     }

@@ -232,7 +232,7 @@ def list_environment_consumption_roles(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.list_environment_consumption_roles(
+        return db.api.Environment.paginated_user_environment_consumption_roles(
             session=session,
             username=context.username,
             groups=context.groups,

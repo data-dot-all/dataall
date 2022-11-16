@@ -70,7 +70,7 @@ const RequestAccessModal = (props) => {
       );
       if (!response.errors) {
         setGroupOptions(
-          response.data.listEnvironmentGroups.map((g) => ({
+          response.data.listEnvironmentGroups.nodes.map((g) => ({
             value: g.groupUri,
             label: g.groupUri
           }))
@@ -101,7 +101,10 @@ const RequestAccessModal = (props) => {
       );
       if (!response.errors) {
         setRoleOptions(
-          response.data.listEnvironmentConsumptionRoles
+          response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
+            value: g.IAMRoleArn,
+            label: g.consumptionRoleName
+          }))
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });

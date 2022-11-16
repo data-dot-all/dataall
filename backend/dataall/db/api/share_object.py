@@ -36,6 +36,7 @@ class ShareObject:
         principalType = data['principalType']
         datasetUri = data['datasetUri']
         environmentUri = uri
+        groupUri = data['groupUri']
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
 
@@ -48,18 +49,18 @@ class ShareObject:
         )
 
         if (
-            dataset.stewards == principalId or dataset.SamlAdminGroupName == principalId
+            dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
         ) and environment.environmentUri == dataset.environmentUri:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
-                message=f'Team: {principalId} is managing the dataset {dataset.name}',
+                message=f'Team: {groupUri} is managing the dataset {dataset.name}',
             )
 
         ShareObject.validate_group_membership(
             session=session,
             username=username,
             groups=groups,
-            share_object_group=principalId,
+            share_object_group=groupUri,
             environment_uri=uri,
         )
 
@@ -70,6 +71,7 @@ class ShareObject:
                     models.ShareObject.datasetUri == datasetUri,
                     models.ShareObject.principalId == principalId,
                     models.ShareObject.environmentUri == environmentUri,
+                    models.ShareObject.groupUri == groupUri,
                 )
             )
             .first()
@@ -79,6 +81,7 @@ class ShareObject:
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner=username,
+                groupUri=groupUri,
                 principalId=principalId,
                 principalType=principalType,
                 status=ShareObjectStatus.Draft.value,
