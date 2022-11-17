@@ -352,8 +352,8 @@ class Quicksight:
         groupPrincipal = f"arn:aws:quicksight:{identity_region}:{AwsAccountId}:group/default/{GroupName}"
 
         user = Quicksight.register_user_in_group(
-                AwsAccountId=AwsAccountId, UserName=UserName, GroupName=GroupName, UserRole=UserRole
-            )
+            AwsAccountId=AwsAccountId, UserName=UserName, GroupName=GroupName, UserRole=UserRole
+        )
 
         read_principals, write_principals = Quicksight.check_dashboard_permissions(
             AwsAccountId=AwsAccountId,
