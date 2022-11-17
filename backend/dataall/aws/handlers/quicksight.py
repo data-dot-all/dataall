@@ -124,13 +124,42 @@ class Quicksight:
         return group
 
     @staticmethod
-    def describe_group(client, AwsAccountId):
+    def create_quicksight_group(AwsAccountId, GroupName):
+        """Creates a Quicksight group called GroupName
+        Args:
+            AwsAccountId(str):  aws account
+            GroupName(str): name of the QS group
+
+        Returns:dict
+            quicksight.describe_group response
+        """
+        client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
+        group = Quicksight.describe_group(client, AwsAccountId, GroupName)
+        print("inside create groups")
+        print(group)
+        if not group:
+            logger.info(f'Attempting to create Quicksight group `{GroupName}...')
+            response = client.create_group(
+                GroupName=GroupName,
+                Description='data.all group',
+                AwsAccountId=AwsAccountId,
+                Namespace='default',
+            )
+            logger.info(f'Quicksight group {GroupName} created {response}')
+            response = client.describe_group(
+                AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
+            )
+            return response
+        return group
+
+    @staticmethod
+    def describe_group(client, AwsAccountId, GroupName='dataall'):
         try:
             response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
+                AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
             )
             logger.info(
-                f'Quicksight `dataall` group already exists in {AwsAccountId} '
+                f'Quicksight {GroupName} group already exists in {AwsAccountId} '
                 f'(using identity region {Quicksight.get_identity_region(AwsAccountId)}): '
                 f'{response}'
             )
@@ -234,6 +263,7 @@ class Quicksight:
         )
         exists = False
         user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
+        print(user)
         if user is not None:
             exists = True
 
@@ -294,14 +324,17 @@ class Quicksight:
         return response.get('EmbedUrl')
 
     @staticmethod
-    def check_dashboard_permissions(AwsAccountId, DashboardId):
-        permissions = client.describe_dashboard_permissions(
+    def check_dashboard_permissions(AwsAccountId, region, DashboardId):
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        response = client.describe_dashboard_permissions(
             AwsAccountId=AwsAccountId,
             DashboardId=DashboardId
         )['Permissions']
+        print(response)
         read_principals = []
         write_principals = []
-        for a,p in zip([p.Actions for p in permisisons], [p.Principal for p in permissions]):
+
+        for a, p in zip([p["Actions"] for p in response], [p["Principal"] for p in response]):
             write_principals.append(p) if "Update" in str(a) else read_principals.append(p)
 
         print(f"Read principals: {read_principals}")
@@ -316,15 +349,15 @@ class Quicksight:
 
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         identity_region = Quicksight.get_identity_region(AwsAccountId)
-        user = Quicksight.describe_user(AwsAccountId, UserName)
         groupPrincipal = f"arn:aws:quicksight:{identity_region}:{AwsAccountId}:group/default/{GroupName}"
 
-        if user is None:
-            user = Quicksight.register_user_in_group(
+        user = Quicksight.register_user_in_group(
                 AwsAccountId=AwsAccountId, UserName=UserName, GroupName=GroupName, UserRole=UserRole
             )
+
         read_principals, write_principals = Quicksight.check_dashboard_permissions(
             AwsAccountId=AwsAccountId,
+            region=region,
             DashboardId=DashboardId
         )
 

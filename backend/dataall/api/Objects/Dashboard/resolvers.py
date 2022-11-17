@@ -42,7 +42,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
             if not shared_groups:
                 raise db.exceptions.UnauthorizedOperation(
                     action=permissions.GET_DASHBOARD,
-                    message=f'Dashboard has not been shared with your Teams',
+                    message='Dashboard has not been shared with your Teams',
                 )
 
             url = Quicksight.get_shared_reader_session(
