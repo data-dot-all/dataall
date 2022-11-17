@@ -228,6 +228,51 @@ class Quicksight:
         return Quicksight.describe_user(AwsAccountId, UserName)
 
     @staticmethod
+    def register_user_in_group(AwsAccountId, UserName, GroupName, UserRole='READER'):
+        client = Quicksight.get_quicksight_client_in_identity_region(
+            AwsAccountId=AwsAccountId
+        )
+        exists = False
+        user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
+        if user is not None:
+            exists = True
+
+        if exists:
+            response = client.update_user(
+                UserName=UserName,
+                AwsAccountId=AwsAccountId,
+                Namespace='default',
+                Email=UserName,
+                Role=UserRole,
+            )
+        else:
+            response = client.register_user(
+                UserName=UserName,
+                Email=UserName,
+                AwsAccountId=AwsAccountId,
+                Namespace='default',
+                IdentityType='QUICKSIGHT',
+                UserRole=UserRole,
+            )
+        member = False
+
+        Quicksight.create_quicksight_group(AwsAccountId, GroupName)
+        response = client.list_user_groups(
+            UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
+        )
+        print(f'list_user_groups {UserName}')
+        print(response)
+        if GroupName not in [g['GroupName'] for g in response['GroupList']]:
+            logger.warning(f'Adding {UserName} to Quicksight group {GroupName} on {AwsAccountId}')
+            response = client.create_group_membership(
+                MemberName=UserName,
+                GroupName=GroupName,
+                AwsAccountId=AwsAccountId,
+                Namespace='default',
+            )
+        return Quicksight.describe_user(AwsAccountId, UserName)
+
+    @staticmethod
     def get_reader_session(
         AwsAccountId, region, UserName, UserRole='READER', DashboardId=None
     ):
@@ -237,6 +282,27 @@ class Quicksight:
         if user is None:
             user = Quicksight.register_user(
                 AwsAccountId=AwsAccountId, UserName=UserName, UserRole=UserRole
+            )
+
+        response = client.get_dashboard_embed_url(
+            AwsAccountId=AwsAccountId,
+            DashboardId=DashboardId,
+            IdentityType='QUICKSIGHT',
+            SessionLifetimeInMinutes=120,
+            UserArn=user.get('Arn'),
+        )
+        return response.get('EmbedUrl')
+
+    @staticmethod
+    def get_shared_reader_session(
+            AwsAccountId, region, UserName, GroupName, UserRole='READER', DashboardId=None
+    ):
+
+        client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        user = Quicksight.describe_user(AwsAccountId, UserName)
+        if user is None:
+            user = Quicksight.register_user_in_group(
+                AwsAccountId=AwsAccountId, UserName=UserName, GroupName=GroupName, UserRole=UserRole
             )
 
         response = client.get_dashboard_embed_url(

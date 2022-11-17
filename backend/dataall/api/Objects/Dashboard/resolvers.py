@@ -33,12 +33,32 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
                 DashboardId=dash.DashboardId,
             )
         else:
-            url = Quicksight.get_anonymous_session(
+            shared_groups = db.api.Dashboard.query_all_user_groups_shareddashboard(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                uri=dashboardUri
+            )
+            if not shared_groups:
+                raise db.exceptions.UnauthorizedOperation(
+                    action=permissions.GET_DASHBOARD,
+                    message=f'Dashboard has not been shared with your Teams',
+                )
+
+            url = Quicksight.get_shared_reader_session(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region,
                 UserName=context.username,
+                GroupName=shared_groups[0],
                 DashboardId=dash.DashboardId,
             )
+
+            # url = Quicksight.get_anonymous_session(
+            #     AwsAccountId=env.AwsAccountId,
+            #     region=env.region,
+            #     UserName=context.username,
+            #     DashboardId=dash.DashboardId,
+            # )
     return url
 
 
