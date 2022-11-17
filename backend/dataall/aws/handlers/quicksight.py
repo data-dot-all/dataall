@@ -294,16 +294,56 @@ class Quicksight:
         return response.get('EmbedUrl')
 
     @staticmethod
+    def check_dashboard_permissions(AwsAccountId, DashboardId):
+        permissions = client.describe_dashboard_permissions(
+            AwsAccountId=AwsAccountId,
+            DashboardId=DashboardId
+        )['Permissions']
+        read_principals = []
+        write_principals = []
+        for a,p in zip([p.Actions for p in permisisons], [p.Principal for p in permissions]):
+            write_principals.append(p) if "Update" in str(a) else read_principals.append(p)
+
+        print(f"Read principals: {read_principals}")
+        print(f"Write principals: {write_principals}")
+
+        return read_principals, write_principals
+
+    @staticmethod
     def get_shared_reader_session(
             AwsAccountId, region, UserName, GroupName, UserRole='READER', DashboardId=None
     ):
 
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
+        identity_region = Quicksight.get_identity_region(AwsAccountId)
         user = Quicksight.describe_user(AwsAccountId, UserName)
+        groupPrincipal = f"arn:aws:quicksight:{identity_region}:{AwsAccountId}:group/default/{GroupName}"
+
         if user is None:
             user = Quicksight.register_user_in_group(
                 AwsAccountId=AwsAccountId, UserName=UserName, GroupName=GroupName, UserRole=UserRole
             )
+        read_principals, write_principals = Quicksight.check_dashboard_permissions(
+            AwsAccountId=AwsAccountId,
+            DashboardId=DashboardId
+        )
+
+        if groupPrincipal not in read_principals:
+            permissions = client.update_dashboard_permissions(
+                AwsAccountId=AwsAccountId,
+                DashboardId=DashboardId,
+                GrantPermissions=[
+                    {
+                        'Principal': groupPrincipal,
+                        'Actions': [
+                            "quicksight:DescribeDashboard",
+                            "quicksight:ListDashboardVersions",
+                            "quicksight:QueryDashboard",
+                        ]
+                    },
+                ]
+            )
+            print(f"Permissions granted: {permissions}")
 
         response = client.get_dashboard_embed_url(
             AwsAccountId=AwsAccountId,
