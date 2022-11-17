@@ -47,6 +47,12 @@ class ShareObject:
             'environment',
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
+        if principalType == "ConsumptionRole":
+            consumption_role: models.GroupConsumptionRole = api.Environment.get_environment_consumption_role(
+                session,
+                principalId,
+                environmentUri
+            )
 
         if (
             dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
@@ -131,7 +137,7 @@ class ShareObject:
             action='SHARE_OBJECT:CREATE',
             label='SHARE_OBJECT:CREATE',
             owner=username,
-            summary=f'{username} created a share object for the {dataset.name} in {environment.name} for the group {principalId}',
+            summary=f'{username} created a share object for the {dataset.name} in {environment.name} for the principal: {principalId}',
             targetUri=dataset.datasetUri,
             targetType='dataset',
         )
@@ -139,7 +145,7 @@ class ShareObject:
 
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=principalId,
+            group=groupUri,
             permissions=permissions.SHARE_OBJECT_REQUESTER,
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
@@ -263,7 +269,7 @@ class ShareObject:
 
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=share.principalId,
+            group=share.groupUri,
             permissions=permissions.DATASET_READ,
             resource_uri=dataset.datasetUri,
             resource_type=models.Dataset.__name__,
@@ -308,7 +314,7 @@ class ShareObject:
         share.status = ShareObjectStatus.Rejected.value
         ResourcePolicy.delete_resource_policy(
             session=session,
-            group=share.principalId,
+            group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
         api.Notification.notify_share_object_approval(session, username, dataset, share)
@@ -624,7 +630,7 @@ class ShareObject:
             and_(
                 models.ShareObject.datasetUri == dataset_uri,
                 models.ShareObject.environmentUri == environment_uri,
-                models.ShareObject.principalId.in_(groups),
+                models.ShareObject.groupUri.in_(groups),
             )
         )
         if not share:
@@ -750,14 +756,14 @@ class ShareObject:
             .filter(
                 and_(
                     models.EnvironmentGroup.environmentUri == share.environmentUri,
-                    models.EnvironmentGroup.groupUri == share.principalId,
+                    models.EnvironmentGroup.groupUri == share.groupUri,
                 )
             )
             .first()
         )
         if not env_group:
             raise Exception(
-                f'Share object Team {share.principalId} is not a member of the '
+                f'Share object Team {share.groupUri} is not a member of the '
                 f'environment {target_environment.name}/{target_environment.AwsAccountId}'
             )
 

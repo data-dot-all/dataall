@@ -102,8 +102,8 @@ const RequestAccessModal = (props) => {
       if (!response.errors) {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
-            value: g.IAMRoleArn,
-            label: g.consumptionRoleName
+            value: g.consumptionRoleUri,
+            label: {g.consumptionRoleName}-{g.IAMRoleArn}
           }))
         );
       } else {
@@ -404,7 +404,7 @@ const RequestAccessModal = (props) => {
                                     key={role.value}
                                     value={role.value}
                                   >
-                                    {role.label}-: {role.value}
+                                    {role.label}
                                   </MenuItem>
                                 ))}
                               </TextField>

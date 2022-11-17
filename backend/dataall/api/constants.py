@@ -150,6 +150,7 @@ class PrincipalType(GraphQLEnumMapper):
     Project = 'Project'
     Public = 'Public'
     Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'
 
 
 class ShareObjectPermission(GraphQLEnumMapper):
