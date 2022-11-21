@@ -15,7 +15,7 @@ class ParamStoreStack(pyNestedClass):
         custom_domain=None,
         enable_cw_canaries=False,
         quicksight_enabled=False,
-        shared_dashboard_sessions='anonymous'
+        shared_dashboard_sessions='anonymous',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
