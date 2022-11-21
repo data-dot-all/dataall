@@ -173,4 +173,3 @@ ConsumptionRoleSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(ConsumptionRole)),
     ],
 )
-

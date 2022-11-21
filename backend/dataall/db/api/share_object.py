@@ -56,7 +56,7 @@ class ShareObject:
 
         if (
             dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
-        ) and environment.environmentUri == dataset.environmentUri:
+        ) and environment.environmentUri == dataset.environmentUri and principalType == "Group":
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
                 message=f'Team: {groupUri} is managing the dataset {dataset.name}',

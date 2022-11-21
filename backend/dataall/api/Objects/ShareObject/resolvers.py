@@ -276,6 +276,12 @@ def resolve_environment(context: Context, source: models.ShareObject, **kwargs):
         return environment
 
 
+def resolve_group(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    return source.groupUri
+
+
 def get_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None

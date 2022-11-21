@@ -112,6 +112,11 @@ ShareObject = gql.ObjectType(
             type=gql.Ref('Environment'),
         ),
         gql.Field(
+            name='group',
+            resolver=resolve_group,
+            type=gql.String,
+        ),
+        gql.Field(
             'items',
             args=[gql.Argument(name='filter', type=gql.Ref('ShareableObjectFilter'))],
             type=gql.Ref('SharedItemSearchResult'),

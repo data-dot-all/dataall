@@ -102,8 +102,8 @@ const RequestAccessModal = (props) => {
       if (!response.errors) {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
-            value: g.consumptionRoleUri,
-            label: {g.consumptionRoleName}-{g.IAMRoleArn}
+            value: g.groupConsumptionRoleUri,
+            label: [g.consumptionRoleName,g.IAMRoleArn].join(' --> '),
           }))
         );
       } else {
@@ -127,8 +127,12 @@ const RequestAccessModal = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       let response;
+      console.log("inside submit")
+      console.log(values)
       let type = values.consumptionRole? 'ConsumptionRole' : 'Group';
+      console.log(type)
       let principal = values.consumptionRole? values.consumptionRole : values.groupUri;
+      console.log(principal)
       console.log(type)
       if (hit.resourceKind === 'dataset') {
         response = await client.mutate(
@@ -394,7 +398,11 @@ const RequestAccessModal = (props) => {
                                 fullWidth
                                 label="Consumption Role (optional)"
                                 name="consumptionRole"
-                                onChange={handleChange}
+                                onChange={(event) => {
+                                  console.log("change")
+                                  console.log(event)
+                                  setFieldValue('consumptionRole', event.target.value);
+                                }}
                                 select
                                 value={values.consumptionRole}
                                 variant="outlined"
