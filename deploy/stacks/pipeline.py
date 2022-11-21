@@ -583,6 +583,7 @@ class PipelineStack(Stack):
                 quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
+                shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
             )
         )
         return backend_stage
