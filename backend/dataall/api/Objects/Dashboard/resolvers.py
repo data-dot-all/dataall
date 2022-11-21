@@ -2,6 +2,8 @@ from .... import db
 from ....api.constants import DashboardRole
 from ....api.context import Context
 from ....aws.handlers.quicksight import Quicksight
+from ....aws.handlers.parameter_store import ParameterStoreManager
+from ....aws.handlers.sts import SessionHelper
 from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary, Vote
 from ....searchproxy import indexers
@@ -45,20 +47,29 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
                     message='Dashboard has not been shared with your Teams',
                 )
 
-            url = Quicksight.get_shared_reader_session(
-                AwsAccountId=env.AwsAccountId,
-                region=env.region,
-                UserName=context.username,
-                GroupName=shared_groups[0],
-                DashboardId=dash.DashboardId,
-            )
+            current_account = SessionHelper.get_account()
+            region = os.getenv('AWS_REGION', 'eu-west-1')
 
-            # url = Quicksight.get_anonymous_session(
-            #     AwsAccountId=env.AwsAccountId,
-            #     region=env.region,
-            #     UserName=context.username,
-            #     DashboardId=dash.DashboardId,
-            # )
+            session_type = ParameterStoreManager.get_parameter_value(
+                AwsAccountId=current_account,
+                region=region,
+                parameter_path=f"/dataall/{envname}/quicksight/sharedDashboardsSessions"
+            )
+            if session_type == 'reader':
+                url = Quicksight.get_shared_reader_session(
+                    AwsAccountId=env.AwsAccountId,
+                    region=env.region,
+                    UserName=context.username,
+                    GroupName=shared_groups[0],
+                    DashboardId=dash.DashboardId,
+                )
+            else:
+                url = Quicksight.get_anonymous_session(
+                    AwsAccountId=env.AwsAccountId,
+                    region=env.region,
+                    UserName=context.username,
+                    DashboardId=dash.DashboardId,
+                )
     return url
 
 
