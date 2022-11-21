@@ -135,8 +135,7 @@ class Quicksight:
         """
         client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
         group = Quicksight.describe_group(client, AwsAccountId, GroupName)
-        print("inside create groups")
-        print(group)
+
         if not group:
             logger.info(f'Attempting to create Quicksight group `{GroupName}...')
             response = client.create_group(
@@ -244,8 +243,9 @@ class Quicksight:
         response = client.list_user_groups(
             UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
         )
-        print(f'list_user_groups {UserName}')
-        print(response)
+        logger.info(
+            f'list_user_groups for {UserName}: {response})'
+        )
         if 'dataall' not in [g['GroupName'] for g in response['GroupList']]:
             logger.warning(f'Adding {UserName} to Quicksight dataall on {AwsAccountId}')
             response = client.create_group_membership(
@@ -263,7 +263,7 @@ class Quicksight:
         )
         exists = False
         user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
-        print(user)
+
         if user is not None:
             exists = True
 
@@ -290,8 +290,9 @@ class Quicksight:
         response = client.list_user_groups(
             UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
         )
-        print(f'list_user_groups {UserName}')
-        print(response)
+        logger.info(
+            f'list_user_groups for {UserName}: {response})'
+        )
         if GroupName not in [g['GroupName'] for g in response['GroupList']]:
             logger.warning(f'Adding {UserName} to Quicksight group {GroupName} on {AwsAccountId}')
             response = client.create_group_membership(
@@ -330,15 +331,15 @@ class Quicksight:
             AwsAccountId=AwsAccountId,
             DashboardId=DashboardId
         )['Permissions']
-        print(response)
+        logger.info(f"Dashboard initial permissions: {response}")
         read_principals = []
         write_principals = []
 
         for a, p in zip([p["Actions"] for p in response], [p["Principal"] for p in response]):
             write_principals.append(p) if "Update" in str(a) else read_principals.append(p)
 
-        print(f"Read principals: {read_principals}")
-        print(f"Write principals: {write_principals}")
+        logger.info(f"Dashboard updated permissions, Read principals: {read_principals}")
+        logger.info(f"Dashboard updated permissions, Write principals: {write_principals}")
 
         return read_principals, write_principals
 
@@ -376,7 +377,7 @@ class Quicksight:
                     },
                 ]
             )
-            print(f"Permissions granted: {permissions}")
+            logger.info(f"Permissions granted: {permissions}")
 
         response = client.get_dashboard_embed_url(
             AwsAccountId=AwsAccountId,
