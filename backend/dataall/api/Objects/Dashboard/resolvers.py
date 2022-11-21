@@ -48,14 +48,10 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
                     message='Dashboard has not been shared with your Teams',
                 )
 
-            current_account = SessionHelper.get_account()
-            region = os.getenv('AWS_REGION', 'eu-west-1')
-
             session_type = ParameterStoreManager.get_parameter_value(
-                AwsAccountId=current_account,
-                region=region,
                 parameter_path=f"/dataall/{os.getenv('envname', 'local')}/quicksight/sharedDashboardsSessions"
             )
+
             if session_type == 'reader':
                 url = Quicksight.get_shared_reader_session(
                     AwsAccountId=env.AwsAccountId,
