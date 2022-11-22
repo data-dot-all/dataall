@@ -21,14 +21,14 @@ const ShareOutboxList = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      searchOutbox({
+      getShareRequestsFromMe({
         filter: {
           ...filter
         }
       })
     );
     if (!response.errors) {
-      setItems(response.data.requestsFromMe);
+      setItems(response.data.getShareRequestsFromMe);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
