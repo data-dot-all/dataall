@@ -12,6 +12,7 @@ class ConsumptionRole(Base):
     environmentUri = Column(String, nullable=False)
     groupUri = Column(String, nullable=False)
     IAMRoleName = Column(String, nullable=False)
+    IAMRoleArn = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)

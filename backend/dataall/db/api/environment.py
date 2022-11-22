@@ -498,7 +498,8 @@ class Environment:
             consumptionRoleName=data['consumptionRoleName'],
             environmentUri=environment.environmentUri,
             groupUri=group,
-            IAMRoleArn=IAMRoleArn
+            IAMRoleArn=IAMRoleArn,
+            IAMRoleName=IAMRoleArn.split("/")[-1],
         )
 
         session.add(consumption_role)
