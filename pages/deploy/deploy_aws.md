@@ -302,11 +302,11 @@ Run the commands below with the AWS credentials of the deployment account:
 
 Your region (can be any supported region)
 ```bash
-cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
+cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/<aws-region>
 ```
 North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
 ```bash
-cdk bootstrap --trust <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east
+cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east
 ```
 
 
