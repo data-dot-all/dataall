@@ -233,17 +233,14 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: models.Dataset = session.query(models.Dataset).get(source.datasetUri)
+        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
         if ds:
-            org: models.Organization = session.query(models.Organization).get(
-                ds.organizationUri
-            )
+            env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
-                'datasetOrganizationUri': ds.organizationUri if ds else 'NotFound',
-                'businessOwnerEmail': ds.businessOwnerEmail,
-                'datasetOrganizationName': org.name if org else 'NotFound',
+                'SamlAdminGroupName': ds.SamlAdminGroupName if ds else 'NotFound',
+                'environmentName': env.label if env else 'NotFound',
                 'exists': True if ds else False,
             }
 
@@ -262,7 +259,7 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
 
     with context.engine.scoped_session() as session:
         return get_principal(
-            session, source.principalId, source.principalType, source.environmentUri
+            session, source.principalId, source.principalType, source.environmentUri, source.groupUri
         )
 
 
