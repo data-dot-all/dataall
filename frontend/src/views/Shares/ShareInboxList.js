@@ -10,7 +10,7 @@ import Pager from '../../components/Pager';
 import ShareInboxListItem from './ShareInboxListItem';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import searchInbox from '../../api/DataAccessRequest/searchInbox';
+import getShareRequestsToMe from '../../api/ShareObject/getShareRequestsToMe';
 import listDatasetShareObjects from '../../api/Dataset/listShareObjects';
 
 const ShareInboxList = (props) => {

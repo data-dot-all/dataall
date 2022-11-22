@@ -1395,6 +1395,14 @@ class Environment:
                 group=group.groupUri,
             )
 
+        env_roles = (
+            session.query(models.GroupConsumptionRole)
+                .filter(models.GroupConsumptionRole.environmentUri == uri)
+                .all()
+        )
+        for role in env_roles:
+            session.delete(role)
+
         KeyValueTag.delete_key_value_tags(
             session, environment.environmentUri, 'environment'
         )

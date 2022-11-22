@@ -8,7 +8,7 @@ import useSettings from '../../hooks/useSettings';
 import Pager from '../../components/Pager';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import searchOutbox from '../../api/DataAccessRequest/searchOutbox';
+import getShareRequestsFromMe from '../../api/ShareObject/getShareRequestsFromMe';
 import ShareOutboxListItem from './ShareOutboxListItem';
 
 const ShareOutboxList = () => {
