@@ -21,6 +21,7 @@ const getShareObject = ({ shareUri, filter }) => ({
           principalId
           principalType
           principalName
+          principalIAMRoleName
           SamlGroupName
           environmentUri
           environmentName

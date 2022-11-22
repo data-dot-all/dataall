@@ -43,7 +43,7 @@ class S3ShareManager:
         self.source_account_id = dataset.AwsAccountId
         self.target_account_id = target_environment.AwsAccountId
         self.source_env_admin = source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share.principalIAMRoleName
+        self.target_requester_IAMRoleName = share.principal.principalIAMRoleName
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = dataset.AwsAccountId

@@ -259,7 +259,7 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
 
     with context.engine.scoped_session() as session:
         return get_principal(
-            session, source.principalId, source.principalType, source.environmentUri, source.groupUri
+            session, source.principalId, source.principalType, source.principalIAMRoleName, source.environmentUri, source.groupUri
         )
 
 

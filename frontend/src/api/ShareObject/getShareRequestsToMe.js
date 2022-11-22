@@ -21,6 +21,7 @@ const getShareRequestsToMe = ({ filter }) => ({
             principalId
             principalType
             principalName
+            principalIAMRoleName
             SamlGroupName
             environmentUri
             environmentName

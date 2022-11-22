@@ -1,7 +1,7 @@
 from .... import db
 
 
-def get_principal(session, principalId, principalType=None, environmentUri=None, groupUri=None):
+def get_principal(session, principalId, principalType=None, principalIAMRoleName=None, environmentUri=None, groupUri=None):
     if principalType in ['Group', 'ConsumptionRole']:
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
         organization = db.api.Organization.get_organization_by_uri(
@@ -18,6 +18,7 @@ def get_principal(session, principalId, principalType=None, environmentUri=None,
             'principalId': principalId,
             'principalType': principalType,
             'principalName': principalName,
+            'principalIAMRoleName': principalIAMRoleName,
             'SamlGroupName': groupUri,
             'environmentUri': environment.environmentUri,
             'environmentName': environment.label,
