@@ -1211,7 +1211,7 @@ class Environment:
                 (
                     and_(
                         models.ConsumptionRole.consumptionRoleUri == role_uri,
-                        models.ConsumptionRoleUri.environmentUri == environment_uri,
+                        models.ConsumptionRole.environmentUri == environment_uri,
                     )
                 )
             )
@@ -1398,8 +1398,8 @@ class Environment:
 
         env_roles = (
             session.query(models.ConsumptionRoleUri)
-                .filter(models.ConsumptionRoleUri.environmentUri == uri)
-                .all()
+            .filter(models.ConsumptionRoleUri.environmentUri == uri)
+            .all()
         )
         for role in env_roles:
             session.delete(role)

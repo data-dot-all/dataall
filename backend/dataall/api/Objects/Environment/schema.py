@@ -155,6 +155,7 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='consumptionRoleName', type=gql.String),
         gql.Field(name='groupUri', type=gql.String),
         gql.Field(name='environmentUri', type=gql.String),
+        gql.Field(name='IAMRoleArn', type=gql.String),
         gql.Field(name='IAMRoleName', type=gql.String),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
