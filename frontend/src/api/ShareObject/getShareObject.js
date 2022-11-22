@@ -21,9 +21,12 @@ const getShareObject = ({ shareUri, filter }) => ({
           principalId
           principalType
           principalName
+          SamlGroupName
+          environmentUri
+          environmentName
           AwsAccountId
           region
-          SamlGroupName
+          organizationUri
           organizationName
         }
         items(filter: $filter) {
@@ -44,7 +47,9 @@ const getShareObject = ({ shareUri, filter }) => ({
         dataset {
           datasetUri
           datasetName
-          businessOwnerEmail
+          SamlAdminGroupName
+          environmentName
+          exists
         }
       }
     }
