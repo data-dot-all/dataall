@@ -14,7 +14,7 @@ from . import (
     KeyValueTag,
 )
 from ..api.organization import Organization
-from ..models import EnvironmentGroup, GroupConsumptionRole
+from ..models import EnvironmentGroup, ConsumptionRole
 from ..models.Enums import (
     ShareObjectStatus,
     ShareableType,
@@ -494,7 +494,7 @@ class Environment:
                 message=f'IAM role {IAMRoleArn} is already added to the environment {environment.name}',
             )
 
-        consumption_role = GroupConsumptionRole(
+        consumption_role = ConsumptionRole(
             consumptionRoleName=data['consumptionRoleName'],
             environmentUri=environment.environmentUri,
             groupUri=group,
@@ -507,9 +507,9 @@ class Environment:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=group,
-            resource_uri=consumption_role.groupConsumptionRoleUri,
+            resource_uri=consumption_role.consumptionRoleUri,
             permissions=permissions.CONSUMPTION_ROLE_ALL,
-            resource_type=models.GroupConsumptionRole.__name__,
+            resource_type=models.ConsumptionRole.__name__,
         )
         return consumption_role
 
@@ -519,10 +519,10 @@ class Environment:
     def remove_consumption_role(session, username, groups, uri, data=None, check_perm=None):
         if not data:
             raise exceptions.RequiredParameter('data')
-        if not data.get('groupConsumptionRoleUri'):
-            raise exceptions.RequiredParameter('groupConsumptionRoleUri')
+        if not data.get('consumptionRoleUri'):
+            raise exceptions.RequiredParameter('consumptionRoleUri')
 
-        consumption_role = Environment.get_environment_consumption_role(session, data.get('groupConsumptionRoleUri'), uri)
+        consumption_role = Environment.get_environment_consumption_role(session, data.get('consumptionRoleUri'), uri)
 
         if consumption_role:
             session.delete(consumption_role)
@@ -531,8 +531,8 @@ class Environment:
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=consumption_role.groupUri,
-            resource_uri=consumption_role.groupConsumptionRoleUri,
-            resource_type=models.GroupConsumptionRole.__name__,
+            resource_uri=consumption_role.consumptionRoleUri,
+            resource_type=models.ConsumptionRole.__name__,
         )
         return True
 
@@ -695,15 +695,15 @@ class Environment:
     @staticmethod
     def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
         query = (
-            session.query(models.GroupConsumptionRole)
-            .filter(models.GroupConsumptionRole.environmentUri == uri)
-            .filter(models.GroupConsumptionRole.groupUri.in_(groups))
+            session.query(models.ConsumptionRole)
+            .filter(models.ConsumptionRole.environmentUri == uri)
+            .filter(models.ConsumptionRole.groupUri.in_(groups))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.GroupConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
@@ -711,7 +711,7 @@ class Environment:
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    models.GroupConsumptionRole.groupUri == group,
+                    models.ConsumptionRole.groupUri == group,
                 )
             )
         return query
@@ -731,21 +731,21 @@ class Environment:
 
     @staticmethod
     def query_all_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.GroupConsumptionRole).filter(
-            models.GroupConsumptionRole.environmentUri == uri
+        query = session.query(models.ConsumptionRole).filter(
+            models.ConsumptionRole.environmentUri == uri
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.GroupConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    models.GroupConsumptionRole.groupUri == group,
+                    models.ConsumptionRole.groupUri == group,
                 )
             )
         return query
@@ -779,10 +779,10 @@ class Environment:
     def find_consumption_roles_by_IAMArn(
             session, uri, arn
     ) -> Query:
-        return session.query(models.GroupConsumptionRole).filter(
+        return session.query(models.ConsumptionRole).filter(
             and_(
-                models.GroupConsumptionRole.environmentUri == uri,
-                models.GroupConsumptionRole.IAMRoleArn == arn
+                models.ConsumptionRole.environmentUri == uri,
+                models.ConsumptionRole.IAMRoleArn == arn
             )
         ).first()
 
@@ -1205,12 +1205,12 @@ class Environment:
     @staticmethod
     def get_environment_consumption_role(session, role_uri, environment_uri):
         role = (
-            session.query(models.GroupConsumptionRole)
+            session.query(models.ConsumptionRole)
             .filter(
                 (
                     and_(
-                        models.GroupConsumptionRole.groupConsumptionRoleUri == role_uri,
-                        models.GroupConsumptionRole.environmentUri == environment_uri,
+                        models.ConsumptionRole.consumptionRoleUri == role_uri,
+                        models.ConsumptionRoleUri.environmentUri == environment_uri,
                     )
                 )
             )
@@ -1218,7 +1218,7 @@ class Environment:
         )
         if not role:
             raise exceptions.ObjectNotFound(
-                'GroupConsumptionRole', f'({role_uri},{environment_uri})'
+                'ConsumptionRoleUri', f'({role_uri},{environment_uri})'
             )
         return role
 
@@ -1396,8 +1396,8 @@ class Environment:
             )
 
         env_roles = (
-            session.query(models.GroupConsumptionRole)
-                .filter(models.GroupConsumptionRole.environmentUri == uri)
+            session.query(models.ConsumptionRoleUri)
+                .filter(models.ConsumptionRoleUri.environmentUri == uri)
                 .all()
         )
         for role in env_roles:

@@ -73,7 +73,7 @@ removeConsumptionRoleFromEnvironment = gql.MutationField(
     name='removeConsumptionRoleFromEnvironment',
     args=[
         gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('groupConsumptionRoleUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
     resolver=remove_consumption_role,

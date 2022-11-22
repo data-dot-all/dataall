@@ -20,7 +20,7 @@ const listAllEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
         hasNext
         hasPrevious
         nodes {
-          groupConsumptionRoleUri
+          consumptionRoleUri
           consumptionRoleName
           environmentUri
           groupUri

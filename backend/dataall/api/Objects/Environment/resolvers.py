@@ -166,14 +166,14 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     return environment
 
 
-def remove_consumption_role(context: Context, source, environmentUri=None, groupConsumptionRoleUri=None):
+def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
     with context.engine.scoped_session() as session:
         status = db.api.Environment.remove_consumption_role(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=environmentUri,
-            data={'groupConsumptionRoleUri': groupConsumptionRoleUri},
+            data={'consumptionRoleUri': consumptionRoleUri},
             check_perm=True,
         )
 

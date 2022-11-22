@@ -297,7 +297,7 @@ const EnvironmentTeams = ({ environment }) => {
       const response = await client.mutate(
         removeConsumptionRoleFromEnvironment({
           environmentUri: environment.environmentUri,
-          groupConsumptionRoleUri: consumptionGroupUri
+          consumptionRoleUri: consumptionGroupUri
         })
       );
       if (!response.errors) {
@@ -562,12 +562,12 @@ const EnvironmentTeams = ({ environment }) => {
                 <TableBody>
                   {roles.nodes.length > 0 ? (
                     roles.nodes.map((role) => (
-                      <TableRow hover key={role.groupConsumptionRoleUri}>
+                      <TableRow hover key={role.consumptionRoleUri}>
                         <TableCell>{role.consumptionRoleName}</TableCell>
                         <TableCell>{role.IAMRoleArn}</TableCell>
                         <TableCell>{role.groupUri}</TableCell>
                         <TableCell>
-                          <IconButton onClick={() => removeConsumptionRole(role.groupConsumptionRoleUri)}>
+                          <IconButton onClick={() => removeConsumptionRole(role.consumptionRoleUri)}>
                             <DeleteOutlined fontSize="small" />
                           </IconButton>
                         </TableCell>

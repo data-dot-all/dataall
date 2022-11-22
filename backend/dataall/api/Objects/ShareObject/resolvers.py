@@ -324,7 +324,7 @@ def list_shareable_objects(
         )
 
 
-def get_share_in_my_inbox(context: Context, source, filter: dict = None):
+def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -338,7 +338,7 @@ def get_share_in_my_inbox(context: Context, source, filter: dict = None):
         )
 
 
-def get_share_in_my_outbox(context: Context, source, filter: dict = None):
+def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:

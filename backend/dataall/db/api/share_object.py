@@ -48,11 +48,19 @@ class ShareObject:
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
         if principalType == "ConsumptionRole":
-            consumption_role: models.GroupConsumptionRole = api.Environment.get_environment_consumption_role(
+            consumption_role: models.ConsumptionRole = api.Environment.get_environment_consumption_role(
                 session,
                 principalId,
                 environmentUri
             )
+            principalIAMRoleName = consumption_role.IAMRoleName
+        else:
+            env_group: models.EnvironmentGroup = api.Environment.get_environment_group(
+                session,
+                groupUri,
+                environmentUri
+            )
+            principalIAMRoleName = env_group.environmentIAMRoleName
 
         if (
             dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
@@ -90,6 +98,7 @@ class ShareObject:
                 groupUri=groupUri,
                 principalId=principalId,
                 principalType=principalType,
+                principalIAMRoleName=principalIAMRoleName,
                 status=ShareObjectStatus.Draft.value,
             )
             session.add(share)

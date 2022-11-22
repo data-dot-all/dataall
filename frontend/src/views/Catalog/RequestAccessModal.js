@@ -102,7 +102,7 @@ const RequestAccessModal = (props) => {
       if (!response.errors) {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
-            value: g.groupConsumptionRoleUri,
+            value: g.consumptionRoleUri,
             label: [g.consumptionRoleName,' [',g.IAMRoleArn,']'].join(''),
           }))
         );

@@ -12,12 +12,12 @@ getShareRequestsFromMe = gql.QueryField(
     name='getShareRequestsFromMe',
     args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
     type=gql.Ref('ShareSearchResult'),
-    resolver=get_shares_in_my_outbox,
+    resolver=list_shares_in_my_outbox,
 )
 
 getShareRequestsToMe = gql.QueryField(
     name='getShareRequestsToMe',
     args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
     type=gql.Ref('ShareSearchResult'),
-    resolver=get_share_in_my_inbox,
+    resolver=list_shares_in_my_inbox,
 )
