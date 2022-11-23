@@ -255,21 +255,6 @@ class CloudfrontDistro(pyNestedClass):
             frontend_alternate_domain = custom_domain_name
             userguide_alternate_domain = 'userguide.' + custom_domain_name
 
-            ssm.StringParameter(
-                self,
-                f'FrontendCustomDomain{envname}',
-                parameter_name=f'/dataall/{envname}/frontend/custom_domain_name',
-                string_value=frontend_alternate_domain,
-            )
-
-            ssm.StringParameter(
-                self,
-                f'UserGuideCustomDomain{envname}',
-                parameter_name=f'/dataall/{envname}/userguide/custom_domain_name',
-                string_value=userguide_alternate_domain,
-            )
-
-
             hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
                 self,
                 'CustomDomainHostedZone',
