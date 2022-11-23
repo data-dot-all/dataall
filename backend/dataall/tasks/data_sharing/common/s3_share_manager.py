@@ -165,14 +165,11 @@ class S3ShareManager:
         """
         :return:
         """
-        logger.info(
-            f'Create and manage access point'
-        )
 
         access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name)
         if not access_point_arn:
             logger.info(
-                f'Access point does not exists, creating...'
+                'Access point does not exists, creating...'
             )
             access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.source_environment.region, self.bucket_name, self.access_point_name)
         existing_policy = S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name)
@@ -181,7 +178,7 @@ class S3ShareManager:
         if existing_policy:
             # Update existing access point policy
             logger.info(
-                f'There is already an existing access point policy, updating...'
+                f'There is already an existing access point {access_point_arn} with an existing policy, updating policy...'
             )
             existing_policy = json.loads(existing_policy)
             statements = {item["Sid"]: item for item in existing_policy["Statement"]}
@@ -210,7 +207,7 @@ class S3ShareManager:
         else:
             # First time to create access point policy
             logger.info(
-                f'Access point policy does not exists, creating...'
+                f'Access point policy for access point {access_point_arn} does not exists, creating policy...'
             )
             access_point_policy = S3.generate_access_point_policy_template(
                 target_requester_id,
@@ -238,7 +235,7 @@ class S3ShareManager:
 
     def update_dataset_bucket_key_policy(self):
         logger.info(
-            f'Updating policy for Bucket KMS key'
+            'Updating dataset Bucket KMS key policy...'
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_keyId = KMS.get_key_id(self.source_account_id, self.source_environment.region, key_alias)
@@ -272,7 +269,7 @@ class S3ShareManager:
 
     def delete_access_point_policy(self):
         logger.info(
-            f'Deleting access point policy...'
+            f'Deleting access point policy for access point {self.access_point_name}...'
         )
         access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name))
         access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name)
@@ -291,7 +288,7 @@ class S3ShareManager:
 
     def delete_access_point(self):
         logger.info(
-            f'Deleting access point...'
+            f'Deleting access point {self.access_point_name}...'
         )
         access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name))
         if len(access_point_policy["Statement"]) <= 1:
@@ -303,7 +300,7 @@ class S3ShareManager:
 
     def delete_target_role_access_policy(self):
         logger.info(
-            f'Deleting target role access policy...'
+            'Deleting target role IAM policy...'
         )
         existing_policy = IAM.get_role_policy(
             self.target_account_id,
@@ -332,7 +329,7 @@ class S3ShareManager:
 
     def delete_dataset_bucket_key_policy(self):
         logger.info(
-            f'Deleting dataset bucket KMS key policy...'
+            'Deleting dataset bucket KMS key policy...'
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_keyId = KMS.get_key_id(self.source_account_id, self.source_environment.region, key_alias)

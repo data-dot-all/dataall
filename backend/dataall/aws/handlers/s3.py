@@ -141,7 +141,7 @@ class S3:
             return response['Policy']
 
     @staticmethod
-    def attach_access_point_policy(account_id: str, region:str, access_point_name: str, policy: str):
+    def attach_access_point_policy(account_id: str, region: str, access_point_name: str, policy: str):
         try:
             s3control = S3.client(account_id, region, 's3control')
             s3control.put_access_point_policy(
