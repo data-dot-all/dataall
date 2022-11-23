@@ -1397,8 +1397,8 @@ class Environment:
             )
 
         env_roles = (
-            session.query(models.ConsumptionRoleUri)
-            .filter(models.ConsumptionRoleUri.environmentUri == uri)
+            session.query(models.ConsumptionRole)
+            .filter(models.ConsumptionRole.environmentUri == uri)
             .all()
         )
         for role in env_roles:

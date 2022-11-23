@@ -116,6 +116,10 @@ class S3ShareManager:
         )
         if existing_policy:  # type dict
             if self.bucket_name not in ",".join(existing_policy["Statement"][0]["Resource"]):
+                logger.info(
+                    f'targetDatasetAccessControlPolicy exists for IAM role {self.target_requester_IAMRoleName}, '
+                    f'but S3 Access point {self.access_point_name} is not included, updating...'
+                )
                 target_resources = [
                     f"arn:aws:s3:::{self.bucket_name}",
                     f"arn:aws:s3:::{self.bucket_name}/*",
@@ -124,8 +128,15 @@ class S3ShareManager:
                 ]
                 policy = existing_policy["Statement"][0]["Resource"].extend(target_resources)
             else:
+                logger.info(
+                    f'targetDatasetAccessControlPolicy exists for IAM role {self.target_requester_IAMRoleName} '
+                    f'and S3 Access point {self.access_point_name} is included, skipping...'
+                )
                 return
         else:
+            logger.info(
+                f'targetDatasetAccessControlPolicy does not exists for IAM role {self.target_requester_IAMRoleName}, creating...'
+            )
             policy = {
                 "Version": "2012-10-17",
                 "Statement": [
