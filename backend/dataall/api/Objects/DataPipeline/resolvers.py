@@ -408,6 +408,11 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
+        aws_session = SessionHelper.remote_session(env.AwsAccountId)
+        codecommit_client = aws_session.client("codecommit", region_name=env.region)
+        response = codecommit_client.delete_repository(
+            repositoryName=pipeline.repo
+        )
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
                 context=context,
