@@ -64,7 +64,7 @@ class OpenSearchStack(pyNestedClass):
             enable_key_rotation=True,
         )
         iam.CfnServiceLinkedRole(
-            self, 'ServiceLinkedForElasticSearch', aws_service_name='es.amazonaws.com'
+            self, 'ServiceLinkedForElasticSearch', aws_service_name='opensearchservice.amazonaws.com'
         )
 
         es_app_log_group = logs.LogGroup(
