@@ -225,6 +225,16 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
             or dataset.SamlAdminGroupName in context.groups
         ):
             return ShareObjectPermission.Requesters.value
+        if (
+            dataset and dataset.stewards in context.groups
+            and (
+                source.owner == context.username
+                or source.principalId in context.groups
+                or dataset.owner == context.username
+                or dataset.SamlAdminGroupName in context.groups
+        )
+        ):
+            return ShareObjectPermission.ApproversAndRequesters.value
         else:
             return ShareObjectPermission.NoPermission.value
 
