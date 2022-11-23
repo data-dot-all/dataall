@@ -827,7 +827,7 @@ class PipelineStack(Stack):
             post=[
                 self.cognito_config_action(target_env),
                 self.cw_rum_config_action(target_env),
-            ],
+            ]
         else:
             post=[
                 self.cognito_config_action(target_env),
