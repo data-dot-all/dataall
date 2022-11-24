@@ -37,14 +37,14 @@ const ShareInboxTable = () => {
     setLoading(true);
     await client
       .query(
-        searchInbox({
+        getShareRequestsToMe({
           filter: {
             ...filter
           }
         })
       )
       .then((response) => {
-        setItems(response.data.requestsToMe);
+        setItems(response.data.getShareRequestsToMe);
       })
       .catch((error) => {
         dispatch({ type: SET_ERROR, error: error.Error });

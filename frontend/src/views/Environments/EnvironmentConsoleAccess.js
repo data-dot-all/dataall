@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Box,
   Card,
   CardContent,
   CardHeader,
   Divider,
   Typography
 } from '@mui/material';
-import { CopyAll } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import { FaExternalLinkAlt } from 'react-icons/fa';
 import { useSnackbar } from 'notistack';
 import getEnvironmentAssumeRoleUrl from '../../api/Environment/getEnvironmentAssumeRoleUrl';
 import generateEnvironmentAccessToken from '../../api/Environment/generateEnvironmentAccessToken';
@@ -22,11 +18,8 @@ const EnvironmentConsoleAccess = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [isLoadingUI, setIsLoadingUI] = useState(false);
-  const [loadingCreds, setLoadingCreds] = useState(false);
 
   const generateCredentials = async () => {
-    setLoadingCreds(true);
     const response = await client.query(
       generateEnvironmentAccessToken({
         environmentUri: environment.environmentUri
@@ -46,11 +39,9 @@ const EnvironmentConsoleAccess = ({ environment }) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setLoadingCreds(false);
   };
 
   const goToAWSConsole = async () => {
-    setIsLoadingUI(true);
     const response = await client.query(
       getEnvironmentAssumeRoleUrl({
         environmentUri: environment.environmentUri
@@ -61,7 +52,6 @@ const EnvironmentConsoleAccess = ({ environment }) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setIsLoadingUI(false);
   };
 
   return (

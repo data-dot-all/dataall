@@ -1,24 +1,19 @@
 import { createRef, useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { Formik, useFormik } from 'formik';
+import { Formik } from 'formik';
 import * as ReactIf from 'react-if';
 import {
   Box,
   Grid,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
   Divider,
   TextField,
   Typography,
-  Button,
-  CircularProgress
 } from '@mui/material';
-import { FaCheckCircle } from 'react-icons/fa';
-import { AddOutlined, CopyAllOutlined, ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
-import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
+import { AddOutlined, ArrowRightAlt } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import getMonitoringDashboardId from '../../api/Tenant/getMonitoringDashboardId';
 import getMonitoringVPCConnectionId from '../../api/Tenant/getMonitoringVPCConnectionId';
@@ -68,7 +63,7 @@ const DashboardViewer = () => {
     const response = await client.query(getMonitoringDashboardId());
     if (!response.errors) {
       setDashboardId(response.data.getMonitoringDashboardId);
-      if (response.data.getMonitoringDashboardId != "updateme"){
+      if (response.data.getMonitoringDashboardId !== "updateme"){
         const resp = await client.query(getPlatformReaderSession(response.data.getMonitoringDashboardId));
         if (!resp.errors){
           setSessionUrl(resp.data.getPlatformReaderSession)
@@ -92,7 +87,7 @@ const DashboardViewer = () => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  }, [client, dispatch]);
+  }, [client, dispatch, dashboardRef]);
 
   useEffect(() => {
     if (client) {
