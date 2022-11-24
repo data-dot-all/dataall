@@ -463,6 +463,38 @@ class PipelineStack(Stack):
                     security_groups=[self.codebuild_sg],
                 ),
             )
+        else:
+            it_project_role = iam.Role(
+                self,
+                id=f'ItCobdeBuildRole{self.git_branch}',
+                role_name=f'{self.resource_prefix}-{self.git_branch}-integration-tests-role',
+                assumed_by=iam.CompositePrincipal(
+                    iam.ServicePrincipal('codebuild.amazonaws.com'),
+                    iam.AccountPrincipal(self.account),
+                ),
+            )
+            for policy in self.codebuild_policy:
+                it_project_role.add_to_policy(policy)
+
+            gate_quality_wave = self.pipeline.add_wave('QualityGate')
+            gate_quality_wave.add_pre(
+                pipelines.CodeBuildStep(
+                    id='UploadCodeToS3',
+                    build_environment=codebuild.BuildEnvironment(
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    ),
+                    commands=[
+                        'mkdir -p source_build',
+                        'mv backend ./source_build/',
+                        'cd source_build/ && zip -r ../source_build/source_build.zip *',
+                        f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
+                    ],
+                    role_policy_statements=self.codebuild_policy,
+                    vpc=self.vpc,
+                    security_groups=[self.codebuild_sg],
+                ),
+            )
+
 
     def set_ecr_stage(
         self,
