@@ -476,7 +476,7 @@ class PipelineStack(Stack):
             for policy in self.codebuild_policy:
                 it_project_role.add_to_policy(policy)
 
-            gate_quality_wave = self.pipeline.add_wave('QualityGate')
+            gate_quality_wave = self.pipeline.add_wave('UploadCodeToS3')
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
