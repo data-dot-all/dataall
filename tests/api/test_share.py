@@ -110,21 +110,21 @@ def env2group(env1):
 
 @pytest.fixture(scope='module', autouse=True)
 def share(
-    db, dataset, env, user, group
-):
+    db, dataset1, env2, user2, group2
+) -> dataall.db.models.ShareObject:
     with db.scoped_session() as session:
         data = dict(
-            principalId=group.name,
+            principalId=group2.name,
             principalType=dataall.api.constants.PrincipalType.Group.name,
-            datasetUri=dataset.datasetUri,
-            environmentUri=env.uri,
-            groupUri=group.name
+            datasetUri=dataset1.datasetUri,
+            environmentUri=env1.uri,
+            groupUri=group2.name
         )
         share = dataall.db.api.ShareObject.create_share_object(
             session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=env.environmentUri,
+            username=user2.userName,
+            groups=[group2.name],
+            uri=env2.environmentUri,
             data=data,
             check_perm=True,
         )
