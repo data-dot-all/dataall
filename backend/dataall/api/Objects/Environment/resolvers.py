@@ -13,6 +13,7 @@ from ...constants import *
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
+from ....aws.handlers.iam import IAM
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -122,6 +123,13 @@ def invite_group(context: Context, source, input):
 
 def add_consumption_role(context: Context, source, input):
     with context.engine.scoped_session() as session:
+        env = db.api.Environment.get_environment_by_uri(session, input['environmentUri'])
+        role = IAM.get_role(env.AwsAccountId, input['IAMRoleArn'])
+        if not role:
+            raise exceptions.AWSResourceNotFound(
+                action='ADD_CONSUMPTION_ROLE',
+                message=f"{input['IAMRoleArn']} does not exist in this account",
+            )
         consumption_role = db.api.Environment.add_consumption_role(
             session=session,
             username=context.username,
