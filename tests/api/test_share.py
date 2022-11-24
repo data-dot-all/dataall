@@ -124,9 +124,10 @@ def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
             owner
             dataset{
                 datasetUri
+                datasetName
+                exists
             }
         }
-    }
     """
 
     response = client.query(
@@ -136,6 +137,7 @@ def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
         datasetUri=dataset1.datasetUri,
         input={
             'environmentUri': env2.environmentUri,
+            'groupUri': group2.name,
             'principalId': group2.groupUri,
             'principalType': dataall.api.constants.PrincipalType.Group.name,
         },
@@ -170,6 +172,7 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
         datasetUri=dataset1.datasetUri,
         input={
             'environmentUri': env2.environmentUri,
+            'groupUri': group2.name,
             'principalId': group2.name,
             'principalType': dataall.api.constants.PrincipalType.Group.name,
         },
@@ -356,23 +359,50 @@ def test_add_item(
     share_item_uri = response.data.addSharedItem.shareItemUri
 
     query = """
-    query GetShareObject($shareUri:String!){
-        getShareObject(shareUri:$shareUri){
-            status
-            owner
-            datasetUri
-            dataset{
-                    datasetUri
-                    datasetName
-                    businessOwnerEmail
+        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                userRoleForShareObject
+                principal {
+                  principalId
+                  principalType
+                  principalName
+                  principalIAMRoleName
+                  SamlGroupName
+                  environmentUri
+                  environmentName
+                  AwsAccountId
+                  region
+                  organizationUri
+                  organizationName
                 }
-            principal{
-                principalId
-                principalType
-                principalName
+                items(filter: $filter) {
+                  count
+                  page
+                  pages
+                  hasNext
+                  hasPrevious
+                  nodes {
+                    itemUri
+                    shareItemUri
+                    itemType
+                    itemName
+                    status
+                    action
+                  }
+                }
+                dataset {
+                  datasetUri
+                  datasetName
+                  SamlAdminGroupName
+                  environmentName
+                  exists
+                }
+              }
             }
-        }
-    }
     """
 
     response = client.query(
@@ -499,8 +529,8 @@ def test_add_item(
 
     assert response.data.removeSharedItem
     received_requests = """
-            query requestsToMe($filter: ShareObjectFilter){
-                requestsToMe(filter: $filter){
+            query getShareRequestsToMe($filter: ShareObjectFilter){
+                getShareRequestsToMe(filter: $filter){
                     count
                     nodes{
                         shareUri
@@ -513,8 +543,8 @@ def test_add_item(
     )
     assert response.data.requestsToMe.count == 0
     received_requests = """
-                query requestsToMe($filter: ShareObjectFilter){
-                    requestsToMe(filter: $filter){
+                query getShareRequestsToMe($filter: ShareObjectFilter){
+                    getShareRequestsToMe(filter: $filter){
                         count
                         nodes{
                             shareUri
@@ -528,8 +558,8 @@ def test_add_item(
     assert response.data.requestsToMe.count == 1
 
     sent_requests = """
-                    query requestsFromMe($filter: ShareObjectFilter){
-                        requestsFromMe(filter: $filter){
+                    query getShareRequestsFromMe($filter: ShareObjectFilter){
+                        getShareRequestsFromMe(filter: $filter){
                             count
                             nodes{
                                 shareUri
@@ -543,8 +573,8 @@ def test_add_item(
     assert response.data.requestsFromMe.count == 1
 
     sent_requests = """
-                        query requestsFromMe($filter: ShareObjectFilter){
-                            requestsFromMe(filter: $filter){
+                        query getShareRequestsFromMe($filter: ShareObjectFilter){
+                            getShareRequestsFromMe(filter: $filter){
                                 count
                                 nodes{
                                     shareUri

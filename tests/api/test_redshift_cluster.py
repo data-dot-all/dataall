@@ -114,6 +114,7 @@ def share(
         datasetUri=dataset2.datasetUri,
         input={
             'environmentUri': env1.environmentUri,
+            'groupUri': group.name,
             'principalId': group.name,
             'principalType': dataall.api.constants.PrincipalType.Group.name,
         },

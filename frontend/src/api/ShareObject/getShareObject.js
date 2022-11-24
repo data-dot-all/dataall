@@ -13,10 +13,6 @@ const getShareObject = ({ shareUri, filter }) => ({
         owner
         status
         userRoleForShareObject
-        #label
-        #deleted
-        #confirmed
-        #userInitiated
         principal {
           principalId
           principalType
