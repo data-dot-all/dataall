@@ -12,6 +12,8 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
 from aws_cdk.pipelines import CodePipelineSource
 
+from common import ApplicationComponents
+
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
 from .backend_stage import BackendStage
@@ -19,7 +21,6 @@ from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .vpc import VpcStack
-from ..setup import ApplicationComponents
 
 
 class PipelineStack(Stack):

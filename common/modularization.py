@@ -3,6 +3,7 @@ from enum import Enum
 
 
 class ApplicationComponents(Enum):
+    BACKEND = "backend"
     GRAPHQL = "graphql_api"
     ECS = "ecs_tasks"
 

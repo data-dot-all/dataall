@@ -4,5 +4,6 @@ core:
     frontend_views: "core/frontend"
 modules:
     -   name: "Notebooks"
+        backend: "modules/notebooks/backend"
         graphql_api: "modules/notebooks/backend/docker/prod/lambda/Dockerfile"
         frontend_views: "modules/notebooks"
