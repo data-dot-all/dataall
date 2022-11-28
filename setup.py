@@ -9,6 +9,6 @@ setuptools.setup(
     version=__version__,
     description='data.all common functions package',
     author=__author__,
-    packages=setuptools.find_packages(include=["common","core"]),
+    packages=setuptools.find_packages(),
     python_requires='>=3.8',
 )

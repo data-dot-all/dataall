@@ -304,7 +304,7 @@ class PipelineStack(Stack):
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
     def parse_config_yaml(self, path):
-        with open(path, "p") as file:
+        with open(path, "r") as file:
             try:
                 definition = yaml.safe_load(file)
                 return definition.get("core"), definition.get("modules")
