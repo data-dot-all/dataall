@@ -4,6 +4,14 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "git_branch": "modularization",
+    "DeploymentEnvironments": [
+      {
+        "envname": "mod",
+        "account": "225684764766",
+        "region": "eu-west-1",
+      }
+    ]
   }
 }
