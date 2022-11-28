@@ -1,6 +1,7 @@
 import re
 import uuid
 from typing import List
+import yaml
 
 from aws_cdk import SecretValue, Stack, Tags, RemovalPolicy
 from aws_cdk import aws_codebuild as codebuild
@@ -18,6 +19,7 @@ from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .vpc import VpcStack
+from ..setup import ApplicationComponents
 
 
 class PipelineStack(Stack):
@@ -38,6 +40,7 @@ class PipelineStack(Stack):
         self.source = source
         self.resource_prefix = resource_prefix
         self.target_envs = target_envs
+        self.core, self.modules = self.parse_config_yaml(path="config.yaml")
 
         self.vpc_stack = VpcStack(
             self,
@@ -299,6 +302,14 @@ class PipelineStack(Stack):
 
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
+    def parse_config_yaml(self, path):
+        with open(path, "p") as file:
+            try:
+                definition = yaml.safe_load(file)
+                return definition.get("core"), definition.get("modules")
+            except yaml.YAMLError as exc:
+                print(exc)
+
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
             raise ValueError(
@@ -517,7 +528,7 @@ class PipelineStack(Stack):
         )
         ecr_stage.add_post(
             pipelines.CodeBuildStep(
-                id='LambdaImage',
+                id='CoreLambdaImage',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                     privileged=True,
@@ -532,13 +543,13 @@ class PipelineStack(Stack):
                 ),
                 commands=[
                     'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                    f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                    f"make deploy-image type=lambda path={self.core.get(ApplicationComponents.GRAPHQL.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
             ),
             pipelines.CodeBuildStep(
-                id='ECSImage',
+                id='CoreECSImage',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                     privileged=True,
@@ -553,12 +564,38 @@ class PipelineStack(Stack):
                 ),
                 commands=[
                     'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                    f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                    f"make deploy-image path={self.core.get(ApplicationComponents.ECS.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
             ),
         )
+        for module in self.modules:
+            if module.get(ApplicationComponents.GRAPHQL.value):
+                ecr_stage.add_post(
+                    pipelines.CodeBuildStep(
+                        id=f'{module.get("name")}LambdaImage',
+                        build_environment=codebuild.BuildEnvironment(
+                            build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                            privileged=True,
+                            environment_variables={
+                                'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
+                                    value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
+                                ),
+                                'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
+                                    value=f'lambdas-{module.get("name")}-{self.image_tag}'
+                                ),
+                            },
+                        ),
+                        commands=[
+                            'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
+                            f"make deploy-image path={module.get(ApplicationComponents.GRAPHQL.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                        ],
+                        role_policy_statements=self.codebuild_policy,
+                        vpc=self.vpc,
+                    )
+                )
+
         return repository_name
 
     def set_backend_stage(self, target_env, repository_name):

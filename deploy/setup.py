@@ -1,4 +1,5 @@
 import setuptools
+from enum import Enum
 
 __pkg_name__ = 'data.all-deploy'
 __version__ = '0.5.0'

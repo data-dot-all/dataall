@@ -1,0 +1,8 @@
+core:
+    graphql_api: "core/backend/docker/prod/lambda/Dockerfile"
+    ecs_tasks: "core/backend/docker/prod/ecs/Dockerfile"
+    frontend_views: "core/frontend"
+modules:
+    -   name: "Notebooks"
+        graphql_api: "modules/notebooks/backend/docker/prod/lambda/Dockerfile"
+        frontend_views: "modules/notebooks"
