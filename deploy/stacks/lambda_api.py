@@ -1,4 +1,5 @@
 import json
+import yaml
 
 from aws_cdk import (
     aws_iam as iam,
@@ -48,9 +49,12 @@ class LambdaApiStack(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
 
+        self.core, self.modules = self.parse_config_yaml(path="config.yaml")
+
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
 
+        self.img_tag = image_tag
         image_tag = f'lambdas-{image_tag}'
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
@@ -92,6 +96,27 @@ class LambdaApiStack(pyNestedClass):
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
         )
+
+        for module in self.modules:
+            module_image_tag = f'lambdas-{module.get("name").lower()}-{self.img_tag}'
+            module_lambda = _lambda.DockerImageFunction(
+                self,
+                f'LambdaGraphQL-{module.get("name")}',
+                function_name=f'{resource_prefix}-{envname}-graphql-{module.get("name")}',
+                description='dataall graphql function',
+                role=self.create_function_role(envname, resource_prefix, 'graphql'),
+                code=_lambda.DockerImageCode.from_ecr(
+                    repository=ecr_repository, tag=module_image_tag, cmd=['api_handler.handler']
+                ),
+                vpc=vpc,
+                memory_size=3008 if prod_sizing else 1024,
+                timeout=Duration.minutes(15),
+                environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
+                dead_letter_queue_enabled=True,
+                dead_letter_queue=self.api_handler_dlq,
+                on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
+                tracing=_lambda.Tracing.ACTIVE,
+            )
 
         self.aws_handler_dlq = self.set_dlq(
             f'{resource_prefix}-{envname}-awsworker-dlq'
@@ -141,6 +166,14 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
+
+    def parse_config_yaml(self, path):
+        with open(path, "r") as file:
+            try:
+                definition = yaml.safe_load(file)
+                return definition.get("core"), definition.get("modules")
+            except yaml.YAMLError as exc:
+                print(exc)
 
     def create_function_role(self, envname, resource_prefix, fn_name):
 
