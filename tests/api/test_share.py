@@ -108,7 +108,7 @@ def env2group(env1):
     return env2.SamlGroupName
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='module')
 def share(share, env1, dataset2, user, env1group):
     return share(env1, dataset2, user.userName, env1group)
 
