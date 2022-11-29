@@ -6,6 +6,7 @@
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
     "@aws-cdk/core:stackRelativeExports": false,
     "git_branch": "modularization",
+    "quality_gate": false,
     "DeploymentEnvironments": [
       {
         "envname": "mod",
