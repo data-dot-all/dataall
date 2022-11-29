@@ -213,6 +213,10 @@ class PipelineStack(Stack):
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                 ),
+                install_commands=[
+                    "pip install -r deploy/requirements.txt",
+                    "python -m build",
+                ],
                 commands=[
                     'n 16.15.1',
                     'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
@@ -221,7 +225,6 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
-                    'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,

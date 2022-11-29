@@ -25,26 +25,26 @@ install-deploy:
 	pip install -r deploy/requirements.txt
 
 install-backend:
-	pip install -r backend/requirements.txt
+	pip install -r core/backend/requirements.txt
 
 install-cdkproxy:
-	pip install -r backend/dataall/cdkproxy/requirements.txt
+	pip install -r core/backend/dataall/cdkproxy/requirements.txt
 
 install-tests:
-	pip install -r tests/requirements.txt
+	pip install -r core/tests/requirements.txt
 
 lint:
 	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 core/backend/
 
 bandit:
 	pip install bandit
-	python -m bandit -r backend/ | tee bandit.log || true
+	python -m bandit -r core/backend/ | tee bandit.log || true
 
 check-security: upgrade-pip install-backend install-cdkproxy
 	pip install bandit
 	pip install safety
-	bandit -lll -r backend
+	bandit -lll -r core/backend
 	safety check
 
 test:
@@ -52,13 +52,13 @@ test:
 	python -m pytest -v -ra tests/
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
-	export PYTHONPATH=./backend:/./tests && \
+	export PYTHONPATH=./core/backend:/./tests && \
 	python -m  pytest -x -v -ra tests/ \
 		--junitxml=reports/test-unit.xml \
 		--cov-report xml:cobertura.xml \
 		--cov-report term-missing \
 		--cov-report html \
-		--cov=backend/dataall \
+		--cov=core/backend/dataall \
 		--cov-config=.coveragerc \
 		--color=yes
 
@@ -77,13 +77,13 @@ assume-role:
 
 drop-tables: upgrade-pip install-backend
 	pip install alembic
-	export PYTHONPATH=./backend && \
-	python backend/migrations/drop_tables.py
+	export PYTHONPATH=./core/backend && \
+	python core/backend/migrations/drop_tables.py
 
 upgrade-db: upgrade-pip install-backend
 	pip install alembic
-	export PYTHONPATH=./backend && \
-	alembic -c backend/alembic.ini upgrade head
+	export PYTHONPATH=./core/backend && \
+	alembic -c core/backend/alembic.ini upgrade head
 
 version-major:
 	pip install bump2version
