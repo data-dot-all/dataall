@@ -48,12 +48,12 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	safety check
 
 test:
-	export PYTHONPATH=./backend:/./tests && \
-	python -m pytest -v -ra tests/
+	export PYTHONPATH=./core/backend:/./core/tests && \
+	python -m pytest -v -ra core/tests/
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
-	export PYTHONPATH=./core/backend:/./tests && \
-	python -m  pytest -x -v -ra tests/ \
+	export PYTHONPATH=./core/backend:/./core/tests && \
+	python -m  pytest -x -v -ra core/tests/ \
 		--junitxml=reports/test-unit.xml \
 		--cov-report xml:cobertura.xml \
 		--cov-report term-missing \
