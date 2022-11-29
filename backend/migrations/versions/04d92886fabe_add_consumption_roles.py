@@ -7,6 +7,7 @@ Create Date: 2022-11-29 10:57:27.641565
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -36,6 +37,7 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint('consumptionRoleUri', name='consumptionRoleUri_pkey'),
     )
+
 
 def downgrade():
     op.drop_table('consumptionrole')
