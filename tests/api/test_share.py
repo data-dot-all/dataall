@@ -108,9 +108,41 @@ def env2group(env1):
     return env2.SamlGroupName
 
 
-@pytest.fixture(scope='module')
-def share1(share, env1, dataset2, user, env1group):
-    return share(env1, dataset2, user.userName, env1group)
+@pytest.fixture(scope='module', autouse=True)
+def share1(
+    client, env1, user, env1group, dataset2
+):
+    q = """
+    mutation CreateShareObject(
+        $datasetUri:String!,
+        $input:NewShareObjectInput
+    ){
+        createShareObject(datasetUri:$datasetUri, input:$input){
+            shareUri
+            status
+            owner
+            dataset{
+                datasetUri
+                datasetName
+                exists
+            }
+        }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[env1group],
+        datasetUri=dataset2.datasetUri,
+        input={
+            'environmentUri': env1.environmentUri,
+            'groupUri': env1group,
+            'principalId': env1group,
+            'principalType': dataall.api.constants.PrincipalType.Group.name,
+        },
+    )
+    return response.data.createShareObject
 
 
 def test_init(tables1, tables2):
