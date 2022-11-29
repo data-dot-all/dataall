@@ -17,8 +17,7 @@ from ..db import Engine
 from ..db import models
 from ..db.api import Pipeline, Environment, Stack
 from ..utils.alarm_service import AlarmService
-from dataall.cdkproxy.stacks.cdk_pipeline import CDKPipelineStack
-# from dataall.cdkproxy.stacks.pipeline_template import PipelineTemplateStack
+from dataall.cdkproxy.cdkpipeline.cdk_pipeline import CDKPipelineStack
 
 logger = logging.getLogger('cdksass')
 
@@ -80,26 +79,53 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.warning(f"stackuri = {stack.stackUri}, stackId = {stack.stackid}")
             stack.status = 'PENDING'
             session.commit()
-            
+
             if stack.stack == "cdkpipeline" or stack.stack == "template":
-                cdkpipeline = CDKPipelineStack(stack)
+                cdkpipeline = CDKPipelineStack(stack.targetUri)
                 venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
                 pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
-                path = f"./stacks/{pipeline.repo}/"
+                path = f"./cdkpipeline/{pipeline.repo}/"
+                app_path = './app.py'
                 if not venv_name:
                     logger.info("Successfully Updated CDK Pipeline")
-                    meta = describe_stack(stack) 
+                    meta = describe_stack(stack)
                     stack.stackid = meta['StackId']
                     stack.status = meta['StackStatus']
                     update_stack_output(session, stack)
                     return
 
             cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
-            
+            python_path = '/:'.join(sys.path)[1:] + ':/code'
+            logger.info(f'python path = {python_path}')
+
+            env = {
+                'AWS_REGION': os.getenv('AWS_REGION', 'eu-west-1'),
+                'AWS_DEFAULT_REGION': os.getenv('AWS_REGION', 'eu-west-1'),
+                'PYTHONPATH': python_path,
+                'CURRENT_AWS_ACCOUNT': this_aws_account,
+                'envname': os.environ.get('envname', 'local'),
+            }
+            if creds:
+                env.update(
+                    {
+                        'AWS_ACCESS_KEY_ID': creds.get('AccessKeyId'),
+                        'AWS_SECRET_ACCESS_KEY': creds.get('SecretAccessKey'),
+                        'AWS_SESSION_TOKEN': creds.get('Token'),
+                    }
+                )
             if stack.stack == "template":
-                resp = subprocess.run(['cdk','ls'], cwd=cwd, stdout=subprocess.PIPE)
-                stack.name = resp.stdout.decode('utf-8').split('\n')[0]
-            
+                resp = subprocess.run(
+                    ['. ~/.nvm/nvm.sh && cdk ls'],
+                    cwd=cwd,
+                    text=True,
+                    shell=True,  # nosec
+                    encoding='utf-8',
+                    stdout=subprocess.PIPE,
+                    env=env
+                )
+                logger.info(f"CDK Apps: {resp.stdout}")
+                stack.name = resp.stdout.split('\n')[0]
+
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
@@ -133,27 +159,9 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 '--verbose',
             ]
 
-            python_path = '/:'.join(sys.path)[1:] + ':/code'
-            logger.info(f'python path = {python_path}')
-
-            env = {
-                'AWS_REGION': os.getenv('AWS_REGION', 'eu-west-1'),
-                'AWS_DEFAULT_REGION': os.getenv('AWS_REGION', 'eu-west-1'),
-                'PYTHONPATH': python_path,
-                'CURRENT_AWS_ACCOUNT': this_aws_account,
-                'envname': os.environ.get('envname', 'local'),
-            }
-            if creds:
-                env.update(
-                    {
-                        'AWS_ACCESS_KEY_ID': creds.get('AccessKeyId'),
-                        'AWS_SECRET_ACCESS_KEY': creds.get('SecretAccessKey'),
-                        'AWS_SESSION_TOKEN': creds.get('Token'),
-                    }
-                )
-
             if stack.stack == "template" or stack.stack == "cdkpipeline":
-                if stack.stack == "template": cmd.insert(0, f"source {venv_name}/bin/activate;") 
+                if stack.stack == "template":
+                    cmd.insert(0, f"source {venv_name}/bin/activate;")
                 aws = SessionHelper.remote_session(stack.accountid)
                 creds = aws.get_credentials()
                 env.update(
@@ -180,11 +188,9 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             )
             if stack.stack == "cdkpipeline" or stack.stack == "template":
                 CDKPipelineStack.clean_up_repo(path=f"./{pipeline.repo}")
-            # if stack.stack == "template":
-            #     PipelineTemplateStack.clean_up_repo(path=f"./{pipeline.repo}")
 
             if process.returncode == 0:
-                meta = describe_stack(stack) 
+                meta = describe_stack(stack)
                 stack.stackid = meta['StackId']
                 stack.status = meta['StackStatus']
                 update_stack_output(session, stack)

@@ -6,14 +6,12 @@ import boto3
 
 from ... import db
 from ...db.api import Environment, Pipeline
-# from ...utils.cdk_nag_utils import CDKNagUtil
-# from ...utils.runtime_stacks_tagging import TagsUtil
 from ...aws.handlers.sts import SessionHelper
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-# @stack(stack='cdkrepo')
+
 class CDKPipelineStack:
     """
     Create a stack that contains CDK Continuous Integration and Delivery (CI/CD) pipeline.
@@ -36,23 +34,23 @@ class CDKPipelineStack:
 
     module_name = __file__
 
-    def __init__(self, stack):
+    def __init__(self, target_uri):
         engine = self.get_engine()
         with engine.scoped_session() as session:
 
-            self.pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
+            self.pipeline = Pipeline.get_pipeline_by_uri(session, target_uri)
             self.pipeline_environment = Environment.get_environment_by_uri(session, self.pipeline.environmentUri)
             # Development environments
-            self.development_environments = Pipeline.query_pipeline_environments(session, stack.targetUri)
+            self.development_environments = Pipeline.query_pipeline_environments(session, target_uri)
 
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
-        
+
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
         template = self.pipeline.template
 
         try:
             codecommit_client = aws.client('codecommit', region_name=self.pipeline_environment.region)
-            repository = CDKPipelineStack._check_repository(codecommit_client,self.pipeline.repo)
+            repository = CDKPipelineStack._check_repository(codecommit_client, self.pipeline.repo)
             if repository:
                 self.venv_name = None
                 self.code_dir_path = os.path.realpath(
@@ -73,7 +71,7 @@ class CDKPipelineStack:
                     'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
                     'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://app.py --file-path app.py --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
                 ]
-            
+
                 process = subprocess.run(
                     "; ".join(update_cmds),
                     text=True,
@@ -82,12 +80,9 @@ class CDKPipelineStack:
                     cwd=self.code_dir_path,
                     env=self.env
                 )
-                if process.returncode != 0:
-                    raise Exception
             else:
                 raise Exception
-            
-        except:
+        except Exception as e:
             if len(template):
                 self.venv_name = self.initialize_repo_template(template)
             else:
@@ -95,17 +90,13 @@ class CDKPipelineStack:
                 CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
                 CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments)
             self.git_push_repo()
-        
 
     def initialize_repo(self):
         venv_name = ".venv"
         cmd_init = [
-            # "pip install aws-ddk",
             f"ddk init {self.pipeline.repo} --generate-only",
             f"cd {self.pipeline.repo}",
             "git init --initial-branch main",
-            # f"python3 -m venv {venv_name} && source {venv_name}/bin/activate",
-            # "pip install -r requirements.txt",
             f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
         ]
 
@@ -126,8 +117,7 @@ class CDKPipelineStack:
 
     def initialize_repo_template(self, template):
         venv_name = ".venv"
-        cmd_init = [ 
-            "pip install aws-ddk",
+        cmd_init = [
             f"git clone {template} {self.pipeline.repo}",
             f"cd {self.pipeline.repo}",
             "rm -rf .git",
@@ -227,7 +217,6 @@ app.synth()
 
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(app, file=text_file)
-
 
     def git_push_repo(self):
         git_cmds = [

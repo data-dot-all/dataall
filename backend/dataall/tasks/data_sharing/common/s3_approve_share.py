@@ -172,3 +172,4 @@ class S3ShareApproval(S3ShareManager):
                     ) for prefix in removed_prefixes
                 ]
                 return removed_folders
+        return []

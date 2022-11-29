@@ -255,16 +255,6 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
     )
 
 
-# def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
-#     if not source:
-#         return None
-#     return stack_helper.get_stack_with_cfn_resources(
-#         context=context,
-#         targetUri=f"{source.DataPipelineUri}pip",
-#         environmentUri=source.environmentUri,
-#     )
-
-
 def get_job_runs(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
@@ -408,10 +398,13 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
-        aws_session = SessionHelper.remote_session(env.AwsAccountId)
-        codecommit_client = aws_session.client("codecommit", region_name=env.region)
-        response = codecommit_client.delete_repository(
-            repositoryName=pipeline.repo
+        stack_helper.delete_repository(
+            context=context,
+            target_uri=DataPipelineUri,
+            accountid=env.AwsAccountId,
+            cdk_role_arn=env.CDKRoleArn,
+            region=env.region,
+            repo_name=pipeline.repo,
         )
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
@@ -434,6 +427,7 @@ def delete_pipeline(
 
     return True
 
+
 def delete_pipeline_environment(context: Context, source, dataPipelineUri: str = None, environmentUri: str = None, stage: str = None):
     with context.engine.scoped_session() as session:
         Pipeline.delete_pipeline_environment(
@@ -446,6 +440,7 @@ def delete_pipeline_environment(context: Context, source, dataPipelineUri: str =
             check_perm=True,
         )
     return True
+
 
 def update_pipeline_environment(context: Context, source, input=None):
     with context.engine.scoped_session() as session:

@@ -28,7 +28,7 @@ def get_target_glossary_terms(session, targetUri):
             )
         )
     )
-    t: models.TermLink
+    # t: models.TermLink
     return [t.path for t in q]
 
 

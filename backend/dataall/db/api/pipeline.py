@@ -327,8 +327,6 @@ class Pipeline:
                 for k in data.keys():
                     print(f"KEY: {k}, VALUE: {data.get(k)}")
                     setattr(pipeline_env, k, data.get(k))
-        # session.add(pipeline_env)
-        # session.commit()
         return pipeline_env
 
     @staticmethod

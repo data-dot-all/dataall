@@ -194,21 +194,14 @@ class PipelineStack(Stack):
                     cwd=code_dir_path,
                     env=env_vars
                 )
-
-                if process.returncode != 0:
-                    raise Exception
             else:
                 raise Exception
-        except:
+        except Exception as e:
             PipelineStack.initialize_repo(pipeline, code_dir_path)
 
             PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
-            # if pipeline.devStrategy != "trunk":
-            #     PipelineStack.write_init_branches_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/init_branches_deploy_buildspec.yaml")
-
             PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file=f"{pipeline.repo}/ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
-
 
             logger.info(f"Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository")
 
@@ -233,19 +226,6 @@ class PipelineStack(Stack):
                 repository_name=pipeline.repo,
             )
             repository.apply_removal_policy(RemovalPolicy.RETAIN)
-            
-            # if pipeline.devStrategy != 'trunk':
-            #     for env in development_environments: 
-            #         if env.stage != 'prod':
-            #             response = codecommit_client.get_branch(
-            #                 repositoryName=repository.repository_name,
-            #                 branchName='main'
-            #             )
-            #             codecommit_client.create_branch(
-            #                 repositoryName=repository.repository_name,
-            #                 branchName=branch_name,
-            #                 commitId=response['branch']['commitId']
-            #             )
 
         if pipeline.devStrategy == "trunk":
             codepipeline_pipeline = codepipeline.Pipeline(
@@ -319,7 +299,6 @@ class PipelineStack(Stack):
         else:
             for env in development_environments:
                 branch_name = 'main' if (env.stage == 'prod') else env.stage
-                # buildspec = "init_branches_deploy_buildspec.yaml" if (env.stage == 'prod' or development_environments.count() == 1) else "deploy_buildspec.yaml"
                 buildspec = "deploy_buildspec.yaml"
 
                 codepipeline_pipeline = codepipeline.Pipeline(
@@ -444,53 +423,6 @@ class PipelineStack(Stack):
         env_vars = dict(env_vars_1)
         return env_vars
 
-    # @staticmethod
-    # def write_init_branches_deploy_buildspec(path, output_file):
-    #     yaml = """
-    #         version: '0.2'
-    #         env:
-    #             git-credential-helper: yes
-    #         phases:
-    #           install:
-    #             commands:
-    #             - 'n 16.15.1'
-    #           pre_build:
-    #             commands:
-    #             - n 16.15.1
-    #             - npm install -g aws-cdk
-    #             - pip install aws-ddk
-    #             - |
-    #               if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-    #                 echo "first build";
-    #               else
-    #                 echo "not first build";
-    #               fi
-    #             - git config --global user.email "codebuild@example.com"
-    #             - git config --global user.name "CodeBuild"
-    #             - |
-    #               if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-    #                 git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}";
-    #                 cd $PIPELINE_NAME;
-    #                 git checkout main;
-    #                 IFS=','
-    #                 for stage in $DEV_STAGES; do
-    #                   if [ $stage != "prod" ]; then
-    #                     git checkout -b $stage;
-    #                     git push --set-upstream origin $stage;
-    #                   fi;
-    #                 done;
-    #               else
-    #                 echo "not first build";
-    #               fi
-    #             - pip install -r requirements.txt
-    #           build:
-    #             commands:
-    #                 - aws sts get-caller-identity
-    #                 - ddk deploy
-    #     """
-    #     with open(f'{path}/{output_file}', 'x') as text_file:
-    #         print(yaml, file=text_file)
-
     @staticmethod
     def write_deploy_buildspec(path, output_file):
         yaml = """
@@ -578,13 +510,11 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
-
     def initialize_repo(pipeline, code_dir_path):
 
         venv_name = ".venv"
 
         cmd_init = [
-            # "pip install aws-ddk",
             f"ddk init {pipeline.repo} --generate-only",
             f"cp app_multiaccount.py ./{pipeline.repo}/app.py",
             f"cp ddk_app/ddk_app_stack_multiaccount.py ./{pipeline.repo}/ddk_app/ddk_app_stack.py",
