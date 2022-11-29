@@ -109,7 +109,7 @@ def env2group(env1):
 
 
 @pytest.fixture(scope='module')
-def share(share, env1, dataset2, user, env1group):
+def share1(share, env1, dataset2, user, env1group):
     return share(env1, dataset2, user.userName, env1group)
 
 
@@ -189,7 +189,7 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
     assert response.data.createShareObject.shareUri
 
 
-def test_get_share_object(client, share, user, env1group):
+def test_get_share_object(client, share1, user, env1group):
     q = """
     query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
       getShareObject(shareUri: $shareUri) {
@@ -241,11 +241,11 @@ def test_get_share_object(client, share, user, env1group):
         q,
         username=user.userName,
         groups=[env1group],
-        shareUri=share.shareUri,
+        shareUri=share1.shareUri,
         filter={},
     )
     print(response)
-    assert response.data.getShareObject.shareUri == share.shareUri
+    assert response.data.getShareObject.shareUri == share1.shareUri
     assert response.data.getShareObject.principal.principalType == dataall.api.constants.PrincipalType.Group.name
     assert response.data.getShareObject.principal.principalIAMRoleName
     assert response.data.getShareObject.principal.SamlGroupName
