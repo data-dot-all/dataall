@@ -104,7 +104,7 @@ class LambdaApiStack(pyNestedClass):
                 f'LambdaGraphQL-{module.get("name")}',
                 function_name=f'{resource_prefix}-{envname}-graphql-{module.get("name")}',
                 description='dataall graphql function',
-                role=self.create_function_role(envname, resource_prefix, 'graphql'),
+                role=self.create_function_role(envname, resource_prefix, f'graphql-{module.get("name")}'),
                 code=_lambda.DockerImageCode.from_ecr(
                     repository=ecr_repository, tag=module_image_tag, cmd=['api_handler.handler']
                 ),
