@@ -105,8 +105,7 @@ class DBMigrationStack(pyNestedClass):
                             'commands': [
                                 f'aws s3api get-object --bucket {pipeline_bucket} --key source_build.zip source_build.zip',
                                 'unzip source_build.zip',
-                                'pip install virtualenv',
-                                'virtualenv env',
+                                'python -m venv env',
                                 '. env/bin/activate',
                                 'pip install -r backend/requirements.txt',
                                 'pip install alembic',
