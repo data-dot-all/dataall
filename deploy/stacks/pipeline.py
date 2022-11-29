@@ -223,7 +223,7 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                    'pip install -r deploy/requirements.txt',
+                    'pip install -e .',
                     'cdk synth',
                 ],
                 role_policy_statements=self.codebuild_policy,
