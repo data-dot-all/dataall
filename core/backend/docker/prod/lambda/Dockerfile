@@ -17,7 +17,7 @@ RUN yum -y install python38-devel
 ## Add your source
 WORKDIR ${FUNCTION_DIR}
 
-COPY backend/requirements.txt ./requirements.txt
+COPY core/backend/requirements.txt ./requirements.txt
 RUN $PYTHON_VERSION -m pip install -U pip
 RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 

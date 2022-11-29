@@ -40,15 +40,15 @@ RUN /bin/bash -c  ". ~/.nvm/nvm.sh && cdk --version"
 
 RUN $PYTHON_VERSION -m pip install -U pip
 
-ADD backend/requirements.txt /dh.requirements.txt
-ADD backend/dataall/cdkproxy/requirements.txt /cdk.requirements.txt
+ADD core/backend/requirements.txt /dh.requirements.txt
+ADD core/backend/dataall/cdkproxy/requirements.txt /cdk.requirements.txt
 
 RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt"
 RUN /bin/bash -c "pip3.8 install -r /cdk.requirements.txt"
 
-ADD backend/dataall /dataall
-ADD backend/blueprints /blueprints
-ADD backend/cdkproxymain.py /cdkproxymain.py
+ADD core/backend/dataall /dataall
+ADD core/backend/blueprints /blueprints
+ADD core/backend/cdkproxymain.py /cdkproxymain.py
 
 RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars
 RUN mkdir -p blueprints/ml_data_pipeline/engine/glue/jars

@@ -541,7 +541,7 @@ class PipelineStack(Stack):
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'lambdas-{self.image_tag}'
+                            value=f'lambdas-{self.image_tag.lower()}'
                         ),
                     },
                 ),
@@ -562,7 +562,7 @@ class PipelineStack(Stack):
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'cdkproxy-{self.image_tag}'
+                            value=f'cdkproxy-{self.image_tag.lower()}'
                         ),
                     },
                 ),
@@ -587,7 +587,7 @@ class PipelineStack(Stack):
                                     value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
                                 ),
                                 'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                    value=f'lambdas-{module.get("name")}-{self.image_tag}'
+                                    value=f'lambdas-{module.get("name").lower()}-{self.image_tag}'
                                 ),
                             },
                         ),
