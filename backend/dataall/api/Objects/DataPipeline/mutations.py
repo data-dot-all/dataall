@@ -47,9 +47,7 @@ deleteDataPipelineEnvironment = gql.MutationField(
     name='deleteDataPipelineEnvironment',
     type=gql.Boolean,
     args=[
-        gql.Argument(name='dataPipelineUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='stage', type=gql.NonNullableType(gql.String))
+        gql.Argument(name='envPipelineUri', type=gql.NonNullableType(gql.String))
     ],
     resolver=delete_pipeline_environment,
 )
@@ -59,7 +57,7 @@ updateDataPipelineEnvironment = gql.MutationField(
     type=gql.Ref('DataPipelineEnvironment'),
     args=[
         gql.Argument(
-            name='input', type=gql.NonNullableType(gql.Ref('UpdateDataPipelineEnvironmentInput'))
+            name='input', type=gql.NonNullableType(gql.Ref('NewDataPipelineEnvironmentInput'))
         )
     ],
     resolver=update_pipeline_environment,

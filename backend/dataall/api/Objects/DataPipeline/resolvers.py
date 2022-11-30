@@ -29,7 +29,7 @@ def create_pipeline(context: Context, source, input=None):
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='cdkpipeline',
-                target_uri=f"{pipeline.DataPipelineUri}",
+                target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
@@ -38,7 +38,7 @@ def create_pipeline(context: Context, source, input=None):
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='template',
-                target_uri=f"{pipeline.DataPipelineUri}",
+                target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
@@ -409,7 +409,7 @@ def delete_pipeline(
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
                 context=context,
-                target_uri=f"{DataPipelineUri}",
+                target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
@@ -428,15 +428,13 @@ def delete_pipeline(
     return True
 
 
-def delete_pipeline_environment(context: Context, source, dataPipelineUri: str = None, environmentUri: str = None, stage: str = None):
+def delete_pipeline_environment(context: Context, source, envPipelineUri: str = None):
     with context.engine.scoped_session() as session:
         Pipeline.delete_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,
-            dataPipelineUri=dataPipelineUri,
-            environmentUri=environmentUri,
-            stage=stage,
+            envPipelineUri=envPipelineUri,
             check_perm=True,
         )
     return True

@@ -1,21 +1,15 @@
 import { gql } from 'apollo-boost';
 
-const deleteDataPipelineEnvironment = ({ dataPipelineUri, environmentUri, stage }) => ({
+const deleteDataPipelineEnvironment = ({ envPipelineUri }) => ({
   variables: {
-    dataPipelineUri,
-    environmentUri,
-    stage  
+    envPipelineUri
   },
   mutation: gql`
     mutation deleteDataPipelineEnvironment(
-      $dataPipelineUri: String!
-      $environmentUri: String!
-      $stage: String!
+      $envPipelineUri: String!
     ) {
       deleteDataPipelineEnvironment(
-        dataPipelineUri: $dataPipelineUri
-        environmentUri: $environmentUri
-        stage: $stage
+        envPipelineUri: $envPipelineUri
       )
     }
   `

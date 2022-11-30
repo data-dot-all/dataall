@@ -81,6 +81,7 @@ const PipelineEnvironmentEditForm = (props) => {
         env: e.environmentLabel,
         environmentLabel: e.environmentLabel,
         environmentUri: e.environmentUri,
+        envPipelineUri: e.envPipelineUri,
         samlGroupName: e.samlGroupName,
         team: e.samlGroupName,
         AwsAccountId: e.AwsAccountId
@@ -197,9 +198,7 @@ const PipelineEnvironmentEditForm = (props) => {
     try {
       const response = await client.mutate(
         deleteDataPipelineEnvironment({
-          dataPipelineUri: pipelineUri,
-          environmentUri: element.environmentUri,
-          stage: element.stage
+          envPipelineUri: element.envPipelineUri
         })
       );
       if (!response.errors) {

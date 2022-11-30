@@ -297,15 +297,12 @@ class Pipeline:
 
     @staticmethod
     def delete_pipeline_environment(
-        session, username, groups, dataPipelineUri, environmentUri, stage, check_perm=None
+        session, username, groups, envPipelineUri, check_perm=None
     ) -> bool:
-        deletedItem = session.query(models.DataPipelineEnvironment).filter(
-            and_(
-                models.DataPipelineEnvironment.pipelineUri == dataPipelineUri,
-                models.DataPipelineEnvironment.environmentUri == environmentUri,
-                models.DataPipelineEnvironment.stage == stage
-            )
-        ).delete()
+        deletedItem = (
+            session.query(models.DataPipelineEnvironment).filter(
+                models.DataPipelineEnvironment.envPipelineUri == envPipelineUri).delete()
+        )
         session.commit()
         return True
 
