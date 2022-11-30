@@ -38,6 +38,10 @@ def upgrade():
         sa.PrimaryKeyConstraint('consumptionRoleUri', name='consumptionRoleUri_pkey'),
     )
 
+    op.add_column('share_object', sa.Column('principalIAMRoleName', sa.String(), nullable=True))
+    op.add_column('share_object', sa.Column('groupUri', sa.String(), nullable=True))
 
 def downgrade():
     op.drop_table('consumptionrole')
+    op.drop_column('share_object', 'principalIAMRoleName')
+    op.drop_column('share_object', 'groupUri')
