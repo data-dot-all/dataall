@@ -6,7 +6,8 @@ Create Date: 2022-11-29 10:57:27.641565
 
 """
 from alembic import op
-from sqlalchemy import orm, Column, String, Boolean, sa, DateTime, and_
+import sqlalchemy as sa
+from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
