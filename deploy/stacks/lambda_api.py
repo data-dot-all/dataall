@@ -96,7 +96,7 @@ class LambdaApiStack(pyNestedClass):
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
         )
-
+        self.modules_api_handlers = []
         for module in self.modules:
             module_image_tag = f'lambdas-{module.get("name").lower()}-{self.img_tag}'
             module_lambda = _lambda.DockerImageFunction(
@@ -117,6 +117,7 @@ class LambdaApiStack(pyNestedClass):
                 on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
                 tracing=_lambda.Tracing.ACTIVE,
             )
+            self.modules_api_handlers.append(module_lambda)
 
         self.aws_handler_dlq = self.set_dlq(
             f'{resource_prefix}-{envname}-awsworker-dlq'
@@ -323,6 +324,8 @@ class LambdaApiStack(pyNestedClass):
             apig_vpce,
             resource_prefix,
             user_pool,
+            self.modules,
+            self.modules_api_handlers,
         )
 
         # Create IP set if IP filtering enabled in CDK.json
@@ -382,6 +385,8 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce,
         resource_prefix,
         user_pool,
+        modules,
+        modules_api_handlers,
     ):
         cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
@@ -506,6 +511,27 @@ class LambdaApiStack(pyNestedClass):
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
+
+        for module, api_handler in modules, modules_api_handlers:
+            integration = apigw.LambdaIntegration(api_handler)
+            graphql = gw.root.add_resource(path_part=f'graphql{module.get("name")}')
+            graphql_proxy = graphql.add_resource(
+                path_part='{proxy+}',
+                default_integration=integration,
+                default_cors_preflight_options=apigw.CorsOptions(
+                    allow_methods=apigw.Cors.ALL_METHODS,
+                    allow_origins=apigw.Cors.ALL_ORIGINS,
+                    allow_headers=['*'],
+                ),
+            )
+            graphql_proxy.add_method(
+                'POST',
+                authorizer=cognito_authorizer,
+                authorization_type=apigw.AuthorizationType.COGNITO,
+                request_validator=request_validator,
+                request_models={'application/json': graphql_validation_model},
+            )
+
         search_integration = apigw.LambdaIntegration(elasticsearch_proxy_handler)
         search = gw.root.add_resource(path_part='search')
         search_validation_model = apigw.Model(
