@@ -6,15 +6,53 @@ Create Date: 2022-11-29 10:57:27.641565
 
 """
 from alembic import op
-import sqlalchemy as sa
+from sqlalchemy import orm, Column, String, Boolean, sa
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.ext.declarative import declarative_base
 
+from dataall.db import utils, Resource
+from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'
 down_revision = 'd922057f0d91'
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
+
+class EnvironmentGroup(Base):
+    __tablename__ = 'environment_group_permission'
+    groupUri = Column(String, primary_key=True)
+    environmentUri = Column(String, primary_key=True)
+    invitedBy = Column(String, nullable=True)
+    environmentIAMRoleArn = Column(String, nullable=True)
+    environmentIAMRoleName = Column(String, nullable=True)
+    environmentIAMRoleImported = Column(Boolean, default=False)
+    environmentAthenaWorkGroup = Column(String, nullable=True)
+    description = Column(String, default='No description provided')
+    created = Column(DateTime, default=datetime.datetime.now)
+    updated = Column(DateTime, onupdate=datetime.datetime.now)
+    deleted = Column(DateTime)
+
+
+class ShareObject(Base):
+    __tablename__ = 'share_object'
+    shareUri = Column(
+        String, nullable=False, primary_key=True, default=utils.uuid('share')
+    )
+    datasetUri = Column(String, nullable=False)
+    environmentUri = Column(String)
+    groupUri = Column(String)
+    principalIAMRoleName = Column(String, nullable=True)
+    principalId = Column(String, nullable=True)
+    principalType = Column(String, nullable=True, default='Group')
+    status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
+    owner = Column(String, nullable=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, onupdate=datetime.now)
+    deleted = Column(DateTime)
+    confirmed = Column(Boolean, default=False)
 
 
 def upgrade():
@@ -40,6 +78,30 @@ def upgrade():
 
     op.add_column('share_object', sa.Column('principalIAMRoleName', sa.String(), nullable=True))
     op.add_column('share_object', sa.Column('groupUri', sa.String(), nullable=True))
+
+    try:
+        bind = op.get_bind()
+        session = orm.Session(bind=bind)
+        print('Updating share_object table...')
+        shares: [ShareObject] = session.query(ShareObject).all()
+        for share in shares:
+            env_group: [EnvironmentGroup] = session.query(models.EnvironmentGroup).filter(
+                    (
+                        and_(
+                            models.EnvironmentGroup.groupUri == share.principalId,
+                            models.EnvironmentGroup.environmentUri == share.environmentUri,
+                        )
+                    )
+                ).first()
+            if not share.groupUri:
+                share.groupUri = share.principalId
+                share.principalIAMRoleName = env_group.environmentIAMRoleName
+                session.commit()
+        print('share_object table updated successfully')
+    except Exception as e:
+        print(f'Failed to init permissions due to: {e}')
+
+
 
 
 def downgrade():
