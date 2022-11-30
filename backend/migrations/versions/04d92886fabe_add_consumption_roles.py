@@ -6,11 +6,12 @@ Create Date: 2022-11-29 10:57:27.641565
 
 """
 from alembic import op
-from sqlalchemy import orm, Column, String, Boolean, sa
+from sqlalchemy import orm, Column, String, Boolean, sa, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.db import utils, Resource
+from dataall.db.models.Enums import ShareObjectStatus, ShareableType, PrincipalType
 from datetime import datetime
 
 # revision identifiers, used by Alembic.
@@ -20,6 +21,7 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
+
 
 class EnvironmentGroup(Base):
     __tablename__ = 'environment_group_permission'
@@ -85,14 +87,14 @@ def upgrade():
         print('Updating share_object table...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
-            env_group: [EnvironmentGroup] = session.query(models.EnvironmentGroup).filter(
-                    (
-                        and_(
-                            models.EnvironmentGroup.groupUri == share.principalId,
-                            models.EnvironmentGroup.environmentUri == share.environmentUri,
-                        )
+            env_group: [EnvironmentGroup] = session.query(EnvironmentGroup).filter(
+                (
+                    and_(
+                        EnvironmentGroup.groupUri == share.principalId,
+                        EnvironmentGroup.environmentUri == share.environmentUri,
                     )
-                ).first()
+                )
+            ).first()
             if not share.groupUri:
                 share.groupUri = share.principalId
                 share.principalIAMRoleName = env_group.environmentIAMRoleName
@@ -100,8 +102,6 @@ def upgrade():
         print('share_object table updated successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
-
-
 
 
 def downgrade():
