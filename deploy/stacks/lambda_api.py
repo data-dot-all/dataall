@@ -488,7 +488,7 @@ class LambdaApiStack(pyNestedClass):
                 required=['operationName', 'query', 'variables'],
             ),
         )
-        ssm.StringParameter(
+        modules_api_handlers(
             self,
             'BackendApi',
             parameter_name=f'/dataall/{envname}/apiGateway/backendUrl',
@@ -512,7 +512,7 @@ class LambdaApiStack(pyNestedClass):
             request_models={'application/json': graphql_validation_model},
         )
 
-        for module, api_handler in modules, modules_api_handlers:
+        for module, api_handler in zip(modules, modules_api_handlers):
             integration = apigw.LambdaIntegration(api_handler)
             graphql = gw.root.add_resource(path_part=f'graphql{module.get("name")}')
             graphql_proxy = graphql.add_resource(
