@@ -488,7 +488,7 @@ class LambdaApiStack(pyNestedClass):
                 required=['operationName', 'query', 'variables'],
             ),
         )
-        modules_api_handlers(
+        ssm.StringParameter(
             self,
             'BackendApi',
             parameter_name=f'/dataall/{envname}/apiGateway/backendUrl',
