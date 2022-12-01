@@ -34,8 +34,8 @@ class EnvironmentGroup(Base):
     environmentIAMRoleImported = Column(Boolean, default=False)
     environmentAthenaWorkGroup = Column(String, nullable=True)
     description = Column(String, default='No description provided')
-    created = Column(DateTime, default=datetime.datetime.now)
-    updated = Column(DateTime, onupdate=datetime.datetime.now)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, onupdate=datetime.now)
     deleted = Column(DateTime)
 
 
