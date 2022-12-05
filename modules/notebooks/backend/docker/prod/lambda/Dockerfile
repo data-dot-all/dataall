@@ -2,7 +2,6 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG FUNCTION_DIR="/home/app/"
 ARG PYTHON_VERSION=python3.8
-ARG PATH="modules/notebooks/backend"
 
 RUN yum upgrade -y;\
     find /var/tmp -name "*.rpm" -print -delete ;\
@@ -17,13 +16,12 @@ RUN yum -y install python38-devel
 
 ## Add your source
 WORKDIR ${FUNCTION_DIR}
-
 COPY common/backend/requirements.txt ./requirements.txt
 RUN $PYTHON_VERSION -m pip install -U pip
 RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
-COPY common/backend/. ./
-COPY modules/notebooks/backend/. ./
+COPY common/backend/. ./common/
+COPY modules/notebooks/backend/api/. ./module_api/
 
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}
