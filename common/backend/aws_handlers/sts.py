@@ -7,7 +7,7 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-from dataall.version import __version__, __pkg_name__
+from core.backend.dataall.version import __version__, __pkg_name__
 
 try:
     from urllib import quote_plus

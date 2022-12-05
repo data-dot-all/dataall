@@ -1,8 +1,6 @@
 from botocore.exceptions import ClientError
 
-from .parameter_store import ParameterStoreManager
 from .sts import SessionHelper
-from ...db.models import Environment
 
 
 class SagemakerStudio:

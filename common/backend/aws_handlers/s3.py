@@ -1,23 +1,11 @@
 import logging
 
-from ... import db
-from ...db import models
-from .service_handlers import Worker
 from .sts import SessionHelper
 
 log = logging.getLogger(__name__)
 
 
 class S3:
-    @staticmethod
-    @Worker.handler(path='s3.prefix.create')
-    def create_dataset_location(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            location = db.api.DatasetStorageLocation.get_location_by_uri(
-                session, task.targetUri
-            )
-            S3.create_bucket_prefix(location)
-            return location
 
     @staticmethod
     def client(account_id: str, client_type: str):
