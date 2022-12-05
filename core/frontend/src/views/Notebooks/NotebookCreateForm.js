@@ -38,7 +38,7 @@ const NotebookCreateForm = (props) => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
-  const client = useClient();
+  const client = useClient("notebooks");
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);

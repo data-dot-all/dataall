@@ -79,7 +79,7 @@ const NotebookList = () => {
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
-  const client = useClient();
+  const client = useClient("notebooks");
 
   const fetchItems = useCallback(async () => {
     setLoading(true);

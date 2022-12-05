@@ -26,16 +26,20 @@ const defaultOptions = {
   }
 };
 
-const useClient = () => {
+const useClient = (module='core') => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
-
+  // const mod = module ? `${module}` : 'core'
+  const react_app_graphql_apis = JSON.parse(process.env.REACT_APP_GRAPHQL_API_DICT)
   useEffect(() => {
     const initClient = async () => {
+      console.log(process.env.REACT_APP_GRAPHQL_API_DICT)
+      console.log("REACT APP GRAPHQLS")
+      console.log(react_app_graphql_apis[module])
       const t = token;
       const httpLink = new HttpLink({
-        uri: process.env.REACT_APP_GRAPHQL_API
+        uri: react_app_graphql_apis[module]
       });
       const authLink = new ApolloLink((operation, forward) => {
         operation.setContext({

@@ -1,8 +1,8 @@
 import os
-
+import json
 import boto3
 from bs4 import BeautifulSoup
-
+import yaml
 
 def create_react_env_file(
     region,
@@ -28,10 +28,17 @@ def create_react_env_file(
     api_url = ssm.get_parameter(Name=f'/dataall/{envname}/apiGateway/backendUrl')[
         'Parameter'
     ]['Value']
-    graphql_api_url = f'{api_url}graphql/api'
+    graphql_api_url = f"{api_url}graphql/api"
+    graphql_api_url_dict = {
+        "core": graphql_api_url
+    }
     print(f'GraphQl API: {graphql_api_url}')
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
+
+    core, modules = parse_config_yaml(path="config.yaml")
+    for module in modules:
+        graphql_api_url_dict[module.get("name").lower()] = f"{api_url}graphql{module.get('name')}/api"
 
     if internet_facing == 'True':
         print('Switching to us-east-1 region...')
@@ -55,9 +62,10 @@ def create_react_env_file(
     print(f'UI: {signin_singout_link}')
     print(f'USERGUIDE: {user_guide_link}')
 
-    with open('frontend/.env', 'w') as f:
+    with open('core/frontend/.env', 'w') as f:
         file_content = f"""GENERATE_SOURCEMAP=false
 REACT_APP_GRAPHQL_API={graphql_api_url}
+REACT_APP_GRAPHQL_API_DICT={json.dumps(graphql_api_url_dict)}
 REACT_APP_SEARCH_API={search_api_url}
 REACT_APP_COGNITO_USER_POOL_ID={user_pool_id}
 REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
@@ -74,7 +82,7 @@ REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
         app_monitor = rum.get_app_monitor(Name=f'{resource_prefix}-{envname}-monitor')[
             'AppMonitor'
         ]
-        with open('frontend/public/index.html', 'r') as file:
+        with open('core/frontend/public/index.html', 'r') as file:
             index_html = BeautifulSoup(file.read(), 'html.parser')
             print(index_html.prettify())
             head_tag = index_html.head
@@ -110,16 +118,25 @@ REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
             print('Updated index_html...')
             print(index_html.prettify())
 
-        with open('frontend/public/index.html', 'w') as file:
+        with open('core/frontend/public/index.html', 'w') as file:
             file.write(str(index_html.prettify()))
 
 
+def parse_config_yaml(path):
+    with open(path, "r") as file:
+        try:
+            definition = yaml.safe_load(file)
+            return definition.get("core"), definition.get("modules")
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
 if __name__ == '__main__':
-    envname = os.environ.get('envname', 'prod')
+    envname = os.environ.get('envname', 'mod')
     resource_prefix = os.environ.get('resource_prefix', 'dataall')
     internet_facing = os.environ.get('internet_facing', 'True')
     custom_domain = os.environ.get('custom_domain', 'False')
-    region = os.environ.get('deployment_region', 'eu-west-1')
+    region = os.environ.get('deployment_region', 'us-east-1')
     enable_cw_rum = os.environ.get('enable_cw_rum', 'False')
     print(
         f'Creating React .env file with params: '

@@ -63,7 +63,7 @@ const NotebookView = () => {
   const { settings } = useSettings();
   const { enqueueSnackbar } = useSnackbar();
   const params = useParams();
-  const client = useClient();
+  const client = useClient("notebooks");
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
