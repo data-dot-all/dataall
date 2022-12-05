@@ -10,7 +10,7 @@ class NamingConventionPattern(Enum):
     S3 = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
     GLUE = {'regex': '[^a-zA-Z0-9_]', 'separator': '_', 'max_length': 63}
-    NOTEBOOK = {'regex': '[^a-zA-Z0-9-]','separator': '-', 'max_length': 63}
+    NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
 
 
