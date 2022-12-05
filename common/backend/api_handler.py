@@ -9,10 +9,10 @@ from ariadne import (
     graphql_sync,
 )
 
-from .api.context import bootstrap as bootstrap_schema, get_executable_schema
-from .db import init_permissions, get_engine, permissions
-from .aws_handlers import Worker, SqsQueue
-from .search_proxy import connect
+from api.context import bootstrap as bootstrap_schema, get_executable_schema
+from db import init_permissions, get_engine, permissions
+from aws_handlers import Worker, SqsQueue
+from search_proxy import connect
 
 from core.backend.dataall.db import api
 
