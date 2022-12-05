@@ -9,10 +9,9 @@ from ariadne import (
     graphql_sync,
 )
 
-from api.context import bootstrap as bootstrap_schema, get_executable_schema
-from db import init_permissions, get_engine, permissions
-from aws_handlers import Worker, SqsQueue
-from search_proxy import connect
+from common.backend.api.context import bootstrap as bootstrap_schema, get_executable_schema
+from common.backend.db import init_permissions, get_engine, permissions, TenantPolicy
+from common.backend.search_proxy import connect
 
 from core.backend.dataall.db import api
 
@@ -30,7 +29,6 @@ TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 ES = connect(envname=ENVNAME)
-Worker.queue = SqsQueue.send
 
 init_permissions(ENGINE)
 
@@ -112,57 +110,3 @@ def handler(event, context):
                 'Access-Control-Allow-Methods': '*',
             },
         }
-
-    if 'authorizer' in event['requestContext']:
-        username = event['requestContext']['authorizer']['claims']['email']
-        try:
-            groups = get_groups(event['requestContext']['authorizer']['claims'])
-            with ENGINE.scoped_session() as session:
-                for group in groups:
-                    policy = api.TenantPolicy.find_tenant_policy(
-                        session, group, 'dataall'
-                    )
-                    if not policy:
-                        print(
-                            f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
-                        )
-                        api.TenantPolicy.attach_group_tenant_policy(
-                            session=session,
-                            group=group,
-                            permissions=permissions.TENANT_ALL,
-                            tenant_name='dataall',
-                        )
-
-        except Exception as e:
-            print(f'Error managing groups due to: {e}')
-            groups = []
-
-        app_context = {
-            'engine': ENGINE,
-            'es': ES,
-            'username': username,
-            'groups': groups,
-            'schema': SCHEMA,
-            'cdkproxyurl': None,
-        }
-    else:
-        raise Exception(f'Could not initialize user context from event {event}')
-
-    query = json.loads(event.get('body'))
-    success, response = graphql_sync(
-        schema=executable_schema, data=query, context_value=app_context
-    )
-    response = json.dumps(response)
-
-    log.info('Lambda Response %s', response)
-
-    return {
-        'statusCode': 200 if success else 400,
-        'headers': {
-            'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Methods': '*',
-        },
-        'body': response,
-    }
