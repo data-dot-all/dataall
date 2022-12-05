@@ -13,8 +13,6 @@ from common.api.context import bootstrap as bootstrap_schema, get_executable_sch
 from common.db import init_permissions, get_engine, permissions
 from common.search_proxy import connect
 
-from core.backend.dataall.db import api
-
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
