@@ -35,7 +35,7 @@ const PipelineEditForm = (props) => {
   const navigate = useNavigate();
   const params = useParams();
   const { enqueueSnackbar } = useSnackbar();
-  const client = useClient("notebooks");
+  const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [notebook, setNotebook] = useState(null);

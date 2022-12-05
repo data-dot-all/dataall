@@ -39,6 +39,7 @@ const NotebookCreateForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient("notebooks");
+  const core_client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
@@ -71,7 +72,7 @@ const NotebookCreateForm = (props) => {
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
+    const response = await core_client.query(
       listEnvironments({ filter: Defaults.SelectListFilter })
     );
     if (!response.errors) {
@@ -86,10 +87,10 @@ const NotebookCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, dispatch]);
+  }, [core_client, dispatch]);
   const fetchGroups = async (environmentUri) => {
     try {
-      const response = await client.query(
+      const response = await core_client.query(
         listEnvironmentGroups({
           filter: Defaults.SelectListFilter,
           environmentUri
@@ -110,12 +111,12 @@ const NotebookCreateForm = (props) => {
     }
   };
   useEffect(() => {
-    if (client) {
+    if (core_client) {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, dispatch, fetchEnvironments]);
+  }, [core_client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
