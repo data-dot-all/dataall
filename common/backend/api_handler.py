@@ -48,7 +48,7 @@ def resolver_adapter(resolver):
     return adapted
 
 
-executable_schema = get_executable_schema()
+#executable_schema = get_executable_schema()
 end = perf_counter()
 print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
 
