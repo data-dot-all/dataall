@@ -8,8 +8,7 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from .. import db
-from ..db import Base
+from ..db import Base, api
 from ..db.dbconfig import DbConfig
 from ..utils import Parameter, Secrets
 
@@ -98,8 +97,8 @@ def create_schema_and_tables(engine, envname):
 def init_permissions(engine, envname=None):
     with engine.scoped_session() as session:
         log.info('Initiating permissions')
-        db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        db.api.Permission.init_permissions(session)
+        api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        api.Permission.init_permissions(session)
 
 
 def drop_schema_if_exists(engine, envname):
