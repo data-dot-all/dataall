@@ -11,6 +11,8 @@ from .parameter_store import ParameterStoreManager
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)
 
+DEFAULT_GROUP_NAME = 'dataall'
+
 
 class Quicksight:
     def __init__(self):
@@ -43,7 +45,7 @@ class Quicksight:
         client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
         try:
             response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
+                AwsAccountId=AwsAccountId, GroupName=DEFAULT_GROUP_NAME, Namespace='default'
             )
         except client.exceptions.AccessDeniedException as e:
             match = identity_region_rex.findall(str(e))
@@ -98,33 +100,7 @@ class Quicksight:
             raise Exception('Access denied to Quicksight for data.all PivotRole')
 
     @staticmethod
-    def create_quicksight_default_group(AwsAccountId):
-        """Creates a Quicksight group called dataall
-        Args:
-            AwsAccountId(str):  aws account
-
-        Returns:dict
-            quicksight.describe_group response
-        """
-        client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
-        group = Quicksight.describe_group(client, AwsAccountId)
-        if not group:
-            logger.info('Attempting to create Quicksight group `dataall...')
-            response = client.create_group(
-                GroupName='dataall',
-                Description='Default data.all group',
-                AwsAccountId=AwsAccountId,
-                Namespace='default',
-            )
-            logger.info(f'Quicksight group `dataall created {response}')
-            response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName='dataall', Namespace='default'
-            )
-            return response
-        return group
-
-    @staticmethod
-    def create_quicksight_group(AwsAccountId, GroupName):
+    def create_quicksight_group(AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
         """Creates a Quicksight group called GroupName
         Args:
             AwsAccountId(str):  aws account
@@ -152,7 +128,7 @@ class Quicksight:
         return group
 
     @staticmethod
-    def describe_group(client, AwsAccountId, GroupName='dataall'):
+    def describe_group(client, AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
@@ -211,52 +187,6 @@ class Quicksight:
         return response['GroupList']
 
     @staticmethod
-    def register_user(AwsAccountId, UserName, UserRole='READER'):
-        client = Quicksight.get_quicksight_client_in_identity_region(
-            AwsAccountId=AwsAccountId
-        )
-        exists = False
-        user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
-        if user is not None:
-            exists = True
-
-        if exists:
-            response = client.update_user(
-                UserName=UserName,
-                AwsAccountId=AwsAccountId,
-                Namespace='default',
-                Email=UserName,
-                Role=UserRole,
-            )
-        else:
-            response = client.register_user(
-                UserName=UserName,
-                Email=UserName,
-                AwsAccountId=AwsAccountId,
-                Namespace='default',
-                IdentityType='QUICKSIGHT',
-                UserRole=UserRole,
-            )
-        member = False
-
-        Quicksight.create_quicksight_default_group(AwsAccountId)
-        response = client.list_user_groups(
-            UserName=UserName, AwsAccountId=AwsAccountId, Namespace='default'
-        )
-        logger.info(
-            f'list_user_groups for {UserName}: {response})'
-        )
-        if 'dataall' not in [g['GroupName'] for g in response['GroupList']]:
-            logger.warning(f'Adding {UserName} to Quicksight dataall on {AwsAccountId}')
-            response = client.create_group_membership(
-                MemberName=UserName,
-                GroupName='dataall',
-                AwsAccountId=AwsAccountId,
-                Namespace='default',
-            )
-        return Quicksight.describe_user(AwsAccountId, UserName)
-
-    @staticmethod
     def register_user_in_group(AwsAccountId, UserName, GroupName, UserRole='READER'):
         client = Quicksight.get_quicksight_client_in_identity_region(
             AwsAccountId=AwsAccountId
@@ -311,8 +241,8 @@ class Quicksight:
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
         if user is None:
-            user = Quicksight.register_user(
-                AwsAccountId=AwsAccountId, UserName=UserName, UserRole=UserRole
+            user = Quicksight.register_user_in_group(
+                AwsAccountId=AwsAccountId, UserName=UserName, GroupName=DEFAULT_GROUP_NAME, UserRole=UserRole
             )
 
         response = client.get_dashboard_embed_url(
@@ -396,7 +326,7 @@ class Quicksight:
             SessionLifetimeInMinutes=120,
             Namespace='default',
             SessionTags=[
-                {'Key': 'dataall', 'Value': UserName},
+                {'Key': DEFAULT_GROUP_NAME, 'Value': UserName},
             ],
             AuthorizedResourceArns=[
                 f'arn:aws:quicksight:{region}:{AwsAccountId}:dashboard/{DashboardId}',
@@ -410,11 +340,15 @@ class Quicksight:
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName=UserName)
         if user is None:
-            user = Quicksight.register_user(AwsAccountId, UserName, UserRole)
+            user = Quicksight.register_user_in_group(
+                AwsAccountId=AwsAccountId, UserName=UserName, GroupName=DEFAULT_GROUP_NAME, UserRole=UserRole
+            )
+        elif user.get("Role", None) not in ["AUTHOR", "ADMIN"]:
+            user = Quicksight.register_user_in_group(
+                AwsAccountId=AwsAccountId, UserName=UserName, GroupName=DEFAULT_GROUP_NAME, UserRole=UserRole
+            )
         else:
-            # if user.get("Role",None) not in ["AUTHOR","ADMIN"]:
-            user = Quicksight.register_user(AwsAccountId, UserName, UserRole)
-
+            pass
         response = client.get_session_embed_url(
             AwsAccountId=AwsAccountId,
             EntryPoint='/start/dashboards',
@@ -455,8 +389,9 @@ class Quicksight:
     def create_data_source_vpc(AwsAccountId, region, UserName, vpcConnectionId):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         identity_region = 'us-east-1'
-
-        user = Quicksight.register_user(AwsAccountId, UserName, UserRole='AUTHOR')
+        user = Quicksight.register_user_in_group(
+            AwsAccountId=AwsAccountId, UserName=UserName, GroupName=DEFAULT_GROUP_NAME, UserRole='AUTHOR'
+        )
         try:
             response = client.describe_data_source(
                 AwsAccountId=AwsAccountId, DataSourceId="dataall-metadata-db"
