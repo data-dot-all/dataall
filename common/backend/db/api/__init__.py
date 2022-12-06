@@ -1,2 +1,2 @@
-from permission import Permission
-from tenant import Tenant
+from .permission import Permission
+from .tenant import Tenant
