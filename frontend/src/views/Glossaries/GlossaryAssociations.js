@@ -38,8 +38,7 @@ const GlossaryAssociations = ({ glossary }) => {
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
   const [approving, setApproving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const isAdmin =
-    glossary.owner === user.email || glossary.admin === user.email;
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -50,6 +49,11 @@ const GlossaryAssociations = ({ glossary }) => {
       })
     );
     if (!response.errors) {
+      setIsAdmin(
+        ['Admin'].indexOf(
+          response.data.getGlossary.userRoleForGlossary
+        ) !== -1
+      );
       setItems(response.data.getGlossary.associations);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
