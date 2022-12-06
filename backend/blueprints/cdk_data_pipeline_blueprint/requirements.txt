@@ -1,3 +1,0 @@
-aws-cdk-lib==2.20.0
-constructs>=10.0.0,<11.0.0
-aws_ddk_core==0.3.1

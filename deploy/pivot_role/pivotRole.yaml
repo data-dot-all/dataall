@@ -468,17 +468,22 @@ Resources:
           - Sid: CloudFormation
             Effect: Allow
             Action:
+              - 'cloudformation:CreateStack'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormation2
+            Effect: Allow
+            Action:
               - 'cloudformation:DescribeStacks'
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
-              - 'cloudformation:CreateStack'
               - 'cloudformation:GetTemplate'
               - 'cloudformation:ListStackResources'
               - 'cloudformation:DescribeStackResource'
             Resource:
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
-              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
         - !Ref PivotRoleName
@@ -625,6 +630,7 @@ Resources:
             Resource:
               - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/ddk/*'
           - Sid: Secretsmanager
             Effect: Allow
             Action:
@@ -664,6 +670,7 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/ddk-*'
           - Sid: StepFunctions
             Action:
               - 'states:DescribeStateMachine'
@@ -680,6 +687,15 @@ Resources:
               - 'codecommit:GetCommit'
               - 'codecommit:GitPull'
               - 'codecommit:GetRepository'
+              - 'codecommit:TagResource'
+              - 'codecommit:UntagResource'
+              - 'codecommit:CreateBranch'
+              - 'codecommit:CreateCommit'
+              - 'codecommit:CreateRepository'
+              - 'codecommit:DeleteRepository'
+              - 'codecommit:GitPush'
+              - 'codecommit:PutFile'
+              - 'codecommit:GetBranch'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'

@@ -138,7 +138,6 @@ const PipelineView = () => {
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState(null);
   const [stack, setStack] = useState(null);
-  const [cicdStack, setCicdStack] = useState(null);
   const [cdkTrunk, setCdkTrunk] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [tabs, setTabs] = useState([
@@ -158,15 +157,6 @@ const PipelineView = () => {
     const response = await client.query(getDataPipeline(params.uri));
     if (!response.errors && response.data.getDataPipeline !== null) {
       setPipeline(response.data.getDataPipeline);
-      if (response.data.getDataPipeline.devStrategy =="cdk-trunk") {
-        setTabs([
-          {label: 'Overview', value: 'overview', icon: <Info fontSize="small"/>},
-          {label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small"/>},
-          {label: 'Repo Stack', value: 'stack', icon: <FaAws size={20}/>},
-          {label: 'CICD Stack', value: 'cicdStack', icon: <FaAws size={20}/>}
-        ]);
-        setCdkTrunk(true);
-      }
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -174,7 +164,7 @@ const PipelineView = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, stack, cicdStack]);
+  }, [client, dispatch, params.uri, stack]);
   
   useEffect(() => {
     if (client) {
@@ -225,13 +215,6 @@ const PipelineView = () => {
         setStack={setStack}
         environmentUri={pipeline.environment?.environmentUri}
       />
-      {cdkTrunk && (
-        <StackStatus
-          stack={cicdStack}
-          setStack={setCicdStack}
-          environmentUri={pipeline.environment?.environmentUri}
-        />
-      )}
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -280,15 +263,7 @@ const PipelineView = () => {
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
-                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkrepo" : "pipeline"}
-              />
-            )}
-            {currentTab === 'cicdStack' && (
-              <Stack
-                environmentUri={pipeline.environment.environmentUri}
-                stackUri={pipeline.cicdStack.stackUri}
-                targetUri={pipeline.DataPipelineUri}
-                targetType="cdkpipeline"
+                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkpipeline" : "pipeline"}
               />
             )}
           </Box>
