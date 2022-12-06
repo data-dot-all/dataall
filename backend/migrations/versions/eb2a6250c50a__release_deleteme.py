@@ -60,6 +60,8 @@ class ShareObject(Base):
 
 def upgrade():
     op.drop_table('consumptionrole')
+    op.drop_column('share_object', 'principalIAMRoleName')
+    op.drop_column('share_object', 'groupUri')
     op.create_table(
         'consumptionrole',
         sa.Column('consumptionRoleUri', sa.VARCHAR(), autoincrement=False, nullable=False),
