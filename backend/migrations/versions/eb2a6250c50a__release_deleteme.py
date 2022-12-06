@@ -59,6 +59,7 @@ class ShareObject(Base):
 
 
 def upgrade():
+    op.drop_table('consumptionrole')
     op.create_table(
         'consumptionrole',
         sa.Column('consumptionRoleUri', sa.VARCHAR(), autoincrement=False, nullable=False),
