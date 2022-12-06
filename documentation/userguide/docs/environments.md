@@ -268,7 +268,7 @@ Data.all creates or imports one IAM role per Cognito group that we invite to the
 can ingest and consume data, but sometimes we want to consume data from an application such as a SageMaker pipeline,
 a Glue Job or any other downstream application. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
 
-Any IAM role that exists in the Environment AWS Account can be added
+Any IAM role that exists in the Environment AWS Account can be added to data.all
 
 ### :material-aws: **AWS access**
 <span style="color:grey">*data.all*</span> makes it easier to manage access to your AWS accounts. How? remember when we assigned granular AWS permissions
