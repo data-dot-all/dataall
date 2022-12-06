@@ -238,10 +238,12 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
-            lambdas=[
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
-            ],
+            lambdas=(
+                [
+                    lambda_api_stack.aws_handler,
+                    lambda_api_stack.api_handler,
+            ] + lambda_api_stack.modules_api_handlers
+            ),
             ecs_security_groups=ecs_stack.ecs_security_groups,
             codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
             prod_sizing=prod_sizing,
@@ -255,11 +257,13 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
-            lambdas=[
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
-                lambda_api_stack.elasticsearch_proxy_handler,
-            ],
+            lambdas=(
+                [
+                    lambda_api_stack.aws_handler,
+                    lambda_api_stack.api_handler,
+                    lambda_api_stack.elasticsearch_proxy_handler,
+                ] + lambda_api_stack.modules_api_handlers
+            ),
             ecs_security_groups=ecs_stack.ecs_security_groups,
             prod_sizing=prod_sizing,
             **kwargs,
@@ -270,11 +274,13 @@ class BackendStack(Stack):
             f'CWDashboards',
             envname=envname,
             resource_prefix=resource_prefix,
-            lambdas=[
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
-                lambda_api_stack.elasticsearch_proxy_handler,
-            ],
+            lambdas=(
+                [
+                    lambda_api_stack.aws_handler,
+                    lambda_api_stack.api_handler,
+                    lambda_api_stack.elasticsearch_proxy_handler,
+                ] + lambda_api_stack.modules_api_handlers
+            ),
             database=aurora_stack.cluster.cluster_identifier,
             ecs_cluster=ecs_stack.ecs_cluster,
             ecs_task_definitions=ecs_stack.ecs_task_definitions,
