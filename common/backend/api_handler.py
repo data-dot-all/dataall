@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from argparse import Namespace
@@ -22,8 +21,8 @@ start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
 
-SCHEMA = bootstrap_schema()
-TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
+#SCHEMA = bootstrap_schema()
+#TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 ES = connect(envname=ENVNAME)
