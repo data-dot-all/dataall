@@ -9,7 +9,7 @@ from ariadne import (
     graphql_sync,
 )
 
-from common.api.context import bootstrap as bootstrap_schema, get_executable_schema
+from common.api import bootstrap as bootstrap_schema, get_executable_schema
 from common.db import init_permissions, get_engine, permissions, api, models
 from common.search_proxy import connect
 
