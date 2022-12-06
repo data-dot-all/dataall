@@ -66,7 +66,7 @@ class EnvironmentSetup(Stack):
             return db.api.Vpc.get_environment_default_vpc(session, environmentUri)
 
     def init_quicksight(self, environment: models.Environment):
-        Quicksight.create_quicksight_default_group(environment.AwsAccountId)
+        Quicksight.create_quicksight_group(environment.AwsAccountId, 'dataall')
 
     def check_sagemaker_studio(self, engine, environment: models.Environment):
         logger.info('check sagemaker studio domain creation')
