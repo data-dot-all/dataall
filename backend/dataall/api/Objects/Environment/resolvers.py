@@ -180,8 +180,8 @@ def remove_consumption_role(context: Context, source, environmentUri=None, consu
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=environmentUri,
-            data={'consumptionRoleUri': consumptionRoleUri},
+            uri=consumptionRoleUri,
+            data={'environmentUri': environmentUri},
             check_perm=True,
         )
 

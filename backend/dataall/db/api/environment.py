@@ -287,6 +287,9 @@ class Environment:
             g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
 
+        if permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES in g_permissions:
+            g_permissions.append(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+
         if permissions.CREATE_SHARE_OBJECT in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
 
@@ -509,21 +512,21 @@ class Environment:
             session=session,
             group=group,
             resource_uri=consumption_role.consumptionRoleUri,
-            permissions=permissions.CONSUMPTION_ROLE_ALL,
+            permissions=permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
             resource_type=models.ConsumptionRole.__name__,
         )
         return consumption_role
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLES)
+    @has_resource_perm(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
     def remove_consumption_role(session, username, groups, uri, data=None, check_perm=None):
         if not data:
             raise exceptions.RequiredParameter('data')
-        if not data.get('consumptionRoleUri'):
+        if not uri:
             raise exceptions.RequiredParameter('consumptionRoleUri')
 
-        consumption_role = Environment.get_environment_consumption_role(session, data.get('consumptionRoleUri'), uri)
+        consumption_role = Environment.get_environment_consumption_role(session, uri, data.get('environmentUri'))
 
         if consumption_role:
             session.delete(consumption_role)
@@ -605,7 +608,7 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    def query_all_environment_groups(session, username, groups, uri, filter) -> Query:
+    def query_all_environment_groups(session, uri, filter) -> Query:
         query = session.query(models.EnvironmentGroup).filter(
             models.EnvironmentGroup.environmentUri == uri
         )
@@ -625,7 +628,7 @@ class Environment:
     ) -> dict:
         return paginate(
             query=Environment.query_all_environment_groups(
-                session, username, groups, uri, data
+                session, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),

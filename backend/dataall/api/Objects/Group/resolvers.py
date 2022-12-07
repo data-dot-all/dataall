@@ -89,8 +89,6 @@ def list_cognito_groups(context, source, filter: dict = None):
             with context.engine.scoped_session() as session:
                 invited_groups = db.api.Environment.query_all_environment_groups(
                     session=session,
-                    username=context.username,
-                    groups=context.groups,
                     uri=category_uri,
                     filter=None,
                 ).all()
