@@ -34,13 +34,18 @@ data asset.
 
 ![catalog_search](pictures/shares/shares_1.png#zoom#shadow)
 
-The following window will open. Choose your target environment and team and optionally add a *Request purpose*. Finally,
+The following window will open. Choose your target environment and team and optionally add a *Request purpose*.
+
+![share_request_form](pictures/shares/share_2_1.png#zoom#shadow)
+
+If instead of to a team, you want to request access for a Consumption role, add it to the request as in the picture below.
+
+![share_request_form](pictures/shares/share_2_2.png#zoom#shadow)
+
+Finally,
 click on **Send Request**. This will create a share request or object for the corresponding dataset
 and if you have requested a table or folder
-it will add those items to the request. The share needs to be submitted for the reqeust to be sent to the approvers.
-
-![share_request_form](pictures/shares/shares_2.png#zoom#shadow)
-
+it will add those items to the request. The share needs to be submitted for the request to be sent to the approvers.
 
 ### **Submit a share request (requester)**
 A created share request needs to be filled with requested tables and/or folders and then submitted. For the previous
@@ -59,7 +64,7 @@ then click on **Submit** and wait for the approver to approve or reject the shar
     When a share request is submitted, the approvers receive a notification with the user that is requesting access
     and the dataset. And viceversa, when a request is approved, the requesters get a notification with the
     approver's name and the approved dataset.
-
+shares
 As a dataset **owner** or **steward** you can approve or reject a dataset access request. To do that, you have 2 options.
 First, you can go from the Shares menu and in the *Received* tab approve or reject the request that is pending approval.
 
@@ -121,5 +126,7 @@ Check the <a href="environments.html">environment</a> documentation for the step
     You can also **subscribe to data consumers SNS topic** to be aware of the latest data updates from the producers.
 
 #### Step 2: Publish notification update
-**IMPORTANT**This feature is disabled at the moment
+**IMPORTANT**
+
+This feature is disabled at the moment
 

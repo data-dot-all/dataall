@@ -263,16 +263,31 @@ creator of the environment or invited to the environment). In the following pict
     of the environment. Same applies for **Tags** and **Subscriptions**. Other limitations come from the permissions that have
     been assigned to the team.
 
-### :material-account-plus-outline: **Manage Consumption Roles**
-Data.all creates or imports one IAM role per Cognito group that we invite to the environment as a Team. With these IAM roles data producers and consumers
-can ingest and consume data, but sometimes we want to consume data from an application such as a SageMaker pipeline,
-a Glue Job or any other downstream application. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
-
-Any IAM role that exists in the Environment AWS Account can be added to data.all
-
 ### :material-aws: **AWS access**
 <span style="color:grey">*data.all*</span> makes it easier to manage access to your AWS accounts. How? remember when we assigned granular AWS permissions
 to invited groups and this created an IAM role? (If not, check the "Manage teams" section). From the **Teams** tab of
 the environment we can assume our team's IAM role to get access to the AWS Console or copy the credentials to the
 clipboard. Both options are under the "Actions" column in the Teams table.
+
+## :material-account-plus-outline: **Manage Consumption Roles**
+Data.all creates or imports one IAM role per Cognito/IdP group that we invite to the environment. With these IAM roles data producers and consumers
+can ingest and consume data, but sometimes we want to consume data from an application such as SageMaker pipelines,
+Glue Jobs or any other downstream application. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
+
+Any IAM role that exists in the Environment AWS Account can be added to data.all. In the **Teams** tab click on *Add Consumption Role*
+
+![](pictures/environments/env_consumption_roles_1.png#zoom#shadow)
+
+A window like the following will appear for you to introduce the arn of the IAM role and the Team that owns the consumption role.
+Only members of this team and tenants of data.all can remove the consumption role.
+
+![](pictures/environments/env_consumption_roles_2.png#zoom#shadow)
+
+!!! success "Existing roles only"
+    Data.all checks whether that IAM role exists in the AWS account of the environment before adding it as a consumption role.
+
+**Data Access**
+
+- By default, a new consumption role does NOT have access to any data in data.all.
+- The team that owns the consumption role needs to open a share request for the consumption role as shown in the picture below.
 
