@@ -13,6 +13,7 @@ from common.aws_handlers.s3 import S3
 from common.aws_handlers.sagemaker import Sagemaker
 from common.aws_handlers.sagemaker_studio import SagemakerStudio
 from common.aws_handlers.secrets_manager import SecretsManager
+from common.aws_handlers.service_handlers import WorkerHandler, Worker
 from common.aws_handlers.sqs import SqsQueue
 from common.aws_handlers.sts import SessionHelper
 

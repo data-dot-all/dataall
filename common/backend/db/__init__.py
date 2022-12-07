@@ -30,7 +30,7 @@ from common.db.exceptions import (
     UnauthorizedOperation
 )
 from common.db.paginator import Page, paginate
-from common.db. import permissions
+from common.db import permissions
 from common.db.utils import now, slugifier, uuid
 
 
