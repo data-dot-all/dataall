@@ -85,7 +85,7 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Updating share_object table...')
+        print('Back-filling share_object table...')
         shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
             env_group: [EnvironmentGroup] = session.query(EnvironmentGroup).filter(
@@ -103,6 +103,37 @@ def upgrade():
         print('share_object table updated successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
+
+    try:
+        bind = op.get_bind()
+        session = orm.Session(bind=bind)
+        print('Initializing permissions...')
+        api.Permission.init_permissions(session)
+        print('Permissions initialized successfully')
+    except Exception as e:
+        print(f'Failed to init permissions due to: {e}')
+    # ### end Alembic commands ###
+
+    try:
+        bind = op.get_bind()
+        session = orm.Session(bind=bind)
+        print('Back-filling consumer role permissions for environments...')
+        envs = api.Environment.list_all_active_environments(session=session)
+        for env in envs:
+            groups = api.Environment.query_all_environment_groups(
+                session=session, uri=env.environmentUri, filter=None
+            )
+            for group in groups:
+                api.ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    resource_uri=env.environmentUri,
+                    group=group.groupUri,
+                    permissions=permissions.CONSUMPTION_ROLE_ALL,
+                    resource_type=models.Environment.__name__,
+                )
+        print('Consumer Role Permissions created successfully')
+    except Exception as e:
+        print(f'Failed to back-fill Consumer Role permissions due to: {e}')
 
 
 def downgrade():
