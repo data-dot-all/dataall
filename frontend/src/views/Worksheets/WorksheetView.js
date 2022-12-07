@@ -30,7 +30,7 @@ import useClient from '../../hooks/useClient';
 import listEnvironments from '../../api/Environment/listEnvironments';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import { SET_ERROR } from '../../store/errorReducer';
-import listDatasets from '../../api/Dataset/listDatasets';
+import listDatasetsOwnedByEnvGroup from '../../api/Environment/listDatasetsOwnedByEnvGroup';
 import listDatasetTables from '../../api/Dataset/listDatasetTables';
 import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
 import searchEnvironmentDataItems from '../../api/Environment/listDatasetsPublishedInEnvironment';
@@ -128,17 +128,28 @@ const WorksheetView = () => {
   };
 
   const fetchDatabases = useCallback(
-    async (environment) => {
+    async (environment, team) => {
       setLoadingDatabases(true);
       let ownedDatabases = [];
       let sharedWithDatabases = [];
-      let response = await client.query(listDatasets({ term: '', page: 1, pageSize: 10000}));
+      console.log(environment)
+      console.log(team)
+      let response = await client.query(
+        listDatasetsOwnedByEnvGroup({
+          filter: { 
+            term: '', 
+            page: 1, 
+            pageSize: 10000
+          },
+          environmentUri: environment.environmentUri,
+          groupUri: team
+        }));
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      if (response.data.listDatasets.nodes) {
+      if (response.data.listDatasetsOwnedByEnvGroup.nodes) {
         ownedDatabases =
-          response.data.listDatasets.nodes?.map((d) => ({
+          response.data.listDatasetsOwnedByEnvGroup.nodes?.map((d) => ({
             ...d,
             value: d.datasetUri,
             label: d.GlueDatabaseName
@@ -163,8 +174,8 @@ const WorksheetView = () => {
           response.data.searchEnvironmentDataItems.nodes.map((d) => ({
             datasetUri: d.datasetUri,
             value: d.datasetUri,
-            label: `${d.GlueDatabaseName}shared`,
-            GlueDatabaseName: `${d.GlueDatabaseName}shared`
+            label: `${d.GlueDatabaseName}_shared_${d.shareUri}`,
+            GlueDatabaseName: `${d.GlueDatabaseName}_shared_${d.shareUri}`.substring(0,254)
           }));
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
@@ -336,7 +347,7 @@ const WorksheetView = () => {
     setDatabaseOptions([]);
     setTableOptions([]);
     setCurrentTeam(event.target.value);
-    fetchDatabases(currentEnv).catch((e) =>
+    fetchDatabases(currentEnv, event.target.value).catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
     );
   }
