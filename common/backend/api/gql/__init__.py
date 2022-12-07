@@ -1,6 +1,7 @@
 from .default_resolver import DefaultResolver
 from .graphql_argument import Argument
 from .graphql_directive import DirectiveArgs
+from ._cache import cache_instances
 from .graphql_enum import GraphqlEnum as Enum
 from .graphql_field import Field
 from .graphql_input import InputType
@@ -51,4 +52,5 @@ __all__ = [
     'Union',
     'Ref',
     'Enum',
+    'cache_instances'
 ]
