@@ -9,7 +9,7 @@ data.all uses (and automates)
 to create access permissions to tables, meaning that no data is copied between  AWS accounts.
 
 Under-the-hood, folders are prefixes inside the dataset S3 bucket. To create sharing of folders in data.all,
-the S3 access policies to the corresponding prefixes are modified.
+we create an S3 access point per requester group to handle its access to specific prefixes in the dataset.
 
 **Concepts**
 
@@ -112,6 +112,14 @@ pending approval share request. In fact the status of the request changes to `RE
 Anyone can go to the **Shares** menu on the left side pane and look up the share requests that they have received
 and that they have sent.
 
+
+## **Consume shared data**
+Data.all tables are Glue tables shared using AWS Lake Formation, therefore any service that reads Glue tables and integrates
+with Lake Formation is able to consume the data. Permissions are granted to the team role or the consumption role that 
+has been specified in the request.
+
+For the case of folders, the underlying sharing mechanism used is S3 Access Points. You can read data inside a prefix using 
+the IAM role of the requester (same as with tables) and executing get calls to the S3 access point.
 
 ### **Use data subscriptions**
 data.all helps data owners publish notification updates to all their data consumers.
