@@ -232,11 +232,12 @@ def resolve_redshift_copy_location(
             session, clusterUri, source.datasetUri, source.tableUri
         ).dataLocation
 
+
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str, filter: dict = None):
     with context.engine.scoped_session() as session:
         return db.api.DatasetTable.get_dataset_tables_shared_with_env(
-            session, 
-            envUri, 
+            session,
+            envUri,
             datasetUri,
             ["Approved"]
         )
