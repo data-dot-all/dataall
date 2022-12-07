@@ -1,3 +1,4 @@
+print("Initializing utils Python package...")
 from common.utils.alarm_service import AlarmService
 from common.utils.cdk_nag_utils import CDKNagUtil
 from common.utils.json_utils import dict_compare, json_decoder, to_json, to_string
@@ -23,5 +24,4 @@ __all__ = [
     "slugify",
     "smart_truncate"
 ]
-
-print("Initializing utils Python package")
+print("utils Python package successfully initialized")

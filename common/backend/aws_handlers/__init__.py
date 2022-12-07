@@ -1,3 +1,4 @@
+print("Initializing aws_handlers Python package...")
 from common.aws_handlers.cloudformation import CloudFormation
 from common.aws_handlers.cloudwatch import CloudWatch
 from common.aws_handlers.codecommit import CodeCommit
@@ -37,5 +38,4 @@ __all__ = [
     "SqsQueue",
     "SessionHelper",
 ]
-
-print("Initializing aws_handlers Python package")
+print("aws_handlers Python package successfully initialized")

@@ -1,3 +1,4 @@
+print("Initializing db Python package...")
 from common.db.api import *
 from common.db.models import *
 from common.db.base import Base, Resource
@@ -34,3 +35,4 @@ from common.db import permissions
 from common.db.utils import now, slugifier, uuid
 
 
+print("db Python package successfully initialized")
