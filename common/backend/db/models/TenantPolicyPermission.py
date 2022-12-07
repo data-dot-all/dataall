@@ -3,9 +3,8 @@ import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import Permission
-from . import TenantPolicy
-from .. import Base
+from common.db.models import Permission, TenantPolicy
+from common.db import Base
 
 
 class TenantPolicyPermission(Base):

@@ -8,9 +8,9 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from ..db import Base, api
-from ..db.dbconfig import DbConfig
-from ..utils import Parameter, Secrets
+from common.db import Base, api
+from common.db.dbconfig import DbConfig
+from common.db.utils import Parameter, Secrets
 
 try:
     from urllib import quote_plus, unquote_plus

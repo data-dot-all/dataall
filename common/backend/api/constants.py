@@ -1,5 +1,5 @@
 from enum import Enum
-from . import gql
+from common.api import gql
 
 
 class GraphQLEnumMapper(Enum):

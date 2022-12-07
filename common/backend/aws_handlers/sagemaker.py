@@ -1,6 +1,6 @@
 import logging
 
-from .sts import SessionHelper
+from common.aws_handlers.sts import SessionHelper
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)

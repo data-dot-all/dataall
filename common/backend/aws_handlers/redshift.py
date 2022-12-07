@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from .sts import SessionHelper
+from common.aws_handlers.service_handlers import Worker
+from common.aws_handlers.sts import SessionHelper
 
 log = logging.getLogger(__name__)
 

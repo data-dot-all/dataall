@@ -1,7 +1,7 @@
 import logging
 import boto3
 
-from .sts import SessionHelper
+from common.aws_handlers.sts import SessionHelper
 
 
 log = logging.getLogger(__name__)

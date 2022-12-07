@@ -1,5 +1,5 @@
-from ._cache import cache_instances
-from .utils import get_named_type
+from common.api.gql._cache import cache_instances
+from common.api.gql.utils import get_named_type
 
 
 @cache_instances

@@ -9,8 +9,9 @@ from datetime import datetime
 
 from botocore.exceptions import ClientError
 
-from ..aws.handlers.sts import SessionHelper
-from ..db import models
+from common.aws_handlers import SessionHelper
+from common.db import models
+
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from .sts import SessionHelper
+from common.aws_handlers.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
 

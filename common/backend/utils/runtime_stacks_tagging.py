@@ -4,9 +4,8 @@ from enum import Enum
 
 from aws_cdk import Stack, Tags
 
-from .. import db
-from ..db import models
-
+from common.db.connection import get_engine
+from common.db import api, models
 
 # Tag keys for Stacks
 class StackTagName(Enum):
@@ -117,7 +116,7 @@ class TagsUtil:
     @classmethod
     def get_engine(cls):
         envname = os.environ.get('envname', 'local')
-        engine = db.get_engine(envname=envname)
+        engine = get_engine(envname=envname)
         return engine
 
     @classmethod
@@ -126,14 +125,14 @@ class TagsUtil:
 
     @classmethod
     def get_organization(cls, session, environment):
-        organisation: models.Organization = db.api.Organization.get_organization_by_uri(
+        organisation: models.Organization = api.Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
         return organisation
 
     @classmethod
     def get_environment(cls, session, target_stack):
-        environment: models.Environment = db.api.Environment.get_environment_by_uri(
+        environment: models.Environment = api.Environment.get_environment_by_uri(
             session, target_stack.environmentUri
         )
         return environment
@@ -142,10 +141,10 @@ class TagsUtil:
     def get_model_key_value_tags(cls, session, stack, model_name):
         return [
             (kv.key, kv.value)
-            for kv in db.api.KeyValueTag.find_key_value_tags(
+            for kv in api.KeyValueTag.find_key_value_tags(
                 session,
                 stack.target_uri,
-                db.api.TargetType.get_target_type(model_name),
+                api.TargetType.get_target_type(model_name),
             )
         ]
 

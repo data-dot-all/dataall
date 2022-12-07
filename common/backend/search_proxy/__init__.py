@@ -1,5 +1,11 @@
-from .connect import connect
+from common.search_proxy.connect import add_keyword_mapping, connect, connect_dev_environment, get_mappings_indice, get_mappings_properties_indice
 
 __all__ = [
-    'connect'
+    "add_keyword_mapping",
+    "connect",
+    "connect_dev_environment",
+    "get_mappings_indice",
+    "get_mappings_properties_indice"
 ]
+
+print("Initializing search_proxy Python package")

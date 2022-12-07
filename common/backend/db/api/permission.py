@@ -2,8 +2,8 @@ import logging
 
 from sqlalchemy import or_
 
-from ..paginator import paginate
-from .. import models, exceptions, permissions
+from common.db.paginator import paginate
+from common.db import models, exceptions, permissions
 
 logger = logging.getLogger(__name__)
 

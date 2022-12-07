@@ -1,14 +1,14 @@
 import typing
 
-from .graphql_argument import Argument
-from .graphql_enum import GraphqlEnum
-from .graphql_scalar import *
-from .graphql_type import ObjectType
-from .graphql_type_modifiers import ArrayType, NonNullableType, TypeModifier
-from .graphql_union_type import Union
-from .ref import Ref
-from .thunk import Thunk
-from .utils import get_named_type
+from common.api.gql.graphql_argument import Argument
+from common.api.gql.graphql_enum import GraphqlEnum
+from common.api.gql.graphql_scalar import *
+from common.api.gql.graphql_type import ObjectType
+from common.api.gql.graphql_type_modifiers import ArrayType, NonNullableType, TypeModifier
+from common.api.gql.graphql_union_type import Union
+from common.api.gql.ref import Ref
+from common.api.gql.thunk import Thunk
+from common.api.gql.utils import get_named_type
 
 
 class Field:

@@ -3,10 +3,9 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from .sts import SessionHelper
-from ..db import Engine
-from ..utils import json_utils
+from common.aws_handlers.service_handlers import Worker
+from common.aws_handlers.sts import SessionHelper
+from common.utils import json_utils
 
 log = logging.getLogger(__name__)
 

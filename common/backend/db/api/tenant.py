@@ -1,6 +1,6 @@
 import logging
 
-from .. import models
+from common.db import models
 
 logger = logging.getLogger(__name__)
 
