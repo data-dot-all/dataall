@@ -170,7 +170,7 @@ class DatasetTable:
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
-        env_tables = (
+        query = (
             session.query(models.DatasetTable)  # all tables
             .join(
                 models.ShareObjectItem,  # found in ShareObjectItem
@@ -188,9 +188,8 @@ class DatasetTable:
                     models.ShareObject.status.in_(status),
                 )
             )
-            .all()
         )
-        return env_tables
+        return paginate(query=query, page_size=10, page=1).to_dict()
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):
