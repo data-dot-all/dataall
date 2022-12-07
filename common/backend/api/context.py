@@ -10,7 +10,14 @@ from ariadne import (
     make_executable_schema,
 )
 
-from common.api import gql
+from common.api.gql.schema import Schema
+from common.api.gql.graphql_enum import GraphqlEnum as Enum
+from common.api.gql.graphql_input import InputType
+from common.api.gql.graphql_mutation_field import MutationField
+from common.api.gql.graphql_query_field import QueryField
+from common.api.gql.graphql_type import ObjectType
+from common.api.gql.graphql_union_type import Union
+
 from common.api.constants import GraphQLEnumMapper
 
 class Context:
@@ -31,17 +38,17 @@ class Context:
 
 def bootstrap():
     classes = {
-        gql.ObjectType: [],
-        gql.QueryField: [],
-        gql.MutationField: [],
-        gql.Enum: [],
-        gql.Union: [],
-        gql.InputType: [],
+        ObjectType: [],
+        QueryField: [],
+        MutationField: [],
+        Enum: [],
+        Union: [],
+        InputType: [],
     }
 
-    Query = gql.ObjectType(name='Query', fields=classes[gql.QueryField])
+    Query = ObjectType(name='Query', fields=classes[QueryField])
 
-    Mutation = gql.ObjectType(name='Mutation', fields=classes[gql.MutationField])
+    Mutation = ObjectType(name='Mutation', fields=classes[MutationField])
 
     for enumclass in GraphQLEnumMapper.__subclasses__():
         enumclass.toGraphQLEnum()
@@ -53,11 +60,11 @@ def bootstrap():
             else:
                 raise Exception(f'Unknown Graphql Type :`{name}`')
 
-    schema = gql.Schema(
-        types=classes[gql.ObjectType],
-        inputs=classes[gql.InputType],
-        enums=classes[gql.Enum],
-        unions=classes[gql.Union],
+    schema = Schema(
+        types=classes[ObjectType],
+        inputs=classes[InputType],
+        enums=classes[Enum],
+        unions=classes[Union],
     )
     return schema
 

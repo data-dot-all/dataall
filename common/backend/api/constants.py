@@ -1,11 +1,11 @@
 from enum import Enum
-from common.api import gql
+from common.api.gql.graphql_enum import GraphqlEnum
 
 
 class GraphQLEnumMapper(Enum):
     @classmethod
     def toGraphQLEnum(cls):
-        return gql.Enum(name=cls.__name__, values=cls)
+        return GraphqlEnum(name=cls.__name__, values=cls)
 
     @classmethod
     def to_value(cls, label):
