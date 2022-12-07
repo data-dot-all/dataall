@@ -1,6 +1,4 @@
 print("Initializing db Python package...")
-from common.db.api import *
-from common.db.models import *
 from common.db.base import Base, Resource
 from common.db.connection import (
     Engine,
@@ -34,5 +32,7 @@ from common.db.paginator import Page, paginate
 from common.db import permissions
 from common.db.utils import now, slugifier, uuid
 
+from common.db.api import *
+from common.db.models import *
 
 print("db Python package successfully initialized")

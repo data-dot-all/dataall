@@ -5,7 +5,7 @@ import boto3
 import opensearchpy
 from requests_aws4auth import AWS4Auth
 
-from common import utils
+from common.utils.parameter import Parameter
 
 CREATE_INDEX_REQUEST_BODY = {
     'mappings': {
@@ -63,7 +63,7 @@ def connect(envname='local'):
             session_token=token,
         )
 
-        host = utils.Parameter.get_parameter(env=envname, path='elasticsearch/endpoint')
+        host = Parameter.get_parameter(env=envname, path='elasticsearch/endpoint')
         es = opensearchpy.OpenSearch(
             hosts=[{'host': host, 'port': 443}],
             http_auth=awsauth,
