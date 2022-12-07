@@ -310,6 +310,7 @@ const RequestAccessModal = (props) => {
                           name="environment"
                           onChange={(event) => {
                             setFieldValue('groupUri', '');
+                            setFieldValue('consumptionRole', '');
                             fetchGroups(
                               event.target.value.environmentUri
                             ).catch((e) =>
