@@ -1,4 +1,7 @@
 print("Initializing aws_handlers Python package...")
+from common.aws_handlers.sts import SessionHelper
+from common.aws_handlers.service_handlers import WorkerHandler, Worker
+from common.aws_handlers.parameter_store import ParameterStoreManager
 from common.aws_handlers.cloudformation import CloudFormation
 from common.aws_handlers.cloudwatch import CloudWatch
 from common.aws_handlers.codecommit import CodeCommit
@@ -6,7 +9,6 @@ from common.aws_handlers.cognito import Cognito
 from common.aws_handlers.iam import IAM
 from common.aws_handlers.kms import KMS
 from common.aws_handlers.lakeformation import LakeFormation
-from common.aws_handlers.parameter_store import ParameterStoreManager
 from common.aws_handlers.quicksight import Quicksight
 from common.aws_handlers.ram import Ram
 from common.aws_handlers.redshift import Redshift
@@ -14,10 +16,9 @@ from common.aws_handlers.s3 import S3
 from common.aws_handlers.sagemaker import Sagemaker
 from common.aws_handlers.sagemaker_studio import SagemakerStudio
 from common.aws_handlers.secrets_manager import SecretsManager
-from common.aws_handlers.service_handlers import WorkerHandler, Worker
 from common.aws_handlers.sqs import SqsQueue
-from common.aws_handlers.sts import SessionHelper
 
+print("aws_handlers Python package successfully initialized")
 
 __all__ = [
     "CloudFormation",
@@ -38,4 +39,3 @@ __all__ = [
     "SqsQueue",
     "SessionHelper",
 ]
-print("aws_handlers Python package successfully initialized")

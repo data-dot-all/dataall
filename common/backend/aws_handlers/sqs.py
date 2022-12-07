@@ -6,7 +6,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
-from common.utils import Parameter
+from common.utils.parameter import Parameter
 
 logger = logging.getLogger(__name__)
 
