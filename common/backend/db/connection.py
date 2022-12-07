@@ -10,7 +10,8 @@ from sqlalchemy.orm import sessionmaker
 
 from common.db import Base, api
 from common.db.dbconfig import DbConfig
-from common.db.utils import Parameter, Secrets
+from common.utils.parameter import Parameter
+from common.utils.secrets_manager import Secrets
 
 try:
     from urllib import quote_plus, unquote_plus
