@@ -14,7 +14,7 @@ from . import (
     KeyValueTag,
 )
 from ..api.organization import Organization
-from ..models import EnvironmentGroup, ConsumptionRole
+from ..models import EnvironmentGroup
 from ..models.Enums import (
     ShareObjectStatus,
     ShareableType,
@@ -497,7 +497,7 @@ class Environment:
                 message=f'IAM role {IAMRoleArn} is already added to the environment {environment.name}',
             )
 
-        consumption_role = ConsumptionRole(
+        consumption_role = models.ConsumptionRole(
             consumptionRoleName=data['consumptionRoleName'],
             environmentUri=environment.environmentUri,
             groupUri=group,
@@ -512,7 +512,7 @@ class Environment:
             session=session,
             group=group,
             resource_uri=consumption_role.consumptionRoleUri,
-            permissions=permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
+            permissions=permissions.CONSUMPTION_ROLE_ALL,
             resource_type=models.ConsumptionRole.__name__,
         )
         return consumption_role
