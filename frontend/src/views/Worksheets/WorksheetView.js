@@ -187,7 +187,7 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = ""
-      if (dataset.GlueDatabaseName.includes("shared")){
+      if (dataset.GlueDatabaseName.includes(dataset.datasetUri+"_shared_")){
         response = await client.query(
           getSharedDatasetTables({
             datasetUri: dataset.datasetUri,
@@ -203,7 +203,7 @@ const WorksheetView = () => {
         );
       }
 
-      if (!response.errors && dataset.GlueDatabaseName.includes("shared")) {
+      if (!response.errors && dataset.GlueDatabaseName.includes(dataset.datasetUri+"_shared_")) {
         setTableOptions(
           response.data.getSharedDatasetTables.nodes.map((t) => (
             {
