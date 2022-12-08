@@ -10,14 +10,7 @@ from ariadne import (
     make_executable_schema,
 )
 
-from backend.api.gql.schema import Schema as gqlSchema
-from backend.api.gql.graphql_enum import GraphqlEnum as gqlEnum
-from backend.api.gql.graphql_input import InputType as gqlInputType
-from backend.api.gql.graphql_mutation_field import MutationField as gqlMutationField
-from backend.api.gql.graphql_query_field import QueryField as gqlQueryField
-from backend.api.gql.graphql_type import ObjectType as gqlObjectType
-from backend.api.gql.graphql_union_type import Union as gqlUnion
-
+from backend.api import gql
 from backend.api.constants import GraphQLEnumMapper
 
 class Context:
@@ -38,34 +31,33 @@ class Context:
 
 def bootstrap():
     classes = {
-        gqlObjectType: [],
-        gqlQueryField: [],
-        gqlMutationField: [],
-        gqlEnum: [],
-        gqlUnion: [],
-        gqlInputType: [],
+        gql.ObjectType: [],
+        gql.QueryField: [],
+        gql.MutationField: [],
+        gql.Enum: [],
+        gql.Union: [],
+        gql.InputType: [],
     }
 
-    Query = gqlObjectType(name='Query', fields=classes[gqlQueryField])
+    Query = gql.ObjectType(name='Query', fields=classes[gql.QueryField])
 
-    Mutation = gqlObjectType(name='Mutation', fields=classes[gqlMutationField])
+    Mutation = gql.ObjectType(name='Mutation', fields=classes[gql.MutationField])
 
     for enumclass in GraphQLEnumMapper.__subclasses__():
         enumclass.toGraphQLEnum()
 
     for cls in classes.keys():
-        print(f"printing class in bootstrap: {cls.name}")
         for name in cls.class_instances['default'].keys():
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))
             else:
                 raise Exception(f'Unknown Graphql Type :`{name}`')
 
-    schema = gqlSchema(
-        types=classes[gqlObjectType],
-        inputs=classes[gqlInputType],
-        enums=classes[gqlEnum],
-        unions=classes[gqlUnion],
+    schema = gql.Schema(
+        types=classes[gql.ObjectType],
+        inputs=classes[gql.InputType],
+        enums=classes[gql.Enum],
+        unions=classes[gql.Union],
     )
     return schema
 

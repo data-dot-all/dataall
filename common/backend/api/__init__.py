@@ -1,5 +1,4 @@
 print("Initializing api Python package...")
-from backend.api.gql import *
 from backend.api.constants import GraphQLEnumMapper
 from backend.api.context import (
     Context,

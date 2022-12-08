@@ -1,4 +1,4 @@
-from backend.api.module_api import (
+from backend.api.core.Environment import (
     input_types,
     mutations,
     queries,

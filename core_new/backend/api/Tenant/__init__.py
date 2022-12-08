@@ -1,4 +1,4 @@
-from backend.api.module_api import (
+from . import (
     input_types,
     mutations,
     queries,

@@ -1,12 +1,16 @@
-from common.api import Context
-from common.aws_handlers import Sagemaker
-from common.db import permissions
+from backend.api import Context
+from backend.db import permissions
+from backend.db.api import ResourcePolicy
+from backend.aws_handlers import Sagemaker
 
-from core.backend.dataall.db import models
-from core.backend.dataall.db.api import ResourcePolicy, Notebook, KeyValueTag, Stack, Environment
-from core.backend.dataall.api.Objects.Stack import stack_helper
 
-from .schema import SagemakerNotebookRole
+from backend.db.core import models, api
+from backend.db.module import Notebook
+
+from backend.api.core import stack_helper
+from backend.api.Module.schema import SagemakerNotebookRole
+
+
 
 def create_notebook(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
@@ -20,7 +24,7 @@ def create_notebook(context: Context, source, input: dict = None):
             check_perm=True,
         )
 
-        Stack.create_stack(
+        api.Stack.create_stack(
             session=session,
             environment_uri=notebook.environmentUri,
             target_type='notebook',
@@ -155,11 +159,11 @@ def delete_notebook(
             username=context.username,
         )
         notebook = Notebook.get_notebook_by_uri(session, notebookUri)
-        env: models.Environment = Environment.get_environment_by_uri(
+        env: models.Environment = api.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
 
-        KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+        api.KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
 
         session.delete(notebook)
 
