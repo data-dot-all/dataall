@@ -147,3 +147,30 @@ EnvironmentPublishedItemSearchResults = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(EnvironmentPublishedItem)),
     ],
 )
+
+ConsumptionRole = gql.ObjectType(
+    name='ConsumptionRole',
+    fields=[
+        gql.Field(name='consumptionRoleUri', type=gql.String),
+        gql.Field(name='consumptionRoleName', type=gql.String),
+        gql.Field(name='groupUri', type=gql.String),
+        gql.Field(name='environmentUri', type=gql.String),
+        gql.Field(name='IAMRoleArn', type=gql.String),
+        gql.Field(name='IAMRoleName', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='deleted', type=gql.String),
+    ],
+)
+
+ConsumptionRoleSearchResult = gql.ObjectType(
+    name='ConsumptionRoleSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='nodes', type=gql.ArrayType(ConsumptionRole)),
+    ],
+)

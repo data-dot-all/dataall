@@ -16,6 +16,7 @@ from .EnvironmentGroup import EnvironmentGroup
 from .FeedMessage import FeedMessage
 from .Glossary import GlossaryNode, TermLink
 from .Group import Group
+from .ConsumptionRole import ConsumptionRole
 from .GroupMember import GroupMember
 from .Notification import Notification, NotificationType
 from .Organization import Organization

@@ -85,9 +85,8 @@ DatasetLink = gql.ObjectType(
     fields=[
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='datasetName', type=gql.String),
-        gql.Field(name='datasetOrganizationUri', type=gql.String),
-        gql.Field(name='businessOwnerEmail', type=gql.String),
-        gql.Field(name='datasetOrganizationName', type=gql.String),
+        gql.Field(name='SamlAdminGroupName', type=gql.String),
+        gql.Field(name='environmentName', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
     ],
 )
@@ -110,6 +109,11 @@ ShareObject = gql.ObjectType(
             name='environment',
             resolver=resolve_environment,
             type=gql.Ref('Environment'),
+        ),
+        gql.Field(
+            name='group',
+            resolver=resolve_group,
+            type=gql.String,
         ),
         gql.Field(
             'items',

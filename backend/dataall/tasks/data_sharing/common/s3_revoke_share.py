@@ -52,6 +52,9 @@ class S3ShareRevoke(S3ShareManager):
         -------
         True if share is approved successfully
         """
+        log.info(
+            '##### Starting Revoking folders #######'
+        )
         for folder in revoke_folders:
             revoking_item = api.ShareObject.find_share_item_by_folder(
                 session, share, folder

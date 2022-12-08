@@ -8,7 +8,7 @@ import useSettings from '../../hooks/useSettings';
 import Pager from '../../components/Pager';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import searchOutbox from '../../api/DataAccessRequest/searchOutbox';
+import getShareRequestsFromMe from '../../api/ShareObject/getShareRequestsFromMe';
 import ShareOutboxListItem from './ShareOutboxListItem';
 
 const ShareOutboxList = () => {
@@ -21,14 +21,14 @@ const ShareOutboxList = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      searchOutbox({
+      getShareRequestsFromMe({
         filter: {
           ...filter
         }
       })
     );
     if (!response.errors) {
-      setItems(response.data.requestsFromMe);
+      setItems(response.data.getShareRequestsFromMe);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

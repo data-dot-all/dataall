@@ -132,30 +132,11 @@ const ShareInboxListItem = (props) => {
               px: 3
             }}
           >
-            {share.status === 'Approved' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Dataset  ${share.dataset.datasetName} read access
-                  approved for the team ${
-                    share.principal.principalName || '-'
-                  }.`}
-              </Typography>
-            )}
-            {share.status === 'PendingApproval' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Approving will grant the team ${
-                  share.principal.principalName || '-'
-                }
-                   read access on dataset ${share.dataset.datasetName}.`}
-              </Typography>
-            )}
-            {share.status === 'Rejected' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Dataset ${share.dataset.datasetName} read access
-                  rejected for the team ${
-                    share.principal.principalName || '-'
-                  }.`}
-              </Typography>
-            )}
+            <Typography color="textSecondary" variant="body1">
+              {`Read access to Dataset: ${share.dataset.datasetName} 
+                for the Principal: ${share.principal.principalName} 
+                from Environment: ${share.principal.environmentName}`}
+            </Typography>
           </Box>
         </Grid>
         <Grid item md={share.status === 'PendingApproval' ? 3 : 2} xs={6}>

@@ -76,7 +76,7 @@ def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organ
 
 @pytest.fixture(scope='module')
 def env2(
-    env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
+        env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
 ) -> dataall.db.models.Environment:
     yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-1')
 
@@ -108,43 +108,10 @@ def env2group(env1):
     return env2.SamlGroupName
 
 
-def test_init(tables1, tables2):
-    assert True
-
-
-def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
-    q = """
-    mutation CreateShareObject(
-        $datasetUri:String!,
-        $input:NewShareObjectInput
-    ){
-        createShareObject(datasetUri:$datasetUri, input:$input){
-            shareUri
-            status
-            owner
-            dataset{
-                datasetUri
-            }
-        }
-    }
-    """
-
-    response = client.query(
-        q,
-        username='anonymous',
-        groups=[group3.name],
-        datasetUri=dataset1.datasetUri,
-        input={
-            'environmentUri': env2.environmentUri,
-            'principalId': group2.groupUri,
-            'principalType': dataall.api.constants.PrincipalType.Group.name,
-        },
-    )
-
-    assert 'Unauthorized' in response.errors[0].message
-
-
-def test_request_access_authorized(client, dataset1, env2, db, user2, group2, env1):
+@pytest.fixture(scope='module', autouse=True)
+def share1(
+    client, env1, user, env1group, dataset2
+):
     q = """
     mutation CreateShareObject(
         $datasetUri:String!,
@@ -165,27 +132,160 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
 
     response = client.query(
         q,
+        username=user.userName,
+        groups=[env1group],
+        datasetUri=dataset2.datasetUri,
+        input={
+            'environmentUri': env1.environmentUri,
+            'groupUri': env1group,
+            'principalId': env1group,
+            'principalType': dataall.api.constants.PrincipalType.Group.name,
+        },
+    )
+    return response.data.createShareObject
+
+
+def test_init(tables1, tables2):
+    assert True
+
+
+def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
+    q = """
+      mutation CreateShareObject(
+        $datasetUri: String!
+        $itemType: String
+        $itemUri: String
+        $input: NewShareObjectInput
+      ) {
+        createShareObject(
+          datasetUri: $datasetUri
+          itemType: $itemType
+          itemUri: $itemUri
+          input: $input
+        ) {
+          shareUri
+          created
+        }
+      }
+    """
+
+    response = client.query(
+        q,
+        username='anonymous',
+        groups=[group3.name],
+        datasetUri=dataset1.datasetUri,
+        input={
+            'environmentUri': env2.environmentUri,
+            'groupUri': group2.name,
+            'principalId': group2.groupUri,
+            'principalType': dataall.api.constants.PrincipalType.Group.name,
+        },
+    )
+
+    assert 'Unauthorized' in response.errors[0].message
+
+
+def test_request_access_authorized(client, dataset1, env2, db, user2, group2, env1):
+    q = """
+      mutation CreateShareObject(
+        $datasetUri: String!
+        $itemType: String
+        $itemUri: String
+        $input: NewShareObjectInput
+      ) {
+        createShareObject(
+          datasetUri: $datasetUri
+          itemType: $itemType
+          itemUri: $itemUri
+          input: $input
+        ) {
+          shareUri
+          created
+        }
+      }
+    """
+
+    response = client.query(
+        q,
         username=user2.userName,
         groups=[group2.name],
         datasetUri=dataset1.datasetUri,
         input={
             'environmentUri': env2.environmentUri,
+            'groupUri': group2.name,
             'principalId': group2.name,
             'principalType': dataall.api.constants.PrincipalType.Group.name,
         },
     )
-    print(response)
 
-    assert response.data.createShareObject.dataset.datasetUri == dataset1.datasetUri
-    assert (
-        response.data.createShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
+    assert response.data.createShareObject.shareUri
+
+
+def test_get_share_object(client, share1, user, env1group):
+    q = """
+    query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
+      getShareObject(shareUri: $shareUri) {
+        shareUri
+        created
+        owner
+        status
+        userRoleForShareObject
+        principal {
+          principalId
+          principalType
+          principalName
+          principalIAMRoleName
+          SamlGroupName
+          environmentUri
+          environmentName
+          AwsAccountId
+          region
+          organizationUri
+          organizationName
+        }
+        items(filter: $filter) {
+          count
+          page
+          pages
+          hasNext
+          hasPrevious
+          nodes {
+            itemUri
+            shareItemUri
+            itemType
+            itemName
+            status
+            action
+          }
+        }
+        dataset {
+          datasetUri
+          datasetName
+          SamlAdminGroupName
+          environmentName
+          exists
+        }
+      }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[env1group],
+        shareUri=share1.shareUri,
+        filter={},
     )
-    assert response.data.createShareObject.owner == user2.userName
+    print(response)
+    assert response.data.getShareObject.shareUri == share1.shareUri
+    assert response.data.getShareObject.principal.principalType == dataall.api.constants.PrincipalType.Group.name
+    assert response.data.getShareObject.principal.principalIAMRoleName
+    assert response.data.getShareObject.principal.SamlGroupName
+    assert response.data.getShareObject.principal.region
 
 
 def test_list_dataset_share_objects(
-    client, dataset1, env1, user, user3, env2, db, user2, group2, group, group4
+        client, dataset1, env1, user, user3, env2, db, user2, group2, group, group4
 ):
     q = """
     query GetDataset(
@@ -214,7 +314,7 @@ def test_list_dataset_share_objects(
 
     assert response.data.getDataset.shares.count >= 1
     assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
+            response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
     )
 
     response = client.query(
@@ -223,8 +323,8 @@ def test_list_dataset_share_objects(
 
     assert response.data.getDataset.shares.count == 1
     assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject
-        == 'NoPermission'
+            response.data.getDataset.shares.nodes[0].userRoleForShareObject
+            == 'NoPermission'
     )
 
     response = client.query(
@@ -235,23 +335,23 @@ def test_list_dataset_share_objects(
     )
     assert response.data.getDataset.shares.count == 1
     assert (
-        response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
+            response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
     )
 
 
 def test_add_item(
-    dataset1,
-    env1,
-    client,
-    user2,
-    group2,
-    env2,
-    org2,
-    user,
-    group3,
-    user3,
-    module_mocker,
-    group,
+        dataset1,
+        env1,
+        client,
+        user2,
+        group2,
+        env2,
+        org2,
+        user,
+        group3,
+        user3,
+        module_mocker,
+        group,
 ):
     module_mocker.patch(
         'dataall.api.Objects.Stack.stack_helper.deploy_stack',
@@ -356,23 +456,50 @@ def test_add_item(
     share_item_uri = response.data.addSharedItem.shareItemUri
 
     query = """
-    query GetShareObject($shareUri:String!){
-        getShareObject(shareUri:$shareUri){
-            status
-            owner
-            datasetUri
-            dataset{
-                    datasetUri
-                    datasetName
-                    businessOwnerEmail
+        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                userRoleForShareObject
+                principal {
+                  principalId
+                  principalType
+                  principalName
+                  principalIAMRoleName
+                  SamlGroupName
+                  environmentUri
+                  environmentName
+                  AwsAccountId
+                  region
+                  organizationUri
+                  organizationName
                 }
-            principal{
-                principalId
-                principalType
-                principalName
+                items(filter: $filter) {
+                  count
+                  page
+                  pages
+                  hasNext
+                  hasPrevious
+                  nodes {
+                    itemUri
+                    shareItemUri
+                    itemType
+                    itemName
+                    status
+                    action
+                  }
+                }
+                dataset {
+                  datasetUri
+                  datasetName
+                  SamlAdminGroupName
+                  environmentName
+                  exists
+                }
+              }
             }
-        }
-    }
     """
 
     response = client.query(
@@ -383,19 +510,18 @@ def test_add_item(
     )
 
     assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
+            response.data.getShareObject.status
+            == dataall.api.constants.ShareObjectStatus.Draft.name
     )
     assert (
-        response.data.getShareObject.principal.principalName
-        == f'{group2.name} ({env2.name}/{env2.region})'
+            response.data.getShareObject.principal.principalId
+            == group2.name
     )
     assert (
-        response.data.getShareObject.principal.principalType
-        == dataall.api.constants.PrincipalType.Group.name
+            response.data.getShareObject.principal.principalType
+            == dataall.api.constants.PrincipalType.Group.name
     )
     assert response.data.getShareObject.dataset.datasetUri == dataset1.datasetUri
-    assert response.data.getShareObject.datasetUri == dataset1.datasetUri
 
     query = """
         mutation submitShareObject($shareUri:String!){
@@ -499,8 +625,8 @@ def test_add_item(
 
     assert response.data.removeSharedItem
     received_requests = """
-            query requestsToMe($filter: ShareObjectFilter){
-                requestsToMe(filter: $filter){
+            query getShareRequestsToMe($filter: ShareObjectFilter){
+                getShareRequestsToMe(filter: $filter){
                     count
                     nodes{
                         shareUri
@@ -511,10 +637,10 @@ def test_add_item(
     response = client.query(
         received_requests, username=user.userName, groups=[group.name]
     )
-    assert response.data.requestsToMe.count == 0
+    assert response.data.getShareRequestsToMe.count == 0
     received_requests = """
-                query requestsToMe($filter: ShareObjectFilter){
-                    requestsToMe(filter: $filter){
+                query getShareRequestsToMe($filter: ShareObjectFilter){
+                    getShareRequestsToMe(filter: $filter){
                         count
                         nodes{
                             shareUri
@@ -525,11 +651,11 @@ def test_add_item(
     response = client.query(
         received_requests, username=user3.userName, groups=[group3.name]
     )
-    assert response.data.requestsToMe.count == 1
+    assert response.data.getShareRequestsToMe.count == 1
 
     sent_requests = """
-                    query requestsFromMe($filter: ShareObjectFilter){
-                        requestsFromMe(filter: $filter){
+                    query getShareRequestsFromMe($filter: ShareObjectFilter){
+                        getShareRequestsFromMe(filter: $filter){
                             count
                             nodes{
                                 shareUri
@@ -540,11 +666,11 @@ def test_add_item(
     response = client.query(
         sent_requests, username=user2.userName, groups=[group2.name]
     )
-    assert response.data.requestsFromMe.count == 1
+    assert response.data.getShareRequestsFromMe.count == 1
 
     sent_requests = """
-                        query requestsFromMe($filter: ShareObjectFilter){
-                            requestsFromMe(filter: $filter){
+                        query getShareRequestsFromMe($filter: ShareObjectFilter){
+                            getShareRequestsFromMe(filter: $filter){
                                 count
                                 nodes{
                                     shareUri
@@ -555,7 +681,7 @@ def test_add_item(
     response = client.query(
         sent_requests, username=user3.userName, groups=[group3.name]
     )
-    assert response.data.requestsFromMe.count == 0
+    assert response.data.getShareRequestsFromMe.count == 0
 
 
 def test_notifications(client, db, user):
@@ -574,8 +700,8 @@ def test_notifications(client, db, user):
                 """
     response = client.query(list, username=user.userName)
     assert (
-        response.data.listNotifications.nodes[0].type
-        == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
+            response.data.listNotifications.nodes[0].type
+            == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
     )
     notificationUri = response.data.listNotifications.nodes[0].notificationUri
     query = """
@@ -717,21 +843,22 @@ def test_delete_share_object(client, dataset1, group, user2, group2, env2):
     assert response.data.deleteShareObject
 
     create_shared_object_query = """
-    mutation CreateShareObject(
-        $datasetUri:String!,
-        $input:NewShareObjectInput
-    ){
-        createShareObject(datasetUri:$datasetUri, input:$input){
-            shareUri
-            status
-            owner
-            dataset{
-                datasetUri
-                datasetName
-                exists
-            }
+      mutation CreateShareObject(
+        $datasetUri: String!
+        $itemType: String
+        $itemUri: String
+        $input: NewShareObjectInput
+      ) {
+        createShareObject(
+          datasetUri: $datasetUri
+          itemType: $itemType
+          itemUri: $itemUri
+          input: $input
+        ) {
+          shareUri
+          created
         }
-    }
+      }
     """
 
     client.query(
@@ -741,10 +868,12 @@ def test_delete_share_object(client, dataset1, group, user2, group2, env2):
         datasetUri=dataset1.datasetUri,
         input={
             'environmentUri': env2.environmentUri,
+            'groupUri': group2.name,
             'principalId': group2.name,
             'principalType': dataall.api.constants.PrincipalType.Group.name,
         },
     )
+
     add_item_query = """
     mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
         addSharedItem(shareUri:$shareUri,input:$input){

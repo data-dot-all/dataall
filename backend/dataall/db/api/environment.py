@@ -287,6 +287,9 @@ class Environment:
             g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
 
+        if permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES in g_permissions:
+            g_permissions.append(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+
         if permissions.CREATE_SHARE_OBJECT in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
 
@@ -475,6 +478,69 @@ class Environment:
         return group_invitation_permissions
 
     @staticmethod
+    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_perm(permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES)
+    def add_consumption_role(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> (models.Environment, models.EnvironmentGroup):
+
+        group: str = data['groupUri']
+        IAMRoleArn: str = data['IAMRoleArn']
+        environment = Environment.get_environment_by_uri(session, uri)
+
+        alreadyAdded = Environment.find_consumption_roles_by_IAMArn(
+            session, environment.environmentUri, IAMRoleArn
+        )
+        if alreadyAdded:
+            raise exceptions.UnauthorizedOperation(
+                action='ADD_CONSUMPTION_ROLE',
+                message=f'IAM role {IAMRoleArn} is already added to the environment {environment.name}',
+            )
+
+        consumption_role = models.ConsumptionRole(
+            consumptionRoleName=data['consumptionRoleName'],
+            environmentUri=environment.environmentUri,
+            groupUri=group,
+            IAMRoleArn=IAMRoleArn,
+            IAMRoleName=IAMRoleArn.split("/")[-1],
+        )
+
+        session.add(consumption_role)
+        session.commit()
+
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=group,
+            resource_uri=consumption_role.consumptionRoleUri,
+            permissions=permissions.CONSUMPTION_ROLE_ALL,
+            resource_type=models.ConsumptionRole.__name__,
+        )
+        return consumption_role
+
+    @staticmethod
+    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_perm(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
+    def remove_consumption_role(session, username, groups, uri, data=None, check_perm=None):
+        if not data:
+            raise exceptions.RequiredParameter('data')
+        if not uri:
+            raise exceptions.RequiredParameter('consumptionRoleUri')
+
+        consumption_role = Environment.get_environment_consumption_role(session, uri, data.get('environmentUri'))
+
+        if consumption_role:
+            session.delete(consumption_role)
+            session.commit()
+
+        ResourcePolicy.delete_resource_policy(
+            session=session,
+            group=consumption_role.groupUri,
+            resource_uri=consumption_role.consumptionRoleUri,
+            resource_type=models.ConsumptionRole.__name__,
+        )
+        return True
+
+    @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
         query = (
             session.query(models.Environment)
@@ -538,11 +604,11 @@ class Environment:
                 session, username, groups, uri, data
             ),
             page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
+            page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod
-    def query_all_environment_groups(session, username, groups, uri, filter) -> Query:
+    def query_all_environment_groups(session, uri, filter) -> Query:
         query = session.query(models.EnvironmentGroup).filter(
             models.EnvironmentGroup.environmentUri == uri
         )
@@ -562,7 +628,7 @@ class Environment:
     ) -> dict:
         return paginate(
             query=Environment.query_all_environment_groups(
-                session, username, groups, uri, data
+                session, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
@@ -629,6 +695,100 @@ class Environment:
         return Environment.query_environment_invited_groups(
             session, username, groups, uri, data
         ).all()
+
+    @staticmethod
+    def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
+        query = (
+            session.query(models.ConsumptionRole)
+            .filter(models.ConsumptionRole.environmentUri == uri)
+            .filter(models.ConsumptionRole.groupUri.in_(groups))
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                )
+            )
+        if filter and filter.get('groupUri'):
+            print("filter group")
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    models.ConsumptionRole.groupUri == group,
+                )
+            )
+        return query
+
+    @staticmethod
+    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+    def paginated_user_environment_consumption_roles(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return paginate(
+            query=Environment.query_user_environment_consumption_roles(
+                session, username, groups, uri, data
+            ),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 1000),
+        ).to_dict()
+
+    @staticmethod
+    def query_all_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
+        query = session.query(models.ConsumptionRole).filter(
+            models.ConsumptionRole.environmentUri == uri
+        )
+        if filter and filter.get('term'):
+            term = filter['term']
+            query = query.filter(
+                or_(
+                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                )
+            )
+        if filter and filter.get('groupUri'):
+            group = filter['groupUri']
+            query = query.filter(
+                or_(
+                    models.ConsumptionRole.groupUri == group,
+                )
+            )
+        return query
+
+    @staticmethod
+    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+    def paginated_all_environment_consumption_roles(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return paginate(
+            query=Environment.query_all_environment_consumption_roles(
+                session, username, groups, uri, data
+            ),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+    def list_environment_consumption_roles(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> [str]:
+        return [
+            {"value": g.IAMRoleArn, "label": g.consumptionRoleName}
+            for g in Environment.query_user_environment_consumption_roles(
+                session, username, groups, uri, data
+            ).all()
+        ]
+
+    @staticmethod
+    def find_consumption_roles_by_IAMArn(
+            session, uri, arn
+    ) -> Query:
+        return session.query(models.ConsumptionRole).filter(
+            and_(
+                models.ConsumptionRole.environmentUri == uri,
+                models.ConsumptionRole.IAMRoleArn == arn
+            )
+        ).first()
 
     @staticmethod
     def query_environment_datasets(session, username, groups, uri, filter) -> Query:
@@ -1047,6 +1207,26 @@ class Environment:
         return env_group
 
     @staticmethod
+    def get_environment_consumption_role(session, role_uri, environment_uri):
+        role = (
+            session.query(models.ConsumptionRole)
+            .filter(
+                (
+                    and_(
+                        models.ConsumptionRole.consumptionRoleUri == role_uri,
+                        models.ConsumptionRole.environmentUri == environment_uri,
+                    )
+                )
+            )
+            .first()
+        )
+        if not role:
+            raise exceptions.ObjectNotFound(
+                'ConsumptionRoleUri', f'({role_uri},{environment_uri})'
+            )
+        return role
+
+    @staticmethod
     def get_environment_by_uri(session, uri) -> models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
@@ -1218,6 +1398,14 @@ class Environment:
                 resource_uri=uri,
                 group=group.groupUri,
             )
+
+        env_roles = (
+            session.query(models.ConsumptionRole)
+            .filter(models.ConsumptionRole.environmentUri == uri)
+            .all()
+        )
+        for role in env_roles:
+            session.delete(role)
 
         KeyValueTag.delete_key_value_tags(
             session, environment.environmentUri, 'environment'

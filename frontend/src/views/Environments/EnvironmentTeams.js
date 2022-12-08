@@ -8,6 +8,7 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   InputAdornment,
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
 import CircularProgress from '@mui/material/CircularProgress';
 import {
   CopyAllOutlined,
+  DeleteOutlined,
   GroupAddOutlined,
   SupervisedUserCircleRounded
 } from '@mui/icons-material';
@@ -38,11 +40,14 @@ import { useDispatch } from '../../store';
 import Pager from '../../components/Pager';
 import Label from '../../components/Label';
 import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';
+import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
 import removeGroupFromEnvironment from '../../api/Environment/removeGroup';
+import removeConsumptionRoleFromEnvironment from '../../api/Environment/removeConsumptionRole';
 import getEnvironmentAssumeRoleUrl from '../../api/Environment/getEnvironmentAssumeRoleUrl';
 import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
 import generateEnvironmentAccessToken from '../../api/Environment/generateEnvironmentAccessToken';
 import listAllEnvironmentGroups from '../../api/Environment/listAllEnvironmentGroups';
+import listAllEnvironmentConsumptionRoles from '../../api/Environment/listAllEnvironmentConsumptionRoles';
 
 function TeamRow({ team, environment, fetchItems }) {
   const client = useClient();
@@ -59,6 +64,7 @@ function TeamRow({ team, environment, fetchItems }) {
   const handleTeamEditModalOpen = () => {
     setIsTeamEditModalOpen(true);
   };
+
   const removeGroup = async (groupUri) => {
     try {
       const response = await client.mutate(
@@ -218,19 +224,31 @@ TeamRow.propTypes = {
   environment: PropTypes.any,
   fetchItems: PropTypes.any
 };
+
 const EnvironmentTeams = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.PagedResponseDefault);
+  const [roles, setRoles] = useState(Defaults.PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [filterRoles, setFilterRoles] = useState(Defaults.DefaultFilter);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
+  const [inputValueRoles, setInputValueRoles] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
+  const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
   const handleTeamInviteModalOpen = () => {
     setIsTeamInviteModalOpen(true);
   };
   const handleTeamInviteModalClose = () => {
     setIsTeamInviteModalOpen(false);
+  };
+  const handleAddRoleModalOpen = () => {
+    setIsAddRoleModalOpen(true);
+  };
+  const handleAddRoleModalClose = () => {
+    setIsAddRoleModalOpen(false);
   };
 
   const fetchItems = useCallback(async () => {
@@ -253,13 +271,63 @@ const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filter]);
 
+  const fetchRoles= useCallback(async () => {
+    try {
+      const response = await client.query(
+        listAllEnvironmentConsumptionRoles({
+          environmentUri: environment.environmentUri,
+          filterRoles
+        })
+      );
+      if (!response.errors) {
+        setRoles({ ...response.data.listAllEnvironmentConsumptionRoles });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [client, dispatch, environment, filterRoles]);
+
+  const removeConsumptionRole = async (consumptionGroupUri) => {
+    console.log(consumptionGroupUri)
+    try {
+      const response = await client.mutate(
+        removeConsumptionRoleFromEnvironment({
+          environmentUri: environment.environmentUri,
+          consumptionRoleUri: consumptionGroupUri
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Consumption Role removed from environment', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        fetchRoles();
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
+
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchRoles().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page, fetchItems, dispatch]);
+  }, [client, filter.page, filterRoles.page, fetchItems, fetchRoles, dispatch]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -280,9 +348,29 @@ const EnvironmentTeams = ({ environment }) => {
     }
   };
 
+  const handleInputChangeRoles = (event) => {
+    setInputValueRoles(event.target.value);
+    setFilterRoles({ ...filterRoles, term: event.target.value });
+  };
+
+  const handleInputKeyupRoles = (event) => {
+    if (event.code === 'Enter') {
+      fetchRoles().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  };
+
+  const handlePageChangeRoles = async (event, value) => {
+    if (value <= roles.pages && value !== roles.page) {
+      await setFilterRoles({ ...filterRoles, page: value });
+    }
+  };
+
   return (
     <Box>
-      <Card>
+      <Box>
+        <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
           title={
@@ -390,6 +478,121 @@ const EnvironmentTeams = ({ environment }) => {
           </Box>
         </Scrollbar>
       </Card>
+      </Box>
+      <Box sx={{ mt: 3 }}>
+        <Card>
+        <CardHeader
+          action={<RefreshTableMenu refresh={fetchRoles} />}
+          title={
+            <Box>
+              <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
+              Environment Consumption IAM roles
+            </Box>
+          }
+        />
+        <Divider />
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            flexWrap: 'wrap',
+            m: -1,
+            p: 2
+          }}
+        >
+          <Grid item md={10} sm={6} xs={12}>
+            <Box
+              sx={{
+                m: 1,
+                maxWidth: '100%',
+                width: 500
+              }}
+            >
+              <TextField
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  )
+                }}
+                onChange={handleInputChangeRoles}
+                onKeyUp={handleInputKeyupRoles}
+                placeholder="Search"
+                value={inputValueRoles}
+                variant="outlined"
+              />
+            </Box>
+          </Grid>
+          <Grid item md={2} sm={6} xs={12}>
+            <Button
+              color="primary"
+              startIcon={<GroupAddOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              onClick={handleAddRoleModalOpen}
+              variant="contained"
+            >
+              Add Consumption Role
+            </Button>
+            {isAddRoleModalOpen && (
+              <EnvironmentRoleAddForm
+                environment={environment}
+                open
+                reloadRoles={fetchRoles}
+                onClose={handleAddRoleModalClose}
+              />
+            )}
+          </Grid>
+        </Box>
+        <Scrollbar>
+          <Box sx={{ minWidth: 600 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>IAM Role</TableCell>
+                  <TableCell>Role Owner</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              {loading ? (
+                <CircularProgress sx={{ mt: 1 }} />
+              ) : (
+                <TableBody>
+                  {roles.nodes.length > 0 ? (
+                    roles.nodes.map((role) => (
+                      <TableRow hover key={role.consumptionRoleUri}>
+                        <TableCell>{role.consumptionRoleName}</TableCell>
+                        <TableCell>{role.IAMRoleArn}</TableCell>
+                        <TableCell>{role.groupUri}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => removeConsumptionRole(role.consumptionRoleUri)}>
+                            <DeleteOutlined fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow hover>
+                      <TableCell>No Consumption IAM Role added</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              )}
+            </Table>
+            {!loading && roles.nodes.length > 0 && (
+              <Pager
+                mgTop={2}
+                mgBottom={2}
+                items={roles}
+                onChange={handlePageChangeRoles}
+              />
+            )}
+          </Box>
+        </Scrollbar>
+      </Card>
+      </Box>
     </Box>
   );
 };

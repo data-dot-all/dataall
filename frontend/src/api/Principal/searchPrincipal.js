@@ -13,9 +13,16 @@ const searchPrincipal = ({ filter }) => ({
         hasNext
         hasPrevious
         nodes {
+          principalId
           principalType
           principalName
-          principalId
+          SamlGroupName
+          environmentUri
+          environmentName
+          AwsAccountId
+          region
+          organizationUri
+          organizationName
         }
       }
     }

@@ -108,36 +108,11 @@ const ShareOutboxListItem = (props) => {
               px: 3
             }}
           >
-            {share.status === 'Approved' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Your environment ${
-                  share.principal.principalName || '-'
-                } is approved read access
-                  to dataset ${share.dataset.datasetName} .`}
-              </Typography>
-            )}
-            {share.status === 'Draft' && (
-              <Typography color="textSecondary" variant="body1">
-                Submit your request data owners to get read access.
-              </Typography>
-            )}
-            {share.status === 'PendingApproval' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Your share request to dataset ${
-                  share.dataset.datasetName
-                } for environment ${
-                  share.principal.principalName || '-'
-                } is pending approval.`}
-              </Typography>
-            )}
-            {share.status === 'Rejected' && (
-              <Typography color="textSecondary" variant="body1">
-                {`Your environment ${
-                  share.principal.principalName || '-'
-                } was rejected read access
-                  to dataset ${share.dataset.datasetName} .`}
-              </Typography>
-            )}
+            <Typography color="textSecondary" variant="body1">
+              {`Read access to Dataset: ${share.dataset.datasetName} 
+                for the Principal: ${share.principal.principalName} 
+                from Environment: ${share.principal.environmentName}`}
+            </Typography>
           </Box>
         </Grid>
         <Grid item md={2} xs={6}>
