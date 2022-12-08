@@ -22,7 +22,7 @@ RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
 COPY common/backend/. ./backend/
 
-COPY modules/notebooks/backend/api/. ./backend/api/Module/
+COPY modules/notebooks/backend/api/. ./backend/api/module/
 COPY modules/notebooks/backend/db/. ./backend/db/module/
 
 COPY core_new/backend/db/. ./backend/db/core/
