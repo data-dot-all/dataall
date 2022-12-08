@@ -4,9 +4,9 @@ import os
 import ast
 
 from botocore.exceptions import ClientError
-from common.aws_handlers.sts import SessionHelper
-from common.aws_handlers.secrets_manager import SecretsManager
-from common.aws_handlers.parameter_store import ParameterStoreManager
+from backend.aws_handlers.sts import SessionHelper
+from backend.aws_handlers.secrets_manager import SecretsManager
+from backend.aws_handlers.parameter_store import ParameterStoreManager
 
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)

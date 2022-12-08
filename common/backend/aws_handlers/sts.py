@@ -7,7 +7,7 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-from common.version import __version__, __pkg_name__
+from backend.version import __version__, __pkg_name__
 
 try:
     from urllib import quote_plus
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 class SessionHelper:
-    """SessionHelpers is a class simplifying common aws boto3 session tasks and helpers"""
+    """SessionHelpers is a class simplifying backend aws boto3 session tasks and helpers"""
 
     @classmethod
     def get_root_account_session(cls):

@@ -4,8 +4,8 @@ from enum import Enum
 
 from aws_cdk import Stack, Tags
 
-from common.db.connection import get_engine
-from common.db import api, models
+from backend.db.connection import get_engine
+from backend.db import api, models
 
 # Tag keys for Stacks
 class StackTagName(Enum):
@@ -74,7 +74,7 @@ class TagsUtil:
 
         # Build a list of tuples with tag keys and values based on the collected up to this point
         # ex. target_stack, organisation etc.
-        _common_stack_tags = [
+        _backend_stack_tags = [
             (StackTagName.CREATOR.value, target_stack.owner),
             (
                 StackTagName.ORGANISATION.value,
@@ -102,8 +102,8 @@ class TagsUtil:
             ),
         ]
 
-        # Build the final tag list with common tags
-        _stack_tags.extend(_common_stack_tags)
+        # Build the final tag list with backend tags
+        _stack_tags.extend(_backend_stack_tags)
 
         # ..and any additional key value tags
         _stack_tags.extend(key_value_tags)

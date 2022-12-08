@@ -1,6 +1,6 @@
 from enum import Enum
 
-from common.utils.slugify import slugify
+from backend.utils.slugify import slugify
 
 
 class NamingConventionPattern(Enum):

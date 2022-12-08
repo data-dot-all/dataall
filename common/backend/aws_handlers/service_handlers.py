@@ -3,8 +3,8 @@ import os
 import time
 from functools import wraps
 
-from common.db.models import Task
-from common.utils.json_utils import to_json
+from backend.db.models import Task
+from backend.utils.json_utils import to_json
 
 log = logging.getLogger(__name__)
 ENVNAME = os.getenv('envname', 'local')

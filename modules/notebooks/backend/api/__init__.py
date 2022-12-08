@@ -1,4 +1,4 @@
-from . import (
+from common.api.module_api import (
     input_types,
     mutations,
     queries,

@@ -1,4 +1,4 @@
-from common import gql
+from common.api import gql
 from .resolvers import *
 
 getSagemakerNotebook = gql.QueryField(

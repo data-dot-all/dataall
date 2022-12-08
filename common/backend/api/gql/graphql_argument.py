@@ -1,10 +1,10 @@
-from common.api.gql.graphql_enum import GraphqlEnum as Enum
-from common.api.gql.graphql_input import InputType
-from common.api.gql.graphql_scalar import Scalar
-from common.api.gql.graphql_type_modifiers import ArrayType, NonNullableType
-from common.api.gql.ref import Ref
-from common.api.gql.thunk import Thunk
-from common.api.gql.utils import get_named_type
+from backend.api.gql.graphql_enum import GraphqlEnum as Enum
+from backend.api.gql.graphql_input import InputType
+from backend.api.gql.graphql_scalar import Scalar
+from backend.api.gql.graphql_type_modifiers import ArrayType, NonNullableType
+from backend.api.gql.ref import Ref
+from backend.api.gql.thunk import Thunk
+from backend.api.gql.utils import get_named_type
 
 
 class Argument:

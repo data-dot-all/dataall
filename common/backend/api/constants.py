@@ -1,5 +1,5 @@
 from enum import Enum
-from common.api.gql.graphql_enum import GraphqlEnum
+from backend.api.gql.graphql_enum import GraphqlEnum
 
 
 class GraphQLEnumMapper(Enum):

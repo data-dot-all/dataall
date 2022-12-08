@@ -1,4 +1,4 @@
-from common import gql
+from common.api import gql
 
 NewSagemakerNotebookInput = gql.InputType(
     name='NewSagemakerNotebookInput ',

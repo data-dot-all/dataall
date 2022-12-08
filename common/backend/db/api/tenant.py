@@ -1,6 +1,6 @@
 import logging
 
-from common.db import models
+from backend.db import models
 
 logger = logging.getLogger(__name__)
 

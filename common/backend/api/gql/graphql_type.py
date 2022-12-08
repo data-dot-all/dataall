@@ -1,4 +1,4 @@
-from common.api.gql._cache import cache_instances
+from backend.api.gql._cache import cache_instances
 
 
 @cache_instances

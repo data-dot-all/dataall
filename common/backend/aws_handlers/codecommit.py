@@ -1,4 +1,4 @@
-from common.aws_handlers.sts import SessionHelper
+from backend.aws_handlers.sts import SessionHelper
 
 
 class CodeCommit:

@@ -20,8 +20,8 @@ COPY common/backend/requirements.txt ./requirements.txt
 RUN $PYTHON_VERSION -m pip install -U pip
 RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
-COPY common/backend/. ./common/
-COPY modules/notebooks/backend/api/. ./module_api/
+COPY common/backend/. ./backend/
+COPY modules/notebooks/backend/api/. ./backend/api/module_api/
 
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}

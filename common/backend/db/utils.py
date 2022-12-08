@@ -2,7 +2,7 @@ from datetime import datetime
 
 import nanoid
 
-from common.utils.slugify import slugify
+from backend.utils.slugify import slugify
 
 
 def uuid(resource_type='undefined', parent_field=''):

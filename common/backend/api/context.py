@@ -10,15 +10,15 @@ from ariadne import (
     make_executable_schema,
 )
 
-from common.api.gql.schema import Schema as gqlSchema
-from common.api.gql.graphql_enum import GraphqlEnum as gqlEnum
-from common.api.gql.graphql_input import InputType as gqlInputType
-from common.api.gql.graphql_mutation_field import MutationField as gqlMutationField
-from common.api.gql.graphql_query_field import QueryField as gqlQueryField
-from common.api.gql.graphql_type import ObjectType as gqlObjectType
-from common.api.gql.graphql_union_type import Union as gqlUnion
+from backend.api.gql.schema import Schema as gqlSchema
+from backend.api.gql.graphql_enum import GraphqlEnum as gqlEnum
+from backend.api.gql.graphql_input import InputType as gqlInputType
+from backend.api.gql.graphql_mutation_field import MutationField as gqlMutationField
+from backend.api.gql.graphql_query_field import QueryField as gqlQueryField
+from backend.api.gql.graphql_type import ObjectType as gqlObjectType
+from backend.api.gql.graphql_union_type import Union as gqlUnion
 
-from common.api.constants import GraphQLEnumMapper
+from backend.api.constants import GraphQLEnumMapper
 
 class Context:
     def __init__(
@@ -54,6 +54,7 @@ def bootstrap():
         enumclass.toGraphQLEnum()
 
     for cls in classes.keys():
+        print(f"printing class in bootstrap: {cls.name}")
         for name in cls.class_instances['default'].keys():
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))

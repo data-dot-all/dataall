@@ -1,5 +1,5 @@
-from common.api.gql._cache import cache_instances
-from common.api.gql.graphql_field import Field
+from backend.api.gql._cache import cache_instances
+from backend.api.gql.graphql_field import Field
 
 
 @cache_instances

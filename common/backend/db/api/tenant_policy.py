@@ -2,10 +2,10 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from common.db.paginator import paginate
-from common.db import models, exceptions, permissions
-from common.db.api.permission import Permission
-from common.db.api.tenant import Tenant
+from backend.db.paginator import paginate
+from backend.db import models, exceptions, permissions
+from backend.db.api.permission import Permission
+from backend.db.api.tenant import Tenant
 
 logger = logging.getLogger(__name__)
 

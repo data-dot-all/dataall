@@ -1,4 +1,4 @@
-from common import gql, GraphQLEnumMapper
+from common.api import gql, GraphQLEnumMapper
 from .resolvers import *
 
 class SagemakerNotebookRole(GraphQLEnumMapper):

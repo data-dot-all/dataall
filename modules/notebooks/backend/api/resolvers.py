@@ -1,6 +1,6 @@
-from common import Context
-from common.backend.aws_handlers import Sagemaker
-from common.backend.db import permissions
+from common.api import Context
+from common.aws_handlers import Sagemaker
+from common.db import permissions
 
 from core.backend.dataall.db import models
 from core.backend.dataall.db.api import ResourcePolicy, Notebook, KeyValueTag, Stack, Environment
