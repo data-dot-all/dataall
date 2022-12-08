@@ -126,13 +126,8 @@ const RequestAccessModal = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       let response;
-      console.log("inside submit")
-      console.log(values)
       let type = values.consumptionRole? 'ConsumptionRole' : 'Group';
-      console.log(type)
       let principal = values.consumptionRole? values.consumptionRole : values.groupUri;
-      console.log(principal)
-      console.log(type)
       if (hit.resourceKind === 'dataset') {
         response = await client.mutate(
           createShareObject({
@@ -399,8 +394,6 @@ const RequestAccessModal = (props) => {
                                 label="Consumption Role (optional)"
                                 name="consumptionRole"
                                 onChange={(event) => {
-                                  console.log("change")
-                                  console.log(event)
                                   setFieldValue('consumptionRole', event.target.value);
                                 }}
                                 select

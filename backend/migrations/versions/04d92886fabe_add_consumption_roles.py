@@ -11,7 +11,7 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import utils, Resource
+from dataall.db import api, models, permissions, utils
 from dataall.db.models.Enums import ShareObjectStatus, ShareableType, PrincipalType
 from datetime import datetime
 
@@ -102,14 +102,14 @@ def upgrade():
                 session.commit()
         print('share_object table updated successfully')
     except Exception as e:
-        print(f'Failed to init permissions due to: {e}')
+        print(f'Failed to backfill share_object due to: {e}')
 
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Initializing permissions...')
+        print('Re-Initializing permissions...')
         api.Permission.init_permissions(session)
-        print('Permissions initialized successfully')
+        print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
     # ### end Alembic commands ###

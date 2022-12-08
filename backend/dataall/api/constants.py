@@ -157,7 +157,6 @@ class ShareObjectPermission(GraphQLEnumMapper):
     Approvers = '999'
     Requesters = '800'
     DatasetAdmins = '700'
-    ApproversAndRequesters = '600'
     NoPermission = '000'
 
 
