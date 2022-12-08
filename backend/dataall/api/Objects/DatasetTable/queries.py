@@ -43,6 +43,6 @@ getSharedDatasetTables = gql.QueryField(
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='envUri', type=gql.NonNullableType(gql.String))
     ],
-    type=DatasetTableSearchResult,
+    type=gql.ArrayType(gql.Ref('SharedDatasetTableItem')),
     resolver=list_shared_tables_by_env_dataset,
 )

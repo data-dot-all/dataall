@@ -205,7 +205,7 @@ const WorksheetView = () => {
 
       if (!response.errors && dataset.GlueDatabaseName.includes(dataset.datasetUri+"_shared_")) {
         setTableOptions(
-          response.data.getSharedDatasetTables.nodes.map((t) => (
+          response.data.getSharedDatasetTables.map((t) => (
             {
               ...t,
               value: t.tableUri,

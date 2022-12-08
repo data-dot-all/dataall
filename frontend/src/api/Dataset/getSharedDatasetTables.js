@@ -8,30 +8,8 @@ const getSharedDatasetTables = ({ datasetUri, envUri }) => ({
   query: gql`
     query GetSharedDatasetTables($datasetUri: String!, $envUri: String!) {
         getSharedDatasetTables(datasetUri: $datasetUri, envUri: $envUri) {
-            count
-            pages
-            page
-            hasNext
-            hasPrevious 
-            nodes {
-                dataset {
-                  datasetUri
-                }
-                terms {
-                  nodes {
-                    label
-                  }
-                }
-                tableUri
-                name
-                created
-                GlueTableName
-                GlueDatabaseName
-                description
-                stage
-                S3Prefix
-                userRoleForTable
-            }
+          tableUri
+          GlueTableName
         }
     }
   `

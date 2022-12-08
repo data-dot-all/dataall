@@ -129,3 +129,11 @@ DatasetTablePreviewResult = gql.ObjectType(
         gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )
+
+SharedDatasetTableItem = gql.ObjectType(
+    name='SharedDatasetTableItem',
+    fields=[
+        gql.Field(name='tableUri', type=gql.String),
+        gql.Field(name='GlueTableName', type=gql.String),
+    ]
+)
