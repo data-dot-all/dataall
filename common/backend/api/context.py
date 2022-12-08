@@ -11,7 +11,7 @@ from ariadne import (
 )
 
 from common.api.gql.schema import Schema as gqlSchema
-from common.api.gql.graphql_enum import GraphqlEnum as Enum
+from common.api.gql.graphql_enum import GraphqlEnum as gqlEnum
 from common.api.gql.graphql_input import InputType as gqlInputType
 from common.api.gql.graphql_mutation_field import MutationField as gqlMutationField
 from common.api.gql.graphql_query_field import QueryField as gqlQueryField
@@ -41,7 +41,7 @@ def bootstrap():
         gqlObjectType: [],
         gqlQueryField: [],
         gqlMutationField: [],
-        Enum: [],
+        gqlEnum: [],
         gqlUnion: [],
         gqlInputType: [],
     }
@@ -61,10 +61,10 @@ def bootstrap():
                 raise Exception(f'Unknown Graphql Type :`{name}`')
 
     schema = gqlSchema(
-        types=classes[ObjectType],
-        inputs=classes[InputType],
-        enums=classes[Enum],
-        unions=classes[Union],
+        types=classes[gqlObjectType],
+        inputs=classes[gqlInputType],
+        enums=classes[gqlEnum],
+        unions=classes[gqlUnion],
     )
     return schema
 
