@@ -215,7 +215,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: models.Dataset = session.query(models.Dataset).get(source.datasetUri)
+        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
         if dataset and dataset.stewards in context.groups:
             return ShareObjectPermission.Approvers.value
         if (
