@@ -24,7 +24,7 @@ from backend.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from  backend.utils.utils.slugify import slugify
+from backend.utils.utils.slugify import slugify
 
 logger = logging.getLogger(__name__)
 

@@ -45,8 +45,10 @@ def bootstrap():
 
     for enumclass in GraphQLEnumMapper.__subclasses__():
         enumclass.toGraphQLEnum()
+        print(f"inside enum.class: {enumclass}")
 
     for cls in classes.keys():
+        print(f"inside loop, class: {cls.name}")
         for name in cls.class_instances['default'].keys():
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))
