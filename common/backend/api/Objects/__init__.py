@@ -11,8 +11,6 @@ from ariadne import (
 )
 
 from backend.api import gql, GraphQLEnumMapper
-from backend.api.Objects.core import *
-from backend.api.Objects.module import *
 
 def bootstrap():
     classes = {
