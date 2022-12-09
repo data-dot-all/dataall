@@ -1,4 +1,4 @@
-from backend.api import gql
+from ... import gql
 from .resolvers import *
 
 

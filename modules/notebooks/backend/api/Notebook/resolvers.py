@@ -4,13 +4,12 @@ from backend.db.api import ResourcePolicy
 from backend.aws_handlers import Sagemaker
 
 
-from backend.db.core import models, api
+from backend.db.core import models, operations
 from backend.db.module import Notebook
 
+from backend.api.Objects.module import SagemakerNotebookRole
+
 from backend.api.core import stack_helper
-from backend.api.Module.schema import SagemakerNotebookRole
-
-
 
 def create_notebook(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
