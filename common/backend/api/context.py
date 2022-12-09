@@ -1,14 +1,4 @@
-from argparse import Namespace
 from enum import Enum
-from ariadne import (
-    EnumType,
-    MutationType,
-    ObjectType,
-    UnionType,
-    QueryType,
-    gql as GQL,
-    make_executable_schema,
-)
 
 from backend.api import gql
 
