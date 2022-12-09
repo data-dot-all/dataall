@@ -29,7 +29,6 @@ from backend.db.exceptions import (
     UnauthorizedOperation
 )
 from backend.db.paginator import Page, paginate
-from backend.db import permissions
 from backend.db.utils import now, slugifier, uuid
 
 

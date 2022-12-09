@@ -1,20 +1,21 @@
 from backend.api import Context
-from backend.db import permissions
-from backend.db.api import ResourcePolicy
-from backend.aws_handlers import Sagemaker
+from backend.aws_handlers.sagemaker import Sagemaker
+from backend.aws_handlers import stack_helper
+
+from backend.db import (
+    core,
+    common,
+    module
+)
 
 
-from backend.db.core import models, operations
-from backend.db.module import Notebook
+from ..constants import SagemakerNotebookRole
 
-from backend.api.Objects.module import SagemakerNotebookRole
-
-from backend.api.core import stack_helper
 
 def create_notebook(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
 
-        notebook = Notebook.create_notebook(
+        notebook = module.operations.Notebook.create_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -23,7 +24,7 @@ def create_notebook(context: Context, source, input: dict = None):
             check_perm=True,
         )
 
-        api.Stack.create_stack(
+        common.operations.Stack.create_stack(
             session=session,
             environment_uri=notebook.environmentUri,
             target_type='notebook',
@@ -40,7 +41,7 @@ def list_notebooks(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return Notebook.paginated_user_notebooks(
+        return module.operations.Notebook.paginated_user_notebooks(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -52,7 +53,7 @@ def list_notebooks(context, source, filter: dict = None):
 
 def get_notebook(context, source, notebookUri: str = None):
     with context.engine.scoped_session() as session:
-        return Notebook.get_notebook(
+        return module.operations.Notebook.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -62,7 +63,7 @@ def get_notebook(context, source, notebookUri: str = None):
         )
 
 
-def resolve_status(context, source: models.SagemakerNotebook, **kwargs):
+def resolve_status(context, source: module.models.SagemakerNotebook, **kwargs):
     if not source:
         return None
     return Sagemaker.get_notebook_instance_status(
@@ -72,16 +73,16 @@ def resolve_status(context, source: models.SagemakerNotebook, **kwargs):
     )
 
 
-def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+def start_notebook(context, source: module.models.SagemakerNotebook, notebookUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        common.operations.ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=notebookUri,
-            permission_name=permissions.UPDATE_NOTEBOOK,
+            permission_name=module.permissions.UPDATE_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = module.operations.Notebook.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -95,16 +96,16 @@ def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str =
     return 'Starting'
 
 
-def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+def stop_notebook(context, source: module.models.SagemakerNotebook, notebookUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        common.operations.ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=notebookUri,
-            permission_name=permissions.UPDATE_NOTEBOOK,
+            permission_name=module.permissions.UPDATE_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = module.operations.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -119,17 +120,17 @@ def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = 
 
 
 def get_notebook_presigned_url(
-    context, source: models.SagemakerNotebook, notebookUri: str = None
+    context, source: module.models.SagemakerNotebook, notebookUri: str = None
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        common.operations.ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,
             groups=context.groups,
             resource_uri=notebookUri,
-            permission_name=permissions.GET_NOTEBOOK,
+            permission_name=module.permissions.GET_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = module.operations.Notebook.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -145,28 +146,28 @@ def get_notebook_presigned_url(
 
 def delete_notebook(
     context,
-    source: models.SagemakerNotebook,
+    source: module.models.SagemakerNotebook,
     notebookUri: str = None,
     deleteFromAWS: bool = None,
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        common.operations.ResourcePolicy.check_user_resource_permission(
             session=session,
             resource_uri=notebookUri,
-            permission_name=permissions.DELETE_NOTEBOOK,
+            permission_name=module.permissions.DELETE_NOTEBOOK,
             groups=context.groups,
             username=context.username,
         )
-        notebook = Notebook.get_notebook_by_uri(session, notebookUri)
-        env: models.Environment = api.Environment.get_environment_by_uri(
+        notebook = module.operations.Notebook.get_notebook_by_uri(session, notebookUri)
+        env: core.models.Environment = core.operations.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
 
-        api.KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+        core.operations.KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
 
         session.delete(notebook)
 
-        ResourcePolicy.delete_resource_policy(
+        common.operations.ResourcePolicy.delete_resource_policy(
             session=session,
             resource_uri=notebook.notebookUri,
             group=notebook.SamlAdminGroupName,
@@ -189,20 +190,20 @@ def resolve_environment(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return session.query(models.Environment).get(source.environmentUri)
+        return session.query(core.models.Environment).get(source.environmentUri)
 
 
 def resolve_organization(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
+        env: core.models.Environment = session.query(core.models.Environment).get(
             source.environmentUri
         )
-        return session.query(models.Organization).get(env.organizationUri)
+        return session.query(core.models.Organization).get(env.organizationUri)
 
 
-def resolve_user_role(context: Context, source: models.SagemakerNotebook):
+def resolve_user_role(context: Context, source: module.models.SagemakerNotebook):
     if not source:
         return None
     if source.owner == context.username:
@@ -212,7 +213,7 @@ def resolve_user_role(context: Context, source: models.SagemakerNotebook):
     return SagemakerNotebookRole.NoPermission.value
 
 
-def resolve_stack(context: Context, source: models.SagemakerNotebook, **kwargs):
+def resolve_stack(context: Context, source: module.models.SagemakerNotebook, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(

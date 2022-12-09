@@ -1,5 +1,5 @@
 from backend.api import gql
-from backend.api.Module.resolvers import *
+from .resolvers import *
 
 getSagemakerNotebook = gql.QueryField(
     name='getSagemakerNotebook',

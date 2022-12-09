@@ -1,5 +1,5 @@
 from backend.api import gql
-from backend.api.Module.resolvers import *
+from .resolvers import *
 
 createSagemakerNotebook = gql.MutationField(
     name='createSagemakerNotebook',
