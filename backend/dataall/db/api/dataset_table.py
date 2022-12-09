@@ -163,14 +163,14 @@ class DatasetTable:
         return True
 
     @staticmethod
-    def get_dataset_tables_shared_with_env(
+    def query_dataset_tables_shared_with_env(
         session, environment_uri: str, dataset_uri: str, status: List[str]
     ):
         """For a given dataset, returns the list of Tables shared with the environment
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
-        env_tables = (
+        env_tables_shared = (
             session.query(models.DatasetTable)  # all tables
             .join(
                 models.ShareObjectItem,  # found in ShareObjectItem
@@ -190,7 +190,19 @@ class DatasetTable:
             )
             .all()
         )
-        return env_tables
+
+        return env_tables_shared
+
+    @staticmethod
+    def get_dataset_tables_shared_with_env(
+        session, environment_uri: str, dataset_uri: str, status: List[str]
+    ):
+        return [
+            {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
+            for t in DatasetTable.query_dataset_tables_shared_with_env(
+                session, environment_uri, dataset_uri, status
+            )
+        ]
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):
