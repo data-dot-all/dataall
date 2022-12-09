@@ -1,0 +1,16 @@
+Parameters:
+  sagemaker_domain_id:
+    Description: "Sagemaker domain id for the Sagemaker studio"
+  user_profile_name:
+    Description: "User profile name to add to the Sagemaker studio"
+  execution_role:
+    Description: "Execution role for that user profile"
+
+Resources:
+  SagemakerUser:
+    Type: AWS::SageMaker::UserProfile
+    Properties:
+      DomainId: !Ref sagemaker_domain_id
+      UserProfileName: !Ref user_profile_name
+      UserSettings:
+        ExecutionRole: !Ref execution_role
