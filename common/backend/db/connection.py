@@ -10,8 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.db import Base, api
 from backend.db.dbconfig import DbConfig
-from backend.utils.parameter import Parameter
-from backend.utils.secrets_manager import Secrets
+from backend.aws_handlers.parameter import Parameter
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -115,7 +114,6 @@ def get_engine(envname=ENVNAME):
     schema = os.getenv('schema_name', envname)
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
-        secret = Secrets()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
         secretsmanager = boto3.client(
             'secretsmanager', region_name=os.environ.get('AWS_REGION', 'eu-west-1')

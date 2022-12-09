@@ -6,7 +6,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
-from backend.utils.parameter import Parameter
+from backend.aws_handlers.parameter import Parameter
 
 logger = logging.getLogger(__name__)
 

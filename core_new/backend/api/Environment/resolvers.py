@@ -555,7 +555,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
 
 
 def get_pivot_role_template(context: Context, source, organizationUri=None):
-    from ....utils import Parameter
+    from backend.aws_handlers.parameter import Parameter
 
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(

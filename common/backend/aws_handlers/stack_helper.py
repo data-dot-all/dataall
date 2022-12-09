@@ -6,7 +6,7 @@ import requests
 from backend.api.context import Context
 from backend.aws_handlers.service_handlers import Worker
 from backend.aws_handlers.ecs import Ecs
-from backend.utils.parameter import Parameter
+from backend.aws_handlers.parameter import Parameter
 from backend.db import models, operations
 
 
