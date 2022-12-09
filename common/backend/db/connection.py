@@ -8,9 +8,11 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from backend.db import Base, api
+from backend.db.base import Base
+from backend.db.common import operations
 from backend.db.dbconfig import DbConfig
 from backend.aws_handlers.parameter import Parameter
+
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -97,8 +99,8 @@ def create_schema_and_tables(engine, envname):
 def init_permissions(engine, envname=None):
     with engine.scoped_session() as session:
         log.info('Initiating permissions')
-        api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        api.Permission.init_permissions(session)
+        operations.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        operations.Permission.init_permissions(session)
 
 
 def drop_schema_if_exists(engine, envname):
