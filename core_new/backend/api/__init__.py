@@ -1,4 +1,4 @@
-from backend.api.core import (
+from backend.api.Objects.core import (
     Environment,
     KeyValueTag,
     Organization,
