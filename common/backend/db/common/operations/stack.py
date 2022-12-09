@@ -1,9 +1,10 @@
 import logging
 
-from . import ResourcePolicy, TargetType
-from .. import exceptions
+from .resource_policy import ResourcePolicy
+from .target_type import TargetType
+from ... import exceptions
 from .. import models
-from ...utils.naming_convention import (
+from backend.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

@@ -1,5 +1,5 @@
-from backend.db.api.resource_policy import ResourcePolicy
-from backend.db.api.tenant_policy import TenantPolicy
+from .resource_policy import ResourcePolicy
+from .tenant_policy import TenantPolicy
 
 
 def has_resource_perm(permission):

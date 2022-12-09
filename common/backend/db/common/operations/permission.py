@@ -2,8 +2,9 @@ import logging
 
 from sqlalchemy import or_
 
-from backend.db.paginator import paginate
-from backend.db import models, exceptions, permissions
+from ...paginator import paginate
+from ... import exceptions, permissions
+from .. import models
 
 logger = logging.getLogger(__name__)
 

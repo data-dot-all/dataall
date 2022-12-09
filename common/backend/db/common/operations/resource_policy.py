@@ -3,10 +3,9 @@ from typing import Optional
 
 from sqlalchemy.sql import and_
 
-from .. import exceptions
+from ... import exceptions
 from .. import models
 from . import Permission
-from ..models.Permission import PermissionType
 
 logger = logging.getLogger(__name__)
 
@@ -252,7 +251,7 @@ class ResourcePolicy:
         policy_permission = models.ResourcePolicyPermission(
             sid=policy.sid,
             permissionUri=Permission.get_permission_by_name(
-                session, permission, permission_type=PermissionType.RESOURCE.name
+                session, permission, permission_type=models.PermissionType.RESOURCE.name
             ).permissionUri,
         )
         session.add(policy_permission)
