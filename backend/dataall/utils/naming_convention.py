@@ -10,6 +10,7 @@ class NamingConventionPattern(Enum):
     S3 = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
     GLUE = {'regex': '[^a-zA-Z0-9_]', 'separator': '_', 'max_length': 63}
+    NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
 
 
@@ -39,6 +40,9 @@ class NamingConventionService:
         elif self.service == NamingConventionPattern.GLUE:
             regex = self.service.GLUE.value['regex']
             return self.build_glue_compliant_name(regex)
+        elif self.service == NamingConventionPattern.NOTEBOOK:
+            regex = self.service.NOTEBOOK.value['regex']
+            return self.build_notebook_compliant_name(regex)
         else:
             regex = self.service.DEFAULT.value['regex']
             return self.build_default_compliant_name(regex)
@@ -51,6 +55,9 @@ class NamingConventionService:
 
     def build_glue_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.GLUE.value['max_length'] - len(self.resource_prefix + self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.GLUE.value['separator'], lowercase=True)}"
+
+    def build_notebook_compliant_name(self, regex) -> str:
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.NOTEBOOK.value['max_length'] - len(self.resource_prefix +self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.NOTEBOOK.value['separator'], lowercase=True)}"
 
     def build_default_compliant_name(self, regex) -> str:
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(self.service.DEFAULT.value['max_length'] - len(self.resource_prefix +self.target_uri))] + '-' + self.target_uri, regex_pattern=fr'{regex}', separator=self.service.DEFAULT.value['separator'], lowercase=True)}"

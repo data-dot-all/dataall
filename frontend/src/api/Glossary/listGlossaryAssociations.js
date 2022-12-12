@@ -19,6 +19,7 @@ const listGlossaryAssociations = ({ nodeUri, filter }) => ({
         status
         path
         admin
+        userRoleForGlossary
         associations(filter: $filter) {
           count
           page

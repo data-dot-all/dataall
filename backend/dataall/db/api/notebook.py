@@ -78,7 +78,7 @@ class Notebook:
         notebook.NotebookInstanceName = NamingConventionService(
             target_uri=notebook.notebookUri,
             target_label=notebook.label,
-            pattern=NamingConventionPattern.DEFAULT,
+            pattern=NamingConventionPattern.NOTEBOOK,
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
 

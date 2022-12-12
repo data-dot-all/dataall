@@ -68,7 +68,7 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 | Region (auto-filled)            | AWS region of the environment                             | Yes             | No       |Europe (Ireland)
 | Organization (auto-filled)     | Organization of the environment                           | Yes             | No       | AnyCompany EMEA
 | Owners    | Team that owns the dataset                                | Yes             |   No       | DataScienceTeam
-| Stewards    | Team that can manage share requests on behalf of owners   | No              |  No        |  FinanceBITeam, FinanceMgmtTeam
+| Stewards    | Team that can manage share requests on behalf of owners   | No              |  Yes        |  FinanceBITeam, FinanceMgmtTeam
 | Confidentiality  | Level of confidentiality: Unclassified, Oficial or Secret | Yes             | Yes      | Secret
 | Topics           | Topics that can later be used in the Catalog              | Yes, at least 1 | Yes       | Finance
 | Tags             | Tags that can later be used in the Catalog                | Yes, at least 1 | Yes      | deleteme, ds
