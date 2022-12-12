@@ -531,6 +531,7 @@ class Glue:
                     if k
                     not in [
                         'CatalogId',
+                        'VersionId',
                         'DatabaseName',
                         'CreateTime',
                         'UpdateTime',
