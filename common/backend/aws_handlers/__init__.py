@@ -15,6 +15,6 @@ from .s3 import S3
 from .sagemaker import Sagemaker
 from .sagemaker_studio import SagemakerStudio
 from .secrets_manager import SecretsManager
-from .service_handlers import Worker
+#from .service_handlers import Worker
 from .sqs import SqsQueue
 from .sts import SessionHelper
