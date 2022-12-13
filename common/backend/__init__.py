@@ -1,6 +1,4 @@
 print("Initializing backend Python package...")
-from backend.api import *
-from backend.db import *
-from backend.search_proxy import *
+from . import api, db, utils
 print("All packages and files have been successfully initialized")
 

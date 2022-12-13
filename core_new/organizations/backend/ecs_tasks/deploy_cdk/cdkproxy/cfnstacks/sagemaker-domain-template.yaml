@@ -1,0 +1,21 @@
+Parameters:
+  auth_mode:
+    Description: "Auth mode for Sagemaker Domain"
+  domain_name:
+    Description: "domain name for Sagemaker Domain"
+  subnet_ids:
+    Description: "subnet ids for Sagemaker Domain"
+  vpc_id:
+    Description: "vpc id for Sagemaker Domain"
+  default_execution_role_user:
+    Description: "default execution role user for Sagemaker Domain"
+Resources:
+  SagemakerDomainCDK:
+    Type: AWS::SageMaker::Domain
+    Properties:
+      AuthMode: !Ref auth_mode
+      DefaultUserSettings:
+        ExecutionRole: !Ref default_execution_role_user
+      DomainName: !Ref domain_name
+      SubnetIds: !Ref subnet_ids
+      VpcId: !Ref vpc_id
