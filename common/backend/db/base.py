@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from backend.db.utils import slugifier
+from .utils import slugifier
 
 Base = declarative_base()
 

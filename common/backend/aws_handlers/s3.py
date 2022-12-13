@@ -1,6 +1,6 @@
 import logging
 
-from backend.aws_handlers.sts import SessionHelper
+from .sts import SessionHelper
 
 log = logging.getLogger(__name__)
 

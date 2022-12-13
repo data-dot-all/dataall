@@ -10,7 +10,7 @@ from ariadne import (
     make_executable_schema,
 )
 
-from backend.api import gql
+from . import gql
 
 
 class GraphQLEnumMapper(Enum):

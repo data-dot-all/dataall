@@ -1,13 +1,12 @@
 import os
-
 import requests
 
-
 from backend.api.context import Context
-from backend.aws_handlers.service_handlers import Worker
-from backend.aws_handlers.ecs import Ecs
-from backend.aws_handlers.parameter import Parameter
 from backend.db import models, operations
+
+from .service_handlers import Worker
+from .ecs import Ecs
+from .parameter import Parameter
 
 
 def get_stack_with_cfn_resources(context: Context, targetUri: str, AwsAccountId: str, region: str):

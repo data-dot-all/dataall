@@ -1,6 +1,6 @@
 from botocore.exceptions import ClientError
 
-from backend.aws_handlers.sts import SessionHelper
+from .sts import SessionHelper
 
 
 class SagemakerStudio:

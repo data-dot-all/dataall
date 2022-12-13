@@ -4,7 +4,7 @@ import time
 from functools import wraps
 
 from backend.db.models import Task
-from backend.utils.json_utils import to_json
+from backend.utils import json_utils
 
 log = logging.getLogger(__name__)
 ENVNAME = os.getenv('envname', 'local')
@@ -44,7 +44,7 @@ class WorkerHandler:
                     error, response, status = self.handle_task(engine, task, handler)
                     if save_response:
                         WorkerHandler.update_task(
-                            engine, taskid, error, to_json(response), status
+                            engine, taskid, error, json_utils.to_json(response), status
                         )
 
                     else:

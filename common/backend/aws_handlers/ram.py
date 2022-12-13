@@ -3,7 +3,7 @@ import time
 
 from botocore.exceptions import ClientError
 
-from backend.aws_handlers.sts import SessionHelper
+from .sts import SessionHelper
 
 log = logging.getLogger('aws:ram')
 

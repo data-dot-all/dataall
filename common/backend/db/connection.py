@@ -8,10 +8,11 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from backend.db.base import Base
-from backend.db.common import operations
-from backend.db.dbconfig import DbConfig
-from backend.aws_handlers.parameter import Parameter
+from backend.aws_handlers import Parameter
+
+from .base import Base
+from .common import operations
+from .dbconfig import DbConfig
 
 
 try:

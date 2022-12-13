@@ -1,13 +1,13 @@
 print("Initializing gql Python package...")
-from backend.api.gql.default_resolver import DefaultResolver
-from backend.api.gql.graphql_argument import Argument
-from backend.api.gql.graphql_directive import DirectiveArgs
-from backend.api.gql.graphql_enum import GraphqlEnum
-from backend.api.gql.graphql_field import Field
-from backend.api.gql.graphql_input import InputType
-from backend.api.gql.graphql_mutation_field import MutationField
-from backend.api.gql.graphql_query_field import QueryField
-from backend.api.gql.graphql_scalar import (
+from .default_resolver import DefaultResolver
+from .graphql_argument import Argument
+from .graphql_directive import DirectiveArgs
+from .graphql_enum import GraphqlEnum
+from .graphql_field import Field
+from .graphql_input import InputType
+from .graphql_mutation_field import MutationField
+from .graphql_query_field import QueryField
+from .graphql_scalar import (
     ID,
     AWSDateTime,
     Boolean,
@@ -18,14 +18,14 @@ from backend.api.gql.graphql_scalar import (
     String,
     scalars,
 )
-from backend.api.gql.graphql_type import ObjectType
-from backend.api.gql.graphql_type_modifiers import ArrayType, NonNullableType
-from backend.api.gql.graphql_union_type import Union
-from backend.api.gql.ref import Ref
-from backend.api.gql.schema import Schema
-from backend.api.gql.thunk import Thunk
-from backend.api.gql.utils import get_named_type
-from backend.api.gql.visitor import SchemaVisitor
+from .graphql_type import ObjectType
+from .graphql_type_modifiers import ArrayType, NonNullableType
+from .graphql_union_type import Union
+from .ref import Ref
+from .schema import Schema
+from .thunk import Thunk
+from .utils import get_named_type
+from .visitor import SchemaVisitor
 
 print("gql Python package successfully initialized")
 
