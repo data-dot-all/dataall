@@ -2,8 +2,8 @@ import json
 import logging
 import os
 
-from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import get_engine
+from backend.short_async_tasks import Worker
+from backend.db import get_engine
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL'))
