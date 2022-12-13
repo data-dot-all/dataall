@@ -99,6 +99,21 @@ class dataAllBaseInfra(Stack):
                                          actions=["s3:GetObject"],
                                          resources=["arn:aws:s3:::crawler-public*"]
                                      ),
+                                     # S3 Access points
+                                     iam.PolicyStatement(
+                                         sid="ManagedAccessPoints", effect=iam.Effect.ALLOW,
+                                         actions=[
+                                            "s3:GetAccessPoint",
+                                            "s3:GetAccessPointPolicy",
+                                            "s3:ListAccessPoints",
+                                            "s3:CreateAccessPoint",
+                                            "s3:DeleteAccessPoint",
+                                            "s3:GetAccessPointPolicyStatus",
+                                            "s3:DeleteAccessPointPolicy",
+                                            "s3:PutAccessPointPolicy"
+                                         ],
+                                         resources=[f"arn:aws:s3:*:{self.account}:accesspoint/*"]
+                                     ),
                                      # S3 Managed Buckets
                                      iam.PolicyStatement(
                                          sid="ManagedBuckets", effect=iam.Effect.ALLOW,
@@ -216,7 +231,8 @@ class dataAllBaseInfra(Stack):
                                              "glue:UpdateTable",
                                              "glue:UpdateTrigger",
                                              "glue:UpdateJob",
-                                             "glue:TagResource"
+                                             "glue:TagResource",
+                                             "glue:UpdateCrawler"
                                          ],
                                          resources=["*"]
                                      ),
@@ -442,6 +458,14 @@ class dataAllBaseInfra(Stack):
                                          conditions={
                                              "StringEquals": {"aws:ResourceTag/dataall": "true"},
                                              "ForAllValues:StringLike": {
+                                                 "ram:ResourceShareName": ["LakeFormation*"]}
+                                         }
+                                     ),
+                                     iam.PolicyStatement(
+                                         sid="RamAssociateResource", effect=iam.Effect.ALLOW,
+                                         actions=["ram:AssociateResourceShare"],
+                                         resources=[f"arn:aws:ram:*:{self.account}:resource-share/*"],
+                                         conditions={"ForAllValues:StringLike": {
                                                  "ram:ResourceShareName": ["LakeFormation*"]}
                                          }
                                      ),
@@ -675,7 +699,8 @@ class dataAllBaseInfra(Stack):
                                              "quicksight:RegisterUser",
                                              "quicksight:DescribeDashboardPermissions",
                                              "quicksight:GetAuthCode",
-                                             "quicksight:CreateGroupMembership"
+                                             "quicksight:CreateGroupMembership",
+                                             "quicksight:DescribeAccountSubscription"
                                          ],
                                          resources=[
                                              f"arn:aws:quicksight:*:{self.account}:group/default/dataall",
@@ -683,7 +708,8 @@ class dataAllBaseInfra(Stack):
                                              f"arn:aws:quicksight:*:{self.account}:datasource/*",
                                              f"arn:aws:quicksight:*:{self.account}:user/*",
                                              f"arn:aws:quicksight:*:{self.account}:dashboard/*",
-                                             f"arn:aws:quicksight:*:{self.account}:namespace/default"
+                                             f"arn:aws:quicksight:*:{self.account}:namespace/default",
+                                             f"arn:aws:quicksight:*:{self.account}:account/*"
                                          ]
                                      ),
                                      iam.PolicyStatement(
@@ -706,6 +732,18 @@ class dataAllBaseInfra(Stack):
         return iam.ManagedPolicy(self, "PivotRolePolicy3",
                                  managed_policy_name=f"{env_resource_prefix}-pivotrole-policy-3",
                                  statements=[
+                                     # SSM Parameter Store
+                                     iam.PolicyStatement(
+                                         sid="ParameterStore", effect=iam.Effect.ALLOW,
+                                         actions=[
+                                             "ssm:GetParameter"
+                                         ],
+                                         resources=[
+                                             f"arn:aws:ssm:*:{self.account}:parameter/{env_resource_prefix}/*",
+                                             f"arn:aws:ssm:*:{self.account}:parameter/dataall/*",
+                                             f"arn:aws:ssm:*:{self.account}:parameter/ddk/*"
+                                         ]
+                                     ),
                                      # Secrets Manager
                                      iam.PolicyStatement(
                                          sid="SecretsManager", effect=iam.Effect.ALLOW,
@@ -727,6 +765,14 @@ class dataAllBaseInfra(Stack):
                                      iam.PolicyStatement(
                                          sid="IAMList", effect=iam.Effect.ALLOW,
                                          actions=["iam:ListRoles"],
+                                         resources=["*"]
+                                     ),
+                                     iam.PolicyStatement(
+                                         sid="IAMRolePolicy", effect=iam.Effect.ALLOW,
+                                         actions=[
+                                             "iam:PutRolePolicy",
+                                             "iam:DeleteRolePolicy"
+                                         ],
                                          resources=["*"]
                                      ),
                                      iam.PolicyStatement(
@@ -765,7 +811,9 @@ class dataAllBaseInfra(Stack):
                                              "codecommit:GetFile",
                                              "codecommit:ListBranches",
                                              "codecommit:GetFolder",
-                                             "codecommit:GetCommit"
+                                             "codecommit:GetCommit",
+                                             "codecommit:GitPull",
+                                             "codecommit:GetRepository"
                                          ],
                                          resources=[f"arn:aws:codecommit:*:{self.account}:{env_resource_prefix}*"]
                                      )

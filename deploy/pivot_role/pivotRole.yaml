@@ -593,6 +593,7 @@ Resources:
               - "quicksight:DescribeDashboardPermissions"
               - "quicksight:GetAuthCode"
               - "quicksight:CreateGroupMembership"
+              - "quicksight:DescribeAccountSubscription"
             Resource:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/dataall"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"
@@ -605,7 +606,6 @@ Resources:
             Effect: Allow
             Action:
               - 'quicksight:GetSessionEmbedUrl'
-              - "quicksight:DescribeAccountSubscription"
             Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-2
       Roles:
@@ -623,8 +623,8 @@ Resources:
             Action:
               - "ssm:GetParameter"
             Resource:
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
           - Sid: Secretsmanager
             Effect: Allow
             Action:
