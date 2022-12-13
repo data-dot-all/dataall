@@ -2,7 +2,7 @@ import logging
 
 from .resource_policy import ResourcePolicy
 from .target_type import TargetType
-from ... import exceptions
+from backend.db import exceptions
 from .. import models
 from backend.utils.naming_convention import (
     NamingConventionService,

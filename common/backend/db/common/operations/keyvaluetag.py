@@ -1,6 +1,6 @@
 import logging
 
-from . import TargetType
+from .target_type import TargetType
 from .resource_policy import ResourcePolicy
 from .. import exceptions
 from .. import models

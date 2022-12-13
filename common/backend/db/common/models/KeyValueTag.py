@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String
 
-from .. import Base
-from .. import Resource, utils
+from ... import Base
+from ... import Resource, utils
 
 
 class KeyValueTag(Base):
