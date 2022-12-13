@@ -9,6 +9,7 @@ from .TenantPolicy import TenantPolicy
 from .TenantPolicyPermission import TenantPolicyPermission
 
 __all__ = [
+    "KeyValueTag",
     "Permission",
     "PermissionType",
     "ResourcePolicy",

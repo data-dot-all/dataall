@@ -1,17 +1,17 @@
 print("Initializing db Python package...")
-from backend.db.base import Base, Resource
-from backend.db.connection import (
-    Engine,
-    get_engine,
+from .base import Base, Resource
+from .connection import (
     create_schema_if_not_exists,
     create_schema_and_tables,
+    drop_schema_if_exists,
+    Engine,
+    get_engine,
     has_table,
     has_column,
-    drop_schema_if_exists,
     init_permissions,
 )
-from backend.db.dbconfig import DbConfig
-from backend.db.exceptions import (
+from .dbconfig import DbConfig
+from .exceptions import (
     AWSResourceNotFound,
     AWSResourceNotAvailable,
     EnvironmentResourcesFound,
@@ -28,8 +28,8 @@ from backend.db.exceptions import (
     TenantPermissionUnauthorized,
     UnauthorizedOperation
 )
-from backend.db.paginator import Page, paginate
-from backend.db.utils import now, slugifier, uuid
+from .paginator import Page, paginate
+from .utils import now, slugifier, uuid
 
 
 print("db Python package successfully initialized")

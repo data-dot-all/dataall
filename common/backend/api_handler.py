@@ -3,16 +3,23 @@ import logging
 import os
 from argparse import Namespace
 from time import perf_counter
-
 from ariadne import (
     gql,
     graphql_sync,
 )
 
-from backend.api import bootstrap as bootstrap_schema, get_executable_schema
-from backend.db import init_permissions, get_engine, permissions, api, models
-from backend.search_proxy import connect
+from backend.api import (
+    bootstrap as bootstrap_schema,
+    get_executable_schema
+)
+from backend.aws_handlers.search_proxy import connect
 
+from backend.db import (
+    init_permissions,
+    get_engine
+)
+
+from backend.db.common import models, operations, permissions
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -112,14 +119,14 @@ def handler(event, context):
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = api.TenantPolicy.find_tenant_policy(
+                    policy = operations.TenantPolicy.find_tenant_policy(
                         session, group, 'dataall'
                     )
                     if not policy:
                         print(
                             f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
                         )
-                        api.TenantPolicy.attach_group_tenant_policy(
+                        operations.TenantPolicy.attach_group_tenant_policy(
                             session=session,
                             group=group,
                             permissions=permissions.TENANT_ALL,
