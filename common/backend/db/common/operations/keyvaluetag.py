@@ -2,7 +2,7 @@ import logging
 
 from .target_type import TargetType
 from .resource_policy import ResourcePolicy
-from .. import exceptions
+from ... import exceptions
 from .. import models
 
 logger = logging.getLogger(__name__)

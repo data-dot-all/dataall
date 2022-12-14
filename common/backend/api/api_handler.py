@@ -16,11 +16,9 @@ from backend.utils.aws.search_proxy import connect
 
 from backend.db import (
     init_permissions,
-    get_engine
+    get_engine,
+    common
 )
-
-from backend.db.common.permissions import permissions
-from backend.db.common.operations.tenant_policy import TenantPolicy
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -120,17 +118,17 @@ def handler(event, context):
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = TenantPolicy.find_tenant_policy(
+                    policy = common.operations.TenantPolicy.find_tenant_policy(
                         session, group, 'dataall'
                     )
                     if not policy:
                         print(
                             f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
                         )
-                        TenantPolicy.attach_group_tenant_policy(
+                        common.operations.TenantPolicy.attach_group_tenant_policy(
                             session=session,
                             group=group,
-                            permissions=permissions.TENANT_ALL,
+                            permissions=common.permissions.TENANT_ALL,
                             tenant_name='dataall',
                         )
 

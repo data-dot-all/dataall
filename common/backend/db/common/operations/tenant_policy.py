@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from ... import exceptions, permissions
+from ... import exceptions
 from ...paginator import paginate
-from .. import models
+from .. import models, permissions
 from .permission import Permission
 from .tenant import Tenant
 

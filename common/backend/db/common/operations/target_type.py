@@ -1,7 +1,7 @@
 import logging
 
-from ... import exceptions, permissions
-from .. import models
+from ... import exceptions
+from .. import models, permissions
 
 logger = logging.getLogger(__name__)
 
