@@ -5,7 +5,18 @@ from sqlalchemy import or_, case, func
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from .. import exceptions, permissions, models
+from backend.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
+
+from backend.db import (
+    exceptions,
+    core,
+    common,
+)
+from backend.db.paginator import Page, paginate
+
 from . import (
     has_resource_perm,
     has_tenant_perm,
@@ -13,20 +24,16 @@ from . import (
     Permission,
     KeyValueTag,
 )
-from ..api.organization import Organization
-from ..models import EnvironmentGroup
-from ..models.Enums import (
-    ShareObjectStatus,
-    ShareableType,
-    EnvironmentType,
-    EnvironmentPermission,
-)
+
+from ..models.Environment import EnvironmentType, EnvironmentPermission
+from ..models.ShareObject import ShareObjectStatus, ShareableType
+
 from ..models.Permission import PermissionType
-from ..paginator import Page, paginate
-from ...utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
+
+
+from backend.db import common
+from .. import permissions, models
+
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +44,7 @@ class Environment:
     @has_resource_perm(permissions.LINK_ENVIRONMENT)
     def create_environment(session, username, groups, uri, data=None, check_perm=None):
         Environment._validate_creation_params(data, uri)
-        organization = Organization.get_organization_by_uri(session, uri)
+        organization = core.operations.Organization.get_organization_by_uri(session, uri)
         env = models.Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),
@@ -120,7 +127,7 @@ class Environment:
                 resource_uri=vpc.vpcUri,
                 resource_type=models.Vpc.__name__,
             )
-        env_group = models.EnvironmentGroup(
+        env_group = core.models.EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
             groupRoleInEnvironment=EnvironmentPermission.Owner.value,
@@ -211,7 +218,7 @@ class Environment:
     @has_resource_perm(permissions.INVITE_ENVIRONMENT_GROUP)
     def invite_group(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> (models.Environment, models.EnvironmentGroup):
+    ) -> (models.Environment, core.models.EnvironmentGroup):
         Environment.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -248,7 +255,7 @@ class Environment:
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
 
-        environment_group = EnvironmentGroup(
+        environment_group = core.models.EnvironmentGroup(
             environmentUri=environment.environmentUri,
             groupUri=group,
             invitedBy=username,
@@ -479,14 +486,14 @@ class Environment:
         query = (
             session.query(models.Environment)
             .outerjoin(
-                models.EnvironmentGroup,
+                core.models.EnvironmentGroup,
                 models.Environment.environmentUri
-                == models.EnvironmentGroup.environmentUri,
+                == core.models.EnvironmentGroup.environmentUri,
             )
             .filter(
                 or_(
                     models.Environment.owner == username,
-                    models.EnvironmentGroup.groupUri.in_(groups),
+                    core.models.EnvironmentGroup.groupUri.in_(groups),
                 )
             )
         )
@@ -515,15 +522,15 @@ class Environment:
     @staticmethod
     def query_user_environment_groups(session, username, groups, uri, filter) -> Query:
         query = (
-            session.query(models.EnvironmentGroup)
-            .filter(models.EnvironmentGroup.environmentUri == uri)
-            .filter(models.EnvironmentGroup.groupUri.in_(groups))
+            session.query(core.models.EnvironmentGroup)
+            .filter(core.models.EnvironmentGroup.environmentUri == uri)
+            .filter(core.models.EnvironmentGroup.groupUri.in_(groups))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -543,14 +550,14 @@ class Environment:
 
     @staticmethod
     def query_all_environment_groups(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.EnvironmentGroup).filter(
-            models.EnvironmentGroup.environmentUri == uri
+        query = session.query(core.models.EnvironmentGroup).filter(
+            core.models.EnvironmentGroup.environmentUri == uri
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -585,16 +592,16 @@ class Environment:
         session, username, groups, uri, filter
     ) -> Query:
         query = (
-            session.query(models.EnvironmentGroup)
+            session.query(core.models.EnvironmentGroup)
             .join(
                 models.Environment,
-                models.EnvironmentGroup.environmentUri
+                core.models.EnvironmentGroup.environmentUri
                 == models.Environment.environmentUri,
             )
             .filter(
                 and_(
                     models.Environment.environmentUri == uri,
-                    models.EnvironmentGroup.groupUri
+                    core.models.EnvironmentGroup.groupUri
                     != models.Environment.SamlGroupName,
                 )
             )
@@ -603,7 +610,7 @@ class Environment:
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -1029,12 +1036,12 @@ class Environment:
     @staticmethod
     def get_environment_group(session, group_uri, environment_uri):
         env_group = (
-            session.query(models.EnvironmentGroup)
+            session.query(core.models.EnvironmentGroup)
             .filter(
                 (
                     and_(
-                        models.EnvironmentGroup.groupUri == group_uri,
-                        models.EnvironmentGroup.environmentUri == environment_uri,
+                        core.models.EnvironmentGroup.groupUri == group_uri,
+                        core.models.EnvironmentGroup.environmentUri == environment_uri,
                     )
                 )
             )
@@ -1205,8 +1212,8 @@ class Environment:
             )
 
         env_groups = (
-            session.query(models.EnvironmentGroup)
-            .filter(models.EnvironmentGroup.environmentUri == uri)
+            session.query(core.models.EnvironmentGroup)
+            .filter(core.models.EnvironmentGroup.environmentUri == uri)
             .all()
         )
         for group in env_groups:

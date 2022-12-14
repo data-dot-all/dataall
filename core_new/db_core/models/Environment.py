@@ -1,9 +1,21 @@
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
-from .. import Base
-from .. import Resource, utils
+from backend.db.common import Base, Resource, utils
 
+class EnvironmentPermission(Enum):
+    Owner = '999'
+    Admin = '900'
+    DatasetCreator = '800'
+    Invited = '200'
+    ProjectAccess = '050'
+    NotInvited = '000'
+
+
+class EnvironmentType(Enum):
+    Data = 'Data'
+    Compute = 'Compute'
 
 class Environment(Resource, Base):
     __tablename__ = 'environment'

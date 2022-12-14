@@ -1,8 +1,15 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
-from .. import Base
-from .. import Resource, utils
+from backend.db.common import Base, Resource, utils
+
+class OrganisationUserRole(Enum):
+    Owner = '999'
+    Admin = '900'
+    Member = '100'
+    NotMember = '000'
+    Invited = '800'
 
 
 class Organization(Resource, Base):

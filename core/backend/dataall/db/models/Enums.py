@@ -1,33 +1,5 @@
+
 from enum import Enum
-
-
-class OrganisationUserRole(Enum):
-    Owner = '999'
-    Admin = '900'
-    Member = '100'
-    NotMember = '000'
-    Invited = '800'
-
-
-class GroupMemberRole(Enum):
-    Owner = 'Owner'
-    Admin = 'Admin'
-    Member = 'Member'
-    NotMember = 'NotMember'
-
-
-class EnvironmentPermission(Enum):
-    Owner = '999'
-    Admin = '900'
-    DatasetCreator = '800'
-    Invited = '200'
-    ProjectAccess = '050'
-    NotInvited = '000'
-
-
-class EnvironmentType(Enum):
-    Data = 'Data'
-    Compute = 'Compute'
 
 
 class ProjectMemberRole(Enum):
