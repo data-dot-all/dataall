@@ -19,7 +19,7 @@ from backend.db import (
     get_engine
 )
 
-from backend.db.common import permissions
+from backend.db.common.permissions import permissions
 from backend.db.common.operations.tenant_policy import TenantPolicy
 
 logger = logging.getLogger()
