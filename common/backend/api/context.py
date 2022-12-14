@@ -71,8 +71,9 @@ def bootstrap():
     print("printing classes loop")
     for cls in classes.keys():
         print(f"inside loop, class: {cls}")
-        print(f"inside loop, class: {cls.class_instances['default']}")
+        print(f"inside loop, class.class_instances['default']: {cls.class_instances['default']}")
         for name in cls.class_instances['default'].keys():
+            print(f"inside loop, name: {name}")
             if cls.get_instance(name):
                 classes[cls].append(cls.get_instance(name))
             else:
