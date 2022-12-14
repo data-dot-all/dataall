@@ -1,5 +1,5 @@
 print("Initializing utils Python package...")
-from . import boto3
+from . import aws
 from .alarm_service import AlarmService
 from .cdk_nag_utils import CDKNagUtil
 from .naming_convention import NamingConventionPattern, NamingConventionService
