@@ -1,1 +1,1 @@
-from .worker import Worker, WorkerHandler
+from .worker_decorator import Worker, WorkerHandler

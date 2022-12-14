@@ -1,5 +1,5 @@
 print("Initializing search_proxy Python package")
-from backend.search_proxy.connect import(
+from .connect import(
     add_keyword_mapping,
     connect,
     connect_dev_environment,
