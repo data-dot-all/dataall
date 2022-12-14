@@ -19,7 +19,8 @@ from backend.db import (
     get_engine
 )
 
-from backend.db.common import models, operations, permissions
+from backend.db.common import permissions
+from backend.db.common.operations.tenant_policy import TenantPolicy
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -119,14 +120,14 @@ def handler(event, context):
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = operations.TenantPolicy.find_tenant_policy(
+                    policy = TenantPolicy.find_tenant_policy(
                         session, group, 'dataall'
                     )
                     if not policy:
                         print(
                             f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
                         )
-                        operations.TenantPolicy.attach_group_tenant_policy(
+                        TenantPolicy.attach_group_tenant_policy(
                             session=session,
                             group=group,
                             permissions=permissions.TENANT_ALL,
