@@ -24,7 +24,7 @@ COPY common/backend/. ./backend/
 COPY core_new/db_core/. ./backend/db/core/
 
 
-COPY modules/notebooks/backend/api/. ./backend/api/
+COPY modules/notebooks/backend/api/. ./backend/api/Objects
 COPY modules/notebooks/backend/db/. ./backend/db/module/
 
 
