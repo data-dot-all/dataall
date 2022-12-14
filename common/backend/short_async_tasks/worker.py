@@ -38,7 +38,7 @@ class WorkerHandler:
         if self.enabled:
             for taskid in task_ids:
                 try:
-                    log.info(f'Processing Task: {taskid}')
+                    log.info(f'Processing Worker Task: {taskid}')
                     handler, task = self.get_task_handler(engine, taskid)
 
                     error, response, status = self.handle_task(engine, task, handler)
