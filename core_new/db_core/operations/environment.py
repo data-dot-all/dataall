@@ -26,13 +26,7 @@ from . import (
 )
 
 from ..models.Environment import EnvironmentType, EnvironmentPermission
-from ..models.ShareObject import ShareObjectStatus, ShareableType
-
-from ..models.Permission import PermissionType
-
-
-from backend.db import common
-from .. import permissions, models
+from .. import permissions
 
 
 log = logging.getLogger(__name__)
@@ -45,7 +39,7 @@ class Environment:
     def create_environment(session, username, groups, uri, data=None, check_perm=None):
         Environment._validate_creation_params(data, uri)
         organization = core.operations.Organization.get_organization_by_uri(session, uri)
-        env = models.Environment(
+        env = core.models.Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),
             tags=data.get('tags', []),
@@ -105,7 +99,7 @@ class Environment:
             env.EnvironmentDefaultIAMRoleImported = True
 
         if data.get('vpcId'):
-            vpc = models.Vpc(
+            vpc = core.models.Vpc(
                 environmentUri=env.environmentUri,
                 region=env.region,
                 AwsAccountId=env.AwsAccountId,
@@ -125,7 +119,7 @@ class Environment:
                 group=data['SamlGroupName'],
                 permissions=permissions.NETWORK_ALL,
                 resource_uri=vpc.vpcUri,
-                resource_type=models.Vpc.__name__,
+                resource_type=core.models.Vpc.__name__,
             )
         env_group = core.models.EnvironmentGroup(
             environmentUri=env.environmentUri,
@@ -141,11 +135,11 @@ class Environment:
             resource_uri=env.environmentUri,
             group=data['SamlGroupName'],
             permissions=permissions.ENVIRONMENT_ALL,
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         session.commit()
 
-        activity = models.Activity(
+        activity = common.models.Activity(
             action='ENVIRONMENT:CREATE',
             label='ENVIRONMENT:CREATE',
             owner=username,
@@ -209,7 +203,7 @@ class Environment:
             resource_uri=environment.environmentUri,
             group=environment.SamlGroupName,
             permissions=permissions.ENVIRONMENT_ALL,
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         return environment
 
@@ -218,7 +212,7 @@ class Environment:
     @has_resource_perm(permissions.INVITE_ENVIRONMENT_GROUP)
     def invite_group(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> (models.Environment, core.models.EnvironmentGroup):
+    ) -> (core.models.Environment, core.models.EnvironmentGroup):
         Environment.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -271,7 +265,7 @@ class Environment:
             group=group,
             resource_uri=environment.environmentUri,
             permissions=data['permissions'],
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         return environment, environment_group
 
@@ -322,7 +316,7 @@ class Environment:
                 Permission.find_permission_by_name(
                     session=session,
                     permission_name=p,
-                    permission_type=PermissionType.RESOURCE.name,
+                    permission_type=common.models.PermissionType.RESOURCE.name,
                 )
             )
 
@@ -344,56 +338,56 @@ class Environment:
                 action='REMOVE_TEAM',
                 message=f'Team: {group} is the owner of the environment {environment.name}',
             )
-
-        group_env_objects_count = (
-            session.query(models.Environment)
-            .outerjoin(
-                models.Dataset,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
-                models.SagemakerStudioUserProfile,
-                models.SagemakerStudioUserProfile.environmentUri
-                == models.Environment.environmentUri,
-            )
-            .outerjoin(
-                models.RedshiftCluster,
-                models.RedshiftCluster.environmentUri
-                == models.Environment.environmentUri,
-            )
-            .outerjoin(
-                models.DataPipeline,
-                models.DataPipeline.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
-                models.Dashboard,
-                models.Dashboard.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
-                models.WorksheetQueryResult,
-                models.WorksheetQueryResult.AwsAccountId
-                == models.Environment.AwsAccountId,
-            )
-            .filter(
-                and_(
-                    models.Environment.environmentUri == environment.environmentUri,
-                    or_(
-                        models.RedshiftCluster.SamlGroupName == group,
-                        models.Dataset.SamlAdminGroupName == group,
-                        models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
-                        models.DataPipeline.SamlGroupName == group,
-                        models.Dashboard.SamlGroupName == group,
-                    ),
-                )
-            )
-            .count()
-        )
-
-        if group_env_objects_count > 0:
-            raise exceptions.EnvironmentResourcesFound(
-                action='Remove Team',
-                message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
-            )
+        ##TODO: rethingk how we check no objects for groups:
+        # group_env_objects_count = (
+        #     session.query(core.models.Environment)
+        #     .outerjoin(
+        #         models.Dataset,
+        #         models.Dataset.environmentUri == core.models.Environment.environmentUri,
+        #     )
+        #     .outerjoin(
+        #         models.SagemakerStudioUserProfile,
+        #         models.SagemakerStudioUserProfile.environmentUri
+        #         == core.models.Environment.environmentUri,
+        #     )
+        #     .outerjoin(
+        #         models.RedshiftCluster,
+        #         models.RedshiftCluster.environmentUri
+        #         == core.models.Environment.environmentUri,
+        #     )
+        #     .outerjoin(
+        #         models.DataPipeline,
+        #         models.DataPipeline.environmentUri == core.models.Environment.environmentUri,
+        #     )
+        #     .outerjoin(
+        #         models.Dashboard,
+        #         models.Dashboard.environmentUri == core.models.Environment.environmentUri,
+        #     )
+        #     .outerjoin(
+        #         models.WorksheetQueryResult,
+        #         models.WorksheetQueryResult.AwsAccountId
+        #         == core.models.Environment.AwsAccountId,
+        #     )
+        #     .filter(
+        #         and_(
+        #             core.models.Environment.environmentUri == environment.environmentUri,
+        #             or_(
+        #                 models.RedshiftCluster.SamlGroupName == group,
+        #                 models.Dataset.SamlAdminGroupName == group,
+        #                 models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
+        #                 models.DataPipeline.SamlGroupName == group,
+        #                 models.Dashboard.SamlGroupName == group,
+        #             ),
+        #         )
+        #     )
+        #     .count()
+        # )
+        #
+        # if group_env_objects_count > 0:
+        #     raise exceptions.EnvironmentResourcesFound(
+        #         action='Remove Team',
+        #         message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
+        #     )
 
         group_membership = Environment.find_environment_group(
             session, group, environment.environmentUri
@@ -406,7 +400,7 @@ class Environment:
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         return environment
 
@@ -437,14 +431,14 @@ class Environment:
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
             permissions=data['permissions'],
-            resource_type=models.Environment.__name__,
+            resource_type=core.models.Environment.__name__,
         )
         return environment
 
@@ -476,7 +470,7 @@ class Environment:
                 Permission.find_permission_by_name(
                     session=session,
                     permission_name=p,
-                    permission_type=PermissionType.RESOURCE.name,
+                    permission_type=common.models.PermissionType.RESOURCE.name,
                 )
             )
         return group_invitation_permissions
@@ -484,15 +478,15 @@ class Environment:
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
         query = (
-            session.query(models.Environment)
+            session.query(core.models.Environment)
             .outerjoin(
                 core.models.EnvironmentGroup,
-                models.Environment.environmentUri
+                core.models.Environment.environmentUri
                 == core.models.EnvironmentGroup.environmentUri,
             )
             .filter(
                 or_(
-                    models.Environment.owner == username,
+                    core.models.Environment.owner == username,
                     core.models.EnvironmentGroup.groupUri.in_(groups),
                 )
             )
@@ -501,10 +495,10 @@ class Environment:
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.Environment.label.ilike('%' + term + '%'),
-                    models.Environment.description.ilike('%' + term + '%'),
-                    models.Environment.tags.contains(f'{{{term}}}'),
-                    models.Environment.region.ilike('%' + term + '%'),
+                    core.models.Environment.label.ilike('%' + term + '%'),
+                    core.models.Environment.description.ilike('%' + term + '%'),
+                    core.models.Environment.tags.contains(f'{{{term}}}'),
+                    core.models.Environment.region.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -594,15 +588,15 @@ class Environment:
         query = (
             session.query(core.models.EnvironmentGroup)
             .join(
-                models.Environment,
+                core.models.Environment,
                 core.models.EnvironmentGroup.environmentUri
-                == models.Environment.environmentUri,
+                == core.models.Environment.environmentUri,
             )
             .filter(
                 and_(
-                    models.Environment.environmentUri == uri,
+                    core.models.Environment.environmentUri == uri,
                     core.models.EnvironmentGroup.groupUri
-                    != models.Environment.SamlGroupName,
+                    != core.models.Environment.SamlGroupName,
                 )
             )
         )
@@ -637,277 +631,278 @@ class Environment:
             session, username, groups, uri, data
         ).all()
 
-    @staticmethod
-    def query_environment_datasets(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
-            and_(
-                models.Dataset.environmentUri == uri,
-                models.Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    def query_environment_group_datasets(session, username, groups, envUri, groupUri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
-            and_(
-                models.Dataset.environmentUri == envUri,
-                models.Dataset.SamlAdminGroupName == groupUri,
-                models.Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
-    def paginated_environment_datasets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        return paginate(
-            query=Environment.query_environment_datasets(
-                session, username, groups, uri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def paginated_environment_group_datasets(
-        session, username, groups, envUri, groupUri, data=None, check_perm=None
-    ) -> dict:
-        return paginate(
-            query=Environment.query_environment_group_datasets(
-                session, username, groups, envUri, groupUri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-    def paginated_shared_with_environment_datasets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        q = (
-            session.query(
-                models.ShareObjectItem.shareUri.label('shareUri'),
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('datasetName'),
-                models.Dataset.description.label('datasetDescription'),
-                models.Environment.environmentUri.label('environmentUri'),
-                models.Environment.name.label('environmentName'),
-                models.ShareObject.created.label('created'),
-                models.ShareObject.principalId.label('principalId'),
-                models.ShareObjectItem.itemType.label('itemType'),
-                models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
-                models.ShareObjectItem.GlueTableName.label('GlueTableName'),
-                models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
-                models.Organization.organizationUri.label('organizationUri'),
-                models.Organization.name.label('organizationName'),
-                case(
-                    [
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.Table.value,
-                            func.concat(
-                                models.DatasetTable.GlueDatabaseName,
-                                '.',
-                                models.DatasetTable.GlueTableName,
-                            ),
-                        ),
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
-                        ),
-                    ],
-                    else_='XXX XXXX',
-                ).label('itemAccess'),
-            )
-            .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-            )
-            .join(
-                models.Dataset,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
-            )
-            .join(
-                models.Environment,
-                models.Environment.environmentUri == models.Dataset.environmentUri,
-            )
-            .join(
-                models.Organization,
-                models.Organization.organizationUri
-                == models.Environment.organizationUri,
-            )
-            .outerjoin(
-                models.DatasetTable,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
-            )
-            .outerjoin(
-                models.DatasetStorageLocation,
-                models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
-            )
-            .filter(
-                and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareObjectStatus.Share_Succeeded.value,
-                            ShareObjectStatus.Approved.value,
-                        ]
-                    ),
-                    models.ShareObject.environmentUri == uri,
-                )
-            )
-        )
-
-        if data.get('datasetUri'):
-            datasetUri = data.get('datasetUri')
-            q = q.filter(models.ShareObject.datasetUri == datasetUri)
-
-        if data.get('itemTypes', None):
-            itemTypes = data.get('itemTypes')
-            q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
-            )
-        if data.get('term'):
-            term = data.get('term')
-            q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
-
-        return paginate(
-            query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
-
-    @staticmethod
-    def paginated_shared_with_environment_group_datasets(
-        session, username, groups, envUri, groupUri, data=None, check_perm=None
-    ) -> dict:
-        q = (
-            session.query(
-                models.ShareObjectItem.shareUri.label('shareUri'),
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('datasetName'),
-                models.Dataset.description.label('datasetDescription'),
-                models.Environment.environmentUri.label('environmentUri'),
-                models.Environment.name.label('environmentName'),
-                models.ShareObject.created.label('created'),
-                models.ShareObject.principalId.label('principalId'),
-                models.ShareObjectItem.itemType.label('itemType'),
-                models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
-                models.ShareObjectItem.GlueTableName.label('GlueTableName'),
-                models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
-                models.Organization.organizationUri.label('organizationUri'),
-                models.Organization.name.label('organizationName'),
-                case(
-                    [
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.Table.value,
-                            func.concat(
-                                models.DatasetTable.GlueDatabaseName,
-                                '.',
-                                models.DatasetTable.GlueTableName,
-                            ),
-                        ),
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
-                        ),
-                    ],
-                    else_='XXX XXXX',
-                ).label('itemAccess'),
-            )
-            .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-            )
-            .join(
-                models.Dataset,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
-            )
-            .join(
-                models.Environment,
-                models.Environment.environmentUri == models.Dataset.environmentUri,
-            )
-            .join(
-                models.Organization,
-                models.Organization.organizationUri
-                == models.Environment.organizationUri,
-            )
-            .outerjoin(
-                models.DatasetTable,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
-            )
-            .outerjoin(
-                models.DatasetStorageLocation,
-                models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
-            )
-            .filter(
-                and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareObjectStatus.Share_Succeeded.value,
-                            ShareObjectStatus.Approved.value,
-                        ]
-                    ),
-                    models.ShareObject.environmentUri == envUri,
-                    models.ShareObject.principalId == groupUri,
-                )
-            )
-        )
-
-        if data.get('datasetUri'):
-            datasetUri = data.get('datasetUri')
-            q = q.filter(models.ShareObject.datasetUri == datasetUri)
-
-        if data.get('itemTypes', None):
-            itemTypes = data.get('itemTypes')
-            q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
-            )
-        if data.get('term'):
-            term = data.get('term')
-            q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
-
-        return paginate(
-            query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+##### Commented methods need to be moved to Datasets or shares
+    # @staticmethod
+    # def query_environment_datasets(session, username, groups, uri, filter) -> Query:
+    #     query = session.query(models.Dataset).filter(
+    #         and_(
+    #             models.Dataset.environmentUri == uri,
+    #             models.Dataset.deleted.is_(None),
+    #         )
+    #     )
+    #     if filter and filter.get('term'):
+    #         term = filter['term']
+    #         query = query.filter(
+    #             or_(
+    #                 models.Dataset.label.ilike('%' + term + '%'),
+    #                 models.Dataset.description.ilike('%' + term + '%'),
+    #                 models.Dataset.tags.contains(f'{{{term}}}'),
+    #                 models.Dataset.region.ilike('%' + term + '%'),
+    #             )
+    #         )
+    #     return query
+    #
+    # @staticmethod
+    # def query_environment_group_datasets(session, username, groups, envUri, groupUri, filter) -> Query:
+    #     query = session.query(models.Dataset).filter(
+    #         and_(
+    #             models.Dataset.environmentUri == envUri,
+    #             models.Dataset.SamlAdminGroupName == groupUri,
+    #             models.Dataset.deleted.is_(None),
+    #         )
+    #     )
+    #     if filter and filter.get('term'):
+    #         term = filter['term']
+    #         query = query.filter(
+    #             or_(
+    #                 models.Dataset.label.ilike('%' + term + '%'),
+    #                 models.Dataset.description.ilike('%' + term + '%'),
+    #                 models.Dataset.tags.contains(f'{{{term}}}'),
+    #                 models.Dataset.region.ilike('%' + term + '%'),
+    #             )
+    #         )
+    #     return query
+    #
+    # @staticmethod
+    # @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
+    # def paginated_environment_datasets(
+    #     session, username, groups, uri, data=None, check_perm=None
+    # ) -> dict:
+    #     return paginate(
+    #         query=Environment.query_environment_datasets(
+    #             session, username, groups, uri, data
+    #         ),
+    #         page=data.get('page', 1),
+    #         page_size=data.get('pageSize', 10),
+    #     ).to_dict()
+    #
+    # @staticmethod
+    # def paginated_environment_group_datasets(
+    #     session, username, groups, envUri, groupUri, data=None, check_perm=None
+    # ) -> dict:
+    #     return paginate(
+    #         query=Environment.query_environment_group_datasets(
+    #             session, username, groups, envUri, groupUri, data
+    #         ),
+    #         page=data.get('page', 1),
+    #         page_size=data.get('pageSize', 10),
+    #     ).to_dict()
+    #
+    # @staticmethod
+    # @has_resource_perm(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
+    # def paginated_shared_with_environment_datasets(
+    #     session, username, groups, uri, data=None, check_perm=None
+    # ) -> dict:
+    #     q = (
+    #         session.query(
+    #             models.ShareObjectItem.shareUri.label('shareUri'),
+    #             models.Dataset.datasetUri.label('datasetUri'),
+    #             models.Dataset.name.label('datasetName'),
+    #             models.Dataset.description.label('datasetDescription'),
+    #             core.models.Environment.environmentUri.label('environmentUri'),
+    #             core.models.Environment.name.label('environmentName'),
+    #             models.ShareObject.created.label('created'),
+    #             models.ShareObject.principalId.label('principalId'),
+    #             models.ShareObjectItem.itemType.label('itemType'),
+    #             models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+    #             models.ShareObjectItem.GlueTableName.label('GlueTableName'),
+    #             models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+    #             models.Organization.organizationUri.label('organizationUri'),
+    #             models.Organization.name.label('organizationName'),
+    #             case(
+    #                 [
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.Table.value,
+    #                         func.concat(
+    #                             models.DatasetTable.GlueDatabaseName,
+    #                             '.',
+    #                             models.DatasetTable.GlueTableName,
+    #                         ),
+    #                     ),
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.StorageLocation.value,
+    #                         func.concat(models.DatasetStorageLocation.name),
+    #                     ),
+    #                 ],
+    #                 else_='XXX XXXX',
+    #             ).label('itemAccess'),
+    #         )
+    #         .join(
+    #             models.ShareObject,
+    #             models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+    #         )
+    #         .join(
+    #             models.Dataset,
+    #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
+    #         )
+    #         .join(
+    #             core.models.Environment,
+    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #         )
+    #         .join(
+    #             models.Organization,
+    #             models.Organization.organizationUri
+    #             == core.models.Environment.organizationUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetTable,
+    #             models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetStorageLocation,
+    #             models.ShareObjectItem.itemUri
+    #             == models.DatasetStorageLocation.locationUri,
+    #         )
+    #         .filter(
+    #             and_(
+    #                 models.ShareObjectItem.status.in_(
+    #                     [
+    #                         ShareObjectStatus.Share_Succeeded.value,
+    #                         ShareObjectStatus.Approved.value,
+    #                     ]
+    #                 ),
+    #                 models.ShareObject.environmentUri == uri,
+    #             )
+    #         )
+    #     )
+    #
+    #     if data.get('datasetUri'):
+    #         datasetUri = data.get('datasetUri')
+    #         q = q.filter(models.ShareObject.datasetUri == datasetUri)
+    #
+    #     if data.get('itemTypes', None):
+    #         itemTypes = data.get('itemTypes')
+    #         q = q.filter(
+    #             or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+    #         )
+    #     if data.get('term'):
+    #         term = data.get('term')
+    #         q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
+    #
+    #     return paginate(
+    #         query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
+    #     ).to_dict()
+    #
+    # @staticmethod
+    # def paginated_shared_with_environment_group_datasets(
+    #     session, username, groups, envUri, groupUri, data=None, check_perm=None
+    # ) -> dict:
+    #     q = (
+    #         session.query(
+    #             models.ShareObjectItem.shareUri.label('shareUri'),
+    #             models.Dataset.datasetUri.label('datasetUri'),
+    #             models.Dataset.name.label('datasetName'),
+    #             models.Dataset.description.label('datasetDescription'),
+    #             core.models.Environment.environmentUri.label('environmentUri'),
+    #             core.models.Environment.name.label('environmentName'),
+    #             models.ShareObject.created.label('created'),
+    #             models.ShareObject.principalId.label('principalId'),
+    #             models.ShareObjectItem.itemType.label('itemType'),
+    #             models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+    #             models.ShareObjectItem.GlueTableName.label('GlueTableName'),
+    #             models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+    #             models.Organization.organizationUri.label('organizationUri'),
+    #             models.Organization.name.label('organizationName'),
+    #             case(
+    #                 [
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.Table.value,
+    #                         func.concat(
+    #                             models.DatasetTable.GlueDatabaseName,
+    #                             '.',
+    #                             models.DatasetTable.GlueTableName,
+    #                         ),
+    #                     ),
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.StorageLocation.value,
+    #                         func.concat(models.DatasetStorageLocation.name),
+    #                     ),
+    #                 ],
+    #                 else_='XXX XXXX',
+    #             ).label('itemAccess'),
+    #         )
+    #         .join(
+    #             models.ShareObject,
+    #             models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+    #         )
+    #         .join(
+    #             models.Dataset,
+    #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
+    #         )
+    #         .join(
+    #             core.models.Environment,
+    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #         )
+    #         .join(
+    #             models.Organization,
+    #             models.Organization.organizationUri
+    #             == core.models.Environment.organizationUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetTable,
+    #             models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetStorageLocation,
+    #             models.ShareObjectItem.itemUri
+    #             == models.DatasetStorageLocation.locationUri,
+    #         )
+    #         .filter(
+    #             and_(
+    #                 models.ShareObjectItem.status.in_(
+    #                     [
+    #                         ShareObjectStatus.Share_Succeeded.value,
+    #                         ShareObjectStatus.Approved.value,
+    #                     ]
+    #                 ),
+    #                 models.ShareObject.environmentUri == envUri,
+    #                 models.ShareObject.principalId == groupUri,
+    #             )
+    #         )
+    #     )
+    #
+    #     if data.get('datasetUri'):
+    #         datasetUri = data.get('datasetUri')
+    #         q = q.filter(models.ShareObject.datasetUri == datasetUri)
+    #
+    #     if data.get('itemTypes', None):
+    #         itemTypes = data.get('itemTypes')
+    #         q = q.filter(
+    #             or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+    #         )
+    #     if data.get('term'):
+    #         term = data.get('term')
+    #         q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
+    #
+    #     return paginate(
+    #         query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
+    #     ).to_dict()
 
     @staticmethod
     def query_environment_networks(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.Vpc).filter(
-            models.Vpc.environmentUri == uri,
+        query = session.query(core.models.Vpc).filter(
+            core.models.Vpc.environmentUri == uri,
         )
         if filter.get('term'):
             term = filter.get('term')
             query = query.filter(
                 or_(
-                    models.Vpc.label.ilike('%' + term + '%'),
-                    models.Vpc.VpcId.ilike('%' + term + '%'),
+                    core.models.Vpc.label.ilike('%' + term + '%'),
+                    core.models.Vpc.VpcId.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -925,96 +920,96 @@ class Environment:
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
-    def paginated_environment_data_items(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
-        q = (
-            session.query(
-                models.ShareObjectItem.shareUri.label('shareUri'),
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('datasetName'),
-                models.Dataset.description.label('datasetDescription'),
-                models.Environment.environmentUri.label('environmentUri'),
-                models.Environment.name.label('environmentName'),
-                models.ShareObject.created.label('created'),
-                models.ShareObjectItem.itemType.label('itemType'),
-                models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
-                models.ShareObjectItem.GlueTableName.label('GlueTableName'),
-                models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
-                models.Organization.organizationUri.label('organizationUri'),
-                models.Organization.name.label('organizationName'),
-                case(
-                    [
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.Table.value,
-                            func.concat(
-                                models.DatasetTable.GlueDatabaseName,
-                                '.',
-                                models.DatasetTable.GlueTableName,
-                            ),
-                        ),
-                        (
-                            models.ShareObjectItem.itemType
-                            == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
-                        ),
-                    ],
-                    else_='XXX XXXX',
-                ).label('itemAccess'),
-            )
-            .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-            )
-            .join(
-                models.Dataset,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
-            )
-            .join(
-                models.Environment,
-                models.Environment.environmentUri == models.Dataset.environmentUri,
-            )
-            .join(
-                models.Organization,
-                models.Organization.organizationUri
-                == models.Environment.organizationUri,
-            )
-            .outerjoin(
-                models.DatasetTable,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
-            )
-            .outerjoin(
-                models.DatasetStorageLocation,
-                models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
-            )
-            .filter(
-                and_(
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
-                    models.ShareObject.environmentUri == uri,
-                )
-            )
-        )
-
-        if data.get('datasetUri'):
-            datasetUri = data.get('datasetUri')
-            q = q.filter(models.ShareObject.datasetUri == datasetUri)
-
-        if data.get('itemTypes', None):
-            itemTypes = data.get('itemTypes')
-            q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
-            )
-        if data.get('term'):
-            term = data.get('term')
-            q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
-
-        return paginate(
-            query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+    # @staticmethod
+    # @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
+    # def paginated_environment_data_items(
+    #     session, username, groups, uri, data=None, check_perm=None
+    # ):
+    #     q = (
+    #         session.query(
+    #             models.ShareObjectItem.shareUri.label('shareUri'),
+    #             models.Dataset.datasetUri.label('datasetUri'),
+    #             models.Dataset.name.label('datasetName'),
+    #             models.Dataset.description.label('datasetDescription'),
+    #             core.models.Environment.environmentUri.label('environmentUri'),
+    #             core.models.Environment.name.label('environmentName'),
+    #             models.ShareObject.created.label('created'),
+    #             models.ShareObjectItem.itemType.label('itemType'),
+    #             models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+    #             models.ShareObjectItem.GlueTableName.label('GlueTableName'),
+    #             models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+    #             models.Organization.organizationUri.label('organizationUri'),
+    #             models.Organization.name.label('organizationName'),
+    #             case(
+    #                 [
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.Table.value,
+    #                         func.concat(
+    #                             models.DatasetTable.GlueDatabaseName,
+    #                             '.',
+    #                             models.DatasetTable.GlueTableName,
+    #                         ),
+    #                     ),
+    #                     (
+    #                         models.ShareObjectItem.itemType
+    #                         == ShareableType.StorageLocation.value,
+    #                         func.concat(models.DatasetStorageLocation.name),
+    #                     ),
+    #                 ],
+    #                 else_='XXX XXXX',
+    #             ).label('itemAccess'),
+    #         )
+    #         .join(
+    #             models.ShareObject,
+    #             models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+    #         )
+    #         .join(
+    #             models.Dataset,
+    #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
+    #         )
+    #         .join(
+    #             core.models.Environment,
+    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #         )
+    #         .join(
+    #             models.Organization,
+    #             models.Organization.organizationUri
+    #             == core.models.Environment.organizationUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetTable,
+    #             models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+    #         )
+    #         .outerjoin(
+    #             models.DatasetStorageLocation,
+    #             models.ShareObjectItem.itemUri
+    #             == models.DatasetStorageLocation.locationUri,
+    #         )
+    #         .filter(
+    #             and_(
+    #                 models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+    #                 models.ShareObject.environmentUri == uri,
+    #             )
+    #         )
+    #     )
+    #
+    #     if data.get('datasetUri'):
+    #         datasetUri = data.get('datasetUri')
+    #         q = q.filter(models.ShareObject.datasetUri == datasetUri)
+    #
+    #     if data.get('itemTypes', None):
+    #         itemTypes = data.get('itemTypes')
+    #         q = q.filter(
+    #             or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+    #         )
+    #     if data.get('term'):
+    #         term = data.get('term')
+    #         q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
+    #
+    #     return paginate(
+    #         query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
+    #     ).to_dict()
 
     @staticmethod
     def validate_invite_params(data):
@@ -1054,33 +1049,33 @@ class Environment:
         return env_group
 
     @staticmethod
-    def get_environment_by_uri(session, uri) -> models.Environment:
+    def get_environment_by_uri(session, uri) -> core.models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
-        environment: models.Environment = Environment.find_environment_by_uri(
+        environment: core.models.Environment = Environment.find_environment_by_uri(
             session, uri
         )
         if not environment:
-            raise exceptions.ObjectNotFound(models.Environment.__name__, uri)
+            raise exceptions.ObjectNotFound(core.models.Environment.__name__, uri)
         return environment
 
     @staticmethod
-    def find_environment_by_uri(session, uri) -> models.Environment:
+    def find_environment_by_uri(session, uri) -> core.models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
-        environment: models.Environment = session.query(models.Environment).get(uri)
+        environment: core.models.Environment = session.query(core.models.Environment).get(uri)
         return environment
 
     @staticmethod
-    def list_all_active_environments(session) -> [models.Environment]:
+    def list_all_active_environments(session) -> [core.models.Environment]:
         """
         Lists all active dataall environments
         :param session:
-        :return: [models.Environment]
+        :return: [core.models.Environment]
         """
-        environments: [models.Environment] = (
-            session.query(models.Environment)
-            .filter(models.Environment.deleted.is_(None))
+        environments: [core.models.Environment] = (
+            session.query(core.models.Environment)
+            .filter(core.models.Environment.deleted.is_(None))
             .all()
         )
         log.info(
@@ -1088,114 +1083,114 @@ class Environment:
         )
         return environments
 
-    @staticmethod
-    def list_environment_redshift_clusters_query(session, environment_uri, filter):
-        q = session.query(models.RedshiftCluster).filter(
-            models.RedshiftCluster.environmentUri == environment_uri
-        )
-        term = filter.get('term', None)
-        if term:
-            q = q.filter(
-                or_(
-                    models.RedshiftCluster.label.ilike('%' + term + '%'),
-                    models.RedshiftCluster.description.ilike('%' + term + '%'),
-                )
-            )
-        return q
+    # @staticmethod
+    # def list_environment_redshift_clusters_query(session, environment_uri, filter):
+    #     q = session.query(models.RedshiftCluster).filter(
+    #         models.RedshiftCluster.environmentUri == environment_uri
+    #     )
+    #     term = filter.get('term', None)
+    #     if term:
+    #         q = q.filter(
+    #             or_(
+    #                 models.RedshiftCluster.label.ilike('%' + term + '%'),
+    #                 models.RedshiftCluster.description.ilike('%' + term + '%'),
+    #             )
+    #         )
+    #     return q
 
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-    def paginated_environment_redshift_clusters(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
-        query = Environment.list_environment_redshift_clusters_query(session, uri, data)
-        return paginate(
-            query=query,
-            page_size=data.get('pageSize', 10),
-            page=data.get('page', 1),
-        ).to_dict()
-
-    @staticmethod
-    def list_environment_objects(session, environment_uri):
-        environment_objects = []
-        datasets = (
-            session.query(models.Dataset.label, models.Dataset.datasetUri)
-            .filter(models.Dataset.environmentUri == environment_uri)
-            .all()
-        )
-        notebooks = (
-            session.query(
-                models.SagemakerNotebook.label,
-                models.SagemakerNotebook.notebookUri,
-            )
-            .filter(models.SagemakerNotebook.environmentUri == environment_uri)
-            .all()
-        )
-        ml_studios = (
-            session.query(
-                models.SagemakerStudioUserProfile.label,
-                models.SagemakerStudioUserProfile.sagemakerStudioUserProfileUri,
-            )
-            .filter(models.SagemakerStudioUserProfile.environmentUri == environment_uri)
-            .all()
-        )
-        redshift_clusters = (
-            session.query(
-                models.RedshiftCluster.label, models.RedshiftCluster.clusterUri
-            )
-            .filter(models.RedshiftCluster.environmentUri == environment_uri)
-            .all()
-        )
-        pipelines = (
-            session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
-            .filter(models.DataPipeline.environmentUri == environment_uri)
-            .all()
-        )
-        dashboards = (
-            session.query(models.Dashboard.label, models.Dashboard.dashboardUri)
-            .filter(models.Dashboard.environmentUri == environment_uri)
-            .all()
-        )
-        if datasets:
-            environment_objects.append({'type': 'Datasets', 'data': datasets})
-        if notebooks:
-            environment_objects.append({'type': 'Notebooks', 'data': notebooks})
-        if ml_studios:
-            environment_objects.append({'type': 'MLStudios', 'data': ml_studios})
-        if redshift_clusters:
-            environment_objects.append(
-                {'type': 'RedshiftClusters', 'data': redshift_clusters}
-            )
-        if pipelines:
-            environment_objects.append({'type': 'Pipelines', 'data': pipelines})
-        if dashboards:
-            environment_objects.append({'type': 'Dashboards', 'data': dashboards})
-        return environment_objects
-
-    @staticmethod
-    def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
-
-        return (
-            session.query(models.Dataset)
-            .filter(
-                and_(
-                    models.Dataset.environmentUri == uri,
-                    models.Dataset.SamlAdminGroupName == data['groupUri'],
-                )
-            )
-            .all()
-        )
+    # @staticmethod
+    # @has_resource_perm(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
+    # def paginated_environment_redshift_clusters(
+    #     session, username, groups, uri, data=None, check_perm=None
+    # ):
+    #     query = Environment.list_environment_redshift_clusters_query(session, uri, data)
+    #     return paginate(
+    #         query=query,
+    #         page_size=data.get('pageSize', 10),
+    #         page=data.get('page', 1),
+    #     ).to_dict()
+    #
+    # @staticmethod
+    # def list_environment_objects(session, environment_uri):
+    #     environment_objects = []
+    #     datasets = (
+    #         session.query(models.Dataset.label, models.Dataset.datasetUri)
+    #         .filter(models.Dataset.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     notebooks = (
+    #         session.query(
+    #             models.SagemakerNotebook.label,
+    #             models.SagemakerNotebook.notebookUri,
+    #         )
+    #         .filter(models.SagemakerNotebook.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     ml_studios = (
+    #         session.query(
+    #             models.SagemakerStudioUserProfile.label,
+    #             models.SagemakerStudioUserProfile.sagemakerStudioUserProfileUri,
+    #         )
+    #         .filter(models.SagemakerStudioUserProfile.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     redshift_clusters = (
+    #         session.query(
+    #             models.RedshiftCluster.label, models.RedshiftCluster.clusterUri
+    #         )
+    #         .filter(models.RedshiftCluster.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     pipelines = (
+    #         session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
+    #         .filter(models.DataPipeline.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     dashboards = (
+    #         session.query(models.Dashboard.label, models.Dashboard.dashboardUri)
+    #         .filter(models.Dashboard.environmentUri == environment_uri)
+    #         .all()
+    #     )
+    #     if datasets:
+    #         environment_objects.append({'type': 'Datasets', 'data': datasets})
+    #     if notebooks:
+    #         environment_objects.append({'type': 'Notebooks', 'data': notebooks})
+    #     if ml_studios:
+    #         environment_objects.append({'type': 'MLStudios', 'data': ml_studios})
+    #     if redshift_clusters:
+    #         environment_objects.append(
+    #             {'type': 'RedshiftClusters', 'data': redshift_clusters}
+    #         )
+    #     if pipelines:
+    #         environment_objects.append({'type': 'Pipelines', 'data': pipelines})
+    #     if dashboards:
+    #         environment_objects.append({'type': 'Dashboards', 'data': dashboards})
+    #     return environment_objects
+    #
+    # @staticmethod
+    # def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
+    #     if not data:
+    #         raise exceptions.RequiredParameter('data')
+    #     if not data.get('groupUri'):
+    #         raise exceptions.RequiredParameter('groupUri')
+    #
+    #     return (
+    #         session.query(models.Dataset)
+    #         .filter(
+    #             and_(
+    #                 models.Dataset.environmentUri == uri,
+    #                 models.Dataset.SamlAdminGroupName == data['groupUri'],
+    #             )
+    #         )
+    #         .all()
+    #     )
 
     @staticmethod
     @has_resource_perm(permissions.GET_ENVIRONMENT)
     def get_stack(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Stack:
-        return session.query(models.Stack).get(data['stackUri'])
+    ) -> common.models.Stack:
+        return session.query(common.models.Stack).get(data['stackUri'])
 
     @staticmethod
     def delete_environment(session, username, groups, uri, data=None, check_perm=None):
@@ -1230,15 +1225,17 @@ class Environment:
             session, environment.environmentUri, 'environment'
         )
 
+        ##TODO: Rethink how to check empty environment
+
         env_shared_with_objects = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.environmentUri == environment.environmentUri)
+            session.query(core.models.ShareObject)
+            .filter(core.models.ShareObject.environmentUri == environment.environmentUri)
             .all()
         )
         for share in env_shared_with_objects:
             (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.shareUri == share.shareUri)
+                session.query(core.models.ShareObjectItem)
+                .filter(core.models.ShareObjectItem.shareUri == share.shareUri)
                 .delete()
             )
             session.delete(share)
