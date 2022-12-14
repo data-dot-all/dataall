@@ -4,7 +4,6 @@ import requests
 from backend.api.context import Context
 from backend.db import models, operations
 
-from .service_handlers import Worker
 from .ecs import Ecs
 from .parameter import Parameter
 
@@ -28,7 +27,6 @@ def get_stack_with_cfn_resources(context: Context, targetUri: str, AwsAccountId:
             return stack
 
         cfn_task = save_describe_stack_task(session, env, stack, targetUri)
-        Worker.queue(engine=context.engine, task_ids=[cfn_task.taskUri])
     return stack
 
 
@@ -72,7 +70,6 @@ def deploy_stack(context, targetUri):
                 )
                 session.add(task)
                 session.commit()
-                Worker.queue(engine=context.engine, task_ids=[task.taskUri])
 
         return stack
 
@@ -98,12 +95,10 @@ def delete_stack(
         )
         session.add(task)
 
-    Worker.queue(context.engine, [task.taskUri])
     return True
 
 
 
-@Worker.handler(path='ecs.cdkproxy.deploy')
 def deploy_stack(engine, task: models.Task):
     with engine.scoped_session() as session:
         stack: models.Stack = db.api.Stack.get_stack_by_uri(

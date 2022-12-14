@@ -1,6 +1,5 @@
 import logging
 import uuid
-
 from botocore.exceptions import ClientError
 
 from .sts import SessionHelper

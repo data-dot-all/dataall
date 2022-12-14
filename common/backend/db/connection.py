@@ -8,7 +8,7 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from backend.utils.boto3 import Parameter
+from backend.utils.aws import Parameter
 
 from .base import Base
 from .common import operations

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
 from .sts import SessionHelper
 
 log = logging.getLogger(__name__)
@@ -177,7 +176,6 @@ class Redshift:
         cluster.external_schema_created = True
 
     @staticmethod
-    @Worker.retry(exception=ClientError, tries=4, delay=3, backoff=2, logger=log)
     def get_secret(cluster, secretsmanager):
         try:
             dh_secret = secretsmanager.get_secret_value(SecretId=cluster.datahubSecret)
@@ -188,7 +186,6 @@ class Redshift:
 
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.create_external_schema')
     def create_external_schemas(engine, task):
         with engine.scoped_session() as session:
             catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(
@@ -260,7 +257,6 @@ class Redshift:
             return True
 
     @staticmethod
-    @Worker.handler(path='redshift.cluster.drop_external_schema')
     def drop_external_schemas(engine, task):
         with engine.scoped_session() as session:
             catalog_databases, cluster, env = Redshift.get_cluster_catalog_databases(
