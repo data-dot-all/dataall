@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, String, DateTime, Enum as DBEnum
 from sqlalchemy.orm import relationship
 
-from .. import Base, utils
+from ... import Base, utils
 
 
 class ResourcePolicy(Base):

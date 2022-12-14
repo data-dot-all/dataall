@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from .TenantPolicy import TenantPolicy
 from .Permission import Permission
-from backend.db import Base
+from ... import Base
 
 
 class TenantPolicyPermission(Base):

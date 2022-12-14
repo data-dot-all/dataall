@@ -3,7 +3,7 @@ import enum
 
 from sqlalchemy import Column, String, DateTime, Enum
 
-from backend.db import Base, utils
+from ... import Base, utils
 
 
 class PermissionType(enum.Enum):

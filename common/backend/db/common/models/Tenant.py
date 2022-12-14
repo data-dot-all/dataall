@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy import Column, String, DateTime
 
-from backend.db import Base, utils
+from ... import Base, utils
 
 
 class Tenant(Base):

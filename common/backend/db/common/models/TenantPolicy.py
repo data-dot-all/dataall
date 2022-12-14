@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as DBEnum
 from sqlalchemy.orm import relationship
 
-from backend.db import Base, utils
+from ... import Base, utils
 
 
 class TenantPolicy(Base):

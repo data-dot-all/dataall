@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from .. import Base
+from ... import Base
 from . import ResourcePolicy
 from . import Permission
 
