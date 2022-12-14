@@ -11,6 +11,7 @@ from ariadne import (
 )
 
 from . import gql
+from .Objects import *
 
 
 class GraphQLEnumMapper(Enum):
