@@ -2,7 +2,7 @@ print("Initializing gql Python package...")
 from .default_resolver import DefaultResolver
 from .graphql_argument import Argument
 from .graphql_directive import DirectiveArgs
-from .graphql_enum import GraphqlEnum
+from .graphql_enum import GraphqlEnum as Enum
 from .graphql_field import Field
 from .graphql_input import InputType
 from .graphql_mutation_field import MutationField
@@ -53,7 +53,7 @@ __all__ = [
     'Thunk',
     'Union',
     'Ref',
-    'GraphqlEnum',
+    'Enum',
 ]
 
 
