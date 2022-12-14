@@ -1,4 +1,5 @@
-from backend.api.module_api import (
+print("init Notebooks module")
+from . import (
     input_types,
     mutations,
     queries,

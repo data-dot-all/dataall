@@ -1,6 +1,5 @@
 from backend.api import GraphQLEnumMapper
 
-
 class SagemakerNotebookRole(GraphQLEnumMapper):
     Creator = '950'
     Admin = '900'

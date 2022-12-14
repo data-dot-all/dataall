@@ -7,4 +7,6 @@ from .context import (
     resolver_adapter,
     save
 )
+print("starting all import")
+from . import *
 print("api Python package successfully initialized")
