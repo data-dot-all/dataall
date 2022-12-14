@@ -16,13 +16,12 @@ from backend.db import (
     common,
 )
 from backend.db.paginator import Page, paginate
-
-from . import (
+from backend.common.operations import (
+    KeyValueTag,
     has_resource_perm,
     has_tenant_perm,
-    ResourcePolicy,
     Permission,
-    KeyValueTag,
+    ResourcePolicy,
 )
 
 from ..models.Environment import EnvironmentType, EnvironmentPermission
