@@ -7,6 +7,6 @@ from .context import (
     resolver_adapter,
     save
 )
-print("starting all import")
-from . import *
+print("starting import Objects")
+from .Objects import *
 print("api Python package successfully initialized")
