@@ -12,7 +12,7 @@ from backend.api import (
     bootstrap as bootstrap_schema,
     get_executable_schema
 )
-from backend.aws_handlers.search_proxy import connect
+from backend.utils.aws.search_proxy import connect
 
 from backend.db import (
     init_permissions,
