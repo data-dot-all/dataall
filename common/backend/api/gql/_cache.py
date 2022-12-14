@@ -11,6 +11,7 @@ def cache_instances(cls):
 
         @classmethod
         def get_instance(cls, name, scope='default'):
+            print("initializing class instances. Inside class method of class X")
             return cls.class_instances[scope].get(name, None)
 
     return X
