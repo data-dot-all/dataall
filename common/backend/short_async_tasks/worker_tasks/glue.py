@@ -3,17 +3,18 @@ import logging
 from botocore.exceptions import ClientError
 
 from backend.short_async_tasks import Worker
-from .sts import SessionHelper
-from ... import db
-from ...db import models
+from backend.utils.aws import Glue
+from backend.db import common, module
+
+##TODO Assuming this goes into module Datasets, careful references to datapipeline
 
 log = logging.getLogger('aws:glue')
 
-#TODO
+
 @Worker.handler(path='glue.dataset.database.tables')
-def list_tables(engine, task: models.Task):
+def list_tables(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+        dataset: module.models.Dataset = module.operations.Dataset.get_dataset_by_uri(
             session, task.targetUri
         )
         accountid = dataset.AwsAccountId
@@ -21,14 +22,14 @@ def list_tables(engine, task: models.Task):
         tables = Glue.list_glue_database_tables(
             accountid, dataset.GlueDatabaseName, region
         )
-        db.api.DatasetTable.sync(session, dataset.datasetUri, glue_tables=tables)
+        module.operations.DatasetTable.sync(session, dataset.datasetUri, glue_tables=tables)
         return tables
 
 
 @Worker.handler(path='glue.dataset.crawler.create')
-def create_crawler(engine, task: models.Task):
+def create_crawler(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+        dataset: module.models.Dataset = module.operations.Dataset.get_dataset_by_uri(
             session, task.targetUri
         )
         location = task.payload.get('location')
@@ -44,9 +45,9 @@ def create_crawler(engine, task: models.Task):
 
 
 @Worker.handler(path='glue.crawler.start')
-def start_crawler(engine, task: models.Task):
+def start_crawler(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+        dataset: module.models.Dataset = module.operations.Dataset.get_dataset_by_uri(
             session, task.targetUri
         )
         location = task.payload.get('location')
@@ -62,12 +63,12 @@ def start_crawler(engine, task: models.Task):
 
 
 @Worker.handler('glue.table.update_column')
-def update_table_columns(engine, task: models.Task):
+def update_table_columns(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        column: models.DatasetTableColumn = session.query(
-            models.DatasetTableColumn
+        column: module.models.DatasetTableColumn = session.query(
+            module.models.DatasetTableColumn
         ).get(task.targetUri)
-        table: models.DatasetTable = session.query(models.DatasetTable).get(
+        table: module.models.DatasetTable = session.query(module.models.DatasetTable).get(
             column.tableUri
         )
         try:
@@ -121,9 +122,9 @@ def update_table_columns(engine, task: models.Task):
 
 
 @Worker.handler('glue.table.columns')
-def get_table_columns(engine, task: models.Task):
+def get_table_columns(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(
+        dataset_table: module.models.DatasetTable = session.query(module.models.DatasetTable).get(
             task.targetUri
         )
         aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
@@ -142,16 +143,16 @@ def get_table_columns(engine, task: models.Task):
                 f'//{dataset_table.name} due to: '
                 f'{e}'
             )
-        db.api.DatasetTable.sync_table_columns(
+        module.operations.DatasetTable.sync_table_columns(
             session, dataset_table, glue_table['Table']
         )
     return True
 
 
 @Worker.handler(path='glue.job.runs')
-def get_job_runs(engine, task: models.Task):
+def get_job_runs(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        Data_pipeline: models.DataPipeline = session.query(models.DataPipeline).get(
+        Data_pipeline: module.models.DataPipeline = session.query(module.models.DataPipeline).get(
             task.targetUri
         )
         aws = SessionHelper.remote_session(Data_pipeline.AwsAccountId)
@@ -166,14 +167,14 @@ def get_job_runs(engine, task: models.Task):
 
 
 @Worker.handler('glue.job.start_profiling_run')
-def start_profiling_run(engine, task: models.Task):
+def start_profiling_run(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        profiling: models.DatasetProfilingRun = (
-            db.api.DatasetProfilingRun.get_profiling_run(
+        profiling: module.models.DatasetProfilingRun = (
+            module.operations.DatasetProfilingRun.get_profiling_run(
                 session, profilingRunUri=task.targetUri
             )
         )
-        dataset: models.Dataset = session.query(models.Dataset).get(
+        dataset: module.models.Dataset = session.query(module.models.Dataset).get(
             profiling.datasetUri
         )
         run = Glue.run_job(
@@ -188,7 +189,7 @@ def start_profiling_run(engine, task: models.Task):
                 ),
             }
         )
-        db.api.DatasetProfilingRun.update_run(
+        module.operations.DatasetProfilingRun.update_run(
             session,
             profilingRunUri=profiling.profilingRunUri,
             GlueJobRunId=run['JobRunId'],
@@ -197,14 +198,14 @@ def start_profiling_run(engine, task: models.Task):
 
 
 @Worker.handler('glue.job.profiling_run_status')
-def get_profiling_run(engine, task: models.Task):
+def get_profiling_run(engine, task: common.models.Task):
     with engine.scoped_session() as session:
-        profiling: models.DatasetProfilingRun = (
-            db.api.DatasetProfilingRun.get_profiling_run(
+        profiling: module.models.DatasetProfilingRun = (
+            module.operations.DatasetProfilingRun.get_profiling_run(
                 session, profilingRunUri=task.targetUri
             )
         )
-        dataset: models.Dataset = session.query(models.Dataset).get(
+        dataset: module.models.Dataset = session.query(module.models.Dataset).get(
             profiling.datasetUri
         )
         glue_run = Glue.get_job_run(

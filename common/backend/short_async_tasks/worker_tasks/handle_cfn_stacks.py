@@ -19,7 +19,7 @@ def delete_stack(engine, task: models.Task):
             'region': task.payload['region'],
             'stack_name': task.payload['stack_name'],
         }
-        CloudFormation.delete_cloudformation_stack(**data)
+        CloudFormation.delete_cloudformation_stack(**data) #TODO Replace for arguments and avoid **args
     except ClientError as e:
         log.error(f'Failed to delete CFN stack{task.targetUri}: {e}')
         raise e
@@ -34,7 +34,7 @@ def get_stack_status(engine, task: models.Task):
             'region': task.payload['region'],
             'stack_name': task.payload['stack_name'],
         }
-        return CloudFormation._get_stack(**data)['StackStatus']
+        return CloudFormation._get_stack(**data)['StackStatus']#TODO Replace for arguments and avoid **args
     except ClientError as e:
         log.error(f'Failed to Get CFN stack status{task.targetUri}: {e}')
         raise e
@@ -52,7 +52,7 @@ def describe_stack_resources(engine, task: models.Task):
             'stack_name': task.payload['stack_name'],
         }
 
-        cfn_stack = CloudFormation._get_stack(**data)
+        cfn_stack = CloudFormation._get_stack(**data)#TODO Replace for arguments and avoid **args
         stack_arn = cfn_stack['StackId']
         status = cfn_stack['StackStatus']
         stack_outputs = cfn_stack.get('Outputs', [])

@@ -1,12 +1,11 @@
 from backend.short_async_tasks import Worker
-from .sts import SessionHelper
-from ...db import models, Engine
+from backend.utils.aws.codecommit import CodeCommit
+from backend.db import Engine, common
 
 
 
-@staticmethod
 @Worker.handler(path='repo.datapipeline.cat')
-def cat(engine: Engine, task: models.Task):
+def cat(engine: Engine, task: common.models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = CodeCommit._unpack(session, task)
         response = client.get_file(
@@ -16,9 +15,9 @@ def cat(engine: Engine, task: models.Task):
         )
         return response['fileContent']
 
-@staticmethod
+
 @Worker.handler(path='repo.datapipeline.ls')
-def ls(engine: Engine, task: models.Task):
+def ls(engine: Engine, task: common.models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = CodeCommit._unpack(session, task)
         response = client.get_folder(
@@ -65,9 +64,9 @@ def ls(engine: Engine, task: models.Task):
             )
         return nodes
 
-@staticmethod
+
 @Worker.handler(path='repo.datapipeline.branches')
-def list_branches(engine: Engine, task: models.Task):
+def list_branches(engine: Engine, task: common.models.Task):
     with engine.scoped_session() as session:
         (pipe, env, client) = CodeCommit._unpack(session, task)
         response = client.list_branches(repositoryName=pipe.repo)

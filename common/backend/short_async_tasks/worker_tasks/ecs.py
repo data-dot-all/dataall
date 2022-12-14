@@ -2,8 +2,6 @@ import logging
 import os
 import time
 
-import boto3
-from botocore.exceptions import ClientError
 
 from backend.short_async_tasks import Worker
 from ... import db
@@ -13,7 +11,7 @@ from ...tasks.data_sharing.data_sharing_service import DataSharingService
 
 log = logging.getLogger('aws:ecs')
 
-
+##TODO: import ECS run task only and here only redirecting to ECS long running task
 @Worker.handler(path='ecs.share.approve')
 def approve_share(engine, task: models.Task):
     envname = os.environ.get('envname', 'local')
