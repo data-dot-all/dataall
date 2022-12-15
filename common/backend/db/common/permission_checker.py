@@ -1,5 +1,5 @@
-from .resource_policy import ResourcePolicy
-from .tenant_policy import TenantPolicy
+from .operations.resource_policy import ResourcePolicy
+from .operations.tenant_policy import TenantPolicy
 
 
 def has_resource_perm(permission):

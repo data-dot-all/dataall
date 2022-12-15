@@ -15,10 +15,9 @@ from backend.db import (
     common,
 )
 
-from backend.common.operations import (
+from backend.db.common import (
     has_resource_perm,
     has_tenant_perm,
-    ResourcePolicy,
 )
 
 from .. import permissions
