@@ -1,9 +1,5 @@
 import textwrap
 
-from backend.api.gql._cache import cache_instances
-
-
-
 class InputType:
     def __init__(self, name, arguments):
         self.name = name

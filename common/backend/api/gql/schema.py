@@ -1,6 +1,6 @@
-from backend.api.gql.graphql_field import Field
-from backend.api.gql.graphql_scalar import *
-from backend.api.gql.graphql_type import ObjectType
+from .graphql_field import Field
+from .graphql_scalar import *
+from .graphql_type import ObjectType
 
 
 class Schema:

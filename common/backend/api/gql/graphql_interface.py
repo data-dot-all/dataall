@@ -1,4 +1,4 @@
-from backend.api.gql.graphql_type import ObjectType
+from .graphql_type import ObjectType
 
 
 class Interface(ObjectType):

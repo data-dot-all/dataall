@@ -1,9 +1,9 @@
-from backend.api.gql.graphql_enum import GraphqlEnum as Enum
-from backend.api.gql.graphql_input import InputType
-from backend.api.gql.graphql_scalar import Scalar
-from backend.api.gql.graphql_type import ObjectType
-from backend.api.gql.ref import Ref
-from backend.api.gql.thunk import Thunk
+from .graphql_enum import GraphqlEnum as Enum
+from .graphql_input import InputType
+from .graphql_scalar import Scalar
+from .graphql_type import ObjectType
+from .ref import Ref
+from .thunk import Thunk
 
 
 class TypeModifier:

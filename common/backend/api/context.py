@@ -5,7 +5,7 @@ from . import gql
 class GraphQLEnumMapper(Enum):
     @classmethod
     def toGraphQLEnum(cls):
-        return gql.GraphqlEnum(name=cls.__name__, values=cls)
+        return gql.Enum(name=cls.__name__, values=cls)
 
     @classmethod
     def to_value(cls, label):

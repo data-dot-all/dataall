@@ -1,8 +1,8 @@
 import types
 
-from backend.api.gql.graphql_type_modifiers import *
-from backend.api.gql.ref import Ref
-from backend.api.gql.thunk import Thunk
+from .graphql_type_modifiers import *
+from .ref import Ref
+from .thunk import Thunk
 
 
 def get_named_type(type):
