@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -6,8 +6,12 @@ import {
   Button,
   Container,
   Grid,
+  Divider,
   Link,
-  Typography
+  Typography,
+  Autocomplete,
+  Select,
+  TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet-async';
@@ -22,6 +26,10 @@ import PipelineListItem from './PipelineListItem';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
 import listDataPipelines from '../../api/DataPipeline/listDataPipelines';
+import ChevronDown from '../../icons/ChevronDown';
+import ChipInput from '../../components/TagsInput';
+import { AwsRegions } from '../../constants';
+
 
 function PipelinesPageHeader() {
   return (
@@ -80,9 +88,12 @@ const PipelineList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
+  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
+  const [filterItems] = useState([{title:'PipelineType', options: devOptions},{title:'Tags'},{title: 'Region', options: AwsRegions}]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
+    console.log(filter)
     const response = await client.query(listDataPipelines(filter));
     if (!response.errors) {
       setItems(response.data.listDataPipelines);
@@ -99,7 +110,7 @@ const PipelineList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      setFilter({page: 1, term: event.target.value});
+      setFilter({...filter, page: 1, term: event.target.value});
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -108,8 +119,28 @@ const PipelineList = () => {
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
-      await setFilter({ ...filter, page: value });
+      setFilter({ ...filter, page: value });
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
+  };
+
+  const handleFilterChange = (filterLabel, values) => {
+    console.log(values)
+    console.log(filterLabel)
+    if (filterLabel === "Region"){
+      const selectedRegions = values.map((region) => region.value)
+      setFilter({ ...filter, region: selectedRegions});
+    } else if (filterLabel === "Tags"){
+      setFilter({ ...filter, tags: values });
+    } else if (filterLabel === "PipelineType"){
+      const selectedTypes = values.map((type) => type.value)
+      setFilter({ ...filter, type: values });
+    }
+    fetchItems().catch((e) =>
+      dispatch({ type: SET_ERROR, error: e.message })
+    );
   };
 
   useEffect(() => {
@@ -118,7 +149,7 @@ const PipelineList = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, dispatch, fetchItems]);
+  }, [client, filter.page, dispatch]);
 
   return (
     <>
@@ -141,7 +172,42 @@ const PipelineList = () => {
               value={inputValue}
             />
           </Box>
-
+          <Box
+            sx={{
+              mr: 2
+            }}
+          >
+            <Grid container>
+              {filterItems.map((item) => (
+                <Grid item>
+                  {item.title != 'Tags' 
+                    ? <Autocomplete
+                      id={item.title}
+                      multiple
+                      options ={item.options}
+                      getOptionLabel={(option) => option.label}
+                      onChange={(event, value) => handleFilterChange(item.title, value)}
+                      renderInput={(regionParams) => (
+                        <TextField
+                          {...regionParams}
+                          label={item.title}
+                          margin="normal"
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                    : <ChipInput
+                      fullWidth
+                      variant="outlined"
+                      label= {item.title}
+                      placeholder="Hit enter after typing value"
+                      onChange={(e) => handleFilterChange(item.title, e)}
+                    />
+                  }
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
           <Box
             sx={{
               flexGrow: 1,
@@ -157,7 +223,6 @@ const PipelineList = () => {
                     <PipelineListItem pipeline={node} />
                   ))}
                 </Grid>
-
                 <Pager items={items} onChange={handlePageChange} />
               </Box>
             )}
