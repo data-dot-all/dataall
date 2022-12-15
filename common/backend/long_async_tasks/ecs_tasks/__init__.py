@@ -1,2 +1,2 @@
-from .tables_syncer import sync_tables
-from .catalog_indexer import index_objects
+from .sync_tables import sync_tables
+from .index_items_catalog import index_objects

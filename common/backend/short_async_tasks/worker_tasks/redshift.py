@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from botocore.exceptions import ClientError
 
-from .glue import Glue
+from .handle_glue_table_schema import Glue
 from backend.short_async_tasks import Worker
 from backend.utils.aws import SessionHelper, Redshift
 

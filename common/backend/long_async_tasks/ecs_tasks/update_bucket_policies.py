@@ -17,6 +17,7 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
+#TODO Check where this is used!!
 
 class BucketPoliciesUpdater:
     def __init__(self, engine, event=None):

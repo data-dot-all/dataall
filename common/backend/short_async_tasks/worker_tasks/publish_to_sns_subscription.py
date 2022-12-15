@@ -10,6 +10,7 @@ from backend.db.common import models
 
 logger = logging.getLogger(__name__)
 
+##TODO: Check if it is used
 @Worker.handler(path='sns.dataset.publish_update')
 def publish_update(engine, task: models.Task):
     with engine.scoped_session() as session:
