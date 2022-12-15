@@ -238,23 +238,26 @@ class Pipeline:
                 )
             )
         if filter and filter.get('region'):
-            query = query.filter(
-                or_(
-                    *[models.DataPipeline.region.ilike(region + '%%') for region in filter.get('region')]
+            if len(filter.get('region')) > 0:
+                query = query.filter(
+                    or_(
+                        models.DataPipeline.region.in_(filter.get('region'))
+                    )
                 )
-            )
         if filter and filter.get('tags'):
-            query = query.filter(
-                or_(
-                    *[models.DataPipeline.region.ilike(tag + '%%') for tag in filter.get('tags')]
+            if len(filter.get('tags')) > 0:
+                query = query.filter(
+                    or_(
+                        *[models.DataPipeline.tags.any(tag) for tag in filter.get('tags')]
+                    )
                 )
-            )
         if filter and filter.get('type'):
-            query = query.filter(
-                or_(
-                    *[models.DataPipeline.region.ilike(pipelineType + '%%') for pipelineType in filter.get('type')]
+            if len(filter.get('type')) > 0:
+                query = query.filter(
+                    or_(
+                        models.DataPipeline.devStrategy.in_(filter.get('type'))
+                    )
                 )
-            )
         return query
 
     @staticmethod

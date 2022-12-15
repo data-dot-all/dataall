@@ -89,7 +89,7 @@ const PipelineList = () => {
   const [loading, setLoading] = useState(true);
   const client = useClient();
   const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
-  const [filterItems] = useState([{title:'PipelineType', options: devOptions},{title:'Tags'},{title: 'Region', options: AwsRegions}]);
+  const [filterItems] = useState([{title:'DevStrategy', options: devOptions},{title:'Tags'},{title: 'Region', options: AwsRegions}]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -111,18 +111,18 @@ const PipelineList = () => {
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
       setFilter({...filter, page: 1, term: event.target.value});
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      // fetchItems(filter).catch((e) =>
+      //   dispatch({ type: SET_ERROR, error: e.message })
+      // );
     }
   };
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
       setFilter({ ...filter, page: value });
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      // fetchItems().catch((e) =>
+      //   dispatch({ type: SET_ERROR, error: e.message })
+      // );
     }
   };
 
@@ -134,13 +134,16 @@ const PipelineList = () => {
       setFilter({ ...filter, region: selectedRegions});
     } else if (filterLabel === "Tags"){
       setFilter({ ...filter, tags: values });
-    } else if (filterLabel === "PipelineType"){
+    } else if (filterLabel === "DevStrategy"){
       const selectedTypes = values.map((type) => type.value)
-      setFilter({ ...filter, type: values });
+      setFilter({ ...filter, type: selectedTypes })
     }
-    fetchItems().catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
-    );
+    // setFilter(
+    //   { ...filter, tags: values },
+    //   () => fetchItems().catch((e) =>
+    //   dispatch({ type: SET_ERROR, error: e.message })
+    // )
+    // );
   };
 
   useEffect(() => {
@@ -149,7 +152,7 @@ const PipelineList = () => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, dispatch]);
+  }, [client, filter, dispatch]);
 
   return (
     <>
