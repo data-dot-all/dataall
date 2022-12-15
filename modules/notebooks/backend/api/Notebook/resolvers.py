@@ -1,6 +1,6 @@
 from backend.api.context import Context
 from backend.utils.aws.sagemaker import Sagemaker
-from backend.utils.aws import stack_helper
+from backend.utils import stack_helper
 
 from backend.db import (
     core,
