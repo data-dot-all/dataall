@@ -16,12 +16,11 @@ class CDKPipelineStack:
     """
     Create a stack that contains CDK Continuous Integration and Delivery (CI/CD) pipeline.
 
-    The pipeline is based on CodePipeline pipelines
+    The pipeline is based on AWS DDK CICD CodePipeline pipelines
 
     - Defaults for source/synth - CodeCommit & cdk synth
     - blueprint with DDK application code added in the CodeCommit repository <https://github.com/awslabs/aws-ddk>
     - ability to define development stages: dev, test, prod
-    - ability to select gitflow or trunk-based as development strategy
     - Ability to connect to private artifactory to pull artifacts from at synth
     - Security best practices - ensures pipeline buckets block non-SSL, and are KMS-encrypted with rotated keys
     - data.all metadata as environment variables accesible at synth
