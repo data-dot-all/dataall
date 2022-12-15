@@ -1,4 +1,4 @@
-from backend.api import GraphQLEnumMapper
+from backend.api.context import GraphQLEnumMapper
 
 class SagemakerNotebookRole(GraphQLEnumMapper):
     Creator = '950'
