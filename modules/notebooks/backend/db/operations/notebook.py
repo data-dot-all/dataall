@@ -7,31 +7,31 @@ from backend.db import (
     exceptions,
     paginate,
     core,
-    common,
-    module
+    common
 )
 
-from backend.db.common.operations import (
-    has_tenant_perm,
+from backend.db.common import (
     has_resource_perm,
+    has_tenant_perm,
 )
 
 from backend.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from backend.utils.slugify import slugify
 
+from backend.utils.slugify import slugify
+from .. import models, permissions
 logger = logging.getLogger(__name__)
 
 
 class Notebook:
     @staticmethod
-    @has_tenant_perm(module.permissions.MANAGE_NOTEBOOKS)
-    @has_resource_perm(module.permissions.CREATE_NOTEBOOK)
+    @has_tenant_perm(permissions.MANAGE_NOTEBOOKS)
+    @has_resource_perm(permissions.CREATE_NOTEBOOK)
     def create_notebook(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> module.models.SagemakerNotebook:
+    ) -> models.SagemakerNotebook:
 
         Notebook.validate_params(data)
 
@@ -41,14 +41,14 @@ class Notebook:
             groups=groups,
             uri=uri,
             group=data['SamlAdminGroupName'],
-            permission_name=module.permissions.CREATE_NOTEBOOK,
+            permission_name=permissions.CREATE_NOTEBOOK,
         )
 
         env = core.operations.Environment.get_environment_by_uri(session, uri)
 
         if not env.notebooksEnabled:
             raise exceptions.UnauthorizedOperation(
-                action=module.permissions.CREATE_NOTEBOOK,
+                action=permissions.CREATE_NOTEBOOK,
                 message=f'Notebooks feature is disabled for the environment {env.label}',
             )
 
@@ -61,7 +61,7 @@ class Notebook:
             ),
         )
 
-        notebook = module.models.SagemakerNotebook(
+        notebook = models.SagemakerNotebook(
             label=data.get('label', 'Untitled'),
             environmentUri=env.environmentUri,
             description=data.get('description', 'No description provided'),
@@ -91,18 +91,18 @@ class Notebook:
         common.operations.ResourcePolicy.attach_resource_policy(
             session=session,
             group=data['SamlAdminGroupName'],
-            permissions=module.permissions.NOTEBOOK_ALL,
+            permissions=permissions.NOTEBOOK_ALL,
             resource_uri=notebook.notebookUri,
-            resource_type=module.models.SagemakerNotebook.__name__,
+            resource_type=models.SagemakerNotebook.__name__,
         )
 
         if env.SamlGroupName != notebook.SamlAdminGroupName:
             common.operations.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=env.SamlGroupName,
-                permissions=module.permissions.NOTEBOOK_ALL,
+                permissions=permissions.NOTEBOOK_ALL,
                 resource_uri=notebook.notebookUri,
-                resource_type=module.models.SagemakerNotebook.__name__,
+                resource_type=models.SagemakerNotebook.__name__,
             )
 
         return notebook
@@ -118,19 +118,19 @@ class Notebook:
 
     @staticmethod
     def query_user_notebooks(session, username, groups, filter) -> Query:
-        query = session.query(module.models.SagemakerNotebook).filter(
+        query = session.query(models.SagemakerNotebook).filter(
             or_(
-                module.models.SagemakerNotebook.owner == username,
-                module.models.SagemakerNotebook.SamlAdminGroupName.in_(groups),
+                models.SagemakerNotebook.owner == username,
+                models.SagemakerNotebook.SamlAdminGroupName.in_(groups),
             )
         )
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    module.models.SagemakerNotebook.description.ilike(
+                    models.SagemakerNotebook.description.ilike(
                         filter.get('term') + '%%'
                     ),
-                    module.models.SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
+                    models.SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -146,15 +146,15 @@ class Notebook:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(module.permissions.GET_NOTEBOOK)
+    @has_resource_perm(permissions.GET_NOTEBOOK)
     def get_notebook(session, username, groups, uri, data=None, check_perm=True):
         return Notebook.get_notebook_by_uri(session, uri)
 
     @staticmethod
-    def get_notebook_by_uri(session, uri) -> module.models.SagemakerNotebook:
+    def get_notebook_by_uri(session, uri) -> models.SagemakerNotebook:
         if not uri:
             raise exceptions.RequiredParameter('URI')
-        notebook = session.query(module.models.SagemakerNotebook).get(uri)
+        notebook = session.query(models.SagemakerNotebook).get(uri)
         if not notebook:
             raise exceptions.ObjectNotFound('SagemakerNotebook', uri)
         return notebook
