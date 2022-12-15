@@ -7,19 +7,20 @@ from ariadne import (
     gql,
     graphql_sync,
 )
-
+print("initial imports 1")
 from backend.api import (
     bootstrap as bootstrap_schema,
     get_executable_schema
 )
+print("initial imports 2")
 from backend.utils.aws.search_proxy import connect
-
+print("initial imports 3")
 from backend.db import (
     init_permissions,
     get_engine,
     common
 )
-
+print("initial imports 4")
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 log = logging.getLogger(__name__)
