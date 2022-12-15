@@ -1,4 +1,4 @@
-from backend.api import Context
+from backend.api.context import Context
 from backend.aws_handlers.sagemaker import Sagemaker
 from backend.aws_handlers import stack_helper
 

@@ -1,4 +1,5 @@
-from backend.api import gql, GraphQLEnumMapper
+from backend.api import gql
+from backend.api.context import GraphQLEnumMapper
 from .resolvers import *
 
 class SagemakerNotebookRole(GraphQLEnumMapper):
