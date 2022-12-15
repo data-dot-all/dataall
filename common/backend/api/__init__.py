@@ -41,7 +41,7 @@ def bootstrap():
         print(f"inside enum.class: {enumclass}")
 
     non_empty_classes = [cls for cls in classes.keys() if hasattr(cls, 'class_instances')]
-    print(non_empty_classes)
+    print(hasattr(cls, 'class_instances') for cls in classes.keys() if hasattr(cls, 'class_instances'))
     print("-----printing classes loop--------")
     for cls in non_empty_classes:
         print(f">>>>>inside loop, class: {cls}>>>> Object, Query, Mutation, Enum, Union, InputType")
