@@ -17,3 +17,6 @@ from .utils import now, slugifier, uuid
 from . import common
 
 print("db Python package successfully initialized")
+from . import core
+from . import module
+print("end after import core and module")
