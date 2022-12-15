@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import Column, DateTime, String, Boolean
 from enum import Enum
 
-from backend.db.common import Base
+from backend.db import Base
 
 from .Environment import EnvironmentPermission as EnvironmentPermissionEnum
 

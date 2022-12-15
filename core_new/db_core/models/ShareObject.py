@@ -6,7 +6,7 @@ from sqlalchemy.orm import query_expression
 
 from enum import Enum
 
-from backend.db.common import Base, utils
+from backend.db import Base, utils
 
 
 class ShareObjectPermission(Enum):

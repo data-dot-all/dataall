@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, String
 from sqlalchemy.orm import query_expression
 from enum import Enum
 
-from backend.db.common import Base, Resource, utils
+from backend.db import Base, Resource, utils
 
 class EnvironmentPermission(Enum):
     Owner = '999'

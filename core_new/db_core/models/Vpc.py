@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
-from backend.db.common import Base, Resource, utils
+from backend.db import Base, Resource, utils
 
 
 class Vpc(Resource, Base):

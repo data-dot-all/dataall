@@ -9,23 +9,20 @@ from backend.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-
+from backend.db.paginator import Page, paginate
 from backend.db import (
     exceptions,
-    core,
     common,
 )
-from backend.db.paginator import Page, paginate
+
 from backend.common.operations import (
-    KeyValueTag,
     has_resource_perm,
     has_tenant_perm,
-    Permission,
     ResourcePolicy,
 )
 
-from ..models.Environment import EnvironmentType, EnvironmentPermission
 from .. import permissions
+from .. import operations, models
 
 
 log = logging.getLogger(__name__)
@@ -37,20 +34,20 @@ class Environment:
     @has_resource_perm(permissions.LINK_ENVIRONMENT)
     def create_environment(session, username, groups, uri, data=None, check_perm=None):
         Environment._validate_creation_params(data, uri)
-        organization = core.operations.Organization.get_organization_by_uri(session, uri)
-        env = core.models.Environment(
+        organization = operations.Organization.get_organization_by_uri(session, uri)
+        env = models.Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),
             tags=data.get('tags', []),
             owner=username,
             description=data.get('description', ''),
-            environmentType=data.get('type', EnvironmentType.Data.value),
+            environmentType=data.get('type', models.EnvironmentType.Data.value),
             AwsAccountId=data.get('AwsAccountId'),
             region=data.get('region'),
             SamlGroupName=data['SamlGroupName'],
             validated=False,
             isOrganizationDefaultEnvironment=False,
-            userRoleInEnvironment=EnvironmentPermission.Owner.value,
+            userRoleInEnvironment=models.EnvironmentPermission.Owner.value,
             EnvironmentDefaultIAMRoleName=data.get(
                 'EnvironmentDefaultIAMRoleName', 'unknown'
             ),
@@ -98,7 +95,7 @@ class Environment:
             env.EnvironmentDefaultIAMRoleImported = True
 
         if data.get('vpcId'):
-            vpc = core.models.Vpc(
+            vpc = models.Vpc(
                 environmentUri=env.environmentUri,
                 region=env.region,
                 AwsAccountId=env.AwsAccountId,
@@ -113,28 +110,28 @@ class Environment:
             )
             session.add(vpc)
             session.commit()
-            ResourcePolicy.attach_resource_policy(
+            common.operations.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=data['SamlGroupName'],
                 permissions=permissions.NETWORK_ALL,
                 resource_uri=vpc.vpcUri,
-                resource_type=core.models.Vpc.__name__,
+                resource_type=models.Vpc.__name__,
             )
-        env_group = core.models.EnvironmentGroup(
+        env_group = models.EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=data['SamlGroupName'],
-            groupRoleInEnvironment=EnvironmentPermission.Owner.value,
+            groupRoleInEnvironment=models.EnvironmentPermission.Owner.value,
             environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,
             environmentIAMRoleName=env.EnvironmentDefaultIAMRoleName,
             environmentAthenaWorkGroup=env.EnvironmentDefaultAthenaWorkGroup,
         )
         session.add(env_group)
-        ResourcePolicy.attach_resource_policy(
+        common.operations.ResourcePolicy.attach_resource_policy(
             session=session,
             resource_uri=env.environmentUri,
             group=data['SamlGroupName'],
             permissions=permissions.ENVIRONMENT_ALL,
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
         session.commit()
 
@@ -197,12 +194,12 @@ class Environment:
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
 
-        ResourcePolicy.attach_resource_policy(
+        common.operations.ResourcePolicy.attach_resource_policy(
             session=session,
             resource_uri=environment.environmentUri,
             group=environment.SamlGroupName,
             permissions=permissions.ENVIRONMENT_ALL,
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
         return environment
 
@@ -211,7 +208,7 @@ class Environment:
     @has_resource_perm(permissions.INVITE_ENVIRONMENT_GROUP)
     def invite_group(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> (core.models.Environment, core.models.EnvironmentGroup):
+    ) -> (models.Environment, models.EnvironmentGroup):
         Environment.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -248,7 +245,7 @@ class Environment:
             resource_prefix=environment.resourcePrefix,
         ).build_compliant_name()
 
-        environment_group = core.models.EnvironmentGroup(
+        environment_group = models.EnvironmentGroup(
             environmentUri=environment.environmentUri,
             groupUri=group,
             invitedBy=username,
@@ -259,12 +256,12 @@ class Environment:
         )
         session.add(environment_group)
         session.commit()
-        ResourcePolicy.attach_resource_policy(
+        common.operations.ResourcePolicy.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
             permissions=data['permissions'],
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
         return environment, environment_group
 
@@ -312,7 +309,7 @@ class Environment:
         env_group_permissions = []
         for p in g_permissions:
             env_group_permissions.append(
-                Permission.find_permission_by_name(
+                common.operations.Permission.find_permission_by_name(
                     session=session,
                     permission_name=p,
                     permission_type=common.models.PermissionType.RESOURCE.name,
@@ -339,37 +336,37 @@ class Environment:
             )
         ##TODO: rethingk how we check no objects for groups:
         # group_env_objects_count = (
-        #     session.query(core.models.Environment)
+        #     session.query(models.Environment)
         #     .outerjoin(
         #         models.Dataset,
-        #         models.Dataset.environmentUri == core.models.Environment.environmentUri,
+        #         models.Dataset.environmentUri == models.Environment.environmentUri,
         #     )
         #     .outerjoin(
         #         models.SagemakerStudioUserProfile,
         #         models.SagemakerStudioUserProfile.environmentUri
-        #         == core.models.Environment.environmentUri,
+        #         == models.Environment.environmentUri,
         #     )
         #     .outerjoin(
         #         models.RedshiftCluster,
         #         models.RedshiftCluster.environmentUri
-        #         == core.models.Environment.environmentUri,
+        #         == models.Environment.environmentUri,
         #     )
         #     .outerjoin(
         #         models.DataPipeline,
-        #         models.DataPipeline.environmentUri == core.models.Environment.environmentUri,
+        #         models.DataPipeline.environmentUri == models.Environment.environmentUri,
         #     )
         #     .outerjoin(
         #         models.Dashboard,
-        #         models.Dashboard.environmentUri == core.models.Environment.environmentUri,
+        #         models.Dashboard.environmentUri == models.Environment.environmentUri,
         #     )
         #     .outerjoin(
         #         models.WorksheetQueryResult,
         #         models.WorksheetQueryResult.AwsAccountId
-        #         == core.models.Environment.AwsAccountId,
+        #         == models.Environment.AwsAccountId,
         #     )
         #     .filter(
         #         and_(
-        #             core.models.Environment.environmentUri == environment.environmentUri,
+        #             models.Environment.environmentUri == environment.environmentUri,
         #             or_(
         #                 models.RedshiftCluster.SamlGroupName == group,
         #                 models.Dataset.SamlAdminGroupName == group,
@@ -395,11 +392,11 @@ class Environment:
             session.delete(group_membership)
             session.commit()
 
-        ResourcePolicy.delete_resource_policy(
+        common.operations.ResourcePolicy.delete_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
         return environment
 
@@ -426,18 +423,18 @@ class Environment:
                 message=f'Team {group.name} is not a member of the environment {environment.name}',
             )
 
-        ResourcePolicy.delete_resource_policy(
+        common.operations.ResourcePolicy.delete_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
-        ResourcePolicy.attach_resource_policy(
+        common.operations.ResourcePolicy.attach_resource_policy(
             session=session,
             group=group,
             resource_uri=environment.environmentUri,
             permissions=data['permissions'],
-            resource_type=core.models.Environment.__name__,
+            resource_type=models.Environment.__name__,
         )
         return environment
 
@@ -453,7 +450,7 @@ class Environment:
 
         environment = Environment.get_environment_by_uri(session, uri)
 
-        return ResourcePolicy.get_resource_policy_permissions(
+        return common.operations.ResourcePolicy.get_resource_policy_permissions(
             session=session,
             group_uri=data['groupUri'],
             resource_uri=environment.environmentUri,
@@ -466,7 +463,7 @@ class Environment:
         group_invitation_permissions = []
         for p in permissions.ENVIRONMENT_INVITATION_REQUEST:
             group_invitation_permissions.append(
-                Permission.find_permission_by_name(
+                common.operations.Permission.find_permission_by_name(
                     session=session,
                     permission_name=p,
                     permission_type=common.models.PermissionType.RESOURCE.name,
@@ -477,16 +474,16 @@ class Environment:
     @staticmethod
     def query_user_environments(session, username, groups, filter) -> Query:
         query = (
-            session.query(core.models.Environment)
+            session.query(models.Environment)
             .outerjoin(
-                core.models.EnvironmentGroup,
-                core.models.Environment.environmentUri
-                == core.models.EnvironmentGroup.environmentUri,
+                models.EnvironmentGroup,
+                models.Environment.environmentUri
+                == models.EnvironmentGroup.environmentUri,
             )
             .filter(
                 or_(
-                    core.models.Environment.owner == username,
-                    core.models.EnvironmentGroup.groupUri.in_(groups),
+                    models.Environment.owner == username,
+                    models.EnvironmentGroup.groupUri.in_(groups),
                 )
             )
         )
@@ -494,10 +491,10 @@ class Environment:
             term = filter['term']
             query = query.filter(
                 or_(
-                    core.models.Environment.label.ilike('%' + term + '%'),
-                    core.models.Environment.description.ilike('%' + term + '%'),
-                    core.models.Environment.tags.contains(f'{{{term}}}'),
-                    core.models.Environment.region.ilike('%' + term + '%'),
+                    models.Environment.label.ilike('%' + term + '%'),
+                    models.Environment.description.ilike('%' + term + '%'),
+                    models.Environment.tags.contains(f'{{{term}}}'),
+                    models.Environment.region.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -515,15 +512,15 @@ class Environment:
     @staticmethod
     def query_user_environment_groups(session, username, groups, uri, filter) -> Query:
         query = (
-            session.query(core.models.EnvironmentGroup)
-            .filter(core.models.EnvironmentGroup.environmentUri == uri)
-            .filter(core.models.EnvironmentGroup.groupUri.in_(groups))
+            session.query(models.EnvironmentGroup)
+            .filter(models.EnvironmentGroup.environmentUri == uri)
+            .filter(models.EnvironmentGroup.groupUri.in_(groups))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -543,14 +540,14 @@ class Environment:
 
     @staticmethod
     def query_all_environment_groups(session, username, groups, uri, filter) -> Query:
-        query = session.query(core.models.EnvironmentGroup).filter(
-            core.models.EnvironmentGroup.environmentUri == uri
+        query = session.query(models.EnvironmentGroup).filter(
+            models.EnvironmentGroup.environmentUri == uri
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -585,17 +582,17 @@ class Environment:
         session, username, groups, uri, filter
     ) -> Query:
         query = (
-            session.query(core.models.EnvironmentGroup)
+            session.query(models.EnvironmentGroup)
             .join(
-                core.models.Environment,
-                core.models.EnvironmentGroup.environmentUri
-                == core.models.Environment.environmentUri,
+                models.Environment,
+                models.EnvironmentGroup.environmentUri
+                == models.Environment.environmentUri,
             )
             .filter(
                 and_(
-                    core.models.Environment.environmentUri == uri,
-                    core.models.EnvironmentGroup.groupUri
-                    != core.models.Environment.SamlGroupName,
+                    models.Environment.environmentUri == uri,
+                    models.EnvironmentGroup.groupUri
+                    != models.Environment.SamlGroupName,
                 )
             )
         )
@@ -603,7 +600,7 @@ class Environment:
             term = filter['term']
             query = query.filter(
                 or_(
-                    core.models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
+                    models.EnvironmentGroup.groupUri.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -708,8 +705,8 @@ class Environment:
     #             models.Dataset.datasetUri.label('datasetUri'),
     #             models.Dataset.name.label('datasetName'),
     #             models.Dataset.description.label('datasetDescription'),
-    #             core.models.Environment.environmentUri.label('environmentUri'),
-    #             core.models.Environment.name.label('environmentName'),
+    #             models.Environment.environmentUri.label('environmentUri'),
+    #             models.Environment.name.label('environmentName'),
     #             models.ShareObject.created.label('created'),
     #             models.ShareObject.principalId.label('principalId'),
     #             models.ShareObjectItem.itemType.label('itemType'),
@@ -747,13 +744,13 @@ class Environment:
     #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
     #         )
     #         .join(
-    #             core.models.Environment,
-    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #             models.Environment,
+    #             models.Environment.environmentUri == models.Dataset.environmentUri,
     #         )
     #         .join(
     #             models.Organization,
     #             models.Organization.organizationUri
-    #             == core.models.Environment.organizationUri,
+    #             == models.Environment.organizationUri,
     #         )
     #         .outerjoin(
     #             models.DatasetTable,
@@ -804,8 +801,8 @@ class Environment:
     #             models.Dataset.datasetUri.label('datasetUri'),
     #             models.Dataset.name.label('datasetName'),
     #             models.Dataset.description.label('datasetDescription'),
-    #             core.models.Environment.environmentUri.label('environmentUri'),
-    #             core.models.Environment.name.label('environmentName'),
+    #             models.Environment.environmentUri.label('environmentUri'),
+    #             models.Environment.name.label('environmentName'),
     #             models.ShareObject.created.label('created'),
     #             models.ShareObject.principalId.label('principalId'),
     #             models.ShareObjectItem.itemType.label('itemType'),
@@ -843,13 +840,13 @@ class Environment:
     #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
     #         )
     #         .join(
-    #             core.models.Environment,
-    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #             models.Environment,
+    #             models.Environment.environmentUri == models.Dataset.environmentUri,
     #         )
     #         .join(
     #             models.Organization,
     #             models.Organization.organizationUri
-    #             == core.models.Environment.organizationUri,
+    #             == models.Environment.organizationUri,
     #         )
     #         .outerjoin(
     #             models.DatasetTable,
@@ -893,15 +890,15 @@ class Environment:
 
     @staticmethod
     def query_environment_networks(session, username, groups, uri, filter) -> Query:
-        query = session.query(core.models.Vpc).filter(
-            core.models.Vpc.environmentUri == uri,
+        query = session.query(models.Vpc).filter(
+            models.Vpc.environmentUri == uri,
         )
         if filter.get('term'):
             term = filter.get('term')
             query = query.filter(
                 or_(
-                    core.models.Vpc.label.ilike('%' + term + '%'),
-                    core.models.Vpc.VpcId.ilike('%' + term + '%'),
+                    models.Vpc.label.ilike('%' + term + '%'),
+                    models.Vpc.VpcId.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -930,8 +927,8 @@ class Environment:
     #             models.Dataset.datasetUri.label('datasetUri'),
     #             models.Dataset.name.label('datasetName'),
     #             models.Dataset.description.label('datasetDescription'),
-    #             core.models.Environment.environmentUri.label('environmentUri'),
-    #             core.models.Environment.name.label('environmentName'),
+    #             models.Environment.environmentUri.label('environmentUri'),
+    #             models.Environment.name.label('environmentName'),
     #             models.ShareObject.created.label('created'),
     #             models.ShareObjectItem.itemType.label('itemType'),
     #             models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
@@ -968,13 +965,13 @@ class Environment:
     #             models.ShareObject.datasetUri == models.Dataset.datasetUri,
     #         )
     #         .join(
-    #             core.models.Environment,
-    #             core.models.Environment.environmentUri == models.Dataset.environmentUri,
+    #             models.Environment,
+    #             models.Environment.environmentUri == models.Dataset.environmentUri,
     #         )
     #         .join(
     #             models.Organization,
     #             models.Organization.organizationUri
-    #             == core.models.Environment.organizationUri,
+    #             == models.Environment.organizationUri,
     #         )
     #         .outerjoin(
     #             models.DatasetTable,
@@ -1030,12 +1027,12 @@ class Environment:
     @staticmethod
     def get_environment_group(session, group_uri, environment_uri):
         env_group = (
-            session.query(core.models.EnvironmentGroup)
+            session.query(models.EnvironmentGroup)
             .filter(
                 (
                     and_(
-                        core.models.EnvironmentGroup.groupUri == group_uri,
-                        core.models.EnvironmentGroup.environmentUri == environment_uri,
+                        models.EnvironmentGroup.groupUri == group_uri,
+                        models.EnvironmentGroup.environmentUri == environment_uri,
                     )
                 )
             )
@@ -1048,33 +1045,33 @@ class Environment:
         return env_group
 
     @staticmethod
-    def get_environment_by_uri(session, uri) -> core.models.Environment:
+    def get_environment_by_uri(session, uri) -> models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
-        environment: core.models.Environment = Environment.find_environment_by_uri(
+        environment: models.Environment = Environment.find_environment_by_uri(
             session, uri
         )
         if not environment:
-            raise exceptions.ObjectNotFound(core.models.Environment.__name__, uri)
+            raise exceptions.ObjectNotFound(models.Environment.__name__, uri)
         return environment
 
     @staticmethod
-    def find_environment_by_uri(session, uri) -> core.models.Environment:
+    def find_environment_by_uri(session, uri) -> models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
-        environment: core.models.Environment = session.query(core.models.Environment).get(uri)
+        environment: models.Environment = session.query(models.Environment).get(uri)
         return environment
 
     @staticmethod
-    def list_all_active_environments(session) -> [core.models.Environment]:
+    def list_all_active_environments(session) -> [models.Environment]:
         """
         Lists all active dataall environments
         :param session:
-        :return: [core.models.Environment]
+        :return: [models.Environment]
         """
-        environments: [core.models.Environment] = (
-            session.query(core.models.Environment)
-            .filter(core.models.Environment.deleted.is_(None))
+        environments: [models.Environment] = (
+            session.query(models.Environment)
+            .filter(models.Environment.deleted.is_(None))
             .all()
         )
         log.info(
@@ -1206,35 +1203,35 @@ class Environment:
             )
 
         env_groups = (
-            session.query(core.models.EnvironmentGroup)
-            .filter(core.models.EnvironmentGroup.environmentUri == uri)
+            session.query(models.EnvironmentGroup)
+            .filter(models.EnvironmentGroup.environmentUri == uri)
             .all()
         )
         for group in env_groups:
 
             session.delete(group)
 
-            ResourcePolicy.delete_resource_policy(
+            common.operations.ResourcePolicy.delete_resource_policy(
                 session=session,
                 resource_uri=uri,
                 group=group.groupUri,
             )
 
-        KeyValueTag.delete_key_value_tags(
+        common.operations.KeyValueTag.delete_key_value_tags(
             session, environment.environmentUri, 'environment'
         )
 
         ##TODO: Rethink how to check empty environment
 
         env_shared_with_objects = (
-            session.query(core.models.ShareObject)
-            .filter(core.models.ShareObject.environmentUri == environment.environmentUri)
+            session.query(models.ShareObject)
+            .filter(models.ShareObject.environmentUri == environment.environmentUri)
             .all()
         )
         for share in env_shared_with_objects:
             (
-                session.query(core.models.ShareObjectItem)
-                .filter(core.models.ShareObjectItem.shareUri == share.shareUri)
+                session.query(models.ShareObjectItem)
+                .filter(models.ShareObjectItem.shareUri == share.shareUri)
                 .delete()
             )
             session.delete(share)
@@ -1277,7 +1274,7 @@ class Environment:
             permission_name=permission_name,
         )
 
-        ResourcePolicy.check_user_resource_permission(
+        common.operations.ResourcePolicy.check_user_resource_permission(
             session=session,
             username=username,
             groups=[group],

@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy import Column, DateTime, String
 
-from backend.db.common import Base
+from backend.db import Base
 
 
 class OrganizationGroup(Base):

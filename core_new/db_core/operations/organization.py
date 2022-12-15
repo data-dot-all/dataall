@@ -6,7 +6,6 @@ from sqlalchemy.orm import Query
 from backend.db.paginator import Page, paginate
 from backend.db import (
     exceptions,
-    core,
     common,
 )
 from backend.common.operations import (
@@ -16,14 +15,14 @@ from backend.common.operations import (
 )
 
 from .. import permissions
-from ..models.Organization import OrganisationUserRole
+from .. import models
 
 logger = logging.getLogger(__name__)
 
 
 class Organization:
     @staticmethod
-    def get_organization_by_uri(session, uri: str) -> core.models.Organization:
+    def get_organization_by_uri(session, uri: str) -> models.Organization:
         if not uri:
             raise exceptions.RequiredParameter(param_name='organizationUri')
         org = Organization.find_organization_by_uri(session, uri)
@@ -32,12 +31,12 @@ class Organization:
         return org
 
     @staticmethod
-    def find_organization_by_uri(session, uri) -> core.models.Organization:
-        return session.query(core.models.Organization).get(uri)
+    def find_organization_by_uri(session, uri) -> models.Organization:
+        return session.query(models.Organization).get(uri)
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ORGANIZATIONS)
-    def create_organization(session, username, groups, uri, data=None, check_perm=None) -> core.models.Organization:
+    def create_organization(session, username, groups, uri, data=None, check_perm=None) -> models.Organization:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('SamlGroupName'):
@@ -45,17 +44,17 @@ class Organization:
         if not data.get('label'):
             raise exceptions.RequiredParameter('label')
 
-        org = core.models.Organization(
+        org = models.Organization(
             label=data.get('label'),
             owner=username,
             tags=data.get('tags', []),
             description=data.get('description', 'No description provided'),
             SamlGroupName=data.get('SamlGroupName'),
-            userRoleInOrganization=OrganisationUserRole.Owner.value,
+            userRoleInOrganization=models.OrganisationUserRole.Owner.value,
         )
         session.add(org)
         session.commit()
-        member = core.models.OrganizationGroup(
+        member = models.OrganizationGroup(
             organizationUri=org.organizationUri,
             groupUri=data['SamlGroupName'],
         )
@@ -76,7 +75,7 @@ class Organization:
             group=data['SamlGroupName'],
             permissions=permissions.ORGANIZATION_ALL,
             resource_uri=org.organizationUri,
-            resource_type=core.models.Organization.__name__,
+            resource_type=models.Organization.__name__,
         )
 
         return org
@@ -103,31 +102,31 @@ class Organization:
             group=organization.SamlGroupName,
             permissions=permissions.ORGANIZATION_ALL,
             resource_uri=organization.organizationUri,
-            resource_type=core.models.Organization.__name__,
+            resource_type=models.Organization.__name__,
         )
         return organization
 
     @staticmethod
     def query_user_organizations(session, username, groups, filter) -> Query:
         query = (
-            session.query(core.models.Organization)
+            session.query(models.Organization)
             .outerjoin(
-                core.models.OrganizationGroup,
-                core.models.Organization.organizationUri == core.models.OrganizationGroup.organizationUri,
+                models.OrganizationGroup,
+                models.Organization.organizationUri == models.OrganizationGroup.organizationUri,
             )
             .filter(
                 or_(
-                    core.models.Organization.owner == username,
-                    core.models.OrganizationGroup.groupUri.in_(groups),
+                    models.Organization.owner == username,
+                    models.OrganizationGroup.groupUri.in_(groups),
                 )
             )
         )
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    core.models.Organization.label.ilike('%' + filter.get('term') + '%'),
-                    core.models.Organization.description.ilike('%' + filter.get('term') + '%'),
-                    core.models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
+                    models.Organization.label.ilike('%' + filter.get('term') + '%'),
+                    models.Organization.description.ilike('%' + filter.get('term') + '%'),
+                    models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
                 )
             )
         return query
@@ -142,12 +141,12 @@ class Organization:
 
     @staticmethod
     def query_organization_environments(session, uri, filter) -> Query:
-        query = session.query(core.models.Environment).filter(core.models.Environment.organizationUri == uri)
+        query = session.query(models.Environment).filter(models.Environment.organizationUri == uri)
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    core.models.Environment.label.ilike('%' + filter.get('term') + '%'),
-                    core.models.Environment.description.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.label.ilike('%' + filter.get('term') + '%'),
+                    models.Environment.description.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -168,7 +167,7 @@ class Organization:
     def archive_organization(session, username, groups, uri, data=None, check_perm=None) -> bool:
 
         org = Organization.get_organization_by_uri(session, uri)
-        environments = session.query(core.models.Environment).filter(core.models.Environment.organizationUri == uri).count()
+        environments = session.query(models.Environment).filter(models.Environment.organizationUri == uri).count()
         if environments:
             raise exceptions.UnauthorizedOperation(
                 action='ARCHIVE_ORGANIZATION',
@@ -179,7 +178,7 @@ class Organization:
             session=session,
             group=org.SamlGroupName,
             resource_uri=org.organizationUri,
-            resource_type=core.models.Organization.__name__,
+            resource_type=models.Organization.__name__,
         )
 
         return True
@@ -189,7 +188,7 @@ class Organization:
     @has_resource_perm(permissions.INVITE_ORGANIZATION_GROUP)
     def invite_group(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> (core.models.Organization, core.models.OrganizationGroup):
+    ) -> (models.Organization, models.OrganizationGroup):
 
         Organization.validate_invite_params(data)
 
@@ -203,7 +202,7 @@ class Organization:
                 action='INVITE_TEAM',
                 message=f'Team {group} is already admin of the organization {organization.name}',
             )
-        org_group = core.models.OrganizationGroup(
+        org_group = models.OrganizationGroup(
             organizationUri=organization.organizationUri,
             groupUri=group,
             invitedBy=username,
@@ -214,19 +213,19 @@ class Organization:
             group=group,
             resource_uri=organization.organizationUri,
             permissions=permissions.ORGANIZATION_INVITED,
-            resource_type=core.models.Organization.__name__,
+            resource_type=models.Organization.__name__,
         )
         return organization, org_group
 
     @staticmethod
     def find_group_membership(session, group, organization):
         membership = (
-            session.query(core.models.OrganizationGroup)
+            session.query(models.OrganizationGroup)
             .filter(
                 (
                     and_(
-                        core.models.OrganizationGroup.groupUri == group,
-                        core.models.OrganizationGroup.organizationUri == organization.organizationUri,
+                        models.OrganizationGroup.groupUri == group,
+                        models.OrganizationGroup.organizationUri == organization.organizationUri,
                     )
                 )
             )
@@ -261,11 +260,11 @@ class Organization:
             )
 
         group_env_objects_count = (
-            session.query(core.models.Environment)
+            session.query(models.Environment)
             .filter(
                 and_(
-                    core.models.Environment.organizationUri == organization.organizationUri,
-                    core.models.Environment.SamlGroupName == group,
+                    models.Environment.organizationUri == organization.organizationUri,
+                    models.Environment.SamlGroupName == group,
                 )
             )
             .count()
@@ -285,17 +284,17 @@ class Organization:
             session=session,
             group=group,
             resource_uri=organization.organizationUri,
-            resource_type=core.models.Organization.__name__,
+            resource_type=models.Organization.__name__,
         )
         return organization
 
     @staticmethod
     def query_organization_groups(session, uri, filter) -> Query:
-        query = session.query(core.models.OrganizationGroup).filter(core.models.OrganizationGroup.organizationUri == uri)
+        query = session.query(models.OrganizationGroup).filter(models.OrganizationGroup.organizationUri == uri)
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    core.models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
+                    models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -313,22 +312,22 @@ class Organization:
     @staticmethod
     def query_organization_invited_groups(session, organization, filter) -> Query:
         query = (
-            session.query(core.models.OrganizationGroup)
+            session.query(models.OrganizationGroup)
             .join(
-                core.models.Organization,
-                core.models.OrganizationGroup.organizationUri == core.models.Organization.organizationUri,
+                models.Organization,
+                models.OrganizationGroup.organizationUri == models.Organization.organizationUri,
             )
             .filter(
                 and_(
-                    core.models.Organization.organizationUri == organization.organizationUri,
-                    core.models.OrganizationGroup.groupUri != core.models.Organization.SamlGroupName,
+                    models.Organization.organizationUri == organization.organizationUri,
+                    models.OrganizationGroup.groupUri != models.Organization.SamlGroupName,
                 )
             )
         )
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    core.models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
+                    models.OrganizationGroup.groupUri.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -347,11 +346,11 @@ class Organization:
     @staticmethod
     def count_organization_invited_groups(session, uri, group) -> int:
         groups = (
-            session.query(core.models.OrganizationGroup)
+            session.query(models.OrganizationGroup)
             .filter(
                 and_(
-                    core.models.OrganizationGroup.organizationUri == uri,
-                    core.models.OrganizationGroup.groupUri != group,
+                    models.OrganizationGroup.organizationUri == uri,
+                    models.OrganizationGroup.groupUri != group,
                 )
             )
             .count()
@@ -361,9 +360,9 @@ class Organization:
     @staticmethod
     def count_organization_environments(session, uri) -> int:
         envs = (
-            session.query(core.models.Environment)
+            session.query(models.Environment)
             .filter(
-                core.models.Environment.organizationUri == uri,
+                models.Environment.organizationUri == uri,
             )
             .count()
         )
@@ -372,11 +371,11 @@ class Organization:
     @staticmethod
     def find_organization_membership(session, uri, groups) -> int:
         groups = (
-            session.query(core.models.OrganizationGroup)
+            session.query(models.OrganizationGroup)
             .filter(
                 and_(
-                    core.models.OrganizationGroup.organizationUri == uri,
-                    core.models.OrganizationGroup.groupUri.in_(groups),
+                    models.OrganizationGroup.organizationUri == uri,
+                    models.OrganizationGroup.groupUri.in_(groups),
                 )
             )
             .count()
