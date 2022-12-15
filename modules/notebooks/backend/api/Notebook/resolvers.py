@@ -8,9 +8,7 @@ from backend.db import (
     module
 )
 
-
 from ..constants import SagemakerNotebookRole
-
 
 def create_notebook(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:

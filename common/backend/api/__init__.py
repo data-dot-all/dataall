@@ -39,11 +39,13 @@ def bootstrap():
         enumclass.toGraphQLEnum()
         print(f"inside enum.class: {enumclass}")
 
+    non_empty_classes = [cls for cls in classes.keys() if bool(cls.class_instances['default'])]
+    print(non_empty_classes)
     print("-----printing classes loop--------")
-    non_empty_classes = {cls for cls in classes if bool(cls.class_instances['default'])}
-    for cls in non_empty_classes.keys():
+    for cls in non_empty_classes:
         print(f">>>>>inside loop, class: {cls}>>>> Object, Query, Mutation, Enum, Union, InputType")
         print(f"inside loop, class.class_instances['default']: {cls.class_instances['default']}")
+
         for name in cls.class_instances['default'].keys():
             print(f"inside loop, name: {name}")
             if cls.get_instance(name):

@@ -8,7 +8,6 @@ getSagemakerNotebook = gql.QueryField(
     resolver=get_notebook,
 )
 
-
 listSagemakerNotebooks = gql.QueryField(
     name='listSagemakerNotebooks',
     args=[gql.Argument('filter', gql.Ref('SagemakerNotebookFilter'))],
