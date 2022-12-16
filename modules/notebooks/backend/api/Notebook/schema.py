@@ -8,6 +8,62 @@ class SagemakerNotebookRole(GraphQLEnumMapper):
     Shared = '300'
     NoPermission = '000'
 
+
+Environment = gql.ObjectType(
+    name='Environment',
+    fields=[
+        gql.Field(name='environmentUri', type=gql.ID),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='owner', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='deleted', type=gql.String),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(name='admins', type=gql.ArrayType(gql.String)),
+        gql.Field(name='environmentType', type=gql.String),
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='resourcePrefix', type=gql.String),
+        gql.Field(name='EnvironmentDefaultIAMRoleArn', type=gql.String),
+        gql.Field(name='EnvironmentDefaultIAMRoleName', type=gql.String),
+        gql.Field(name='EnvironmentDefaultIAMRoleImported', type=gql.Boolean),
+        gql.Field(name='datasets', type=gql.String),
+        gql.Field('validated', type=gql.Boolean),
+        gql.Field('dashboardsEnabled', type=gql.Boolean),
+        gql.Field('notebooksEnabled', type=gql.Boolean),
+        gql.Field('mlStudiosEnabled', type=gql.Boolean),
+        gql.Field('pipelinesEnabled', type=gql.Boolean),
+        gql.Field('warehousesEnabled', type=gql.Boolean),
+        gql.Field('roleCreated', type=gql.Boolean),
+        gql.Field('isOrganizationDefaultEnvironment', type=gql.Boolean),
+        gql.Field('subscriptionsEnabled', type=gql.Boolean),
+        gql.Field('subscriptionsProducersTopicImported', type=gql.Boolean),
+        gql.Field('subscriptionsConsumersTopicImported', type=gql.Boolean),
+        gql.Field('subscriptionsConsumersTopicName', type=gql.String),
+        gql.Field('subscriptionsProducersTopicName', type=gql.String),
+        gql.Field('EnvironmentDefaultBucketName', type=gql.String),
+        gql.Field('EnvironmentDefaultAthenaWorkGroup', type=gql.String),
+    ],
+)
+
+Organization = gql.ObjectType(
+    name='Organization',
+    fields=[
+        gql.Field(name='organizationUri', type=gql.ID),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(name='owner', type=gql.String),
+        gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+    ],
+)
+
 SagemakerNotebook = gql.ObjectType(
     name='SagemakerNotebook',
     fields=[
@@ -43,8 +99,8 @@ SagemakerNotebook = gql.ObjectType(
             name='organization',
             type=gql.Ref('Organization'),
             resolver=resolve_organization,
-        ),
-        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
+        )#,
+        #gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
     ],
 )
 

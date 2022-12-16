@@ -9,6 +9,7 @@ def cache_instances(cls):
             if not X.class_instances.get(scope):
                 X.class_instances[scope] = {}
                 print(f"scope={scope}")
+                print(cls)
             X.class_instances[scope][name] = self
 
         @classmethod
