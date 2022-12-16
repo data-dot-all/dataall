@@ -43,8 +43,10 @@ def bootstrap():
     for cls in classes.keys():
         print(f"class {cls} value")
         print(classes[cls])
+        print("isintance")
+        print(isinstance(cls, [gql.ObjectType, gql.QueryField, gql.MutationField, gql.Enum, gql.Union, gql.InputType]))
 
-    non_empty_classes = [cls for cls in classes.keys() if classes[cls] != []]
+    non_empty_classes = [cls for cls in classes.keys() if isinstance(cls,)]
     print("-----printing classes loop--------")
     print(cls for cls in non_empty_classes)
     for cls in non_empty_classes:
