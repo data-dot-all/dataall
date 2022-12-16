@@ -1,4 +1,6 @@
 def cache_instances(cls):
+    cached_classes = []
+
     class X(cls):
         class_instances = {}
 
@@ -10,6 +12,8 @@ def cache_instances(cls):
                 X.class_instances[scope] = {}
                 print(f"scope={scope}")
                 print(cls)
+                cached_classes.append(cls)
+                print(f"cached_classes={cached_classes}")
             X.class_instances[scope][name] = self
 
         @classmethod
