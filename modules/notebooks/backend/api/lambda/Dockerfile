@@ -21,7 +21,7 @@ RUN $PYTHON_VERSION -m pip install -U pip
 RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
 COPY common/backend/. ./backend/
-COPY _core_new/db_core/. ./backend/db/core/
+COPY core_new/_db_core/. ./backend/db/core/
 
 
 COPY modules/notebooks/backend/api/. ./backend/api/Objects
