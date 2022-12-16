@@ -429,7 +429,8 @@ class dataAllBaseInfra(Stack):
                                          actions=[
                                              "sagemaker:ListNotebookInstances",
                                              "sagemaker:ListDomains",
-                                             "sagemaker:ListApps"
+                                             "sagemaker:ListApps",
+                                             "sagemaker:DeleteApp"
                                          ],
                                          resources=["*"]
                                      ),
@@ -569,7 +570,8 @@ class dataAllBaseInfra(Stack):
                                          ],
                                          resources=[
                                              f"arn:aws:cloudformation:*:{self.account}:stack/{env_resource_prefix}*/*",
-                                             f"arn:aws:cloudformation:*:{self.account}:stack/CDKToolkit/*"
+                                             f"arn:aws:cloudformation:*:{self.account}:stack/CDKToolkit/*",
+                                             f"arn:aws:cloudformation:*:{self.account}:stack/*/*"
                                          ]
                                      )
                                  ]
@@ -609,8 +611,6 @@ class dataAllBaseInfra(Stack):
                                              "lakeformation:PutDataLakeSettings",
                                              "lakeformation:GetDataLakeSettings",
                                              "lakeformation:GetDataAccess",
-                                             "lakeformation:SearchTablesByLFTags",
-                                             "lakeformation:SearchDatabasesByLFTags",
                                              "lakeformation:GetWorkUnits",
                                              "lakeformation:StartQueryPlanning",
                                              "lakeformation:GetWorkUnitResults",
@@ -625,7 +625,7 @@ class dataAllBaseInfra(Stack):
                                              "lakeformation:GetTableObjects",
                                              "lakeformation:UpdateTableObjects",
                                              "lakeformation:DeleteObjectsOnCancel",
-                                             "lakeformation:RegisterResource"
+                                             "lakeformation:DescribeResource"
                                          ],
                                          resources=["*"]
                                      ),
@@ -763,8 +763,11 @@ class dataAllBaseInfra(Stack):
                                      ),
                                      # IAM
                                      iam.PolicyStatement(
-                                         sid="IAMList", effect=iam.Effect.ALLOW,
-                                         actions=["iam:ListRoles"],
+                                         sid="IAMListGet", effect=iam.Effect.ALLOW,
+                                         actions=[
+                                             "iam:ListRoles",
+                                             "iam:Get*"
+                                         ],
                                          resources=["*"]
                                      ),
                                      iam.PolicyStatement(
@@ -778,7 +781,6 @@ class dataAllBaseInfra(Stack):
                                      iam.PolicyStatement(
                                          sid="IAMPassRole", effect=iam.Effect.ALLOW,
                                          actions=[
-                                             "iam:Get*",
                                              "iam:PassRole"
                                          ],
                                          resources=[
@@ -791,7 +793,10 @@ class dataAllBaseInfra(Stack):
                                      iam.PolicyStatement(
                                          sid="STS", effect=iam.Effect.ALLOW,
                                          actions=["sts:AssumeRole"],
-                                         resources=[f"arn:aws:iam::{self.account}:role/{env_resource_prefix}*"]
+                                         resources=[
+                                             f"arn:aws:iam::{self.account}:role/{env_resource_prefix}*",
+                                             f"arn:aws:iam::{self.account}:role/ddk-*"
+                                         ]
                                      ),
                                      # Step Functions
                                      iam.PolicyStatement(
@@ -813,7 +818,16 @@ class dataAllBaseInfra(Stack):
                                              "codecommit:GetFolder",
                                              "codecommit:GetCommit",
                                              "codecommit:GitPull",
-                                             "codecommit:GetRepository"
+                                             "codecommit:GetRepository",
+                                             'codecommit:TagResource',
+                                             "codecommit:UntagResource",
+                                             "codecommit:CreateBranch",
+                                             "codecommit:CreateCommit",
+                                             "codecommit:CreateRepository",
+                                             "codecommit:DeleteRepository",
+                                             "codecommit:GitPush",
+                                             "codecommit:PutFile",
+                                             "codecommit:GetBranch",
                                          ],
                                          resources=[f"arn:aws:codecommit:*:{self.account}:{env_resource_prefix}*"]
                                      )
