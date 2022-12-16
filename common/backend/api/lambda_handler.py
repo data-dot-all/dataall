@@ -21,6 +21,7 @@ from backend.db import (
     common
 )
 print("initial imports 4")
+
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 log = logging.getLogger(__name__)
