@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   IconButton,
+  Button,
   Link,
   List,
   ListItem,
@@ -13,8 +14,10 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import { DeleteOutlined } from '@mui/icons-material';
 import countUnreadNotifications from '../../api/Notification/countUnreadNotifications';
 import listNotifications from '../../api/Notification/listNotifications';
+import markNotificationAsRead from '../../api/Notification/markAsRead';
 import BellIcon from '../../icons/Bell';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../defaults';
@@ -25,7 +28,7 @@ const NotificationsPopover = () => {
   const [open, setOpen] = useState(false);
   const client = useClient();
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState(PagedResponseDefault);
+  const [notifications, setNotifications] = useState([]);
   const [countInbox, setCountInbox] = useState(null);
 
   const handleOpen = () => {
@@ -41,27 +44,55 @@ const NotificationsPopover = () => {
     const response = await client.query(countUnreadNotifications());
     if (!response.errors) {
       setCountInbox(response.data.countUnreadNotifications);
+      fetchItems({ unread: true });
     }
     setLoading(false);
   },[client]);
 
-  const fetchItems = useCallback(async () => {
+  const fetchItems = useCallback(async (notificationFilter) => {
     setLoading(true);
+    let filter = Object.assign({}, Defaults.SelectListFilter, notificationFilter)
     const response = await client.query(
-      listNotifications(Defaults.SelectListFilter)
+      listNotifications(filter)
     );
     if (!response.errors) {
-      setNotifications(response.data.listNotifications);
-      getCountInbox();
+      setNotifications(response.data.listNotifications.nodes);
     }
     setLoading(false);
-  },[client, getCountInbox]);
+  },[client]);
+
+
+  const markAsRead = useCallback(async (notificationUri) => {
+    const response = await client.mutate(
+      markNotificationAsRead(notificationUri)
+    );
+  },[client]);
+
+  const handleRemoveNotification = (idx) => {
+    let notificiationUri = notifications[idx].notificationUri
+    setNotifications((prevstate) => {
+      const rows = [...prevstate];
+      rows.splice(idx, 1);
+      return rows;
+    });
+    setCountInbox(countInbox - 1)
+    markAsRead(notificiationUri)
+  };
+
+  const clearNotifications = (idx) => {
+    let readNotifications = notifications
+    setNotifications([])
+    setCountInbox(0)
+    readNotifications.forEach(note => {
+      markAsRead(note.notificationUri)
+    });
+  };
 
   useEffect(() => {
     if (client) {
-      fetchItems({ unread: true });
+      getCountInbox()
     }
-  }, [client, fetchItems]);
+  }, [client]);
 
   return (
     <>
@@ -88,8 +119,18 @@ const NotificationsPopover = () => {
           <Typography color="textPrimary" variant="h6">
             Notifications
           </Typography>
+          <Button
+            fullWidth
+            type="submit"
+            variant="outlined"
+            onClick={() => {
+              clearNotifications();
+            }}
+          >
+            Clear All
+          </Button>
         </Box>
-        {loading || notifications.nodes.length === 0 ? (
+        {loading || notifications.length === 0 ? (
           <Box sx={{ p: 2 }}>
             <Typography color="textPrimary" variant="subtitle2">
               There are no notifications
@@ -98,8 +139,8 @@ const NotificationsPopover = () => {
         ) : (
           <>
             <List disablePadding>
-              {notifications.nodes.length > 0 &&
-                notifications.nodes.map((notification) => (
+              {notifications.length > 0 &&
+                notifications.map((notification, idx) => (
                   <ListItem divider key={notification.id}>
                     <ListItemAvatar>
                       <Avatar
@@ -121,6 +162,13 @@ const NotificationsPopover = () => {
                         </Link>
                       }
                     />
+                  <IconButton
+                    onClick={() => {
+                      handleRemoveNotification(idx);
+                    }}
+                  >
+                    <DeleteOutlined fontSize="small" />
+                  </IconButton>
                   </ListItem>
                 ))}
             </List>
