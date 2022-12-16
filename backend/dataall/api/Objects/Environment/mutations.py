@@ -3,6 +3,7 @@ from .input_types import (
     NewEnvironmentInput,
     EnableDataSubscriptionsInput,
     InviteGroupOnEnvironmentInput,
+    AddConsumptionRoleToEnvironmentInput
 )
 from .resolvers import *
 
@@ -36,6 +37,16 @@ inviteGroupOnEnvironment = gql.MutationField(
     resolver=invite_group,
 )
 
+addConsumptionRoleToEnvironment = gql.MutationField(
+    name='addConsumptionRoleToEnvironment',
+    args=[
+        gql.Argument(
+            name='input', type=gql.NonNullableType(AddConsumptionRoleToEnvironmentInput)
+        )
+    ],
+    type=gql.Ref('ConsumptionRole'),
+    resolver=add_consumption_role,
+)
 
 updateGroupPermission = gql.MutationField(
     name='updateGroupEnvironmentPermissions',
@@ -58,6 +69,15 @@ removeGroupFromEnvironment = gql.MutationField(
     resolver=remove_group,
 )
 
+removeConsumptionRoleFromEnvironment = gql.MutationField(
+    name='removeConsumptionRoleFromEnvironment',
+    args=[
+        gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Boolean,
+    resolver=remove_consumption_role,
+)
 
 deleteEnvironment = gql.MutationField(
     name='deleteEnvironment',

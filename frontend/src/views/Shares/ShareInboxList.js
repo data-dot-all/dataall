@@ -10,7 +10,7 @@ import Pager from '../../components/Pager';
 import ShareInboxListItem from './ShareInboxListItem';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import searchInbox from '../../api/DataAccessRequest/searchInbox';
+import getShareRequestsToMe from '../../api/ShareObject/getShareRequestsToMe';
 import listDatasetShareObjects from '../../api/Dataset/listShareObjects';
 
 const ShareInboxList = (props) => {
@@ -37,14 +37,14 @@ const ShareInboxList = (props) => {
     } else {
       await client
         .query(
-          searchInbox({
+          getShareRequestsToMe({
             filter: {
               ...filter
             }
           })
         )
         .then((response) => {
-          setItems(response.data.requestsToMe);
+          setItems(response.data.getShareRequestsToMe);
         })
         .catch((error) => {
           dispatch({ type: SET_ERROR, error: error.Error });

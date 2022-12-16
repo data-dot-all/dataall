@@ -364,8 +364,7 @@ class PipelineStack(Stack):
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
                         f'export schema_name=validation',
-                        'pip install virtualenv',
-                        'virtualenv env',
+                        'python -m venv env',
                         '. env/bin/activate',
                         'make drop-tables',
                         'make upgrade-db',
@@ -397,8 +396,7 @@ class PipelineStack(Stack):
                     ),
                     commands=[
                         'pip install --upgrade pip',
-                        'pip install virtualenv',
-                        'virtualenv env',
+                        'python -m venv env',
                         '. env/bin/activate',
                         'make lint',
                         'cd frontend',
@@ -426,8 +424,7 @@ class PipelineStack(Stack):
                                         'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                         f'export envname={self.git_branch}',
-                                        'pip install virtualenv',
-                                        'virtualenv env',
+                                        'python -m venv env',
                                         '. env/bin/activate',
                                         'make coverage',
                                     ]
@@ -586,6 +583,7 @@ class PipelineStack(Stack):
                 quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
+                shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
             )
         )
         return backend_stage
@@ -913,8 +911,7 @@ class PipelineStack(Stack):
                                 'commands': [
                                     'set -eu',
                                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                                    'pip install virtualenv',
-                                    'virtualenv env',
+                                    'python -m venv env',
                                     '. env/bin/activate',
                                     'pip install git-remote-codecommit',
                                     'mkdir release && cd release',

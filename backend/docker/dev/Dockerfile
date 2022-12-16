@@ -14,6 +14,8 @@ RUN amazon-linux-extras install $PYTHON_VERSION
 RUN yum -y install python38-devel
 RUN yum -y install git
 
+RUN /bin/bash -c "ln -s /usr/bin/${PYTHON_VERSION} /usr/bin/python3"
+
 RUN useradd -m app
 
 WORKDIR /build

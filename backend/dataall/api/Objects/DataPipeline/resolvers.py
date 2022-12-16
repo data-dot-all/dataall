@@ -28,17 +28,17 @@ def create_pipeline(context: Context, source, input=None):
             Stack.create_stack(
                 session=session,
                 environment_uri=pipeline.environmentUri,
-                target_type='cdkrepo',
+                target_type='cdkpipeline',
                 target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
-
+        elif input['devStrategy'] == 'template':
             Stack.create_stack(
                 session=session,
                 environment_uri=pipeline.environmentUri,
-                target_type='cdkpipeline',
-                target_uri=f"{pipeline.DataPipelineUri}pip",
+                target_type='template',
+                target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
@@ -79,6 +79,9 @@ def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict 
             data=input,
             check_perm=True,
         )
+    if (pipeline.template == ""):
+        stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+
     return pipeline
 
 
@@ -252,16 +255,6 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
     )
 
 
-def get_cicd_stack(context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    return stack_helper.get_stack_with_cfn_resources(
-        context=context,
-        targetUri=f"{source.DataPipelineUri}pip",
-        environmentUri=source.environmentUri,
-    )
-
-
 def get_job_runs(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
@@ -405,23 +398,22 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
+        stack_helper.delete_repository(
+            context=context,
+            target_uri=DataPipelineUri,
+            accountid=env.AwsAccountId,
+            cdk_role_arn=env.CDKRoleArn,
+            region=env.region,
+            repo_name=pipeline.repo,
+        )
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
                 context=context,
-                target_uri=f"{DataPipelineUri}",
+                target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='cdkrepo',
-            )
-
-            stack_helper.delete_stack(
-                context=context,
-                target_uri=f"{DataPipelineUri}pip",
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region,
-                target_type='pipelinePip',
+                target_type='cdkpipeline',
             )
         else:
             stack_helper.delete_stack(
@@ -434,3 +426,28 @@ def delete_pipeline(
             )
 
     return True
+
+
+def delete_pipeline_environment(context: Context, source, envPipelineUri: str = None):
+    with context.engine.scoped_session() as session:
+        Pipeline.delete_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            envPipelineUri=envPipelineUri,
+            check_perm=True,
+        )
+    return True
+
+
+def update_pipeline_environment(context: Context, source, input=None):
+    with context.engine.scoped_session() as session:
+        pipeline_env = Pipeline.update_pipeline_environment(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            data=input,
+            uri=input['pipelineUri'],
+            check_perm=True,
+        )
+    return pipeline_env

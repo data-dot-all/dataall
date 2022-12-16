@@ -5,6 +5,7 @@ KeyValueTagInput = gql.InputType(
     arguments=[
         gql.Argument(name='key', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='value', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='cascade', type=gql.NonNullableType(gql.Boolean)),
     ],
 )
 

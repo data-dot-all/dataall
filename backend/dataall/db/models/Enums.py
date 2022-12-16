@@ -113,6 +113,7 @@ class PrincipalType(Enum):
     Project = 'Project'
     Public = 'Public'
     Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'
 
 
 class ShareObjectPermission(Enum):

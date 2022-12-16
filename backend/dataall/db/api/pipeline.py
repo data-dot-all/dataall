@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from . import (
@@ -63,7 +63,7 @@ class Pipeline:
             region=environment.region,
             repo=slugify(data['label']),
             devStrategy=data['devStrategy'],
-            template=data['template'] if data['template'] != '' else data['label'],
+            template=data['template'] if data['devStrategy'] == 'template' else "",
         )
 
         session.add(pipeline)
@@ -294,6 +294,37 @@ class Pipeline:
         )
         session.commit()
         return True
+
+    @staticmethod
+    def delete_pipeline_environment(
+        session, username, groups, envPipelineUri, check_perm=None
+    ) -> bool:
+        deletedItem = (
+            session.query(models.DataPipelineEnvironment).filter(
+                models.DataPipelineEnvironment.envPipelineUri == envPipelineUri).delete()
+        )
+        session.commit()
+        return True
+
+    @staticmethod
+    @has_tenant_perm(permissions.MANAGE_PIPELINES)
+    @has_resource_perm(permissions.UPDATE_PIPELINE)
+    def update_pipeline_environment(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> models.DataPipelineEnvironment:
+        pipeline_env = session.query(models.DataPipelineEnvironment).filter(
+            and_(
+                models.DataPipelineEnvironment.pipelineUri == data['pipelineUri'],
+                models.DataPipelineEnvironment.environmentUri == data['environmentUri'],
+                models.DataPipelineEnvironment.stage == data['stage']
+            )
+        ).first()
+        if data:
+            if isinstance(data, dict):
+                for k in data.keys():
+                    print(f"KEY: {k}, VALUE: {data.get(k)}")
+                    setattr(pipeline_env, k, data.get(k))
+        return pipeline_env
 
     @staticmethod
     def paginated_pipeline_environments(

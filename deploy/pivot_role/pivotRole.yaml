@@ -469,11 +469,17 @@ Resources:
           - Sid: CloudFormation
             Effect: Allow
             Action:
+              - 'cloudformation:CreateStack'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormation2
+            Effect: Allow
+            Action:
               - 'cloudformation:DescribeStacks'
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
-              - 'cloudformation:CreateStack'
               - 'cloudformation:GetTemplate'
               - 'cloudformation:ListStackResources'
               - 'cloudformation:DescribeStackResource'
@@ -643,6 +649,7 @@ Resources:
             Action:
               - 'iam:Get*'
               - 'iam:ListRoles'
+              - 'iam:Get*'
             Effect: Allow
             Resource: '*'
           - Sid: IAMRolePolicy

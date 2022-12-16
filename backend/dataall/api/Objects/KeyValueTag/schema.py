@@ -8,5 +8,6 @@ KeyValueTag = gql.ObjectType(
         gql.Field(name='targetUri', type=gql.String),
         gql.Field(name='key', type=gql.String),
         gql.Field(name='value', type=gql.String),
+        gql.Field(name='cascade', type=gql.Boolean),
     ],
 )

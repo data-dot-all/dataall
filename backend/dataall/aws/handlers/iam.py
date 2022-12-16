@@ -13,6 +13,24 @@ class IAM:
         return session.client('iam')
 
     @staticmethod
+    def get_role(
+        account_id: str,
+        role_arn: str
+    ):
+        try:
+            iamcli = IAM.client(account_id)
+            response = iamcli.get_role(
+                RoleName=role_arn.split("/")[-1]
+            )
+        except Exception as e:
+            log.error(
+                f'Failed to get role {role_arn} due to: {e}'
+            )
+            return None
+        else:
+            return response["Role"]
+
+    @staticmethod
     def update_role_policy(
         account_id: str,
         role_name: str,

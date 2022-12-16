@@ -42,6 +42,7 @@ class BackendStack(Stack):
         quicksight_enabled=False,
         enable_cw_canaries=False,
         enable_cw_rum=False,
+        shared_dashboard_sessions='anonymous',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -66,6 +67,7 @@ class BackendStack(Stack):
             custom_domain=custom_domain,
             enable_cw_canaries=enable_cw_canaries,
             quicksight_enabled=quicksight_enabled,
+            shared_dashboard_sessions=shared_dashboard_sessions,
             **kwargs,
         )
 

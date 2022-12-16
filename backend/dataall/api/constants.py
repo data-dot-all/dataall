@@ -150,6 +150,7 @@ class PrincipalType(GraphQLEnumMapper):
     Project = 'Project'
     Public = 'Public'
     Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'
 
 
 class ShareObjectPermission(GraphQLEnumMapper):
@@ -157,17 +158,6 @@ class ShareObjectPermission(GraphQLEnumMapper):
     Requesters = '800'
     DatasetAdmins = '700'
     NoPermission = '000'
-
-
-"""
-    1) i created it								DatasetCreator
-    2) i belong tp the Datyaszt Admin group		DatasetAdmin
-    3) i'm the business owner					DatasetBusinessOwner
-    4) i'm a steward 							DatasetSteward
-
-    5) ShareObjectCreator						sebastian
-    6) ShareObjectGroupMember					rochepeople
-"""
 
 
 class ShareObjectStatus(GraphQLEnumMapper):
