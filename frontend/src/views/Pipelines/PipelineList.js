@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   Link,
   Typography,
   Autocomplete,
-  Select,
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -26,7 +25,6 @@ import PipelineListItem from './PipelineListItem';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
 import listDataPipelines from '../../api/DataPipeline/listDataPipelines';
-import ChevronDown from '../../icons/ChevronDown';
 import ChipInput from '../../components/TagsInput';
 import { AwsRegions } from '../../constants';
 
@@ -184,7 +182,6 @@ const PipelineList = () => {
                           {...regionParams}
                           label={item.title}
                           fullWidth
-                          // margin="normal"
                           variant="outlined"
                         />
                       )}
