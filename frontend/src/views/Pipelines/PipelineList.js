@@ -88,7 +88,7 @@ const PipelineList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
+  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"},{value:"template", label:"GitHub Template"}];/*DBT Pipelines*/
   const [filterItems] = useState([{title:'DevStrategy', options: devOptions},{title:'Tags'},{title: 'Region', options: AwsRegions}]);
 
   const fetchItems = useCallback(async () => {
@@ -111,18 +111,12 @@ const PipelineList = () => {
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
       setFilter({...filter, page: 1, term: event.target.value});
-      // fetchItems(filter).catch((e) =>
-      //   dispatch({ type: SET_ERROR, error: e.message })
-      // );
     }
   };
 
   const handlePageChange = async (event, value) => {
     if (value <= items.pages && value !== items.page) {
       setFilter({ ...filter, page: value });
-      // fetchItems().catch((e) =>
-      //   dispatch({ type: SET_ERROR, error: e.message })
-      // );
     }
   };
 
@@ -138,12 +132,6 @@ const PipelineList = () => {
       const selectedTypes = values.map((type) => type.value)
       setFilter({ ...filter, type: selectedTypes })
     }
-    // setFilter(
-    //   { ...filter, tags: values },
-    //   () => fetchItems().catch((e) =>
-    //   dispatch({ type: SET_ERROR, error: e.message })
-    // )
-    // );
   };
 
   useEffect(() => {
@@ -180,13 +168,14 @@ const PipelineList = () => {
               mr: 2
             }}
           >
-            <Grid container>
+            <Grid container spacing={2} xs={8}>
               {filterItems.map((item) => (
-                <Grid item>
+                <Grid item md={4} xs={12}>
                   {item.title != 'Tags' 
                     ? <Autocomplete
                       id={item.title}
                       multiple
+                      fullWidth
                       options ={item.options}
                       getOptionLabel={(option) => option.label}
                       onChange={(event, value) => handleFilterChange(item.title, value)}
@@ -194,7 +183,8 @@ const PipelineList = () => {
                         <TextField
                           {...regionParams}
                           label={item.title}
-                          margin="normal"
+                          fullWidth
+                          // margin="normal"
                           variant="outlined"
                         />
                       )}
@@ -211,6 +201,7 @@ const PipelineList = () => {
               ))}
             </Grid>
           </Box>
+          <Divider />
           <Box
             sx={{
               flexGrow: 1,
