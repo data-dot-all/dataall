@@ -27,7 +27,7 @@ def bootstrap():
         gql.QueryField: [],
         gql.MutationField: [],
         gql.Enum: [],
-        gql.Union: [],
+        #gql.Union: [],
         gql.InputType: [],
     }
 
