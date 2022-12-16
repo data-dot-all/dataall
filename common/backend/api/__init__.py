@@ -41,15 +41,6 @@ def bootstrap():
         print(f"inside enum.class: {enumclass}")
 
     for cls in classes.keys():
-        print(f"class {cls} value")
-        print(classes[cls])
-        print("isintance")
-        print(isinstance(cls, [gql.ObjectType, gql.QueryField, gql.MutationField, gql.Enum, gql.Union, gql.InputType]))
-
-    non_empty_classes = [cls for cls in classes.keys() if isinstance(cls,)]
-    print("-----printing classes loop--------")
-    print(cls for cls in non_empty_classes)
-    for cls in non_empty_classes:
         print(f">>>>>inside loop, class: {cls}>>>> Object, Query, Mutation, Enum, Union, InputType")
         print(f"class.class_instances['default']: {cls.class_instances['default']}")
         for name in cls.class_instances['default'].keys():

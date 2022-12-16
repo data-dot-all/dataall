@@ -1,5 +1,9 @@
 import textwrap
 
+from ._cache import cache_instances
+
+
+@cache_instances
 class InputType:
     def __init__(self, name, arguments):
         self.name = name
