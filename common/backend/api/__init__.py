@@ -53,8 +53,8 @@ def bootstrap():
     schema = gql.Schema(
         types=classes[gql.ObjectType],
         inputs=classes[gql.InputType],
-        enums=classes[gql.Enum],
-        unions=classes[gql.Union],
+        enums=classes[gql.Enum]#,
+        #unions=classes[gql.Union],
     )
     return schema
 
