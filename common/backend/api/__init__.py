@@ -33,7 +33,7 @@ def bootstrap():
 
     Query = gql.ObjectType(name='Query', fields=classes[gql.QueryField])
     Mutation = gql.ObjectType(name='Mutation', fields=classes[gql.MutationField])
-    QueryType = gql.QueryField()
+
     print("printing enum loop")
     for enumclass in GraphQLEnumMapper.__subclasses__():
         # Gets all Enums from constants.py
