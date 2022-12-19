@@ -118,8 +118,6 @@ const PipelineList = () => {
   };
 
   const handleFilterChange = (filterLabel, values) => {
-    console.log(values)
-    console.log(filterLabel)
     if (filterLabel === "Region"){
       const selectedRegions = values.map((region) => region.value)
       setFilter({ ...filter, region: selectedRegions});
