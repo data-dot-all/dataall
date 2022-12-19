@@ -128,7 +128,7 @@ def upgrade():
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,
-                    permissions=permissions.CONSUMPTION_ROLE_ALL,
+                    permissions=permissions.CONSUMPTION_ENVIRONMENT_ROLE_ALL,
                     resource_type=models.Environment.__name__,
                 )
         print('Consumer Role Permissions created successfully')
