@@ -63,14 +63,22 @@ class DataSharingService:
                 env_group,
                 dataset,
                 share,
-                shared_tables,
-                shared_folders,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri, ['Approved'])
+            ) = api.ShareObject.get_share_data(session, share_uri)
+            (
+                shared_tables,
+                shared_folders
+            ) = api.ShareObject.get_share_data_items(session, share_uri, ["Approved"])
+            (
+                revoked_tables,
+                revoked_folders
+            ) = api.ShareObject.get_share_data_items(session, share_uri, ['PendingRevoke'])
 
         log.info(f'Granting permissions to tables : {shared_tables}')
         log.info(f'Granting permissions to folders : {shared_folders}')
+        log.info(f'Revoking permissions to tables : {revoked_tables}')
+        log.info(f'Revoking permissions to folders : {revoked_folders}')
 
         shared_db_name = cls.build_shared_db_name(dataset, share)
 
@@ -85,6 +93,7 @@ class DataSharingService:
             dataset,
             share,
             shared_folders,
+            revoked_folders,
             source_environment,
             target_environment,
             source_env_group,
@@ -138,11 +147,14 @@ class DataSharingService:
                 env_group,
                 dataset,
                 share,
-                shared_tables,
-                shared_folders,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri, ['Rejected'])
+            ) = api.ShareObject.get_share_data(session, share_uri)
+
+            (
+                shared_tables,
+                shared_folders
+            ) = api.ShareObject.get_share_data_items(session, share_uri, ['Rejected'])
 
             log.info(f'Revoking permissions for tables : {shared_tables}')
             log.info(f'Revoking permissions for folders : {shared_folders}')

@@ -1,11 +1,7 @@
 import logging
-import json
-
 
 from ....db import models, api
 from .s3_share_manager import S3ShareManager
-from ....aws.handlers.s3 import S3
-from ....aws.handlers.sts import SessionHelper
 
 
 log = logging.getLogger(__name__)
@@ -42,6 +38,7 @@ class S3ShareApproval(S3ShareManager):
         dataset: models.Dataset,
         share: models.ShareObject,
         share_folders: [models.DatasetStorageLocation],
+        revoke_folders: [models.DatasetStorageLocation],
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -98,16 +95,18 @@ class S3ShareApproval(S3ShareManager):
             except Exception as e:
                 sharing_folder.handle_share_failure(e)
 
-        removed_folders = S3ShareApproval.get_removed_prefixes(
-            session,
-            dataset,
-            share,
-            share_folders,
-            target_environment,
-            env_group,
-        )
-        for folder in removed_folders:
+        for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
+            removing_item = api.ShareObject.find_share_item_by_folder(
+                session,
+                share,
+                folder,
+            )
+            api.ShareObject.update_share_item_status(
+                session,
+                removing_item,
+                models.ShareObjectStatus.Revoke_In_Progress.value,
+            )
 
             removing_folder = cls(
                 session,
@@ -126,42 +125,11 @@ class S3ShareApproval(S3ShareManager):
                 if cleanup:
                     removing_folder.delete_target_role_access_policy()
                     removing_folder.delete_dataset_bucket_key_policy()
+                api.ShareObject.update_share_item_status(
+                    session,
+                    removing_item,
+                    models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+                )
             except Exception as e:
                 removing_folder.handle_revoke_failure(e)
         return True
-
-    @staticmethod
-    def get_removed_prefixes(
-        session,
-        dataset: models.Dataset,
-        share: models.ShareObject,
-        share_folders: [models.DatasetStorageLocation],
-        target_environment: models.Environment,
-        env_group: models.EnvironmentGroup,
-    ) -> [models.DatasetStorageLocation]:
-        source_account_id = dataset.AwsAccountId
-        access_point_name = f"{dataset.datasetUri}-{share.principalId}".lower()
-        target_account_id = target_environment.AwsAccountId
-        target_env_admin = env_group.environmentIAMRoleName
-        access_point_policy = S3.get_access_point_policy(source_account_id, dataset.region, access_point_name)
-        if access_point_policy:
-            policy = json.loads(access_point_policy)
-            target_env_admin_id = SessionHelper.get_role_id(target_account_id, target_env_admin)
-            statements = {item["Sid"]: item for item in policy["Statement"]}
-            if f"{target_env_admin_id}0" in statements.keys():
-                prefix_list = statements[f"{target_env_admin_id}0"]["Condition"]["StringLike"]["s3:prefix"]
-                if isinstance(prefix_list, str):
-                    prefix_list = [prefix_list]
-                prefix_list = [prefix[:-2] for prefix in prefix_list]
-                shared_prefix = [folder.S3Prefix for folder in share_folders]
-                removed_prefixes = [prefix for prefix in prefix_list if prefix not in shared_prefix]
-                removed_folders = [
-                    api.DatasetStorageLocation.get_location_by_s3_prefix(
-                        session,
-                        prefix,
-                        source_account_id,
-                        dataset.region,
-                    ) for prefix in removed_prefixes
-                ]
-                return removed_folders
-        return []
