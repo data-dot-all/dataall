@@ -62,6 +62,7 @@ class S3ShareApproval(S3ShareManager):
             '##### Starting Sharing folders #######'
         )
         for folder in share_folders:
+            log.info(f'sharing folder: {folder}')
             sharing_item = api.ShareObject.find_share_item_by_folder(
                 session,
                 share,
@@ -106,16 +107,7 @@ class S3ShareApproval(S3ShareManager):
             env_group,
         )
         for folder in removed_folders:
-            removing_item = api.ShareObject.find_share_item_by_folder(
-                session,
-                share,
-                folder,
-            )
-            api.ShareObject.update_share_item_status(
-                session,
-                removing_item,
-                models.ShareObjectStatus.Revoke_In_Progress.value,
-            )
+            log.info(f'revoking access to folder: {folder}')
 
             removing_folder = cls(
                 session,
