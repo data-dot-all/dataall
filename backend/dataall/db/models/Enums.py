@@ -131,6 +131,7 @@ class ShareObjectStatus(Enum):
     Share_In_Progress = 'Share_In_Progress'
     Share_Failed = 'Share_Failed'
     Share_Succeeded = 'Share_Succeeded'
+    PendingRevoke = 'PendingRevoke'
     Revoke_In_Progress = 'Revoke_In_Progress'
     Revoke_Share_Failed = 'Revoke_Share_Failed'
     Revoke_Share_Succeeded = 'Revoke_Share_Succeeded'
