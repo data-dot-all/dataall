@@ -91,7 +91,6 @@ const PipelineList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    console.log(filter)
     const response = await client.query(listDataPipelines(filter));
     if (!response.errors) {
       setItems(response.data.listDataPipelines);

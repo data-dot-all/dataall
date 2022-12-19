@@ -240,9 +240,7 @@ class Pipeline:
         if filter and filter.get('region'):
             if len(filter.get('region')) > 0:
                 query = query.filter(
-                    or_(
-                        models.DataPipeline.region.in_(filter.get('region'))
-                    )
+                    models.DataPipeline.region.in_(filter.get('region'))
                 )
         if filter and filter.get('tags'):
             if len(filter.get('tags')) > 0:
@@ -254,9 +252,7 @@ class Pipeline:
         if filter and filter.get('type'):
             if len(filter.get('type')) > 0:
                 query = query.filter(
-                    or_(
-                        models.DataPipeline.devStrategy.in_(filter.get('type'))
-                    )
+                    models.DataPipeline.devStrategy.in_(filter.get('type'))
                 )
         return query
 
