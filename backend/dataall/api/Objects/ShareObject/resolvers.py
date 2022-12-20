@@ -98,6 +98,7 @@ def reject_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
+
 def revoke_all_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         share = db.api.ShareObject.revoke_all_share_object(

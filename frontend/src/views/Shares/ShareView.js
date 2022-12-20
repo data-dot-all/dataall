@@ -53,6 +53,7 @@ import PlusIcon from '../../icons/Plus';
 import AddShareItemModal from './AddShareItemModal';
 import approveShareObject from '../../api/ShareObject/approveShareObject';
 import rejectShareObject from '../../api/ShareObject/rejectShareObject';
+import revokeAllShareObject from '../../api/ShareObject/revokeAllShareObject';
 import submitApproval from '../../api/ShareObject/submitApproval';
 
 function ShareViewHeader(props) {
@@ -68,6 +69,7 @@ function ShareViewHeader(props) {
   } = props;
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [removing, setRemoving] = useState(false);
   const submit = async () => {
@@ -134,7 +136,6 @@ function ShareViewHeader(props) {
     }
     setAccepting(false);
   };
-
   const reject = async () => {
     setRejecting(true);
     const response = await client.mutate(
@@ -156,6 +157,28 @@ function ShareViewHeader(props) {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setRejecting(false);
+  };
+  const revoke = async () => {
+    setRevoking(true);
+    const response = await client.mutate(
+      revokeAllShareObject({
+        shareUri: share.shareUri
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('All items if share request revoked', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      await fetchItems();
+      await fetchItem();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setRevoking(false);
   };
   return (
     <Grid container justifyContent="space-between" spacing={3}>
@@ -251,7 +274,7 @@ function ShareViewHeader(props) {
                     color="primary"
                     startIcon={<LockRounded />}
                     sx={{ m: 1 }}
-                    onClick={reject}
+                    onClick={revoke}
                     type="button"
                     variant="outlined"
                   >
@@ -265,7 +288,7 @@ function ShareViewHeader(props) {
                     color="primary"
                     startIcon={<LockRounded />}
                     sx={{ m: 1 }}
-                    onClick={reject}
+                    onClick={revoke}
                     type="button"
                     variant="outlined"
                   >
