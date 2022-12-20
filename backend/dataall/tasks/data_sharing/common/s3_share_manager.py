@@ -362,7 +362,7 @@ class S3ShareManager:
         api.ShareObject.update_share_item_status(
             self.session,
             self.share_item,
-            models.ShareObjectStatus.Share_Failed.value,
+            models.ShareItemStatus.Share_Failed.value,
         )
         AlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
@@ -385,7 +385,7 @@ class S3ShareManager:
         api.ShareObject.update_share_item_status(
             self.session,
             self.share_item,
-            models.ShareObjectStatus.Revoke_Share_Failed.value,
+            models.ShareItemStatus.Revoke_Failed.value,
         )
         AlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment

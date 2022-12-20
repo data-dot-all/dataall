@@ -63,7 +63,7 @@ class S3ShareRevoke(S3ShareManager):
             api.ShareObject.update_share_item_status(
                 session,
                 revoking_item,
-                models.ShareObjectStatus.Revoke_In_Progress.value
+                models.ShareItemStatus.Revoke_In_Progress.value
             )
             revoking_folder = cls(
                 session,
@@ -85,7 +85,7 @@ class S3ShareRevoke(S3ShareManager):
                 api.ShareObject.update_share_item_status(
                     session,
                     revoking_item,
-                    models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+                    models.ShareItemStatus.Revoke_Succeeded.value,
                 )
             except Exception as e:
                 revoking_folder.handle_revoke_failure(e)

@@ -77,7 +77,7 @@ class CrossAccountShareApproval(LFShareApproval):
             api.ShareObject.update_share_item_status(
                 self.session,
                 share_item,
-                models.ShareObjectStatus.Share_In_Progress.value,
+                models.ShareItemStatus.Share_In_Progress.value,
             )
 
             try:
@@ -102,7 +102,7 @@ class CrossAccountShareApproval(LFShareApproval):
                 api.ShareObject.update_share_item_status(
                     self.session,
                     share_item,
-                    models.ShareObjectStatus.Share_Succeeded.value,
+                    models.ShareItemStatus.Share_Succeeded.value,
                 )
 
             except Exception as e:

@@ -1,12 +1,12 @@
 import logging
 from typing import List
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from . import has_tenant_perm, has_resource_perm, Glossary
 from .. import models, paginate, permissions, exceptions
 from .dataset import Dataset
-from ..models.Enums import ShareObjectStatus
+from ..models.Enums import ShareItemStatus
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +186,14 @@ class DatasetStorageLocation:
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == location.locationUri,
-                    models.ShareObjectItem.status == 'Approved',
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    )
                 )
             )
             .first()
@@ -230,7 +237,14 @@ class DatasetStorageLocation:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    ),
                     models.ShareObject.environmentUri == environment_uri,
                 )
             )

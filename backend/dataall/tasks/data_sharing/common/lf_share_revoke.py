@@ -52,7 +52,7 @@ class LFShareRevoke:
             api.ShareObject.update_share_item_status(
                 self.session,
                 share_item,
-                models.ShareObjectStatus.Revoke_In_Progress.value,
+                models.ShareItemStatus.Revoke_In_Progress.value,
             )
 
             try:
@@ -66,7 +66,7 @@ class LFShareRevoke:
                 api.ShareObject.update_share_item_status(
                     self.session,
                     share_item,
-                    models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+                    models.ShareItemStatus.Revoke_Succeeded.value,
                 )
 
             except Exception as e:
@@ -237,7 +237,7 @@ class LFShareRevoke:
         api.ShareObject.update_share_item_status(
             self.session,
             share_item,
-            models.ShareObjectStatus.Revoke_Share_Failed.value,
+            models.ShareItemStatus.Revoke_Failed.value,
         )
         AlarmService().trigger_revoke_sharing_failure_alarm(
             table, self.share, self.target_environment

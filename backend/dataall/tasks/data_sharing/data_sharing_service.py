@@ -69,11 +69,11 @@ class DataSharingService:
             (
                 shared_tables,
                 shared_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, ["Approved"])
+            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Share_Approved.value)
             (
                 revoked_tables,
                 revoked_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, ['PendingRevoke'])
+            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
 
         log.info(f'Granting permissions to tables : {shared_tables}')
         log.info(f'Granting permissions to folders : {shared_folders}')

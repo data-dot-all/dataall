@@ -195,7 +195,7 @@ def cross_account_share(
             itemName=table.GlueTableName,
             GlueDatabaseName=table.GlueDatabaseName,
             GlueTableName=table.GlueTableName,
-            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
         share_item = dataall.db.models.ShareObjectItem(
@@ -206,7 +206,7 @@ def cross_account_share(
             itemName=table2.GlueTableName,
             GlueDatabaseName=table2.GlueDatabaseName,
             GlueTableName=table2.GlueTableName,
-            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
         session.commit()
@@ -240,7 +240,7 @@ def same_account_share(
             itemName=table.GlueTableName,
             GlueDatabaseName=table.GlueDatabaseName,
             GlueTableName=table.GlueTableName,
-            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
         yield share

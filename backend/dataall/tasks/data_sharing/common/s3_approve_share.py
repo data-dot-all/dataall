@@ -68,7 +68,7 @@ class S3ShareApproval(S3ShareManager):
             api.ShareObject.update_share_item_status(
                 session,
                 sharing_item,
-                models.ShareObjectStatus.Share_In_Progress.value,
+                models.ShareItemStatus.Share_In_Progress.value,
             )
 
             sharing_folder = cls(
@@ -90,7 +90,7 @@ class S3ShareApproval(S3ShareManager):
                 api.ShareObject.update_share_item_status(
                     session,
                     sharing_item,
-                    models.ShareObjectStatus.Share_Succeeded.value,
+                    models.ShareItemStatus.Share_Succeeded.value,
                 )
             except Exception as e:
                 sharing_folder.handle_share_failure(e)
@@ -105,7 +105,7 @@ class S3ShareApproval(S3ShareManager):
             api.ShareObject.update_share_item_status(
                 session,
                 removing_item,
-                models.ShareObjectStatus.Revoke_In_Progress.value,
+                models.ShareItemStatus.Revoke_In_Progress.value,
             )
 
             removing_folder = cls(
@@ -128,7 +128,7 @@ class S3ShareApproval(S3ShareManager):
                 api.ShareObject.update_share_item_status(
                     session,
                     removing_item,
-                    models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+                    models.ShareItemStatus.Revoke_Succeeded.value,
                 )
             except Exception as e:
                 removing_folder.handle_revoke_failure(e)

@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_, literal
 
 from .. import models, exceptions, paginate, permissions
 from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset
-from ..models.Enums import ShareObjectStatus
+from ..models.Enums import ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -197,7 +197,14 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    ),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),
@@ -317,7 +324,14 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    ),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),

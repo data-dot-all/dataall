@@ -9,7 +9,7 @@ from . import (
 )
 from .. import api
 from .. import models, exceptions, permissions, paginate
-from ..models.Enums import ShareObjectStatus, ShareableType, PrincipalType
+from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ class ShareObject:
                     itemUri=itemUri,
                     itemType=itemType,
                     itemName=item.name,
-                    status=ShareObjectStatus.Draft.value,
+                    status=ShareItemStatus.PendingApproval.value,
                     owner=username,
                     GlueDatabaseName=dataset.GlueDatabaseName
                     if itemType == ShareableType.Table.value
@@ -217,39 +217,44 @@ class ShareObject:
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-        if share.status == ShareObjectStatus.PendingApproval.value:
+        if share.status == ShareObjectStatus.Pending.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.SUBMIT_SHARE_OBJECT,
-                message='ShareObject is in PendingApproval state',
+                message='ShareObject is already in Pending state',
             )
+        # Items that are going to be reprocessed to share
         (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
                     or_(
-                        models.ShareObjectItem.status == ShareObjectStatus.Draft.value,
-                        models.ShareObjectItem.status == ShareObjectStatus.Share_Failed.value
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Failed.value
                     )
                 )
             )
             .update(
-                {models.ShareObjectItem.status: ShareObjectStatus.PendingApproval.value}
+                {models.ShareObjectItem.status: ShareItemStatus.PendingApproval.value}
             )
         )
+        # Items that are going to be reprocessed to revoke
         (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status == ShareObjectStatus.Revoke_Share_Failed.value,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                    )
                 )
             )
             .update(
-                {models.ShareObjectItem.status: ShareObjectStatus.PendingRevoke.value}
+                {models.ShareObjectItem.status: ShareItemStatus.PendingRevoke.value}
             )
         )
-        share.status = ShareObjectStatus.PendingApproval.value
+        share.status = ShareObjectStatus.Pending.value
         api.Notification.notify_share_object_submission(
             session, username, dataset, share
         )
@@ -269,25 +274,40 @@ class ShareObject:
 
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
 
-        if share.status != ShareObjectStatus.PendingApproval.value:
+        if share.status != ShareObjectStatus.Pending.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.APPROVE_SHARE_OBJECT,
-                message='ShareObject is not in PendingApproval state',
+                message='Share Request is not in Pending state',
             )
-
         (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
                     or_(
-                        models.ShareObjectItem.status == ShareObjectStatus.PendingApproval.value,
+                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
                     )
                 )
             )
             .update(
                 {
-                    models.ShareObjectItem.status: ShareObjectStatus.Approved.value,
+                    models.ShareObjectItem.status: ShareItemStatus.Share_Approved.value,
+                }
+            )
+        )
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == uri,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                    )
+                )
+            )
+            .update(
+                {
+                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Approved.value,
                 }
             )
         )
@@ -323,18 +343,37 @@ class ShareObject:
         if share.status == ShareObjectStatus.Rejected.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.REJECT_SHARE_OBJECT,
-                message='ShareObject is not in Rejected state',
+                message='ShareObject is already in Rejected state',
             )
         (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
+                    )
                 )
             )
             .update(
                 {
-                    models.ShareObjectItem.status: ShareObjectStatus.Rejected.value,
+                    models.ShareObjectItem.status: ShareItemStatus.Share_Rejected.value,
+                }
+            )
+        )
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == uri,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                    )
+                )
+            )
+            .update(
+                {
+                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Rejected.value,
                 }
             )
         )
@@ -451,7 +490,7 @@ class ShareObject:
                 itemUri=itemUri,
                 itemType=itemType,
                 itemName=item.name,
-                status=ShareObjectStatus.Draft.value,
+                status=ShareItemStatus.PendingApproval.value,
                 owner=username,
                 GlueDatabaseName=dataset.GlueDatabaseName
                 if itemType == ShareableType.Table.value
@@ -487,19 +526,30 @@ class ShareObject:
             'share',
             ShareObject.get_share_by_uri(session, uri),
         )
-        if share_item.status in ['Share_Succeeded', 'Revoke_Share_Failed', 'PendingRevoke']:
+        if share_item.status in [
+            ShareItemStatus.Share_Succeeded.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.PendingRevoke.value
+        ]:
             ShareObject.update_share_item_status(
                 session,
                 share_item,
-                models.ShareObjectStatus.PendingRevoke.value,
+                models.ShareItemStatus.PendingRevoke.value,
             )
-            share.status = ShareObjectStatus.Draft.value
+            share.status = ShareObjectStatus.Pending.value
             session.commit()
+
+        elif share_item.status in [
+            ShareItemStatus.Revoke_Succeeded.value,
+            ShareItemStatus.Share_Failed.value,
+            ShareItemStatus.PendingApproval.value,
+            ShareItemStatus.Share_Rejected.value
+        ]:
+            session.delete(share_item)
+        else:
             raise Exception(
-                'Before deleting the item access needs to be revoked. Submit this request to revoke access'
+                "Item is currently being processed. Wait until the current sharing operation has finished."
             )
-        share.status = ShareObjectStatus.Draft.value
-        session.delete(share_item)
         return True
 
     @staticmethod
@@ -792,7 +842,7 @@ class ShareObject:
         share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
-        if share.status not in ["Approved", "Rejected"]:
+        if share.status not in [ShareObjectStatus.Approved.value, ShareObjectStatus.Rejected.value]:
             raise Exception(
                 f'Share request {share_uri} has neither been Approved nor Rejected'
             )
