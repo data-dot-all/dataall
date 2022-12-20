@@ -126,15 +126,23 @@ class ShareObjectPermission(Enum):
 class ShareObjectStatus(Enum):
     Approved = 'Approved'
     Rejected = 'Rejected'
-    PendingApproval = 'PendingApproval'
     Draft = 'Draft'
+    Pending = 'Pending'
+
+
+class ShareItemStatus(Enum):
+    Share_Approved = 'Share_Approved'
+    Share_Rejected = 'Share_Rejected'
+    Revoke_Approved = 'Revoke_Approved'
+    Revoke_Rejected = 'Revoke_Rejected'
+    PendingApproval = 'PendingApproval'
+    PendingRevoke = 'PendingRevoke'
     Share_In_Progress = 'Share_In_Progress'
     Share_Failed = 'Share_Failed'
     Share_Succeeded = 'Share_Succeeded'
-    PendingRevoke = 'PendingRevoke'
     Revoke_In_Progress = 'Revoke_In_Progress'
-    Revoke_Share_Failed = 'Revoke_Share_Failed'
-    Revoke_Share_Succeeded = 'Revoke_Share_Succeeded'
+    Revoke_Failed = 'Revoke_Failed'
+    Revoke_Succeeded = 'Revoke_Succeeded'
 
 
 class ShareObjectItemAction(Enum):
