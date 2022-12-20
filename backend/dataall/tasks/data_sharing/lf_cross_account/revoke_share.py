@@ -17,7 +17,7 @@ class CrossAccountShareRevoke(LFShareRevoke):
         shared_db_name: str,
         dataset: models.Dataset,
         share: models.ShareObject,
-        shared_tables: [models.DatasetTable],
+        revoked_tables: [models.DatasetTable],
         source_environment: models.Environment,
         target_environment: models.Environment,
         env_group: models.EnvironmentGroup,
@@ -27,7 +27,7 @@ class CrossAccountShareRevoke(LFShareRevoke):
             shared_db_name,
             dataset,
             share,
-            shared_tables,
+            revoked_tables,
             source_environment,
             target_environment,
             env_group,
@@ -78,7 +78,7 @@ class CrossAccountShareRevoke(LFShareRevoke):
             'lakeformation', region_name=self.source_environment.region
         )
         revoke_entries = []
-        for table in self.shared_tables:
+        for table in self.revoked_tables:
 
             revoke_entries.append(
                 {

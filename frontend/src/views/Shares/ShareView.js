@@ -222,7 +222,7 @@ function ShareViewHeader(props) {
             </Button>
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
-                {share.status === 'PendingApproval' && (
+                {share.status === 'Pending' && (
                   <>
                     <LoadingButton
                       loading={accepting}
@@ -246,9 +246,20 @@ function ShareViewHeader(props) {
                     >
                       Reject
                     </LoadingButton>
+                    <LoadingButton
+                    loading={rejecting}
+                    color="primary"
+                    startIcon={<LockRounded />}
+                    sx={{ m: 1 }}
+                    onClick={reject}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Revoke all
+                  </LoadingButton>
                   </>
                 )}
-                {share.status === 'Approved' && (
+                {(share.status === 'Approved' || share.status === 'Rejected') && (
                   <LoadingButton
                     loading={rejecting}
                     color="primary"
@@ -258,7 +269,7 @@ function ShareViewHeader(props) {
                     type="button"
                     variant="outlined"
                   >
-                    Revoke
+                    Revoke all
                   </LoadingButton>
                 )}
               </>

@@ -126,7 +126,7 @@ class DataSharingService:
         ).approve_share() if share_folders_succeed else False
 
     @classmethod
-    def reject_share(cls, engine: Engine, share_uri: str):
+    def revoke_share(cls, engine: Engine, share_uri: str):
         """
         1) Retrieves share related model objects
         2) Build shared database name (unique db per team for a dataset)
@@ -154,12 +154,12 @@ class DataSharingService:
             ) = api.ShareObject.get_share_data(session, share_uri)
 
             (
-                shared_tables,
-                shared_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, ['Rejected'])
+                revoked_tables,
+                revoked_folders
+            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
 
-            log.info(f'Revoking permissions for tables : {shared_tables}')
-            log.info(f'Revoking permissions for folders : {shared_folders}')
+            log.info(f'Revoking permissions for tables : {revoked_tables}')
+            log.info(f'Revoking permissions for folders : {revoked_folders}')
 
             shared_db_name = cls.build_shared_db_name(dataset, share)
 
@@ -173,7 +173,7 @@ class DataSharingService:
                 session,
                 dataset,
                 share,
-                shared_folders,
+                revoked_folders,
                 source_environment,
                 target_environment,
                 source_env_group,
@@ -186,7 +186,7 @@ class DataSharingService:
                     shared_db_name,
                     dataset,
                     share,
-                    shared_tables,
+                    revoked_tables,
                     source_environment,
                     target_environment,
                     env_group,
@@ -197,7 +197,7 @@ class DataSharingService:
                 shared_db_name,
                 dataset,
                 share,
-                shared_tables,
+                revoked_tables,
                 source_environment,
                 target_environment,
                 env_group,

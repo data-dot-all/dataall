@@ -75,16 +75,12 @@ def approve_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
-        # Create task for lake formation updates
         approve_share_task: models.Task = models.Task(
             action='ecs.share.approve',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
         session.add(approve_share_task)
-
-    # call cdk to update bucket policy of the dataset for folder shares
-    # stack_helper.deploy_stack(context, share.datasetUri)
 
     Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
 
@@ -93,7 +89,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.reject_share_object(
+        return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -101,17 +97,26 @@ def reject_share_object(context: Context, source, shareUri: str = None):
             data=None,
             check_perm=True,
         )
-        # Create task for lake formation updates
-        reject_share_task: models.Task = models.Task(
-            action='ecs.share.reject',
+
+def revoke_all_share_object(context: Context, source, shareUri: str = None):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.revoke_all_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=shareUri,
+            data=None,
+            check_perm=True,
+        )
+
+        revoke_all_share_task: models.Task = models.Task(
+            action='ecs.share.revoke',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
-        session.add(reject_share_task)
+        session.add(revoke_all_share_task)
 
-    # stack_helper.deploy_stack(context, share.datasetUri)
-
-    Worker.queue(engine=context.engine, task_ids=[reject_share_task.taskUri])
+    Worker.queue(engine=context.engine, task_ids=[revoke_all_share_task.taskUri])
 
     return share
 

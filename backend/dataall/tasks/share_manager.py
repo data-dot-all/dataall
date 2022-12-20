@@ -26,9 +26,9 @@ if __name__ == '__main__':
             log.info(f'Starting approval task for share : {share_uri}...')
             DataSharingService.approve_share(engine=ENGINE, share_uri=share_uri)
 
-        elif handler == 'reject_share':
+        elif handler == 'revoke_share':
             log.info(f'Starting revoke task for share : {share_uri}...')
-            DataSharingService.reject_share(engine=ENGINE, share_uri=share_uri)
+            DataSharingService.revoke_share(engine=ENGINE, share_uri=share_uri)
 
         log.info('Sharing task finished successfully')
 

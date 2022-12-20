@@ -95,6 +95,9 @@ class S3ShareApproval(S3ShareManager):
             except Exception as e:
                 sharing_folder.handle_share_failure(e)
 
+        log.info(
+            '##### Starting Revoking folders #######'
+        )
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
             removing_item = api.ShareObject.find_share_item_by_folder(

@@ -30,7 +30,7 @@ class Ecs:
             )
 
     @staticmethod
-    @Worker.handler(path='ecs.share.reject')
+    @Worker.handler(path='ecs.share.revoke')
     def reject_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:

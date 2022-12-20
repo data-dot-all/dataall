@@ -387,6 +387,64 @@ class ShareObject:
         return share
 
     @staticmethod
+    @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
+    def revoke_all_share_object(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> models.ShareObject:
+
+        share = ShareObject.get_share_by_uri(session, uri)
+
+        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == uri,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    )
+                )
+            )
+            .update(
+                {
+                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Approved.value,
+                }
+            )
+        )
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == uri,
+                    or_(
+                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Rejected.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Share_Failed.value,
+                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Succeeded.value
+                    )
+                )
+            )
+            .delete()
+        )
+        share.status = ShareObjectStatus.Rejected.value
+        ResourcePolicy.delete_resource_policy(
+            session=session,
+            group=share.groupUri,
+            resource_uri=dataset.datasetUri,
+        )
+        api.Notification.notify_share_object_approval(session, username, dataset, share)
+        return share
+
+    @staticmethod
     @has_resource_perm(permissions.GET_SHARE_OBJECT)
     def get_share_object(
         session,
