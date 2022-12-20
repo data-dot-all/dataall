@@ -229,8 +229,7 @@ class ShareObject:
                     models.ShareObjectItem.shareUri == uri,
                     or_(
                         models.ShareObjectItem.status == ShareObjectStatus.Draft.value,
-                        models.ShareObjectItem.status == ShareObjectStatus.Share_Failed.value,
-                        models.ShareObjectItem.status == ShareObjectStatus.Share_Succeeded.value,
+                        models.ShareObjectItem.status == ShareObjectStatus.Share_Failed.value
                     )
                 )
             )

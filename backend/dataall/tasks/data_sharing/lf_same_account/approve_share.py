@@ -14,6 +14,7 @@ class SameAccountShareApproval(LFShareApproval):
         dataset: models.Dataset,
         share: models.ShareObject,
         shared_tables: [models.DatasetTable],
+        revoked_tables: [models.DatasetTable],
         source_environment: models.Environment,
         target_environment: models.Environment,
         env_group: models.EnvironmentGroup,
@@ -24,6 +25,7 @@ class SameAccountShareApproval(LFShareApproval):
             dataset,
             share,
             shared_tables,
+            revoked_tables,
             source_environment,
             target_environment,
             env_group,
@@ -52,6 +54,22 @@ class SameAccountShareApproval(LFShareApproval):
         )
 
         principals = self.get_share_principals()
+
+        for table in self.revoked_tables:
+            share_item = api.ShareObject.find_share_item_by_table(
+                self.session, self.share, table
+            )
+            if not share_item:
+                log.info(
+                    f'Revoke Item not found for {self.share.shareUri} '
+                    f'and Dataset Table {table.GlueTableName}. Nothing to do, already revoked'
+                )
+            else:
+                api.ShareObject.update_share_item_status(
+                    self.session,
+                    share_item,
+                    models.ShareObjectStatus.Revoke_In_Progress.value,
+                )
 
         self.create_shared_database(
             self.target_environment, self.dataset, self.shared_db_name, principals
@@ -92,7 +110,15 @@ class SameAccountShareApproval(LFShareApproval):
             except Exception as e:
                 self.handle_share_failure(table, share_item, e)
 
-        self.clean_shared_database()
+        deleted_tables = self.clean_shared_database()
+
+        for table in deleted_tables:
+            item = api.ShareObject.find_share_item_by_table(self.session, self.share, table)
+            api.ShareObject.update_share_item_status(
+                self.session,
+                item,
+                models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+            )
 
         self.delete_deprecated_shared_database()
 

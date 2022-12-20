@@ -21,6 +21,7 @@ class LFShareApproval:
         dataset: models.Dataset,
         share: models.ShareObject,
         shared_tables: [models.DatasetTable],
+        revoked_tables: [models.DatasetTable],
         source_environment: models.Environment,
         target_environment: models.Environment,
         env_group: models.EnvironmentGroup,
@@ -30,6 +31,7 @@ class LFShareApproval:
         self.dataset = dataset
         self.share = share
         self.shared_tables = shared_tables
+        self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
         self.shared_db_name = shared_db_name
@@ -201,29 +203,29 @@ class LFShareApproval:
         """
         tables_to_delete = []
 
-        shared_glue_tables = Glue.list_glue_database_tables(
+        current_shared_glue_tables = Glue.list_glue_database_tables(
             accountid=self.target_environment.AwsAccountId,
             database=self.shared_db_name,
             region=self.target_environment.region,
         )
         logger.info(
-            f'Shared database {self.shared_db_name} glue tables: {shared_glue_tables}'
+            f'Current shared glue tables: {current_shared_glue_tables} in database {self.shared_db_name} '
         )
 
-        shared_tables = [t.GlueTableName for t in self.shared_tables]
-        logger.info(f'Share items of the share object {self.shared_tables}')
+        glue_table_names = [table['Name'] for table in current_shared_glue_tables]
+        logger.info(f'Revoked items included in the request {self.revoked_tables}')
 
-        for table in shared_glue_tables:
-            if table['Name'] not in shared_tables:
+        for table in self.revoked_tables:
+            if table.GlueTableName in glue_table_names:
                 logger.info(
-                    f'Found a table not part of the share: {self.dataset.GlueDatabaseName}//{table["Name"]}'
+                    f'Found a table to revoke access: {self.dataset.GlueDatabaseName}//{table.GlueTableName}'
                 )
                 try:
                     LakeFormation.revoke_source_table_access(
                         target_accountid=self.target_environment.AwsAccountId,
                         region=self.target_environment.region,
                         source_database=self.dataset.GlueDatabaseName,
-                        source_table=table['Name'],
+                        source_table=table.GlueTableName,
                         target_principal=self.env_group.environmentIAMRoleArn,
                         source_accountid=self.source_environment.AwsAccountId,
                     )
@@ -233,14 +235,32 @@ class LFShareApproval:
                     logger.error(
                         f'Revoking permission on source table failed due to: {e}'
                     )
+                    item = api.ShareObject.find_share_item_by_table(self.session, table)
+                    self.handle_share_failure(table, item, e)
 
-                tables_to_delete.append(table['Name'])
-
+                tables_to_delete.append(table)
+            else:
+                logger.info(
+                    f'Glue Table not found, already deleted: {self.dataset.GlueDatabaseName}//{table.GlueTableName}'
+                )
+                item = api.ShareObject.find_share_item_by_table(self.session, table)
+                api.ShareObject.update_share_item_status(
+                    self.session,
+                    item,
+                    models.ShareObjectStatus.Revoke_Share_Succeeded.value,
+                )
+        table_names = [t.GlueTableName for t in tables_to_delete]
+        logger.info(
+            f'Tables to delete: {table_names}'
+        )
         Glue.batch_delete_tables(
             accountid=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             database=self.shared_db_name,
-            tables=tables_to_delete,
+            tables=table_names,
+        )
+        logger.info(
+            'Tables successfully deleted'
         )
 
         return tables_to_delete
@@ -275,6 +295,34 @@ class LFShareApproval:
             models.ShareObjectStatus.Share_Failed.value,
         )
         AlarmService().trigger_table_sharing_failure_alarm(
+            table, self.share, self.target_environment
+        )
+        return True
+
+    def handle_revoke_failure(
+            self,
+            table: models.DatasetTable,
+            share_item: models.ShareObjectItem,
+            error: Exception,
+    ) -> bool:
+        """
+        Handles share failure by raising an alarm to alarmsTopic
+        Returns
+        -------
+        True if alarm published successfully
+        """
+        logger.error(
+            f'Failed to revoke S3 permissions to table {table.GlueTableName} '
+            f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
+            f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
+            f'due to: {error}'
+        )
+        api.ShareObject.update_share_item_status(
+            self.session,
+            share_item,
+            models.ShareObjectStatus.Revoke_Share_Failed.value,
+        )
+        AlarmService().trigger_revoke_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True
