@@ -83,7 +83,7 @@ def upgrade():
         session = orm.Session(bind=bind)
         print('Back-filling dataset table permissions...')
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(
-            models.DatasetTable.LastGlueTableStatus != "Deleted"
+            DatasetTable.LastGlueTableStatus != "Deleted"
         ).all()
         for table in dataset_tables:
             dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
@@ -108,8 +108,8 @@ def upgrade():
         share_table_items: [ShareObjectItem] = session.query(ShareObjectItem).filter(
             (
                 and_(
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
-                    models.ShareObjectItem.itemType == ShareableType.Table
+                    ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    ShareObjectItem.itemType == ShareableType.Table.value
                 )
             )
         )
