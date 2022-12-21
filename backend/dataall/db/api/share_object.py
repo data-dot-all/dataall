@@ -9,9 +9,181 @@ from . import (
 )
 from .. import api
 from .. import models, exceptions, permissions, paginate
-from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
+from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 
 logger = logging.getLogger(__name__)
+
+
+class Transition:
+    def __init__(self, name, transitions):
+        self._name = name
+        self._transitions = transitions
+        self._all_source_states = [*set([item for sublist in transitions.values() for item in sublist])]
+
+    def validate_transition(self, prev_state):
+        if prev_state in self._transitions.keys():
+            raise exceptions.UnauthorizedOperation(
+                action=self._name,
+                message=f'ShareObject is already in target state: {self._transitions.keys()}',
+            )
+        elif prev_state not in self._all_source_states:
+            raise exceptions.UnauthorizedOperation(
+                action=self._name,
+                message='This transition is not possible',
+            )
+        else:
+            return
+
+    def execute_transition(self, prev_state):
+        self.validate_transition(prev_state)
+        for target_state, list_prev_states in self._transitions.items():
+            if prev_state in list_prev_states:
+                return target_state
+            else:
+                pass
+
+
+class ShareObjectSM:
+    def __init__(self, state):
+        self._state = state
+        self.transitionTable = {
+            ShareObjectActions.Submit.value: Transition(
+                name=ShareObjectActions.Submit.value,
+                transitions={
+                    ShareObjectStatus.Pending: [
+                        ShareObjectStatus.Draft,
+                        ShareObjectStatus.Rejected
+                    ]
+                }
+            ),
+            ShareObjectActions.Approve.value: Transition(
+                name=ShareObjectActions.Approve.value,
+                transitions={
+                    ShareObjectStatus.Approved: [
+                        ShareObjectStatus.Pending
+                    ]
+                }
+            ),
+            ShareObjectActions.Reject.value: Transition(
+                name=ShareObjectActions.Reject.value,
+                transitions={
+                    ShareObjectStatus.Rejected : [ShareObjectStatus.Pending]
+                }
+            ),
+            ShareObjectActions.RevokeAll.value: Transition(
+                name=ShareObjectActions.RevokeAll.value,
+                transitions={
+                    ShareObjectStatus.Rejected: [
+                        ShareObjectStatus.Draft,
+                        ShareObjectStatus.Pending,
+                        ShareObjectStatus.Approved
+                    ]
+                }
+            ),
+            ShareObjectActions.Edit.value: Transition(
+                name=ShareObjectActions.Edit.value,
+                transitions={
+                    ShareObjectStatus.Draft: [
+                        ShareObjectStatus.Pending,
+                        ShareObjectStatus.Rejected,
+                        ShareObjectStatus.Approved
+                    ]
+                }
+            )
+        }
+
+    def run_transition(self, transition):
+        Trans = self.transitionTable[transition]
+        state = Trans.execute_transition(self._state)
+        return state
+
+
+class ShareItemSM:
+    def __init__(self, state):
+        self._state = state
+        self.transitionTable = {
+            ShareItemActions.AddItem.value: Transition(
+                name=ShareItemActions.AddItem.value,
+                transitions={
+                    ShareItemStatus.PendingApproval: [ShareItemStatus.No_Item.value]
+                }
+            ),
+            ShareObjectActions.Submit.value: Transition(
+                name=ShareObjectActions.Submit.value,
+                transitions={
+                    ShareItemStatus.PendingApproval: [
+                        ShareItemStatus.Share_Rejected,
+                        ShareItemStatus.Share_Failed
+                    ],
+                    ShareItemStatus.PendingRevoke: [
+                        ShareItemStatus.Revoke_Failed,
+                        ShareItemStatus.Revoke_Rejected
+                    ]
+                }
+            ),
+            ShareObjectActions.Approve.value: Transition(
+                name=ShareObjectActions.Approve.value,
+                transitions={
+                    ShareItemStatus.Share_Approved: [ShareItemStatus.PendingApproval],
+                    ShareItemStatus.Revoke_Approved: [ShareItemStatus.PendingRevoke],
+                }
+            ),
+            ShareObjectActions.Reject.value: Transition(
+                name=ShareObjectActions.Reject.value,
+                transitions={
+                    ShareItemStatus.Share_Rejected: [ShareItemStatus.PendingApproval],
+                    ShareItemStatus.Revoke_Rejected: [ShareItemStatus.PendingRevoke]
+                }
+            ),
+            ShareItemActions.RemoveItem.value: Transition(
+                name=ShareItemActions.RemoveItem.value,
+                transitions={
+                    ShareItemStatus.No_Item.value: [
+                        ShareItemStatus.PendingApproval,
+                        ShareItemStatus.Share_Rejected,
+                        ShareItemStatus.Share_Failed,
+                        ShareItemStatus.Revoke_Succeeded
+                    ]
+                }
+            ),
+            ShareItemActions.RevokeItem.value: Transition(
+                name=ShareItemActions.RevokeItem.value,
+                transitions={
+                    ShareItemStatus.PendingRevoke: [
+                        ShareItemStatus.Revoke_Rejected,
+                        ShareItemStatus.Share_Succeeded,
+                        ShareItemStatus.Revoke_Failed
+                    ]
+                }
+            ),
+            ShareObjectActions.RevokeAll.value: Transition(
+                name=ShareObjectActions.RevokeAll.value,
+                transitions={
+                    ShareItemStatus.No_Item.value: [
+                        ShareItemStatus.PendingApproval,
+                        ShareItemStatus.Share_Rejected,
+                        ShareItemStatus.Share_Failed,
+                        ShareItemStatus.Revoke_Succeeded
+                    ],
+                    ShareItemStatus.PendingRevoke: [
+                        ShareItemStatus.Revoke_Rejected,
+                        ShareItemStatus.Share_Succeeded,
+                        ShareItemStatus.Revoke_Failed
+                    ]
+                }
+            ),
+        }
+
+    def run_transition(self, transition, share_uri):
+        Trans = self.transitionTable[transition]
+        state = Trans.execute_transition(self._state)
+        if share_uri:
+            if state == ShareItemStatus.No_Item.value:
+                ShareObject.delete_share_item_status_batch(share_uri=share_uri, status=self._state)
+            else:
+                ShareObject.update_share_item_status_batch(share_uri=share_uri, old_status=self._state, new_status=state)
+        else:
+            return state
 
 
 class ShareObject:
@@ -217,44 +389,16 @@ class ShareObject:
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-        if share.status == ShareObjectStatus.Pending.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.SUBMIT_SHARE_OBJECT,
-                message='ShareObject is already in Pending state',
-            )
-        # Items that are going to be reprocessed to share
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Failed.value
-                    )
-                )
-            )
-            .update(
-                {models.ShareObjectItem.status: ShareItemStatus.PendingApproval.value}
-            )
-        )
-        # Items that are going to be reprocessed to revoke
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                    )
-                )
-            )
-            .update(
-                {models.ShareObjectItem.status: ShareItemStatus.PendingRevoke.value}
-            )
-        )
-        share.status = ShareObjectStatus.Pending.value
+        share_items_states = ShareObject.get_share_items_states(session, uri)
+
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.Submit.value)
+
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            item_status = Item_SM.run_transition(ShareObjectActions.Submit.value, uri)
+
+        session.commit()
         api.Notification.notify_share_object_submission(
             session, username, dataset, share
         )
@@ -271,49 +415,17 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
-
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        share_items_states = ShareObject.get_share_items_states(session, uri)
 
-        if share.status != ShareObjectStatus.Pending.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.APPROVE_SHARE_OBJECT,
-                message='Share Request is not in Pending state',
-            )
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
-                    )
-                )
-            )
-            .update(
-                {
-                    models.ShareObjectItem.status: ShareItemStatus.Share_Approved.value,
-                }
-            )
-        )
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                    )
-                )
-            )
-            .update(
-                {
-                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Approved.value,
-                }
-            )
-        )
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.Approve.value)
 
-        share.status = ShareObjectStatus.Approved.value
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            item_status = Item_SM.run_transition(ShareObjectActions.Approve.value, uri)
 
+        session.commit()
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=share.groupUri,
@@ -337,47 +449,17 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        share_items_states = ShareObject.get_share_items_states(session, uri)
 
-        if share.status == ShareObjectStatus.Rejected.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.REJECT_SHARE_OBJECT,
-                message='ShareObject is already in Rejected state',
-            )
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
-                    )
-                )
-            )
-            .update(
-                {
-                    models.ShareObjectItem.status: ShareItemStatus.Share_Rejected.value,
-                }
-            )
-        )
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                    )
-                )
-            )
-            .update(
-                {
-                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Rejected.value,
-                }
-            )
-        )
-        share.status = ShareObjectStatus.Rejected.value
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.Reject.value)
+
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            item_status = Item_SM.run_transition(ShareObjectActions.Reject.value, uri)
+
+        session.commit()
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=share.groupUri,
@@ -398,44 +480,18 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        share_items_states = ShareObject.get_share_items_states(session, uri)
 
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
-                    )
-                )
-            )
-            .update(
-                {
-                    models.ShareObjectItem.status: ShareItemStatus.Revoke_Approved.value,
-                }
-            )
-        )
-        (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.PendingApproval.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Failed.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Succeeded.value
-                    )
-                )
-            )
-            .delete()
-        )
-        share.status = ShareObjectStatus.Rejected.value
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.RevokeAll.value)
+
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            item_status = Item_SM.run_transition(ShareObjectActions.RevokeAll.value, uri)
+
+        session.commit()
+
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=share.groupUri,
@@ -515,6 +571,9 @@ class ShareObject:
             share.environmentUri
         )
 
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.Edit.value)
+
         if itemType == ShareableType.Table.value:
             item: models.DatasetTable = session.query(models.DatasetTable).get(itemUri)
             if item and item.region != target_environment.region:
@@ -561,7 +620,6 @@ class ShareObject:
                 else '',
             )
             session.add(shareItem)
-            share.status = ShareObjectStatus.Draft.value
 
         return shareItem
 
@@ -584,30 +642,40 @@ class ShareObject:
             'share',
             ShareObject.get_share_by_uri(session, uri),
         )
-        if share_item.status in [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.PendingRevoke.value
-        ]:
-            ShareObject.update_share_item_status(
-                session,
-                share_item,
-                models.ShareItemStatus.PendingRevoke.value,
-            )
-            share.status = ShareObjectStatus.Pending.value
-            session.commit()
 
-        elif share_item.status in [
-            ShareItemStatus.Revoke_Succeeded.value,
-            ShareItemStatus.Share_Failed.value,
-            ShareItemStatus.PendingApproval.value,
-            ShareItemStatus.Share_Rejected.value
-        ]:
-            session.delete(share_item)
-        else:
-            raise Exception(
-                "Item is currently being processed. Wait until the current sharing operation has finished."
-            )
+        Item_SM = ShareItemSM(share_item.status)
+        item_status = Item_SM.run_transition(ShareItemActions.RemoveItem.value)
+
+        session.delete(share_item)
+        return True
+
+    @staticmethod
+    @has_resource_perm(permissions.REMOVE_ITEM)
+    def revoke_share_object_item(
+        session,
+        username: str,
+        groups: [str],
+        uri: str,
+        data: dict = None,
+        check_perm: bool = False,
+    ) -> bool:
+
+        share_item: models.ShareObjectItem = data.get(
+            'share_item',
+            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
+        )
+        share: models.ShareObject = data.get(
+            'share',
+            ShareObject.get_share_by_uri(session, uri),
+        )
+        Share_SM = ShareObjectSM(share.status)
+        share.status = Share_SM.run_transition(ShareObjectActions.Edit.value)
+
+        Item_SM = ShareItemSM(share_item.status)
+        share_item.status = Item_SM.run_transition(ShareItemActions.RevokeItem.value)
+
+        session.commit()
+
         return True
 
     @staticmethod
@@ -795,6 +863,47 @@ class ShareObject:
         share_item.status = status
         session.commit()
         return share_item
+
+    @staticmethod
+    def delete_share_item_status_batch(
+        session,
+        share_uri: str,
+        status: [str],
+    ):
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == share_uri,
+                    models.ShareObjectItem.status.in_(status)
+                )
+            )
+            .delete()
+        )
+
+    @staticmethod
+    def update_share_item_status_batch(
+        session,
+        share_uri: str,
+        old_status: [str],
+        new_status: str,
+    ) -> bool:
+
+        (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == share_uri,
+                    models.ShareObjectItem.status.in_(old_status)
+                )
+            )
+            .update(
+                {
+                    models.ShareObjectItem.status: new_status,
+                }
+            )
+        )
+        return True
 
     @staticmethod
     def find_share_item_by_table(
@@ -987,3 +1096,20 @@ class ShareObject:
             )
             .first()
         )
+
+    @staticmethod
+    def get_share_items_states(session, share_uri):
+        query = (
+            session.query(models.ShareObjectItem)
+            .join(
+                models.ShareObject,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri,
+            )
+            .filter(
+                and_(
+                    models.ShareObject.shareUri == share_uri,
+                )
+            )
+            .distinct(models.ShareObjectItem.status)
+        )
+        return [item.status for item in query]

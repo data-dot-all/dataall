@@ -28,6 +28,7 @@ import {
   BlockOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  RemoveCircleOutlineOutlined,
   LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
@@ -37,24 +38,26 @@ import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
+import PlusIcon from '../../icons/Plus';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
-import getShareObject from '../../api/ShareObject/getShareObject';
 import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
 import Pager from '../../components/Pager';
 import Scrollbar from '../../components/Scrollbar';
 import * as Defaults from '../../components/defaults';
 import { PagedResponseDefault } from '../../components/defaults';
-import removeSharedItem from '../../api/ShareObject/removeSharedItem';
-import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
-import PlusIcon from '../../icons/Plus';
-import AddShareItemModal from './AddShareItemModal';
+import getShareObject from '../../api/ShareObject/getShareObject';
 import approveShareObject from '../../api/ShareObject/approveShareObject';
 import rejectShareObject from '../../api/ShareObject/rejectShareObject';
 import revokeAllShareObject from '../../api/ShareObject/revokeAllShareObject';
+import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import submitApproval from '../../api/ShareObject/submitApproval';
+import AddShareItemModal from './AddShareItemModal';
+import removeSharedItem from '../../api/ShareObject/removeSharedItem';
+import revokeSharedItem from '../../api/ShareObject/revokeSharedItem';
+
 
 function ShareViewHeader(props) {
   const {
@@ -272,7 +275,7 @@ function ShareViewHeader(props) {
                     <LoadingButton
                     loading={rejecting}
                     color="primary"
-                    startIcon={<LockRounded />}
+                    startIcon={<RemoveCircleOutlineOutlined />}
                     sx={{ m: 1 }}
                     onClick={revoke}
                     type="button"
@@ -286,7 +289,7 @@ function ShareViewHeader(props) {
                   <LoadingButton
                     loading={rejecting}
                     color="primary"
-                    startIcon={<LockRounded />}
+                    startIcon={<RemoveCircleOutlineOutlined />}
                     sx={{ m: 1 }}
                     onClick={revoke}
                     type="button"
@@ -341,6 +344,7 @@ function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+  const [isRevokingItem, setIsRevokingItem] = useState(false);
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
     const response = await client.mutate(
@@ -361,6 +365,26 @@ function SharedItem(props) {
     }
     setIsRemovingItem(false);
   };
+  const revokeItemFromShareObject = async () => {
+    setIsRevokingItem(true);
+    const response = await client.mutate(
+      revokeSharedItem({ shareItemUri: item.shareItemUri })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Item removed', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      await fetchShareItems();
+      await fetchItem();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setIsRevokingItem(false);
+  };
   return (
     <TableRow hover>
       <TableCell>{item.itemType === 'Table' ? 'Table' : 'Folder'}</TableCell>
@@ -369,12 +393,32 @@ function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
-        {isRemovingItem ? (
+        {(isRemovingItem || isRevokingItem) ? (
           <CircularProgress size={15} />
         ) : (
-          <IconButton onClick={removeItemFromShareObject}>
-            <DeleteOutlined fontSize="small" />
-          </IconButton>
+            <>
+            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'Revoke_Rejected') ? (
+                <Button
+                  color="primary"
+                  startIcon={<DeleteOutlined fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={removeItemFromShareObject}
+                >
+                  Delete
+                </Button>
+            ) : (
+                <Button
+                  color="primary"
+                  startIcon={<RemoveCircleOutlineOutlined fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={revokeItemFromShareObject}
+                >
+                  Revoke
+                </Button>
+            )}
+            </>
         )}
       </TableCell>
     </TableRow>

@@ -39,6 +39,12 @@ removeSharedItem = gql.MutationField(
     type=gql.Boolean,
 )
 
+revokeSharedItem = gql.MutationField(
+    name='revokeSharedItem',
+    args=[gql.Argument(name='shareItemUri', type=gql.NonNullableType(gql.String))],
+    resolver=revoke_shared_item,
+    type=gql.Boolean,
+)
 
 submitShareObject = gql.MutationField(
     name='submitShareObject',

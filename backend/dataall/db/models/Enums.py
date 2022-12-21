@@ -131,6 +131,7 @@ class ShareObjectStatus(Enum):
 
 
 class ShareItemStatus(Enum):
+    No_Item = 'No_Item'
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Revoke_Approved = 'Revoke_Approved'
@@ -143,6 +144,20 @@ class ShareItemStatus(Enum):
     Revoke_In_Progress = 'Revoke_In_Progress'
     Revoke_Failed = 'Revoke_Failed'
     Revoke_Succeeded = 'Revoke_Succeeded'
+
+
+class ShareObjectActions(Enum):
+    Submit = 'Submit'
+    Approve = 'Approve'
+    Reject = 'Reject'
+    RevokeAll = 'RevokeAll'
+    Edit = 'Edit'
+
+
+class ShareItemActions(Enum):
+    AddItem = 'AddItem'
+    RemoveItem = 'RemoveItem'
+    RevokeItem = 'RevokeItem'
 
 
 class ShareObjectItemAction(Enum):

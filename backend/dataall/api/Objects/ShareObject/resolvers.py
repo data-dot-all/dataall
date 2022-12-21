@@ -173,6 +173,29 @@ def remove_shared_item(context, source, shareItemUri: str = None):
     return True
 
 
+def revoke_shared_item(context, source, shareItemUri: str = None):
+    with context.engine.scoped_session() as session:
+        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
+            shareItemUri
+        )
+        if not share_item:
+            raise db.exceptions.ObjectNotFound('ShareObjectItem', shareItemUri)
+        share = db.api.ShareObject.get_share_by_uri(session, share_item.shareUri)
+        db.api.ShareObject.revoke_share_object_item(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=share.shareUri,
+            data={
+                'shareItemUri': shareItemUri,
+                'share_item': share_item,
+                'share': share,
+            },
+            check_perm=True,
+        )
+    return True
+
+
 def list_shared_items(
     context: Context, source: models.ShareObject, filter: dict = None
 ):
