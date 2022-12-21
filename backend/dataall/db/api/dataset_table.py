@@ -63,7 +63,7 @@ class DatasetTable:
             )
         session.commit()
 
-        #ADD DATASET TABLE PERMISSIONS
+        # ADD DATASET TABLE PERMISSIONS
         environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
         permission_group = set([dataset.SamlAdminGroupName, dataset.stewards, environment.SamlGroupName])
         for group in permission_group:
