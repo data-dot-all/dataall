@@ -383,6 +383,22 @@ class Dataset:
             resource_uri=dataset.datasetUri,
             resource_type=models.Dataset.__name__,
         )
+        dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if new_stewards != dataset.SamlAdminGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=new_stewards,
+                permissions=permissions.DATASET_TABLE_READ,
+                resource_uri=tableUri,
+                resource_type=models.DatasetTable.__name__,
+            )
+
         dataset_shares = (
             session.query(models.ShareObject)
             .filter(models.ShareObject.datasetUri == dataset.datasetUri)

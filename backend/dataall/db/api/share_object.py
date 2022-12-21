@@ -266,6 +266,17 @@ class ShareObject:
             resource_type=models.Dataset.__name__,
         )
 
+        share_tables = api.DatasetTable.query_dataset_tables_shared_with_env(session, share.environmentUri, dataset.datasetUri, ["Approved"])
+        print(share_tables)
+        for tbl in share_tables:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=share.principalId,
+                permissions=permissions.DATASET_TABLE_READ,
+                resource_uri=tbl.tableUri,
+                resource_type=models.DatasetTable.__name__,
+            )
+
         api.Notification.notify_share_object_approval(session, username, dataset, share)
         return share
 
