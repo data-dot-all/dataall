@@ -385,12 +385,11 @@ class Dataset:
         )
         dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
-            if new_stewards != dataset.SamlAdminGroupName:
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=tableUri,
-                )
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=tableUri,
+            )
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=new_stewards,
