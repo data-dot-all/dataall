@@ -168,6 +168,7 @@ class ShareObjectStatus(GraphQLEnumMapper):
 
 
 class ShareItemStatus(GraphQLEnumMapper):
+    No_Item = 'No_Item'
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Revoke_Approved = 'Revoke_Approved'
@@ -182,9 +183,18 @@ class ShareItemStatus(GraphQLEnumMapper):
     Revoke_Succeeded = 'Revoke_Succeeded'
 
 
-class ShareObjectItemAction(GraphQLEnumMapper):
-    New = 'New'
-    Removed = 'Removed'
+class ShareObjectActions(GraphQLEnumMapper):
+    Submit = 'Submit'
+    Approve = 'Approve'
+    Reject = 'Reject'
+    RevokeAll = 'RevokeAll'
+    Edit = 'Edit'
+
+
+class ShareItemActions(GraphQLEnumMapper):
+    AddItem = 'AddItem'
+    RemoveItem = 'RemoveItem'
+    RevokeItem = 'RevokeItem'
 
 
 class ConfidentialityClassification(GraphQLEnumMapper):

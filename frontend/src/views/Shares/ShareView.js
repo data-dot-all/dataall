@@ -285,7 +285,7 @@ function ShareViewHeader(props) {
                   </LoadingButton>
                   </>
                 )}
-                {(share.status === 'Approved' || share.status === 'Rejected') && (
+                {(share.status === 'Approved' || share.status === 'Rejected' || share.status === 'Draft') && (
                   <LoadingButton
                     loading={rejecting}
                     color="primary"
@@ -397,17 +397,7 @@ function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
             <>
-            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'Revoke_Rejected') ? (
-                <Button
-                  color="primary"
-                  startIcon={<DeleteOutlined fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                  onClick={removeItemFromShareObject}
-                >
-                  Delete
-                </Button>
-            ) : (
+            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'Pending_Revoke' || item.status === 'Revoke_Rejected') ? (
                 <Button
                   color="primary"
                   startIcon={<RemoveCircleOutlineOutlined fontSize="small" />}
@@ -416,6 +406,16 @@ function SharedItem(props) {
                   onClick={revokeItemFromShareObject}
                 >
                   Revoke
+                </Button>
+            ) : (
+                <Button
+                  color="primary"
+                  startIcon={<DeleteOutlined fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={removeItemFromShareObject}
+                >
+                  Delete
                 </Button>
             )}
             </>
