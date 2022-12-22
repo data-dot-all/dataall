@@ -1,8 +1,8 @@
-"""_update_dataset_table_permissions
+"""backfill_dataset_table_permissions
 
-Revision ID: 0a267f6a5f05
-Revises: 04d92886fabe
-Create Date: 2022-12-21 08:58:22.287666
+Revision ID: d05f9a5b215e
+Revises: 45a4a4702af1
+Create Date: 2022-12-22 10:18:55.835315
 
 """
 from alembic import op
@@ -13,11 +13,12 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import api, models, permissions, utils, Resource
 from datetime import datetime
-from dataall.db.models.Enums import ShareObjectStatus, ShareableType, PrincipalType
+from dataall.db.models.Enums import ShareObjectStatus, ShareableType
+
 
 # revision identifiers, used by Alembic.
-revision = '0a267f6a5f05'
-down_revision = '04d92886fabe'
+revision = 'd05f9a5b215e'
+down_revision = '45a4a4702af1'
 branch_labels = None
 depends_on = None
 
@@ -81,10 +82,8 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Back-filling dataset table permissions...')
-        dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(
-            DatasetTable.LastGlueTableStatus != "Deleted"
-        ).all()
+        print('Back-filling dataset table permissions for owners/stewards...')
+        dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
             dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
             env = api.Environment.get_environment_by_uri(session, dataset.environmentUri)
@@ -105,14 +104,15 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
+        print('Back-filling dataset table permissions for shared principals...')
         share_table_items: [ShareObjectItem] = session.query(ShareObjectItem).filter(
             (
                 and_(
-                    ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    ShareObjectItem.status == ShareObjectStatus.Share_Succeeded.value,
                     ShareObjectItem.itemType == ShareableType.Table.value
                 )
             )
-        )
+        ).all()
         for shared_table in share_table_items:
             share = api.ShareObject.get_share_by_uri(session, shared_table.shareUri)
             api.ResourcePolicy.attach_resource_policy(

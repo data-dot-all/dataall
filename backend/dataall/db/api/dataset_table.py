@@ -65,7 +65,7 @@ class DatasetTable:
 
         # ADD DATASET TABLE PERMISSIONS
         environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        permission_group = set([dataset.SamlAdminGroupName, dataset.stewards, environment.SamlGroupName])
+        permission_group = set([dataset.SamlAdminGroupName, environment.SamlGroupName,  dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
         for group in permission_group:
             ResourcePolicy.attach_resource_policy(
                 session=session,
@@ -262,7 +262,8 @@ class DatasetTable:
                     session.add(updated_table)
                     session.commit()
                     # ADD DATASET TABLE PERMISSIONS
-                    permission_group = set([dataset.SamlAdminGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
+                    env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+                    permission_group = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
                     for group in permission_group:
                         ResourcePolicy.attach_resource_policy(
                             session=session,
