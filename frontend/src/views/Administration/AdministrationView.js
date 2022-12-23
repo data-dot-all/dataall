@@ -15,10 +15,11 @@ import {
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import AdministrationTeams from './AdministrationTeams';
+import LFTagsView from './AdministrationLFTagsView';
 import DashboardViewer from './AdministratorDashboardViewer'
 
 
-const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' }];
+const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' },{ label: 'LF-Tags', value: 'lftags' }];
 
 const AdministrationView = () => {
   const { settings } = useSettings();
@@ -90,6 +91,7 @@ const AdministrationView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'teams' && <AdministrationTeams />}
             {currentTab === 'dashboard' && <DashboardViewer />}
+            {currentTab === 'lftags' && <LFTagsView />}
           </Box>
         </Container>
       </Box>

@@ -44,3 +44,4 @@ from .User import User
 from .Vpc import Vpc
 from .Worksheet import Worksheet, WorksheetQueryResult, WorksheetShare
 from .Vote import Vote
+from .LFTag import LFTag

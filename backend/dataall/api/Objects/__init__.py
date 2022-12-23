@@ -41,6 +41,7 @@ from . import (
     SagemakerNotebook,
     KeyValueTag,
     Vote,
+    LFTags
 )
 
 
