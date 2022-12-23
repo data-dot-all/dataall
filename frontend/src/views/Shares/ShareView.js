@@ -248,7 +248,7 @@ function ShareViewHeader(props) {
             </Button>
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
-                {share.status === 'Pending' && (
+                {share.status === 'Submitted' && (
                   <>
                     <LoadingButton
                       loading={accepting}

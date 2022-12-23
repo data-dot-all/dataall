@@ -13,12 +13,7 @@ from .lf_same_account.approve_share import (
 from .lf_same_account.revoke_share import (
     SameAccountShareRevoke,
 )
-from .common.s3_approve_share import (
-    S3ShareApproval
-)
-from .common.s3_revoke_share import (
-    S3ShareRevoke
-)
+from .common.s3_share import ProcessS3Share
 
 from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.ram import Ram
@@ -34,7 +29,7 @@ class DataSharingService:
         pass
 
     @classmethod
-    def approve_share(cls, engine: Engine, share_uri: str) -> bool:
+    def process_share(cls, engine: Engine, share_uri: str) -> bool:
         """
         Share tables
         1) Retrieves share related model objects
@@ -66,19 +61,36 @@ class DataSharingService:
                 source_environment,
                 target_environment,
             ) = api.ShareObject.get_share_data(session, share_uri)
+
+            Share_SM = api.ShareObjectSM(share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_state(session, share, new_share_state)
+
+            Shared_Item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
+            Revoked_Item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+
             (
                 shared_tables,
                 shared_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Share_Approved.value)
+            ) = api.ShareObject.get_share_data_items(session, share_uri, Shared_Item_SM._state)
+
             (
                 revoked_tables,
                 revoked_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
+            ) = api.ShareObject.get_share_data_items(session, share_uri, Revoked_Item_SM._state)
+
 
         log.info(f'Granting permissions to tables : {shared_tables}')
         log.info(f'Granting permissions to folders : {shared_folders}')
+
+        new_state = Shared_Item_SM.run_transition(models.ShareObjectActions.Start.value)
+        Shared_Item_SM.update_state(session, share_uri, new_state)
+
         log.info(f'Revoking permissions to tables : {revoked_tables}')
         log.info(f'Revoking permissions to folders : {revoked_folders}')
+
+        new_state = Revoked_Item_SM.run_transition(models.ShareObjectActions.Start.value)
+        Revoked_Item_SM.update_state(session, share_uri, new_state)
 
         shared_db_name = cls.build_shared_db_name(dataset, share)
 
@@ -88,7 +100,7 @@ class DataSharingService:
             dataset.GlueDatabaseName,
         )
 
-        share_folders_succeed = S3ShareApproval.approve_share(
+        folders_succeed = ProcessS3Share.process_share(
             session,
             dataset,
             share,
@@ -98,10 +110,12 @@ class DataSharingService:
             target_environment,
             source_env_group,
             env_group,
+            Shared_Item_SM,
+            Revoked_Item_SM
         )
 
         if source_environment.AwsAccountId != target_environment.AwsAccountId:
-            return CrossAccountShareApproval(
+            tables_succeed = ProcessLFCrossAccountShare(
                 session,
                 shared_db_name,
                 dataset,
@@ -111,9 +125,14 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 env_group,
-            ).approve_share() if share_folders_succeed else False
+            ).process_share()
 
-        return SameAccountShareApproval(
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishApprove.value)
+            Share_SM.update_state(session, share, new_share_state)
+
+            return tables_succeed if folders_succeed else False
+
+        tables_succeed = ProcessLFSameAccountShare(
             session,
             shared_db_name,
             dataset,
@@ -123,7 +142,12 @@ class DataSharingService:
             source_environment,
             target_environment,
             env_group,
-        ).approve_share() if share_folders_succeed else False
+        ).process_share()
+
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishApprove.value)
+        Share_SM.update_state(session, share, new_share_state)
+
+        return tables_succeed if folders_succeed else False
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str):
@@ -153,10 +177,19 @@ class DataSharingService:
                 target_environment,
             ) = api.ShareObject.get_share_data(session, share_uri)
 
+            Share_SM = api.ShareObjectSM(share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_state(session, share, new_share_state)
+
+            Revoked_Item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+
             (
                 revoked_tables,
                 revoked_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
+            ) = api.ShareObject.get_share_data_items(session, share_uri, Revoked_Item_SM._state)
+
+            new_state = Revoked_Item_SM.run_transition(models.ShareObjectActions.Start.value)
+            Revoked_Item_SM.update_state(session, share_uri, new_state)
 
             log.info(f'Revoking permissions for tables : {revoked_tables}')
             log.info(f'Revoking permissions for folders : {revoked_folders}')
@@ -181,7 +214,7 @@ class DataSharingService:
             )
 
             if source_environment.AwsAccountId != target_environment.AwsAccountId:
-                return CrossAccountShareRevoke(
+                revoke_tables_succeed = CrossAccountShareRevoke(
                     session,
                     shared_db_name,
                     dataset,
@@ -190,9 +223,14 @@ class DataSharingService:
                     source_environment,
                     target_environment,
                     env_group,
-                ).revoke_share() if revoke_folders_succeed else False
+                ).revoke_share()
 
-            return SameAccountShareRevoke(
+                new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishReject.value)
+                Share_SM.update_state(session, share, new_share_state)
+
+                return revoke_tables_succeed if revoke_folders_succeed else False
+
+            revoke_tables_succeed = SameAccountShareRevoke(
                 session,
                 shared_db_name,
                 dataset,
@@ -201,7 +239,12 @@ class DataSharingService:
                 source_environment,
                 target_environment,
                 env_group,
-            ).revoke_share() if revoke_folders_succeed else False
+            ).revoke_share()
+
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishReject.value)
+            Share_SM.update_state(session, share, new_share_state)
+
+            return revoke_tables_succeed if revoke_folders_succeed else False
 
     @classmethod
     def build_shared_db_name(

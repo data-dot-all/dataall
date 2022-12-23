@@ -7,7 +7,7 @@ const ShareStatus = (props) => {
     if (['Approved', 'Share_Approved', 'Revoke_Approved', 'Share_Succeeded', 'Revoke_Succeeded'].includes(status)) return 'success';
     if (['Rejected', 'Share_Rejected', 'Revoke_Rejected', 'Share_Failed', 'Revoke_Failed'].includes(status))
       return 'error';
-    if (['PendingApproval', 'PendingRevoke', 'Pending'].includes(status)) return 'warning';
+    if (['PendingApproval', 'PendingRevoke', 'Submitted'].includes(status)) return 'warning';
     return 'info';
   };
   return <Label color={setTagColor(status)}>{status}</Label>;

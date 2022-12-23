@@ -1,5 +1,6 @@
 import abc
 import logging
+import uuid
 
 from botocore.exceptions import ClientError
 
@@ -13,7 +14,7 @@ from ....utils.alarm_service import AlarmService
 logger = logging.getLogger(__name__)
 
 
-class LFShareApproval:
+class LFShareManager:
     def __init__(
         self,
         session,
@@ -37,7 +38,11 @@ class LFShareApproval:
         self.shared_db_name = shared_db_name
 
     @abc.abstractmethod
-    def approve_share(self) -> [str]:
+    def process_share(self, Shared_Item_SM: api.ShareItemSM, Revoked_Item_SM: api.ShareItemSM) -> [str]:
+        return NotImplementedError
+
+    @abc.abstractmethod
+    def clean_up_share(self):
         return NotImplementedError
 
     def get_share_principals(self) -> [str]:
@@ -55,6 +60,34 @@ class LFShareApproval:
             if q_group:
                 principals.append(q_group)
         return principals
+
+    def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
+        """
+        Build aws dict for boto3 operations on Glue and LF from share data
+        Parameters
+        ----------
+        principals : team role
+        table : dataset table
+
+        Returns
+        -------
+        dict for boto3 operations
+        """
+        data = {
+            'source': {
+                'accountid': self.source_environment.AwsAccountId,
+                'region': self.source_environment.region,
+                'database': table.GlueDatabaseName,
+                'tablename': table.GlueTableName,
+            },
+            'target': {
+                'accountid': self.target_environment.AwsAccountId,
+                'region': self.target_environment.region,
+                'principals': principals,
+                'database': self.shared_db_name,
+            },
+        }
+        return data
 
     def check_share_item_exists_on_glue_catalog(
         self, share_item: models.ShareObjectItem, table: models.DatasetTable
@@ -79,7 +112,7 @@ class LFShareApproval:
             tablename=table.GlueTableName,
         ):
             raise exceptions.AWSResourceNotFound(
-                action='ApproveShare',
+                action='ProcessShare',
                 message=(
                     f'Share Item {share_item.itemUri} found on share request'
                     f' but its correspondent Glue table {table.GlueTableName} does not exist.'
@@ -139,6 +172,21 @@ class LFShareApproval:
 
         return database
 
+    def delete_shared_database(self) -> bool:
+        """
+        Deletes shared database when share request is rejected
+
+        Returns
+        -------
+        bool
+        """
+        logger.info(f'Deleting shared database {self.shared_db_name}')
+        return Glue.delete_database(
+            accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+        )
+
     @classmethod
     def create_resource_link(cls, **data) -> dict:
         """
@@ -192,78 +240,115 @@ class LFShareApproval:
             )
             raise e
 
-    def clean_shared_database(self) -> [str]:
+    def revoke_table_resource_link_access(self, table: models.DatasetTable):
         """
-        After share approval verify that the shared database
-        do not have any removed items from the share request.
+        Revokes access to glue table resource link
+        Parameters
+        ----------
+        table : models.DatasetTable
 
         Returns
         -------
-        List of deleted tables from the shared database
+        True if revoke is successful
         """
-        tables_to_delete = []
-
-        current_shared_glue_tables = Glue.list_glue_database_tables(
-            accountid=self.target_environment.AwsAccountId,
-            database=self.shared_db_name,
-            region=self.target_environment.region,
-        )
-        logger.info(
-            f'Current shared glue tables: {current_shared_glue_tables} in database {self.shared_db_name} '
-        )
-
-        glue_table_names = [table['Name'] for table in current_shared_glue_tables]
-        logger.info(f'Revoked items included in the request {self.revoked_tables}')
-
-        for table in self.revoked_tables:
-            if table.GlueTableName in glue_table_names:
-                logger.info(
-                    f'Found a table to revoke access: {self.dataset.GlueDatabaseName}//{table.GlueTableName}'
-                )
-                try:
-                    LakeFormation.revoke_source_table_access(
-                        target_accountid=self.target_environment.AwsAccountId,
-                        region=self.target_environment.region,
-                        source_database=self.dataset.GlueDatabaseName,
-                        source_table=table.GlueTableName,
-                        target_principal=self.env_group.environmentIAMRoleArn,
-                        source_accountid=self.source_environment.AwsAccountId,
-                    )
-                except ClientError as e:
-                    # error not raised due to multiple failure reasons
-                    # cleanup failure does not impact share request items access
-                    logger.error(
-                        f'Revoking permission on source table failed due to: {e}'
-                    )
-                    item = api.ShareObject.find_share_item_by_table(self.session, table)
-                    self.handle_share_failure(table, item, e)
-
-                tables_to_delete.append(table)
-            else:
-                logger.info(
-                    f'Glue Table not found, already deleted: {self.dataset.GlueDatabaseName}//{table.GlueTableName}'
-                )
-                item = api.ShareObject.find_share_item_by_table(self.session, table)
-                api.ShareObject.update_share_item_status(
-                    self.session,
-                    item,
-                    models.ShareItemStatus.Revoke_Succeeded.value,
-                )
-        table_names = [t.GlueTableName for t in tables_to_delete]
-        logger.info(
-            f'Tables to delete: {table_names}'
-        )
-        Glue.batch_delete_tables(
+        if not Glue.table_exists(
             accountid=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             database=self.shared_db_name,
-            tables=table_names,
-        )
-        logger.info(
-            'Tables successfully deleted'
-        )
+            tablename=table.GlueTableName,
+        ):
+            logger.info(
+                f'Resource link could not be found '
+                f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
+                f'skipping revoke actions...'
+            )
+            return True
 
-        return tables_to_delete
+        logger.info(
+            f'Revoking resource link access '
+            f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
+            f'for principal {self.env_group.environmentIAMRoleArn}'
+        )
+        LakeFormation.batch_revoke_permissions(
+            SessionHelper.remote_session(self.target_environment.AwsAccountId).client(
+                'lakeformation', region_name=self.target_environment.region
+            ),
+            self.target_environment.AwsAccountId,
+            [
+                {
+                    'Id': str(uuid.uuid4()),
+                    'Principal': {
+                        'DataLakePrincipalIdentifier': self.env_group.environmentIAMRoleArn
+                    },
+                    'Resource': {
+                        'Table': {
+                            'DatabaseName': self.shared_db_name,
+                            'Name': table.GlueTableName,
+                            'CatalogId': self.target_environment.AwsAccountId,
+                        }
+                    },
+                    'Permissions': ['DESCRIBE'],
+                }
+            ],
+        )
+        return True
+
+    def revoke_source_table_access(self, table):
+        """
+        Revokes access to the source glue table
+        Parameters
+        ----------
+        table : models.DatasetTable
+
+        Returns
+        -------
+        True if revoke is successful
+        """
+        if not Glue.table_exists(
+            accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+            tablename=table.GlueTableName,
+        ):
+            logger.info(
+                f'Source table could not be found '
+                f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
+                f'skipping revoke actions...'
+            )
+            return True
+
+        logger.info(
+            f'Revoking source table access '
+            f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
+            f'for principal {self.env_group.environmentIAMRoleArn}'
+        )
+        LakeFormation.revoke_source_table_access(
+            target_accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            source_database=self.dataset.GlueDatabaseName,
+            source_table=table.GlueTableName,
+            target_principal=self.env_group.environmentIAMRoleArn,
+            source_accountid=self.source_environment.AwsAccountId,
+        )
+        return True
+
+    def delete_resource_link_table(self, table: models.DatasetTable):
+        logger.info(f'Deleting shared table {table.GlueTableName}')
+
+        if not Glue.table_exists(
+                accountid=self.target_environment.AwsAccountId,
+                region=self.target_environment.region,
+                database=self.shared_db_name,
+                tablename=table.GlueTableName,
+        ):
+            return True
+        Glue.delete_table(
+            accountid=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+            tablename=table.GlueTableName
+        )
+        return True
 
     def handle_share_failure(
         self,
@@ -289,11 +374,7 @@ class LFShareApproval:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
             f'due to: {error}'
         )
-        api.ShareObject.update_share_item_status(
-            self.session,
-            share_item,
-            models.ShareItemStatus.Share_Failed.value,
-        )
+
         AlarmService().trigger_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
@@ -326,44 +407,3 @@ class LFShareApproval:
             table, self.share, self.target_environment
         )
         return True
-
-    def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
-        """
-        Build aws dict for boto3 operations on Glue and LF from share data
-        Parameters
-        ----------
-        principals : team role
-        table : dataset table
-
-        Returns
-        -------
-        dict for boto3 operations
-        """
-        data = {
-            'source': {
-                'accountid': self.source_environment.AwsAccountId,
-                'region': self.source_environment.region,
-                'database': table.GlueDatabaseName,
-                'tablename': table.GlueTableName,
-            },
-            'target': {
-                'accountid': self.target_environment.AwsAccountId,
-                'region': self.target_environment.region,
-                'principals': principals,
-                'database': self.shared_db_name,
-            },
-        }
-        return data
-
-    def delete_deprecated_shared_database(self) -> bool:
-        """
-        Deletes deprecated shared db
-        Returns
-        -------
-        True if delete is successful
-        """
-        return Glue.delete_database(
-            accountid=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=f'{self.dataset.GlueDatabaseName}shared',
-        )

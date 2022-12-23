@@ -1,6 +1,6 @@
+import abc
 import logging
 import json
-
 
 from ....db import models, api
 from ....aws.handlers.sts import SessionHelper
@@ -49,6 +49,10 @@ class S3ShareManager:
         self.dataset_account_id = dataset.AwsAccountId
         self.dataset_region = dataset.region
         self.s3_prefix = target_folder.S3Prefix
+
+    @abc.abstractmethod
+    def process_share(self, *kwargs) -> [str]:
+        return NotImplementedError
 
     def manage_bucket_policy(self):
         """
@@ -359,11 +363,6 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        api.ShareObject.update_share_item_status(
-            self.session,
-            self.share_item,
-            models.ShareItemStatus.Share_Failed.value,
-        )
         AlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
@@ -381,11 +380,6 @@ class S3ShareManager:
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
-        )
-        api.ShareObject.update_share_item_status(
-            self.session,
-            self.share_item,
-            models.ShareItemStatus.Revoke_Failed.value,
         )
         AlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment

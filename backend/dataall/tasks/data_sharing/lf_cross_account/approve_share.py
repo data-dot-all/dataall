@@ -3,7 +3,7 @@ import time
 
 from botocore.exceptions import ClientError
 
-from ..common.lf_share_approval import LFShareApproval
+from ..common.lf_share_manager import LFShareApproval
 from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.ram import Ram
 from ....aws.handlers.sts import SessionHelper
@@ -39,6 +39,8 @@ class CrossAccountShareApproval(LFShareApproval):
 
     def approve_share(
         self,
+        Shared_Item_SM: api.ShareItemSM,
+        Revoked_Item_SM: api.ShareItemSM
     ) -> bool:
         """
         1) Gets share principals
@@ -74,11 +76,8 @@ class CrossAccountShareApproval(LFShareApproval):
                 self.session, self.share, table
             )
 
-            api.ShareObject.update_share_item_status(
-                self.session,
-                share_item,
-                models.ShareItemStatus.Share_In_Progress.value,
-            )
+            new_state = Shared_Item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Shared_Item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
 
@@ -99,14 +98,13 @@ class CrossAccountShareApproval(LFShareApproval):
 
                 self.create_resource_link(**data)
 
-                api.ShareObject.update_share_item_status(
-                    self.session,
-                    share_item,
-                    models.ShareItemStatus.Share_Succeeded.value,
-                )
+                new_state = Shared_Item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                Shared_Item_SM.update_state_single_item(self.session, share_item, new_state)
 
             except Exception as e:
                 self.handle_share_failure(table, share_item, e)
+                new_state = Shared_Item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                Shared_Item_SM.update_state_single_item(self.session, share_item, new_state)
 
         self.clean_shared_database()
 

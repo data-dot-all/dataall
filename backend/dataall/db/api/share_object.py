@@ -51,7 +51,7 @@ class ShareObjectSM:
             ShareObjectActions.Submit.value: Transition(
                 name=ShareObjectActions.Submit.value,
                 transitions={
-                    ShareObjectStatus.Pending.value: [
+                    ShareObjectStatus.Submitted.value: [
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Rejected.value
                     ]
@@ -61,14 +61,14 @@ class ShareObjectSM:
                 name=ShareObjectActions.Approve.value,
                 transitions={
                     ShareObjectStatus.Approved.value: [
-                        ShareObjectStatus.Pending.value
+                        ShareObjectStatus.Submitted.value
                     ]
                 }
             ),
             ShareObjectActions.Reject.value: Transition(
                 name=ShareObjectActions.Reject.value,
                 transitions={
-                    ShareObjectStatus.Rejected.value: [ShareObjectStatus.Pending.value]
+                    ShareObjectStatus.Rejected.value: [ShareObjectStatus.Submitted.value]
                 }
             ),
             ShareObjectActions.RevokeAll.value: Transition(
@@ -76,7 +76,7 @@ class ShareObjectSM:
                 transitions={
                     ShareObjectStatus.Rejected.value: [
                         ShareObjectStatus.Draft.value,
-                        ShareObjectStatus.Pending.value,
+                        ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Approved.value
                     ]
                 }
@@ -85,12 +85,33 @@ class ShareObjectSM:
                 name=ShareObjectActions.Edit.value,
                 transitions={
                     ShareObjectStatus.Draft.value: [
-                        ShareObjectStatus.Pending.value,
+                        ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Approved.value
                     ]
                 }
-            )
+            ),
+            ShareObjectActions.Start.value: Transition(
+                name=ShareObjectActions.Start.value,
+                transitions={
+                    ShareObjectStatus.In_Progress.value: [
+                        ShareObjectStatus.Rejected.value,
+                        ShareObjectStatus.Approved.value
+                    ]
+                }
+            ),
+            ShareObjectActions.FinishApprove.value: Transition(
+                name=ShareObjectActions.FinishApprove.value,
+                transitions={
+                    ShareObjectStatus.Approved.value: [ShareObjectStatus.In_Progress.value]
+                }
+            ),
+            ShareObjectActions.FinishReject.value: Transition(
+                name=ShareObjectActions.FinishReject.value,
+                transitions={
+                    ShareObjectStatus.Rejected.value: [ShareObjectStatus.In_Progress.value]
+                }
+            ),
         }
 
     def run_transition(self, transition):
@@ -99,6 +120,7 @@ class ShareObjectSM:
         return new_state
 
     def update_state(self, session, share, new_state):
+        self._state=new_state
         share.status = new_state
         session.commit()
         return True
@@ -151,6 +173,27 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Rejected.value: [ShareItemStatus.PendingRevoke.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
+                }
+            ),
+            ShareObjectActions.Start.value: Transition(
+                name=ShareObjectActions.Start.value,
+                transitions={
+                    ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_Approved.value],
+                    ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_Approved.value],
+                }
+            ),
+            ShareItemActions.Success.value: Transition(
+                name=ShareItemActions.Success.value,
+                transitions={
+                    ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_In_Progress.value],
+                    ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_In_Progress.value],
+                }
+            ),
+            ShareItemActions.Failure.value: Transition(
+                name=ShareItemActions.Failure.value,
+                transitions={
+                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_In_Progress.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_In_Progress.value],
                 }
             ),
             ShareItemActions.RemoveItem.value: Transition(
@@ -216,6 +259,7 @@ class ShareItemSM:
                     old_status=self._state,
                     new_status=new_state
                 )
+            self._state = new_state
         else:
             logger.info(f"Share Items already in target state {new_state} or no update required")
             return True

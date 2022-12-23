@@ -1,6 +1,6 @@
 import logging
 
-from ..common.lf_share_approval import LFShareApproval
+from ..common.lf_share_manager import LFShareApproval
 from ....db import models, api
 
 log = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class SameAccountShareApproval(LFShareApproval):
             env_group,
         )
 
-    def approve_share(self) -> bool:
+    def approve_share(self, Shared_Item_SM: api.ShareItemSM, Revoked_Item_SM: api.ShareItemSM) -> bool:
         """
         Approves a share request for same account sharing
         1) Gets share principals
