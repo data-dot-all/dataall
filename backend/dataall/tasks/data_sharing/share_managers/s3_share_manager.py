@@ -51,7 +51,15 @@ class S3ShareManager:
         self.s3_prefix = target_folder.S3Prefix
 
     @abc.abstractmethod
-    def process_share(self, *kwargs) -> [str]:
+    def process_approved_shares(self, *kwargs) -> [str]:
+        return NotImplementedError
+
+    @abc.abstractmethod
+    def process_revoked_shares(self, *kwargs) -> [str]:
+        return NotImplementedError
+
+    @abc.abstractmethod
+    def clean_up_share(self):
         return NotImplementedError
 
     def manage_bucket_policy(self):

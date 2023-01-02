@@ -1,6 +1,7 @@
 import abc
 import logging
 import uuid
+import time
 
 from botocore.exceptions import ClientError
 
@@ -8,6 +9,7 @@ from ....aws.handlers.glue import Glue
 from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
+from ....aws.handlers.ram import Ram
 from ....db import api, exceptions, models
 from ....utils.alarm_service import AlarmService
 
@@ -38,7 +40,11 @@ class LFShareManager:
         self.shared_db_name = shared_db_name
 
     @abc.abstractmethod
-    def process_share(self, Shared_Item_SM: api.ShareItemSM, Revoked_Item_SM: api.ShareItemSM) -> [str]:
+    def process_approved_shares(self) -> [str]:
+        return NotImplementedError
+
+    @abc.abstractmethod
+    def process_revoked_shares(self) -> [str]:
         return NotImplementedError
 
     @abc.abstractmethod
@@ -60,6 +66,21 @@ class LFShareManager:
             if q_group:
                 principals.append(q_group)
         return principals
+
+    def build_shared_db_name(self) -> str:
+        """
+        Build Glue shared database name.
+        Unique per share Uri.
+        Parameters
+        ----------
+        dataset : models.Dataset
+        share : models.ShareObject
+
+        Returns
+        -------
+        Shared database name
+        """
+        return (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
 
     def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
         """
@@ -118,6 +139,14 @@ class LFShareManager:
                     f' but its correspondent Glue table {table.GlueTableName} does not exist.'
                 ),
             )
+
+    def grant_pivot_role_all_database_permissions(self) -> bool:
+        LakeFormation.grant_pivot_role_all_database_permissions(
+            self.source_environment.AwsAccountId,
+            self.source_environment.region,
+            self.dataset.GlueDatabaseName,
+        )
+        return True
 
     @classmethod
     def create_shared_database(
@@ -349,6 +378,122 @@ class LFShareManager:
             tablename=table.GlueTableName
         )
         return True
+
+    @classmethod
+    def share_table_with_target_account(cls, **data):
+        """
+        Shares tables using Lake Formation
+        Sharing feature may take some extra seconds
+        :param data:
+        :return:
+        """
+        source_accountid = data['source']['accountid']
+        source_region = data['source']['region']
+
+        target_accountid = data['target']['accountid']
+        target_region = data['target']['region']
+
+        source_session = SessionHelper.remote_session(accountid=source_accountid)
+        source_lf_client = source_session.client(
+            'lakeformation', region_name=source_region
+        )
+        try:
+
+            LakeFormation.revoke_iamallowedgroups_super_permission_from_table(
+                source_lf_client,
+                source_accountid,
+                data['source']['database'],
+                data['source']['tablename'],
+            )
+            time.sleep(1)
+
+            LakeFormation.grant_permissions_to_table(
+                source_lf_client,
+                target_accountid,
+                data['source']['database'],
+                data['source']['tablename'],
+                ['DESCRIBE', 'SELECT'],
+                ['DESCRIBE', 'SELECT'],
+            )
+            time.sleep(2)
+
+            logger.info(
+                f"Granted access to table {data['source']['tablename']} "
+                f'to external account {target_accountid} '
+            )
+            return True
+
+        except ClientError as e:
+            logging.error(
+                f'Failed granting access to table {data["source"]["tablename"]} '
+                f'from {source_accountid} / {source_region} '
+                f'to external account{target_accountid}/{target_region}'
+                f'due to: {e}'
+            )
+            raise e
+
+    def revoke_external_account_access_on_source_account(self) -> [dict]:
+        """
+        1) Revokes access to external account
+        if dataset is not shared with any other team from the same workspace
+        2) Deletes resource_shares on RAM associated to revoked tables
+
+        Returns
+        -------
+        List of revoke entries
+        """
+        logger.info(
+            f'Revoking Access for AWS account: {self.target_environment.AwsAccountId}'
+        )
+        aws_session = SessionHelper.remote_session(
+            accountid=self.source_environment.AwsAccountId
+        )
+        client = aws_session.client(
+            'lakeformation', region_name=self.source_environment.region
+        )
+        revoke_entries = []
+        for table in self.revoked_tables:
+            revoke_entries.append(
+                {
+                    'Id': str(uuid.uuid4()),
+                    'Principal': {
+                        'DataLakePrincipalIdentifier': self.target_environment.AwsAccountId
+                    },
+                    'Resource': {
+                        'TableWithColumns': {
+                            'DatabaseName': table.GlueDatabaseName,
+                            'Name': table.GlueTableName,
+                            'ColumnWildcard': {},
+                            'CatalogId': self.source_environment.AwsAccountId,
+                        }
+                    },
+                    'Permissions': ['DESCRIBE', 'SELECT'],
+                    'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
+                }
+            )
+            LakeFormation.batch_revoke_permissions(
+                client, self.source_environment.AwsAccountId, revoke_entries
+            )
+        return revoke_entries
+
+    def delete_ram_resource_shares(self, resource_arn: str) -> [dict]:
+        """
+        Deletes resource share for the resource arn
+        Parameters
+        ----------
+        resource_arn : glue table arn
+
+        Returns
+        -------
+        list of ram associations
+        """
+        logger.info(f'Cleaning RAM resource shares for resource: {resource_arn} ...')
+        return Ram.delete_resource_shares(
+            SessionHelper.remote_session(
+                accountid=self.source_environment.AwsAccountId
+            ).client('ram', region_name=self.source_environment.region),
+            resource_arn,
+        )
 
     def handle_share_failure(
         self,

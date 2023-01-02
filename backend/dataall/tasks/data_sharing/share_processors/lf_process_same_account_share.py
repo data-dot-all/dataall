@@ -6,11 +6,10 @@ from ....db import models, api
 log = logging.getLogger(__name__)
 
 
-class ProcessSameAccountLFShare(LFShareManager):
+class ProcessLFSameAccountShare(LFShareManager):
     def __init__(
         self,
         session,
-        shared_db_name: str,
         dataset: models.Dataset,
         share: models.ShareObject,
         shared_tables: [models.DatasetTable],
@@ -21,7 +20,6 @@ class ProcessSameAccountLFShare(LFShareManager):
     ):
         super().__init__(
             session,
-            shared_db_name,
             dataset,
             share,
             shared_tables,
@@ -31,7 +29,7 @@ class ProcessSameAccountLFShare(LFShareManager):
             env_group,
         )
 
-    def process_approved_shares(self, shared_item_SM: api.ShareItemSM) -> bool:
+    def process_approved_shares(self) -> bool:
         """
         Approves a share request for same account sharing
         1) Gets share principals
@@ -59,7 +57,7 @@ class ProcessSameAccountLFShare(LFShareManager):
         principals = self.get_share_principals()
 
         self.create_shared_database(
-            self.target_environment, self.dataset, self.shared_db_name, principals
+            self.target_environment, self.dataset, shared_db_name, principals
         )
 
         for table in self.shared_tables:
@@ -74,12 +72,12 @@ class ProcessSameAccountLFShare(LFShareManager):
                     f'and Dataset Table {table.GlueTableName} continuing loop...'
                 )
                 continue
-
+            shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
             new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
             shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
-
+                log.info(f'Starting sharing access for table: {table.GlueTableName}')
                 self.check_share_item_exists_on_glue_catalog(share_item, table)
 
                 data = self.build_share_data(principals, table)
@@ -95,18 +93,47 @@ class ProcessSameAccountLFShare(LFShareManager):
 
         return True
 
-    def process_revoked_shares(self, revoked_item_SM: api.ShareItemSM) -> bool:
+    def process_revoked_shares(self) -> bool:
         """
-        Revokes a share on same account
-        1) revoke resource link access
-        2) revoke source table access
-        3) delete shared database
+        Loops through share request items and revokes access on LF
         Returns
         -------
         True if revoke is successful
         """
 
-        self.revoke_shared_tables_access()
+        for table in self.revoked_tables:
+            share_item = api.ShareObject.find_share_item_by_table(
+                self.session, self.share, table
+            )
+            if not share_item:
+                log.info(
+                    f'Share Item not found for {self.share.shareUri} '
+                    f'and Dataset Table {table.GlueTableName} continuing loop...'
+                )
+                continue
+
+            revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+            new_state = revoked_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+            try:
+                self.check_share_item_exists_on_glue_catalog(share_item, table)
+
+                log.info(f'Starting revoke access for table: {table.GlueTableName}')
+
+                self.revoke_table_resource_link_access(table)
+
+                self.revoke_source_table_access(table)
+
+                self.delete_resource_link_table(table)
+
+                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+            except Exception as e:
+                self.handle_revoke_failure(share_item, table, e)
+                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
         return True
 
@@ -120,5 +147,3 @@ class ProcessSameAccountLFShare(LFShareManager):
         """
         self.delete_shared_database()
         return True
-
-

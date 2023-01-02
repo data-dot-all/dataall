@@ -19,25 +19,25 @@ class Ecs:
         pass
 
     @staticmethod
-    @Worker.handler(path='ecs.share.approve')
-    def approve_share(engine, task: models.Task):
+    @Worker.handler(path='ecs.share.process')
+    def process_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
-            return DataSharingService.approve_share(engine, task.targetUri)
+            return DataSharingService.process_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'approve_share'
+                envname, task.targetUri, 'process_share'
             )
 
     @staticmethod
     @Worker.handler(path='ecs.share.revoke')
-    def reject_share(engine, task: models.Task):
+    def revoke_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
-            return DataSharingService.reject_share(engine, task.targetUri)
+            return DataSharingService.revoke_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'reject_share'
+                envname, task.targetUri, 'revoke_share'
             )
 
     @staticmethod

@@ -75,14 +75,14 @@ def approve_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
-        approve_share_task: models.Task = models.Task(
-            action='ecs.share.approve',
+        process_share_task: models.Task = models.Task(
+            action='ecs.share.process',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
-        session.add(approve_share_task)
+        session.add(process_share_task)
 
-    Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
+    Worker.queue(engine=context.engine, task_ids=[process_share_task.taskUri])
 
     return share
 

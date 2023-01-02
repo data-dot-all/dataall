@@ -1,7 +1,7 @@
 import logging
 
 from ....db import models, api
-from .s3_share_manager import S3ShareManager
+from ..share_managers import S3ShareManager
 
 
 log = logging.getLogger(__name__)
@@ -32,19 +32,16 @@ class ProcessS3Share(S3ShareManager):
         )
 
     @classmethod
-    def process_share(
+    def process_approved_shares(
         cls,
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
         share_folders: [models.DatasetStorageLocation],
-        revoke_folders: [models.DatasetStorageLocation],
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
-        env_group: models.EnvironmentGroup,
-        shared_item_SM: api.ShareItemSM,
-        revoked_item_SM: api.ShareItemSM
+        env_group: models.EnvironmentGroup
     ) -> bool:
         """
         1) (one time only) manage_bucket_policy - grants permission in the bucket policy
@@ -67,6 +64,7 @@ class ProcessS3Share(S3ShareManager):
                 share,
                 folder,
             )
+            shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
             new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
             shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
@@ -96,6 +94,32 @@ class ProcessS3Share(S3ShareManager):
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
+        return True
+
+    @classmethod
+    def process_revoked_shares(
+            cls,
+            session,
+            dataset: models.Dataset,
+            share: models.ShareObject,
+            revoke_folders: [models.DatasetStorageLocation],
+            source_environment: models.Environment,
+            target_environment: models.Environment,
+            source_env_group: models.EnvironmentGroup,
+            env_group: models.EnvironmentGroup
+    ) -> bool:
+        """
+        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
+        2) grant_target_role_access_policy
+        3) manage_access_point_and_policy
+        4) update_dataset_bucket_key_policy
+        5) update_share_item_status
+
+        Returns
+        -------
+        True if share is approved successfully
+        """
+
         log.info(
             '##### Starting Revoking folders #######'
         )
@@ -107,6 +131,7 @@ class ProcessS3Share(S3ShareManager):
                 folder,
             )
 
+            revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
             new_state = revoked_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
@@ -123,10 +148,6 @@ class ProcessS3Share(S3ShareManager):
 
             try:
                 removing_folder.delete_access_point_policy()
-                cleanup = removing_folder.delete_access_point()
-                if cleanup:
-                    removing_folder.delete_target_role_access_policy()
-                    removing_folder.delete_dataset_bucket_key_policy()
 
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
@@ -136,5 +157,15 @@ class ProcessS3Share(S3ShareManager):
 
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
+
+        return True
+
+    def clean_up_share(self) -> bool:
+
+        cleanup = self.delete_access_point()
+
+        if cleanup:
+            self.delete_target_role_access_policy()
+            self.delete_dataset_bucket_key_policy()
 
         return True

@@ -157,6 +157,7 @@ class ShareObjectActions(Enum):
     FinishApprove = 'FinishApprove'
     FinishReject = 'FinishReject'
 
+
 class ShareItemActions(Enum):
     AddItem = 'AddItem'
     RemoveItem = 'RemoveItem'

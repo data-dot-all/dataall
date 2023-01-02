@@ -103,7 +103,7 @@ class ShareObjectSM:
             ShareObjectActions.FinishApprove.value: Transition(
                 name=ShareObjectActions.FinishApprove.value,
                 transitions={
-                    ShareObjectStatus.Approved.value: [ShareObjectStatus.In_Progress.value]
+                    ShareObjectStatus.Approved.value: [ShareObjectStatus.In_Progress.value],
                 }
             ),
             ShareObjectActions.FinishReject.value: Transition(
@@ -120,7 +120,7 @@ class ShareObjectSM:
         return new_state
 
     def update_state(self, session, share, new_state):
-        self._state=new_state
+        self._state = new_state
         share.status = new_state
         session.commit()
         return True
@@ -204,7 +204,7 @@ class ShareItemSM:
                         ShareItemStatus.Share_Approved.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value
+                        ShareItemStatus.Revoke_Succeeded.value,
                     ]
                 }
             ),
@@ -238,8 +238,8 @@ class ShareItemSM:
         }
 
     def run_transition(self, transition):
-        Trans = self.transitionTable[transition]
-        new_state = Trans.get_transition_target(self._state)
+        trans = self.transitionTable[transition]
+        new_state = trans.get_transition_target(self._state)
         return new_state
 
     def update_state(self, session, share_uri, new_state):
@@ -268,6 +268,7 @@ class ShareItemSM:
         logger.info(f"Updating share item {share_item.shareItemUri} status to {new_state}")
         share_item.status = new_state
         session.commit()
+        self._state = new_state
         return True
 
 
@@ -1118,7 +1119,7 @@ class ShareObject:
         share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
-        if share.status not in [ShareObjectStatus.Approved.value, ShareObjectStatus.Rejected.value]:
+        if share.status not in [ShareObjectStatus.Approved.value, ShareObjectStatus.Rejected.value, ShareObjectStatus.In_Progress.value]:
             raise Exception(
                 f'Share request {share_uri} has neither been Approved nor Rejected'
             )
