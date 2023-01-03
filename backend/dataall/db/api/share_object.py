@@ -585,7 +585,7 @@ class ShareObject:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
+    @has_resource_perm(permissions.GET_SHARE_OBJECT)
     def revoke_all_share_object(
         session,
         username: str,
