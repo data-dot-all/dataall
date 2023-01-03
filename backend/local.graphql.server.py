@@ -51,8 +51,9 @@ def request_context(headers, mock=False):
     if mock:
         username = headers.get('username', 'anonymous@amazon.com')
         groups = headers.get('groups', ['DAAdministrators', 'Engineers', 'Other'])
-        #username = headers.get('username', 'requester@amazon.com')
-        #groups = headers.get('groups', ['Scientists', 'DAAdministrators', 'Requesters', 'Producers', 'Consumers'])
+
+        username = headers.get('username', 'requester@amazon.com')
+        groups = headers.get('groups', ['Scientists', 'DAAdministrators', 'Requesters', 'Producers', 'Consumers'])
     else:
         if not headers.get('Authorization'):
             raise Exception('Missing Authorization header')

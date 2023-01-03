@@ -31,8 +31,9 @@ const getShareRequestsFromMe = ({ filter }) => ({
             organizationName
           }
           statistics {
-            tables
-            locations
+            sharedItems
+            failedItems
+            pendingItems
           }
           dataset {
             datasetUri
