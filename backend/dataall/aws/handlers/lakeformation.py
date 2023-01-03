@@ -13,6 +13,13 @@ class LakeFormation:
         pass
 
     @staticmethod
+    def create_lf_client(accountid, region):
+        session = SessionHelper.remote_session(accountid)
+        lf_client = session.client('lakeformation', region_name=region)
+
+        return lf_client
+
+    @staticmethod
     def describe_resource(resource_arn, accountid, region):
         """
         Describes a LF data location
@@ -314,6 +321,28 @@ class LakeFormation:
             logging.error(
                 f'Failed to revoke permissions for {target_principal} '
                 f'on source table {source_accountid}/{source_database}/{source_table} '
+                f'due to: {e}'
+            )
+            raise e
+
+    @staticmethod
+    def create_lf_tag(accountid, lf_client, tag_name, tag_values):
+        try:
+            # aws_session = SessionHelper.remote_session(accountid)
+            # lakeformation = aws_session.client('lakeformation', region_name=region)
+
+            logging.info(f'Creating LF Tag {tag_name} ...')
+
+            lf_client.create_lf_tag(
+                CatalogId=accountid,
+                TagKey=tag_name,
+                TagValues=tag_values
+            )
+            logging.info(f'Successfully create LF Tag {tag_name}')
+
+        except ClientError as e:
+            logging.error(
+                f'Failed to create LF Tag  {tag_name} '
                 f'due to: {e}'
             )
             raise e

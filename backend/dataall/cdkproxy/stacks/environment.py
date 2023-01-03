@@ -32,6 +32,7 @@ from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
+from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sagemaker_studio import (
     SagemakerStudio,
@@ -153,6 +154,24 @@ class EnvironmentSetup(Stack):
                 )
                 .all()
             )
+
+    @staticmethod
+    def create_lf_tags(engine, environment):
+        with engine.scoped_session() as session:
+            lf_tags = db.api.LFTag.list_all_lf_tags(session)
+
+        lf_client = LakeFormation.create_lf_client(environment.AwsAccountId, environment.region)
+        # aws_session = SessionHelper.remote_session(environment.AwsAccountId)
+        # lakeformation = aws_session.client('lakeformation', region_name=environment.region)
+
+        for lf_tag in lf_tags:
+            # Create the Tag
+            LakeFormation.create_lf_tag(
+                environment.AwsAccountId, 
+                lf_client,
+                lf_tag.LFTagName,
+                lf_tag.LFTagValues)
+
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
@@ -280,6 +299,9 @@ class EnvironmentSetup(Stack):
             f'PivotRole{self._environment.environmentUri}',
             f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
         )
+
+        # Lakeformation LF Tag Creation
+        self.create_lf_tags(self.engine, self._environment)
 
         # Lakeformation default settings
         entry_point = str(
