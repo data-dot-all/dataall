@@ -328,9 +328,6 @@ class LakeFormation:
     @staticmethod
     def create_lf_tag(accountid, lf_client, tag_name, tag_values):
         try:
-            # aws_session = SessionHelper.remote_session(accountid)
-            # lakeformation = aws_session.client('lakeformation', region_name=region)
-
             logging.info(f'Creating LF Tag {tag_name} ...')
 
             lf_client.create_lf_tag(
@@ -346,3 +343,38 @@ class LakeFormation:
                 f'due to: {e}'
             )
             raise e
+
+    # @staticmethod
+    # def add_lf_tag_permission_to_role(iam_role, lf_client, tag_name, tag_values):
+    #     try:
+    #         logging.info(f'Adding LF Tag {tag_name} Permissions for {iam_role}...')
+
+    #         response = lf_client.grant_permissions(
+    #             CatalogId='string',
+    #             Principal={
+    #                 'DataLakePrincipalIdentifier': iam_role
+    #             },
+    #             Resource={
+    #                 'LFTag': {
+    #                     'CatalogId': 'string',
+    #                     'TagKey': 'string',
+    #                     'TagValues': [
+    #                         'string',
+    #                     ]
+    #                 }
+    #             },
+    #             Permissions=[
+    #                 'DESCRIBE','ASSOCIATE'
+    #             ],
+    #             PermissionsWithGrantOption=[
+    #                 'DESCRIBE','ASSOCIATE'
+    #             ]
+    #         )
+    #         logging.info(f'Successfully create LF Tag {tag_name}')
+
+    #     except ClientError as e:
+    #         logging.error(
+    #             f'Failed to create LF Tag  {tag_name} '
+    #             f'due to: {e}'
+    #         )
+    #         raise e

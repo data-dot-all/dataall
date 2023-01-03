@@ -14,7 +14,8 @@ from . import (
     KeyValueTag,
 )
 from ..api.organization import Organization
-from ..models import EnvironmentGroup
+from ..api.lf_tags import LFTag
+from ..models import EnvironmentGroup, LFTagPermissions
 from ..models.Enums import (
     ShareObjectStatus,
     ShareItemStatus,
@@ -147,6 +148,18 @@ class Environment:
             resource_type=models.Environment.__name__,
         )
         session.commit()
+
+        lf_tags = LFTag.list_all_lf_tags(session)
+        for lf_tag in lf_tags:
+            lf_tag_permission = LFTagPermissions(
+                SamlGroupName=env.SamlGroupName,
+                environmentUri=env.environmentUri,
+                # environmentLabel=env.label,
+                awsAccount=env.AwsAccountId,
+                tagKey=lf_tag.LFTagName,
+                tagValues=lf_tag.LFTagValues
+            )
+            session.add(lf_tag_permission)
 
         activity = models.Activity(
             action='ENVIRONMENT:CREATE',
