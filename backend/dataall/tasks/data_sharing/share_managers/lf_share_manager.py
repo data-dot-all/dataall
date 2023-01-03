@@ -20,7 +20,6 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        shared_db_name: str,
         dataset: models.Dataset,
         share: models.ShareObject,
         shared_tables: [models.DatasetTable],
@@ -37,7 +36,7 @@ class LFShareManager:
         self.revoked_tables = revoked_tables
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.shared_db_name = shared_db_name
+        self.shared_db_name = self.build_shared_db_name()
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:

@@ -23,7 +23,7 @@ class Transition:
 
     def validate_transition(self, prev_state):
         if prev_state in self._all_target_states:
-            logger.info(f'ShareObject is already in target state ({prev_state}) in {self._all_target_states}')
+            logger.info(f'Resource is already in target state ({prev_state}) in {self._all_target_states}')
             return False
         elif prev_state not in self._all_source_states:
             raise exceptions.UnauthorizedOperation(
@@ -77,7 +77,8 @@ class ShareObjectSM:
                     ShareObjectStatus.Rejected.value: [
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
-                        ShareObjectStatus.Approved.value
+                        ShareObjectStatus.Approved.value,
+                        ShareObjectStatus.Completed.value
                     ]
                 }
             ),
@@ -87,7 +88,8 @@ class ShareObjectSM:
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Approved.value
+                        ShareObjectStatus.Approved.value,
+                        ShareObjectStatus.Completed.value
                     ]
                 }
             ),
@@ -100,16 +102,10 @@ class ShareObjectSM:
                     ]
                 }
             ),
-            ShareObjectActions.FinishApprove.value: Transition(
-                name=ShareObjectActions.FinishApprove.value,
+            ShareObjectActions.Finish.value: Transition(
+                name=ShareObjectActions.Finish.value,
                 transitions={
-                    ShareObjectStatus.Approved.value: [ShareObjectStatus.In_Progress.value],
-                }
-            ),
-            ShareObjectActions.FinishReject.value: Transition(
-                name=ShareObjectActions.FinishReject.value,
-                transitions={
-                    ShareObjectStatus.Rejected.value: [ShareObjectStatus.In_Progress.value]
+                    ShareObjectStatus.Completed.value: [ShareObjectStatus.In_Progress.value],
                 }
             ),
         }
@@ -120,9 +116,13 @@ class ShareObjectSM:
         return new_state
 
     def update_state(self, session, share, new_state):
+        logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
+        ShareObject.update_share_object_status(
+            session=session,
+            shareUri=share.shareUri,
+            status=new_state
+        )
         self._state = new_state
-        share.status = new_state
-        session.commit()
         return True
 
 
@@ -199,7 +199,7 @@ class ShareItemSM:
             ShareItemActions.RemoveItem.value: Transition(
                 name=ShareItemActions.RemoveItem.value,
                 transitions={
-                    ShareItemStatus.No_Item.value: [
+                    ShareItemStatus.Deleted.value: [
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Approved.value,
                         ShareItemStatus.Share_Rejected.value,
@@ -221,20 +221,32 @@ class ShareItemSM:
             ShareObjectActions.RevokeAll.value: Transition(
                 name=ShareObjectActions.RevokeAll.value,
                 transitions={
-                    ShareItemStatus.No_Item.value: [
+                    ShareItemStatus.Deleted.value: [
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
                         ShareItemStatus.Revoke_Succeeded.value
                     ],
-                    ShareItemStatus.PendingRevoke.value: [
+                    ShareItemStatus.Revoke_Approved.value: [
                         ShareItemStatus.Revoke_Rejected.value,
                         ShareItemStatus.Share_Succeeded.value,
                         ShareItemStatus.Revoke_Failed.value,
-                        ShareItemStatus.PendingRevoke.value
+                        ShareItemStatus.PendingRevoke.value,
+                        ShareItemStatus.Revoke_Approved.value
                     ]
                 }
             ),
+            ShareObjectActions.Delete.value: Transition(
+                name=ShareObjectActions.Delete.value,
+                transitions={
+                    ShareItemStatus.Deleted.value: [
+                        ShareItemStatus.PendingApproval.value,
+                        ShareItemStatus.Share_Rejected.value,
+                        ShareItemStatus.Share_Failed.value,
+                        ShareItemStatus.Revoke_Succeeded.value
+                    ]
+                }
+            )
         }
 
     def run_transition(self, transition):
@@ -244,15 +256,15 @@ class ShareItemSM:
 
     def update_state(self, session, share_uri, new_state):
         if share_uri and (new_state != self._state):
-            if new_state == ShareItemStatus.No_Item.value:
-                logger.info(f"Deleting share items in {self._state} state")
+            if new_state == ShareItemStatus.Deleted.value:
+                logger.info(f"Deleting share items in DB in {self._state} state")
                 ShareObject.delete_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
                     status=self._state
                 )
             else:
-                logger.info(f"Updating share items from {self._state} to state {new_state}")
+                logger.info(f"Updating share items in DB from {self._state} to state {new_state}")
                 ShareObject.update_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
@@ -261,13 +273,16 @@ class ShareItemSM:
                 )
             self._state = new_state
         else:
-            logger.info(f"Share Items already in target state {new_state} or no update required")
+            logger.info(f"Share Items in DB already in target state {new_state} or no update is required")
             return True
 
     def update_state_single_item(self, session, share_item, new_state):
-        logger.info(f"Updating share item {share_item.shareItemUri} status to {new_state}")
-        share_item.status = new_state
-        session.commit()
+        logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
+        ShareObject.update_share_item_status(
+            session=session,
+            uri=share_item.shareItemUri,
+            status=new_state
+        )
         self._state = new_state
         return True
 
@@ -790,7 +805,36 @@ class ShareObject:
 
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
-    def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
+    def check_delete_share_object(session, username, groups, uri, data=None, check_perm=None):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        share_items_states = ShareObject.get_share_items_states(session, uri)
+        shared_states = [
+            ShareItemStatus.Share_Succeeded.value,
+            ShareItemStatus.Share_In_Progress.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.Revoke_In_Progress.value,
+            ShareItemStatus.Revoke_Rejected.value,
+            ShareItemStatus.Revoke_Approved.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.PendingRevoke.value
+        ]
+        shared_share_items_states = [x for x in shared_states if x in share_items_states]
+
+        if shared_share_items_states:
+            raise exceptions.ShareItemsFound(
+                action='Delete share object',
+                message='There are shared items in this request. Revoke access to these items before deleting the request.',
+            )
+
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(ShareObjectActions.Delete.value)
+            Item_SM.update_state(session, share.shareUri, new_state)
+
+        return True
+
+    @staticmethod
+    def delete_share_object(session, uri):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         shared_items = session.query(models.ShareObjectItem).filter(
             models.ShareObjectItem.shareUri == share.shareUri
@@ -810,6 +854,8 @@ class ShareObject:
         )
         if not share_item:
             raise exceptions.ObjectNotFound('ShareObjectItem', uri)
+
+        return share_item
 
     @staticmethod
     @has_resource_perm(permissions.LIST_SHARED_ITEMS)
@@ -963,13 +1009,25 @@ class ShareObject:
         return share
 
     @staticmethod
+    def update_share_object_status(
+            session,
+            shareUri: str,
+            status: str,
+    ) -> models.ShareObject:
+
+        share = ShareObject.get_share_by_uri(session, shareUri)
+        share.status = status
+        session.commit()
+        return share
+
+    @staticmethod
     def update_share_item_status(
         session,
-        share_item: models.ShareObjectItem,
+        uri: str,
         status: str,
     ) -> models.ShareObjectItem:
 
-        logger.info(f'Updating share item status to {status}')
+        share_item = ShareObject.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
         return share_item

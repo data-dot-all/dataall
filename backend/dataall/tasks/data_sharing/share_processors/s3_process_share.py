@@ -123,6 +123,7 @@ class ProcessS3Share(S3ShareManager):
         log.info(
             '##### Starting Revoking folders #######'
         )
+
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
             removing_item = api.ShareObject.find_share_item_by_folder(
@@ -160,12 +161,26 @@ class ProcessS3Share(S3ShareManager):
 
         return True
 
-    def clean_up_share(self) -> bool:
-
-        cleanup = self.delete_access_point()
-
-        if cleanup:
-            self.delete_target_role_access_policy()
-            self.delete_dataset_bucket_key_policy()
+    @staticmethod
+    def clean_up_share(
+            dataset: models.Dataset,
+            share: models.ShareObject,
+            target_environment: models.Environment
+    ):
+        clean_up = S3ShareManager.delete_access_point(
+            share=share,
+            dataset=dataset
+        )
+        if clean_up:
+            S3ShareManager.delete_target_role_access_policy(
+                share=share,
+                dataset=dataset,
+                target_environment=target_environment
+            )
+            S3ShareManager.delete_dataset_bucket_key_policy(
+                share=share,
+                dataset=dataset,
+                target_environment=target_environment
+            )
 
         return True

@@ -129,10 +129,11 @@ class ShareObjectStatus(Enum):
     Draft = 'Draft'
     Submitted = 'Submitted'
     In_Progress = 'In_Progress'
+    Completed = 'Completed'
 
 
 class ShareItemStatus(Enum):
-    No_Item = 'No_Item'
+    Deleted = 'Deleted'
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Revoke_Approved = 'Revoke_Approved'
@@ -154,8 +155,8 @@ class ShareObjectActions(Enum):
     RevokeAll = 'RevokeAll'
     Edit = 'Edit'
     Start = 'Start'
-    FinishApprove = 'FinishApprove'
-    FinishReject = 'FinishReject'
+    Finish = 'Finish'
+    Delete = 'Delete'
 
 
 class ShareItemActions(Enum):

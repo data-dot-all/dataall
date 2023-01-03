@@ -166,10 +166,11 @@ class ShareObjectStatus(GraphQLEnumMapper):
     Draft = 'Draft'
     Submitted = 'Submitted'
     In_Progress = 'In_Progress'
+    Completed = 'Completed'
 
 
 class ShareItemStatus(GraphQLEnumMapper):
-    No_Item = 'No_Item'
+    Deleted = 'Deleted'
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Revoke_Approved = 'Revoke_Approved'
@@ -191,8 +192,8 @@ class ShareObjectActions(GraphQLEnumMapper):
     RevokeAll = 'RevokeAll'
     Edit = 'Edit'
     Start = 'Start'
-    FinishApprove = 'FinishApprove'
-    FinishReject = 'FinishReject'
+    Finish = 'FinishApprove'
+    Delete = 'Delete'
 
 
 class ShareItemActions(GraphQLEnumMapper):

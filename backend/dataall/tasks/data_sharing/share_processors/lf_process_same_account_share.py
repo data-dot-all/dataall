@@ -51,14 +51,18 @@ class ProcessLFSameAccountShare(LFShareManager):
             '##### Starting Sharing tables same account #######'
         )
 
-        self.grant_pivot_role_all_database_permissions()
+        if not self.shared_tables:
+            log.info("No tables to share. Skipping...")
 
-        shared_db_name = self.build_shared_db_name()
-        principals = self.get_share_principals()
+        else:
+            self.grant_pivot_role_all_database_permissions()
 
-        self.create_shared_database(
-            self.target_environment, self.dataset, shared_db_name, principals
-        )
+            shared_db_name = self.build_shared_db_name()
+            principals = self.get_share_principals()
+
+            self.create_shared_database(
+                self.target_environment, self.dataset, shared_db_name, principals
+            )
 
         for table in self.shared_tables:
 

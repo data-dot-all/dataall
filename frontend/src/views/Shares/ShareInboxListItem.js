@@ -85,7 +85,7 @@ const ShareInboxListItem = (props) => {
       <Grid container>
         <Grid item md={share.status === 'PendingApproval' ? 9 : 10} xs={6}>
           <CardHeader
-            avatar={<TextAvatar name={share.owner} />}
+            avatar={<TextAvatar name=Created by: {share.owner} />}
             disableTypography
             subheader={
               <Box

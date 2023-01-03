@@ -55,57 +55,60 @@ class ProcessLFCrossAccountShare(LFShareManager):
             '##### Starting Sharing tables cross account #######'
         )
 
-        self.grant_pivot_role_all_database_permissions()
+        if not self.shared_tables:
+            log.info("No tables to share. Skipping...")
+        else:
+            self.grant_pivot_role_all_database_permissions()
 
-        shared_db_name = self.build_shared_db_name()
-        principals = self.get_share_principals()
+            shared_db_name = self.build_shared_db_name()
+            principals = self.get_share_principals()
 
-        self.create_shared_database(
-            self.target_environment, self.dataset, shared_db_name, principals
-        )
-
-        for table in self.shared_tables:
-
-            share_item = api.ShareObject.find_share_item_by_table(
-                self.session, self.share, table
+            self.create_shared_database(
+                self.target_environment, self.dataset, shared_db_name, principals
             )
 
-            if not share_item:
-                log.info(
-                    f'Share Item not found for {self.share.shareUri} '
-                    f'and Dataset Table {table.GlueTableName} continuing loop...'
+            for table in self.shared_tables:
+
+                share_item = api.ShareObject.find_share_item_by_table(
+                    self.session, self.share, table
                 )
-                continue
 
-            shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
-            new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
-            shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                if not share_item:
+                    log.info(
+                        f'Share Item not found for {self.share.shareUri} '
+                        f'and Dataset Table {table.GlueTableName} continuing loop...'
+                    )
+                    continue
 
-            try:
+                shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
+                new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+                shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
-                self.check_share_item_exists_on_glue_catalog(share_item, table)
+                try:
 
-                data = self.build_share_data(principals, table)
-                self.share_table_with_target_account(**data)
+                    self.check_share_item_exists_on_glue_catalog(share_item, table)
 
-                (
-                    retry_share_table,
-                    failed_invitations,
-                ) = Ram.accept_ram_invitation(**data)
-
-                if retry_share_table:
+                    data = self.build_share_data(principals, table)
                     self.share_table_with_target_account(**data)
-                    Ram.accept_ram_invitation(**data)
 
-                self.create_resource_link(**data)
+                    (
+                        retry_share_table,
+                        failed_invitations,
+                    ) = Ram.accept_ram_invitation(**data)
 
-                new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
-                shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    if retry_share_table:
+                        self.share_table_with_target_account(**data)
+                        Ram.accept_ram_invitation(**data)
 
-            except Exception as e:
-                self.handle_share_failure(table, share_item, e)
-                new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
-                shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    self.create_resource_link(**data)
+
+                    new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                    shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+
+                except Exception as e:
+                    self.handle_share_failure(table, share_item, e)
+                    new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                    shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
     def process_revoked_shares(self) -> bool:
         """

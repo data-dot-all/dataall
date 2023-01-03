@@ -129,7 +129,7 @@ class DataSharingService:
 
         tables_succeed = approved_tables_succeed and revoked_tables_succeed
 
-        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishApprove.value)
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
         Share_SM.update_state(session, share, new_share_state)
 
         return tables_succeed if folders_succeed else False
@@ -190,8 +190,6 @@ class DataSharingService:
                 env_group,
             )
 
-            clean_up_folders = ProcessS3Share.clean_up_share()
-
             if source_environment.AwsAccountId != target_environment.AwsAccountId:
                 processor = ProcessLFCrossAccountShare(
                     session,
@@ -214,16 +212,64 @@ class DataSharingService:
                     target_environment,
                     env_group)
 
-                new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishReject.value)
-                Share_SM.update_state(session, share, new_share_state)
+            revoked_tables_succeed = processor.process_revoked_shares()
 
-            revoked_tables_succeed = processor.process_revoked_shares(revoked_item_SM)
-            clean_up_tables = processor.clean_up_share()
-
-            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishReject.value)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
             Share_SM.update_state(session, share, new_share_state)
 
-            return revoked_tables_succeed and revoked_folders_succeed and clean_up_tables and clean_up_folders
+            return revoked_tables_succeed and revoked_folders_succeed
+
+    @classmethod
+    def clean_up_and_delete(cls, engine: Engine, share_uri: str):
+
+        with engine.scoped_session() as session:
+            (
+                source_env_group,
+                env_group,
+                dataset,
+                share,
+                source_environment,
+                target_environment,
+            ) = api.ShareObject.get_share_data(session, share_uri)
+
+        log.info("Clean up S3 access points")
+        clean_up_folders = ProcessS3Share.clean_up_share(
+            dataset=dataset,
+            share=share,
+            target_environment=target_environment
+        )
+        log.info(f"Clean up S3 successful = {clean_up_folders}")
+
+        if source_environment.AwsAccountId != target_environment.AwsAccountId:
+            processor = ProcessLFCrossAccountShare(
+                session,
+                dataset,
+                share,
+                [],
+                [],
+                source_environment,
+                target_environment,
+                env_group,
+            )
+        else:
+            processor = ProcessLFSameAccountShare(
+                session,
+                dataset,
+                share,
+                [],
+                [],
+                source_environment,
+                target_environment,
+                env_group,
+            )
+
+        log.info("Clean up LF remaining resources")
+        clean_up_folders = processor.clean_up_share()
+        log.info(f"Clean up LF successful = {clean_up_folders}")
+
+        with engine.scoped_session() as session:
+            log.info("Deleting share object...")
+            api.ShareObject.delete_share_object(session, share.shareUri)
 
     @classmethod
     def clean_lfv1_ram_resources(cls, environment: models.Environment):

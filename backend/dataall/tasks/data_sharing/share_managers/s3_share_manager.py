@@ -51,16 +51,20 @@ class S3ShareManager:
         self.s3_prefix = target_folder.S3Prefix
 
     @abc.abstractmethod
-    def process_approved_shares(self, *kwargs) -> [str]:
+    def process_approved_shares(self, *kwargs) -> bool:
         return NotImplementedError
 
     @abc.abstractmethod
-    def process_revoked_shares(self, *kwargs) -> [str]:
+    def process_revoked_shares(self, *kwargs) -> bool:
         return NotImplementedError
 
     @abc.abstractmethod
-    def clean_up_share(self):
+    def clean_up_share(self, *kwargs):
         return NotImplementedError
+
+    @staticmethod
+    def build_access_point_name(share):
+        return f'{share.datasetUri}-{share.principalId}'.lower()
 
     def manage_bucket_policy(self):
         """
@@ -298,61 +302,77 @@ class S3ShareManager:
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}1"])
         S3.attach_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name, json.dumps(access_point_policy))
 
-    def delete_access_point(self):
+    @staticmethod
+    def delete_access_point(
+            share: models.ShareObject,
+            dataset: models.Dataset,
+    ):
+        access_point_name = S3ShareManager.build_access_point_name(share)
         logger.info(
-            f'Deleting access point {self.access_point_name}...'
+            f'Deleting access point {access_point_name}...'
         )
-        access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name))
+        access_point_policy = json.loads(S3.get_access_point_policy(dataset.AwsAccountId, dataset.region, access_point_name))
         if len(access_point_policy["Statement"]) <= 1:
             # At least we have the 'AllowAllToAdmin' statement
-            S3.delete_bucket_access_point(self.source_account_id, self.source_environment.region, self.access_point_name)
+            S3.delete_bucket_access_point(dataset.AwsAccountId, dataset.region, access_point_name)
             return True
         else:
             return False
 
-    def delete_target_role_access_policy(self):
+    @staticmethod
+    def delete_target_role_access_policy(
+            share: models.ShareObject,
+            dataset: models.Dataset,
+            target_environment: models.Environment,
+    ):
         logger.info(
             'Deleting target role IAM policy...'
         )
+        access_point_name = S3ShareManager.build_access_point_name(share)
         existing_policy = IAM.get_role_policy(
-            self.target_account_id,
-            self.target_requester_IAMRoleName,
+            dataset.AwsAccountId,
+            share.principalIAMRoleName,
             "targetDatasetAccessControlPolicy",
         )
         if existing_policy:
-            if self.bucket_name in ",".join(existing_policy["Statement"][0]["Resource"]):
+            if dataset.S3BucketName in ",".join(existing_policy["Statement"][0]["Resource"]):
                 target_resources = [
-                    f"arn:aws:s3:::{self.bucket_name}",
-                    f"arn:aws:s3:::{self.bucket_name}/*",
-                    f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
-                    f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
+                    f"arn:aws:s3:::{dataset.S3BucketName}",
+                    f"arn:aws:s3:::{dataset.S3BucketName}/*",
+                    f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}",
+                    f"arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{access_point_name}/*"
                 ]
                 for item in target_resources:
                     existing_policy["Statement"][0]["Resource"].remove(item)
                 if not existing_policy["Statement"][0]["Resource"]:
-                    IAM.delete_role_policy(self.target_account_id, self.target_requester_IAMRoleName, "targetDatasetAccessControlPolicy")
+                    IAM.delete_role_policy(target_environment.AwsAccountId, share.principalIAMRoleName, "targetDatasetAccessControlPolicy")
                 else:
                     IAM.update_role_policy(
-                        self.target_account_id,
-                        self.target_requester_IAMRoleName,
+                        target_environment.AwsAccountId,
+                        share.principalIAMRoleName,
                         "targetDatasetAccessControlPolicy",
                         json.dumps(existing_policy),
                     )
 
-    def delete_dataset_bucket_key_policy(self):
+    @staticmethod
+    def delete_dataset_bucket_key_policy(
+            share: models.ShareObject,
+            dataset: models.Dataset,
+            target_environment: models.Environment,
+    ):
         logger.info(
             'Deleting dataset bucket KMS key policy...'
         )
-        key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_keyId = KMS.get_key_id(self.source_account_id, self.source_environment.region, key_alias)
-        existing_policy = KMS.get_key_policy(self.source_account_id, self.source_environment.region, kms_keyId, "default")
-        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        key_alias = f"alias/{dataset.KmsAlias}"
+        kms_keyId = KMS.get_key_id(dataset.AwsAccountId, dataset.region, key_alias)
+        existing_policy = KMS.get_key_policy(dataset.AwsAccountId, dataset.region, kms_keyId, "default")
+        target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
         if existing_policy and f'{target_requester_id}:*' in existing_policy:
             policy = json.loads(existing_policy)
             policy["Statement"] = [item for item in policy["Statement"] if item["Sid"] != f"{target_requester_id}"]
             KMS.put_key_policy(
-                self.source_account_id,
-                self.source_environment.region,
+                dataset.AwsAccountId,
+                dataset.region,
                 kms_keyId,
                 "default",
                 json.dumps(policy)
