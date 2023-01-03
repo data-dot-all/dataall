@@ -41,17 +41,6 @@ class Ecs:
             )
 
     @staticmethod
-    @Worker.handler(path='ecs.share.cleandelete')
-    def clean_up_and_delete(engine, task: models.Task):
-        envname = os.environ.get('envname', 'local')
-        if envname in ['local', 'dkrcompose']:
-            return DataSharingService.clean_up_and_delete(engine, task.targetUri)
-        else:
-            return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'clean_delete'
-            )
-
-    @staticmethod
     def run_share_management_ecs_task(envname, share_uri, handler):
         share_task_definition = Parameter().get_parameter(
             env=envname, path='ecs/task_def_arn/share_management'

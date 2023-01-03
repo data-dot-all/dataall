@@ -133,7 +133,7 @@ class ShareItemSM:
             ShareItemActions.AddItem.value: Transition(
                 name=ShareItemActions.AddItem.value,
                 transitions={
-                    ShareItemStatus.PendingApproval.value: [ShareItemStatus.No_Item.value]
+                    ShareItemStatus.PendingApproval.value: [ShareItemStatus.Deleted.value]
                 }
             ),
             ShareObjectActions.Submit.value: Transition(
@@ -805,7 +805,7 @@ class ShareObject:
 
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
-    def check_delete_share_object(session, username, groups, uri, data=None, check_perm=None):
+    def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
         shared_states = [
@@ -820,31 +820,43 @@ class ShareObject:
         ]
         shared_share_items_states = [x for x in shared_states if x in share_items_states]
 
+        for item_state in share_items_states:
+            Item_SM = ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(ShareObjectActions.Delete.value)
+            Item_SM.update_state(session, share.shareUri, new_state)
+
         if shared_share_items_states:
             raise exceptions.ShareItemsFound(
                 action='Delete share object',
                 message='There are shared items in this request. Revoke access to these items before deleting the request.',
             )
 
-        for item_state in share_items_states:
-            Item_SM = ShareItemSM(item_state)
-            new_state = Item_SM.run_transition(ShareObjectActions.Delete.value)
-            Item_SM.update_state(session, share.shareUri, new_state)
+        session.delete(share)
 
         return True
 
     @staticmethod
-    def delete_share_object(session, uri):
+    def check_items_cleanup(session, uri, item_type):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_states = [
+            ShareItemStatus.Share_Succeeded.value,
+            ShareItemStatus.Share_In_Progress.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.Revoke_In_Progress.value,
+            ShareItemStatus.Revoke_Rejected.value,
+            ShareItemStatus.Revoke_Approved.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.PendingRevoke.value
+        ]
         shared_items = session.query(models.ShareObjectItem).filter(
-            models.ShareObjectItem.shareUri == share.shareUri
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.itemType == item_type,
+                models.ShareObjectItem.status.in_(shared_states)
+            )
         ).all()
         if shared_items:
-            raise exceptions.ShareItemsFound(
-                action='Delete share object',
-                message='Delete all shared items before proceeding',
-            )
-        session.delete(share)
+            return False
         return True
 
     @staticmethod

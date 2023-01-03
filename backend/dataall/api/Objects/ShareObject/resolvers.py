@@ -128,22 +128,13 @@ def delete_share_object(context: Context, source, shareUri: str = None):
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
 
-        db.api.ShareObject.check_delete_share_object(
+        db.api.ShareObject.delete_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=shareUri,
             check_perm=True,
         )
-
-        delete_share_task: models.Task = models.Task(
-            action='ecs.share.cleandelete',
-            targetUri=shareUri,
-            payload={'environmentUri': share.environmentUri},
-        )
-        session.add(delete_share_task)
-
-    Worker.queue(engine=context.engine, task_ids=[delete_share_task.taskUri])
 
     return True
 

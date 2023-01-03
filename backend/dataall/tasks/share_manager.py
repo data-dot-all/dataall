@@ -30,10 +30,6 @@ if __name__ == '__main__':
             log.info(f'Starting revoking task for share : {share_uri}...')
             DataSharingService.revoke_share(engine=ENGINE, share_uri=share_uri)
 
-        elif handler == 'clean_delete':
-            log.info(f'Starting cleaning up task for share : {share_uri}...')
-            DataSharingService.clean_up_and_delete(engine=ENGINE, share_uri=share_uri)
-
         log.info('Sharing task finished successfully')
 
     except Exception as e:
