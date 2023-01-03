@@ -167,11 +167,10 @@ class EnvironmentSetup(Stack):
         for lf_tag in lf_tags:
             # Create the Tag
             LakeFormation.create_lf_tag(
-                environment.AwsAccountId, 
+                environment.AwsAccountId,
                 lf_client,
                 lf_tag.LFTagName,
                 lf_tag.LFTagValues)
-
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
