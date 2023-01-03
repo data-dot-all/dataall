@@ -32,6 +32,15 @@ class LFTag:
         return result
 
     @staticmethod
+    def list_all_lf_tags(session):
+        lftags = session.query(models.LFTag).all()
+
+        for item in lftags:
+            _fix_json_array(item, 'LFTagValues')
+
+        return lftags
+
+    @staticmethod
     def remove_lf_tag(session, username, groups, uri, check_perm=None):
         if not uri:
             raise exceptions.RequiredParameter('lftagUri')
