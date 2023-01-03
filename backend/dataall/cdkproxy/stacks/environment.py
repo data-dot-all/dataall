@@ -17,6 +17,7 @@ from aws_cdk import (
     aws_kms as kms,
     aws_ec2 as ec2,
     aws_sagemaker as sagemaker,
+    aws_lakeformation as lakeformation,
     aws_athena,
     RemovalPolicy,
     Stack,
@@ -156,21 +157,12 @@ class EnvironmentSetup(Stack):
             )
 
     @staticmethod
-    def create_lf_tags(engine, environment):
+    def list_lf_tags(engine):
         with engine.scoped_session() as session:
             lf_tags = db.api.LFTag.list_all_lf_tags(session)
 
-        lf_client = LakeFormation.create_lf_client(environment.AwsAccountId, environment.region)
-        # aws_session = SessionHelper.remote_session(environment.AwsAccountId)
-        # lakeformation = aws_session.client('lakeformation', region_name=environment.region)
-
-        for lf_tag in lf_tags:
-            # Create the Tag
-            LakeFormation.create_lf_tag(
-                environment.AwsAccountId,
-                lf_client,
-                lf_tag.LFTagName,
-                lf_tag.LFTagValues)
+        lftag_dict = {lftag.LFTagName : lftag.LFTagValues for lftag in lf_tags}
+        return lftag_dict
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
@@ -299,8 +291,8 @@ class EnvironmentSetup(Stack):
             f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
         )
 
-        # Lakeformation LF Tag Creation
-        self.create_lf_tags(self.engine, self._environment)
+        # Get LF Tags To Create
+        lf_tags_dict = self.list_lf_tags(self.engine)
 
         # Lakeformation default settings
         entry_point = str(
@@ -413,7 +405,9 @@ class EnvironmentSetup(Stack):
             properties={
                 'DataLakeAdmins': [
                     f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
-                ]
+                ],
+                'LFTags': lf_tags_dict,
+                'EnvAdminRole': self._environment.EnvironmentDefaultIAMRoleArn
             },
         )
 

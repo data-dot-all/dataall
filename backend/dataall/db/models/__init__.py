@@ -45,3 +45,4 @@ from .Vpc import Vpc
 from .Worksheet import Worksheet, WorksheetQueryResult, WorksheetShare
 from .Vote import Vote
 from .LFTag import LFTag
+from .LFTagPermissions import LFTagPermissions

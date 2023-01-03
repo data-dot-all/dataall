@@ -1,6 +1,7 @@
 import os
 import boto3
 from botocore.exceptions import ClientError
+import uuid
 
 
 def clean_props(**props):
@@ -53,6 +54,36 @@ def on_create(event):
         print(
             f'Successfully configured AWS LakeFormation data lake admins: {new_admins}| {response}'
         )
+        lftags_dict = props.get('LFTags', {})
+        envAdmin = props.get('EnvAdminRole', {})
+
+        Entries = []
+        for tagkey in lftags_dict:
+            # Create LF Tag
+            client.create_lf_tag(
+                CatalogId=AWS_ACCOUNT,
+                TagKey=tagkey,
+                TagValues=lftags_dict[tagkey]
+            )
+            print(f'Successfully create LF Tag {tagkey}')
+
+            # Add Permissions to Env Admin
+            Entries.append(
+                {
+                    'Id': str(uuid.uuid4()),
+                    'Principal': {'DataLakePrincipalIdentifier': envAdmin},
+                    'Resource': {
+                        'LFTag': {
+                            'CatalogId': AWS_ACCOUNT,
+                            'TagKey': tagkey,
+                            'TagValues': lftags_dict[tagkey]
+                        }
+                    },
+                    'Permissions': ["DESCRIBE", "ASSOCIATE"],
+                    'PermissionsWithGrantOption': ["DESCRIBE", "ASSOCIATE"]
+                }
+            )
+        client.batch_grant_permissions(CatalogId=AWS_ACCOUNT, Entries=Entries)
     except ClientError as e:
         print(f'Failed to setup AWS LakeFormation data lake admins due to: {e}')
 
