@@ -34,6 +34,7 @@ import createDataset from '../../api/Dataset/createDataset';
 import ChipInput from '../../components/TagsInput';
 import TopicsData from '../../components/topics/TopicsData';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
+import listEnvironmentLFTags from '../../api/Environment/listEnvironmentLFTags';
 import * as Defaults from '../../components/defaults';
 
 const DatasetCreateForm = (props) => {
@@ -44,6 +45,8 @@ const DatasetCreateForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
+  const [lfTagOptions, setLFTagOptions] = useState([]);
+  const [lfTagValueOptions, setLFTagValueOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState([
     'Unclassified',
@@ -93,6 +96,28 @@ const DatasetCreateForm = (props) => {
     }
   };
 
+  const fetchLFTagValues = async (environmentUri) => {
+    try {
+      const response = await client.query(
+        listEnvironmentLFTags({
+          environmentUri
+        })
+      );
+      if (!response.errors) {
+        setLFTagOptions(
+          response.data.listEnvironmentLFTags.map((lf) => ({
+            value: lf.tagValues,
+            label: lf.tagKey
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -114,7 +139,9 @@ const DatasetCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
-          confidentiality: values.confidentiality
+          confidentiality: values.confidentiality,
+          lfTagKey: values.lfTagKey,
+          lfTagValue: values.lfTagValue
         })
       );
       if (!response.errors) {
@@ -209,7 +236,9 @@ const DatasetCreateForm = (props) => {
                 confidentiality: '',
                 SamlGroupName: '',
                 tags: [],
-                topics: []
+                topics: [],
+                lfTagKey: '',
+                lfTagValue: ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -225,7 +254,9 @@ const DatasetCreateForm = (props) => {
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: Yup.string()
                   .max(255)
-                  .required('*Confidentiality is required')
+                  .required('*Confidentiality is required'),
+                lfTagKey: Yup.string().max(255).nullable(),
+                lfTagValue: Yup.string().max(255).nullable()
               })}
               onSubmit={async (
                 values,
@@ -386,6 +417,11 @@ const DatasetCreateForm = (props) => {
                               ).catch((e) =>
                                 dispatch({ type: SET_ERROR, error: e.message })
                               );
+                              fetchLFTagValues(
+                                event.target.value.environmentUri
+                              ).catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
                               setFieldValue('environment', event.target.value);
                             }}
                             select
@@ -429,6 +465,61 @@ const DatasetCreateForm = (props) => {
                             }
                             variant="outlined"
                           />
+                        </CardContent>
+                      </Card>
+                      <Card sx={{ mb: 3 }}>
+                        <CardHeader title="LFTags (Optional)" />
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(touched.lfTagKey && errors.lfTagKey)}
+                            helperText={touched.lfTagKey && errors.lfTagKey}
+                            label="LF-Tag Key"
+                            name="lfTagKey"
+                            onChange={(event) => {
+                              setFieldValue('lfTagValue', '');
+                              setLFTagValueOptions(event.target.value.value);
+                              setFieldValue('lfTagKey', event.target.value.label);
+                            }}
+                            select
+                            value={values.lfTagKey}
+                            variant="outlined"
+                          >
+                            {lfTagOptions.map((lf) => (
+                              <MenuItem
+                                key={lf.label}
+                                value={lf}
+                              >
+                                {lf.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            fullWidth
+                            error={Boolean(
+                              touched.lfTagValue && errors.lfTagValue
+                            )}
+                            helperText={
+                              touched.lfTagValue && errors.lfTagValue
+                            }
+                            label="LF-Tag Value"
+                            name="lfTagValue"
+                            onChange={handleChange}
+                            select
+                            value={values.lfTagValue}
+                            variant="outlined"
+                          >
+                            {lfTagValueOptions.map((lfVals) => (
+                              <MenuItem
+                                key={lfVals}
+                                value={lfVals}
+                              >
+                                {lfVals}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         </CardContent>
                       </Card>
                       <Card>

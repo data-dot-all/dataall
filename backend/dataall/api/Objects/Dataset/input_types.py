@@ -26,6 +26,8 @@ NewDatasetInput = gql.InputType(
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument('lfTagKey', type=gql.String),
+        gql.Argument(name='lfTagValue', type=gql.String),
     ],
 )
 

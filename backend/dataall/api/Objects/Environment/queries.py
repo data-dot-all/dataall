@@ -116,6 +116,15 @@ listEnvironmentInvitedGroups = gql.QueryField(
     resolver=list_environment_invited_groups,
 )
 
+listEnvironmentLFTags = gql.QueryField(
+    name='listEnvironmentLFTags',
+    type=gql.ArrayType(gql.Ref('LFTagPermission')),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))
+    ],
+    resolver=list_environment_lf_tags,
+)
+
 listEnvironmentGroups = gql.QueryField(
     name='listEnvironmentGroups',
     type=gql.Ref('GroupSearchResult'),
