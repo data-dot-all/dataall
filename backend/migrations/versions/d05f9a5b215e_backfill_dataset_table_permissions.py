@@ -1,7 +1,7 @@
 """backfill_dataset_table_permissions
 
 Revision ID: d05f9a5b215e
-Revises: 45a4a4702af1
+Revises: 04d92886fabe
 Create Date: 2022-12-22 10:18:55.835315
 
 """
@@ -18,7 +18,7 @@ from dataall.db.models.Enums import ShareObjectStatus, ShareableType
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'
-down_revision = '45a4a4702af1'
+down_revision = '04d92886fabe'
 branch_labels = None
 depends_on = None
 
