@@ -15,6 +15,7 @@ class ParamStoreStack(pyNestedClass):
         custom_domain=None,
         enable_cw_canaries=False,
         quicksight_enabled=False,
+        shared_dashboard_sessions='anonymous',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -72,3 +73,10 @@ class ParamStoreStack(pyNestedClass):
                 parameter_name=f'/dataall/{envname}/quicksightmonitoring/DashboardId',
                 string_value='updateme',
             )
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallQuicksightConfiguration{envname}',
+            parameter_name=f"/dataall/{envname}/quicksight/sharedDashboardsSessions",
+            string_value=shared_dashboard_sessions,
+        )

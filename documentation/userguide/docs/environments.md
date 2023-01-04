@@ -67,9 +67,9 @@ aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.co
     role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
     <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
 
-### 4. (Optional) Amazon Quicksight
+### 4. Amazon Quicksight
 
-To link environments with <i><b>Dashboards enabled</b></i> , you will also need a running Amazon QuickSight subscription
+This is an optional step. To link environments with <i><b>Dashboards enabled</b></i> , you will also need a running Amazon QuickSight subscription
 on the bootstraped account. If you have not subscribed to Quicksight before, go to your AWS account and choose the
 Enterprise option as show below:
 
@@ -87,8 +87,8 @@ to enable Dashboard Embedding on <span style="color:grey">*data.all*</span> UI. 
 
 ![quicksight_domain](pictures/environments/boot_qs_3.png#zoom#shadow)
 
-## :material-new-box: **Link/Create an environment**
-### Become an Organization Administrator
+## :material-new-box: **Link an environment**
+### Necessary permissions
 !!! note "Environment permissions"
     Only organization Administrator teams can link environments to the Organization. The Organization creator team is
     the by default Organization Administrator team, but users of this group can now invite other teams and grant them
@@ -147,7 +147,7 @@ fourth step explained in the previous chapter "Bootstrap your AWS account".
 Click on Save, the new Environment should be displayed in the Environments section of the left side pane.
 
 
-## :material-card-search-outline: **Navigate Environment tabs**
+## :material-card-search-outline: **Manage your Environment**
 Go to the environment you want to check. You can find your environment in the Environments list clicking on the left
 side pane or by navigating to
 the environment organization. There are several tabs just below the environment name:
@@ -166,7 +166,7 @@ the environment organization. There are several tabs just below the environment 
     the environment in the
     environments menu or in the organization environments list. **Check the "Manage teams" section**
 
-## :material-cloud-check-outline: **Check CloudFormation stack**
+### :material-cloud-check-outline: **Check CloudFormation stack**
 After linking an environment we can check the deployment of AWS resources in CloudFormation, click on the environment
 and then on the **Stack** tab. Right after linking an environment you should find something like the below picture.
 
@@ -182,7 +182,7 @@ can manually trigger the update in case of change sets of the CloudFormation sta
 After being processed (not in `PENDING`), the status of the CloudFormation stack is directly read from
  <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html">CloudFormation</a>.
 
-## :material-pencil-outline: **Edit and update an environment**
+### :material-pencil-outline: **Edit and update an environment**
 Find your environment in the Environments list or by navigating to the corresponding organization. Once in your selected
 environment, click on **Edit** in the top-right corner of the window and make all the changes you want.
 
@@ -190,7 +190,7 @@ Finally, click on **Save** at the bottom-right side of the page to update the en
 !!! success "Automatically updates the CloudFormation stack"
     Clicking on Save will update the environment metadata as well as the CloudFormation stack on the AWS account
 
-## :material-trash-can-outline: **Delete an environment**
+### :material-trash-can-outline: **Delete an environment**
 In the chosen environment, next to the Edit button, click on the **Delete** button.
 
 !!! danger "orphan <span style="color:grey">*data.all*</span> resources"
@@ -201,8 +201,26 @@ In the chosen environment, next to the Edit button, click on the **Delete** butt
 Note that we can keep the environment CloudFormation stack. What is this for? This is useful in case you want to keep
 using the environment resources (IAM roles, etc) created by <span style="color:grey">*data.all*</span> but outside of <span style="color:grey">*data.all*</span>
 
+### :material-plus-network-outline: **Create networks**
+Networks are VPCs created from <span style="color:grey">*data.all*</span> and belonging to an environment and team. To create a network, click in the
+**Networks** tab in the environment window, then click on **Add** and finally fill the following form.
 
-## :material-account-plus-outline: **Manage teams**
+!!!abstract "I need an example!"
+    What is the advantage of using networks from <span style="color:grey">*data.all*</span>? ....[MISSING INFO]
+
+
+![](pictures/environments/env_networks.png#zoom#shadow)
+
+
+### :material-tag-remove-outline: **Create Key-value tags**
+In the **Tags** tab of the environment window, we can create key-value tags. These tags are not <span style="color:grey">*data.all*</span> tags
+that are used to tag datasets and find them in the catalog. In this case we are creating AWS tags as part of the
+environment CloudFormation stack. There are multiple tagging strategies as explained in the
+<a href="https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html">documentation</a>.
+
+
+
+## :material-account-plus-outline: **Manage Teams**
 
 Environment creators have all permissions on the environment,
 and can invite other teams to the onboarded environment. To add an IdP group to an environment, navigate to the
@@ -245,27 +263,31 @@ creator of the environment or invited to the environment). In the following pict
     of the environment. Same applies for **Tags** and **Subscriptions**. Other limitations come from the permissions that have
     been assigned to the team.
 
-
-## :material-aws: **AWS console access and credentials**
+### :material-aws: **AWS access**
 <span style="color:grey">*data.all*</span> makes it easier to manage access to your AWS accounts. How? remember when we assigned granular AWS permissions
 to invited groups and this created an IAM role? (If not, check the "Manage teams" section). From the **Teams** tab of
 the environment we can assume our team's IAM role to get access to the AWS Console or copy the credentials to the
 clipboard. Both options are under the "Actions" column in the Teams table.
 
-## :material-plus-network-outline: **Create networks**
-Networks are VPCs created from <span style="color:grey">*data.all*</span> and belonging to an environment and team. To create a network, click in the
-**Networks** tab in the environment window, then click on **Add** and finally fill the following form.
+## :material-account-plus-outline: **Manage Consumption Roles**
+Data.all creates or imports one IAM role per Cognito/IdP group that we invite to the environment. With these IAM roles data producers and consumers
+can ingest and consume data, but sometimes we want to consume data from an application such as SageMaker pipelines,
+Glue Jobs or any other downstream application. To increase the flexibility in the data consumption patterns, data.all introduces Consumption Roles.
 
-!!!abstract "I need an example!"
-    What is the advantage of using networks from <span style="color:grey">*data.all*</span>? ....[MISSING INFO]
+Any IAM role that exists in the Environment AWS Account can be added to data.all. In the **Teams** tab click on *Add Consumption Role*
 
+![](pictures/environments/env_consumption_roles_1.png#zoom#shadow)
 
-![](pictures/environments/env_networks.png#zoom#shadow)
+A window like the following will appear for you to introduce the arn of the IAM role and the Team that owns the consumption role.
+Only members of this team and tenants of data.all can remove the consumption role.
 
+![](pictures/environments/env_consumption_roles_2.png#zoom#shadow)
 
-## :material-tag-remove-outline: **Create Key-value tags**
-In the **Tags** tab of the environment window, we can create key-value tags. These tags are not <span style="color:grey">*data.all*</span> tags
-that are used to tag datasets and find them in the catalog. In this case we are creating AWS tags as part of the
-environment CloudFormation stack. There are multiple tagging strategies as explained in the
-<a href="https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html">documentation</a>.
+!!! success "Existing roles only"
+    Data.all checks whether that IAM role exists in the AWS account of the environment before adding it as a consumption role.
+
+**Data Access**
+
+- By default, a new consumption role does NOT have access to any data in data.all.
+- The team that owns the consumption role needs to open a share request for the consumption role as shown in the picture below.
 

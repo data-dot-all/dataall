@@ -462,11 +462,11 @@ const ShareView = () => {
           ) : (
             <Box sx={{ mt: 3 }}>
               <Grid container spacing={3}>
-                <Grid item md={7} xl={7} xs={12}>
+                <Grid item md={5} xl={5} xs={12}>
                   <Box sx={{ mb: 3 }}>
                     <Card {...share} sx={{ width: 1 }}>
                       <Box>
-                        <CardHeader title="Details" />
+                        <CardHeader title="Requested Dataset Details" />
                         <Divider />
                       </Box>
                       <CardContent>
@@ -487,14 +487,14 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
-                              Sharing manager
+                              Dataset Owners
                             </Typography>
                             <Box sx={{ mt: 1 }}>
                               <Typography
                                 color="textPrimary"
                                 variant="subtitle2"
                               >
-                                {share.dataset.businessOwnerEmail || '-'}
+                                {share.dataset.SamlAdminGroupName || '-'}
                               </Typography>
                             </Box>
                           </Box>
@@ -503,7 +503,23 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
-                              Role
+                              Dataset Environment
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              <Typography
+                                color="textPrimary"
+                                variant="subtitle2"
+                              >
+                                {share.dataset.environmentName || '-'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ mt: 3 }}>
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Your role for this request
                             </Typography>
                             <Box sx={{ mt: 1 }}>
                               <Typography
@@ -519,7 +535,7 @@ const ShareView = () => {
                     </Card>
                   </Box>
                 </Grid>
-                <Grid item md={5} xl={6} xs={12}>
+                <Grid item md={7} xl={7} xs={12}>
                   <Card {...share} style={{ height: '92%' }}>
                     <CardHeader
                       avatar={<TextAvatar name={share.owner} />}
@@ -542,7 +558,7 @@ const ShareView = () => {
                           display="block"
                           variant="overline"
                         >
-                          Created by
+                          Request created by
                         </Typography>
                       }
                     />
@@ -557,13 +573,13 @@ const ShareView = () => {
                           }}
                         >
                           <Typography color="textSecondary" variant="subtitle2">
-                            Environment
+                            Principal
                           </Typography>
                           <Typography
                             color="textPrimary"
                             variant="body2"
                             sx={{
-                              width: '300px',
+                              width: '500px',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -589,7 +605,37 @@ const ShareView = () => {
                           }}
                         >
                           <Typography color="textSecondary" variant="subtitle2">
-                            Created
+                            Requester Team
+                          </Typography>
+                          <Typography color="textPrimary" variant="body2">
+                            {share.principal.SamlGroupName || '-'}
+                          </Typography>
+                        </ListItem>
+                        <ListItem
+                          disableGutters
+                          divider
+                          sx={{
+                            justifyContent: 'space-between',
+                            padding: 2
+                          }}
+                        >
+                          <Typography color="textSecondary" variant="subtitle2">
+                            Requester Environment
+                          </Typography>
+                          <Typography color="textPrimary" variant="body2">
+                            {share.principal.environmentName || '-'}
+                          </Typography>
+                        </ListItem>
+                        <ListItem
+                          disableGutters
+                          divider
+                          sx={{
+                            justifyContent: 'space-between',
+                            padding: 2
+                          }}
+                        >
+                          <Typography color="textSecondary" variant="subtitle2">
+                            Creation time
                           </Typography>
                           <Typography color="textPrimary" variant="body2">
                             {share.created}

@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import subprocess
 from typing import List
 
 
@@ -13,8 +14,10 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
 
 from aws_cdk.aws_s3_assets import Asset
+from botocore.exceptions import ClientError
 
 from .manager import stack
+from ...aws.handlers.sts import SessionHelper
 from ... import db
 from ...db import models
 from ...db.api import Environment, Pipeline, Dataset
@@ -169,37 +172,60 @@ class PipelineStack(Stack):
             )
         )
 
-        PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file="deploy_buildspec.yaml")
+        try:
+            env_vars, aws = PipelineStack._set_env_vars(pipeline_environment)
+            codecommit_client = aws.client('codecommit', region_name=pipeline_environment.region)
+            repository = PipelineStack._check_repository(codecommit_client, pipeline.repo)
+            if repository:
+                PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
-        if pipeline.devStrategy == "trunk":
-            PipelineStack.write_init_deploy_buildspec(path=code_dir_path, output_file="init_deploy_buildspec.yaml")
+                logger.info(f"Pipeline Repo {pipeline.repo} Exists...Handling Update")
+                update_cmds = [
+                    f'REPO_NAME={pipeline.repo}',
+                    'COMMITID=$(aws codecommit get-branch --repository-name ${REPO_NAME} --branch-name main --query branch.commitId --output text)',
+                    'aws codecommit put-file --repository-name ${REPO_NAME} --branch-name main --file-content file://ddk.json --file-path ddk.json --parent-commit-id ${COMMITID} --cli-binary-format raw-in-base64-out',
+                ]
 
-        else:
-            PipelineStack.write_init_branches_deploy_buildspec(path=code_dir_path, output_file="init_branches_deploy_buildspec.yaml")
+                process = subprocess.run(
+                    "; ".join(update_cmds),
+                    text=True,
+                    shell=True,  # nosec
+                    encoding='utf-8',
+                    cwd=code_dir_path,
+                    env=env_vars
+                )
+            else:
+                raise Exception
+        except Exception as e:
+            PipelineStack.initialize_repo(pipeline, code_dir_path)
 
-        PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file="dataall_ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
+            PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
-        PipelineStack.cleanup_zip_directory(code_dir_path)
+            PipelineStack.write_ddk_json_multienvironment(path=code_dir_path, output_file=f"{pipeline.repo}/ddk.json", pipeline_environment=pipeline_environment, development_environments=development_environments)
 
-        PipelineStack.zip_directory(code_dir_path)
+            logger.info(f"Pipeline Repo {pipeline.repo} Does Not Exists... Creating Repository")
 
-        code_asset = Asset(
-            scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/code.zip"
-        )
+            PipelineStack.cleanup_zip_directory(code_dir_path)
 
-        code = codecommit.CfnRepository.CodeProperty(
-            s3=codecommit.CfnRepository.S3Property(
-                bucket=code_asset.s3_bucket_name,
-                key=code_asset.s3_object_key,
+            PipelineStack.zip_directory(os.path.join(code_dir_path, pipeline.repo))
+            code_asset = Asset(
+                scope=self, id=f"{pipeline.name}-asset", path=f"{code_dir_path}/{pipeline.repo}/code.zip"
             )
-        )
 
-        repository = codecommit.CfnRepository(
-            scope=self,
-            code=code,
-            id="CodecommitRepository",
-            repository_name=pipeline.repo,
-        )
+            code = codecommit.CfnRepository.CodeProperty(
+                s3=codecommit.CfnRepository.S3Property(
+                    bucket=code_asset.s3_bucket_name,
+                    key=code_asset.s3_object_key,
+                )
+            )
+
+            repository = codecommit.CfnRepository(
+                scope=self,
+                code=code,
+                id="CodecommitRepository",
+                repository_name=pipeline.repo,
+            )
+            repository.apply_removal_policy(RemovalPolicy.RETAIN)
 
         if pipeline.devStrategy == "trunk":
             codepipeline_pipeline = codepipeline.Pipeline(
@@ -227,9 +253,7 @@ class PipelineStack(Stack):
             )
 
             for env in sorted(development_environments, key=lambda env: env.order):
-
-                buildspec = "init_deploy_buildspec.yaml" if env.order == 1 else "deploy_buildspec.yaml"
-
+                buildspec = "deploy_buildspec.yaml"
                 build_project = codebuild.PipelineProject(
                     scope=self,
                     id=f'{pipeline.name}-build-{env.stage}',
@@ -274,8 +298,9 @@ class PipelineStack(Stack):
 
         else:
             for env in development_environments:
-                branch_name = 'main' if (env.stage == 'prod' or development_environments.count() == 1) else env.stage
-                buildspec = "init_branches_deploy_buildspec.yaml" if (env.stage == 'prod' or development_environments.count() == 1) else "deploy_buildspec.yaml"
+                branch_name = 'main' if (env.stage == 'prod') else env.stage
+                buildspec = "deploy_buildspec.yaml"
+
                 codepipeline_pipeline = codepipeline.Pipeline(
                     scope=self,
                     id=f"{pipeline.name}-{env.stage}",
@@ -332,7 +357,6 @@ class PipelineStack(Stack):
                 )
 
         # CloudFormation output
-
         CfnOutput(
             self,
             "RepoNameOutput",
@@ -351,6 +375,7 @@ class PipelineStack(Stack):
         CDKNagUtil.check_rules(self)
 
         PipelineStack.cleanup_zip_directory(code_dir_path)
+        PipelineStack.cleanup_pipeline_directory(os.path.join(code_dir_path, pipeline.repo))
 
     @staticmethod
     def zip_directory(path):
@@ -366,6 +391,13 @@ class PipelineStack(Stack):
             os.remove(f"{path}/code.zip")
         else:
             logger.info("Info: %s Zip not found" % f"{path}/code.zip")
+
+    @staticmethod
+    def cleanup_pipeline_directory(path):
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            logger.info("Info: %s Directory not found" % f"{path}")
 
     @staticmethod
     def make_environment_variables(
@@ -392,110 +424,6 @@ class PipelineStack(Stack):
         return env_vars
 
     @staticmethod
-    def write_init_deploy_buildspec(path, output_file):
-        yaml = """
-            version: '0.2'
-            env:
-                git-credential-helper: yes
-            phases:
-              pre_build:
-                commands:
-                - n 16.15.1
-                - npm install -g aws-cdk
-                - pip install aws-ddk
-                - |
-                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-                    echo "first build";
-                  else
-                    echo "not first build";
-                  fi
-                - git config --global user.email "codebuild@example.com"
-                - git config --global user.name "CodeBuild"
-                - |
-                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}";
-                    cd $PIPELINE_NAME;
-                    git checkout main;
-                    ddk init --generate-only ddk-app;
-                    cp -R ddk-app/* ./;
-                    rm -r ddk-app;
-                    cp dataall_ddk.json ./ddk.json;
-                    cp app_multiaccount.py ./app.py;
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py;
-                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py;
-                    git add .;
-                    git commit -m "First Commit from CodeBuild - DDK application";
-                    git push --set-upstream origin main;
-                  else
-                    echo "not first build";
-                  fi
-                - pip install -r requirements.txt
-              build:
-                commands:
-                    - aws sts get-caller-identity
-                    - ddk deploy
-        """
-        with open(f'{path}/{output_file}', 'w') as text_file:
-            print(yaml, file=text_file)
-
-    @staticmethod
-    def write_init_branches_deploy_buildspec(path, output_file):
-        yaml = """
-            version: '0.2'
-            env:
-                git-credential-helper: yes
-            phases:
-              install:
-                commands:
-                - 'n 16.15.1'
-              pre_build:
-                commands:
-                - n 16.15.1
-                - npm install -g aws-cdk
-                - pip install aws-ddk
-                - |
-                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-                    echo "first build";
-                  else
-                    echo "not first build";
-                  fi
-                - git config --global user.email "codebuild@example.com"
-                - git config --global user.name "CodeBuild"
-                - |
-                  if [ ${CODEBUILD_BUILD_NUMBER} == 1 ] ; then
-                    git clone "https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${PIPELINE_NAME}";
-                    cd $PIPELINE_NAME;
-                    git checkout main;
-                    ddk init --generate-only ddk-app;
-                    cp -R ddk-app/* ./;
-                    rm -r ddk-app;
-                    cp dataall_ddk.json ./ddk.json;
-                    cp app_multiaccount.py ./app.py;
-                    cp ddk_app/ddk_app_stack_multiaccount.py ./ddk_app/ddk_app_stack.py;
-                    rm dataall_ddk.json app_multiaccount.py ddk_app/ddk_app_stack_multiaccount.py;
-                    git add .;
-                    git commit -m "First Commit from CodeBuild - DDK application";
-                    git push --set-upstream origin main;
-                    IFS=','
-                    for stage in $DEV_STAGES; do
-                      if [ $stage != "prod" ]; then
-                        git checkout -b $stage;
-                        git push --set-upstream origin $stage;
-                      fi;
-                    done;
-                  else
-                    echo "not first build";
-                  fi
-                - pip install -r requirements.txt
-              build:
-                commands:
-                    - aws sts get-caller-identity
-                    - ddk deploy
-        """
-        with open(f'{path}/{output_file}', 'w') as text_file:
-            print(yaml, file=text_file)
-
-    @staticmethod
     def write_deploy_buildspec(path, output_file):
         yaml = """
             version: '0.2'
@@ -513,7 +441,7 @@ class PipelineStack(Stack):
                     - aws sts get-caller-identity
                     - ddk deploy
         """
-        with open(f'{path}/{output_file}', 'w') as text_file:
+        with open(f'{path}/{output_file}', 'x') as text_file:
             print(yaml, file=text_file)
 
     @staticmethod
@@ -551,8 +479,6 @@ class PipelineStack(Stack):
                 ],
                 resources=[f"arn:aws:codecommit:{pipeline_environment.region}:{pipeline_environment.AwsAccountId}:{pipeline.repo}"],
             )
-
-
         ]
 
     @staticmethod
@@ -583,3 +509,62 @@ class PipelineStack(Stack):
 
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
+
+    def initialize_repo(pipeline, code_dir_path):
+
+        venv_name = ".venv"
+
+        cmd_init = [
+            f"ddk init {pipeline.repo} --generate-only",
+            f"cp app_multiaccount.py ./{pipeline.repo}/app.py",
+            f"cp ddk_app/ddk_app_stack_multiaccount.py ./{pipeline.repo}/ddk_app/ddk_app_stack.py",
+            f"mkdir ./{pipeline.repo}/utils",
+            f"cp -R utils/* ./{pipeline.repo}/utils/"
+        ]
+
+        logger.info(f"Running Commands: {'; '.join(cmd_init)}")
+
+        process = subprocess.run(
+            '; '.join(cmd_init),
+            text=True,
+            shell=True,  # nosec
+            encoding='utf-8',
+            cwd=code_dir_path
+        )
+        if process.returncode == 0:
+            logger.info("Successfully Initialized New CDK/DDK App")
+            return
+
+    @staticmethod
+    def _set_env_vars(pipeline_environment):
+        aws = SessionHelper.remote_session(pipeline_environment.AwsAccountId)
+        env_creds = aws.get_credentials()
+
+        env = {
+            'AWS_REGION': pipeline_environment.region,
+            'AWS_DEFAULT_REGION': pipeline_environment.region,
+            'CURRENT_AWS_ACCOUNT': pipeline_environment.AwsAccountId,
+            'envname': os.environ.get('envname', 'local'),
+        }
+        if env_creds:
+            env.update(
+                {
+                    'AWS_ACCESS_KEY_ID': env_creds.access_key,
+                    'AWS_SECRET_ACCESS_KEY': env_creds.secret_key,
+                    'AWS_SESSION_TOKEN': env_creds.token
+                }
+            )
+        return env, aws
+
+    @staticmethod
+    def _check_repository(codecommit_client, repo_name):
+        repository = None
+        logger.info(f"Checking Repository Exists: {repo_name}")
+        try:
+            repository = codecommit_client.get_repository(repositoryName=repo_name)
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'RepositoryDoesNotExistException':
+                logger.debug(f'Repository does not exists {repo_name} %s', e)
+            else:
+                raise e
+        return repository if repository else None

@@ -87,3 +87,14 @@ class CodeCommit:
             (pipe, env, client) = CodeCommit._unpack(session, task)
             response = client.list_branches(repositoryName=pipe.repo)
             return response['branches']
+
+    @staticmethod
+    @Worker.handler(path='repo.datapipeline.delete')
+    def delete_repository(engine: Engine, task: models.Task):
+        with engine.scoped_session() as session:
+            cc_client = CodeCommit.client(
+                task.payload.get('accountid', '111111111111'),
+                task.payload.get('region', 'eu-west-1')
+            )
+            response = cc_client.delete_repository(repositoryName=task.payload.get("repo_name", "dataall-repo"))
+            return True

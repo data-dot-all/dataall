@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Boolean
 
 from .. import Base
 from .. import Resource, utils
@@ -11,3 +11,4 @@ class KeyValueTag(Base):
     targetType = Column(String, nullable=False)
     key = Column(String, nullable=False)
     value = Column(String, nullable=False)
+    cascade = Column(Boolean, default=False)

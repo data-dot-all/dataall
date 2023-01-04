@@ -10,7 +10,7 @@ from ....aws.handlers.iam import IAM
 
 from ....utils.alarm_service import AlarmService
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class S3ShareManager:
@@ -43,7 +43,7 @@ class S3ShareManager:
         self.source_account_id = dataset.AwsAccountId
         self.target_account_id = target_environment.AwsAccountId
         self.source_env_admin = source_env_group.environmentIAMRoleArn
-        self.target_env_admin = env_group.environmentIAMRoleName
+        self.target_requester_IAMRoleName = share.principalIAMRoleName
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = dataset.AwsAccountId
@@ -56,7 +56,10 @@ class S3ShareManager:
         and environment admin. All of the policies will only be added once.
         :return:
         """
-        bucket_policy = json.loads(S3.get_bucket_policy(self.source_account_id, self.bucket_name))
+        logger.info(
+            f'Manage Bucket policy for {self.bucket_name}'
+        )
+        bucket_policy = json.loads(S3.get_bucket_policy(self.source_account_id, self.source_environment.region, self.bucket_name))
         for statement in bucket_policy["Statement"]:
             if statement.get("Sid") in ["AllowAllToAdmin", "DelegateAccessToAccessPoint"]:
                 return
@@ -96,20 +99,27 @@ class S3ShareManager:
         }
         bucket_policy["Statement"].append(allow_owner_access)
         bucket_policy["Statement"].append(delegated_to_accesspoint)
-        S3.create_bucket_policy(self.source_account_id, self.bucket_name, json.dumps(bucket_policy))
+        S3.create_bucket_policy(self.source_account_id, self.source_environment.region, self.bucket_name, json.dumps(bucket_policy))
 
     def grant_target_role_access_policy(self):
         """
         Updates requester IAM role policy to include requested S3 bucket and access point
         :return:
         """
+        logger.info(
+            f'Grant target role {self.target_requester_IAMRoleName} access policy'
+        )
         existing_policy = IAM.get_role_policy(
             self.target_account_id,
-            self.target_env_admin,
+            self.target_requester_IAMRoleName,
             "targetDatasetAccessControlPolicy",
         )
         if existing_policy:  # type dict
             if self.bucket_name not in ",".join(existing_policy["Statement"][0]["Resource"]):
+                logger.info(
+                    f'targetDatasetAccessControlPolicy exists for IAM role {self.target_requester_IAMRoleName}, '
+                    f'but S3 Access point {self.access_point_name} is not included, updating...'
+                )
                 target_resources = [
                     f"arn:aws:s3:::{self.bucket_name}",
                     f"arn:aws:s3:::{self.bucket_name}/*",
@@ -118,8 +128,15 @@ class S3ShareManager:
                 ]
                 policy = existing_policy["Statement"][0]["Resource"].extend(target_resources)
             else:
+                logger.info(
+                    f'targetDatasetAccessControlPolicy exists for IAM role {self.target_requester_IAMRoleName} '
+                    f'and S3 Access point {self.access_point_name} is included, skipping...'
+                )
                 return
         else:
+            logger.info(
+                f'targetDatasetAccessControlPolicy does not exists for IAM role {self.target_requester_IAMRoleName}, creating...'
+            )
             policy = {
                 "Version": "2012-10-17",
                 "Statement": [
@@ -139,7 +156,7 @@ class S3ShareManager:
             }
         IAM.update_role_policy(
             self.target_account_id,
-            self.target_env_admin,
+            self.target_requester_IAMRoleName,
             "targetDatasetAccessControlPolicy",
             json.dumps(policy),
         )
@@ -149,33 +166,39 @@ class S3ShareManager:
         :return:
         """
 
-        access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.access_point_name)
+        access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name)
         if not access_point_arn:
-            access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.bucket_name, self.access_point_name)
-        existing_policy = S3.get_access_point_policy(self.source_account_id, self.access_point_name)
+            logger.info(
+                'Access point does not exists, creating...'
+            )
+            access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.source_environment.region, self.bucket_name, self.access_point_name)
+        existing_policy = S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name)
         # requester will use this role to access resources
-        target_env_admin_id = SessionHelper.get_role_id(self.target_account_id, self.target_env_admin)
+        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
         if existing_policy:
             # Update existing access point policy
+            logger.info(
+                f'There is already an existing access point {access_point_arn} with an existing policy, updating policy...'
+            )
             existing_policy = json.loads(existing_policy)
             statements = {item["Sid"]: item for item in existing_policy["Statement"]}
-            if f"{target_env_admin_id}0" in statements.keys():
-                prefix_list = statements[f"{target_env_admin_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+            if f"{target_requester_id}0" in statements.keys():
+                prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
                 if isinstance(prefix_list, str):
                     prefix_list = [prefix_list]
                 if f"{self.s3_prefix}/*" not in prefix_list:
                     prefix_list.append(f"{self.s3_prefix}/*")
-                    statements[f"{target_env_admin_id}0"]["Condition"]["StringLike"]["s3:prefix"] = prefix_list
-                resource_list = statements[f"{target_env_admin_id}1"]["Resource"]
+                    statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"] = prefix_list
+                resource_list = statements[f"{target_requester_id}1"]["Resource"]
                 if isinstance(resource_list, str):
                     resource_list = [resource_list]
                 if f"{access_point_arn}/object/{self.s3_prefix}/*" not in resource_list:
                     resource_list.append(f"{access_point_arn}/object/{self.s3_prefix}/*")
-                    statements[f"{target_env_admin_id}1"]["Resource"] = resource_list
+                    statements[f"{target_requester_id}1"]["Resource"] = resource_list
                 existing_policy["Statement"] = list(statements.values())
             else:
                 additional_policy = S3.generate_access_point_policy_template(
-                    target_env_admin_id,
+                    target_requester_id,
                     access_point_arn,
                     self.s3_prefix,
                 )
@@ -183,8 +206,11 @@ class S3ShareManager:
             access_point_policy = existing_policy
         else:
             # First time to create access point policy
+            logger.info(
+                f'Access point policy for access point {access_point_arn} does not exists, creating policy...'
+            )
             access_point_policy = S3.generate_access_point_policy_template(
-                target_env_admin_id,
+                target_requester_id,
                 access_point_arn,
                 self.s3_prefix,
             )
@@ -205,18 +231,21 @@ class S3ShareManager:
                 }
             }
             access_point_policy["Statement"].append(admin_statement)
-        S3.attach_access_point_policy(self.source_account_id, self.access_point_name, json.dumps(access_point_policy))
+        S3.attach_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name, json.dumps(access_point_policy))
 
     def update_dataset_bucket_key_policy(self):
+        logger.info(
+            'Updating dataset Bucket KMS key policy...'
+        )
         key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_keyId = KMS.get_key_id(self.source_account_id, key_alias)
-        existing_policy = KMS.get_key_policy(self.source_account_id, kms_keyId, "default")
-        target_env_admin_id = SessionHelper.get_role_id(self.target_account_id, self.target_env_admin)
-        if existing_policy and f'{target_env_admin_id}:*' not in existing_policy:
+        kms_keyId = KMS.get_key_id(self.source_account_id, self.source_environment.region, key_alias)
+        existing_policy = KMS.get_key_policy(self.source_account_id, self.source_environment.region, kms_keyId, "default")
+        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        if existing_policy and f'{target_requester_id}:*' not in existing_policy:
             policy = json.loads(existing_policy)
             policy["Statement"].append(
                 {
-                    "Sid": f"{target_env_admin_id}",
+                    "Sid": f"{target_requester_id}",
                     "Effect": "Allow",
                     "Principal": {
                         "AWS": "*"
@@ -225,47 +254,57 @@ class S3ShareManager:
                     "Resource": "*",
                     "Condition": {
                         "StringLike": {
-                            "aws:userId": f"{target_env_admin_id}:*"
+                            "aws:userId": f"{target_requester_id}:*"
                         }
                     }
                 }
             )
             KMS.put_key_policy(
                 self.source_account_id,
+                self.source_environment.region,
                 kms_keyId,
                 "default",
                 json.dumps(policy)
             )
 
     def delete_access_point_policy(self):
-        access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.access_point_name))
-        access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.access_point_name)
-        target_env_admin_id = SessionHelper.get_role_id(self.target_account_id, self.target_env_admin)
+        logger.info(
+            f'Deleting access point policy for access point {self.access_point_name}...'
+        )
+        access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name))
+        access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name)
+        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
         statements = {item["Sid"]: item for item in access_point_policy["Statement"]}
-        if f"{target_env_admin_id}0" in statements.keys():
-            prefix_list = statements[f"{target_env_admin_id}0"]["Condition"]["StringLike"]["s3:prefix"]
+        if f"{target_requester_id}0" in statements.keys():
+            prefix_list = statements[f"{target_requester_id}0"]["Condition"]["StringLike"]["s3:prefix"]
             if isinstance(prefix_list, list) and f"{self.s3_prefix}/*" in prefix_list:
                 prefix_list.remove(f"{self.s3_prefix}/*")
-                statements[f"{target_env_admin_id}1"]["Resource"].remove(f"{access_point_arn}/object/{self.s3_prefix}/*")
+                statements[f"{target_requester_id}1"]["Resource"].remove(f"{access_point_arn}/object/{self.s3_prefix}/*")
                 access_point_policy["Statement"] = list(statements.values())
             else:
-                access_point_policy["Statement"].remove(statements[f"{target_env_admin_id}0"])
-                access_point_policy["Statement"].remove(statements[f"{target_env_admin_id}1"])
-        S3.attach_access_point_policy(self.source_account_id, self.access_point_name, json.dumps(access_point_policy))
+                access_point_policy["Statement"].remove(statements[f"{target_requester_id}0"])
+                access_point_policy["Statement"].remove(statements[f"{target_requester_id}1"])
+        S3.attach_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name, json.dumps(access_point_policy))
 
     def delete_access_point(self):
-        access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.access_point_name))
+        logger.info(
+            f'Deleting access point {self.access_point_name}...'
+        )
+        access_point_policy = json.loads(S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name))
         if len(access_point_policy["Statement"]) <= 1:
             # At least we have the 'AllowAllToAdmin' statement
-            S3.delete_bucket_access_point(self.source_account_id, self.access_point_name)
+            S3.delete_bucket_access_point(self.source_account_id, self.source_environment.region, self.access_point_name)
             return True
         else:
             return False
 
     def delete_target_role_access_policy(self):
+        logger.info(
+            'Deleting target role IAM policy...'
+        )
         existing_policy = IAM.get_role_policy(
             self.target_account_id,
-            self.target_env_admin,
+            self.target_requester_IAMRoleName,
             "targetDatasetAccessControlPolicy",
         )
         if existing_policy:
@@ -279,25 +318,29 @@ class S3ShareManager:
                 for item in target_resources:
                     existing_policy["Statement"][0]["Resource"].remove(item)
                 if not existing_policy["Statement"][0]["Resource"]:
-                    IAM.delete_role_policy(self.target_account_id, self.target_env_admin, "targetDatasetAccessControlPolicy")
+                    IAM.delete_role_policy(self.target_account_id, self.target_requester_IAMRoleName, "targetDatasetAccessControlPolicy")
                 else:
                     IAM.update_role_policy(
                         self.target_account_id,
-                        self.target_env_admin,
+                        self.target_requester_IAMRoleName,
                         "targetDatasetAccessControlPolicy",
                         json.dumps(existing_policy),
                     )
 
     def delete_dataset_bucket_key_policy(self):
+        logger.info(
+            'Deleting dataset bucket KMS key policy...'
+        )
         key_alias = f"alias/{self.dataset.KmsAlias}"
-        kms_keyId = KMS.get_key_id(self.source_account_id, key_alias)
-        existing_policy = KMS.get_key_policy(self.source_account_id, kms_keyId, "default")
-        target_env_admin_id = SessionHelper.get_role_id(self.target_account_id, self.target_env_admin)
-        if existing_policy and f'{target_env_admin_id}:*' in existing_policy:
+        kms_keyId = KMS.get_key_id(self.source_account_id, self.source_environment.region, key_alias)
+        existing_policy = KMS.get_key_policy(self.source_account_id, self.source_environment.region, kms_keyId, "default")
+        target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
+        if existing_policy and f'{target_requester_id}:*' in existing_policy:
             policy = json.loads(existing_policy)
-            policy["Statement"] = [item for item in policy["Statement"] if item["Sid"] != f"{target_env_admin_id}"]
+            policy["Statement"] = [item for item in policy["Statement"] if item["Sid"] != f"{target_requester_id}"]
             KMS.put_key_policy(
                 self.source_account_id,
+                self.source_environment.region,
                 kms_keyId,
                 "default",
                 json.dumps(policy)
@@ -310,7 +353,7 @@ class S3ShareManager:
         -------
         True if alarm published successfully
         """
-        logging.error(
+        logger.error(
             f'Failed to share folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
@@ -333,7 +376,7 @@ class S3ShareManager:
         -------
         True if alarm published successfully
         """
-        logging.error(
+        logger.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '

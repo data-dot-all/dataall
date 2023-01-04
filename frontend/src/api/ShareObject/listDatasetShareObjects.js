@@ -32,11 +32,14 @@ const listDatasetShareObjects = ({ datasetUri, filter }) => ({
               principalId
               principalType
               principalName
+              principalIAMRoleName
+              SamlGroupName
+              environmentUri
+              environmentName
               AwsAccountId
               region
-              SamlGroupName
-              organizationName
               organizationUri
+              organizationName
             }
           }
         }

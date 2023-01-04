@@ -76,7 +76,7 @@ def get_monitoring_vpc_connection_id(context, source):
 def create_quicksight_data_source_set(context, source, vpcConnectionId: str = None):
     current_account = SessionHelper.get_account()
     region = os.getenv('AWS_REGION', 'eu-west-1')
-    user = Quicksight.register_user(AwsAccountId=current_account, UserName=context.username, UserRole='AUTHOR')
+    user = Quicksight.register_user_in_group(AwsAccountId=current_account, UserName=context.username, GroupName='dataall', UserRole='AUTHOR')
 
     datasourceId = Quicksight.create_data_source_vpc(AwsAccountId=current_account, region=region, UserName=context.username, vpcConnectionId=vpcConnectionId)
     # Data sets are not created programmatically. Too much overhead for the value added. However, an example API is provided:

@@ -26,6 +26,7 @@ class BackendStage(Stage):
         quicksight_enabled=False,
         enable_cw_canaries=False,
         enable_cw_rum=False,
+        shared_dashboard_sessions='anonymous',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -49,6 +50,7 @@ class BackendStage(Stage):
             quicksight_enabled=quicksight_enabled,
             enable_cw_canaries=enable_cw_canaries,
             enable_cw_rum=enable_cw_rum,
+            shared_dashboard_sessions=shared_dashboard_sessions,
             **kwargs,
         )
 

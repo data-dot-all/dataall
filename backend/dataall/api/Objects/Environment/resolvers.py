@@ -13,6 +13,7 @@ from ...constants import *
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
+from ....aws.handlers.iam import IAM
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -120,6 +121,27 @@ def invite_group(context: Context, source, input):
     return environment
 
 
+def add_consumption_role(context: Context, source, input):
+    with context.engine.scoped_session() as session:
+        env = db.api.Environment.get_environment_by_uri(session, input['environmentUri'])
+        role = IAM.get_role(env.AwsAccountId, input['IAMRoleArn'])
+        if not role:
+            raise exceptions.AWSResourceNotFound(
+                action='ADD_CONSUMPTION_ROLE',
+                message=f"{input['IAMRoleArn']} does not exist in this account",
+            )
+        consumption_role = db.api.Environment.add_consumption_role(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=input['environmentUri'],
+            data=input,
+            check_perm=True,
+        )
+
+    return consumption_role
+
+
 def update_group_permissions(context, source, input):
     with context.engine.scoped_session() as session:
         environment = db.api.Environment.update_group_permissions(
@@ -150,6 +172,20 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
 
     return environment
+
+
+def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
+    with context.engine.scoped_session() as session:
+        status = db.api.Environment.remove_consumption_role(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=consumptionRoleUri,
+            data={'environmentUri': environmentUri},
+            check_perm=True,
+        )
+
+    return status
 
 
 def list_environment_invited_groups(
@@ -189,6 +225,38 @@ def list_all_environment_groups(
         filter = {}
     with context.engine.scoped_session() as session:
         return db.api.Environment.paginated_all_environment_groups(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environmentUri,
+            data=filter,
+            check_perm=True,
+        )
+
+
+def list_environment_consumption_roles(
+    context: Context, source, environmentUri=None, filter=None
+):
+    if filter is None:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.Environment.paginated_user_environment_consumption_roles(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environmentUri,
+            data=filter,
+            check_perm=True,
+        )
+
+
+def list_all_environment_consumption_roles(
+    context: Context, source, environmentUri=None, filter=None
+):
+    if filter is None:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.Environment.paginated_all_environment_consumption_roles(
             session=session,
             username=context.username,
             groups=context.groups,

@@ -18,7 +18,7 @@ NewDataPipelineEnvironmentInput = gql.InputType(
     arguments=[
         gql.Argument(name='stage', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='order', type=gql.NonNullableType(gql.Integer)),
-        gql.Argument(name='pipelineUri', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='pipelineUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentLabel', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='samlGroupName', type=gql.NonNullableType(gql.String)),

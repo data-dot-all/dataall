@@ -151,7 +151,7 @@ class S3ShareApproval(S3ShareManager):
         access_point_name = f"{dataset.datasetUri}-{share.principalId}".lower()
         target_account_id = target_environment.AwsAccountId
         target_env_admin = env_group.environmentIAMRoleName
-        access_point_policy = S3.get_access_point_policy(source_account_id, access_point_name)
+        access_point_policy = S3.get_access_point_policy(source_account_id, dataset.region, access_point_name)
         if access_point_policy:
             policy = json.loads(access_point_policy)
             target_env_admin_id = SessionHelper.get_role_id(target_account_id, target_env_admin)

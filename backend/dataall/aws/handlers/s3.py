@@ -20,15 +20,16 @@ class S3:
             return location
 
     @staticmethod
-    def client(account_id: str, client_type: str):
+    def client(account_id: str, region: str, client_type: str):
         session = SessionHelper.remote_session(accountid=account_id)
-        return session.client(client_type)
+        return session.client(client_type, region_name=region)
 
     @staticmethod
     def create_bucket_prefix(location):
         try:
             accountid = location.AWSAccountId
-            s3cli = S3.client(account_id=accountid, client_type='s3')
+            region = location.region
+            s3cli = S3.client(account_id=accountid, region=region, client_type='s3')
             response = s3cli.put_object(
                 Bucket=location.S3BucketName, Body='', Key=location.S3Prefix + '/'
             )
@@ -45,9 +46,9 @@ class S3:
             raise e
 
     @staticmethod
-    def create_bucket_policy(account_id: str, bucket_name: str, policy: str):
+    def create_bucket_policy(account_id: str, region: str, bucket_name: str, policy: str):
         try:
-            s3cli = S3.client(account_id=account_id, client_type='s3')
+            s3cli = S3.client(account_id=account_id, region=region, client_type='s3')
             s3cli.put_bucket_policy(
                 Bucket=bucket_name,
                 Policy=policy,
@@ -64,9 +65,9 @@ class S3:
             raise e
 
     @staticmethod
-    def get_bucket_policy(account_id: str, bucket_name: str):
+    def get_bucket_policy(account_id: str, region: str, bucket_name: str):
         try:
-            s3cli = S3.client(account_id=account_id, client_type='s3')
+            s3cli = S3.client(account_id=account_id, region=region, client_type='s3')
             response = s3cli.get_bucket_policy(Bucket=bucket_name, ExpectedBucketOwner=account_id)
         except Exception as e:
             log.warning(
@@ -77,9 +78,9 @@ class S3:
             return response['Policy']
 
     @staticmethod
-    def get_bucket_access_point_arn(account_id: str, access_point_name: str):
+    def get_bucket_access_point_arn(account_id: str, region: str, access_point_name: str):
         try:
-            s3control = S3.client(account_id, 's3control')
+            s3control = S3.client(account_id, region, 's3control')
             access_point = s3control.get_access_point(
                 AccountId=account_id,
                 Name=access_point_name,
@@ -93,9 +94,9 @@ class S3:
             return access_point["AccessPointArn"]
 
     @staticmethod
-    def create_bucket_access_point(account_id: str, bucket_name: str, access_point_name: str):
+    def create_bucket_access_point(account_id: str, region: str, bucket_name: str, access_point_name: str):
         try:
-            s3control = S3.client(account_id, 's3control')
+            s3control = S3.client(account_id, region, 's3control')
             access_point = s3control.create_access_point(
                 AccountId=account_id,
                 Name=access_point_name,
@@ -110,9 +111,9 @@ class S3:
             return access_point["AccessPointArn"]
 
     @staticmethod
-    def delete_bucket_access_point(account_id: str, access_point_name: str):
+    def delete_bucket_access_point(account_id: str, region: str, access_point_name: str):
         try:
-            s3control = S3.client(account_id, 's3control')
+            s3control = S3.client(account_id, region, 's3control')
             s3control.delete_access_point(
                 AccountId=account_id,
                 Name=access_point_name,
@@ -124,9 +125,9 @@ class S3:
             raise e
 
     @staticmethod
-    def get_access_point_policy(account_id: str, access_point_name: str):
+    def get_access_point_policy(account_id: str, region: str, access_point_name: str):
         try:
-            s3control = S3.client(account_id, 's3control')
+            s3control = S3.client(account_id, region, 's3control')
             response = s3control.get_access_point_policy(
                 AccountId=account_id,
                 Name=access_point_name,
@@ -140,9 +141,9 @@ class S3:
             return response['Policy']
 
     @staticmethod
-    def attach_access_point_policy(account_id: str, access_point_name: str, policy: str):
+    def attach_access_point_policy(account_id: str, region: str, access_point_name: str, policy: str):
         try:
-            s3control = S3.client(account_id, 's3control')
+            s3control = S3.client(account_id, region, 's3control')
             s3control.put_access_point_policy(
                 AccountId=account_id,
                 Name=access_point_name,
