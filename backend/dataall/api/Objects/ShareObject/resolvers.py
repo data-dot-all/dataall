@@ -324,85 +324,9 @@ def resolve_share_object_statistics(context: Context, source: models.ShareObject
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        tables = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetTable',
-                )
-            )
-            .count()
+        return db.api.ShareObject.resolve_share_object_statistics(
+            session, source.shareUri
         )
-        locations = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetStorageLocation',
-                )
-            )
-            .count()
-        )
-        shared_states = [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Share_In_Progress.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Rejected.value,
-            ShareItemStatus.Revoke_Approved.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.PendingRevoke.value
-        ]
-        shared_items = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.status.in_(shared_states),
-                )
-            )
-            .count()
-        )
-        revoked_items = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.status.in_([ShareItemStatus.Revoke_Succeeded.value]),
-                )
-            )
-            .count()
-        )
-        failed_states = [
-            ShareItemStatus.Share_Failed.value,
-            ShareItemStatus.Revoke_Failed.value
-        ]
-        failed_items = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.status.in_(failed_states),
-                )
-            )
-            .count()
-        )
-        pending_states = [
-            ShareItemStatus.PendingRevoke.value,
-            ShareItemStatus.PendingApproval.value
-        ]
-        pending_items = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.status.in_(pending_states),
-                )
-            )
-            .count()
-        )
-    return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items, 'failedItems': failed_items, 'pendingItems': pending_items}
 
 
 def list_shareable_objects(

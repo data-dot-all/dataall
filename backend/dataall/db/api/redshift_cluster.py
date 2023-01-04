@@ -184,6 +184,7 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
+
         shared = (
             session.query(
                 models.ShareObject.datasetUri.label('datasetUri'),
@@ -197,13 +198,15 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    models.ShareObjectItem.status.in_(
+                        [
+                            models.Enums.ShareItemStatus.Share_Succeeded.value,
+                            models.Enums.ShareItemStatus.PendingRevoke.value,
+                            models.Enums.ShareItemStatus.Revoke_Rejected.value,
+                            models.Enums.ShareItemStatus.Revoke_Approved.value,
+                            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+                            models.Enums.ShareItemStatus.Revoke_Failed.value
+                        ]
                     ),
                     or_(
                         models.ShareObject.owner == username,
@@ -324,13 +327,15 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
+                    models.ShareObjectItem.status.in_(
+                        [
+                            models.Enums.ShareItemStatus.Share_Succeeded.value,
+                            models.Enums.ShareItemStatus.PendingRevoke.value,
+                            models.Enums.ShareItemStatus.Revoke_Rejected.value,
+                            models.Enums.ShareItemStatus.Revoke_Approved.value,
+                            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+                            models.Enums.ShareItemStatus.Revoke_Failed.value
+                        ]
                     ),
                     or_(
                         models.ShareObject.owner == username,

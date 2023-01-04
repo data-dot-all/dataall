@@ -181,19 +181,20 @@ class DatasetStorageLocation:
         location = DatasetStorageLocation.get_location_by_uri(
             session, data['locationUri']
         )
+        shared_states = [
+            models.Enums.ShareItemStatus.Share_Succeeded.value,
+            models.Enums.ShareItemStatus.PendingRevoke.value,
+            models.Enums.ShareItemStatus.Revoke_Rejected.value,
+            models.Enums.ShareItemStatus.Revoke_Approved.value,
+            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+            models.Enums.ShareItemStatus.Revoke_Failed.value
+        ]
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == location.locationUri,
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
-                    )
+                    models.ShareObjectItem.status.in_(shared_states)
                 )
             )
             .first()
@@ -220,6 +221,15 @@ class DatasetStorageLocation:
         """
         helper function to get all storage locations for an environment, regardless of the datataset
         """
+        shared_states = [
+            models.Enums.ShareItemStatus.Share_Succeeded.value,
+            models.Enums.ShareItemStatus.PendingRevoke.value,
+            models.Enums.ShareItemStatus.Revoke_Rejected.value,
+            models.Enums.ShareItemStatus.Revoke_Approved.value,
+            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+            models.Enums.ShareItemStatus.Revoke_Failed.value
+        ]
+
         locations = (
             session.query(models.DatasetStorageLocation)  # all locations
             .join(
@@ -237,14 +247,7 @@ class DatasetStorageLocation:
             )
             .filter(
                 and_(
-                    or_(
-                        models.ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
-                        models.ShareObjectItem.status == ShareItemStatus.PendingRevoke.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Rejected.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Approved.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_In_Progress.value,
-                        models.ShareObjectItem.status == ShareItemStatus.Revoke_Failed.value,
-                    ),
+                    models.ShareObjectItem.status.in_(shared_states),
                     models.ShareObject.environmentUri == environment_uri,
                 )
             )

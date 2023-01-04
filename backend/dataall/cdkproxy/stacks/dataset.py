@@ -101,14 +101,7 @@ class Dataset(Stack):
                     and_(
                         models.DatasetTable.datasetUri == self.target_uri,
                         models.DatasetTable.deleted.is_(None),
-                        or_(
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Share_Succeeded.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.PendingRevoke.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Rejected.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Approved.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Failed.value,
-                        )
+                        models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )
                 .all()
@@ -147,14 +140,7 @@ class Dataset(Stack):
                     and_(
                         models.DatasetStorageLocation.datasetUri == self.target_uri,
                         models.DatasetStorageLocation.deleted.is_(None),
-                        or_(
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Share_Succeeded.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.PendingRevoke.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Rejected.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Approved.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-                            models.ShareObjectItem.status == models.Enums.ShareItemStatus.Revoke_Failed.value,
-                        )
+                        models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )
                 .all()
@@ -175,6 +161,15 @@ class Dataset(Stack):
 
         # Required for dynamic stack tagging
         self.target_uri = target_uri
+
+        self.shared_states = [
+            models.Enums.ShareItemStatus.Share_Succeeded.value,
+            models.Enums.ShareItemStatus.PendingRevoke.value,
+            models.Enums.ShareItemStatus.Revoke_Rejected.value,
+            models.Enums.ShareItemStatus.Revoke_Approved.value,
+            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+            models.Enums.ShareItemStatus.Revoke_Failed.value
+        ]
 
         pivot_role_name = SessionHelper.get_delegation_role_name()
 

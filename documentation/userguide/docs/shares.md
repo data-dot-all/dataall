@@ -127,6 +127,8 @@ When the task is completed, the items go to `*SUCCEEDED` or `*FAILED` and the re
 If a dataset is shared, the requester should see the dataset on his or her screen. The role with
 regards to the dataset is `SHARED`.
 
+![accept_share](pictures/shares/shares_dataset.png#zoom#shadow)
+
 
 ## **Revoke all items**
 After a project or during clean-up tasks we might want to clean up all shares in a request.
