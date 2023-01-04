@@ -237,15 +237,6 @@ function ShareViewHeader(props) {
             >
               Refresh
             </Button>
-            <Button
-              color="primary"
-              startIcon={<DeleteOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={remove}
-            >
-              Delete
-            </Button>
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
                 {share.status === 'Submitted' && (
@@ -272,31 +263,7 @@ function ShareViewHeader(props) {
                     >
                       Reject
                     </LoadingButton>
-                    <LoadingButton
-                    loading={rejecting}
-                    color="primary"
-                    startIcon={<RemoveCircleOutlineOutlined />}
-                    sx={{ m: 1 }}
-                    onClick={revoke}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Revoke all
-                  </LoadingButton>
                   </>
-                )}
-                {(share.status === 'Approved' || share.status === 'Rejected' || share.status === 'Draft') && (
-                  <LoadingButton
-                    loading={rejecting}
-                    color="primary"
-                    startIcon={<RemoveCircleOutlineOutlined />}
-                    sx={{ m: 1 }}
-                    onClick={revoke}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Revoke all
-                  </LoadingButton>
                 )}
               </>
             ) : (
@@ -316,6 +283,26 @@ function ShareViewHeader(props) {
                 )}
               </>
             )}
+            <LoadingButton
+              loading={rejecting}
+              color="error"
+              startIcon={<RemoveCircleOutlineOutlined />}
+              sx={{ m: 1 }}
+              onClick={revoke}
+              type="button"
+              variant="outlined"
+            >
+              Revoke all
+            </LoadingButton>
+            <Button
+              color="primary"
+              startIcon={<DeleteOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={remove}
+            >
+              Delete
+            </Button>
           </Box>
         )}
       </Grid>
