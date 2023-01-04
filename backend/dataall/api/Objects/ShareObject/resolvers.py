@@ -215,7 +215,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: models.Dataset = session.query(models.Dataset).get(source.datasetUri)
+        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
         if dataset and dataset.stewards in context.groups:
             return ShareObjectPermission.Approvers.value
         if (
@@ -225,6 +225,16 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
             or dataset.SamlAdminGroupName in context.groups
         ):
             return ShareObjectPermission.Requesters.value
+        if (
+            dataset and dataset.stewards in context.groups
+            and (
+                source.owner == context.username
+                or source.principalId in context.groups
+                or dataset.owner == context.username
+                or dataset.SamlAdminGroupName in context.groups
+            )
+        ):
+            return ShareObjectPermission.ApproversAndRequesters.value
         else:
             return ShareObjectPermission.NoPermission.value
 
@@ -233,17 +243,14 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: models.Dataset = session.query(models.Dataset).get(source.datasetUri)
+        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
         if ds:
-            org: models.Organization = session.query(models.Organization).get(
-                ds.organizationUri
-            )
+            env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
             return {
                 'datasetUri': source.datasetUri,
                 'datasetName': ds.name if ds else 'NotFound',
-                'datasetOrganizationUri': ds.organizationUri if ds else 'NotFound',
-                'businessOwnerEmail': ds.businessOwnerEmail,
-                'datasetOrganizationName': org.name if org else 'NotFound',
+                'SamlAdminGroupName': ds.SamlAdminGroupName if ds else 'NotFound',
+                'environmentName': env.label if env else 'NotFound',
                 'exists': True if ds else False,
             }
 
@@ -262,7 +269,7 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
 
     with context.engine.scoped_session() as session:
         return get_principal(
-            session, source.principalId, source.principalType, source.environmentUri
+            session, source.principalId, source.principalType, source.principalIAMRoleName, source.environmentUri, source.groupUri
         )
 
 
@@ -274,6 +281,12 @@ def resolve_environment(context: Context, source: models.ShareObject, **kwargs):
             session, source.environmentUri
         )
         return environment
+
+
+def resolve_group(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    return source.groupUri
 
 
 def get_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
@@ -321,7 +334,7 @@ def list_shareable_objects(
         )
 
 
-def inbox(context: Context, source, filter: dict = None):
+def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -335,7 +348,7 @@ def inbox(context: Context, source, filter: dict = None):
         )
 
 
-def outbox(context: Context, source, filter: dict = None):
+def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:

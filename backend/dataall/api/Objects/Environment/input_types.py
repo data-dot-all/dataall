@@ -111,3 +111,23 @@ InviteGroupOnEnvironmentInput = gql.InputType(
         gql.Argument('environmentIAMRoleName', gql.String),
     ],
 )
+
+AddConsumptionRoleToEnvironmentInput = gql.InputType(
+    name='AddConsumptionRoleToEnvironmentInput',
+    arguments=[
+        gql.Argument('consumptionRoleName', gql.NonNullableType(gql.String)),
+        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
+        gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
+    ],
+)
+
+ConsumptionRoleFilter = gql.InputType(
+    name='ConsumptionRoleFilter',
+    arguments=[
+        gql.Argument('term', gql.String),
+        gql.Argument(name='page', type=gql.Integer),
+        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+    ],
+)

@@ -7,12 +7,13 @@ Principal = gql.ObjectType(
     fields=[
         gql.Field(name='principalId', type=gql.ID),
         gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
-        gql.Field(name='principalName', type=gql.ID),
-        # fields related to environment
+        gql.Field(name='principalName', type=gql.String),
+        gql.Field(name='principalIAMRoleName', type=gql.String),
+        gql.Field(name='SamlGroupName', type=gql.String),
+        gql.Field(name='environmentName', type=gql.String),
+        gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
-        gql.Field(name='SamlGroupName', type=gql.String),
-        gql.Field(name='cognitoGroupName', type=gql.String),
         gql.Field(name='organizationName', type=gql.String),
         gql.Field(name='organizationUri', type=gql.String),
     ],

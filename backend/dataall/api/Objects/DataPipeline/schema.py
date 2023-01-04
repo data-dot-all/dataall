@@ -30,7 +30,7 @@ DataPipeline = gql.ObjectType(
         gql.Field('devStrategy', type=gql.String),
         gql.Field('cloneUrlHttp', gql.String, resolver=get_clone_url_http),
         gql.Field('stack', gql.Ref('Stack'), resolver=get_stack),
-        gql.Field('cicdStack', gql.Ref('Stack'), resolver=get_cicd_stack),
+        # gql.Field('cicdStack', gql.Ref('Stack'), resolver=get_cicd_stack),
         gql.Field(
             'userRoleForPipeline',
             type=DataPipelineRole.toGraphQLEnum(),

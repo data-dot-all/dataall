@@ -33,11 +33,9 @@ def create_react_env_file(
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
 
-    if internet_facing == 'True':
+    if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
-
-    if custom_domain == 'False':
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/CloudfrontDistributionDomainName'
         )['Parameter']['Value']

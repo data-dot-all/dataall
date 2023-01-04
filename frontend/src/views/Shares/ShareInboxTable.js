@@ -21,7 +21,7 @@ import * as Defaults from '../../components/defaults';
 import useSettings from '../../hooks/useSettings';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import searchInbox from '../../api/DataAccessRequest/searchInbox';
+import getShareRequestsToMe from '../../api/ShareObject/getShareRequestsToMe';
 import RefreshTableMenu from '../../components/RefreshTableMenu';
 import Scrollbar from '../../components/Scrollbar';
 import ArrowRightIcon from '../../icons/ArrowRight';
@@ -37,14 +37,14 @@ const ShareInboxTable = () => {
     setLoading(true);
     await client
       .query(
-        searchInbox({
+        getShareRequestsToMe({
           filter: {
             ...filter
           }
         })
       )
       .then((response) => {
-        setItems(response.data.requestsToMe);
+        setItems(response.data.getShareRequestsToMe);
       })
       .catch((error) => {
         dispatch({ type: SET_ERROR, error: error.Error });

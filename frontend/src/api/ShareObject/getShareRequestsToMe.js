@@ -1,10 +1,10 @@
 import { gql } from 'apollo-boost';
 
-const searchInbox = ({ filter }) => ({
+const getShareRequestsToMe = ({ filter }) => ({
   variables: { filter },
   query: gql`
-    query RequestsToMe($filter: ShareObjectFilter) {
-      requestsToMe(filter: $filter) {
+    query getShareRequestsToMe($filter: ShareObjectFilter) {
+      getShareRequestsToMe(filter: $filter) {
         count
         page
         pages
@@ -21,8 +21,14 @@ const searchInbox = ({ filter }) => ({
             principalId
             principalType
             principalName
+            principalIAMRoleName
+            SamlGroupName
+            environmentUri
+            environmentName
             AwsAccountId
             region
+            organizationUri
+            organizationName
           }
           statistics {
             tables
@@ -31,8 +37,9 @@ const searchInbox = ({ filter }) => ({
           dataset {
             datasetUri
             datasetName
-            datasetOrganizationName
-            datasetOrganizationUri
+            SamlAdminGroupName
+            environmentName
+            exists
           }
         }
       }
@@ -40,4 +47,4 @@ const searchInbox = ({ filter }) => ({
   `
 });
 
-export default searchInbox;
+export default getShareRequestsToMe;

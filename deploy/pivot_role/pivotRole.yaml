@@ -398,7 +398,8 @@ Resources:
               - "ec2:DescribeAvailabilityZones"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
-          - Effect: Allow
+          - Sid: RamRead
+            Effect: Allow
             Action:
               - 'glue:PutResourcePolicy'
               - 'ram:Get*'
@@ -468,17 +469,24 @@ Resources:
           - Sid: CloudFormation
             Effect: Allow
             Action:
+              - 'cloudformation:CreateStack'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormation2
+            Effect: Allow
+            Action:
               - 'cloudformation:DescribeStacks'
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
-              - 'cloudformation:CreateStack'
               - 'cloudformation:GetTemplate'
               - 'cloudformation:ListStackResources'
               - 'cloudformation:DescribeStackResource'
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
         - !Ref PivotRoleName
@@ -512,8 +520,6 @@ Resources:
               - 'lakeformation:PutDataLakeSettings'
               - 'lakeformation:GetDataLakeSettings'
               - 'lakeformation:GetDataAccess'
-              - 'lakeformation:SearchTablesByLFTags'
-              - 'lakeformation:SearchDatabasesByLFTags'
               - 'lakeformation:GetWorkUnits'
               - 'lakeformation:StartQueryPlanning'
               - 'lakeformation:GetWorkUnitResults'
@@ -593,6 +599,7 @@ Resources:
               - "quicksight:DescribeDashboardPermissions"
               - "quicksight:GetAuthCode"
               - "quicksight:CreateGroupMembership"
+              - "quicksight:DescribeAccountSubscription"
             Resource:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/dataall"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"
@@ -605,7 +612,6 @@ Resources:
             Effect: Allow
             Action:
               - 'quicksight:GetSessionEmbedUrl'
-              - "quicksight:DescribeAccountSubscription"
             Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-2
       Roles:
@@ -623,8 +629,9 @@ Resources:
             Action:
               - "ssm:GetParameter"
             Resource:
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${EnvironmentResourcePrefix}*'
-              - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:dataall*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/ddk/*'
           - Sid: Secretsmanager
             Effect: Allow
             Action:
@@ -638,9 +645,11 @@ Resources:
             Action:
               - "secretsmanager:ListSecrets"
             Resource: '*'
-          - Sid: IAMList
+          - Sid: IAMListGet
             Action:
+              - 'iam:Get*'
               - 'iam:ListRoles'
+              - 'iam:Get*'
             Effect: Allow
             Resource: '*'
           - Sid: IAMRolePolicy
@@ -651,7 +660,6 @@ Resources:
             Resource: '*'
           - Sid: IAMPassRole
             Action:
-              - 'iam:Get*'
               - 'iam:PassRole'
             Effect: Allow
             Resource:
@@ -664,6 +672,7 @@ Resources:
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/ddk-*'
           - Sid: StepFunctions
             Action:
               - 'states:DescribeStateMachine'
@@ -680,6 +689,15 @@ Resources:
               - 'codecommit:GetCommit'
               - 'codecommit:GitPull'
               - 'codecommit:GetRepository'
+              - 'codecommit:TagResource'
+              - 'codecommit:UntagResource'
+              - 'codecommit:CreateBranch'
+              - 'codecommit:CreateCommit'
+              - 'codecommit:CreateRepository'
+              - 'codecommit:DeleteRepository'
+              - 'codecommit:GitPush'
+              - 'codecommit:PutFile'
+              - 'codecommit:GetBranch'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'

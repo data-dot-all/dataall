@@ -8,19 +8,20 @@ log = logging.getLogger(__name__)
 class KMS:
 
     @staticmethod
-    def client(account_id: str):
+    def client(account_id: str, region: str):
         session = SessionHelper.remote_session(accountid=account_id)
-        return session.client('kms')
+        return session.client('kms', region_name=region)
 
     @staticmethod
     def put_key_policy(
         account_id: str,
+        region: str,
         key_id: str,
         policy_name: str,
         policy: str,
     ):
         try:
-            kms_client = KMS.client(account_id)
+            kms_client = KMS.client(account_id, region)
             kms_client.put_key_policy(
                 KeyId=key_id,
                 PolicyName=policy_name,
@@ -35,11 +36,12 @@ class KMS:
     @staticmethod
     def get_key_policy(
         account_id: str,
+        region: str,
         key_id: str,
         policy_name: str,
     ):
         try:
-            kms_client = KMS.client(account_id)
+            kms_client = KMS.client(account_id, region)
             response = kms_client.get_key_policy(
                 KeyId=key_id,
                 PolicyName=policy_name,
@@ -55,10 +57,11 @@ class KMS:
     @staticmethod
     def get_key_id(
         account_id: str,
+        region: str,
         key_alias: str,
     ):
         try:
-            kms_client = KMS.client(account_id)
+            kms_client = KMS.client(account_id, region)
             response = kms_client.describe_key(
                 KeyId=key_alias,
             )

@@ -199,7 +199,7 @@ const PipelineListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                <StackStatus status={pipeline.cicdStack?.status || pipeline.stack.status} />
+                <StackStatus status={pipeline.stack.status} />
               </Typography>
             </Grid>
           </Grid>

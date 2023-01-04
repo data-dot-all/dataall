@@ -197,6 +197,23 @@ class Dashboard:
         return query
 
     @staticmethod
+    def query_all_user_groups_shareddashboard(session, username, groups, uri) -> Query:
+        query = (
+            session.query(models.DashboardShare)
+            .filter(
+                and_(
+                    models.DashboardShare.dashboardUri == uri,
+                    models.DashboardShare.SamlGroupName.in_(groups),
+                )
+            )
+        )
+
+        return [
+            share.SamlGroupName
+            for share in query.all()
+        ]
+
+    @staticmethod
     @has_tenant_perm(permissions.MANAGE_DASHBOARDS)
     @has_resource_perm(permissions.SHARE_DASHBOARD)
     def paginated_dashboard_shares(

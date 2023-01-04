@@ -72,6 +72,9 @@ class TagsUtil:
             key_value_tags: [models.KeyValueTag] = cls.get_model_key_value_tags(
                 session, stack, model_name
             )
+            cascaded_tags: [models.KeyValueTag] = cls.get_environment_cascade_key_value_tags(
+                session, environment.environmentUri
+            )
 
         # Build a list of tuples with tag keys and values based on the collected up to this point
         # ex. target_stack, organisation etc.
@@ -108,6 +111,9 @@ class TagsUtil:
 
         # ..and any additional key value tags
         _stack_tags.extend(key_value_tags)
+
+        # .. and cascade tags inherited form the environment
+        _stack_tags.extend(cascaded_tags)
 
         # Duplicate tag keys are not allowed on CloudFormation. Also Tag keys are case insensitive
         _stack_tags = list(cls.remove_duplicate_tag_keys(_stack_tags).values())
@@ -146,6 +152,16 @@ class TagsUtil:
                 session,
                 stack.target_uri,
                 db.api.TargetType.get_target_type(model_name),
+            )
+        ]
+
+    @classmethod
+    def get_environment_cascade_key_value_tags(cls, session, environmentUri):
+        return [
+            (kv.key, kv.value)
+            for kv in db.api.KeyValueTag.find_environment_cascade_key_value_tags(
+                session,
+                environmentUri,
             )
         ]
 

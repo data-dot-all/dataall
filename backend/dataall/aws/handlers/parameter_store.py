@@ -16,12 +16,15 @@ class ParameterStoreManager:
         pass
 
     @staticmethod
-    def client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
+    def client(AwsAccountId=None, region=None):
+        if AwsAccountId:
+            session = SessionHelper.remote_session(AwsAccountId)
+        else:
+            session = SessionHelper.get_session()
         return session.client('ssm', region_name=region)
 
     @staticmethod
-    def get_parameter_value(AwsAccountId, region, parameter_path):
+    def get_parameter_value(AwsAccountId=None, region=None, parameter_path=None):
         if not parameter_path:
             raise Exception('Parameter name is None')
         try:

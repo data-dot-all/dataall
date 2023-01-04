@@ -13,17 +13,17 @@ const getShareObject = ({ shareUri, filter }) => ({
         owner
         status
         userRoleForShareObject
-        #label
-        #deleted
-        #confirmed
-        #userInitiated
         principal {
           principalId
           principalType
           principalName
+          principalIAMRoleName
+          SamlGroupName
+          environmentUri
+          environmentName
           AwsAccountId
           region
-          SamlGroupName
+          organizationUri
           organizationName
         }
         items(filter: $filter) {
@@ -44,7 +44,9 @@ const getShareObject = ({ shareUri, filter }) => ({
         dataset {
           datasetUri
           datasetName
-          businessOwnerEmail
+          SamlAdminGroupName
+          environmentName
+          exists
         }
       }
     }

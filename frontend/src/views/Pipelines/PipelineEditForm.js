@@ -29,6 +29,10 @@ import { useDispatch } from '../../store';
 import ChipInput from '../../components/TagsInput';
 import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
 import updateDataPipeline from '../../api/DataPipeline/updateDataPipeline';
+import listEnvironments from '../../api/Environment/listEnvironments';
+import PipelineEnvironmentEditForm from "./PipelineEnvironmentEditForm";
+import * as Defaults from '../../components/defaults';
+
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();
@@ -37,11 +41,19 @@ const PipelineEditForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const { settings } = useSettings();
-  const [loading, setLoading] = useState(true);
+  const [loadingPipeline, setLoadingPipeline] = useState(true);
+  const [loadingEnvs, setLoadingEnvs] = useState(true);
   const [pipeline, setPipeline] = useState(null);
+  const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
+  const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
+
+  const handleCountEnvironmentValid = state => {
+    setCountEnvironmentsValid(state);
+      };
 
   const fetchItem = useCallback(async () => {
-    setLoading(true);
+    setLoadingPipeline(true);
     const response = await client.query(getDataPipeline(params.uri));
     if (!response.errors && response.data.getDataPipeline !== null) {
       setPipeline(response.data.getDataPipeline);
@@ -51,7 +63,7 @@ const PipelineEditForm = (props) => {
         : 'Pipeline not found';
       dispatch({ type: SET_ERROR, error });
     }
-    setLoading(false);
+    setLoadingPipeline(false);
   }, [client, dispatch, params.uri]);
 
   useEffect(() => {
@@ -60,43 +72,77 @@ const PipelineEditForm = (props) => {
     }
   }, [client, dispatch, fetchItem]);
 
-  async function submit(values, setStatus, setSubmitting, setErrors) {
-    try {
-      const response = await client.mutate(
-        updateDataPipeline({
-          DataPipelineUri: pipeline.DataPipelineUri,
-          input: {
-            description: values.description,
-            label: values.label,
-            tags: values.tags
-          }
-        })
+  const fetchEnvironments = useCallback(async () => {
+    setLoadingEnvs(true);
+    const response = await client.query(
+      listEnvironments({ filter: Defaults.SelectListFilter })
+    );
+    if (!response.errors) {
+      setEnvironmentOptions(
+        response.data.listEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
       );
-      if (!response.errors) {
-        setStatus({ success: true });
-        setSubmitting(false);
-        enqueueSnackbar('Pipeline updated', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        navigate(
-          `/console/pipelines/${response.data.updateDataPipeline.DataPipelineUri}`
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (err) {
-      setStatus({ success: false });
-      setErrors({ submit: err.message });
-      setSubmitting(false);
-      dispatch({ type: SET_ERROR, error: err.message });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  }
+    setLoadingEnvs(false);
+  }, [client, dispatch]);
 
-  if (loading || (!pipeline && pipeline.environment)) {
+  useEffect(() => {
+    if (client) {
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  }, [client, dispatch, fetchEnvironments]);
+
+  async function submit(values, setStatus, setSubmitting, setErrors) {
+    if (!countEnvironmentsValid){
+      dispatch({ type: SET_ERROR, error: "At least one deployment environment is required" })
+    } else{
+        try {
+          const response = await client.mutate(
+            updateDataPipeline({
+              DataPipelineUri: pipeline.DataPipelineUri,
+              input: {
+                description: values.description,
+                label: values.label,
+                tags: values.tags
+              }
+            })
+          );
+          if (!response.errors) {
+            setStatus({ success: true });
+            setTriggerEnvSubmit(true);
+            setSubmitting(false);
+            enqueueSnackbar('Pipeline updated', {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            });
+            navigate(
+              `/console/pipelines/${response.data.updateDataPipeline.DataPipelineUri}`
+            );
+          } else {
+            setTriggerEnvSubmit(false);
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
+          }
+        } catch (err) {
+          setStatus({ success: false });
+          setTriggerEnvSubmit(false);
+          setErrors({ submit: err.message });
+          setSubmitting(false);
+          dispatch({ type: SET_ERROR, error: err.message });
+        }
+      }
+    }
+
+  if ((loadingPipeline || loadingEnvs) || (!pipeline && pipeline.environment)) {
     return <CircularProgress />;
   }
 
@@ -319,6 +365,22 @@ const PipelineEditForm = (props) => {
                           />
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      <Box sx={{ mt: 3 }}>
+                        <PipelineEnvironmentEditForm
+                          environmentOptions={environmentOptions}
+                          triggerEnvSubmit={triggerEnvSubmit}
+                          pipelineUri={pipeline.DataPipelineUri}
+                          pipeline={pipeline}
+                          handleCountEnvironmentValid={handleCountEnvironmentValid}
+                        />
+                      </Box>
+                      {errors.submit && (
+                        <Box sx={{ mt: 3 }}>
+                          <FormHelperText error>{errors.submit}</FormHelperText>
+                        </Box>
+                      )}
                       <Box
                         sx={{
                           display: 'flex',
@@ -332,10 +394,10 @@ const PipelineEditForm = (props) => {
                           type="submit"
                           variant="contained"
                         >
-                          Save
+                          Update Pipeline
                         </LoadingButton>
                       </Box>
-                    </Grid>
+                  </Grid>
                   </Grid>
                 </form>
               )}

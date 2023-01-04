@@ -45,7 +45,7 @@ class LFShareApproval:
         -------
         List of principals
         """
-        principals = [self.env_group.environmentIAMRoleArn]
+        principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
         if self.target_environment.dashboardsEnabled:
             q_group = Quicksight.get_quicksight_group_arn(
                 self.target_environment.AwsAccountId
