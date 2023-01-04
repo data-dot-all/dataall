@@ -16,10 +16,11 @@ import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import AdministrationTeams from './AdministrationTeams';
 import LFTagsView from './AdministrationLFTagsView';
+import LFTagPermissionsView from './AdministrationLFTagPermissionsView';
 import DashboardViewer from './AdministratorDashboardViewer'
 
 
-const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' },{ label: 'LF-Tags', value: 'lftags' }];
+const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' },{ label: 'LF-Tags', value: 'lftags' },{ label: 'LF Tag Permissions', value: 'lftagpermissions' }];
 
 const AdministrationView = () => {
   const { settings } = useSettings();
@@ -92,6 +93,7 @@ const AdministrationView = () => {
             {currentTab === 'teams' && <AdministrationTeams />}
             {currentTab === 'dashboard' && <DashboardViewer />}
             {currentTab === 'lftags' && <LFTagsView />}
+            {currentTab === 'lftagpermissions' && <LFTagPermissionsView />}
           </Box>
         </Container>
       </Box>

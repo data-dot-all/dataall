@@ -22,5 +22,6 @@ from .notebook import Notebook
 from .sgm_studio_notebook import SgmStudioNotebook
 from .dashboard import Dashboard
 from .pipeline import Pipeline
-from.lf_tags import LFTag
+from.lf_tags import LFTag, LFTagPermissions
 from .worksheet import Worksheet
+

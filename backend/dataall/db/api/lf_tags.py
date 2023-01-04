@@ -10,6 +10,13 @@ from ..models.Permission import PermissionType
 
 logger = logging.getLogger(__name__)
 
+def _fix_json_array(obj, attr):
+    arr = getattr(obj, attr)
+    if isinstance(arr, list) and len(arr) > 1 and arr[0] == '{':
+        arr = arr[1:-1]
+        arr = ''.join(arr).split(",")
+        setattr(obj, attr, arr)
+
 
 class LFTag:
     @staticmethod
@@ -95,9 +102,22 @@ class LFTag:
         return lf_tag
 
 
-def _fix_json_array(obj, attr):
-    arr = getattr(obj, attr)
-    if isinstance(arr, list) and len(arr) > 1 and arr[0] == '{':
-        arr = arr[1:-1]
-        arr = ''.join(arr).split(",")
-        setattr(obj, attr, arr)
+class LFTagPermissions:
+    @staticmethod
+    def list_tenant_lf_tag_permissions(session, username, groups, uri, data=None, check_perm=None):
+        query = session.query(models.LFTagPermissions)
+
+        if data and data.get('term'):
+            query = query.filter(
+                models.LFTagPermissions.tagKey.ilike('%' + data.get('term') + '%')
+            )
+        result = paginate(
+            query=query,
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+        for item in result["nodes"]:
+            _fix_json_array(item, 'tagValues')
+
+        return result
