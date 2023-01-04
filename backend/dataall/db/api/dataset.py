@@ -94,6 +94,8 @@ class Dataset:
             topics=data.get('topics', []),
             businessOwnerEmail=data.get('businessOwnerEmail'),
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
+            lfTagKey=data.get('lfTagKey'),
+            lfTagValue=data.get('lfTagValue'),
             stewards=data.get('stewards')
             if data.get('stewards')
             else data['SamlAdminGroupName'],

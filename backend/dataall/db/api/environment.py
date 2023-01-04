@@ -720,6 +720,29 @@ class Environment:
         ).all()
 
     @staticmethod
+    def list_environment_lf_tags(
+        session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        return Environment.query_environment_lf_tags(
+            session, username, groups, uri
+        ).all()
+
+    @staticmethod
+    def query_environment_lf_tags(
+        session, username, groups, uri
+    ) -> Query:
+        query = (
+            session.query(models.LFTagPermissions)
+            .filter(
+                and_(
+                    models.LFTagPermissions.SamlGroupName.in_(groups),
+                    models.LFTagPermissions.environmentUri == uri
+                )
+            )
+        )
+        return query
+
+    @staticmethod
     def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
         query = (
             session.query(models.ConsumptionRole)

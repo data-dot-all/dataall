@@ -33,8 +33,7 @@ def upgrade():
         ),
         sa.Column(
             'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        ),
-        sa.PrimaryKeyConstraint('consumptionRoleUri', name='consumptionRoleUri_pkey'),
+        )    
     )
 
 

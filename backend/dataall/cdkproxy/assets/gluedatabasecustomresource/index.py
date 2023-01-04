@@ -46,6 +46,26 @@ def on_create(event):
                 CatalogId=props.get('CatalogId'),
                 DatabaseInput=props.get('DatabaseInput'),
             )
+
+            # Create LF Tags if Exist
+            if props.get("LFTags"):
+                response = lf.add_lf_tags_to_resource(
+                    CatalogId=props.get('CatalogId'),
+                    Resource={
+                        'Database': {
+                            'CatalogId': props.get('CatalogId'),
+                            'Name': props['DatabaseInput']['Name']
+                        }
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': props.get('CatalogId'),
+                            'TagKey': props["LFTags"]["TagKey"],
+                            'TagValues': [props["LFTags"]["TagValue"]]
+                        },
+                    ]
+                )
+
         except ClientError as e:
             raise Exception(
                 f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}"

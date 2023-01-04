@@ -33,6 +33,9 @@ class Dataset(Resource, Base):
     topics = Column(postgresql.ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='Unclassified')
     tags = Column(postgresql.ARRAY(String))
+    lfTagKey = Column(String)
+    lfTagValue = Column(String)
+
     inProject = query_expression()
 
     bucketCreated = Column(Boolean, default=False)
