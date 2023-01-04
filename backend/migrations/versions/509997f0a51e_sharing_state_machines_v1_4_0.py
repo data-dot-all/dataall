@@ -76,7 +76,9 @@ def upgrade():
                 ShareObject.status == 'PendingApproval'
             )
             .update(
-                ShareObject.status == 'Completed'
+                {
+                    ShareObject.status == 'Completed'
+                }
             )
         )
 
@@ -88,7 +90,9 @@ def upgrade():
                 ShareObject.status == 'Draft'
             )
             .update(
-                ShareObject.status == 'PendingApproval'
+                {
+                    ShareObject.status == 'PendingApproval'
+                }
             )
         )
 
@@ -109,7 +113,9 @@ def downgrade():
                 ShareObject.status == 'Completed'
             )
             .update(
-                ShareObject.status == 'PendingApproval'
+                {
+                    ShareObject.status == 'PendingApproval'
+                }
             )
         )
 
@@ -121,7 +127,9 @@ def downgrade():
                 ShareObject.status == 'PendingApproval'
             )
             .update(
-                ShareObject.status == 'Draft'
+                {
+                    ShareObject.status == 'Draft'
+                }
             )
         )
 
@@ -129,3 +137,4 @@ def downgrade():
     except Exception as e:
         print(f'Failed to backfill share_objects due to: {e}')
     # ### end Alembic commands ###
+
