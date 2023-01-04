@@ -61,31 +61,28 @@ it will add those items to the request. The share needs to be submitted for the 
 ## **Check your sent/received share requests**
 Anyone can go to the Shares menu on the left side pane and look up the share requests that they have received
 and that they have sent. Click on **Learn More**
-in the request that you are interested in to start working on your request.
+in the request that you are interested in to start working on your request. 
 
-![add_share](pictures/shares/shares_initial_outbox.png#zoom#shadow)
-
-
-Initially the share request should be empty of items and in `DRAFT` state.
-
-![add_share](pictures/shares/shares_initial.png#zoom#shadow)
+![add_share](pictures/shares/shares_completed_inbox.png#zoom#shadow)
 
 ## **Add/delete items**
 When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
-get access to. Or if you have an existing share request with some shared tables and folders, you can add more items
-to the request.
+get access to. Initially the share request should be empty of items and in `DRAFT` state, it should look like the this picture.
 
-It will be more clear with an example. As appears in the picture, go to the share request and click on **Add Item**
-to add a table or folder to the request, the following window will pop up to let you choose a specific table
+![add_share](pictures/shares/shares_initial.png#zoom#shadow)
+
+As appears in the picture, by clicking on **Add Item**, the following window will pop up to let you choose a specific table
 or folder in the dataset.
 
 ![add_share](pictures/shares/shares_add_window.png#zoom#shadow)
 
 Note that the request is in `DRAFT` status and that
 the items that we add are in `PENDINGAPPROVAL`. They are not shared until the request is submitted and processed.
-IN the picture below, we have added the *iot* folder to the request and it is now in `PENDINGAPPROVAL`.
 
-On the contrary, if you want to remove the item click on the **Delete** button with 
+If you have an existing share request with some shared tables and folders, you can add more items
+to the request. In the picture below, we have added the *iot* folder to the request and it is now in `PENDINGAPPROVAL`.
+
+To remove an item from the request click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
 which is explained below. That is why only the Folder *iot* has the **Delete** button next to it.
 
@@ -97,12 +94,12 @@ If an item has been previously shared it cannot be directly deleted. First, clic
 **Revoke item** next to the item that you want to revoke access to. The item 
 will go to `PENDINGREVOKE` status and the request to `DRAFT` status. Access is granted until the request is submitted and processed.
 
-In the example above, we have revoked access tot he table *videogames* and the folder *pdfs*.
+In the example above, we have revoked access to the table *videogames* and the folder *pdfs*.
 
 ## **Submit a share request (requester)**
 
 Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state. 
-Approvers can see the request in their received share requests, alongside the current shared items, failed items and pending items.
+Approvers can see the request in their received share requests, alongside the current shared items, revoked items, failed items and pending items.
 
 ![accept_share](pictures/shares/shares_submitted_inbox.png#zoom#shadow)
 
@@ -133,18 +130,18 @@ regards to the dataset is `SHARED`.
 
 ## **Revoke all items**
 After a project or during clean-up tasks we might want to clean up all shares in a request.
-Approvers and requesters have access to the **Revoke all** button, that deletes all itens
+Approvers and requesters have access to the **Revoke all** button, that deletes all items
 that are not shared and revokes all shared items. 
 
 
 Here we have an example of a request before being completely revoked:
 
-![accept_share](pictures/shares/shares_5.png#zoom#shadow)
+![accept_share](pictures/shares/shares_revokeall_1.png#zoom#shadow)
 
 And after revoking all, the only left items are those that have been revoked. 
 If we click again on the revoke all button they will be deleted.
 
-![accept_share](pictures/shares/shares_5.png#zoom#shadow)
+![accept_share](pictures/shares/shares_revokeall_2.png#zoom#shadow)
 
 ## **Delete share request**
 To delete a share request, it needs to be empty from shared items.
