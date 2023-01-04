@@ -170,7 +170,7 @@ the IAM role of the requester (same as with tables) and executing get calls to t
 
 For example:
 ```json
- aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<-<REQUESTER-TEAM>/folder2/
+ aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/folder2/
 ```
 
 [//]: # (### **Use data subscriptions**)

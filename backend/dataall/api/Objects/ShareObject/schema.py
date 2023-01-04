@@ -78,6 +78,7 @@ ShareObjectStatistic = gql.ObjectType(
         gql.Field(name='locations', type=gql.Integer),
         gql.Field(name='tables', type=gql.Integer),
         gql.Field(name='sharedItems', type=gql.Integer),
+        gql.Field(name='revokedItems', type=gql.Integer),
         gql.Field(name='failedItems', type=gql.Integer),
         gql.Field(name='pendingItems', type=gql.Integer),
     ],
