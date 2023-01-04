@@ -34,6 +34,7 @@ const getShareRequestsToMe = ({ filter }) => ({
             tables
             locations
             sharedItems
+            revokedItems
             failedItems
             pendingItems
           }

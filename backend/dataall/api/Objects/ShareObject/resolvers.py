@@ -356,10 +356,20 @@ def resolve_share_object_statistics(context: Context, source: models.ShareObject
         ]
         shared_items = (
             session.query(models.ShareObjectItem)
-                .filter(
+            .filter(
                 and_(
                     models.ShareObjectItem.shareUri == source.shareUri,
                     models.ShareObjectItem.status.in_(shared_states),
+                )
+            )
+            .count()
+        )
+        revoked_items = (
+            session.query(models.ShareObjectItem)
+            .filter(
+                and_(
+                    models.ShareObjectItem.shareUri == source.shareUri,
+                    models.ShareObjectItem.status.in_([ShareItemStatus.Revoke_Succeeded.value]),
                 )
             )
             .count()
@@ -392,7 +402,7 @@ def resolve_share_object_statistics(context: Context, source: models.ShareObject
             )
             .count()
         )
-    return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'failedItems': failed_items, 'pendingItems': pending_items}
+    return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items, 'failedItems': failed_items, 'pendingItems': pending_items}
 
 
 def list_shareable_objects(

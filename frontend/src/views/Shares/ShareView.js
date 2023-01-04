@@ -397,7 +397,7 @@ function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
             <>
-            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'PendingRevoke' || item.status === 'Revoke_Rejected') ? (
+            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'PendingRevoke' || item.status === 'Revoke_Rejected'|| item.status === 'Revoke_Approved') ? (
                 <Button
                   color="primary"
                   startIcon={<RemoveCircleOutlineOutlined fontSize="small" />}

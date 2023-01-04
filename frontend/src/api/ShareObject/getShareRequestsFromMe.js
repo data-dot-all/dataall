@@ -32,6 +32,7 @@ const getShareRequestsFromMe = ({ filter }) => ({
           }
           statistics {
             sharedItems
+            revokedItems
             failedItems
             pendingItems
           }

@@ -59,11 +59,16 @@ and if you have requested a table or folder
 it will add those items to the request. The share needs to be submitted for the request to be sent to the approvers.
 
 ## **Check your sent/received share requests**
-Anyone can go to the **Shares** menu on the left side pane and look up the share requests that they have received
-and that they have sent.
-
-Click on **Learn More**
+Anyone can go to the Shares menu on the left side pane and look up the share requests that they have received
+and that they have sent. Click on **Learn More**
 in the request that you are interested in to start working on your request.
+
+![add_share](pictures/shares/shares_initial_outbox.png#zoom#shadow)
+
+
+Initially the share request should be empty of items and in `DRAFT` state.
+
+![add_share](pictures/shares/shares_initial.png#zoom#shadow)
 
 ## **Add/delete items**
 When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
@@ -74,43 +79,49 @@ It will be more clear with an example. As appears in the picture, go to the shar
 to add a table or folder to the request, the following window will pop up to let you choose a specific table
 or folder in the dataset.
 
+![add_share](pictures/shares/shares_add_window.png#zoom#shadow)
+
 Note that the request is in `DRAFT` status and that
 the items that we add are in `PENDINGAPPROVAL`. They are not shared until the request is submitted and processed.
-
-![add_share](pictures/shares/shares_6.png#zoom#shadow)
+IN the picture below, we have added the *iot* folder to the request and it is now in `PENDINGAPPROVAL`.
 
 On the contrary, if you want to remove the item click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
-which we will explain in the next steps.
+which is explained below. That is why only the Folder *iot* has the **Delete** button next to it.
+
+![add_share](pictures/shares/shares_added.png#zoom#shadow)
+
 
 ## **Revoke Items**
 If an item has been previously shared it cannot be directly deleted. First, click on
 **Revoke item** next to the item that you want to revoke access to. The item 
-will go to `PENDINGREVOKE` status and the request to `DRAFT` status.
+will go to `PENDINGREVOKE` status and the request to `DRAFT` status. Access is granted until the request is submitted and processed.
 
-Access is granted until the request is submitted and processed.
+In the example above, we have revoked access tot he table *videogames* and the folder *pdfs*.
 
 ## **Submit a share request (requester)**
 
-Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state.
+Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state. 
+Approvers can see the request in their received share requests, alongside the current shared items, failed items and pending items.
 
-![submit_share_2](pictures/shares/shares_3.png#zoom#shadow)
-
+![accept_share](pictures/shares/shares_submitted_inbox.png#zoom#shadow)
 
 ## **Approve/Reject a share request (approver)**
 
-As a dataset **owner** or **steward** you can approve or reject a dataset access request. 
-
 Click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added or revoked in the request.
+This is the view that approvers see, it now contains buttons to approve or reject the request.
 
-![accept_share](pictures/shares/shares_5.png#zoom#shadow)
+![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
 
 If the approver **approves** the request, it moves to the `APPROVED` status. Share items will go to `SHARE_APPROVED` and `REVOKE_APPROVED`
 depending on their previous state. Data.all starts a process share task, during the handling of the shares, items and the request
 are `*IN_PROGRESS` states. 
 
+![accept_share](pictures/shares/shares_approved.png#zoom#shadow)
 
-When the task is completed, the items go to `*SUCCEEDED` or `*FAILED`.
+When the task is completed, the items go to `*SUCCEEDED` or `*FAILED` and the request is `COMPLETED`.
+
+![accept_share](pictures/shares/shares_completed.png#zoom#shadow)
 
 !!!info "delete after revoke"
     Items that were shared and have been revoked and are in `REVOKE_SUCCEEDED` status
@@ -137,8 +148,11 @@ If we click again on the revoke all button they will be deleted.
 
 ## **Delete share request**
 To delete a share request, it needs to be empty from shared items.
-For example, the following request has some items in `SHARE_SUCCEEDED` state, therefore
+For example, the following request has some items in `SHARE_SUCCEEDED` and `PENDINGREVOKE` state, therefore
 we receive an error.
+
+![share](pictures/shares/shares_delete_unauth.png#zoom#shadow)
+
 
 Once we have revoked access to all items (by using revoke all for example) we can delete the request.
 
@@ -156,7 +170,7 @@ the IAM role of the requester (same as with tables) and executing get calls to t
 
 For example:
 ```json
- aws s3 ls arn:aws:s3:eu-west-2:467173892793:accesspoint/6u3nwdfk-scientists/folder2/
+ aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<-<REQUESTER-TEAM>/folder2/
 ```
 
 [//]: # (### **Use data subscriptions**)

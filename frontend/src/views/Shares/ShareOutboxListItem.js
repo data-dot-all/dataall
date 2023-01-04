@@ -89,7 +89,7 @@ const ShareOutboxListItem = (props) => {
                   alignItems: 'center',
                   display: 'flex',
                   pt: 3,
-                  pb: 1
+                  pb: 0.5
                 }}
             >
               <Typography color="textPrimary" variant="body2">
@@ -100,7 +100,18 @@ const ShareOutboxListItem = (props) => {
                 sx={{
                   alignItems: 'center',
                   display: 'flex',
-                  py: 1,
+                  py: 0.5,
+                }}
+            >
+              <Typography color="textPrimary" variant="body2">
+                {`Successfully revoked items: ${share.statistics.revokedItems}`}
+              </Typography>
+            </Box>
+            <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  py: 0.5,
                 }}
             >
               <Typography color="textPrimary" variant="body2">
@@ -111,7 +122,7 @@ const ShareOutboxListItem = (props) => {
                 sx={{
                   alignItems: 'center',
                   display: 'flex',
-                  py: 1
+                  py: 0.5
                 }}
             >
               <Typography color="textPrimary" variant="body2">
