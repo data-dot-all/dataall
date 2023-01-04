@@ -386,7 +386,7 @@ function SharedItem(props) {
             <>
             {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'PendingRevoke' || item.status === 'Revoke_Rejected'|| item.status === 'Revoke_Approved') ? (
                 <Button
-                  color="primary"
+                  color="error"
                   startIcon={<RemoveCircleOutlineOutlined fontSize="small" />}
                   sx={{ m: 1 }}
                   variant="outlined"

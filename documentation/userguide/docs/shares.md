@@ -20,7 +20,7 @@ we create an S3 access point per requester group to handle its access to specifi
 
 Requesters create a share request and add items to it. Both requesters and approvers can work on this `DRAFT` of
 the request and add and remove items to the request Draft. Items that are added go to the `PENDINGAPPROVAL` status. 
-Items that are shared and are deleted from the Draft, go to `PENDINGREVOKE` status.
+Items that are shared and are revoked from the Draft, go to `PENDINGREVOKE` status.
 
 Once the draft is ready, requesters **submit** the request, which moves to the `SUBMITTED` status. 
 Then, approvers **approve** or **reject** the request which will go to `APPROVED` or `REJECTED` status. Items also vary their status accordingly.
@@ -67,7 +67,7 @@ in the request that you are interested in to start working on your request.
 
 ## **Add/delete items**
 When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
-get access to. Initially the share request should be empty of items and in `DRAFT` state, it should look like the this picture.
+get access to. Initially the share request should be empty of items and in `DRAFT` state, it should look like the following picture.
 
 ![add_share](pictures/shares/shares_initial.png#zoom#shadow)
 
@@ -105,7 +105,7 @@ Approvers can see the request in their received share requests, alongside the cu
 
 ## **Approve/Reject a share request (approver)**
 
-Click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added or revoked in the request.
+As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added or revoked in the request.
 This is the view that approvers see, it now contains buttons to approve or reject the request.
 
 ![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
