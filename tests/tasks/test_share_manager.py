@@ -28,6 +28,9 @@ DATASET_S3_BUCKET = 'dataall-world-happiness-report-i6v1v1c2'
 TABLE_NAME = 'dataall_world_happiness_report_i6v1v1c2'
 TABLE_S3_PREFIX = f's3://{DATASET_S3_BUCKET}/'
 
+FOLDER_NAME = 'dataall_folder'
+FOLDER_NAME_2 = 'dataall_folder_2'
+
 
 @pytest.fixture(scope='module')
 def org(db):
@@ -168,7 +171,43 @@ def table2(org, env, db, dataset):
 
 
 @pytest.fixture(scope='module')
-def cross_account_share(
+def folder(org, env, db, dataset):
+    with db.scoped_session() as session:
+        folder = dataall.db.models.DatasetStorageLocation(
+            label=FOLDER_NAME,
+            name=FOLDER_NAME,
+            owner='alice',
+            description='test table',
+            datasetUri=dataset.datasetUri,
+            AWSAccountId=dataset.AwsAccountId,
+            S3BucketName=dataset.S3BucketName,
+            S3Prefix=FOLDER_NAME,
+            region=dataset.region
+        )
+        session.add(folder)
+    yield folder
+
+
+@pytest.fixture(scope='module')
+def folder2(org, env, db, dataset):
+    with db.scoped_session() as session:
+        folder = dataall.db.models.DatasetStorageLocation(
+            label=FOLDER_NAME_2,
+            name=FOLDER_NAME_2,
+            owner='alice',
+            description='test table 2',
+            datasetUri=dataset.datasetUri,
+            AWSAccountId=dataset.AwsAccountId,
+            S3BucketName=dataset.S3BucketName,
+            S3Prefix=FOLDER_NAME_2,
+            region=dataset.region
+        )
+        session.add(folder)
+    yield folder
+
+
+@pytest.fixture(scope='module')
+def cross_account_table_share(
     dataset: dataall.db.models.Dataset,
     db: dataall.db.Engine,
     cross_account_env: dataall.db.models.Environment,
@@ -182,7 +221,8 @@ def cross_account_share(
             environmentUri=cross_account_env.environmentUri,
             owner='bob',
             principalId=cross_account_env.SamlGroupName,
-            principalType=dataall.api.constants.PrincipalType.Environment.value,
+            principalType=dataall.api.constants.PrincipalType.Group.value,
+            principalIAMRoleName=cross_account_env.SamlGroupName,
             status=dataall.api.constants.ShareObjectStatus.Approved.value,
         )
         session.add(share)
@@ -195,6 +235,7 @@ def cross_account_share(
             itemName=table.GlueTableName,
             GlueDatabaseName=table.GlueDatabaseName,
             GlueTableName=table.GlueTableName,
+            S3AccessPointName='',
             status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
@@ -206,6 +247,7 @@ def cross_account_share(
             itemName=table2.GlueTableName,
             GlueDatabaseName=table2.GlueDatabaseName,
             GlueTableName=table2.GlueTableName,
+            S3AccessPointName='',
             status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
@@ -214,7 +256,7 @@ def cross_account_share(
 
 
 @pytest.fixture(scope='module')
-def same_account_share(
+def same_account_table_share(
     dataset: dataall.db.models.Dataset,
     db: dataall.db.Engine,
     env: dataall.db.models.Environment,
@@ -228,6 +270,90 @@ def same_account_share(
             owner='bob',
             principalId='bobTeam',
             principalType=dataall.api.constants.PrincipalType.Group.value,
+            principalIAMRoleName='bobTeam',
+            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+        )
+        session.add(share)
+        session.commit()
+        share_item = dataall.db.models.ShareObjectItem(
+            shareUri=share.shareUri,
+            owner='alice',
+            itemUri=table.tableUri,
+            itemType=dataall.api.constants.ShareableType.Table.value,
+            itemName=table.GlueTableName,
+            GlueDatabaseName=table.GlueDatabaseName,
+            GlueTableName=table.GlueTableName,
+            S3AccessPointName='',
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
+        )
+        session.add(share_item)
+        yield share
+
+@pytest.fixture(scope='module')
+def cross_account_folder_share(
+    dataset: dataall.db.models.Dataset,
+    db: dataall.db.Engine,
+    cross_account_env: dataall.db.models.Environment,
+    folder: dataall.db.models.DatasetStorageLocation,
+    folder2: dataall.db.models.DatasetStorageLocation,
+):
+    with db.scoped_session() as session:
+        share = dataall.db.models.ShareObject(
+            shareUri='cross',
+            datasetUri=dataset.datasetUri,
+            environmentUri=cross_account_env.environmentUri,
+            owner='bob',
+            principalId=cross_account_env.SamlGroupName,
+            principalType=dataall.api.constants.PrincipalType.Group.value,
+            principalIAMRoleName=cross_account_env.SamlGroupName,
+            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+        )
+        session.add(share)
+        session.commit()
+        share_item = dataall.db.models.ShareObjectItem(
+            shareUri=share.shareUri,
+            owner='alice',
+            itemUri=folder.locationUri,
+            itemType=dataall.api.constants.ShareableType.StorageLocation.value,
+            itemName=table.GlueTableName,
+            GlueDatabaseName="",
+            GlueTableName="",
+            S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower(),
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
+        )
+        session.add(share_item)
+        share_item = dataall.db.models.ShareObjectItem(
+            shareUri=share.shareUri,
+            owner='alice',
+            itemUri=folder2.locationUri,
+            itemType=dataall.api.constants.ShareableType.StorageLocation.value,
+            itemName=table2.GlueTableName,
+            GlueDatabaseName="",
+            GlueTableName="",
+            S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower(),
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
+        )
+        session.add(share_item)
+        session.commit()
+        yield share
+
+
+@pytest.fixture(scope='module')
+def same_account_folder_share(
+    dataset: dataall.db.models.Dataset,
+    db: dataall.db.Engine,
+    env: dataall.db.models.Environment,
+    table: dataall.db.models.DatasetTable,
+):
+    with db.scoped_session() as session:
+        share = dataall.db.models.ShareObject(
+            shareUri='same',
+            datasetUri=dataset.datasetUri,
+            environmentUri=env.environmentUri,
+            owner='bob',
+            principalId='bobTeam',
+            principalType=dataall.api.constants.PrincipalType.Group.value,
+            principalIAMRoleName='bobTeam',
             status=dataall.api.constants.ShareObjectStatus.Approved.value,
         )
         session.add(share)
@@ -252,42 +378,42 @@ def __update_to_rejected_status(db, share):
         session.merge(share)
 
 
-def test_cross_account_sharing(db, cross_account_share, dataset, mocker):
+def test_cross_account_table_sharing(db, cross_account_share, dataset, mocker):
     mocker.patch(
-        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share',
+        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.process_share',
         return_value=True,
     )
     mocker.patch(
-        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.reject_share',
+        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.revoke_share',
         return_value=True,
     )
-    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share(
+    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.process_share(
         db, cross_account_share.shareUri
     )
 
     __update_to_rejected_status(db, cross_account_share)
 
-    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.reject_share(
+    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.revoke_share(
         db, cross_account_share.shareUri
     )
 
 
-def test_same_account_sharing(db, same_account_share, dataset, mocker):
+def test_same_account_table_sharing(db, same_account_share, dataset, mocker):
     mocker.patch(
-        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share',
+        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.process_share',
         return_value=True,
     )
     mocker.patch(
-        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.reject_share',
+        'dataall.tasks.data_sharing.data_sharing_service.DataSharingService.revoke_share',
         return_value=True,
     )
-    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.approve_share(
+    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.process_share(
         db, same_account_share.shareUri
     )
 
     __update_to_rejected_status(db, same_account_share)
 
-    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.reject_share(
+    dataall.tasks.data_sharing.data_sharing_service.DataSharingService.revoke_share(
         db, same_account_share.shareUri
     )
 
@@ -308,3 +434,19 @@ def test_refresh_shares(db, same_account_share, cross_account_share, dataset, mo
     assert dataall.tasks.data_sharing.data_sharing_service.DataSharingService.refresh_shares(
         db
     )
+
+
+def test_share_object_actions(db, same_account_table_share):
+    with db.scoped_session() as session:
+        share_SM = dataall.db.api.ShareObjectSM(same_account_table_share.status)
+
+        assert share_SM._state == dataall.api.constants.ShareObjectStatus.Draft.value
+        new_share_state = share_SM.run_transition(dataall.api.constants.ShareObjectActions.Submit.value)
+        share_SM.update_state(session, same_account_table_share, new_share_state)
+
+        assert share_SM._state == dataall.api.constants.ShareObjectStatus.Submitted.value
+        assert same_account_table_share.status == dataall.api.constants.ShareObjectStatus.Submitted.value
+
+
+def test_share_item_actions(db):
+    assert None == None
