@@ -33,7 +33,7 @@ def upgrade():
         ),
         sa.Column(
             'deleted', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
-        )    
+        )
     )
 
 
