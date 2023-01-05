@@ -10,6 +10,7 @@ from ..models.Permission import PermissionType
 
 logger = logging.getLogger(__name__)
 
+
 def _fix_json_array(obj, attr):
     arr = getattr(obj, attr)
     if isinstance(arr, list) and len(arr) > 1 and arr[0] == '{':
