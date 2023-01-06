@@ -11,12 +11,12 @@ from ..models.Permission import PermissionType
 logger = logging.getLogger(__name__)
 
 
-def _fix_json_array(obj, attr):
-    arr = getattr(obj, attr)
-    if isinstance(arr, list) and len(arr) > 1 and arr[0] == '{':
-        arr = arr[1:-1]
-        arr = ''.join(arr).split(",")
-        setattr(obj, attr, arr)
+# def _fix_json_array(obj, attr):
+#     arr = getattr(obj, attr)
+#     if isinstance(arr, list) and len(arr) > 1 and arr[0] == '{':
+#         arr = arr[1:-1]
+#         arr = ''.join(arr).split(",")
+#         setattr(obj, attr, arr)
 
 
 class LFTag:
@@ -26,7 +26,7 @@ class LFTag:
 
         if data and data.get('term'):
             query = query.filter(
-                models.LFTag.LFTagName.ilike('%' + data.get('term') + '%')
+                models.LFTag.LFTagKey.ilike('%' + data.get('term') + '%')
             )
         result = paginate(
             query=query,
@@ -34,8 +34,8 @@ class LFTag:
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
-        for item in result["nodes"]:
-            _fix_json_array(item, 'LFTagValues')
+        # for item in result["nodes"]:
+        #     _fix_json_array(item, 'LFTagValues')
 
         return result
 
@@ -43,8 +43,8 @@ class LFTag:
     def list_all_lf_tags(session):
         lftags = session.query(models.LFTag).all()
 
-        for item in lftags:
-            _fix_json_array(item, 'LFTagValues')
+        # for item in lftags:
+        #     _fix_json_array(item, 'LFTagValues')
 
         return lftags
 
@@ -74,27 +74,27 @@ class LFTag:
         return lftag
 
     @staticmethod
-    def get_lf_tag_by_name(session, lf_tag_name):
+    def get_lf_tag_by_name(session, lf_tag_key):
         return session.query(models.LFTag).filter(
-            models.LFTag.LFTagName == lf_tag_name
+            models.LFTag.LFTagKey == lf_tag_key
         ).first()
 
     @staticmethod
     def add_lf_tag(session, username, groups, data, check_perm=None):
-        lf_tag_name: str = data['LFTagName']
+        lf_tag_key: str = data['LFTagKey']
         lf_tag_values = data.get('LFTagValues', [])
 
         alreadyAdded = LFTag.get_lf_tag_by_name(
-            session, lf_tag_name
+            session, lf_tag_key
         )
         if alreadyAdded:
             raise exceptions.UnauthorizedOperation(
                 action='ADD_LF_TAG',
-                message=f'LF Tag {lf_tag_name} already exists',
+                message=f'LF Tag {lf_tag_key} already exists',
             )
 
         lf_tag = models.LFTag(
-            LFTagName=lf_tag_name,
+            LFTagKey=lf_tag_key,
             LFTagValues=lf_tag_values
         )
 
@@ -118,7 +118,28 @@ class LFTagPermissions:
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
-        for item in result["nodes"]:
-            _fix_json_array(item, 'tagValues')
+        # for item in result["nodes"]:
+        #     _fix_json_array(item, 'tagValues')
 
         return result
+
+    # @staticmethod
+    # def list_lf_tags_all(
+    #     session, username, groups, uri, data=None, check_perm=None
+    # ) -> dict:
+    #     return LFTag.query_lf_tags_all(
+    #         session, username, groups, uri
+    #     ).all()
+
+    # @staticmethod
+    # def query_lf_tags_all(session, username, groups, uri):
+    #     query = (
+    #         session.query(models.LFTagPermissions)
+    #         .filter(
+    #             and_(
+    #                 models.LFTagPermissions.SamlGroupName.in_(groups),
+    #                 models.LFTagPermissions.environmentUri == uri
+    #             )
+    #         )
+    #     )
+    #     return query

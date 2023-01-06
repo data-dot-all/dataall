@@ -33,8 +33,8 @@ class Dataset(Resource, Base):
     topics = Column(postgresql.ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='Unclassified')
     tags = Column(postgresql.ARRAY(String))
-    lfTagKey = Column(String)
-    lfTagValue = Column(String)
+    lfTagKey = Column(postgresql.ARRAY(String))
+    lfTagValue = Column(postgresql.ARRAY(String))
 
     inProject = query_expression()
 

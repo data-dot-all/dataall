@@ -12,7 +12,7 @@ LFTagFilter = gql.InputType(
 AddLFTagInput = gql.InputType(
     name='AddLFTagInput',
     arguments=[
-        gql.Argument('LFTagName', gql.NonNullableType(gql.String)),
+        gql.Argument('LFTagKey', gql.NonNullableType(gql.String)),
         gql.Argument('LFTagValues', gql.ArrayType(gql.String))
     ],
 )

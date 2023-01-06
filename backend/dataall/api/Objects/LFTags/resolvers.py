@@ -70,3 +70,12 @@ def add_lf_tag(context, source, input):
         )
 
     return tag
+
+
+def list_all_lf_tags(
+    context, source, environmentUri=None, filter=None
+):
+    if filter is None:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.LFTag.list_all_lf_tags(session)

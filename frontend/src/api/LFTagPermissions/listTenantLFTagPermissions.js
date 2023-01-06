@@ -16,6 +16,7 @@ const listTenantLFTagPermissions = (filter) => ({
           tagPermissionUri
           SamlGroupName
           environmentUri
+          environmentLabel
           awsAccount
           tagKey
           tagValues

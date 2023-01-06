@@ -26,8 +26,17 @@ NewDatasetInput = gql.InputType(
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
-        gql.Argument('lfTagKey', type=gql.String),
-        gql.Argument(name='lfTagValue', type=gql.String),
+        # gql.Argument('datasetLFTags', type=gql.ArrayType(gql.Ref('DatasetLFTags')))
+        gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagValue', gql.ArrayType(gql.String))
+    ],
+)
+
+DatasetLFTags = gql.InputType(
+    name='DatasetLFTags',
+    arguments=[
+        gql.Argument('lfTagKey', gql.String),
+        gql.Argument('lfTagValue', gql.String)
     ],
 )
 
@@ -109,5 +118,7 @@ ImportDatasetInput = gql.InputType(
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagValue', gql.ArrayType(gql.String))
     ],
 )

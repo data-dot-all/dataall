@@ -432,6 +432,9 @@ class Dataset(Stack):
         if quicksight_default_group_arn:
             dataset_admins.append(quicksight_default_group_arn)
 
+        if dataset.lfTagValue:
+            lf_tags = {dataset.lfTagKey[i]: dataset.lfTagValue[i] for i in range(len(dataset.lfTagKey))}
+
         glue_db = CustomResource(
             self,
             f'{env.resourcePrefix}DatasetDatabase',
@@ -448,10 +451,7 @@ class Dataset(Stack):
                     'CreateTableDefaultPermissions': [],
                 },
                 'DatabaseAdministrators': dataset_admins,
-                'LFTags': {
-                    "TagKey": dataset.lfTagKey,
-                    "TagValue": dataset.lfTagValue
-                } if dataset.lfTagKey else None
+                'LFTags': lf_tags
             },
         )
 

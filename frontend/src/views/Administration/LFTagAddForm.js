@@ -81,7 +81,7 @@ const LFTagAddForm = (props) => {
     try {
       const response = await client.mutate(addLFTag
         ({
-          LFTagName: values.LFTagName,
+          LFTagKey: values.LFTagKey,
           LFTagValues: values.LFTagValues
         })
       );
@@ -138,11 +138,11 @@ const LFTagAddForm = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                LFTagName: '',
+                LFTagKey: '',
                 LFTagValues: []
               }}
               validationSchema={Yup.object().shape({
-                LFTagName: Yup.string()
+                LFTagKey: Yup.string()
                   .max(255)
                   .required('*LF Tag Name is required'),
                   LFTagValues: Yup.array()
@@ -168,19 +168,19 @@ const LFTagAddForm = (props) => {
                   <CardContent>
                     <TextField
                       error={Boolean(
-                        touched.LFTagName &&
-                          errors.LFTagName
+                        touched.LFTagKey &&
+                          errors.LFTagKey
                       )}
                       fullWidth
                       helperText={
-                        touched.LFTagName &&
-                        errors.LFTagName
+                        touched.LFTagKey &&
+                        errors.LFTagKey
                       }
                       label="LF Tag Name"
                       placeholder="Name for your Lake Formation Tag"
-                      name="LFTagName"
+                      name="LFTagKey"
                       onChange={handleChange}
-                      value={values.LFTagName}
+                      value={values.LFTagKey}
                       variant="outlined"
                     />
                   </CardContent>

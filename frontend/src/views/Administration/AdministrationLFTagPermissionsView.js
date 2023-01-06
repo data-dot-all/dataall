@@ -151,7 +151,7 @@ const LFTagPermissionsView = () => {
                         <TableCell>{tagPermission.tagKey} </TableCell>
                         <TableCell>{tagPermission.tagValues} </TableCell>
                         <TableCell>{tagPermission.awsAccount} </TableCell>
-                        <TableCell>{tagPermission.environmentUri} </TableCell>
+                        <TableCell>{tagPermission.environmentLabel} </TableCell>
                         <TableCell>{tagPermission.SamlGroupName} </TableCell>
                       </TableRow>
                     ))
