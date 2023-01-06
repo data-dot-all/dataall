@@ -59,9 +59,10 @@ function LFTagRow({ tag, fetchLFTags }) {
           },
           variant: 'success'
         });
-        if (fetchLFTags) {
-          fetchLFTags();
-        }
+        fetchLFTags();
+        // if (fetchLFTags) {
+        //   fetchLFTags();
+        // }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -69,10 +70,9 @@ function LFTagRow({ tag, fetchLFTags }) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
-// tag.LFTagValues : ['-']}
   return (
     <TableRow hover>
-      <TableCell>{tag.LFTagName} </TableCell>
+      <TableCell>{tag.LFTagKey} </TableCell>
       <TableCell>
         {tag.LFTagValues && tag.LFTagValues.length > 0 ?  
           tag.LFTagValues?.map((tag) => (
@@ -102,7 +102,7 @@ function LFTagRow({ tag, fetchLFTags }) {
 
 LFTagRow.propTypes = {
   tag: PropTypes.any,
-  fetchLFTags: PropTypes.any
+  fetchLFTags: PropTypes.func.isRequired
 };
 
 const LFTagsView = () => {

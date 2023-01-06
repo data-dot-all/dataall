@@ -7,7 +7,8 @@ Create Date: 2023-01-04 14:43:28.815230
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
+from sqlalchemy import String
 
 # revision identifiers, used by Alembic.
 revision = '72de510b8ba3'
@@ -21,15 +22,15 @@ def upgrade():
         'lftagpermissions',
         sa.Column('tagPermissionUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('SamlGroupName', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column('environmentUri', sa.ARRAY(sa.String()), autoincrement=False, nullable=False),
+        sa.Column('environmentUri', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('environmentLabel', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column('awsAccount', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('tagKey', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('tagValues', sa.VARCHAR(), autoincrement=False, nullable=False),
     )
 
-    op.add_column('dataset', sa.Column('lfTagKey', sa.String(), nullable=True))
-    op.add_column('dataset', sa.Column('lfTagValue', sa.String(), nullable=True))
+    op.add_column('dataset', sa.Column('lfTagKey', postgresql.ARRAY(String), nullable=True))
+    op.add_column('dataset', sa.Column('lfTagValue', postgresql.ARRAY(String), nullable=True))
 
 
 def downgrade():

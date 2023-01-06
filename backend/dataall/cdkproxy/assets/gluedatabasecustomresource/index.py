@@ -46,29 +46,50 @@ def on_create(event):
                 CatalogId=props.get('CatalogId'),
                 DatabaseInput=props.get('DatabaseInput'),
             )
-
-            # Create LF Tags if Exist
-            if props.get("LFTags"):
-                response = lf.add_lf_tags_to_resource(
-                    CatalogId=props.get('CatalogId'),
-                    Resource={
-                        'Database': {
-                            'CatalogId': props.get('CatalogId'),
-                            'Name': props['DatabaseInput']['Name']
-                        }
-                    },
-                    LFTags=[
-                        {
-                            'CatalogId': props.get('CatalogId'),
-                            'TagKey': props["LFTags"]["TagKey"],
-                            'TagValues': [props["LFTags"]["TagValue"]]
-                        },
-                    ]
-                )
-
         except ClientError as e:
             raise Exception(
                 f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}"
+            )
+    # Create LF Tags if Required
+    if props.get("LFTags"):
+        # Create LF Tag if Not Exist
+        lf_tags = props.get("LFTags")
+        for tagkey in lf_tags:
+            try:
+                lf.create_lf_tag(
+                    CatalogId=AWS_ACCOUNT,
+                    TagKey=tagkey,
+                    TagValues=[lf_tags[tagkey]]
+                )
+                print(f'Successfully create LF Tag {tagkey}')
+            except ClientError as e:
+                print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+                try:
+                    lf.update_lf_tag(
+                        CatalogId=AWS_ACCOUNT,
+                        TagKey=tagkey,
+                        TagValuesToAdd=[lf_tags[tagkey]]
+                    )
+                except ClientError as e:
+                    print(f'LF Tag {tagkey} already has value {lf_tags[tagkey]}, skippping update...')
+                    pass
+
+            # Add Tag to Resource
+            lf.add_lf_tags_to_resource(
+                CatalogId=props.get('CatalogId'),
+                Resource={
+                    'Database': {
+                        'CatalogId': props.get('CatalogId'),
+                        'Name': props['DatabaseInput']['Name']
+                    }
+                },
+                LFTags=[
+                    {
+                        'CatalogId': props.get('CatalogId'),
+                        'TagKey': tagkey,
+                        'TagValues': [lf_tags[tagkey]]
+                    },
+                ]
             )
 
     Entries = []

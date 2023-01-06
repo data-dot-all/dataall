@@ -7,7 +7,7 @@ const addLFTag = (input) => ({
   mutation: gql`
     mutation addLFTag($input: AddLFTagInput!) {
       addLFTag(input: $input) {
-        LFTagName
+        LFTagKey
         LFTagValues
       }
     }

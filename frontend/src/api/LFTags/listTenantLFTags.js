@@ -14,7 +14,7 @@ const listTenantLFTags = (filter) => ({
         hasPrevious
         nodes {
           lftagUri
-          LFTagName
+          LFTagKey
           LFTagValues
         }
       }

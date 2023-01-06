@@ -149,17 +149,17 @@ class Environment:
         )
         session.commit()
 
-        lf_tags = LFTag.list_all_lf_tags(session)
-        for lf_tag in lf_tags:
-            lf_tag_permission = LFTagPermissions(
-                SamlGroupName=env.SamlGroupName,
-                environmentUri=env.environmentUri,
-                # environmentLabel=env.label,
-                awsAccount=env.AwsAccountId,
-                tagKey=lf_tag.LFTagName,
-                tagValues=lf_tag.LFTagValues
-            )
-            session.add(lf_tag_permission)
+        # lf_tags = LFTag.list_all_lf_tags(session)
+        # for lf_tag in lf_tags:
+        #     lf_tag_permission = LFTagPermissions(
+        #         SamlGroupName=env.SamlGroupName,
+        #         environmentUri=env.environmentUri,
+        #         environmentLabel=env.label,
+        #         awsAccount=env.AwsAccountId,
+        #         tagKey=lf_tag.LFTagKey,
+        #         tagValues=lf_tag.LFTagValues
+        #     )
+        #     session.add(lf_tag_permission)
 
         activity = models.Activity(
             action='ENVIRONMENT:CREATE',
@@ -718,29 +718,6 @@ class Environment:
         return Environment.query_environment_invited_groups(
             session, username, groups, uri, data
         ).all()
-
-    @staticmethod
-    def list_environment_lf_tags(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        return Environment.query_environment_lf_tags(
-            session, username, groups, uri
-        ).all()
-
-    @staticmethod
-    def query_environment_lf_tags(
-        session, username, groups, uri
-    ) -> Query:
-        query = (
-            session.query(models.LFTagPermissions)
-            .filter(
-                and_(
-                    models.LFTagPermissions.SamlGroupName.in_(groups),
-                    models.LFTagPermissions.environmentUri == uri
-                )
-            )
-        )
-        return query
 
     @staticmethod
     def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:

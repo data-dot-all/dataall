@@ -71,7 +71,14 @@ class Dataset:
         organization = Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
-
+        # datasetLFTags = data.get('datasetLFTags', None)
+        # tag_keys = []
+        # tag_vals = []
+        # for d in datasetLFTags:
+        #     tag_keys.append(d.lfTagKey)
+        #     tag_vals.append(d.lfTagValue)
+        print(data.get("lfTagKey"))
+        print(data.get("lfTagValue"))
         dataset = models.Dataset(
             label=data.get('label'),
             owner=username,
@@ -94,8 +101,8 @@ class Dataset:
             topics=data.get('topics', []),
             businessOwnerEmail=data.get('businessOwnerEmail'),
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
-            lfTagKey=data.get('lfTagKey'),
-            lfTagValue=data.get('lfTagValue'),
+            lfTagKey=data.get("lfTagKey"),
+            lfTagValue=data.get("lfTagValue"),
             stewards=data.get('stewards')
             if data.get('stewards')
             else data['SamlAdminGroupName'],

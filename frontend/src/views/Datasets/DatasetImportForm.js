@@ -35,6 +35,7 @@ import TopicsData from '../../components/topics/TopicsData';
 import importDataset from '../../api/Dataset/importDataset';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
+import DatasetLFTagsForm from './DatasetLFTagsForm';
 
 const DatasetImportForm = (props) => {
   const dispatch = useDispatch();
@@ -44,12 +45,17 @@ const DatasetImportForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
+  const [datasetLFTags, setDatasetLFTags] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState([
     'Unclassified',
     'Official',
     'Secret'
   ]);
+
+  // const handleDatasetLFTags = tags => {
+  //   setDatasetLFTags(tags);
+  // };
 
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
@@ -116,7 +122,9 @@ const DatasetImportForm = (props) => {
           bucketName: values.bucketName,
           glueDatabaseName: values.glueDatabaseName,
           stewards: values.stewards,
-          confidentiality: values.confidentiality
+          confidentiality: values.confidentiality,
+          lfTagKey: datasetLFTags ? datasetLFTags.map((d) => d.lfTagKey) : [],
+          lfTagValue: datasetLFTags ? datasetLFTags.map((d) => d.lfTagValue) : []
         })
       );
       if (!response.errors) {
@@ -520,6 +528,13 @@ const DatasetImportForm = (props) => {
                           />
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      <Box sx={{ mt: 3 }}>
+                        <DatasetLFTagsForm
+                          handleDatasetLFTags={setDatasetLFTags}
+                        />
+                      </Box>
                       <Box
                         sx={{
                           display: 'flex',

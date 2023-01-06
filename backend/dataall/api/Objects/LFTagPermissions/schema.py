@@ -6,6 +6,7 @@ LFTagPermission = gql.ObjectType(
         gql.Field(name='tagPermissionUri', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
         gql.Field(name='environmentUri', type=gql.String),
+        gql.Field(name='environmentLabel', type=gql.String),
         gql.Field(name='awsAccount', type=gql.String),
         gql.Field(name='tagKey', type=gql.String),
         gql.Field(name='tagValues', type=gql.ArrayType(gql.String))
