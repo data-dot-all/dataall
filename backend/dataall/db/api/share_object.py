@@ -276,13 +276,23 @@ class ShareObject:
 
         share.status = ShareObjectStatus.Approved.value
 
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=share.groupUri,
-            permissions=permissions.DATASET_READ,
-            resource_uri=dataset.datasetUri,
-            resource_type=models.Dataset.__name__,
-        )
+        # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
+        share_table_items = session.query(models.ShareObjectItem).filter(
+            (
+                and_(
+                    models.ShareObjectItem.shareUri == uri,
+                    models.ShareObjectItem.itemType == ShareableType.Table.value
+                )
+            )
+        ).all()
+        for table in share_table_items:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=share.principalId,
+                permissions=permissions.DATASET_TABLE_READ,
+                resource_uri=table.itemUri,
+                resource_type=models.DatasetTable.__name__,
+            )
 
         api.Notification.notify_share_object_approval(session, username, dataset, share)
         return share

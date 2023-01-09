@@ -114,7 +114,7 @@ def preview(context, source, tableUri: str = None):
                 session=session,
                 username=context.username,
                 groups=context.groups,
-                resource_uri=table.datasetUri,
+                resource_uri=table.tableUri,
                 permission_name=permissions.PREVIEW_DATASET_TABLE,
             )
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
