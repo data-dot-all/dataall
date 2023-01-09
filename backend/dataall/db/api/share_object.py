@@ -13,6 +13,16 @@ from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectAction
 
 logger = logging.getLogger(__name__)
 
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Rejected.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.PendingRevoke.value
+]
 
 class Transition:
     def __init__(self, name, transitions):
@@ -808,17 +818,7 @@ class ShareObject:
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
-        shared_states = [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Share_In_Progress.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Rejected.value,
-            ShareItemStatus.Revoke_Approved.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.PendingRevoke.value
-        ]
-        shared_share_items_states = [x for x in shared_states if x in share_items_states]
+        shared_share_items_states = [x for x in SHARE_ITEM_SHARED_STATES if x in share_items_states]
 
         for item_state in share_items_states:
             Item_SM = ShareItemSM(item_state)
@@ -838,21 +838,11 @@ class ShareObject:
     @staticmethod
     def check_items_cleanup(session, uri, item_type):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_states = [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Share_In_Progress.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Rejected.value,
-            ShareItemStatus.Revoke_Approved.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.PendingRevoke.value
-        ]
         shared_items = session.query(models.ShareObjectItem).filter(
             and_(
                 models.ShareObjectItem.shareUri == share.shareUri,
                 models.ShareObjectItem.itemType == item_type,
-                models.ShareObjectItem.status.in_(shared_states)
+                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
             )
         ).all()
         if shared_items:
@@ -1316,22 +1306,12 @@ class ShareObject:
             )
             .count()
         )
-        shared_states = [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Share_In_Progress.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Rejected.value,
-            ShareItemStatus.Revoke_Approved.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.PendingRevoke.value
-        ]
         shared_items = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_(shared_states),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                 )
             )
             .count()
