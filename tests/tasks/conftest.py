@@ -152,6 +152,7 @@ def share(db):
     def factory(
         dataset: models.Dataset,
         environment: models.Environment,
+        env_group: models.EnvironmentGroup
     ) -> models.ShareObject:
         with db.scoped_session() as session:
             share = models.ShareObject(
@@ -160,7 +161,7 @@ def share(db):
                 owner="bob",
                 principalId=environment.SamlGroupName,
                 principalType=constants.PrincipalType.Environment.value,
-                #principalIAMRoleName=environment.environmentIAMRoleName,
+                principalIAMRoleName=env_group.environmentIAMRoleName,
                 status=constants.ShareObjectStatus.Approved.value,
             )
             session.add(share)

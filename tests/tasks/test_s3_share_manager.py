@@ -10,7 +10,7 @@ from dataall.utils.alarm_service import AlarmService
 
 
 SOURCE_ENV_ACCOUNT = "1234"
-SOURCE_ENV_ROLE_NAME = "dataall-World-Happiness-Report-i6v1v1c2"
+SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
 
 
 TARGET_ACCOUNT_ENV = "5678"
@@ -73,8 +73,10 @@ def location1(location: Callable, dataset1: models.Dataset) -> models.DatasetSto
 
 
 @pytest.fixture(scope="module")
-def share1(share: Callable, dataset1: models.Dataset, target_environment: models.Environment) -> models.ShareObject:
-    share1 = share(dataset1, target_environment)
+def share1(share: Callable, dataset1: models.Dataset, 
+           target_environment: models.Environment,
+           target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
+    share1 = share(dataset1, target_environment, target_environment_group)
     yield share1
 
 
@@ -218,7 +220,8 @@ def test_manage_bucket_policy_no_policy(
         # Then
         print(f"Bucket policy generated {created_bucket_policy}")
 
-        sid_list = [statement.get("Sid") for statement in created_bucket_policy["Statement"] if statement.get("Sid")]
+        sid_list = [statement.get("Sid") for statement in 
+                    created_bucket_policy["Statement"] if statement.get("Sid")]
 
         assert "AllowAllToAdmin" in sid_list
         assert "DelegateAccessToAccessPoint" in sid_list
@@ -428,10 +431,9 @@ def test_grant_target_role_acccess_policy_test_no_policy(
         manager.grant_target_role_access_policy()
 
         # Then
-        # TODO: Currently the principalIAMRoleName is None as the consumption role for the environment is not defined which
-        # is used as principalIAMRoleName for the share object
         iam_update_role_policy_mock.assert_called_with(
-            target_environment.AwsAccountId, share1.principalIAMRoleName, "targetDatasetAccessControlPolicy", json.dumps(expected_policy)
+            target_environment.AwsAccountId, share1.principalIAMRoleName, 
+            "targetDatasetAccessControlPolicy", json.dumps(expected_policy)
         )
 
 
