@@ -142,7 +142,8 @@ class S3ShareManager:
                     f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}",
                     f"arn:aws:s3:{self.dataset_region}:{self.dataset_account_id}:accesspoint/{self.access_point_name}/*"
                 ]
-                policy = existing_policy["Statement"][0]["Resource"].extend(target_resources)
+                existing_policy["Statement"][0]["Resource"].extend(target_resources)
+                policy = existing_policy
             else:
                 logger.info(
                     f'targetDatasetAccessControlPolicy exists for IAM role {self.target_requester_IAMRoleName} '
