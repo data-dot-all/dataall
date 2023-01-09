@@ -698,12 +698,13 @@ class dataAllBaseInfra(Stack):
                                              "quicksight:ListUserGroups",
                                              "quicksight:RegisterUser",
                                              "quicksight:DescribeDashboardPermissions",
+                                             "quicksight:UpdateDashboardPermissions",
                                              "quicksight:GetAuthCode",
                                              "quicksight:CreateGroupMembership",
                                              "quicksight:DescribeAccountSubscription"
                                          ],
                                          resources=[
-                                             f"arn:aws:quicksight:*:{self.account}:group/default/dataall",
+                                             f"arn:aws:quicksight:*:{self.account}:group/default/*",
                                              f"arn:aws:quicksight:*:{self.account}:user/default/*",
                                              f"arn:aws:quicksight:*:{self.account}:datasource/*",
                                              f"arn:aws:quicksight:*:{self.account}:user/*",
