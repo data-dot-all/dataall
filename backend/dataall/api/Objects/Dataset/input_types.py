@@ -26,7 +26,6 @@ NewDatasetInput = gql.InputType(
         ),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
-        # gql.Argument('datasetLFTags', type=gql.ArrayType(gql.Ref('DatasetLFTags')))
         gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
         gql.Argument('lfTagValue', gql.ArrayType(gql.String))
     ],
@@ -53,6 +52,8 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument('language', gql.Ref('Language')),
         gql.Argument('confidentiality', gql.Ref('ConfidentialityClassification')),
         gql.Argument(name='stewards', type=gql.String),
+        gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagValue', gql.ArrayType(gql.String))
     ],
 )
 

@@ -24,32 +24,13 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import listLFTagsAll from '../../api/LFTags/listLFTagsAll';
 
-const DatasetLFTagsForm = (props) => {
-  const { handleDatasetLFTags } = props;
+const LFTagEditForm = (props) => {
+  const { handleLFTags, tagobject } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [tagsDict, setTagsDict] = useState([]);
   const [lfTagOptions, setLFTagOptions] = useState({});
-
-//   const fetchGroups = async (environment) => {
-//   try {
-//     const response = await client.query(
-//       listEnvironmentGroups({
-//         filter: Defaults.SelectListFilter,
-//         environmentUri: environment.environmentUri
-//       })
-//     );
-
-//     if (!response.errors) {
-//       setMapGroups(new Map(mapGroups.set(environment.environmentUri, response.data.listEnvironmentGroups.nodes)) )//Array of groups (Objects)
-//     } else {
-//       dispatch({ type: SET_ERROR, error: response.errors[0].message });
-//     }
-//   } catch (e) {
-//     dispatch({ type: SET_ERROR, error: e.message });
-//   }
-// };
 
   const fetchLFTagValues = async () => {
     try {
@@ -61,6 +42,9 @@ const DatasetLFTagsForm = (props) => {
           return tagData
         });
         console.log(lfTagOptions)
+        if (tagobject.lfTagKey && tagobject.lfTagKey.length > 0) {
+          tagobject.lfTagKey.map((k, idx) => handleSetLFTags(k, tagobject.lfTagValue[idx]))
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -68,11 +52,17 @@ const DatasetLFTagsForm = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
+
+  useEffect(() => {
+    if (client && tagobject) {
+      fetchLFTagValues().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  }, [client, tagobject]);
+
   const handleLFTagChange = (idx, field) => (e) => {
     const { value } = e.target;
-    // console.log(value)
-    // console.log(lfTagOptions)
-    // console.log(Object.keys(lfTagOptions))
     setTagsDict((prevstate) => {
       const rows = [...prevstate];
       if (field === 'lfTagKey') {
@@ -83,6 +73,16 @@ const DatasetLFTagsForm = (props) => {
       }
       return rows;
     });
+  };
+
+  const handleSetLFTags = (tagkey, tagval) => {
+    console.log(tagkey)
+    console.log(tagval)
+    const item = {
+      lfTagValue: tagval,
+      lfTagKey: tagkey
+    };
+    setTagsDict((prevState) => [...prevState, item]);
   };
 
   const handleRemoveLFTagRow = (idx) => {
@@ -101,54 +101,11 @@ const DatasetLFTagsForm = (props) => {
     setTagsDict((prevState) => [...prevState, item]);
   };
 
-  // async function submit(element, index) {
-  //   try {
-  //     const response = await client.mutate(
-  //       createDataPipelineEnvironment({
-  //         input: {
-  //           stage: element.stage,
-  //           order: index+1,
-  //           pipelineUri: pipelineUri,
-  //           environmentLabel: element.environmentLabel,
-  //           environmentUri: element.environmentUri,
-  //           samlGroupName: element.samlGroupName
-
-  //         }
-  //       })
-  //     );
-  //     if (!response.errors) {
-  //     } else {
-  //       dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     dispatch({ type: SET_ERROR, error: err.message });
-  //   }
-  // }
-
-  // useEffect(() => {
-  //     if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
-  //       kvEnvs.forEach((element, index) => submit(element, index))
-  //     }
-  //     if (client && environmentOptions.length > 0) {
-  //       environmentOptions.forEach((element) => fetchGroups(element))
-  //     }
-  //   }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
-  useEffect(() => {
-    if (client) {
-      fetchLFTagValues().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-      
-    }
-  }, [client, dispatch]);
-
-
   useEffect(() => {
     if (tagsDict.length > 0){
-      handleDatasetLFTags(tagsDict)
+      handleLFTags(tagsDict)
     } else{
-      handleDatasetLFTags(tagsDict)
+      handleLFTags(tagsDict)
     }
   }, [tagsDict]);
 
@@ -250,8 +207,8 @@ const DatasetLFTagsForm = (props) => {
     </>
   );
 };
-DatasetLFTagsForm.propTypes = {
-  handleDatasetLFTags: PropTypes.func.isRequired
+LFTagEditForm.propTypes = {
+  handleLFTags: PropTypes.func.isRequired,
+  tagobject: PropTypes.object.isRequired
 };
-
-export default DatasetLFTagsForm;
+export default LFTagEditForm;

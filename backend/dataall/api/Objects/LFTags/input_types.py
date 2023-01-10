@@ -13,6 +13,7 @@ AddLFTagInput = gql.InputType(
     name='AddLFTagInput',
     arguments=[
         gql.Argument('LFTagKey', gql.NonNullableType(gql.String)),
-        gql.Argument('LFTagValues', gql.ArrayType(gql.String))
+        gql.Argument('LFTagValues', gql.ArrayType(gql.String)),
+        gql.Argument('description', gql.String)
     ],
 )

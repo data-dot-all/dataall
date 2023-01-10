@@ -82,7 +82,6 @@ class LFTag:
     @staticmethod
     def add_lf_tag(session, username, groups, data, check_perm=None):
         lf_tag_key: str = data['LFTagKey']
-        lf_tag_values = data.get('LFTagValues', [])
 
         alreadyAdded = LFTag.get_lf_tag_by_name(
             session, lf_tag_key
@@ -94,8 +93,10 @@ class LFTag:
             )
 
         lf_tag = models.LFTag(
-            LFTagKey=lf_tag_key,
-            LFTagValues=lf_tag_values
+            LFTagKey=data['LFTagKey'],
+            LFTagValues=data.get('LFTagValues', []),
+            description=data.get('description'),
+
         )
 
         session.add(lf_tag)
@@ -123,13 +124,35 @@ class LFTagPermissions:
 
         return result
 
-    # @staticmethod
-    # def list_lf_tags_all(
-    #     session, username, groups, uri, data=None, check_perm=None
-    # ) -> dict:
-    #     return LFTag.query_lf_tags_all(
-    #         session, username, groups, uri
-    #     ).all()
+    @staticmethod
+    def update_lftag_permissions_if_not_exist(
+        session, username, group, tagkey, tagval
+    ) -> dict:
+        
+        lf_permission = (
+            session.query(models.LFTagPermissions)
+            .filter(
+                and_(
+                    models.LFTagPermissions.SamlGroupName==group,
+                    models.LFTagPermissions.tagKey==tagkey,
+                    models.LFTagPermissions.tagValues.contains(f'{{{tagkey}}}'),
+                )
+            )
+            .first()
+        )
+        
+        # if not lf_permission:
+        #     lf_tag_permission =models.LFTagPermissions(
+        #         SamlGroupName=owner,
+        #         environmentUri=env.environmentUri,
+        #         environmentLabel=env.label,
+        #         awsAccount=env.AwsAccountId,
+        #         tagKey=tagkey,
+        #         tagValues=tagval
+        #     )
+        #     session.add(lf_tag_permission)
+
+        # return lf_tag_permission
 
     # @staticmethod
     # def query_lf_tags_all(session, username, groups, uri):

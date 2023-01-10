@@ -36,53 +36,14 @@ const LFTagAddForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-//   const [items, setItems] = useState([]);
-//   const [loadingGroups, setLoadingGroups] = useState(true);
-//   const [groupOptions, setGroupOptions] = useState([]);
-//   const [roleError, setRoleError] = useState(null);
-
-//   const fetchGroups = async (environmentUri) => {
-//     try {
-//       setLoadingGroups(true)
-//       const response = await client.query(
-//         listEnvironmentGroups({
-//           filter: Defaults.SelectListFilter,
-//           environmentUri
-//         })
-//       );
-//       if (!response.errors) {
-//         setGroupOptions(
-//           response.data.listEnvironmentGroups.nodes.map((g) => ({
-//             value: g.groupUri,
-//             label: g.groupUri
-//           }))
-//         );
-//       } else {
-//         dispatch({ type: SET_ERROR, error: response.errors[0].message });
-//       }
-//     } catch (e) {
-//       dispatch({ type: SET_ERROR, error: e.message });
-//     } finally {
-//       setLoadingGroups(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (client && environment) {
-//       fetchGroups(
-//         environment.environmentUri
-//       ).catch((e) =>
-//         dispatch({ type: SET_ERROR, error: e.message })
-//       );
-//     }
-//   }, [client, environment, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(addLFTag
         ({
           LFTagKey: values.LFTagKey,
-          LFTagValues: values.LFTagValues
+          LFTagValues: values.LFTagValues,
+          description: values.description
         })
       );
       if (!response.errors) {
@@ -113,14 +74,6 @@ const LFTagAddForm = (props) => {
     }
   }
 
-//   if (!environment) {
-//     return null;
-//   }
-
-//   if (loadingGroups) {
-//     return <CircularProgress size={10} />;
-//   }
-
   return (
     <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
@@ -139,7 +92,8 @@ const LFTagAddForm = (props) => {
             <Formik
               initialValues={{
                 LFTagKey: '',
-                LFTagValues: []
+                LFTagValues: [],
+                description: ''
               }}
               validationSchema={Yup.object().shape({
                 LFTagKey: Yup.string()
@@ -147,6 +101,8 @@ const LFTagAddForm = (props) => {
                   .required('*LF Tag Name is required'),
                   LFTagValues: Yup.array()
                   .required('*List of LF Tag Values is required'),
+                  description: Yup.string()
+                  .max(255)
               })}
               onSubmit={async (
                 values,
@@ -201,6 +157,26 @@ const LFTagAddForm = (props) => {
                         setFieldValue('LFTagValues', [...chip]);
                       }}
                       name="LFTagValues"
+                      variant="outlined"
+                    />
+                  </CardContent>
+                  <CardContent>
+                    <TextField
+                      error={Boolean(
+                        touched.description &&
+                          errors.description
+                      )}
+                      fullWidth
+                      multiline
+                      helperText={
+                        touched.description &&
+                        errors.description
+                      }
+                      label="LF Tag Description"
+                      placeholder="Description of your Lake Formation Tag"
+                      name="description"
+                      onChange={handleChange}
+                      value={values.description}
                       variant="outlined"
                     />
                   </CardContent>

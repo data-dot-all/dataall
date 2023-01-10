@@ -1,5 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
+import LFTagBrief from '../../components/LFTagBrief';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
 import DatasetConsoleAccess from './DatasetConsoleAccess';
@@ -36,6 +37,14 @@ const DatasetOverview = (props) => {
         <Box sx={{ mt: 2 }}>
           {isAdmin && <DatasetConsoleAccess dataset={dataset} />}
         </Box>
+      </Grid>
+      <Grid item lg={12} xl={6} xs={12}>
+        <LFTagBrief
+          title="LF-Tags"
+          lftagkeys={dataset.lfTagKey}
+          lftagvalues={dataset.lfTagValue}
+          objectType="dataset"
+        />
       </Grid>
     </Grid>
   );

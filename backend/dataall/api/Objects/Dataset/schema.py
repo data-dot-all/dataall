@@ -46,6 +46,8 @@ Dataset = gql.ObjectType(
         gql.Field(name='importedKmsKey', type=gql.Boolean),
         gql.Field(name='importedAdminRole', type=gql.Boolean),
         gql.Field(name='imported', type=gql.Boolean),
+        gql.Field('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Field('lfTagValue', gql.ArrayType(gql.String)),
         gql.Field(
             name='environment',
             type=gql.Ref('Environment'),

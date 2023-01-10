@@ -33,6 +33,7 @@ import searchGlossary from '../../api/Glossary/searchGlossary';
 import ChipInput from '../../components/TagsInput';
 import updateDatasetTable from '../../api/DatasetTable/updateDatasetTable';
 import * as Defaults from '../../components/defaults';
+import LFTagEditForm from '../Datasets/LFTagEditForm';
 
 function TableEditHeader(props) {
   const { table } = props;
@@ -115,6 +116,7 @@ const TableEditForm = () => {
   const [loading, setLoading] = useState(true);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
+  const [tableLFTags, setTableLFTags] = useState([]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -127,6 +129,8 @@ const TableEditForm = () => {
               ? values.terms.nodes.map((t) => t.nodeUri)
               : values.terms.map((t) => t.nodeUri),
             tags: values.tags
+            lfTagKey: tableLFTags ? tableLFTags.map((t) => t.lfTagKey) : [],
+            lfTagValue: tableLFTags ? tableLFTags.map((t) => t.lfTagValue) : []
           }
         })
       );
@@ -352,6 +356,14 @@ const TableEditForm = () => {
                           </Box>
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      <Box sx={{ mt: 3 }}>
+                        <LFTagEditForm
+                          handleLFTags={setDatasetLFTags}
+                          tagobject={dataset}
+                        />
+                      </Box>
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>
@@ -372,7 +384,7 @@ const TableEditForm = () => {
                         >
                           Update table
                         </LoadingButton>
-                      </Box>
+                      </Box>                    
                     </Grid>
                   </Grid>
                 </form>

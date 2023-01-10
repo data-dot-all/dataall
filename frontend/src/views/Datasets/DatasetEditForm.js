@@ -36,6 +36,7 @@ import getDataset from '../../api/Dataset/getDataset';
 import searchGlossary from '../../api/Glossary/searchGlossary';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
+// import LFTagEditForm from './LFTagEditForm';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();
@@ -49,6 +50,7 @@ const DatasetEditForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [selectableTerms, setSelectableTerms] = useState([]);
   const [tableTerms, setTableTerms] = useState([]);
+  // const [datasetLFTags, setDatasetLFTags] = useState([]);
   const [confidentialityOptions] = useState([
     'Unclassified',
     'Official',
@@ -150,6 +152,8 @@ const DatasetEditForm = (props) => {
               ? values.terms.nodes.map((t) => t.nodeUri)
               : values.terms.map((t) => t.nodeUri),
             confidentiality: values.confidentiality
+            // lfTagKey: datasetLFTags ? datasetLFTags.map((d) => d.lfTagKey) : [],
+            // lfTagValue: datasetLFTags ? datasetLFTags.map((d) => d.lfTagValue) : []
           }
         })
       );
@@ -517,6 +521,14 @@ const DatasetEditForm = (props) => {
                           />
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      {/* <Box sx={{ mt: 3 }}>
+                        <LFTagEditForm
+                          handleLFTags={setDatasetLFTags}
+                          tagobject={dataset}
+                        />
+                      </Box> */}
                       <Box
                         sx={{
                           display: 'flex',

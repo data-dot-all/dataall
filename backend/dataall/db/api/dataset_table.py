@@ -136,8 +136,22 @@ class DatasetTable:
             DatasetTable.get_dataset_table_by_uri(session, data['tableUri']),
         )
 
+        dataset = DatasetTable.get_dataset_by_uri(data['tableUri'])
+
         for k in [attr for attr in data.keys() if attr != 'term']:
             setattr(table, k, data.get(k))
+
+        # if data.get('lfTagKey') is not None:
+        #     lftagkeys = data.get('lfTagKey')
+        #     lftagvals = data.get('lfTagValue')
+        #     for i in range (0, len(lftagkeys)):
+        #         api.LFTagPermissions.update_lftag_permissions_if_not_exist(
+        #             session=session,
+        #             username=username,
+        #             group=dataset.SamlAdminGroupName,
+        #             tagkey=lftagkeys[i],
+        #             tagvalue=lftagvals[i]
+        #         )
 
         if data.get('terms') is not None:
             Glossary.set_glossary_terms_links(

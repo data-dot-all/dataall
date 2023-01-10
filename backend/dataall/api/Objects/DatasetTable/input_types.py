@@ -23,6 +23,8 @@ ModifyDatasetTableInput = gql.InputType(
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('terms', gql.ArrayType(gql.String)),
         gql.Argument('topics', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagValue', gql.ArrayType(gql.String))
     ],
 )
 

@@ -60,9 +60,6 @@ function LFTagRow({ tag, fetchLFTags }) {
           variant: 'success'
         });
         fetchLFTags();
-        // if (fetchLFTags) {
-        //   fetchLFTags();
-        // }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -93,6 +90,7 @@ function LFTagRow({ tag, fetchLFTags }) {
         }
       </TableCell>
       <TableCell>{tag.team && tag.team.length > 0 ? tag.team : ['-']} </TableCell>
+      <TableCell>{tag?.description} </TableCell>
         <LoadingButton onClick={() => removeTag(tag.lftagUri)}>
             <DeleteOutlined fontSize="small" />
         </LoadingButton>
@@ -234,6 +232,7 @@ const LFTagsView = () => {
                   <TableCell>Name</TableCell>
                   <TableCell>Values</TableCell>
                   <TableCell>Teams with Access</TableCell>
+                  <TableCell>Description</TableCell>
                 </TableRow>
               </TableHead>
               {loading ? (
