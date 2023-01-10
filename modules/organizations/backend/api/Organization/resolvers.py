@@ -1,6 +1,6 @@
 from .... import db
-from ....api.constants import OrganisationUserRole
-from ....api.context import Context
+from ..constants import OrganisationUserRole
+from backend.api.context import Context
 from ....db.api.organization import Organization
 from ....db import models
 

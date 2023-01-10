@@ -4,16 +4,17 @@ import logging
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from ..Stack import stack_helper
-from .... import db
-from ....api.constants import (
+from backend.utils import stack_helper
+from ..constants import (
     DatasetRole,
 )
-from ....api.context import Context
-from ....aws.handlers.glue import Glue
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.sns import Sns
+from backend.api.context import Context
+from backend.aws.glue import Glue
+from backend.aws.service_handlers import Worker
+from backend.aws.sts import SessionHelper
+from backend.aws.sns import Sns
+
+from .... import db
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization

@@ -1,9 +1,9 @@
 import json
 import logging
 
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
+from backend.api.context import Context
+from backend.aws.service_handlers import Worker
+from backend.aws.sts import SessionHelper
 from ....db import api, permissions, models
 from ....db.api import ResourcePolicy
 

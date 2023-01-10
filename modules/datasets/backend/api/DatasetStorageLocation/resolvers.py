@@ -1,6 +1,6 @@
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.s3 import S3
+from backend.api.context import Context
+from backend.aws.service_handlers import Worker
+from backend.aws.s3 import S3
 from ....db import permissions, models
 from ....db.api import (
     ResourcePolicy,

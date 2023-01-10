@@ -3,7 +3,7 @@ import logging
 from .... import db
 from ....db import exceptions
 from ....db.models import Group
-from ....aws.handlers.cognito import Cognito
+from backend.aws.cognito import Cognito
 
 
 log = logging.getLogger()

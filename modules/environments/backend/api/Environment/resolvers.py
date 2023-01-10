@@ -8,11 +8,11 @@ from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
 from ..Organization.resolvers import *
-from ..Stack import stack_helper
+from backend.utils import stack_helper
 from ...constants import *
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.quicksight import Quicksight
-from ....aws.handlers.cloudformation import CloudFormation
+from backend.aws.sts import SessionHelper
+from backend.aws.quicksight import Quicksight
+from backend.aws.cloudformation import CloudFormation
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (

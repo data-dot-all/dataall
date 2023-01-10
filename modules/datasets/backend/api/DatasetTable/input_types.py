@@ -1,5 +1,5 @@
 from backend.api import gql
-from ....api.constants import SortDirection, GraphQLEnumMapper
+from ..constants import SortDirection, GraphQLEnumMapper
 
 
 NewDatasetTableInput = gql.InputType(

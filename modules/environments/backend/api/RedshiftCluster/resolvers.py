@@ -5,11 +5,11 @@ from botocore.exceptions import ClientError
 
 from .... import db
 from ...constants import RedshiftClusterRole
-from ..Stack import stack_helper
-from ....api.context import Context
-from ....aws.handlers.redshift import Redshift
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
+from backend.utils import stack_helper
+from backend.api.context import Context
+from backend.aws.redshift import Redshift
+from backend.aws.service_handlers import Worker
+from backend.aws.sts import SessionHelper
 from ....db import permissions, models
 from ....db.api import ResourcePolicy, KeyValueTag, Stack
 

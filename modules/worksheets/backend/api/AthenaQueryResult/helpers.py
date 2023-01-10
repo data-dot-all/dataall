@@ -2,7 +2,7 @@ import nanoid
 from pyathena import connect
 
 from ....db import models
-from ....aws.handlers.sts import SessionHelper
+from backend.aws.sts import SessionHelper
 
 
 def random_key():

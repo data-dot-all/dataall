@@ -1,8 +1,8 @@
 from sqlalchemy import or_
 
 from .... import db
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
+from backend.api.context import Context
+from backend.aws.service_handlers import Worker
 from ....db import paginate, permissions, models
 from ....db.api import ResourcePolicy
 

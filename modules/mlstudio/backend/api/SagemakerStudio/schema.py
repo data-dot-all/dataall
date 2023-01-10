@@ -1,6 +1,6 @@
 from backend.api import gql
 from .resolvers import *
-from ....api.constants import SagemakerStudioRole
+from ..constants import SagemakerStudioRole
 
 SagemakerStudio = gql.ObjectType(
     name='SagemakerStudio',

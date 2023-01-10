@@ -1,15 +1,25 @@
 import json
 import logging
 
+# TODO see where this is used
 from ....aws.handlers import stepfunction as helpers
-from ...Objects.Stack import stack_helper
-from ...constants import DataPipelineRole
-from ...context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.codecommit import CodeCommit
+
+from backend.api.context import Context
+from backend.aws.service_handlers import Worker
+from backend.aws.sts import SessionHelper
+from backend.utils import stack_helper
+
+from backend.db import (
+    shared_core,
+    common,
+    module
+)
+
+# TODO refractor this imports
 from ....db import permissions, models, exceptions
 from ....db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
+
+from ...constants import DataPipelineRole
 
 log = logging.getLogger(__name__)
 

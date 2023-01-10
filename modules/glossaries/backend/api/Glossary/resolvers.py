@@ -3,12 +3,12 @@ from datetime import datetime
 from sqlalchemy import and_, or_, asc
 
 from .... import db
-from ....api.context import Context
+from backend.api.context import Context
 from ....db import paginate, exceptions, models
 from ....searchproxy import upsert_dataset
 from ....searchproxy import upsert_table
 from ....searchproxy.indexers import upsert_folder, upsert_dashboard
-from ....api.constants import (
+from ..constants import (
     GlossaryRole
 )
 

@@ -1,10 +1,10 @@
 import logging
 
-from ..Stack import stack_helper
+from backend.utils import stack_helper
 from .... import db
-from ....api.constants import SagemakerStudioRole
-from ....api.context import Context
-from ....aws.handlers.sagemaker_studio import (
+from ..constants import SagemakerStudioRole
+from backend.api.context import Context
+from backend.aws.sagemaker_studio import (
     SagemakerStudio,
 )
 from ....db import exceptions, permissions, models

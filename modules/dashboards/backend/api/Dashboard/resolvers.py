@@ -1,10 +1,20 @@
+from backend.api.context import Context
+from backend.aws.quicksight import Quicksight
+
+
+from backend.db import (
+    shared_core,
+    common,
+    module
+)
+
+# TODO refractor this imports
 from .... import db
-from ....api.constants import DashboardRole
-from ....api.context import Context
-from ....aws.handlers.quicksight import Quicksight
 from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary, Vote
 from ....searchproxy import indexers
+
+from ..constants import DashboardRole
 
 
 def get_quicksight_reader_url(context, source, dashboardUri: str = None):

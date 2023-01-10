@@ -1,9 +1,9 @@
 from backend.api.context import Context
-from backend.utils.aws.sagemaker import Sagemaker
+from backend.aws.sagemaker import Sagemaker
 from backend.utils import stack_helper
 
 from backend.db import (
-    core,
+    shared_core,
     common,
     module
 )
@@ -157,11 +157,11 @@ def delete_notebook(
             username=context.username,
         )
         notebook = module.operations.Notebook.get_notebook_by_uri(session, notebookUri)
-        env: core.models.Environment = core.operations.Environment.get_environment_by_uri(
+        env: shared_core.models.Environment = shared_core.operations.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
 
-        core.operations.KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+        shared_core.operations.KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
 
         session.delete(notebook)
 
@@ -188,17 +188,17 @@ def resolve_environment(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return session.query(core.models.Environment).get(source.environmentUri)
+        return session.query(shared_core.models.Environment).get(source.environmentUri)
 
 
 def resolve_organization(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: core.models.Environment = session.query(core.models.Environment).get(
+        env: shared_core.models.Environment = session.query(shared_core.models.Environment).get(
             source.environmentUri
         )
-        return session.query(core.models.Organization).get(env.organizationUri)
+        return session.query(shared_core.models.Organization).get(env.organizationUri)
 
 
 def resolve_user_role(context: Context, source: module.models.SagemakerNotebook):

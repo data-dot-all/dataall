@@ -2,8 +2,8 @@ from sqlalchemy import and_
 
 from .... import db
 from ..AthenaQueryResult import helpers as athena_helpers
-from ....api.constants import WorksheetRole
-from ....api.context import Context
+from ..constants import WorksheetRole
+from backend.api.context import Context
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import ResourcePolicy
 

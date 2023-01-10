@@ -1,4 +1,4 @@
-from ....api.constants import *
+from ..constants import *
 
 NewOrganizationInput = gql.InputType(
     name='NewOrganizationInput',

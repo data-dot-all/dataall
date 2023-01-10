@@ -1,5 +1,5 @@
 from backend.api import gql
-from ....api.constants import GraphQLEnumMapper, SortDirection
+from ..constants import GraphQLEnumMapper, SortDirection
 
 
 AwsEnvironmentInput = gql.InputType(
