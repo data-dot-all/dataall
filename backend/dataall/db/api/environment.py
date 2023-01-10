@@ -31,6 +31,17 @@ from ...utils.naming_convention import (
 
 log = logging.getLogger(__name__)
 
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Rejected.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.PendingRevoke.value
+]
+
 
 class Environment:
     @staticmethod
@@ -926,16 +937,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareItemStatus.Share_Succeeded.value,
-                            ShareItemStatus.PendingRevoke.value,
-                            ShareItemStatus.Revoke_Rejected.value,
-                            ShareItemStatus.Revoke_Approved.value,
-                            ShareItemStatus.Revoke_In_Progress.value,
-                            ShareItemStatus.Revoke_Failed.value,
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == uri,
                 )
             )
@@ -1026,16 +1028,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareItemStatus.Share_Succeeded.value,
-                            ShareItemStatus.PendingRevoke.value,
-                            ShareItemStatus.Revoke_Rejected.value,
-                            ShareItemStatus.Revoke_Approved.value,
-                            ShareItemStatus.Revoke_In_Progress.value,
-                            ShareItemStatus.Revoke_Failed.value,
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == envUri,
                     models.ShareObject.principalId == groupUri,
                 )
@@ -1155,16 +1148,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareItemStatus.Share_Succeeded.value,
-                            ShareItemStatus.PendingRevoke.value,
-                            ShareItemStatus.Revoke_Rejected.value,
-                            ShareItemStatus.Revoke_Approved.value,
-                            ShareItemStatus.Revoke_In_Progress.value,
-                            ShareItemStatus.Revoke_Failed.value,
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == uri,
                 )
             )

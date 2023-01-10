@@ -329,6 +329,15 @@ def resolve_share_object_statistics(context: Context, source: models.ShareObject
         )
 
 
+def resolve_existing_shared_items(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.check_existing_shared_items(
+            session, source.shareUri
+        )
+
+
 def list_shareable_objects(
     context: Context, source: models.ShareObject, filter: dict = None
 ):

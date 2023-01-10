@@ -34,3 +34,4 @@ class ShareObject(Base):
     deleted = Column(DateTime)
     confirmed = Column(Boolean, default=False)
     userRoleForShareObject = query_expression()
+    existingSharedItems = query_expression()

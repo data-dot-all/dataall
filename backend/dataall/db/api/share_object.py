@@ -24,6 +24,7 @@ SHARE_ITEM_SHARED_STATES = [
     ShareItemStatus.PendingRevoke.value
 ]
 
+
 class Transition:
     def __init__(self, name, transitions):
         self._name = name
@@ -836,7 +837,20 @@ class ShareObject:
         return True
 
     @staticmethod
-    def check_items_cleanup(session, uri, item_type):
+    def check_existing_shared_items(session, uri):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_items = session.query(models.ShareObjectItem).filter(
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+            )
+        ).all()
+        if shared_items:
+            return True
+        return False
+
+    @staticmethod
+    def check_existing_shared_items_of_type(session, uri, item_type):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         shared_items = session.query(models.ShareObjectItem).filter(
             and_(
@@ -846,8 +860,8 @@ class ShareObject:
             )
         ).all()
         if shared_items:
-            return False
-        return True
+            return True
+        return False
 
     @staticmethod
     def get_share_item_by_uri(session, uri):
@@ -1355,4 +1369,3 @@ class ShareObject:
             .count()
         )
         return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items, 'failedItems': failed_items, 'pendingItems': pending_items}
-

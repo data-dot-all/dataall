@@ -93,10 +93,13 @@ class DataSharingService:
         )
 
         log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-        clean_up_needed = api.ShareObject.check_items_cleanup(session, share_uri,
-                                                              models.ShareableType.StorageLocation.value)
-        log.info(f'Clean-up S3 folder sharing resources needed = {clean_up_needed}')
-        if clean_up_needed:
+        existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+            session,
+            share_uri,
+            models.ShareableType.StorageLocation.value
+        )
+        log.info(f'Still remaining S3 resources shared ={existing_shared_items}')
+        if not existing_shared_items:
             log.info("Clean up S3 access points...")
             clean_up_folders = ProcessS3Share.clean_up_share(
                 dataset=dataset,
@@ -138,10 +141,13 @@ class DataSharingService:
         revoked_tables_succeed = processor.process_revoked_shares()
         log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 
-        clean_up_needed = api.ShareObject.check_items_cleanup(session, share_uri,
-                                                              models.ShareableType.Table.value)
-        log.info(f'Clean-up LF table sharing resources needed = {clean_up_needed}')
-        if clean_up_needed:
+        existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+            session,
+            share_uri,
+            models.ShareableType.Table.value
+        )
+        log.info(f'Still remaining LF resources shared = {existing_shared_items}')
+        if not existing_shared_items:
             log.info("Clean up LF remaining resources...")
             clean_up_tables = processor.clean_up_share()
             log.info(f"Clean up LF successful = {clean_up_tables}")
@@ -208,10 +214,13 @@ class DataSharingService:
                 env_group,
             )
             log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            clean_up_needed = api.ShareObject.check_items_cleanup(session, share_uri,
-                                                                  models.ShareableType.StorageLocation.value)
-            log.info(f'Clean-up S3 folder sharing resources needed = {clean_up_needed}')
-            if clean_up_needed:
+            existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+                session,
+                share_uri,
+                models.ShareableType.StorageLocation.value
+            )
+            log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
+            if not existing_shared_items:
                 log.info("Clean up S3 access points...")
                 clean_up_folders = ProcessS3Share.clean_up_share(
                     dataset=dataset,
@@ -246,10 +255,13 @@ class DataSharingService:
             revoked_tables_succeed = processor.process_revoked_shares()
             log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 
-            clean_up_needed = api.ShareObject.check_items_cleanup(session, share_uri,
-                                                                  models.ShareableType.Table.value)
-            log.info(f'Clean-up LF table sharing resources needed = {clean_up_needed}')
-            if clean_up_needed:
+            existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+                session,
+                share_uri,
+                models.ShareableType.Table.value
+            )
+            log.info(f'Still remaining LF resources shared = {existing_shared_items}')
+            if not existing_shared_items:
                 log.info("Clean up LF remaining resources...")
                 clean_up_tables = processor.clean_up_share()
                 log.info(f"Clean up LF successful = {clean_up_tables}")

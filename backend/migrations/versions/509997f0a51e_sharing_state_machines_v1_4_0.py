@@ -137,4 +137,3 @@ def downgrade():
     except Exception as e:
         print(f'Failed to backfill share_objects due to: {e}')
     # ### end Alembic commands ###
-
