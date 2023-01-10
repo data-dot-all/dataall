@@ -1,7 +1,14 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
-from .. import Base, Resource, utils
+from backend.db import Base, Resource, utils
+
+class DashboardRole(Enum):
+    Creator = '999'
+    Admin = '900'
+    Shared = '800'
+    NoPermission = '000'
 
 
 class Dashboard(Resource, Base):

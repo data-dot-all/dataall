@@ -1,4 +1,4 @@
-from ... import gql
+from backend.api import gql
 
 NewDataPipelineInput = gql.InputType(
     name='NewDataPipelineInput',

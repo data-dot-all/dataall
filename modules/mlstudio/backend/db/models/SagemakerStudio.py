@@ -1,9 +1,15 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
 from .. import Base
 from .. import Resource, utils
 
+class SagemakerStudioRole(Enum):
+    Creator = '950'
+    Admin = '900'
+    Shared = '300'
+    NoPermission = '000'
 
 class SagemakerStudio(Resource, Base):
     __tablename__ = 'sagemaker_studio_domain'

@@ -1,9 +1,13 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import query_expression
-from sqlalchemy.dialects import postgresql
+from enum import Enum
 
-from .. import Base, Resource, utils
+from backend.db import Base, Resource, utils
 
+class DataPipelineRole(Enum):
+    Creator = '999'
+    Admin = '900'
+    NoPermission = '000'
 
 class DataPipeline(Resource, Base):
     __tablename__ = 'datapipeline'

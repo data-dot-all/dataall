@@ -1,7 +1,14 @@
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
 from backend.db import Base, Resource, utils
+
+class SagemakerNotebookRole(Enum):
+    Creator = '950'
+    Admin = '900'
+    Shared = '300'
+    NoPermission = '000'
 
 
 class SagemakerNotebook(Resource, Base):

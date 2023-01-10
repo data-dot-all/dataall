@@ -1,17 +1,25 @@
 import datetime
-import enum
 
 from sqlalchemy import Column, Boolean, DateTime, Integer, Enum, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
+from enum import Enum
 
 from .. import Base
 from .. import Resource, utils
 
 
-class QueryType(enum.Enum):
+class QueryType(Enum):
     chart = 'chart'
     data = 'data'
+
+
+class WorksheetRole(Enum):
+    Creator = '950'
+    Admin = '900'
+    SharedWithWritePermission = '500'
+    SharedWithReadPermission = '400'
+    NoPermission = '000'
 
 
 class Worksheet(Resource, Base):

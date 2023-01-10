@@ -1,8 +1,8 @@
 from backend.api.context import GraphQLEnumMapper
 
-# class SagemakerNotebookRole(GraphQLEnumMapper):
-#     Creator = '950'
-#     Admin = '900'
-#     Shared = '300'
-#     NoPermission = '000'
+class DashboardRole(GraphQLEnumMapper):
+    Creator = '999'
+    Admin = '900'
+    Shared = '800'
+    NoPermission = '000'
 

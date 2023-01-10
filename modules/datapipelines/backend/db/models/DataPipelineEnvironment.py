@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 
-from .. import Base, Resource, utils
+from backend.db import Base, Resource, utils
 
 
 class DataPipelineEnvironment(Base, Resource):
