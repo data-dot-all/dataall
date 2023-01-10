@@ -3,7 +3,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from backend.short_async_tasks import Worker
-from backend.utils.aws import Glue
+from backend.aws import Glue
 from backend.db import common, module
 
 ##TODO Assuming this goes into module Datasets, careful references to datapipeline

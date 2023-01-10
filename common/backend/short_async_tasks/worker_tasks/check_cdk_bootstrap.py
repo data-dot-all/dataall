@@ -1,8 +1,7 @@
 import logging
 
 from backend.short_async_tasks import Worker
-from backend.utils.aws.sts import SessionHelper
-from backend.utils.aws.cloudformation import CloudFormation
+from backend.aws.cloudformation import CloudFormation
 from backend.db import Engine, common
 
 log = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 import logging
 
 from backend.short_async_tasks import Worker
-from backend.utils.aws import SessionHelper, S3
+from backend.aws import SessionHelper, S3
 from backend.db.core import operations
 from backend.db.common import models
 

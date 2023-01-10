@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 from .handle_glue_table_schema import Glue
 from backend.short_async_tasks import Worker
-from backend.utils.aws import SessionHelper, Redshift
+from backend.aws import SessionHelper, Redshift
 
 
 from ... import db

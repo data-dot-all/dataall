@@ -2,7 +2,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from backend.short_async_tasks import Worker
-from backend.utils.aws import CloudFormation
+from backend.aws import CloudFormation
 from backend.utils import json_utils
 from backend.db.common import models
 

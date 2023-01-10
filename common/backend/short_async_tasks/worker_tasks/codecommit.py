@@ -1,5 +1,5 @@
 from backend.short_async_tasks import Worker
-from backend.utils.aws.codecommit import CodeCommit
+from backend.aws.codecommit import CodeCommit
 from backend.db import Engine, common
 
 

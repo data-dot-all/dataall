@@ -4,7 +4,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from backend.short_async_tasks import Worker
-from backend.utils.aws import SessionHelper
+from backend.aws import SessionHelper
 from backend.db.core import operations
 from backend.db.common import models
 
