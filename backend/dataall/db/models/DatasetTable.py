@@ -27,3 +27,5 @@ class DatasetTable(Resource, Base):
     stage = Column(String, default='RAW')
     topics = Column(postgresql.ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
+    lfTagKey = Column(postgresql.ARRAY(String))
+    lfTagValue = Column(postgresql.ARRAY(String))

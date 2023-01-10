@@ -80,6 +80,14 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
             check_perm=True,
         )
         indexers.upsert_table(session, context.es, table.tableUri)
+
+    if input.get("lfTagKey") and len(input.get("lfTagKey")) > 0:
+        task = models.Task(
+            action='lakeformation.table.assign.lftags',
+            targetUri=tableUri,
+        )
+        session.add(task)
+        Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
     return table
 
 

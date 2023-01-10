@@ -16,6 +16,7 @@ const listTenantLFTags = (filter) => ({
           lftagUri
           LFTagKey
           LFTagValues
+          description
         }
       }
     }

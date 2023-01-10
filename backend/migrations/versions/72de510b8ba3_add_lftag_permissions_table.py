@@ -32,9 +32,21 @@ def upgrade():
     op.add_column('dataset', sa.Column('lfTagKey', postgresql.ARRAY(String), nullable=True))
     op.add_column('dataset', sa.Column('lfTagValue', postgresql.ARRAY(String), nullable=True))
 
+    op.add_column('dataset_table', sa.Column('lfTagKey', postgresql.ARRAY(String), nullable=True))
+    op.add_column('dataset_table', sa.Column('lfTagValue', postgresql.ARRAY(String), nullable=True))
+
+    op.add_column('dataset_table_column', sa.Column('lfTagKey', postgresql.ARRAY(String), nullable=True))
+    op.add_column('dataset_table_column', sa.Column('lfTagValue', postgresql.ARRAY(String), nullable=True))
+
 
 def downgrade():
     op.drop_table('lftagpermissions')
 
     op.drop_column('dataset', 'lfTagKey')
     op.drop_column('dataset', 'lfTagValue')
+
+    op.drop_column('dataset_table', 'lfTagKey')
+    op.drop_column('dataset_table', 'lfTagValue')
+
+    op.drop_column('dataset_table_column', 'lfTagKey')
+    op.drop_column('dataset_table_column', 'lfTagValue')

@@ -25,6 +25,7 @@ def upgrade():
         sa.Column('LFTagKey', sa.VARCHAR(), autoincrement=False, nullable=False),
         sa.Column('LFTagValues', postgresql.ARRAY(String), autoincrement=False, nullable=False),
         sa.Column('teams', sa.VARCHAR(), autoincrement=False, nullable=True),
+        sa.Column('description', sa.VARCHAR(), autoincrement=False, nullable=True),
         sa.Column(
             'created', postgresql.TIMESTAMP(), autoincrement=False, nullable=True
         ),

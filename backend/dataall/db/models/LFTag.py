@@ -12,6 +12,7 @@ class LFTag(Base):
     LFTagKey = Column(String, nullable=False)
     LFTagValues = Column(ARRAY(String))
     teams = Column(String, nullable=True)
+    description = Column(String, nullable=True)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)

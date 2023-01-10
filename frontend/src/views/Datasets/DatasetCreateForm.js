@@ -103,9 +103,9 @@ const DatasetCreateForm = (props) => {
     }
   };
 
-  const handleDatasetLFTags = tags => {
-    setDatasetLFTags(tags);
-  };
+  // const handleDatasetLFTags = tags => {
+  //   setDatasetLFTags(tags);
+  // };
 
   useEffect(() => {
     if (client) {
@@ -497,7 +497,7 @@ const DatasetCreateForm = (props) => {
                     <Grid item lg={12} md={6} xs={12}>
                       <Box sx={{ mt: 3 }}>
                         <DatasetLFTagsForm
-                          handleDatasetLFTags={handleDatasetLFTags}
+                          handleDatasetLFTags={setDatasetLFTags}
                         />
                       </Box>
                       <Box

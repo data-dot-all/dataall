@@ -6,7 +6,8 @@ LFTag = gql.ObjectType(
         gql.Field(name='lftagUri', type=gql.String),
         gql.Field(name='LFTagKey', type=gql.String),
         gql.Field(name='LFTagValues', type=gql.ArrayType(gql.String)),
-        gql.Field(name='teams', type=gql.ArrayType(gql.String))
+        gql.Field(name='teams', type=gql.ArrayType(gql.String)),
+        gql.Field(name='description', type=gql.String)
     ],
 )
 

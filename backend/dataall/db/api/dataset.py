@@ -71,14 +71,7 @@ class Dataset:
         organization = Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
-        # datasetLFTags = data.get('datasetLFTags', None)
-        # tag_keys = []
-        # tag_vals = []
-        # for d in datasetLFTags:
-        #     tag_keys.append(d.lfTagKey)
-        #     tag_vals.append(d.lfTagValue)
-        print(data.get("lfTagKey"))
-        print(data.get("lfTagValue"))
+
         dataset = models.Dataset(
             label=data.get('label'),
             owner=username,
@@ -109,6 +102,14 @@ class Dataset:
         )
         session.add(dataset)
         session.commit()
+
+        Dataset._add_lf_tag_permission_for_dataset(
+            session=session,
+            env=environment,
+            owner=data['SamlAdminGroupName'],
+            tagkeys=data.get("lfTagKey"),
+            tagvals=data.get("lfTagValue")
+        )
 
         Dataset._set_dataset_aws_resources(dataset, data, environment)
 
@@ -146,6 +147,21 @@ class Dataset:
                 resource_type=models.Dataset.__name__,
             )
         return dataset
+
+    @staticmethod
+    def _add_lf_tag_permission_for_dataset(session, env, owner, tagkeys, tagvals):
+        if tagkeys:
+            for i in range(0, len(tagkeys)):
+                lf_tag_permission = models.LFTagPermissions(
+                    SamlGroupName=owner,
+                    environmentUri=env.environmentUri,
+                    environmentLabel=env.label,
+                    awsAccount=env.AwsAccountId,
+                    tagKey=tagkeys[i],
+                    tagValues=tagvals[i]
+                )
+                session.add(lf_tag_permission)
+        return True
 
     @staticmethod
     def _set_dataset_aws_resources(dataset: models.Dataset, data, environment):
