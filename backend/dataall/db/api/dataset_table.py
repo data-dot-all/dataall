@@ -8,6 +8,7 @@ from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Envi
 from ..models import Dataset
 from ..models.Enums import ShareItemStatus
 from ...utils import json_utils
+from ...aws.handlers.glue import LakeFormation
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ class DatasetTable:
             DatasetTable.get_dataset_table_by_uri(session, data['tableUri']),
         )
 
-        dataset = DatasetTable.get_dataset_by_uri(data['tableUri'])
+        dataset = DatasetTable.get_dataset_by_uri(session, data['tableUri'])
 
         for k in [attr for attr in data.keys() if attr != 'term']:
             setattr(table, k, data.get(k))
@@ -298,6 +299,7 @@ class DatasetTable:
                             resource_uri=updated_table.tableUri,
                             resource_type=models.DatasetTable.__name__,
                         )
+                    # table_tags={}
                 else:
                     logger.info(
                         f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'
@@ -309,7 +311,15 @@ class DatasetTable:
                         table.get('Parameters', {})
                     )
 
-                DatasetTable.sync_table_columns(session, updated_table, table)
+                lf_client = LakeFormation.create_lf_client(dataset.AwsAccountId, dataset.region)
+                table_tags = LakeFormation.get_table_lf_tags(
+                    lf=lf_client, 
+                    account=dataset.AwsAccountId,
+                    db_name=dataset.GlueDatabaseName,
+                    table_name=table['Name']
+                )
+                
+                DatasetTable.sync_table_columns(session, updated_table, table, table_tags)
 
         return True
 
@@ -323,7 +333,12 @@ class DatasetTable:
                 )
 
     @staticmethod
-    def sync_table_columns(session, dataset_table, glue_table):
+    def sync_table_columns(session, dataset_table, glue_table, table_tags):
+        existing_col_tags = {}
+        for col_tag in table_tags.get('LFTagsOnColumns', []):
+            existing_col_tags[col_tag["Name"]] = {}
+            existing_col_tags[col_tag["Name"]]["TagKeys"] = [d['TagKey'] for d in col_tag["LFTags"]]
+            existing_col_tags[col_tag["Name"]]["TagValues"] = [''.join(d['TagValues']) for d in col_tag["LFTags"]]
 
         DatasetTable.delete_all_table_columns(session, dataset_table)
 
@@ -340,6 +355,13 @@ class DatasetTable:
         logger.debug(f'Found partitions {partitions} for table {dataset_table}')
 
         for col in columns + partitions:
+            lfTagKey = None
+            lfTagValue = None
+            if col["Name"] in existing_col_tags.keys():
+                lfTagKey = existing_col_tags[col["Name"]]["TagKeys"]
+                lfTagValue = existing_col_tags[col["Name"]]["TagValues"]
+            print(f"lfTagKey: {lfTagKey}")
+            print(f"lfTagValue: {lfTagValue}")
             table_col = models.DatasetTableColumn(
                 name=col['Name'],
                 description=col.get('Comment', 'No description provided'),
@@ -353,8 +375,11 @@ class DatasetTable:
                 region=dataset_table.region,
                 typeName=col['Type'],
                 columnType=col['columnType'],
+                lfTagKey=lfTagKey if lfTagKey else None,
+                lfTagValue=lfTagValue if lfTagValue else None
             )
             session.add(table_col)
+            session.commit()
 
     @staticmethod
     def delete_all_table_columns(session, dataset_table):

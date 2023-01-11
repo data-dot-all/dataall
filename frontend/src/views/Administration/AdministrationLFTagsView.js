@@ -38,74 +38,11 @@ import { useSnackbar } from 'notistack';
 import { HiUserRemove } from 'react-icons/hi';
 import removeLFTag from '../../api/LFTags/removeLFTag';
 
-function LFTagRow({ tag, fetchLFTags }) {
-  const theme = useTheme();
-  const { enqueueSnackbar } = useSnackbar();
-  const client = useClient();
-  const dispatch = useDispatch();
-  console.log(tag)
-  const removeTag = async (tagUri) => {
-    try {
-      const response = await client.mutate(
-        removeLFTag({
-          lftagUri: tagUri
-        })
-      );
-      if (!response.errors) {
-        enqueueSnackbar('LF Tag removed', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        fetchLFTags();
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
-  return (
-    <TableRow hover>
-      <TableCell>{tag.LFTagKey} </TableCell>
-      <TableCell>
-        {tag.LFTagValues && tag.LFTagValues.length > 0 ?  
-          tag.LFTagValues?.map((tag) => (
-            <Chip
-              sx={{ mr: 0.5, mb: 0.5 }}
-              key={tag}
-              label={tag}
-              variant="outlined"
-            />
-          ))
-          : 
-          <Chip
-            sx={{ mr: 0.5, mb: 0.5 }}
-            key={'-'}
-            label={'-'}
-            variant="outlined"
-          />
-        }
-      </TableCell>
-      <TableCell>{tag.team && tag.team.length > 0 ? tag.team : ['-']} </TableCell>
-      <TableCell>{tag?.description} </TableCell>
-        <LoadingButton onClick={() => removeTag(tag.lftagUri)}>
-            <DeleteOutlined fontSize="small" />
-        </LoadingButton>
-    </TableRow>
-  );
-}
-
-LFTagRow.propTypes = {
-  tag: PropTypes.any,
-  fetchLFTags: PropTypes.func.isRequired
-};
 
 const LFTagsView = () => {
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [lftags, setLFTags] = useState(Defaults.PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
   const [loading, setLoading] = useState(true);
@@ -148,6 +85,32 @@ const LFTagsView = () => {
   const handlePageChange = async (event, value) => {
     if (value <= lftags.pages && value !== lftags.page) {
       await setFilter({ ...filter, page: value });
+    }
+  };
+
+  const removeTag = async (tagUri) => {
+    try {
+      const response = await client.mutate(
+        removeLFTag({
+          lftagUri: tagUri
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('LF Tag removed', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        if (fetchLFTags) {
+          fetchLFTags();
+        }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
     }
   };
 
@@ -241,7 +204,33 @@ const LFTagsView = () => {
                 <TableBody>
                   {lftags.nodes.length > 0 ? (
                     lftags.nodes.map((tag) => (
-                      <LFTagRow tag={tag} fetchLFTag={fetchLFTags} />
+                      <TableRow hover>
+                        <TableCell>{tag.LFTagKey} </TableCell>
+                        <TableCell>
+                          {tag.LFTagValues && tag.LFTagValues.length > 0 ?  
+                            tag.LFTagValues?.map((tag) => (
+                              <Chip
+                                sx={{ mr: 0.5, mb: 0.5 }}
+                                key={tag}
+                                label={tag}
+                                variant="outlined"
+                              />
+                            ))
+                            : 
+                            <Chip
+                              sx={{ mr: 0.5, mb: 0.5 }}
+                              key={'-'}
+                              label={'-'}
+                              variant="outlined"
+                            />
+                          }
+                        </TableCell>
+                        <TableCell>{tag.team && tag.team.length > 0 ? tag.team : ['-']} </TableCell>
+                        <TableCell>{tag?.description} </TableCell>
+                          <LoadingButton onClick={() => removeTag(tag.lftagUri)}>
+                              <DeleteOutlined fontSize="small" />
+                          </LoadingButton>
+                      </TableRow>
                     ))
                   ) : (
                     <TableRow hover>

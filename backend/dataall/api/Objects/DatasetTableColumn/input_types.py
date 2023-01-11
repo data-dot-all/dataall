@@ -18,3 +18,11 @@ DatasetTableColumnInput = gql.InputType(
         gql.Argument('topics', gql.Integer),
     ],
 )
+
+DatasetTableColumnLFTagInput = gql.InputType(
+    name='DatasetTableColumnLFTagInput',
+    arguments=[
+        gql.Argument('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Argument('lfTagValue', gql.ArrayType(gql.String))
+    ],
+)

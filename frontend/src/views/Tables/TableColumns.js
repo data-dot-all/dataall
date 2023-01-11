@@ -10,6 +10,7 @@ import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
 import updateColumnDescription from '../../api/DatasetTable/updateDatasetTableColumn';
+import TableColumnLFTagForm from './TableColumnLFTagForm';
 import syncDatasetTableColumns from '../../api/DatasetTable/syncDatasetTableColumns';
 import * as Defaults from '../../components/defaults';
 
@@ -20,7 +21,15 @@ const TableColumns = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState(null);
+  const [columnToEdit, setColumnToEdit] = useState(null);
   const [refreshingColumns, setRefreshingColumns] = useState(false);
+  const [isAddLFTagModalOpen, setIsAddLFTagModalOpen] = useState(false);
+  const handleAddLFTagModalOpen = () => {
+    setIsAddLFTagModalOpen(true);
+  };
+  const handleAddLFTagModalClose = () => {
+    setIsAddLFTagModalOpen(false);
+  };
 
   const updateDescription = async (column, description) => {
     const response = await client.mutate(
@@ -58,6 +67,17 @@ const TableColumns = (props) => {
     }
   };
 
+  const handleCellClick = (e) => {
+    if (e.field === 'lftags' && isAdmin) {
+      columns.map((c) => {
+        if (c.id === e.id) {
+          setColumnToEdit(c)
+          handleAddLFTagModalOpen()
+        }
+      });
+    }
+  };
+
   const startSyncColumns = async () => {
     try {
       setRefreshingColumns(true);
@@ -73,7 +93,13 @@ const TableColumns = (props) => {
                 ? `${c.name} (${c.columnType})`
                 : c.name,
             type: c.typeName,
-            description: c.description
+            description: c.description,
+            lfTagKey: c.lfTagKey,
+            lfTagValue: c.lfTagValue,
+            lftags: 
+              c.lfTagKey && c.lfTagKey.length > 0 
+              ? c.lfTagKey.map((key,idx) => `${key}=${c.lfTagValue[idx]}`)
+              : '-'
           }))
         );
         enqueueSnackbar('Columns synchronized successfully', {
@@ -93,32 +119,39 @@ const TableColumns = (props) => {
     }
   };
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      const response = await client.query(
-        listDatasetTableColumns({
-          tableUri: table.tableUri,
-          filter: Defaults.SelectListFilter
-        })
+  const fetchItems = async () => {
+    setLoading(true);
+    const response = await client.query(
+      listDatasetTableColumns({
+        tableUri: table.tableUri,
+        filter: Defaults.SelectListFilter
+      })
+    );
+    if (!response.errors) {
+      setColumns(
+        response.data.listDatasetTableColumns.nodes.map((c) => ({
+          id: c.columnUri,
+          name:
+            c.columnType && c.columnType !== 'column'
+              ? `${c.name} (${c.columnType})`
+              : c.name,
+          type: c.typeName,
+          description: c.description,
+          lfTagKey: c.lfTagKey,
+          lfTagValue: c.lfTagValue,
+          lftags: 
+          c.lfTagKey && c.lfTagKey.length > 0  
+            ? c.lfTagKey.map((key,idx) => `${key}=${c.lfTagValue[idx]}`)
+            : '-'
+        }))
       );
-      if (!response.errors) {
-        setColumns(
-          response.data.listDatasetTableColumns.nodes.map((c) => ({
-            id: c.columnUri,
-            name:
-              c.columnType && c.columnType !== 'column'
-                ? `${c.name} (${c.columnType})`
-                : c.name,
-            type: c.typeName,
-            description: c.description
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-      setLoading(false);
-    };
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
@@ -135,12 +168,8 @@ const TableColumns = (props) => {
   const header = [
     { field: 'name', headerName: 'Name', width: 400, editable: false },
     { field: 'type', headerName: 'Type', width: 400, editable: false },
-    {
-      field: 'description',
-      headerName: 'Description',
-      width: 600,
-      editable: isAdmin
-    }
+    { field: 'description', headerName: 'Description', width: 400, editable: isAdmin },
+    { field: 'lftags', headerName: 'LF-Tags', width: 300, editable: false }
   ];
 
   return (
@@ -172,6 +201,15 @@ const TableColumns = (props) => {
             rows={columns}
             columns={header}
             onCellEditCommit={handleEditCellChangeCommitted}
+            onCellClick={handleCellClick}
+          />
+        )}
+        {isAddLFTagModalOpen && (
+          <TableColumnLFTagForm
+            open
+            reloadColumns={fetchItems}
+            columnToEdit={columnToEdit}
+            onClose={handleAddLFTagModalClose}
           />
         )}
       </Card>

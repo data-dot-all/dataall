@@ -52,45 +52,94 @@ def on_create(event):
             )
     # Create LF Tags if Required
     if props.get("LFTags"):
+        # Check if LF Tag Already Assigned to Resource
+        print('Check if LF Tag Already Assigned...')
+        table_tags = lf.get_resource_lf_tags(
+            CatalogId=AWS_ACCOUNT,
+            Resource={
+                'Database': {
+                    'CatalogId': AWS_ACCOUNT,
+                    'Name': props['DatabaseInput']['Name']
+                }
+            },
+            ShowAssignedLFTags=True
+        )
+
+        # Create a Dictionary of Existing Tag Key Value Pairs on Resource
+        existing_tags = {}
+        if table_tags.get('LFTagOnDatabase'):
+            for tag in table_tags.get('LFTagOnDatabase'):
+                if tag["TagKey"] in existing_tags.keys():
+                    existing_tags[tag["TagKey"]].append(tag["TagValues"])
+                else:
+                    existing_tags[tag["TagKey"]] = tag["TagValues"]
+        print(f"Existing Tags: {existing_tags}")
+
         # Create LF Tag if Not Exist
         lf_tags = props.get("LFTags")
         for tagkey in lf_tags:
-            try:
-                lf.create_lf_tag(
-                    CatalogId=AWS_ACCOUNT,
-                    TagKey=tagkey,
-                    TagValues=[lf_tags[tagkey]]
-                )
-                print(f'Successfully create LF Tag {tagkey}')
-            except ClientError as e:
-                print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+            if tagkey in existing_tags.keys() and lf_tags[tagkey] in existing_tags[tagkey]:
+                print("Tag Already Assigned, skipping...")
+                existing_tags[tagkey].remove(lf_tags[tagkey])
+                if len(existing_tags[tagkey]) == 0:
+                    existing_tags.pop(tagkey)
+            else:
+                print(f"Assigning LF Tag {tagkey} with value {lf_tags[tagkey]} to Table...")
                 try:
-                    lf.update_lf_tag(
+                    lf.create_lf_tag(
                         CatalogId=AWS_ACCOUNT,
                         TagKey=tagkey,
-                        TagValuesToAdd=[lf_tags[tagkey]]
+                        TagValues=[lf_tags[tagkey]]
                     )
+                    print(f'Successfully create LF Tag {tagkey}')
                 except ClientError as e:
-                    print(f'LF Tag {tagkey} already has value {lf_tags[tagkey]}, skippping update...')
-                    pass
+                    print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+                    try:
+                        lf.update_lf_tag(
+                            CatalogId=AWS_ACCOUNT,
+                            TagKey=tagkey,
+                            TagValuesToAdd=[lf_tags[tagkey]]
+                        )
+                    except ClientError as e:
+                        print(f'LF Tag {tagkey} already has value {lf_tags[tagkey]}, skippping update...')
+                        pass
 
-            # Add Tag to Resource
-            lf.add_lf_tags_to_resource(
-                CatalogId=props.get('CatalogId'),
-                Resource={
-                    'Database': {
-                        'CatalogId': props.get('CatalogId'),
-                        'Name': props['DatabaseInput']['Name']
-                    }
-                },
-                LFTags=[
-                    {
-                        'CatalogId': props.get('CatalogId'),
-                        'TagKey': tagkey,
-                        'TagValues': [lf_tags[tagkey]]
+                # Add Tag to Resource
+                lf.add_lf_tags_to_resource(
+                    CatalogId=props.get('CatalogId'),
+                    Resource={
+                        'Database': {
+                            'CatalogId': props.get('CatalogId'),
+                            'Name': props['DatabaseInput']['Name']
+                        }
                     },
-                ]
-            )
+                    LFTags=[
+                        {
+                            'CatalogId': props.get('CatalogId'),
+                            'TagKey': tagkey,
+                            'TagValues': [lf_tags[tagkey]]
+                        },
+                    ]
+                )
+        print(f"Tags To Remove: {existing_tags}")
+        if len(existing_tags.keys()) > 0:
+            for key in existing_tags:
+                lf.remove_lf_tags_from_resource(
+                    CatalogId=AWS_ACCOUNT,
+                    Resource={
+                        'Database': {
+                            'CatalogId': AWS_ACCOUNT,
+                            'Name': props['DatabaseInput']['Name']
+                        }
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': AWS_ACCOUNT,
+                            'TagKey': key,
+                            'TagValues': existing_tags[key]
+                        },
+                    ]
+                )
 
     Entries = []
     for i, role_arn in enumerate(props.get('DatabaseAdministrators')):

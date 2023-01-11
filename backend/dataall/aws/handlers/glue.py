@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 
 from .service_handlers import Worker
 from .sts import SessionHelper
+from .lakeformation import LakeFormation
 from ... import db
 from ...db import models
 
@@ -628,12 +629,19 @@ class Glue:
             )
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
             glue_client = aws.client('glue', region_name=dataset_table.region)
+            lf_client = aws.client('lakeformation', region_name=dataset_table.region)
             glue_table = {}
             try:
                 glue_table = glue_client.get_table(
                     CatalogId=dataset_table.AWSAccountId,
                     DatabaseName=dataset_table.GlueDatabaseName,
                     Name=dataset_table.name,
+                )
+                table_tags = LakeFormation.get_table_lf_tags(
+                    lf=lf_client, 
+                    account=dataset_table.AWSAccountId,
+                    db_name=dataset_table.GlueDatabaseName,
+                    table_name=dataset_table.name
                 )
             except glue_client.exceptions.ClientError as e:
                 log.error(
@@ -643,7 +651,7 @@ class Glue:
                     f'{e}'
                 )
             db.api.DatasetTable.sync_table_columns(
-                session, dataset_table, glue_table['Table']
+                session, dataset_table, glue_table['Table'], table_tags
             )
         return True
 

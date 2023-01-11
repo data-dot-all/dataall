@@ -62,7 +62,7 @@ def get_table(context, source: models.Dataset, tableUri: str = None):
         )
 
 
-def update_table(context, source, tableUri: str = None, input: dict = None):
+def update_table(context: Context, source, tableUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         table = db.api.DatasetTable.get_dataset_table_by_uri(session, tableUri)
 
@@ -81,13 +81,15 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
         )
         indexers.upsert_table(session, context.es, table.tableUri)
 
+        if input.get("lfTagKey") and len(input.get("lfTagKey")) > 0:
+            task = models.Task(
+                targetUri=tableUri,
+                action='lakeformation.table.assign.lftags',
+            )
+            session.add(task)
     if input.get("lfTagKey") and len(input.get("lfTagKey")) > 0:
-        task = models.Task(
-            action='lakeformation.table.assign.lftags',
-            targetUri=tableUri,
-        )
-        session.add(task)
         Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
+
     return table
 
 
