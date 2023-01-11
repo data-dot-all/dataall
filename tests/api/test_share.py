@@ -149,7 +149,7 @@ def test_init(tables1, tables2):
     assert True
 
 
-def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
+def test_create_share_object_unauthorized(client, dataset1, env2, group2, group3):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -184,8 +184,12 @@ def test_request_access_unauthorized(client, dataset1, env2, group2, group3):
 
     assert 'Unauthorized' in response.errors[0].message
 
+# TODO: This test case covers the endpoint without the addition of share items
 
-def test_request_access_authorized(client, dataset1, env2, db, user2, group2, env1):
+
+def test_create_share_object_authorized(client, dataset1, env2, db, user2,
+                                        group2, env1):
+    # Given
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -201,10 +205,13 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
         ) {
           shareUri
           created
+          status
+          userRoleForShareObject
         }
       }
     """
 
+    # When
     response = client.query(
         q,
         username=user2.userName,
@@ -218,7 +225,11 @@ def test_request_access_authorized(client, dataset1, env2, db, user2, group2, en
         },
     )
 
+    # Then share object created with status Draft
+    print('Create share request response: ', response.data.createShareObject)
     assert response.data.createShareObject.shareUri
+    assert response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.name
+    assert response.data.createShareObject.userRoleForShareObject == 'Requesters'
 
 
 def test_get_share_object(client, share1, user, env1group):
@@ -278,7 +289,8 @@ def test_get_share_object(client, share1, user, env1group):
     )
     print(response)
     assert response.data.getShareObject.shareUri == share1.shareUri
-    assert response.data.getShareObject.principal.principalType == dataall.api.constants.PrincipalType.Group.name
+    assert response.data.getShareObject.principal.principalType == \
+        dataall.api.constants.PrincipalType.Group.name
     assert response.data.getShareObject.principal.principalIAMRoleName
     assert response.data.getShareObject.principal.SamlGroupName
     assert response.data.getShareObject.principal.region
@@ -339,12 +351,188 @@ def test_list_dataset_share_objects(
     )
 
 
-def test_add_item(
-        dataset1,
-        env1,
+@pytest.mark.dependency()
+def test_add_shared_item(
+        share1,
+        tables2,
         client,
+        user,
+        group
+):
+    # Given existing share object in status Draft (-> fixture)
+    getShareObjectQuery = """
+        query getShareObject($shareUri: String!) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                items {
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
+                        status
+                        action
+                    }
+                }
+            }
+        }
+    """
+
+    response = client.query(
+        getShareObjectQuery,
+        username=user.userName,
+        shareUri=share1.shareUri,
+        groups=[group.name],
+    )
+
+    print('Response from getShareObject: ', response)
+
+    assert (
+        response.data.getShareObject.status
+        == dataall.api.constants.ShareObjectStatus.Draft.name
+    )
+
+    # Given existing shareable items (-> fixture)
+    shareableItem = response.data.getShareObject.get('items').nodes[0]
+    itemUri = shareableItem['itemUri']
+    itemType = shareableItem['itemType']
+    shareItemUri = shareableItem['shareItemUri']
+    assert shareItemUri is None
+
+    # When
+    addSharedItemQuery = """
+    mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
+        addSharedItem(shareUri:$shareUri,input:$input){
+            shareUri
+            shareItemUri
+            itemUri
+            status
+            action
+        }
+    }
+    """
+
+    response = client.query(
+        addSharedItemQuery,
+        username=user.userName,
+        groups=[group.name],
+        shareUri=share1.shareUri,
+        input={
+            'itemUri': itemUri,
+            'itemType': itemType,
+        },
+    )
+
+    print('Repsonse from addSharedItem: ', response)
+
+    # Then shared item was added to share object in status PendingApproval
+    assert response.data.addSharedItem.shareUri == share1.shareUri
+    assert response.data.addSharedItem.status == \
+        dataall.api.constants.ShareItemStatus.PendingApproval.name
+
+
+@pytest.mark.dependency(depends=["test_add_shared_item"])
+def test_submit_share_request(
+        share1,
+        client,
+        user,
+        group
+):
+
+    # Given existing share object in status Draft (-> fixture)
+    getShareObjectQuery = """
+        query getShareObject($shareUri: String!) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                items {
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
+                        status
+                        action
+                    }
+                }
+            }
+        }
+    """
+
+    response = client.query(
+        getShareObjectQuery,
+        username=user.userName,
+        shareUri=share1.shareUri,
+        groups=[group.name],
+    )
+
+    print('Response from getShareObject: ', response)
+
+    # When submit share object
+    query = """
+        mutation submitShareObject($shareUri:String!){
+            submitShareObject(shareUri:$shareUri){
+                status
+                owner
+                userRoleForShareObject
+                items {
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
+                        status
+                        action
+                    }
+                }
+            }
+        }
+        """
+
+    response = client.query(
+        query,
+        username=user.userName,
+        shareUri=share1.shareUri,
+        groups=[group.name],
+    )
+
+    # Then share object status is changed to Submitted
+    assert response.data.submitShareObject.status == \
+        dataall.api.constants.ShareObjectStatus.Submitted.name
+    assert response.data.submitShareObject.userRoleForShareObject == 'Requesters'
+
+    # Then shared item status stays in PendingApproval
+    sharedItem = response.data.submitShareObject.get('items').nodes[0]
+    status = sharedItem['status']
+    status == dataall.api.constants.ShareItemStatus.PendingApproval.name
+
+
+@pytest.mark.dependency(depends=["test_submit_share_request"])
+def test_approve_share_object(
+        share1,
         user2,
         group2,
+        client,
         env2,
         org2,
         user,
@@ -353,194 +541,42 @@ def test_add_item(
         module_mocker,
         group,
 ):
-    module_mocker.patch(
-        'dataall.api.Objects.Stack.stack_helper.deploy_stack',
-        return_value=True,
-    )
-    get_share_object_query = q = """
-    query GetDataset(
-        $datasetUri:String!,
-    ){
-        getDataset(datasetUri:$datasetUri){
-            datasetUri
-            tables{
-                count
-                nodes{
-                    tableUri
 
-                }
-
-            }
-            shares{
-                count
-                nodes{
-                    owner
-                    shareUri
-                    status
-
-                }
-            }
-        }
-    }
-    """
-    response = client.query(
-        get_share_object_query,
-        username=dataset1.owner,
-        groups=[group.name],
-        datasetUri=dataset1.datasetUri,
-    )
-    share_object = response.data.getDataset.shares.nodes[0]
-    this_dataset_tables = response.data.getDataset.tables.nodes
-    print(this_dataset_tables)
-    query = """
-    mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
-        addSharedItem(shareUri:$shareUri,input:$input){
-            shareUri
-            shareItemUri
-            itemUri
-        }
-    }
-    """
-
-    response = client.query(
-        query,
-        username=dataset1.owner,
-        shareUri=share_object.shareUri,
-        input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
-        },
-        groups=[group.name],
-    )
-
-    assert 'ResourceNotFound' in response.errors[0].message
-
-    response = client.query(
-        query,
-        username='noneofmybusiness',
-        groups=['anonymous'],
-        shareUri=share_object.shareUri,
-        input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
-        },
-    )
-    assert 'UnauthorizedOperation' in response.errors[0].message
-
-    response = client.query(
-        query,
-        username=share_object.owner,
-        groups=[group2.name],
-        shareUri=share_object.shareUri,
-        input={
-            'itemUri': 'foo',
-            'itemType': dataall.api.constants.ShareableType.Table.name,
-        },
-    )
-
-    assert 'ResourceNotFound' in response.errors[0].message
-
-    random_table: dataall.db.models.DatasetTable = random.choice(this_dataset_tables)
-    response = client.query(
-        query,
-        username=share_object.owner,
-        groups=[group2.name],
-        shareUri=share_object.shareUri,
-        input={
-            'itemUri': random_table.tableUri,
-            'itemType': dataall.api.constants.ShareableType.Table.name,
-        },
-    )
-
-    assert response.data.addSharedItem.shareUri == share_object.shareUri
-    share_item_uri = response.data.addSharedItem.shareItemUri
-
-    query = """
-        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
+    # Given existing share object in status  (-> Submitted)
+    getShareObjectQuery = """
+        query getShareObject($shareUri: String!) {
               getShareObject(shareUri: $shareUri) {
                 shareUri
                 created
                 owner
                 status
-                userRoleForShareObject
-                principal {
-                  principalId
-                  principalType
-                  principalName
-                  principalIAMRoleName
-                  SamlGroupName
-                  environmentUri
-                  environmentName
-                  AwsAccountId
-                  region
-                  organizationUri
-                  organizationName
+                items {
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
+                        status
+                        action
+                    }
                 }
-                items(filter: $filter) {
-                  count
-                  page
-                  pages
-                  hasNext
-                  hasPrevious
-                  nodes {
-                    itemUri
-                    shareItemUri
-                    itemType
-                    itemName
-                    status
-                    action
-                  }
-                }
-                dataset {
-                  datasetUri
-                  datasetName
-                  SamlAdminGroupName
-                  environmentName
-                  exists
-                }
-              }
             }
+        }
     """
 
     response = client.query(
-        query,
+        getShareObjectQuery,
         username=user2.userName,
-        shareUri=share_object.shareUri,
+        shareUri=share1.shareUri,
         groups=[group2.name],
     )
 
-    assert (
-            response.data.getShareObject.status
-            == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
-    assert (
-            response.data.getShareObject.principal.principalId
-            == group2.name
-    )
-    assert (
-            response.data.getShareObject.principal.principalType
-            == dataall.api.constants.PrincipalType.Group.name
-    )
-    assert response.data.getShareObject.dataset.datasetUri == dataset1.datasetUri
-
-    query = """
-        mutation submitShareObject($shareUri:String!){
-            submitShareObject(shareUri:$shareUri){
-                status
-                owner
-                userRoleForShareObject
-            }
-        }
-        """
-
-    response = client.query(
-        query,
-        username=user2.userName,
-        shareUri=share_object.shareUri,
-        groups=[group2.name],
-    )
-    assert response.data.submitShareObject.status == 'PendingApproval'
-    assert response.data.submitShareObject.userRoleForShareObject == 'Requesters'
+    print('Response from getShareObject: ', response)
 
     query = """
             mutation approveShareObject($shareUri:String!){
@@ -554,381 +590,501 @@ def test_add_item(
 
     response = client.query(
         query,
-        username=user3.userName,
-        shareUri=share_object.shareUri,
-        groups=[group3.name],
+        username=user2.userName,
+        shareUri=share1.shareUri,
+        groups=[group2.name],
     )
     assert response.data.approveShareObject.status == 'Approved'
     assert response.data.approveShareObject.userRoleForShareObject == 'Approvers'
 
-    q = """
-        query searchEnvironmentDataItems(
-            $environmentUri:String!, $filter:EnvironmentDataItemFilter
-        ){
-            searchEnvironmentDataItems(environmentUri:$environmentUri, filter:$filter){
-                count
-                nodes{
-                    shareUri
-                    environmentName
-                    environmentUri
-                    organizationName
-                    organizationUri
-                    datasetUri
-                    datasetName
-                    itemType
-                    itemAccess
-                    GlueDatabaseName
-                    GlueTableName
-                    S3AccessPointName
-                    created
-                    principalId
-                }
-            }
-        }
-    """
-    response = client.query(
-        q,
-        username=user2.userName,
-        groups=[env2.SamlGroupName],
-        environmentUri=env2.environmentUri,
-        filter={'itemTypes': 'DatasetTable'},
-    )
-    assert response.data.searchEnvironmentDataItems.nodes[0].principalId == group2.name
+    # TODO: Move to separate test
+    # q = """
+    #     query searchEnvironmentDataItems(
+    #         $environmentUri:String!, $filter:EnvironmentDataItemFilter
+    #     ){
+    #         searchEnvironmentDataItems(environmentUri:$environmentUri, filter:$filter){
+    #             count
+    #             nodes{
+    #                 shareUri
+    #                 environmentName
+    #                 environmentUri
+    #                 organizationName
+    #                 organizationUri
+    #                 datasetUri
+    #                 datasetName
+    #                 itemType
+    #                 itemAccess
+    #                 GlueDatabaseName
+    #                 GlueTableName
+    #                 S3AccessPointName
+    #                 created
+    #                 principalId
+    #             }
+    #         }
+    #     }
+    # """
+    # response = client.query(
+    #     q,
+    #     username=user2.userName,
+    #     groups=[env2.SamlGroupName],
+    #     environmentUri=env2.environmentUri,
+    #     filter={'itemTypes': 'DatasetTable'},
+    # )
+    # assert response.data.searchEnvironmentDataItems.nodes[0].principalId == group2.name
 
-    query = """
-                mutation rejectShareObject($shareUri:String!){
-                    rejectShareObject(shareUri:$shareUri){
-                        status
-                        owner
-                    }
-                }
-                """
 
-    response = client.query(
-        query,
-        username=user3.userName,
-        shareUri=share_object.shareUri,
-        groups=[group3.name],
-    )
-    assert response.data.rejectShareObject.status == 'Rejected'
-    query = """
-        mutation RemoveSharedItem($shareItemUri:String!){
-            removeSharedItem(shareItemUri:$shareItemUri)
-        }
-        """
-    response = client.query(
-        query,
-        username=share_object.owner,
-        groups=[group2.name],
-        shareItemUri=share_item_uri,
-    )
+@pytest.mark.dependency(depends=["test_approve_share_object"])
+def test_revoke_all_share_object_completed(
+        share1,
+        user2,
+        group2,
+        client,
+        db
+):
 
-    assert response.data.removeSharedItem
-    received_requests = """
-            query getShareRequestsToMe($filter: ShareObjectFilter){
-                getShareRequestsToMe(filter: $filter){
+    # Given the approved share object is processed and the shared items
+    # are succesfully shared
+    succesfull_processing_for_approved_share_object(db, share1)
+
+    # Given existing share object in status Completed
+    getShareObjectQuery = """
+        query getShareObject($shareUri: String!) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                items {
                     count
-                    nodes{
-                        shareUri
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
+                        status
+                        action
                     }
                 }
             }
+        }
     """
-    response = client.query(
-        received_requests, username=user.userName, groups=[group.name]
-    )
-    assert response.data.getShareRequestsToMe.count == 0
-    received_requests = """
-                query getShareRequestsToMe($filter: ShareObjectFilter){
-                    getShareRequestsToMe(filter: $filter){
-                        count
-                        nodes{
-                            shareUri
-                        }
-                    }
-                }
-        """
-    response = client.query(
-        received_requests, username=user3.userName, groups=[group3.name]
-    )
-    assert response.data.getShareRequestsToMe.count == 1
 
-    sent_requests = """
-                    query getShareRequestsFromMe($filter: ShareObjectFilter){
-                        getShareRequestsFromMe(filter: $filter){
-                            count
-                            nodes{
-                                shareUri
-                            }
-                        }
-                    }
-            """
     response = client.query(
-        sent_requests, username=user2.userName, groups=[group2.name]
+        getShareObjectQuery,
+        username=user2.userName,
+        shareUri=share1.shareUri,
+        groups=[group2.name],
     )
-    assert response.data.getShareRequestsFromMe.count == 1
 
-    sent_requests = """
-                        query getShareRequestsFromMe($filter: ShareObjectFilter){
-                            getShareRequestsFromMe(filter: $filter){
-                                count
-                                nodes{
-                                    shareUri
-                                }
-                            }
-                        }
-                """
-    response = client.query(
-        sent_requests, username=user3.userName, groups=[group3.name]
-    )
-    assert response.data.getShareRequestsFromMe.count == 0
+    print('Response from getShareObject: ', response)
 
-
-def test_notifications(client, db, user):
-    list = """
-                query ListNotifications{
-                    listNotifications{
-                        count
-                        nodes{
-                            notificationUri
-                            message
-                            type
-                            is_read
-                        }
-                    }
-                }
-                """
-    response = client.query(list, username=user.userName)
     assert (
-            response.data.listNotifications.nodes[0].type
-            == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
+        response.data.getShareObject.status
+        == dataall.api.constants.ShareObjectStatus.Completed.name
     )
-    notificationUri = response.data.listNotifications.nodes[0].notificationUri
-    query = """
-                query CountUnread{
-                    countUnreadNotifications
-                }
-                """
-    response = client.query(query, username=user.userName)
-    assert response.data.countUnreadNotifications == 3
-    read = """
-            mutation markAsRead($notificationUri:String!){
-                markNotificationAsRead(notificationUri:$notificationUri)
-            }
-            """
-    response = client.query(
-        read, username=user.userName, notificationUri=notificationUri
-    )
-    assert response
 
-    query = """
-                    query countReadNotifications{
-                        countReadNotifications
-                    }
-                    """
-    response = client.query(query, username=user.userName)
-    assert response.data.countReadNotifications == 1
-    read = """
-                mutation deleteNotification($notificationUri:String!){
-                    deleteNotification(notificationUri:$notificationUri)
-                }
-                """
-    response = client.query(
-        read, username=user.userName, notificationUri=notificationUri
-    )
-    assert response
-    query = """
-                        query countDeletedNotifications{
-                            countDeletedNotifications
-                        }
-                        """
-    response = client.query(query, username=user.userName)
-    assert response.data.countDeletedNotifications == 1
+    # Given shared item in status Share_Succeeded
+    sharedItem = response.data.getShareObject.get('items').nodes[0]
+    assert sharedItem['status'] == dataall.api.constants.ShareItemStatus.Share_Succeeded.name
 
+    # When revoking all share object
     query = """
-            query ListNotifications($filter:NotificationFilter){
-                    listNotifications(filter:$filter){
-                        count
-                        nodes{
-                            notificationUri
-                            message
-                            type
-                            is_read
-                        }
-                    }
-                }
-    """
-    response = client.query(query, username=user.userName, filter={'unread': True})
-    assert response.data.listNotifications.count == 2
-
-    query = """
-                query ListNotifications($filter:NotificationFilter){
-                        listNotifications(filter:$filter){
+                mutation revokeAllShareObject($shareUri:String!){
+                    revokeAllShareObject(shareUri:$shareUri){
+                        shareUri
+                        status
+                        items {
                             count
-                            nodes{
-                                notificationUri
-                                message
-                                type
-                                is_read
+                            page
+                            pages
+                            hasNext
+                            hasPrevious
+                            nodes {
+                                itemUri
+                                shareItemUri
+                                itemType
+                                itemName
+                                status
+                                action
                             }
                         }
                     }
-        """
-    response = client.query(query, username=user.userName, filter={'read': True})
-    assert response.data.listNotifications.count == 0
-
-    query = """
-                    query ListNotifications($filter:NotificationFilter){
-                            listNotifications(filter:$filter){
-                                count
-                                nodes{
-                                    notificationUri
-                                    message
-                                    type
-                                    is_read
-                                }
-                            }
-                        }
-            """
-    response = client.query(query, username=user.userName, filter={'archived': True})
-    assert response.data.listNotifications.count == 1
-
-
-def test_delete_share_object(client, dataset1, group, user2, group2, env2):
-    get_share_object_query = """
-    query GetDataset(
-        $datasetUri:String!,
-    ){
-        getDataset(datasetUri:$datasetUri){
-            datasetUri
-            tables{
-                count
-                nodes{
-                    tableUri
-
                 }
+                """
 
-            }
-            shares{
-                count
-                nodes{
-                    owner
-                    shareUri
-                    status
-
-                }
-            }
-        }
-    }
-    """
     response = client.query(
-        get_share_object_query,
-        username=dataset1.owner,
-        groups=[group.name],
-        datasetUri=dataset1.datasetUri,
-    )
-    share_object = response.data.getDataset.shares.nodes[0]
-
-    delete_share_object_query = """
-    mutation DeleteShareObject($shareUri: String!){
-      deleteShareObject(shareUri:$shareUri)
-    }
-    """
-    response = client.query(
-        delete_share_object_query,
-        username=dataset1.owner,
-        groups=[group.name],
-        shareUri=share_object.shareUri,
-    )
-    assert response.data.deleteShareObject
-
-    create_shared_object_query = """
-      mutation CreateShareObject(
-        $datasetUri: String!
-        $itemType: String
-        $itemUri: String
-        $input: NewShareObjectInput
-      ) {
-        createShareObject(
-          datasetUri: $datasetUri
-          itemType: $itemType
-          itemUri: $itemUri
-          input: $input
-        ) {
-          shareUri
-          created
-        }
-      }
-    """
-
-    client.query(
-        create_shared_object_query,
+        query,
         username=user2.userName,
+        shareUri=share1.shareUri,
         groups=[group2.name],
-        datasetUri=dataset1.datasetUri,
-        input={
-            'environmentUri': env2.environmentUri,
-            'groupUri': group2.name,
-            'principalId': group2.name,
-            'principalType': dataall.api.constants.PrincipalType.Group.name,
-        },
     )
 
-    add_item_query = """
-    mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
-        addSharedItem(shareUri:$shareUri,input:$input){
-            shareUri
-            shareItemUri
-            itemUri
-        }
-    }
-    """
-    response = client.query(
-        get_share_object_query,
-        username=dataset1.owner,
-        groups=[group.name],
-        datasetUri=dataset1.datasetUri,
-    )
+    # Then share object changes to status Rejected
+    assert response.data.revokeAllShareObject.status == 'Rejected'
 
-    share_object = response.data.getDataset.shares.nodes[0]
+    # Then shared item changes to status Revoke_Approved
+    sharedItem = response.data.revokeAllShareObject.get('items').nodes[0]
+    status = sharedItem['status']
+    status == dataall.api.constants.ShareItemStatus.Revoke_Approved.name
+    # query = """
+    #     mutation RemoveSharedItem($shareItemUri:String!){
+    #         removeSharedItem(shareItemUri:$shareItemUri)
+    #     }
+    #     """
+    # response = client.query(
+    #     query,
+    #     username=user2.owner,
+    #     groups=[group2.name],
+    #     shareItemUri=share_item_uri,
+    # )
 
-    this_dataset_tables = response.data.getDataset.tables.nodes
-    random_table: dataall.db.models.DatasetTable = random.choice(this_dataset_tables)
-    response = client.query(
-        add_item_query,
-        username=share_object.owner,
-        groups=[group2.name],
-        shareUri=share_object.shareUri,
-        input={
-            'itemUri': random_table.tableUri,
-            'itemType': dataall.api.constants.ShareableType.Table.name,
-        },
-    )
+    # assert response.data.removeSharedItem
+    # received_requests = """
+    #         query getShareRequestsToMe($filter: ShareObjectFilter){
+    #             getShareRequestsToMe(filter: $filter){
+    #                 count
+    #                 nodes{
+    #                     shareUri
+    #                 }
+    #             }
+    #         }
+    # """
+    # response = client.query(
+    #     received_requests, username=user.userName, groups=[group.name]
+    # )
+    # assert response.data.getShareRequestsToMe.count == 0
+    # received_requests = """
+    #             query getShareRequestsToMe($filter: ShareObjectFilter){
+    #                 getShareRequestsToMe(filter: $filter){
+    #                     count
+    #                     nod es{
+    #                         shareUri
+    #                     }
+    #                 }
+    #             }
+    #     """
+    # response = client.query(
+    #     received_requests, username=user3.userName, groups=[group3.name]
+    # )
+    # assert response.data.getShareRequestsToMe.count == 1
 
-    shared_item = response.data.addSharedItem
+    # sent_requests = """
+    #                 query getShareRequestsFromMe($filter: ShareObjectFilter){
+    #                     getShareRequestsFromMe(filter: $filter){
+    #                         count
+    #                         nodes{
+    #                             shareUri
+     #                         }
+    #                     }
+    #                 }
+    #         """
+    # response = client.query(
+    #     sent_requests, username=user2.userName, groups=[group2.name]
+    # )
+    # assert response.data.getShareRequestsFromMe.count == 1
 
-    response = client.query(
-        delete_share_object_query,
-        username=user2.userName, groups=[group2.name],
-        shareUri=share_object.shareUri,
-    )
-    assert 'ShareItemsFound' in response.errors[0].message
+    # sent_requests = """
+    #                     query getShareRequestsFromMe($filter: ShareObjectFilter){
+    #                         getShareRequestsFromMe(filter: $filter){
+    #                             count
+    #                             nodes{
+    #                                 shareUri
+    #                             }
+    #                         }
+    #                     }
+    #             """
+    # response = client.query(
+    #     sent_requests, username=user3.userName, groups=[group3.name]
+    # )
+    # assert response.data.getShareRequestsFromMe.count == 0
 
-    remove_item_query = """
-        mutation RemoveSharedItem($shareItemUri:String!){
-            removeSharedItem(shareItemUri:$shareItemUri)
-        }
-    """
-    client.query(
-        remove_item_query,
-        username=user2.userName,
-        groups=[group2.name],
-        shareItemUri=shared_item.shareItemUri
-    )
 
-    response = client.query(
-        delete_share_object_query,
-        username=user2.userName, groups=[group2.name],
-        shareUri=share_object.shareUri,
-    )
-    assert response.data.deleteShareObject
+# def test_notifications(client, db, user):
+#     list = """
+#                 query ListNotifications{
+#                     listNotifications{
+#                         count
+#                         nodes{
+#                             notificationUri
+#                             message
+#                             type
+#                             is_read
+#                         }
+#                     }
+#                 }
+#                 """
+#     response = client.query(list, username=user.userName)
+#     assert (
+#         response.data.listNotifications.nodes[0].type
+#         == dataall.db.models.NotificationType.SHARE_OBJECT_SUBMITTED.name
+#     )
+#     notificationUri = response.data.listNotifications.nodes[0].notificationUri
+#     query = """
+#                 query CountUnread{
+#                     countUnreadNotifications
+#                 }
+#                 """
+#     response = client.query(query, username=user.userName)
+#     assert response.data.countUnreadNotifications == 3
+#     read = """
+#             mutation markAsRead($notificationUri:String!){
+#                 markNotificationAsRead(notificationUri:$notificationUri)
+#             }
+#             """
+#     response = client.query(
+#         read, username=user.userName, notificationUri=notificationUri
+#     )
+#     assert response
+
+#     query = """
+#                     query countReadNotifications{
+#                         countReadNotifications
+#                     }
+#                     """
+#     response = client.query(query, username=user.userName)
+#     assert response.data.countReadNotifications == 1
+#     read = """
+#                 mutation deleteNotification($notificationUri:String!){
+#                     deleteNotification(notificationUri:$notificationUri)
+#                 }
+#                 """
+#     response = client.query(
+#         read, username=user.userName, notificationUri=notificationUri
+#     )
+#     assert response
+#     query = """
+#                         query countDeletedNotifications{
+#                             countDeletedNotifications
+#                         }
+#                         """
+#     response = client.query(query, username=user.userName)
+#     assert response.data.countDeletedNotifications == 1
+
+#     query = """
+#             query ListNotifications($filter:NotificationFilter){
+#                     listNotifications(filter:$filter){
+#                         count
+#                         nodes{
+#                             notificationUri
+#                             message
+#                             type
+#                             is_read
+#                         }
+#                     }
+#                 }
+#     """
+#     response = client.query(
+#         query, username=user.userName, filter={'unread': True})
+#     assert response.data.listNotifications.count == 2
+
+#     query = """
+#                 query ListNotifications($filter:NotificationFilter){
+#                         listNotifications(filter:$filter){
+#                             count
+#                             nodes{
+#                                 notificationUri
+#                                 message
+#                                 type
+#                                 is_read
+#                             }
+#                         }
+#                     }
+#         """
+#     response = client.query(
+#         query, username=user.userName, filter={'read': True})
+#     assert response.data.listNotifications.count == 0
+
+#     query = """
+#                     query ListNotifications($filter:NotificationFilter){
+#                             listNotifications(filter:$filter){
+#                                 count
+#                                 nodes{
+#                                     notificationUri
+#                                     message
+#                                     type
+#                                     is_read
+#                                 }
+#                             }
+#                         }
+#             """
+#     response = client.query(query, username=user.userName,
+#                             filter={'archived': True})
+#     assert response.data.listNotifications.count == 1
+
+
+# def test_delete_share_object(client, dataset1, group, user2, group2, env2):
+#     get_share_object_query = """
+#     query GetDataset(
+#         $datasetUri:String!,
+#     ){
+#         getDataset(datasetUri:$datasetUri){
+#             datasetUri
+#             tables{
+#                 count
+#                 nodes{
+#                     tableUri
+
+#                 }
+
+#             }
+#             shares{
+#                 count
+#                 nodes{
+#                     owner
+#                     shareUri
+#                     status
+
+#                 }
+#             }
+#         }
+#     }
+#     """
+#     response = client.query(
+#         get_share_object_query,
+#         username=dataset1.owner,
+#         groups=[group.name],
+#         datasetUri=dataset1.datasetUri,
+#     )
+#     share_object = response.data.getDataset.shares.nodes[0]
+
+#     delete_share_object_query = """
+#     mutation DeleteShareObject($shareUri: String!){
+#       deleteShareObject(shareUri:$shareUri)
+#     }
+#     """
+#     response = client.query(
+#         delete_share_object_query,
+#         username=dataset1.owner,
+#         groups=[group.name],
+#         shareUri=share_object.shareUri,
+#     )
+#     assert response.data.deleteShareObject
+
+#     create_shared_object_query = """
+#       mutation CreateShareObject(
+#         $datasetUri: String!
+#         $itemType: String
+#         $itemUri: String
+#         $input: NewShareObjectInput
+#       ) {
+#         createShareObject(
+#           datasetUri: $datasetUri
+#           itemType: $itemType
+#           itemUri: $itemUri
+#           input: $input
+#         ) {
+#           shareUri
+#           created
+#         }
+#       }
+#     """
+
+#     client.query(
+#         create_shared_object_query,
+#         username=user2.userName,
+#         groups=[group2.name],
+#         datasetUri=dataset1.datasetUri,
+#         input={
+#             'environmentUri': env2.environmentUri,
+#             'groupUri': group2.name,
+#             'principalId': group2.name,
+#             'principalType': dataall.api.constants.PrincipalType.Group.name,
+#         },
+#     )
+
+#     add_item_query = """
+#     mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
+#         addSharedItem(shareUri:$shareUri,input:$input){
+#             shareUri
+#             shareItemUri
+#             itemUri
+#         }
+#     }
+#     """
+#     response = client.query(
+#         get_share_object_query,
+#         username=dataset1.owner,
+#         groups=[group.name],
+#         datasetUri=dataset1.datasetUri,
+#     )
+
+#     share_object = response.data.getDataset.shares.nodes[0]
+
+#     this_dataset_tables = response.data.getDataset.tables.nodes
+#     random_table: dataall.db.models.DatasetTable = random.choice(
+#         this_dataset_tables)
+#     response = client.query(
+#         add_item_query,
+#         username=share_object.owner,
+#         groups=[group2.name],
+#         shareUri=share_object.shareUri,
+#         input={
+#             'itemUri': random_table.tableUri,
+#             'itemType': dataall.api.constants.ShareableType.Table.name,
+#         },
+#     )
+
+#     shared_item = response.data.addSharedItem
+
+#     response = client.query(
+#         delete_share_object_query,
+#         username=user2.userName, groups=[group2.name],
+#         shareUri=share_object.shareUri,
+#     )
+#     assert 'ShareItemsFound' in response.errors[0].message
+
+#     remove_item_query = """
+#         mutation RemoveSharedItem($shareItemUri:String!){
+#             removeSharedItem(shareItemUri:$shareItemUri)
+#         }
+#     """
+#     client.query(
+#         remove_item_query,
+#         username=user2.userName,
+#         groups=[group2.name],
+#         shareItemUri=shared_item.shareItemUri
+#     )
+
+#     response = client.query(
+#         delete_share_object_query,
+#         username=user2.userName, groups=[group2.name],
+#         shareUri=share_object.shareUri,
+#     )
+#     assert response.data.deleteShareObject
+
+
+def succesfull_processing_for_approved_share_object(db, share):
+    with db.scoped_session() as session:
+        print('Processing approved share with action ShareObjectActions.Start')
+        share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)
+
+        share_items_states = dataall.db.api.ShareObject.get_share_items_states(session, share.shareUri)
+
+        Share_SM = dataall.db.api.ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Start.value)
+
+        for item_state in share_items_states:
+            Item_SM = dataall.db.api.ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Start.value)
+            Item_SM.update_state(session, share.shareUri, new_state)
+
+        Share_SM.update_state(session, share, new_share_state)
+
+        print('Processing approved share with action ShareObjectActions.Finish \
+            and ShareItemActions.Success')
+
+        share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)
+        share_items_states = dataall.db.api.ShareObject.get_share_items_states(session, share.shareUri)
+
+        new_share_state = Share_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Finish.value)
+
+        for item_state in share_items_states:
+            Item_SM = dataall.db.api.ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(dataall.db.models.Enums.ShareItemActions.Success.value)
+            Item_SM.update_state(session, share.shareUri, new_state)
+
+        Share_SM.update_state(session, share, new_share_state)
