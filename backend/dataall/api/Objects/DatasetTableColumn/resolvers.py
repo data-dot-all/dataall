@@ -5,7 +5,7 @@ from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....db import paginate, permissions, models
 from ....db.api import ResourcePolicy
-
+import time
 
 def list_table_columns(
     context: Context,
@@ -57,6 +57,7 @@ def sync_table_columns(context: Context, source, tableUri: str = None):
         task = models.Task(action='glue.table.columns', targetUri=table.tableUri)
         session.add(task)
     Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
+    time.sleep(5)
     return list_table_columns(context, source=table, tableUri=tableUri)
 
 
@@ -95,6 +96,41 @@ def update_table_column(
 
         task = models.Task(
             action='glue.table.update_column', targetUri=column.columnUri
+        )
+        session.add(task)
+        session.commit()
+
+    Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+    return column
+
+
+def update_table_column_lf_tags(
+    context: Context, source, columnUri: str = None, input: dict = None
+):
+    with context.engine.scoped_session() as session:
+        column: models.DatasetTableColumn = session.query(
+            models.DatasetTableColumn
+        ).get(columnUri)
+        if not column:
+            raise db.exceptions.ObjectNotFound('Column', columnUri)
+        table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+            session, column.tableUri
+        )
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            resource_uri=table.datasetUri,
+            permission_name=permissions.UPDATE_DATASET_TABLE,
+        )
+        
+        column.lfTagKey = input.get("lfTagKey", [])
+        column.lfTagValue = input.get("lfTagValue", [])
+        session.add(column)
+        session.commit()
+
+        task = models.Task(
+            action='lakeformation.column.assign.lftags', targetUri=column.columnUri
         )
         session.add(task)
         session.commit()

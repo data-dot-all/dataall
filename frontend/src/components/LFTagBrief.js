@@ -17,6 +17,8 @@ const LFTagBrief = (props) => {
     objectType,
     ...other
   } = props;
+  console.log(lftagkeys);
+  console.log(lftagvalues);
 
   return (
     <Card {...other}>

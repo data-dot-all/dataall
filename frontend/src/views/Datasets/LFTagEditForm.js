@@ -31,6 +31,7 @@ const LFTagEditForm = (props) => {
   const client = useClient();
   const [tagsDict, setTagsDict] = useState([]);
   const [lfTagOptions, setLFTagOptions] = useState({});
+  // const [loading, setLoading] = useState(true);
 
   const fetchLFTagValues = async () => {
     try {
@@ -48,6 +49,7 @@ const LFTagEditForm = (props) => {
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
+      // setLoading(false)
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
@@ -102,7 +104,7 @@ const LFTagEditForm = (props) => {
   };
 
   useEffect(() => {
-    if (tagsDict.length > 0){
+    if (tagsDict.length >= 0){
       handleLFTags(tagsDict)
     } else{
       handleLFTags(tagsDict)

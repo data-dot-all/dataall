@@ -17,6 +17,8 @@ const syncDatasetTableColumns = (tableUri) => ({
           name
           description
           typeName
+          lfTagKey
+          lfTagValue
         }
       }
     }

@@ -41,6 +41,8 @@ const getDatasetTable = (tableUri) => ({
         name
         S3Prefix
         GlueTableProperties
+        lfTagKey
+        lfTagValue
         terms {
           count
           nodes {

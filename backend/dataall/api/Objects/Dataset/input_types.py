@@ -31,13 +31,13 @@ NewDatasetInput = gql.InputType(
     ],
 )
 
-DatasetLFTags = gql.InputType(
-    name='DatasetLFTags',
-    arguments=[
-        gql.Argument('lfTagKey', gql.String),
-        gql.Argument('lfTagValue', gql.String)
-    ],
-)
+# DatasetLFTags = gql.InputType(
+#     name='DatasetLFTags',
+#     arguments=[
+#         gql.Argument('lfTagKey', gql.String),
+#         gql.Argument('lfTagValue', gql.String)
+#     ],
+# )
 
 ModifyDatasetInput = gql.InputType(
     name='ModifyDatasetInput',

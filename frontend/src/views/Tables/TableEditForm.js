@@ -128,7 +128,7 @@ const TableEditForm = () => {
             terms: values.terms.nodes
               ? values.terms.nodes.map((t) => t.nodeUri)
               : values.terms.map((t) => t.nodeUri),
-            tags: values.tags
+            tags: values.tags,
             lfTagKey: tableLFTags ? tableLFTags.map((t) => t.lfTagKey) : [],
             lfTagValue: tableLFTags ? tableLFTags.map((t) => t.lfTagValue) : []
           }
@@ -360,8 +360,8 @@ const TableEditForm = () => {
                     <Grid item lg={12} md={6} xs={12}>
                       <Box sx={{ mt: 3 }}>
                         <LFTagEditForm
-                          handleLFTags={setDatasetLFTags}
-                          tagobject={dataset}
+                          handleLFTags={setTableLFTags}
+                          tagobject={table}
                         />
                       </Box>
                       {errors.submit && (

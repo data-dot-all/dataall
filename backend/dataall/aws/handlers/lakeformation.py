@@ -348,43 +348,41 @@ class LakeFormation:
             raise e
 
     @staticmethod
-    @Worker.handler('lakeformation.table.assign.lftags')
-    def update_table_lf_tags(engine, task: models.Task):
+    @Worker.handler('lakeformation.column.assign.lftags')
+    def update_column_lf_tags(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset_table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
-                session, task.targetUri
-            )
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, dataset_table.datasetUri
-            )
+            column: models.DatasetTableColumn = session.query(
+                models.DatasetTableColumn
+            ).get(task.targetUri)
+        
+        # Check if LF Tag Already Assigned to Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        lf_client = LakeFormation.create_lf_client(column.AWSAccountId, column.region)
+        table_tags = LakeFormation.get_table_lf_tags(
+            lf=lf_client, 
+            account=column.AWSAccountId,
+            db_name=column.GlueDatabaseName,
+            table_name=column.GlueTableName
+        )
 
-        if dataset_table.get("lfTagKey") and len(dataset_table.get("lfTagKey")) > 0:
-            lftags_to_assign = {dataset_table.lfTagKey[i]: dataset_table.lfTagValue[i] for i in range(len(dataset_table.lfTagKey))}
-            
-            lf_client = LakeFormation.create_lf_client(dataset.AwsAccountId, dataset.region)
+        # Create a Dictionary of Existing Tag Key Value Pairs on Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        existing_tags = {}
+        if table_tags.get('LFTagsOnColumns'):
+            for tag in table_tags.get('LFTagsOnColumns'):
+                if tag['Name'] == column.name:
+                    for col_tag in tag["LFTags"]:
+                        if col_tag["TagKey"] in existing_tags.keys():
+                            existing_tags[col_tag["TagKey"]].append(col_tag["TagValues"])
+                        else:
+                            existing_tags[col_tag["TagKey"]] = col_tag["TagValues"]
+        logging.info(f"Existing Tags: {existing_tags}")
 
-            logging.info(f'Get LF Tags in Already Assigned...')
-            table_tags = lf_client.get_resource_lf_tags(
-                CatalogId=dataset.AwsAccountId,
-                Resource={
-                    'Table': {
-                        'CatalogId': dataset.AwsAccountId,
-                        'DatabaseName': dataset.GlueDatabaseName,
-                        'Name': dataset_table.GlueTableName
-                    }
-                },
-                ShowAssignedLFTags=True
-            )
+        if column.lfTagKey:
+            lftags_to_assign = {column.lfTagKey[i]: column.lfTagValue[i] for i in range(len(column.lfTagKey))}
+            logging.info(f"Tags To Assign: {lftags_to_assign}")
 
-            existing_tags = {}
-            if table_tags.get('LFTagsOnTable'):
-                for tag in table_tags:
-                    if tag["TagKey"] in existing_tags.keys():
-                        existing_tags[tag["TagKey"]].append(tag["TagValues"])
-                    else:
-                        existing_tags[tag["TagKey"]] = [tag["TagValues"]]
-            
-
+            # For Each LF Tag To Assign Check if Already Assigned and Assign if Not
             for tagkey in lftags_to_assign:
                 if tagkey in existing_tags.keys() and lftags_to_assign[tagkey] in existing_tags[tagkey]:
                     logging.info("Tag Already Assigned, skipping...")
@@ -395,7 +393,7 @@ class LakeFormation:
                     logging.info(f"Assigning LF Tag {tagkey} with value {lftags_to_assign[tagkey]} to Table...")
                     try:
                         lf_client.create_lf_tag(
-                            CatalogId=dataset.AwsAccountId,
+                            CatalogId=column.AWSAccountId,
                             TagKey=tagkey,
                             TagValues=[lftags_to_assign[tagkey]]
                         )
@@ -404,7 +402,7 @@ class LakeFormation:
                         print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
                         try:
                             lf_client.update_lf_tag(
-                                CatalogId=dataset.AwsAccountId,
+                                CatalogId=column.AWSAccountId,
                                 TagKey=tagkey,
                                 TagValuesToAdd=[lftags_to_assign[tagkey]]
                             )
@@ -414,46 +412,182 @@ class LakeFormation:
 
                     # Add Tag to Resource
                     lf_client.add_lf_tags_to_resource(
-                        CatalogId=dataset.AwsAccountId,
+                        CatalogId=column.AWSAccountId,
                         Resource={
-                            'Table': {
-                                'CatalogId': dataset.AwsAccountId,
-                                'DatabaseName': dataset.GlueDatabaseName,
-                                'Name': dataset_table.GlueTableName,
-                            }
+                            'TableWithColumns': {
+                                'CatalogId': column.AWSAccountId,
+                                'DatabaseName': column.GlueDatabaseName,
+                                'Name': column.GlueTableName,
+                                'ColumnNames': [column.name]
+                            },
                         },
                         LFTags=[
                             {
-                                'CatalogId': dataset.AwsAccountId,
+                                'CatalogId': column.AWSAccountId,
                                 'TagKey': tagkey,
                                 'TagValues': [lftags_to_assign[tagkey]]
                             },
                         ]
                     )
-            
-            if len(existing_tags.keys()) > 0:
-                for key, value in existing_tags:
-                    lf_client.remove_lf_tags_from_resource(
-                        CatalogId=dataset.AwsAccountId,
+
+        # Remove Existing Tags that are No Longer Assigned
+        logging.info(f"Existing Tags: {existing_tags}")
+        if len(existing_tags.keys()) > 0:
+            for key in existing_tags:
+                lf_client.remove_lf_tags_from_resource(
+                    CatalogId=column.AWSAccountId,
+                    Resource={
+                        'TableWithColumns': {
+                            'CatalogId': column.AWSAccountId,
+                            'DatabaseName': column.GlueDatabaseName,
+                            'Name': column.GlueTableName,
+                            'ColumnNames': [column.name]
+                        },
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': column.AWSAccountId,
+                            'TagKey': key,
+                            'TagValues': existing_tags[key]
+                        },
+                    ]
+                )
+        return True
+
+    @staticmethod
+    @Worker.handler('lakeformation.table.assign.lftags')
+    def update_table_lf_tags(engine, task: models.Task):
+        with engine.scoped_session() as session:
+            dataset_table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+                session, task.targetUri
+            )
+
+        # Check if LF Tag Already Assigned to Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        lf_client = LakeFormation.create_lf_client(dataset_table.AWSAccountId, dataset_table.region)
+        table_tags = LakeFormation.get_table_lf_tags(
+            lf=lf_client, 
+            account=dataset_table.AWSAccountId,
+            db_name=dataset_table.GlueDatabaseName,
+            table_name=dataset_table.GlueTableName
+        )
+
+        # Create a Dictionary of Existing Tag Key Value Pairs on Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        existing_tags = {}
+        if table_tags.get('LFTagsOnTable'):
+            for tag in table_tags.get('LFTagsOnTable'):
+                if tag["TagKey"] in existing_tags.keys():
+                    existing_tags[tag["TagKey"]].append(tag["TagValues"])
+                else:
+                    existing_tags[tag["TagKey"]] = tag["TagValues"]
+        logging.info(f"Existing Tags: {existing_tags}")
+
+        if dataset_table.lfTagKey:
+            lftags_to_assign = {dataset_table.lfTagKey[i]: dataset_table.lfTagValue[i] for i in range(len(dataset_table.lfTagKey))}
+            logging.info(f"Tags To Assign: {lftags_to_assign}")
+
+            # For Each LF Tag To Assign Check if Already Assigned and Assign if Not
+            for tagkey in lftags_to_assign:
+                if tagkey in existing_tags.keys() and lftags_to_assign[tagkey] in existing_tags[tagkey]:
+                    logging.info("Tag Already Assigned, skipping...")
+                    existing_tags[tagkey].remove(lftags_to_assign[tagkey])
+                    if len(existing_tags[tagkey]) == 0:
+                        existing_tags.pop(tagkey)
+                else:
+                    logging.info(f"Assigning LF Tag {tagkey} with value {lftags_to_assign[tagkey]} to Table...")
+                    try:
+                        lf_client.create_lf_tag(
+                            CatalogId=dataset_table.AWSAccountId,
+                            TagKey=tagkey,
+                            TagValues=[lftags_to_assign[tagkey]]
+                        )
+                        print(f'Successfully create LF Tag {tagkey}')
+                    except ClientError as e:
+                        print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+                        try:
+                            lf_client.update_lf_tag(
+                                CatalogId=dataset_table.AWSAccountId,
+                                TagKey=tagkey,
+                                TagValuesToAdd=[lftags_to_assign[tagkey]]
+                            )
+                        except ClientError as e:
+                            print(f'LF Tag {tagkey} already has value {lftags_to_assign[tagkey]}, skippping update...')
+                            pass
+
+                    # Add Tag to Resource
+                    lf_client.add_lf_tags_to_resource(
+                        CatalogId=dataset_table.AWSAccountId,
                         Resource={
                             'Table': {
-                                'CatalogId': dataset.AwsAccountId,
-                                'DatabaseName': dataset.GlueDatabaseName,
+                                'CatalogId': dataset_table.AWSAccountId,
+                                'DatabaseName': dataset_table.GlueDatabaseName,
                                 'Name': dataset_table.GlueTableName,
                             }
                         },
                         LFTags=[
                             {
-                                'CatalogId': dataset.AwsAccountId,
+                                'CatalogId': dataset_table.AWSAccountId,
                                 'TagKey': tagkey,
-                                'TagValues': lftags_to_assign[value]
+                                'TagValues': [lftags_to_assign[tagkey]]
                             },
                         ]
                     )
-    
+        
+        # Remove Existing Tags that are No Longer Assigned
+        logging.info(f"Existing Tags: {existing_tags}")
+        if len(existing_tags.keys()) > 0:
+            for key in existing_tags:
+                lf_client.remove_lf_tags_from_resource(
+                    CatalogId=dataset_table.AWSAccountId,
+                    Resource={
+                        'Table': {
+                            'CatalogId': dataset_table.AWSAccountId,
+                            'DatabaseName': dataset_table.GlueDatabaseName,
+                            'Name': dataset_table.GlueTableName,
+                        }
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': dataset_table.AWSAccountId,
+                            'TagKey': key,
+                            'TagValues': existing_tags[key]
+                        },
+                    ]
+                )
+
+        return True
 
 
+    @staticmethod
+    def get_table_lf_tags(lf, account, db_name, table_name):
+        table_tags = lf.get_resource_lf_tags(
+            CatalogId=account,
+            Resource={
+                'Table': {
+                    'CatalogId': account,
+                    'DatabaseName': db_name,
+                    'Name': table_name
+                }
+            },
+            ShowAssignedLFTags=True
+        )
+        return table_tags
 
+    @staticmethod
+    def get_column_lf_tags(lf, account, db_name, table_name, column_name):
+        table_tags = lf.get_resource_lf_tags(
+            CatalogId=account,
+            Resource={
+                'Table': {
+                    'CatalogId': account,
+                    'DatabaseName': db_name,
+                    'Name': table_name
+                }
+            },
+            ShowAssignedLFTags=True
+        )
+        return table_tags
 
 
         
