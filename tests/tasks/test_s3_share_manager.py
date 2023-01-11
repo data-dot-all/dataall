@@ -9,11 +9,11 @@ from dataall.tasks.data_sharing.share_managers.s3_share_manager import S3ShareMa
 from dataall.utils.alarm_service import AlarmService
 
 
-SOURCE_ENV_ACCOUNT = "1234"
+SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
 
 
-TARGET_ACCOUNT_ENV = "5678"
+TARGET_ACCOUNT_ENV = "222222222222"
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
 
 
@@ -100,7 +100,7 @@ def base_bucket_policy():
             },
             {
                 "Effect": "Allow",
-                "Principal": {"AWS": "arn:aws:iam::666148086513:root"},
+                "Principal": {"AWS": "arn:aws:iam::111111111111:root"},
                 "Action": "s3:*",
                 "Resource": "arn:aws:s3:::dataall-iris-test-120922-4s47wv71",
             },
@@ -123,7 +123,7 @@ def admin_ap_delegation_bucket_policy():
             },
             {
                 "Effect": "Allow",
-                "Principal": {"AWS": "arn:aws:iam::666148086513:root"},
+                "Principal": {"AWS": "arn:aws:iam::111111111111:root"},
                 "Action": "s3:*",
                 "Resource": "arn:aws:s3:::dataall-iris-test-120922-4s47wv71",
             },
@@ -329,7 +329,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
 
 
 @pytest.mark.parametrize("target_dataset_access_control_policy", ([("dataset1", SOURCE_ENV_ACCOUNT, "test")]), indirect=True)
-def test_grant_target_role_acccess_policy_existing_policy_bucket_included(
+def test_grant_target_role_access_policy_existing_policy_bucket_included(
     mocker,
     source_environment_group,
     target_environment_group,
@@ -375,7 +375,7 @@ def test_grant_target_role_acccess_policy_existing_policy_bucket_included(
         iam_update_role_policy_mock.assert_not_called()
 
 
-def test_grant_target_role_acccess_policy_test_no_policy(
+def test_grant_target_role_access_policy_test_no_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
@@ -503,7 +503,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
         kms_put_key_policy_mock.assert_not_called()
 
 
-def generate_ap_policy_object(
+def _generate_ap_policy_object(
     access_point_arn: str,
     env_admin_prefix_list: list,
 ):
@@ -741,7 +741,7 @@ def test_manage_access_point_and_policy_2(
     )
 
     # target_env_admin is already in policy but current folder is NOT yet in prefix_list
-    existing_ap_policy = generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [[target_environment.SamlGroupName, ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
     # Existing access point policy
     mocker.patch(
@@ -814,7 +814,7 @@ def test_manage_access_point_and_policy_3(
     )
 
     # New target env admin and prefix are not in existing ap policy
-    existing_ap_policy = generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [["another-env-admin", ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object(s3_get_bucket_access_point_arn_mock.return_value, [["another-env-admin", ["existing-prefix"]]])
 
     # Existing access point policy
     mocker.patch(
@@ -885,7 +885,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
     # New target env admin and prefix are already in existing ap policy
     # Another admin is part of this policy
-    existing_ap_policy = generate_ap_policy_object(
+    existing_ap_policy = _generate_ap_policy_object(
         s3_get_bucket_access_point_arn_mock.return_value,
         [[target_environment.SamlGroupName, [location1.S3Prefix]], ["another-env-admin", [location1.S3Prefix]]],
     )
@@ -954,7 +954,7 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
         return_value="existing-access-point-arn",
     )
 
-    existing_ap_policy = generate_ap_policy_object(
+    existing_ap_policy = _generate_ap_policy_object(
         s3_get_bucket_access_point_arn_mock.return_value,
         [[target_environment.SamlGroupName, [location1.S3Prefix, "another-prefix"]], ["another-env-admin", [location1.S3Prefix]]],
     )
@@ -1015,7 +1015,7 @@ def test_dont_delete_access_point_with_policy(
     target_environment: models.Environment,
 ):
     # Given
-    existing_ap_policy = generate_ap_policy_object("access-point-arn", [[target_environment.SamlGroupName, ["existing-prefix"]]])
+    existing_ap_policy = _generate_ap_policy_object("access-point-arn", [[target_environment.SamlGroupName, ["existing-prefix"]]])
 
     s3_delete_bucket_access_point_mock = mocker.patch(
         "dataall.aws.handlers.s3.S3.get_access_point_policy",
@@ -1061,7 +1061,7 @@ def test_delete_access_point_without_policy(
     target_environment: models.Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
-    existing_ap_policy = generate_ap_policy_object("access-point-arn", [])
+    existing_ap_policy = _generate_ap_policy_object("access-point-arn", [])
 
     s3_delete_bucket_access_point_mock = mocker.patch(
         "dataall.aws.handlers.s3.S3.get_access_point_policy",
