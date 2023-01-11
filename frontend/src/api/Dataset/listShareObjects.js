@@ -39,8 +39,8 @@ const listDatasetShareObjects = ({ datasetUri, filter }) => ({
             dataset {
               datasetUri
               datasetName
-              datasetOrganizationName
-              datasetOrganizationUri
+              SamlAdminGroupName
+              environmentName
             }
           }
         }
