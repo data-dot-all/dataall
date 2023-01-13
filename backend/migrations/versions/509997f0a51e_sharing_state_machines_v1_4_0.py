@@ -77,7 +77,7 @@ def upgrade():
             )
             .update(
                 {
-                    ShareObject.status == 'Completed'
+                    ShareObject.status: 'Completed'
                 }
             )
         )
@@ -91,7 +91,7 @@ def upgrade():
             )
             .update(
                 {
-                    ShareObject.status == 'PendingApproval'
+                    ShareObject.status: 'PendingApproval'
                 }
             )
         )
@@ -114,7 +114,7 @@ def downgrade():
             )
             .update(
                 {
-                    ShareObject.status == 'PendingApproval'
+                    ShareObject.status: 'PendingApproval'
                 }
             )
         )
@@ -128,7 +128,7 @@ def downgrade():
             )
             .update(
                 {
-                    ShareObject.status == 'Draft'
+                    ShareObject.status: 'Draft'
                 }
             )
         )
