@@ -177,7 +177,6 @@ function ShareViewHeader(props) {
         variant: 'success'
       });
       await fetchItems();
-      await fetchItem();
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -384,7 +383,7 @@ function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
             <>
-            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'PendingRevoke' || item.status === 'Revoke_Rejected'|| item.status === 'Revoke_Approved') ? (
+            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed' || item.status === 'Revoke_Rejected') ? (
                 <Button
                   color="error"
                   startIcon={<RemoveCircleOutlineOutlined fontSize="small" />}
