@@ -918,29 +918,50 @@ def test_revoke_all_share_request_completed(
 
     # Given existing share object in status Completed
     getShareObjectQuery = """
-        query getShareObject($shareUri: String!) {
+        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
               getShareObject(shareUri: $shareUri) {
                 shareUri
                 created
                 owner
                 status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
+                userRoleForShareObject
+                principal {
+                  principalId
+                  principalType
+                  principalName
+                  principalIAMRoleName
+                  SamlGroupName
+                  environmentUri
+                  environmentName
+                  AwsAccountId
+                  region
+                  organizationUri
+                  organizationName
                 }
+                items(filter: $filter) {
+                  count
+                  page
+                  pages
+                  hasNext
+                  hasPrevious
+                  nodes {
+                    itemUri
+                    shareItemUri
+                    itemType
+                    itemName
+                    status
+                    action
+                  }
+                }
+                dataset {
+                  datasetUri
+                  datasetName
+                  SamlAdminGroupName
+                  environmentName
+                  exists
+                }
+              }
             }
-        }
     """
 
     response = client.query(
@@ -963,33 +984,34 @@ def test_revoke_all_share_request_completed(
 
     # When revoking all share object
     query = """
-                mutation revokeAllShareObject($shareUri:String!){
-                    revokeAllShareObject(shareUri:$shareUri){
-                        shareUri
+        mutation revokeAllShareObject($shareUri:String!){
+            revokeAllShareObject(shareUri:$shareUri){
+                shareUri
+                status
+                items {
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {
+                        itemUri
+                        shareItemUri
+                        itemType
+                        itemName
                         status
-                        items {
-                            count
-                            page
-                            pages
-                            hasNext
-                            hasPrevious
-                            nodes {
-                                itemUri
-                                shareItemUri
-                                itemType
-                                itemName
-                                status
-                                action
-                            }
-                        }
+                        action
                     }
                 }
-                """
+            }
+        }
+        """
 
     response = client.query(
         query,
         username=user2.userName,
         shareUri=share1.shareUri,
+        filter={"isShared": True},
         groups=[group2.name],
     )
 
@@ -1010,35 +1032,57 @@ def test_revoke_all_share_request_completed(
 def test_delete_share_object(client, share1, dataset1, group, user2, group2, env2):
     # Given existing share object in status Rejected (-> fixture)
     getShareObjectQuery = """
-            query getShareObject($shareUri: String!) {
-                  getShareObject(shareUri: $shareUri) {
-                    shareUri
-                    created
-                    owner
-                    status
-                    items {
-                        count
-                        page
-                        pages
-                        hasNext
-                        hasPrevious
-                        nodes {
-                            itemUri
-                            shareItemUri
-                            itemType
-                            itemName
-                            status
-                            action
-                        }
-                    }
+        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
+              getShareObject(shareUri: $shareUri) {
+                shareUri
+                created
+                owner
+                status
+                userRoleForShareObject
+                principal {
+                  principalId
+                  principalType
+                  principalName
+                  principalIAMRoleName
+                  SamlGroupName
+                  environmentUri
+                  environmentName
+                  AwsAccountId
+                  region
+                  organizationUri
+                  organizationName
                 }
+                items(filter: $filter) {
+                  count
+                  page
+                  pages
+                  hasNext
+                  hasPrevious
+                  nodes {
+                    itemUri
+                    shareItemUri
+                    itemType
+                    itemName
+                    status
+                    action
+                  }
+                }
+                dataset {
+                  datasetUri
+                  datasetName
+                  SamlAdminGroupName
+                  environmentName
+                  exists
+                }
+              }
             }
-        """
+    """
 
     response = client.query(
         getShareObjectQuery,
         username=user2.userName,
         shareUri=share1.shareUri,
+        filter={"isShared": True},
         groups=[group2.name],
     )
 
