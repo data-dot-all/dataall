@@ -126,7 +126,7 @@ Alarm Details:
     - Region:                            {target_environment.region}
 """
 
-    def trigger_revoke_sharing_failure_alarm(
+    def trigger_revoke_table_sharing_failure_alarm(
         self,
         table: models.DatasetTable,
         share: models.ShareObject,

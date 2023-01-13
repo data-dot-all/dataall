@@ -220,6 +220,7 @@ def share_item_table(db):
     def factory(
         share: models.ShareObject,
         table: models.DatasetTable,
+        status: str,
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:
             share_item = models.ShareObjectItem(
@@ -228,7 +229,7 @@ def share_item_table(db):
                 itemUri=table.tableUri,
                 itemType=constants.ShareableType.Table.value,
                 itemName=table.name,
-                status=constants.ShareItemStatus.Share_Approved.value,
+                status=status,
             )
             session.add(share_item)
             session.commit()

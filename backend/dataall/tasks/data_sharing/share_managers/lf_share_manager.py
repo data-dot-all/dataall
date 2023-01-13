@@ -544,10 +544,10 @@ class LFShareManager:
         )
         api.ShareObject.update_share_item_status(
             self.session,
-            share_item,
+            share_item.shareItemUri,
             models.ShareItemStatus.Revoke_Failed.value,
         )
-        AlarmService().trigger_revoke_sharing_failure_alarm(
+        AlarmService().trigger_revoke_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True
