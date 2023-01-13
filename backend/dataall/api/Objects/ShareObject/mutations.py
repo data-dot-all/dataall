@@ -14,6 +14,19 @@ createShareObject = gql.MutationField(
     resolver=create_share_object,
 )
 
+createLFTagShare = gql.MutationField(
+    name='createLFTagShare',
+    args=[
+        gql.Argument(name='lfTagKey', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='lfTagValue', type=gql.NonNullableType(gql.String)),
+        gql.Argument(
+            name='input', type=gql.NonNullableType(gql.Ref('NewLFTagShareInput'))
+        ),
+    ],
+    type=gql.Ref('LFTagShareObject'),
+    resolver=create_lf_tag_share,
+)
+
 deleteShareObject = gql.MutationField(
     name='deleteShareObject',
     args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
@@ -53,7 +66,6 @@ approveShareObject = gql.MutationField(
     resolver=approve_share_object,
 )
 
-
 rejectShareObject = gql.MutationField(
     name='rejectShareObject',
     args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
@@ -66,4 +78,33 @@ revokeItemsShareObject = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.Ref('RevokeItemsInput'))],
     type=gql.Ref('ShareObject'),
     resolver=revoke_items_share_object,
+)
+
+# LF TAG Share MUTATIONS 
+submitLFTagShareObject = gql.MutationField(
+    name='submitLFTagShareObject',
+    args=[gql.Argument(name='lftagShareUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('LFTagShareObject'),
+    resolver=submit_lf_tag_share_object,
+)
+
+approveLFTagShareObject = gql.MutationField(
+    name='approveLFTagShareObject',
+    args=[gql.Argument(name='lftagShareUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('LFTagShareObject'),
+    resolver=approve_lf_tag_share_object,
+)
+
+rejectLFTagShareObject = gql.MutationField(
+    name='rejectLFTagShareObject',
+    args=[gql.Argument(name='lftagShareUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('LFTagShareObject'),
+    resolver=reject_lf_tag_share_object,
+)
+
+deleteLFTagShareObject = gql.MutationField(
+    name='deleteLFTagShareObject',
+    args=[gql.Argument(name='lftagShareUri', type=gql.NonNullableType(gql.String))],
+    resolver=delete_lf_tag_share_object,
+    type=gql.Boolean
 )
