@@ -968,6 +968,7 @@ def test_revoke_all_share_request_completed(
         getShareObjectQuery,
         username=user2.userName,
         shareUri=share1.shareUri,
+        filter={"isShared": True},
         groups=[group2.name],
     )
 
@@ -1011,7 +1012,6 @@ def test_revoke_all_share_request_completed(
         query,
         username=user2.userName,
         shareUri=share1.shareUri,
-        filter={"isShared": True},
         groups=[group2.name],
     )
 
