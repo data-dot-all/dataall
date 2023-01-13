@@ -50,7 +50,7 @@ def environment(db):
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
         dashboardsEnabled: bool = False,
-    ) -> models.Organization:
+    ) -> models.Environment:
         with db.scoped_session() as session:
             env = models.Environment(
                 organizationUri=organization.organizationUri,
@@ -78,7 +78,7 @@ def environment_group(db):
     def factory(
         environment: models.Environment,
         group: models.Group,
-    ) -> models.Organization:
+    ) -> models.EnvironmentGroup:
         with db.scoped_session() as session:
 
             env_group = models.EnvironmentGroup(
@@ -147,6 +147,29 @@ def location(db):
     yield factory
 
 
+@pytest.fixture(scope='module')
+def table(db):
+    def factory(dataset: models.Dataset, label: str) -> models.DatasetTable:
+
+        with db.scoped_session() as session:
+            table = models.DatasetTable(
+                name=label,
+                label=label,
+                owner=dataset.owner,
+                datasetUri=dataset.datasetUri,
+                GlueDatabaseName=dataset.GlueDatabaseName,
+                GlueTableName=label,
+                region=dataset.region,
+                AWSAccountId=dataset.AwsAccountId,
+                S3BucketName=dataset.S3BucketName,
+                S3Prefix=f'{label}',
+            )
+            session.add(table)
+        return table
+
+    yield factory
+
+
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
@@ -160,7 +183,7 @@ def share(db):
                 environmentUri=environment.environmentUri,
                 owner="bob",
                 principalId=environment.SamlGroupName,
-                principalType=constants.PrincipalType.Environment.value,
+                principalType=constants.PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
                 status=constants.ShareObjectStatus.Approved.value,
             )
@@ -184,7 +207,28 @@ def share_item_folder(db):
                 itemUri=location.locationUri,
                 itemType=constants.ShareableType.StorageLocation.value,
                 itemName=location.name,
-                status=constants.ShareObjectStatus.Approved.value,
+                status=constants.ShareItemStatus.Share_Approved.value,
+            )
+            session.add(share_item)
+            session.commit()
+            return share_item
+
+    yield factory
+
+@pytest.fixture(scope="module")
+def share_item_table(db):
+    def factory(
+        share: models.ShareObject,
+        table: models.DatasetTable,
+    ) -> models.ShareObjectItem:
+        with db.scoped_session() as session:
+            share_item = models.ShareObjectItem(
+                shareUri=share.shareUri,
+                owner="alice",
+                itemUri=table.tableUri,
+                itemType=constants.ShareableType.Table.value,
+                itemName=table.name,
+                status=constants.ShareItemStatus.Share_Approved.value,
             )
             session.add(share_item)
             session.commit()

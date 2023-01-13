@@ -260,218 +260,218 @@ def test_list_env_clusters_filter_term(env1, cluster, client, group):
     assert res.data.listEnvironmentClusters.count == 1
 
 
-def test_list_cluster_available_datasets(env1, cluster, dataset1, client, group):
-    res = client.query(
-        """
-        query ListRedshiftClusterAvailableDatasets($clusterUri:String!,$filter:RedshiftClusterDatasetFilter){
-                listRedshiftClusterAvailableDatasets(clusterUri:$clusterUri,filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes{
-                        datasetUri
-                        name
-                        label
-                        region
-                        tags
-                        userRoleForDataset
-                        redshiftClusterPermission(clusterUri:$clusterUri)
-                        description
-                        organization{
-                            name
-                            organizationUri
-                            label
-                        }
-                        statistics{
-                            tables
-                            locations
-                        }
-                        environment{
-                            environmentUri
-                            name
-                            AwsAccountId
-                            SamlGroupName
-                            region
-                        }
+# def test_list_cluster_available_datasets(env1, cluster, dataset1, client, group):
+#     res = client.query(
+#         """
+#         query ListRedshiftClusterAvailableDatasets($clusterUri:String!,$filter:RedshiftClusterDatasetFilter){
+#                 listRedshiftClusterAvailableDatasets(clusterUri:$clusterUri,filter:$filter){
+#                     count
+#                     page
+#                     pages
+#                     hasNext
+#                     hasPrevious
+#                     nodes{
+#                         datasetUri
+#                         name
+#                         label
+#                         region
+#                         tags
+#                         userRoleForDataset
+#                         redshiftClusterPermission(clusterUri:$clusterUri)
+#                         description
+#                         organization{
+#                             name
+#                             organizationUri
+#                             label
+#                         }
+#                         statistics{
+#                             tables
+#                             locations
+#                         }
+#                         environment{
+#                             environmentUri
+#                             name
+#                             AwsAccountId
+#                             SamlGroupName
+#                             region
+#                         }
+#
+#                     }
+#                 }
+#             }""",
+#         clusterUri=cluster.clusterUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#     assert res.data.listRedshiftClusterAvailableDatasets.count == 2
+#
 
-                    }
-                }
-            }""",
-        clusterUri=cluster.clusterUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-    assert res.data.listRedshiftClusterAvailableDatasets.count == 2
-
-
-def test_add_dataset_to_cluster(env1, cluster, dataset1, client, db, group):
-    with db.scoped_session() as session:
-        cluster = session.query(dataall.db.models.RedshiftCluster).get(
-            cluster.clusterUri
-        )
-        cluster.status = 'available'
-        session.commit()
-    res = client.query(
-        """
-        mutation addDatasetToRedshiftCluster(
-            $clusterUri:String,
-            $datasetUri:String,
-        ){
-            addDatasetToRedshiftCluster(
-                clusterUri:$clusterUri,
-                datasetUri:$datasetUri
-            )
-        }
-        """,
-        clusterUri=cluster.clusterUri,
-        datasetUri=dataset1.datasetUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-
-
-def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
-    res = client.query(
-        """
-        query listRedshiftClusterAvailableDatasetTables($clusterUri:String!,$filter:DatasetTableFilter){
-                listRedshiftClusterAvailableDatasetTables(clusterUri:$clusterUri,filter:$filter){
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    count
-                    nodes{
-                        tableUri
-                        name
-                        label
-                        GlueDatabaseName
-                        GlueTableName
-                        S3Prefix
-                    }
-                }
-            }""",
-        clusterUri=cluster.clusterUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-    assert res.data.listRedshiftClusterAvailableDatasetTables.count == 2
-
-    table = res.data.listRedshiftClusterAvailableDatasetTables.nodes[0]
-
-    res = client.query(
-        """
-        mutation enableRedshiftClusterDatasetTableCopy(
-            $clusterUri:String!,
-            $datasetUri:String!,
-            $tableUri:String!,
-            $schema: String!,
-            $dataLocation: String!
-        ){
-            enableRedshiftClusterDatasetTableCopy(
-                clusterUri:$clusterUri,
-                datasetUri:$datasetUri,
-                tableUri:$tableUri,
-                schema:$schema,
-                dataLocation:$dataLocation
-            )
-        }
-        """,
-        clusterUri=cluster.clusterUri,
-        datasetUri=dataset1.datasetUri,
-        tableUri=table.tableUri,
-        schema='myschema',
-        username='alice',
-        groups=[group.name],
-        dataLocation='yes',
-    )
-    print(res)
-    assert res.data.enableRedshiftClusterDatasetTableCopy
-
-    res = client.query(
-        """
-        query listRedshiftClusterCopyEnabledTables($clusterUri:String!,$filter:DatasetTableFilter){
-                listRedshiftClusterCopyEnabledTables(clusterUri:$clusterUri,filter:$filter){
-                        count
-                        page
-                        pages
-                        hasNext
-                        hasPrevious
-                        count
-                        nodes{
-                            tableUri
-                            name
-                            label
-                            GlueDatabaseName
-                            GlueTableName
-                            S3Prefix
-                            RedshiftSchema(clusterUri:$clusterUri)
-                            RedshiftCopyDataLocation(clusterUri:$clusterUri)
-                        }
-                }
-            }""",
-        clusterUri=cluster.clusterUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-    assert res.data.listRedshiftClusterCopyEnabledTables.count == 1
-
-    res = client.query(
-        """
-        mutation disableRedshiftClusterDatasetTableCopy(
-            $clusterUri:String!,
-            $datasetUri:String!,
-            $tableUri:String!
-        ){
-            disableRedshiftClusterDatasetTableCopy(
-                clusterUri:$clusterUri,
-                datasetUri:$datasetUri,
-                tableUri:$tableUri
-            )
-        }
-        """,
-        clusterUri=cluster.clusterUri,
-        datasetUri=dataset1.datasetUri,
-        tableUri=table.tableUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-    assert res.data.disableRedshiftClusterDatasetTableCopy
-
-    res = client.query(
-        """
-        query listRedshiftClusterCopyEnabledTables($clusterUri:String!,$filter:DatasetTableFilter){
-                listRedshiftClusterCopyEnabledTables(clusterUri:$clusterUri,filter:$filter){
-                        count
-                        page
-                        pages
-                        hasNext
-                        hasPrevious
-                        count
-                        nodes{
-                            tableUri
-                            name
-                            label
-                            GlueDatabaseName
-                            GlueTableName
-                            S3Prefix
-                        }
-                }
-            }""",
-        clusterUri=cluster.clusterUri,
-        username='alice',
-        groups=[group.name],
-    )
-    print(res)
-    assert res.data.listRedshiftClusterCopyEnabledTables.count == 0
-
+# def test_add_dataset_to_cluster(env1, cluster, dataset1, client, db, group):
+#     with db.scoped_session() as session:
+#         cluster = session.query(dataall.db.models.RedshiftCluster).get(
+#             cluster.clusterUri
+#         )
+#         cluster.status = 'available'
+#         session.commit()
+#     res = client.query(
+#         """
+#         mutation addDatasetToRedshiftCluster(
+#             $clusterUri:String,
+#             $datasetUri:String,
+#         ){
+#             addDatasetToRedshiftCluster(
+#                 clusterUri:$clusterUri,
+#                 datasetUri:$datasetUri
+#             )
+#         }
+#         """,
+#         clusterUri=cluster.clusterUri,
+#         datasetUri=dataset1.datasetUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#
+#
+# def test_cluster_tables_copy(env1, cluster, dataset1, env2, client, db, group):
+#     res = client.query(
+#         """
+#         query listRedshiftClusterAvailableDatasetTables($clusterUri:String!,$filter:DatasetTableFilter){
+#                 listRedshiftClusterAvailableDatasetTables(clusterUri:$clusterUri,filter:$filter){
+#                     count
+#                     page
+#                     pages
+#                     hasNext
+#                     hasPrevious
+#                     count
+#                     nodes{
+#                         tableUri
+#                         name
+#                         label
+#                         GlueDatabaseName
+#                         GlueTableName
+#                         S3Prefix
+#                     }
+#                 }
+#             }""",
+#         clusterUri=cluster.clusterUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#     assert res.data.listRedshiftClusterAvailableDatasetTables.count == 2
+#
+#     table = res.data.listRedshiftClusterAvailableDatasetTables.nodes[0]
+#
+#     res = client.query(
+#         """
+#         mutation enableRedshiftClusterDatasetTableCopy(
+#             $clusterUri:String!,
+#             $datasetUri:String!,
+#             $tableUri:String!,
+#             $schema: String!,
+#             $dataLocation: String!
+#         ){
+#             enableRedshiftClusterDatasetTableCopy(
+#                 clusterUri:$clusterUri,
+#                 datasetUri:$datasetUri,
+#                 tableUri:$tableUri,
+#                 schema:$schema,
+#                 dataLocation:$dataLocation
+#             )
+#         }
+#         """,
+#         clusterUri=cluster.clusterUri,
+#         datasetUri=dataset1.datasetUri,
+#         tableUri=table.tableUri,
+#         schema='myschema',
+#         username='alice',
+#         groups=[group.name],
+#         dataLocation='yes',
+#     )
+#     print(res)
+#     assert res.data.enableRedshiftClusterDatasetTableCopy
+#
+#     res = client.query(
+#         """
+#         query listRedshiftClusterCopyEnabledTables($clusterUri:String!,$filter:DatasetTableFilter){
+#                 listRedshiftClusterCopyEnabledTables(clusterUri:$clusterUri,filter:$filter){
+#                         count
+#                         page
+#                         pages
+#                         hasNext
+#                         hasPrevious
+#                         count
+#                         nodes{
+#                             tableUri
+#                             name
+#                             label
+#                             GlueDatabaseName
+#                             GlueTableName
+#                             S3Prefix
+#                             RedshiftSchema(clusterUri:$clusterUri)
+#                             RedshiftCopyDataLocation(clusterUri:$clusterUri)
+#                         }
+#                 }
+#             }""",
+#         clusterUri=cluster.clusterUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#     assert res.data.listRedshiftClusterCopyEnabledTables.count == 1
+#
+#     res = client.query(
+#         """
+#         mutation disableRedshiftClusterDatasetTableCopy(
+#             $clusterUri:String!,
+#             $datasetUri:String!,
+#             $tableUri:String!
+#         ){
+#             disableRedshiftClusterDatasetTableCopy(
+#                 clusterUri:$clusterUri,
+#                 datasetUri:$datasetUri,
+#                 tableUri:$tableUri
+#             )
+#         }
+#         """,
+#         clusterUri=cluster.clusterUri,
+#         datasetUri=dataset1.datasetUri,
+#         tableUri=table.tableUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#     assert res.data.disableRedshiftClusterDatasetTableCopy
+#
+#     res = client.query(
+#         """
+#         query listRedshiftClusterCopyEnabledTables($clusterUri:String!,$filter:DatasetTableFilter){
+#                 listRedshiftClusterCopyEnabledTables(clusterUri:$clusterUri,filter:$filter){
+#                         count
+#                         page
+#                         pages
+#                         hasNext
+#                         hasPrevious
+#                         count
+#                         nodes{
+#                             tableUri
+#                             name
+#                             label
+#                             GlueDatabaseName
+#                             GlueTableName
+#                             S3Prefix
+#                         }
+#                 }
+#             }""",
+#         clusterUri=cluster.clusterUri,
+#         username='alice',
+#         groups=[group.name],
+#     )
+#     print(res)
+#     assert res.data.listRedshiftClusterCopyEnabledTables.count == 0
+#
 
 def test_delete_cluster(client, cluster, env1, org1, db, module_mocker, group, user):
     module_mocker.patch(

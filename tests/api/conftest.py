@@ -1,5 +1,6 @@
 from .client import *
 from dataall.db import models
+from dataall.api import constants
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -331,6 +332,179 @@ def env(client):
         )
         cache[key] = response.data.createEnvironment
         return cache[key]
+
+    yield factory
+
+
+@pytest.fixture(scope="module")
+def environment(db):
+    def factory(
+        organization: models.Organization,
+        awsAccountId: str,
+        label: str,
+        owner: str,
+        samlGroupName: str,
+        environmentDefaultIAMRoleName: str,
+        dashboardsEnabled: bool = False,
+    ) -> models.Environment:
+        with db.scoped_session() as session:
+            env = models.Environment(
+                organizationUri=organization.organizationUri,
+                AwsAccountId=awsAccountId,
+                region="eu-central-1",
+                label=label,
+                owner=owner,
+                tags=[],
+                description="desc",
+                SamlGroupName=samlGroupName,
+                EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleName,
+                EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{awsAccountId}:role/{environmentDefaultIAMRoleName}",
+                CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
+                dashboardsEnabled=dashboardsEnabled,
+            )
+            session.add(env)
+            session.commit()
+        return env
+
+    yield factory
+
+@pytest.fixture(scope="module")
+def dataset_model(db):
+    def factory(
+        organization: models.Organization,
+        environment: models.Environment,
+        label: str,
+    ) -> models.Dataset:
+        with db.scoped_session() as session:
+            dataset = models.Dataset(
+                organizationUri=organization.organizationUri,
+                environmentUri=environment.environmentUri,
+                label=label,
+                owner=environment.owner,
+                stewards=environment.SamlGroupName,
+                SamlAdminGroupName=environment.SamlGroupName,
+                businessOwnerDelegationEmails=["foo@amazon.com"],
+                name=label,
+                S3BucketName=label,
+                GlueDatabaseName="gluedatabase",
+                KmsAlias="kmsalias",
+                AwsAccountId=environment.AwsAccountId,
+                region=environment.region,
+                IAMDatasetAdminUserArn=f"arn:aws:iam::{environment.AwsAccountId}:user/dataset",
+                IAMDatasetAdminRoleArn=f"arn:aws:iam::{environment.AwsAccountId}:role/dataset",
+            )
+            session.add(dataset)
+            session.commit()
+            return dataset
+
+    yield factory
+
+
+@pytest.fixture(scope="module")
+def environment_group(db):
+    def factory(
+        environment: models.Environment,
+        group: models.Group,
+    ) -> models.EnvironmentGroup:
+        with db.scoped_session() as session:
+
+            env_group = models.EnvironmentGroup(
+                environmentUri=environment.environmentUri,
+                groupUri=group.name,
+                environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
+                environmentIAMRoleName=environment.EnvironmentDefaultIAMRoleName,
+                environmentAthenaWorkGroup="workgroup",
+            )
+            session.add(env_group)
+            dataall.db.api.ResourcePolicy.attach_resource_policy(
+                session=session,
+                resource_uri=environment.environmentUri,
+                group=group.name,
+                permissions=dataall.db.permissions.ENVIRONMENT_ALL,
+                resource_type=dataall.db.models.Environment.__name__,
+            )
+            session.commit()
+            return env_group
+
+    yield factory
+
+
+@pytest.fixture(scope="module")
+def share(db):
+    def factory(
+            dataset: models.Dataset,
+            environment: models.Environment,
+            env_group: models.EnvironmentGroup,
+            owner: str,
+            status: str
+    ) -> models.ShareObject:
+        with db.scoped_session() as session:
+            share = models.ShareObject(
+                datasetUri=dataset.datasetUri,
+                environmentUri=environment.environmentUri,
+                owner=owner,
+                groupUri=env_group.groupUri,
+                principalId=env_group.groupUri,
+                principalType=constants.PrincipalType.Group.value,
+                principalIAMRoleName=env_group.environmentIAMRoleName,
+                status=status,
+            )
+            session.add(share)
+            session.commit()
+            dataall.db.api.ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=env_group.groupUri,
+                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                resource_uri=share.shareUri,
+                resource_type=models.ShareObject.__name__,
+            )
+            dataall.db.api.ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                resource_uri=share.shareUri,
+                resource_type=dataall.db.models.ShareObject.__name__,
+            )
+            dataall.db.api.ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=dataall.db.permissions.SHARE_OBJECT_APPROVER,
+                resource_uri=share.shareUri,
+                resource_type=dataall.db.models.ShareObject.__name__,
+            )
+            if dataset.SamlAdminGroupName != environment.SamlGroupName:
+                dataall.db.api.ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=environment.SamlGroupName,
+                    permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                    resource_uri=share.shareUri,
+                    resource_type=dataall.db.models.ShareObject.__name__,
+                )
+            session.commit()
+            return share
+
+    yield factory
+
+
+@pytest.fixture(scope="module")
+def share_item(db):
+    def factory(
+            share: models.ShareObject,
+            table: models.DatasetTable,
+            status: str
+    ) -> models.ShareObjectItem:
+        with db.scoped_session() as session:
+            share_item = models.ShareObjectItem(
+                shareUri=share.shareUri,
+                owner="alice",
+                itemUri=table.tableUri,
+                itemType=constants.ShareableType.Table.value,
+                itemName=table.name,
+                status=status,
+            )
+            session.add(share_item)
+            session.commit()
+            return share_item
 
     yield factory
 

@@ -32,16 +32,16 @@ class ProcessLFSameAccountShare(LFShareManager):
     def process_approved_shares(self) -> bool:
         """
         Approves a share request for same account sharing
-        1) Gets share principals
-        2) Creates the shared database if doesn't exist
-        3) For each share request item:
-            a) update its status to share in progress
-            b) check if share item exists on glue catalog raise error if not and flag share item status to failed
-            e) create resource link on same account
-            g) grant permission to resource link for team role on source account
-            h) update share item status to share successful
-        4) Update shareddb by removing items not part of the share request
-        5) Delete deprecated shareddb
+        For share_approved items:
+            1) Gets share principals
+            2) Creates the shared database if it doesn't exist
+            3) For each share request item:
+                a) update its status to share in progress
+                b) check if share item exists on glue catalog raise error if not and flag share item status to failed
+                e) create resource link on same account
+                g) grant permission to resource link for team role on source account
+                h) update share item status to share successful
+        For revoked_approved items
 
         Returns
         -------
