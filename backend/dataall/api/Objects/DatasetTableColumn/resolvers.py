@@ -57,7 +57,6 @@ def sync_table_columns(context: Context, source, tableUri: str = None):
         task = models.Task(action='glue.table.columns', targetUri=table.tableUri)
         session.add(task)
     Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
-    time.sleep(5)
     return list_table_columns(context, source=table, tableUri=tableUri)
 
 

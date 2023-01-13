@@ -135,6 +135,7 @@ const WarehouseImportForm = Loadable(
 
 const ShareList = Loadable(lazy(() => import('./views/Shares/ShareList')));
 const ShareView = Loadable(lazy(() => import('./views/Shares/ShareView')));
+const LFTagShareView = Loadable(lazy(() => import('./views/Shares/LFTagShareView')));
 
 const WorksheetList = Loadable(
   lazy(() => import('./views/Worksheets/WorksheetList'))
@@ -374,6 +375,10 @@ const routes = [
           {
             path: 'shares/:uri',
             element: <ShareView />
+          },
+          {
+            path: 'shares/lftag/:uri',
+            element: <LFTagShareView />
           }
         ]
       },

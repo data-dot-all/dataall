@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { makeStyles, useTheme } from '@mui/styles';
+import { LockOpen } from '@mui/icons-material';
 import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -31,6 +32,7 @@ import { THEMES } from '../../constants';
 import Hit from './Hit';
 import ChevronDown from '../../icons/ChevronDown';
 import GlossarySearchComponent from './GlossarySearchComponent';
+import RequestAccessLFTag from './RequestAccessLFTag';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -207,6 +209,18 @@ const Catalog = () => {
       : classes.darkListSearch
   );
   const [selectedFiltersCleared, setSelectedFiltersCleared] = useState(true);
+  const [isRequestAccessLFTagOpen, setIsRequestAccessLFTagOpen] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+
+  const handleRequestAccessLFTagModalOpen = () => {
+    setIsOpeningModal(true);
+    setIsRequestAccessLFTagOpen(true);
+  };
+
+  const handleRequestAccessLFTagModalClose = () => {
+    setIsRequestAccessLFTagOpen(false);
+  };
+
   const transformRequest = (request) => {
     const transformedRequest = { ...request };
     transformedRequest.url = process.env.REACT_APP_SEARCH_API;
@@ -295,6 +309,26 @@ const Catalog = () => {
                 >
                   New Dataset
                 </Button>
+              </Box>
+              <Box sx={{ m: -1 }}>
+                <Button
+                  color="primary"
+                  // component={RouterLink}
+                  startIcon={<LockOpen fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="contained"
+                  onClick={() => handleRequestAccessLFTagModalOpen()}
+                >
+                  Request Access LF Tag
+                </Button>
+                {isRequestAccessLFTagOpen && (
+                  <RequestAccessLFTag
+                    onApply={handleRequestAccessLFTagModalClose}
+                    onClose={handleRequestAccessLFTagModalClose}
+                    open={isRequestAccessLFTagOpen}
+                    stopLoader={() => setIsOpeningModal(false)}
+                  />
+                )}
               </Box>
             </Grid>
           </Grid>
