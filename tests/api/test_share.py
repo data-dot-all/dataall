@@ -1021,7 +1021,7 @@ def test_revoke_all_share_request_completed(
     # Then shared item changes to status Revoke_Approved
     sharedItem = response.data.revokeAllShareObject.get('items').nodes[0]
     status = sharedItem['status']
-    status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
+    assert status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
 
     # Given the revoked share object is processed and the shared items
     # are successfully revoked. We can re-use the same successful processing function

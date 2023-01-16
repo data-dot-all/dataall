@@ -999,8 +999,8 @@ class ShareObject:
                 or_(
                     models.ShareObject.owner == username,
                     and_(
-                        models.Environment.SamlGroupName.in_(groups),
-                        models.ShareObject.principalType == PrincipalType.Group.value,
+                        models.ShareObject.groupUri.in_(groups),
+                        models.ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value])
                     ),
                 )
             )
