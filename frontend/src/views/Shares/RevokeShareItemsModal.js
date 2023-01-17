@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
-  Box,
+  Box, Card,
   Dialog,
   Divider,
   IconButton,
@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import Checkbox from '@mui/material/Checkbox';
-import { Add } from '@mui/icons-material';
-import { useCallback, useEffect, useState } from 'react';
+import {Add, SyncAlt} from '@mui/icons-material';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -26,17 +26,19 @@ import * as Defaults from '../../components/defaults';
 import { PagedResponseDefault } from '../../components/defaults';
 import getShareObject from '../../api/ShareObject/getShareObject';
 import revokeItemsShareObject from '../../api/ShareObject/revokeItemsShareObject';
+import {LoadingButton} from "@mui/lab";
+import {DataGrid} from "@mui/x-data-grid";
 
 const RevokeShareItemsModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
-  const [sharedItems, setSharedItems] = useState(PagedResponseDefault);
-  const [revoking, setRevoking] = useState(false);
+  const [rows, setRows] = useState([]);
   const dispatch = useDispatch();
   const params = useParams();
   const [loading, setLoading] = useState(true);
+  const [selectionModel, setSelectionModel] = useState([]);
 
   const fetchShareItems = useCallback(async () => {
     setLoading(true);
@@ -45,12 +47,20 @@ const RevokeShareItemsModal = (props) => {
         shareUri: params.uri,
         filter: {
           ...filter,
-          isShared: false
+          isShared: true,
+          isRevokable: true
         }
       })
     );
     if (!response.errors) {
-      setSharedItems({ ...response.data.getShareObject.items });
+      setRows(
+          response.data.getShareObject.items.map((item) => ({
+            id: item.shareItemUri,
+            name: item.itemName,
+            type: item.itemType,
+            status: item.status
+          }))
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -58,11 +68,11 @@ const RevokeShareItemsModal = (props) => {
   }, [client, dispatch, params.uri, filter]);
 
   const revoke = async () => {
-    setRevoking(true);
+    setLoading(true);
     const response = await client.mutate(
       revokeItemsShareObject({
         shareUri: share.shareUri,
-        revokedItemUris: ['']
+        revokedItemUris: selectionModel
       })
     );
     if (!response.errors) {
@@ -76,14 +86,10 @@ const RevokeShareItemsModal = (props) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setRevoking(false);
+    setLoading(false);
   };
 
-  const handlePageChange = async (event, value) => {
-    if (value <= sharedItems.pages && value !== sharedItems.page) {
-      await setFilter({ ...filter, isShared: true, page: value });
-    }
-  };
+
 
   useEffect(() => {
     if (client) {
@@ -96,70 +102,52 @@ const RevokeShareItemsModal = (props) => {
   if (!share) {
     return null;
   }
+  if (!rows) {
+    return null;
+  }
+  const header = [
+    { field: 'name', headerName: 'Name', width: 400, editable: false },
+    { field: 'type', headerName: 'Type', width: 400, editable: false },
+    { field: 'status', headerName: 'Status', width: 400, editable: false },
+  ];
 
   return (
-    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
-      <Box sx={{ p: 3 }}>
-        <Typography
-          align="center"
-          color="textPrimary"
-          gutterBottom
-          variant="h4"
-        >
-          Revoke items from share object {share.dataset.datasetName}
-        </Typography>
-        <Typography align="center" color="textSecondary" variant="subtitle2">
-          {
-            "After selecting items click on revoke to revoke access!"
-          }
-        </Typography>
-        <Divider />
-        <Box sx={{ p: 3 }} />
-        {!loading && sharedItems && sharedItems.nodes.length <= 0 ? (
-          <Typography color="textPrimary" variant="subtitle2">
-            No items to revoke.
-          </Typography>
-        ) : (
-          <Scrollbar>
-            <Box sx={{ minWidth: 600 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                {loading ? (
-                  <CircularProgress sx={{ mt: 1 }} size={20} />
-                ) : (
-                  <TableBody>
-                    {sharedItems.nodes.length > 0 &&
-                      sharedItems.nodes.map((item) => (
-                        <TableRow hover key={item.itemUri}>
-                          <TableCell>
-                            {item.itemType === 'Table' ? 'Table' : 'Folder'}
-                          </TableCell>
-                          <TableCell>{item.itemName}</TableCell>
-                          <TableCell>
-                            <Checkbox name="Revoke" />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                )}
-              </Table>
-              <Pager
-                mgTop={2}
-                mgBottom={2}
-                items={sharedItems}
-                onChange={handlePageChange}
-              />
-            </Box>
-          </Scrollbar>
+    <Box>
+      <Card sx={{ height: 800, width: '100%' }}>
+        {rows.length > 0 && (
+          <DataGrid
+            rows={rows}
+            columns={header}
+            pageSize={10}
+            rowsPerPageOptions={[10]}
+            checkboxSelection
+            onSelectionModelChange={(newSelection) => {
+              setSelectionModel(newSelection.selectionModel);
+            }}
+            selectionModel={selectionModel}
+          />
         )}
-      </Box>
-    </Dialog>
+      </Card>
+      <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            justifyContent: 'flex-end',
+            mb: 2
+          }}
+        >
+          <LoadingButton
+            loading={loading}
+            color="primary"
+            onClick={revoke()}
+            startIcon={<SyncAlt fontSize="small" />}
+            sx={{ m: 1 }}
+            variant="outlined"
+          >
+            Revoke Selected Items
+          </LoadingButton>
+        </Box>
+    </Box>
   );
 };
 
@@ -167,7 +155,6 @@ RevokeShareItemsModal.propTypes = {
   share: PropTypes.object.isRequired,
   onApply: PropTypes.func,
   onClose: PropTypes.func,
-  reloadSharedItems: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
 

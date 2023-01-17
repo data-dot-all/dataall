@@ -873,6 +873,9 @@ class ShareObject:
             )
             .filter(models.DatasetTable.datasetUri == datasetUri)
         )
+        if data:
+            if data.get("isRevokable"):
+                tables = tables.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES))
 
         # All folders from the dataset with a column isShared
         # marking the folder as part of the shareObject
@@ -899,6 +902,10 @@ class ShareObject:
             )
             .filter(models.DatasetStorageLocation.datasetUri == datasetUri)
         )
+        if data:
+            if data.get("isRevokable"):
+                locations = locations.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES))
+
 
         shareable_objects = tables.union(locations).subquery('shareable_objects')
         query = session.query(shareable_objects)
@@ -1215,25 +1222,6 @@ class ShareObject:
                 )
             )
             .all()
-        )
-
-    @staticmethod
-    def is_shared_table(session, environment_uri, dataset_uri, table_name):
-        return (
-            session.query(models.ShareObjectItem)
-            .join(
-                models.ShareObject,
-                models.ShareObjectItem.shareUri == models.ShareObject.shareUri,
-            )
-            .filter(
-                and_(
-                    models.ShareObjectItem.GlueTableName == table_name,
-                    models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.status == models.Enums.ShareObjectStatus.Approved.value,
-                    models.ShareObject.environmentUri == environment_uri,
-                )
-            )
-            .first()
         )
 
     @staticmethod
