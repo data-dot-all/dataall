@@ -10,12 +10,8 @@ import {
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { useSnackbar } from 'notistack';
 import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
 
 const ShareOutboxListItem = (props) => {
   const { share, reload } = props;
@@ -93,7 +89,7 @@ const ShareOutboxListItem = (props) => {
                 }}
             >
               <Typography color="textPrimary" variant="body2">
-                {`Successfully processed items: ${share.statistics.sharedItems}`}
+                {`Cuurently shared items: ${share.statistics.sharedItems}`}
               </Typography>
             </Box>
             <Box
@@ -104,7 +100,7 @@ const ShareOutboxListItem = (props) => {
                 }}
             >
               <Typography color="textPrimary" variant="body2">
-                {`Successfully revoked items: ${share.statistics.revokedItems}`}
+                {`Revoked items: ${share.statistics.revokedItems}`}
               </Typography>
             </Box>
             <Box

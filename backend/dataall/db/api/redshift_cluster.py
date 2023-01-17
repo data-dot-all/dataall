@@ -23,6 +23,7 @@ SHARE_ITEM_SHARED_STATES = [
     ShareItemStatus.Revoke_Failed.value,
 ]
 
+
 class RedshiftCluster:
     def __init__(self):
         pass

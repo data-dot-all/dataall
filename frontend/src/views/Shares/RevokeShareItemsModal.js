@@ -5,25 +5,15 @@ import {
   Dialog,
   Divider,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography
 } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
-import Checkbox from '@mui/material/Checkbox';
 import {Add, SyncAlt} from '@mui/icons-material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
-import Scrollbar from '../../components/Scrollbar';
-import Pager from '../../components/Pager';
 import * as Defaults from '../../components/defaults';
-import { PagedResponseDefault } from '../../components/defaults';
 import getShareObject from '../../api/ShareObject/getShareObject';
 import revokeItemsShareObject from '../../api/ShareObject/revokeItemsShareObject';
 import {LoadingButton} from "@mui/lab";
@@ -54,10 +44,10 @@ const RevokeShareItemsModal = (props) => {
     );
     if (!response.errors) {
       setRows(
-          response.data.getShareObject.items.map((item) => ({
+          response.data.getShareObject.items.nodes.map((item) => ({
             id: item.shareItemUri,
             name: item.itemName,
-            type: item.itemType,
+            type: item.itemType == "StorageLocation"? "Folder": "Table",
             status: item.status
           }))
       );
@@ -69,6 +59,8 @@ const RevokeShareItemsModal = (props) => {
 
   const revoke = async () => {
     setLoading(true);
+    console.log("inside revoke")
+    console.log(selectionModel)
     const response = await client.mutate(
       revokeItemsShareObject({
         shareUri: share.shareUri,
@@ -106,48 +98,65 @@ const RevokeShareItemsModal = (props) => {
     return null;
   }
   const header = [
-    { field: 'name', headerName: 'Name', width: 400, editable: false },
-    { field: 'type', headerName: 'Type', width: 400, editable: false },
-    { field: 'status', headerName: 'Status', width: 400, editable: false },
+    { field: 'name', headerName: 'Name', width: 200, editable: false },
+    { field: 'type', headerName: 'Type', width: 300, editable: false },
+    { field: 'status', headerName: 'Status', width: 300, editable: false },
   ];
 
   return (
-    <Box>
-      <Card sx={{ height: 800, width: '100%' }}>
-        {rows.length > 0 && (
-          <DataGrid
-            rows={rows}
-            columns={header}
-            pageSize={10}
-            rowsPerPageOptions={[10]}
-            checkboxSelection
-            onSelectionModelChange={(newSelection) => {
-              setSelectionModel(newSelection.selectionModel);
-            }}
-            selectionModel={selectionModel}
-          />
-        )}
-      </Card>
-      <Box
-          sx={{
-            display: 'flex',
-            flex: 1,
-            justifyContent: 'flex-end',
-            mb: 2
-          }}
+    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h4"
         >
-          <LoadingButton
-            loading={loading}
-            color="primary"
-            onClick={revoke()}
-            startIcon={<SyncAlt fontSize="small" />}
-            sx={{ m: 1 }}
-            variant="outlined"
+          Revoke access to items from share object {share.dataset.datasetName}
+        </Typography>
+        <Typography align="center" color="textSecondary" variant="subtitle2">
+          {
+            "After selecting the items that you want to revoke, click on Revoke Selected Items"
+          }
+        </Typography>
+        <Divider />
+      <Box sx={{ p: 3 }} />
+        <Card sx={{height: 400, width: '100%' }}>
+          {rows.length > 0 && (
+            <DataGrid
+              rows={rows}
+              columns={header}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              checkboxSelection
+              onSelectionModelChange={(newSelection) => {
+                setSelectionModel(newSelection);
+              }}
+              selectionModel={selectionModel}
+            />
+          )}
+        </Card>
+        <Box
+            sx={{
+              display: 'flex',
+              flex: 1,
+              justifyContent: 'flex-end',
+              mb: 2
+            }}
           >
-            Revoke Selected Items
-          </LoadingButton>
+            <LoadingButton
+              loading={loading}
+              color="primary"
+              onClick={revoke}
+              startIcon={<SyncAlt fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+            >
+              Revoke Selected Items
+            </LoadingButton>
         </Box>
-    </Box>
+      </Box>
+    </Dialog>
   );
 };
 

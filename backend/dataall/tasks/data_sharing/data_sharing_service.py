@@ -20,18 +20,12 @@ class DataSharingService:
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
         """
-        Share tables
-        1) Retrieves share related model objects
-        2) Build shared database name (unique db per team for a dataset)
-        3) Grants pivot role ALL permissions on dataset db and its tables
-        4) Calls sharing approval service
+        1) Updates share object State Machine with the Action: Start
+        2) Retrieves share data and items in Share_Approved state
+        3) Calls sharing folders processor to grant share
+        4) Calls sharing tables processor for same or cross account sharing to grant share
+        5) Updates share object State Machine with the Action: Finish
 
-        Share folders
-        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
-        2) grant_target_role_access_policy
-        3) manage_access_point_and_policy
-        4) update_dataset_bucket_key_policy
-        5) update_share_item_status
         Parameters
         ----------
         engine : db.engine
@@ -39,7 +33,7 @@ class DataSharingService:
 
         Returns
         -------
-        True if approve succeeds
+        True if sharing succeeds
         """
         with engine.scoped_session() as session:
             (
@@ -59,7 +53,6 @@ class DataSharingService:
                 shared_tables,
                 shared_folders
             ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Share_Approved.value)
-
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -110,10 +103,13 @@ class DataSharingService:
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str):
         """
-        1) Retrieves share related model objects
-        2) Build shared database name (unique db per team for a dataset)
-        3) Grants pivot role ALL permissions on dataset db and its tables
-        4) Calls sharing revoke service
+        1) Updates share object State Machine with the Action: Start
+        2) Retrieves share data and items in Revoke_Approved state
+        3) Calls sharing folders processor to revoke share
+        4) Checks if remaining folders are shared and effectuates clean up with folders processor
+        5) Calls sharing tables processor for same or cross account sharing to revoke share
+        6) Checks if remaining tables are shared and effectuates clean up with tables processor
+        7) Updates share object State Machine with the Action: Finish
 
         Parameters
         ----------
@@ -122,7 +118,7 @@ class DataSharingService:
 
         Returns
         -------
-        True if reject succeeds
+        True if revoke succeeds
         """
 
         with engine.scoped_session() as session:

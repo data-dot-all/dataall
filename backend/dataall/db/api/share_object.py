@@ -97,7 +97,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Approved.value,
-                        ShareObjectStatus.Completed.value,
+                        ShareObjectStatus.Completed.value
                     ]
                 }
             ),
@@ -768,7 +768,6 @@ class ShareObject:
         session.delete(share_item)
         return True
 
-
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
@@ -905,7 +904,6 @@ class ShareObject:
         if data:
             if data.get("isRevokable"):
                 locations = locations.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES))
-
 
         shareable_objects = tables.union(locations).subquery('shareable_objects')
         query = session.query(shareable_objects)
@@ -1155,10 +1153,6 @@ class ShareObject:
         share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
-        if share.status not in [ShareObjectStatus.Approved.value, ShareObjectStatus.Rejected.value, ShareObjectStatus.In_Progress.value]:
-            raise Exception(
-                f'Share request {share_uri} has neither been Approved nor Rejected'
-            )
 
         tables = (
             session.query(models.DatasetTable)
@@ -1299,7 +1293,6 @@ class ShareObject:
             .count()
         )
         pending_states = [
-            ShareItemStatus.PendingRevoke.value,
             ShareItemStatus.PendingApproval.value
         ]
         pending_items = (

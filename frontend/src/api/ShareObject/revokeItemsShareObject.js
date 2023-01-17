@@ -6,7 +6,7 @@ const revokeItemsShareObject = ({ shareUri, revokedItemUris }) => ({
     revokedItemUris
   },
   mutation: gql`
-    mutation revokeItemsShareObject($shareUri: String!, $revokedItemUris: [String!]) {
+    mutation revokeItemsShareObject($shareUri: String!, $revokedItemUris: [String!]!) {
       revokeItemsShareObject(shareUri: $shareUri, revokedItemUris: $revokedItemUris) {
         shareUri
         status

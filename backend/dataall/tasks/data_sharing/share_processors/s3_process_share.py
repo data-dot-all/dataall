@@ -44,15 +44,16 @@ class ProcessS3Share(S3ShareManager):
         env_group: models.EnvironmentGroup
     ) -> bool:
         """
-        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
-        2) grant_target_role_access_policy
-        3) manage_access_point_and_policy
-        4) update_dataset_bucket_key_policy
-        5) update_share_item_status
+        1) update_share_item_status with Start action
+        2) (one time only) manage_bucket_policy - grants permission in the bucket policy
+        3) grant_target_role_access_policy
+        4) manage_access_point_and_policy
+        5) update_dataset_bucket_key_policy
+        6) update_share_item_status with Finish action
 
         Returns
         -------
-        True if share is approved successfully
+        True if share is granted successfully
         """
         log.info(
             '##### Starting Sharing folders #######'
@@ -109,15 +110,13 @@ class ProcessS3Share(S3ShareManager):
             env_group: models.EnvironmentGroup
     ) -> bool:
         """
-        1) (one time only) manage_bucket_policy - grants permission in the bucket policy
-        2) grant_target_role_access_policy
-        3) manage_access_point_and_policy
-        4) update_dataset_bucket_key_policy
-        5) update_share_item_status
+        1) update_share_item_status with Start action
+        2) delete_access_point_policy for folder
+        3) update_share_item_status with Finish action
 
         Returns
         -------
-        True if share is approved successfully
+        True if share is revoked successfully
         """
 
         log.info(
@@ -167,6 +166,16 @@ class ProcessS3Share(S3ShareManager):
             share: models.ShareObject,
             target_environment: models.Environment
     ):
+        """
+        1) deletes S3 access point for this share in this Dataset S3 Bucket
+        2) delete_target_role_access_policy to access the above deleted access point
+        3) delete_dataset_bucket_key_policy to remove access to the requester IAM role
+
+        Returns
+        -------
+        True if share is cleaned-up successfully
+        """
+
         clean_up = S3ShareManager.delete_access_point(
             share=share,
             dataset=dataset

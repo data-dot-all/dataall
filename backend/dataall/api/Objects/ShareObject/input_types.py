@@ -60,6 +60,7 @@ ShareableObjectFilter = gql.InputType(
         gql.Argument(name='term', type=gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument(name='isShared', type=gql.Boolean),
+        gql.Argument(name='isRevokable', type=gql.Boolean),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
     ],

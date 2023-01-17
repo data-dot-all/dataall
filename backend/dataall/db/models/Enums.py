@@ -167,7 +167,6 @@ class ShareItemActions(Enum):
     Success = 'Success'
 
 
-
 class ConfidentialityClassification(Enum):
     Unclassified = 'Unclassified'
     Official = 'Official'

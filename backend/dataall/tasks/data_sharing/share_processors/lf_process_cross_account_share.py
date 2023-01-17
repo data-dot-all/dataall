@@ -33,9 +33,10 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
     def process_approved_shares(self) -> bool:
         """
-        1) Gets share principals
-        2) Creates the shared database if doesn't exist
-        3) For each share request item:
+        1) Grant ALL permissions to pivotRole for source database in source account
+        2) Gets share principals and build shared db name
+        3) Creates the shared database in target account if it doesn't exist
+        4) For each shared table:
             a) update its status to share in progress
             b) check if share item exists on glue catalog raise error if not and flag share item status to failed
             c) grant external account to target account
@@ -44,12 +45,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
             f) grant permission to resource link for team role on target account
             g) grant permission to resource link for team role on source account
             h) update share item status to share successful
-         4) Update shareddb by removing items not part of the share request
-         5) Delete deprecated shareddb
+         5) Update shareddb by removing items not part of the share request
+         6) Delete deprecated shareddb
 
         Returns
         -------
-        True if share is approved successfully
+        True if share is granted successfully
         """
         log.info(
             '##### Starting Sharing tables cross account #######'

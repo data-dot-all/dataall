@@ -93,7 +93,7 @@ const ShareInboxListItem = (props) => {
                 }}
             >
               <Typography color="textPrimary" variant="body2">
-                {`Successfully shared items: ${share.statistics.sharedItems}`}
+                {`Currently shared items: ${share.statistics.sharedItems}`}
               </Typography>
             </Box>
             <Box
@@ -104,7 +104,7 @@ const ShareInboxListItem = (props) => {
                 }}
             >
               <Typography color="textPrimary" variant="body2">
-                {`Successfully revoked items: ${share.statistics.revokedItems}`}
+                {`Revoked items: ${share.statistics.revokedItems}`}
               </Typography>
             </Box>
             <Box

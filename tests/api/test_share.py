@@ -44,35 +44,6 @@ def env1group(environment_group: typing.Callable, env1, user, group
         group=group,
     )
 
-# @pytest.fixture(scope='module')
-# def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.Dataset:
-#     with db.scoped_session() as session:
-#         data = dict(
-#             label='label',
-#             owner=user.userName,
-#             SamlAdminGroupName=group.name,
-#             businessOwnerDelegationEmails=['foo@amazon.com'],
-#             businessOwnerEmail=['bar@amazon.com'],
-#             name='name',
-#             S3BucketName='S3BucketName',
-#             GlueDatabaseName='GlueDatabaseName',
-#             KmsAlias='kmsalias',
-#             AwsAccountId='123456789012',
-#             region='eu-west-1',
-#             IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-#             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
-#             stewards=group3.name,
-#         )
-#         dataset = dataall.db.api.Dataset.create_dataset(
-#             session=session,
-#             username=user.userName,
-#             groups=[group.name],
-#             uri=env1.environmentUri,
-#             data=data,
-#             check_perm=True,
-#         )
-#         yield dataset
-
 
 @pytest.fixture(scope='module')
 def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: dataall.db.models.Environment
@@ -982,11 +953,12 @@ def test_revoke_all_share_request_completed(
     # Given shared item in status Share_Succeeded
     sharedItem = response.data.getShareObject.get('items').nodes[0]
     assert sharedItem['status'] == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    revoked_items_uris = [node.shareItemUri for node in response.data.getShareObject.get('items').nodes]
 
     # When revoking all share object
     query = """
-        mutation revokeAllShareObject($shareUri:String!){
-            revokeAllShareObject(shareUri:$shareUri){
+        mutation revokeItemsShareObject($shareUri: String!, $revokedItemUris: [String!]) {
+            revokeItemsShareObject(shareUri: $shareUri, revokedItemUris: $revokedItemUris) {
                 shareUri
                 status
                 items {
@@ -1012,14 +984,15 @@ def test_revoke_all_share_request_completed(
         query,
         username=user2.userName,
         shareUri=share1.shareUri,
+        revokedItemUris=revoked_items_uris,
         groups=[group2.name],
     )
 
     # Then share object changes to status Rejected
-    assert response.data.revokeAllShareObject.status == 'Rejected'
+    assert response.data.revokeItemsShareObject.status == 'Revoked'
 
     # Then shared item changes to status Revoke_Approved
-    sharedItem = response.data.revokeAllShareObject.get('items').nodes[0]
+    sharedItem = response.data.revokeItemsShareObject.get('items').nodes[0]
     status = sharedItem['status']
     assert status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
 
@@ -1028,7 +1001,7 @@ def test_revoke_all_share_request_completed(
     _successfull_processing_for_approved_share_object(db, share1)
 
 
-@pytest.mark.dependency(depends=["test_revoke_all_share_request_completed"])
+@pytest.mark.dependency(depends=["test_revoke_all_items_share_request_completed"])
 def test_delete_share_object(client, share1, dataset1, group, user2, group2, env2):
     # Given existing share object in status Rejected (-> fixture)
     getShareObjectQuery = """
@@ -1270,72 +1243,6 @@ def test_delete_share_object_remaining_items_error(
         shareUri=share2.shareUri,
     )
     assert 'UnauthorizedOperation' in response.errors[0].message
-
-@pytest.mark.dependency(depends=["test_delete_share_object_remaining_items_error"])
-def test_revoke_share_item(
-        share2,
-        share_item2_shared,
-        tables2,
-        client,
-        user,
-        group
-):
-    # Given existing share object in status Draft (-> fixture)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
-                }
-            }
-        }
-    """
-
-    response = client.query(
-        getShareObjectQuery,
-        username=user.userName,
-        shareUri=share2.shareUri,
-        groups=[group.name],
-    )
-
-    print('Response from getShareObject: ', response)
-
-    assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.value
-    )
-
-    # When
-    q = """
-        mutation revokeSharedItem($shareItemUri: String!) {
-          revokeSharedItem(shareItemUri: $shareItemUri)
-        }
-    """
-    response = client.query(
-        q,
-        username=user.userName,
-        shareItemUri=share_item2_shared.shareItemUri,
-        groups=[group.name],
-    )
-    print('Response from revokeSharedItem: ', response)
-    assert response.data.revokeSharedItem
-
 
 
 def _successfull_processing_for_approved_share_object(db, share):
