@@ -36,10 +36,8 @@ SHARE_ITEM_SHARED_STATES = [
     ShareItemStatus.Share_In_Progress.value,
     ShareItemStatus.Revoke_Failed.value,
     ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Rejected.value,
     ShareItemStatus.Revoke_Approved.value,
     ShareItemStatus.Revoke_Failed.value,
-    ShareItemStatus.PendingRevoke.value
 ]
 
 

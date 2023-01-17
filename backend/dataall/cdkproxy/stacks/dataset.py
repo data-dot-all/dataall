@@ -164,8 +164,6 @@ class Dataset(Stack):
 
         self.shared_states = [
             models.Enums.ShareItemStatus.Share_Succeeded.value,
-            models.Enums.ShareItemStatus.PendingRevoke.value,
-            models.Enums.ShareItemStatus.Revoke_Rejected.value,
             models.Enums.ShareItemStatus.Revoke_Approved.value,
             models.Enums.ShareItemStatus.Revoke_In_Progress.value,
             models.Enums.ShareItemStatus.Revoke_Failed.value

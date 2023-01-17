@@ -14,6 +14,15 @@ from ...utils.slugify import slugify
 log = logging.getLogger(__name__)
 
 
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
+
 class RedshiftCluster:
     def __init__(self):
         pass
@@ -198,16 +207,7 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(
-                        [
-                            models.Enums.ShareItemStatus.Share_Succeeded.value,
-                            models.Enums.ShareItemStatus.PendingRevoke.value,
-                            models.Enums.ShareItemStatus.Revoke_Rejected.value,
-                            models.Enums.ShareItemStatus.Revoke_Approved.value,
-                            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-                            models.Enums.ShareItemStatus.Revoke_Failed.value
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),
@@ -327,16 +327,7 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(
-                        [
-                            models.Enums.ShareItemStatus.Share_Succeeded.value,
-                            models.Enums.ShareItemStatus.PendingRevoke.value,
-                            models.Enums.ShareItemStatus.Revoke_Rejected.value,
-                            models.Enums.ShareItemStatus.Revoke_Approved.value,
-                            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-                            models.Enums.ShareItemStatus.Revoke_Failed.value
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),
