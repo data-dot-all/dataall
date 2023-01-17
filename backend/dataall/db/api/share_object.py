@@ -18,10 +18,7 @@ SHARE_ITEM_SHARED_STATES = [
     ShareItemStatus.Share_In_Progress.value,
     ShareItemStatus.Revoke_Failed.value,
     ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Rejected.value,
-    ShareItemStatus.Revoke_Approved.value,
-    ShareItemStatus.Revoke_Failed.value,
-    ShareItemStatus.PendingRevoke.value
+    ShareItemStatus.Revoke_Approved.value
 ]
 
 
@@ -82,41 +79,46 @@ class ShareObjectSM:
                     ShareObjectStatus.Rejected.value: [ShareObjectStatus.Submitted.value]
                 }
             ),
-            ShareObjectActions.RevokeAll.value: Transition(
-                name=ShareObjectActions.RevokeAll.value,
+            ShareObjectActions.RevokeItems.value: Transition(
+                name=ShareObjectActions.RevokeItems.value,
                 transitions={
-                    ShareObjectStatus.Rejected.value: [
+                    ShareObjectStatus.Revoke_In_Progress.value: [
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
-                        ShareObjectStatus.Approved.value,
+                        ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Completed.value
                     ]
                 }
             ),
-            ShareObjectActions.Edit.value: Transition(
-                name=ShareObjectActions.Edit.value,
+            ShareItemActions.AddItem.value: Transition(
+                name=ShareItemActions.AddItem.value,
                 transitions={
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Approved.value,
-                        ShareObjectStatus.Completed.value
+                        ShareObjectStatus.Completed.value,
                     ]
                 }
             ),
             ShareObjectActions.Start.value: Transition(
                 name=ShareObjectActions.Start.value,
                 transitions={
-                    ShareObjectStatus.In_Progress.value: [
-                        ShareObjectStatus.Rejected.value,
+                    ShareObjectStatus.Share_In_Progress.value: [
                         ShareObjectStatus.Approved.value
+                    ],
+                    ShareObjectStatus.Revoke_In_Progress.value: [
+                        ShareObjectStatus.Revoked.value
                     ]
                 }
             ),
             ShareObjectActions.Finish.value: Transition(
                 name=ShareObjectActions.Finish.value,
                 transitions={
-                    ShareObjectStatus.Completed.value: [ShareObjectStatus.In_Progress.value],
+                    ShareObjectStatus.Completed.value: [
+                        ShareObjectStatus.Share_In_Progress.value,
+                        ShareObjectStatus.Revoke_In_Progress.value
+                    ],
                 }
             ),
         }
@@ -154,12 +156,11 @@ class ShareItemSM:
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value
                     ],
-                    ShareItemStatus.PendingRevoke.value: [
+                    ShareItemStatus.Revoke_Approved.value: [
                         ShareItemStatus.Revoke_Failed.value,
-                        ShareItemStatus.Revoke_Rejected.value
+                        ShareItemStatus.Revoke_Approved.value
                     ],
                     ShareItemStatus.Share_Approved.value: [ShareItemStatus.Share_Approved.value],
-                    ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
@@ -170,7 +171,7 @@ class ShareItemSM:
                 name=ShareObjectActions.Approve.value,
                 transitions={
                     ShareItemStatus.Share_Approved.value: [ShareItemStatus.PendingApproval.value],
-                    ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.PendingRevoke.value],
+                    ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
@@ -181,7 +182,6 @@ class ShareItemSM:
                 name=ShareObjectActions.Reject.value,
                 transitions={
                     ShareItemStatus.Share_Rejected.value: [ShareItemStatus.PendingApproval.value],
-                    ShareItemStatus.Revoke_Rejected.value: [ShareItemStatus.PendingRevoke.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                 }
@@ -219,30 +219,12 @@ class ShareItemSM:
                     ]
                 }
             ),
-            ShareItemActions.RevokeItem.value: Transition(
-                name=ShareItemActions.RevokeItem.value,
+            ShareObjectActions.RevokeItems.value: Transition(
+                name=ShareObjectActions.RevokeItems.value,
                 transitions={
-                    ShareItemStatus.PendingRevoke.value: [
-                        ShareItemStatus.Revoke_Rejected.value,
-                        ShareItemStatus.Share_Succeeded.value,
-                        ShareItemStatus.Revoke_Failed.value
-                    ]
-                }
-            ),
-            ShareObjectActions.RevokeAll.value: Transition(
-                name=ShareObjectActions.RevokeAll.value,
-                transitions={
-                    ShareItemStatus.Deleted.value: [
-                        ShareItemStatus.PendingApproval.value,
-                        ShareItemStatus.Share_Rejected.value,
-                        ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value
-                    ],
                     ShareItemStatus.Revoke_Approved.value: [
-                        ShareItemStatus.Revoke_Rejected.value,
                         ShareItemStatus.Share_Succeeded.value,
                         ShareItemStatus.Revoke_Failed.value,
-                        ShareItemStatus.PendingRevoke.value,
                         ShareItemStatus.Revoke_Approved.value
                     ]
                 }
@@ -254,7 +236,8 @@ class ShareItemSM:
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value
+                        ShareItemStatus.Revoke_Succeeded.value,
+                        ShareItemStatus.Share_Approved.value,
                     ]
                 }
             )
@@ -503,13 +486,13 @@ class ShareObject:
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
-        valid_states = [ShareItemStatus.PendingRevoke.value, ShareItemStatus.PendingApproval.value]
+        valid_states = [ShareItemStatus.PendingApproval.value]
         valid_share_items_states = [x for x in valid_states if x in share_items_states]
 
         if valid_share_items_states == []:
             raise exceptions.ShareItemsFound(
                 action='Submit Share Object',
-                message='The request is empty of pending items. Add items to share or revoke shared items.',
+                message='The request is empty of pending items. Add items to share request.',
             )
 
         Share_SM = ShareObjectSM(share.status)
@@ -597,31 +580,32 @@ class ShareObject:
 
     @staticmethod
     @has_resource_perm(permissions.GET_SHARE_OBJECT)
-    def revoke_all_share_object(
+    def revoke_items_share_object(
         session,
         username: str,
         groups: [str],
         uri: str,
+        revoked_items_uris: [str],
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObject.get_share_items_states(session, uri)
+        share_items_states = ShareObject.get_share_items_states(session, uri, revoked_items_uris)
 
         if share_items_states == []:
             raise exceptions.ShareItemsFound(
-                action='Revoke All Share Object',
-                message='Nothing to be revoked or deleted.',
+                action='Revoke Items from Share Object',
+                message='Nothing to be revoked.',
             )
 
         Share_SM = ShareObjectSM(share.status)
-        new_share_state = Share_SM.run_transition(ShareObjectActions.RevokeAll.value)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.RevokeItems.value)
 
         for item_state in share_items_states:
             Item_SM = ShareItemSM(item_state)
-            new_state = Item_SM.run_transition(ShareObjectActions.RevokeAll.value)
+            new_state = Item_SM.run_transition(ShareObjectActions.RevokeItems.value)
             Item_SM.update_state(session, share.shareUri, new_state)
 
         Share_SM.update_state(session, share, new_share_state)
@@ -706,7 +690,7 @@ class ShareObject:
         )
 
         Share_SM = ShareObjectSM(share.status)
-        new_share_state = Share_SM.run_transition(ShareObjectActions.Edit.value)
+        new_share_state = Share_SM.run_transition(ShareItemActions.AddItem.value)
         Share_SM.update_state(session, share, new_share_state)
 
         if itemType == ShareableType.Table.value:
@@ -784,35 +768,6 @@ class ShareObject:
         session.delete(share_item)
         return True
 
-    @staticmethod
-    @has_resource_perm(permissions.REMOVE_ITEM)
-    def revoke_share_object_item(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> bool:
-
-        share_item: models.ShareObjectItem = data.get(
-            'share_item',
-            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
-        )
-        share: models.ShareObject = data.get(
-            'share',
-            ShareObject.get_share_by_uri(session, uri),
-        )
-        Share_SM = ShareObjectSM(share.status)
-        new_share_state = Share_SM.run_transition(ShareObjectActions.Edit.value)
-
-        Item_SM = ShareItemSM(share_item.status)
-        new_state = Item_SM.run_transition(ShareItemActions.RevokeItem.value)
-
-        Share_SM.update_state(session, share, new_share_state)
-        Item_SM.update_state_single_item(session, share_item, new_state)
-
-        return True
 
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
@@ -1282,7 +1237,7 @@ class ShareObject:
         )
 
     @staticmethod
-    def get_share_items_states(session, share_uri):
+    def get_share_items_states(session, share_uri, item_uris=None):
         query = (
             session.query(models.ShareObjectItem)
             .join(
@@ -1294,9 +1249,10 @@ class ShareObject:
                     models.ShareObject.shareUri == share_uri,
                 )
             )
-            .distinct(models.ShareObjectItem.status)
         )
-        return [item.status for item in query]
+        if item_uris:
+            query = query.filter(models.ShareObjectItem.shareItemUri.in_(item_uris))
+        return [item.status for item in query.distinct(models.ShareObjectItem.status)]
 
     @staticmethod
     def resolve_share_object_statistics(session, uri, **kwargs):

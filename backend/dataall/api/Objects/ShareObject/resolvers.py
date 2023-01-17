@@ -1,9 +1,6 @@
 import logging
-import os
 
-from sqlalchemy import and_, or_
 
-from ..Stack import stack_helper
 from .... import db
 from ....api.constants import *
 from ....api.context import Context
@@ -75,14 +72,14 @@ def approve_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
-        process_share_task: models.Task = models.Task(
-            action='ecs.share.process',
+        approve_share_task: models.Task = models.Task(
+            action='ecs.share.approve',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
-        session.add(process_share_task)
+        session.add(approve_share_task)
 
-    Worker.queue(engine=context.engine, task_ids=[process_share_task.taskUri])
+    Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
 
     return share
 
@@ -99,25 +96,26 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         )
 
 
-def revoke_all_share_object(context: Context, source, shareUri: str = None):
+def revoke_items_share_object(context: Context, source, revokedItemUris: [str], shareUri: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.revoke_all_share_object(
+        share = db.api.ShareObject.revoke_items_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=shareUri,
+            revoked_items_uris=revokedItemUris,
             data=None,
             check_perm=True,
         )
 
-        revoke_all_share_task: models.Task = models.Task(
+        revoke_share_task: models.Task = models.Task(
             action='ecs.share.revoke',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
-        session.add(revoke_all_share_task)
+        session.add(revoke_share_task)
 
-    Worker.queue(engine=context.engine, task_ids=[revoke_all_share_task.taskUri])
+    Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
 
     return share
 
@@ -161,29 +159,6 @@ def remove_shared_item(context, source, shareItemUri: str = None):
             raise db.exceptions.ObjectNotFound('ShareObjectItem', shareItemUri)
         share = db.api.ShareObject.get_share_by_uri(session, share_item.shareUri)
         db.api.ShareObject.remove_share_object_item(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=share.shareUri,
-            data={
-                'shareItemUri': shareItemUri,
-                'share_item': share_item,
-                'share': share,
-            },
-            check_perm=True,
-        )
-    return True
-
-
-def revoke_shared_item(context, source, shareItemUri: str = None):
-    with context.engine.scoped_session() as session:
-        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
-            shareItemUri
-        )
-        if not share_item:
-            raise db.exceptions.ObjectNotFound('ShareObjectItem', shareItemUri)
-        share = db.api.ShareObject.get_share_by_uri(session, share_item.shareUri)
-        db.api.ShareObject.revoke_share_object_item(
             session=session,
             username=context.username,
             groups=context.groups,

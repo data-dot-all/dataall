@@ -126,9 +126,11 @@ class ShareObjectPermission(Enum):
 class ShareObjectStatus(Enum):
     Approved = 'Approved'
     Rejected = 'Rejected'
+    Revoked = 'Revoked'
     Draft = 'Draft'
     Submitted = 'Submitted'
-    In_Progress = 'In_Progress'
+    Revoke_In_Progress = 'Revoke_In_Progress'
+    Share_In_Progress = 'Share_In_Progress'
     Completed = 'Completed'
 
 
@@ -137,9 +139,7 @@ class ShareItemStatus(Enum):
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Revoke_Approved = 'Revoke_Approved'
-    Revoke_Rejected = 'Revoke_Rejected'
     PendingApproval = 'PendingApproval'
-    PendingRevoke = 'PendingRevoke'
     Share_In_Progress = 'Share_In_Progress'
     Share_Failed = 'Share_Failed'
     Share_Succeeded = 'Share_Succeeded'
@@ -152,8 +152,8 @@ class ShareObjectActions(Enum):
     Submit = 'Submit'
     Approve = 'Approve'
     Reject = 'Reject'
-    RevokeAll = 'RevokeAll'
-    Edit = 'Edit'
+    RevokeItems = 'RevokeItems'
+    AddItem = 'AddItem'
     Start = 'Start'
     Finish = 'Finish'
     Delete = 'Delete'
@@ -166,10 +166,6 @@ class ShareItemActions(Enum):
     Failure = 'Failure'
     Success = 'Success'
 
-
-class ShareObjectItemAction(Enum):
-    New = 'New'
-    Removed = 'Removed'
 
 
 class ConfidentialityClassification(Enum):

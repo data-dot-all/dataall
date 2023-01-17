@@ -140,6 +140,9 @@ class LFShareManager:
             )
 
     def grant_pivot_role_all_database_permissions(self) -> bool:
+        """
+        Grants 'ALL' database Lake Formation permissions to data.all PivotRole
+        """
         LakeFormation.grant_pivot_role_all_database_permissions(
             self.source_environment.AwsAccountId,
             self.source_environment.region,
