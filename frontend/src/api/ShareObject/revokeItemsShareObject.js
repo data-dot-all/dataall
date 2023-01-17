@@ -1,13 +1,12 @@
 import { gql } from 'apollo-boost';
 
-const revokeItemsShareObject = ({ shareUri, revokedItemUris }) => ({
+const revokeItemsShareObject = ({ input }) => ({
   variables: {
-    shareUri,
-    revokedItemUris
+    input
   },
   mutation: gql`
-    mutation revokeItemsShareObject($shareUri: String!, $revokedItemUris: [String!]!) {
-      revokeItemsShareObject(shareUri: $shareUri, revokedItemUris: $revokedItemUris) {
+    mutation revokeItemsShareObject($input: RevokeItemsInput) {
+      revokeItemsShareObject(input: $input) {
         shareUri
         status
       }

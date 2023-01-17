@@ -23,6 +23,15 @@ AddSharedItemInput = gql.InputType(
 )
 
 
+RevokeItemsInput = gql.InputType(
+    name='RevokeItemsInput',
+    arguments=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+    ],
+)
+
+
 class ShareSortField(GraphQLEnumMapper):
     created = 'created'
     updated = 'updated'

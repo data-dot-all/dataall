@@ -63,8 +63,10 @@ const RevokeShareItemsModal = (props) => {
     console.log(selectionModel)
     const response = await client.mutate(
       revokeItemsShareObject({
-        shareUri: share.shareUri,
-        revokedItemUris: selectionModel
+        input: {
+          shareUri: share.shareUri,
+          revokedItemUris: selectionModel
+        }
       })
     );
     if (!response.errors) {

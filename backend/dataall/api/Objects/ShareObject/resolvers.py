@@ -96,21 +96,21 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         )
 
 
-def revoke_items_share_object(context: Context, source, revokedItemUris: [str], shareUri: str = None):
+def revoke_items_share_object(context: Context, source, input):
     with context.engine.scoped_session() as session:
         share = db.api.ShareObject.revoke_items_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=shareUri,
-            revoked_items_uris=revokedItemUris,
+            uri=input.get("shareUri"),
+            revoked_items_uris=input.get("revokedItemUris"),
             data=None,
             check_perm=True,
         )
 
         revoke_share_task: models.Task = models.Task(
             action='ecs.share.revoke',
-            targetUri=shareUri,
+            targetUri=input.get("shareUri"),
             payload={'environmentUri': share.environmentUri},
         )
         session.add(revoke_share_task)
