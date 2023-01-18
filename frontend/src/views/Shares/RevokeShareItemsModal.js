@@ -124,7 +124,7 @@ const RevokeShareItemsModal = (props) => {
         <Divider />
       <Box sx={{ p: 3 }} />
         <Card sx={{height: 400, width: '100%' }}>
-          {rows.length > 0 && (
+          {!loading && rows.length > 0 ? (
             <DataGrid
               rows={rows}
               columns={header}
@@ -136,6 +136,10 @@ const RevokeShareItemsModal = (props) => {
               }}
               selectionModel={selectionModel}
             />
+          ) : (
+            <Typography color="textPrimary" variant="subtitle2">
+              No items to revoke.
+            </Typography>
           )}
         </Card>
         <Box

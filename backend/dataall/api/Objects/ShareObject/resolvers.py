@@ -103,8 +103,7 @@ def revoke_items_share_object(context: Context, source, input):
             username=context.username,
             groups=context.groups,
             uri=input.get("shareUri"),
-            revoked_items_uris=input.get("revokedItemUris"),
-            data=None,
+            data=input,
             check_perm=True,
         )
 

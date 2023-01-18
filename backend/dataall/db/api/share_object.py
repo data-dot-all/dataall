@@ -82,7 +82,7 @@ class ShareObjectSM:
             ShareObjectActions.RevokeItems.value: Transition(
                 name=ShareObjectActions.RevokeItems.value,
                 transitions={
-                    ShareObjectStatus.Revoke_In_Progress.value: [
+                    ShareObjectStatus.Revoked.value: [
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
@@ -585,16 +585,16 @@ class ShareObject:
         username: str,
         groups: [str],
         uri: str,
-        revoked_items_uris: [str],
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObject.get_share_items_states(session, uri, revoked_items_uris)
+        revoked_items_states = ShareObject.get_share_items_states(session, uri, data.get("revokedItemUris"))
+        revoked_items = [ShareObject.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
 
-        if share_items_states == []:
+        if revoked_items_states == []:
             raise exceptions.ShareItemsFound(
                 action='Revoke Items from Share Object',
                 message='Nothing to be revoked.',
@@ -603,10 +603,12 @@ class ShareObject:
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.RevokeItems.value)
 
-        for item_state in share_items_states:
+        for item_state in revoked_items_states:
             Item_SM = ShareItemSM(item_state)
             new_state = Item_SM.run_transition(ShareObjectActions.RevokeItems.value)
-            Item_SM.update_state(session, share.shareUri, new_state)
+            for item in revoked_items:
+                if item.status == item_state:
+                    Item_SM.update_state_single_item(session, item, new_state)
 
         Share_SM.update_state(session, share, new_share_state)
 
