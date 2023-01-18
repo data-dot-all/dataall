@@ -161,6 +161,7 @@ class ShareObjectPermission(GraphQLEnumMapper):
 
 
 class ShareObjectStatus(GraphQLEnumMapper):
+    Deleted = 'Deleted'
     Approved = 'Approved'
     Rejected = 'Rejected'
     Revoked = 'Revoked'

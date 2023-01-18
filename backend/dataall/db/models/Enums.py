@@ -124,6 +124,7 @@ class ShareObjectPermission(Enum):
 
 
 class ShareObjectStatus(Enum):
+    Deleted = 'Deleted'
     Approved = 'Approved'
     Rejected = 'Rejected'
     Revoked = 'Revoked'

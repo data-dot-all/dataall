@@ -112,13 +112,23 @@ class ShareObjectSM:
                     ],
                 }
             ),
+            ShareObjectActions.Delete.value: Transition(
+                name=ShareObjectActions.Delete.value,
+                transitions={
+                    ShareObjectStatus.Deleted.value: [
+                        ShareObjectStatus.Rejected.value,
+                        ShareObjectStatus.Draft.value,
+                        ShareObjectStatus.Submitted.value,
+                        ShareObjectStatus.Completed.value
+                    ]
+                }
+            ),
             ShareItemActions.AddItem.value: Transition(
                 name=ShareItemActions.AddItem.value,
                 transitions={
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Approved.value,
                         ShareObjectStatus.Completed.value
                     ]
                 }
@@ -319,7 +329,7 @@ class ShareObject:
             'environment',
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
-        if principalType == "ConsumptionRole":
+        if principalType == models.PrincipalType.ConsumptionRole.value:
             consumption_role: models.ConsumptionRole = api.Environment.get_environment_consumption_role(
                 session,
                 principalId,
@@ -336,7 +346,7 @@ class ShareObject:
 
         if (
             dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
-        ) and environment.environmentUri == dataset.environmentUri and principalType == "Group":
+        ) and environment.environmentUri == dataset.environmentUri and principalType == models.PrincipalType.Group.value:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_SHARE_OBJECT,
                 message=f'Team: {groupUri} is managing the dataset {dataset.name}',
@@ -424,6 +434,10 @@ class ShareObject:
         )
         session.add(activity)
 
+        # Attaching REQUESTER permissions to:
+        # requester group (groupUri)
+        # dataset.SamlAdminGroupName
+        # environment.SamlGroupName
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=groupUri,
@@ -438,13 +452,6 @@ class ShareObject:
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=dataset.stewards,
-            permissions=permissions.SHARE_OBJECT_APPROVER,
-            resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
-        )
         if dataset.SamlAdminGroupName != environment.SamlGroupName:
             ResourcePolicy.attach_resource_policy(
                 session=session,
@@ -453,6 +460,15 @@ class ShareObject:
                 resource_uri=share.shareUri,
                 resource_type=models.ShareObject.__name__,
             )
+        # Attaching REQUESTER permissions to:
+        # dataset.stewards (includes the dataset Admins)
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=dataset.stewards,
+            permissions=permissions.SHARE_OBJECT_APPROVER,
+            resource_uri=share.shareUri,
+            resource_type=models.ShareObject.__name__,
+        )
         return share
 
     @staticmethod
@@ -782,6 +798,9 @@ class ShareObject:
         share_items_states = ShareObject.get_share_items_states(session, uri)
         shared_share_items_states = [x for x in SHARE_ITEM_SHARED_STATES if x in share_items_states]
 
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Delete.value)
+
         for item_state in share_items_states:
             Item_SM = ShareItemSM(item_state)
             new_state = Item_SM.run_transition(ShareObjectActions.Delete.value)
@@ -792,8 +811,8 @@ class ShareObject:
                 action='Delete share object',
                 message='There are shared items in this request. Revoke access to these items before deleting the request.',
             )
-
-        session.delete(share)
+        if new_share_state == ShareObjectStatus.Deleted.value:
+            session.delete(share)
 
         return True
 
