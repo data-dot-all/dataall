@@ -31,21 +31,20 @@ class ProcessLFSameAccountShare(LFShareManager):
 
     def process_approved_shares(self) -> bool:
         """
-        Approves a share request for same account sharing
-        For share_approved items:
-            1) Gets share principals
-            2) Creates the shared database if it doesn't exist
-            3) For each share request item:
-                a) update its status to share in progress
-                b) check if share item exists on glue catalog raise error if not and flag share item status to failed
-                e) create resource link on same account
-                g) grant permission to resource link for team role on source account
-                h) update share item status to share successful
-        For revoked_approved items
+        1) Grant ALL permissions to pivotRole for source database in source account
+        2) Gets share principals and build shared db name
+        3) Creates the shared database in target account if it doesn't exist
+        4) For each shared table:
+            a) update its status to SHARE_IN_PROGRESS with Action Start
+            b) check if share item exists on glue catalog raise error if not and flag share item status to failed
+            c) create resource link in account
+            d) grant permission to table for team role in account
+            e) grant permission to resource link table for team role in account
+            f) update share item status to SHARE_SUCCESSFUL with Action Success
 
         Returns
         -------
-        True if share is successful
+        True if share is granted successfully
         """
         log.info(
             '##### Starting Sharing tables same account #######'
@@ -94,17 +93,25 @@ class ProcessLFSameAccountShare(LFShareManager):
                 self.handle_share_failure(table, share_item, e)
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                return False
 
         return True
 
     def process_revoked_shares(self) -> bool:
         """
-        Loops through share request items and revokes access on LF
+        For each revoked request item:
+            a) update its status to REVOKE_IN_PROGRESS with Action Start
+            b) check if item exists on glue catalog raise error if not and flag item status to failed
+            c) revoke table resource link: undo grant permission to resource link table for team role in account
+            d) revoke source table access: undo grant permission to table for team role in account
+            e) delete resource link table
+            h) update share item status to REVOKE_SUCCESSFUL with Action Success
+
         Returns
         -------
-        True if revoke is successful
+        True if share is revoked successfully
+        False if revoke fails
         """
-
         for table in self.revoked_tables:
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
@@ -138,16 +145,16 @@ class ProcessLFSameAccountShare(LFShareManager):
                 self.handle_revoke_failure(share_item, table, e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                return False
 
         return True
 
     def clean_up_share(self) -> bool:
-        """
-        Deletes shared database when share request is rejected
-
+        """"
+        1) deletes deprecated shared db in target account
         Returns
         -------
-        bool
+        True if clean-up succeeds
         """
         self.delete_shared_database()
         return True

@@ -12,6 +12,11 @@ from ...utils import Parameter
 
 log = logging.getLogger(__name__)
 
+REFRESH_SHARES_STATES = [
+    models.ShareObjectStatus.Approved.value,
+    models.ShareObjectStatus.Revoked.value,
+]
+
 
 class DataSharingService:
     def __init__(self):
@@ -33,7 +38,8 @@ class DataSharingService:
 
         Returns
         -------
-        True if sharing succeeds
+        True if sharing succeeds,
+        False if folder or table sharing failed
         """
         with engine.scoped_session() as session:
             (
@@ -119,6 +125,7 @@ class DataSharingService:
         Returns
         -------
         True if revoke succeeds
+        False if folder or table revoking failed
         """
 
         with engine.scoped_session() as session:
@@ -236,7 +243,9 @@ class DataSharingService:
     @classmethod
     def refresh_shares(cls, engine: Engine) -> bool:
         """
-        Refreshes the shares at scheduled frequency
+        Refreshes the shares at scheduled frequency.
+        If a share is in 'Approve' state it triggers an approve ECS sharing task
+        If a share is in 'Revoked' state it triggers a revoke ECS sharing task
         Also cleans up LFV1 ram resource shares if enabled on SSM
         Parameters
         ----------
@@ -250,7 +259,7 @@ class DataSharingService:
             environments = session.query(models.Environment).all()
             shares = (
                 session.query(models.ShareObject)
-                .filter(models.ShareObject.status.in_(['Approved', 'Rejected']))
+                .filter(models.ShareObject.status.in_(REFRESH_SHARES_STATES))
                 .all()
             )
 
@@ -269,7 +278,7 @@ class DataSharingService:
                 cls.clean_lfv1_ram_resources(e)
 
         if not shares:
-            log.info('No Approved nor Rejected shares found. Nothing to do...')
+            log.info('No Approved nor Revoked shares found. Nothing to do...')
             return True
 
         for share in shares:
@@ -277,8 +286,10 @@ class DataSharingService:
                 log.info(
                     f'Refreshing share {share.shareUri} with {share.status} status...'
                 )
-                if share.status in ['Approved', 'Rejected']:
-                    cls.process_share(engine, share.shareUri)
+                if share.status in [models.ShareObjectStatus.Approved.value]:
+                    cls.approve_share(engine, share.shareUri)
+                else:
+                    cls.revoke_share(engine, share.shareUri)
 
             except Exception as e:
                 log.error(

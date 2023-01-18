@@ -37,21 +37,21 @@ class ProcessLFCrossAccountShare(LFShareManager):
         2) Gets share principals and build shared db name
         3) Creates the shared database in target account if it doesn't exist
         4) For each shared table:
-            a) update its status to share in progress
+            a) update its status to SHARE_IN_PROGRESS with Action Start
             b) check if share item exists on glue catalog raise error if not and flag share item status to failed
             c) grant external account to target account
             d) accept Ram invitation if pending
             e) create resource link on target account
-            f) grant permission to resource link for team role on target account
-            g) grant permission to resource link for team role on source account
-            h) update share item status to share successful
-         5) Update shareddb by removing items not part of the share request
-         6) Delete deprecated shareddb
+            f) grant permission to table for team role in source account
+            g) grant permission to resource link table for team role in target account
+            h) update share item status to SHARE_SUCCESSFUL with Action Success
 
         Returns
         -------
         True if share is granted successfully
+        False if share fails
         """
+
         log.info(
             '##### Starting Sharing tables cross account #######'
         )
@@ -110,26 +110,24 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     self.handle_share_failure(table, share_item, e)
                     new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    return False
+
+                return True
 
     def process_revoked_shares(self) -> bool:
         """
-        1) Gets share principals
-        2) Creates the shared database if doesn't exist
-        3) For each share request item:
-            a) update its status to share in progress
-            b) check if share item exists on glue catalog raise error if not and flag share item status to failed
-            c) grant external account to target account
-            d) accept Ram invitation if pending
-            e) create resource link on target account
-            f) grant permission to resource link for team role on target account
-            g) grant permission to resource link for team role on source account
-            h) update share item status to share successful
-         4) Update shareddb by removing items not part of the share request
-         5) Delete deprecated shareddb
+        For each revoked request item:
+            a) update its status to REVOKE_IN_PROGRESS with Action Start
+            b) check if item exists on glue catalog raise error if not and flag item status to failed
+            c) revoke table resource link: undo grant permission to resource link table for team role in target account
+            d) revoke source table access: undo grant permission to table for team role in source account
+            e) delete resource link table
+            h) update share item status to REVOKE_SUCCESSFUL with Action Success
 
         Returns
         -------
-        True if share is approved successfully
+        True if share is revoked successfully
+        False if revoke fails
         """
         log.info(
             '##### Starting Revoking tables cross account #######'
@@ -163,10 +161,19 @@ class ProcessLFCrossAccountShare(LFShareManager):
                 self.handle_revoke_failure(share_item, table, e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                return False
 
             return True
 
     def clean_up_share(self) -> bool:
+        """"
+        1) deletes deprecated shared db in target account
+        2) checks if there are other share objects from this source account to this target account.
+        If not, it revokes external account access of the target account to the source account.
+        Returns
+        -------
+        True if clean-up succeeds
+        """
 
         self.delete_shared_database()
 
