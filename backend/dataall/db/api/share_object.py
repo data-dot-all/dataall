@@ -76,7 +76,9 @@ class ShareObjectSM:
             ShareObjectActions.Reject.value: Transition(
                 name=ShareObjectActions.Reject.value,
                 transitions={
-                    ShareObjectStatus.Rejected.value: [ShareObjectStatus.Submitted.value]
+                    ShareObjectStatus.Rejected.value: [
+                        ShareObjectStatus.Submitted.value
+                    ]
                 }
             ),
             ShareObjectActions.RevokeItems.value: Transition(
@@ -86,17 +88,6 @@ class ShareObjectSM:
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Completed.value
-                    ]
-                }
-            ),
-            ShareItemActions.AddItem.value: Transition(
-                name=ShareItemActions.AddItem.value,
-                transitions={
-                    ShareObjectStatus.Draft.value: [
-                        ShareObjectStatus.Submitted.value,
-                        ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Approved.value,
                         ShareObjectStatus.Completed.value
                     ]
                 }
@@ -119,6 +110,17 @@ class ShareObjectSM:
                         ShareObjectStatus.Share_In_Progress.value,
                         ShareObjectStatus.Revoke_In_Progress.value
                     ],
+                }
+            ),
+            ShareItemActions.AddItem.value: Transition(
+                name=ShareItemActions.AddItem.value,
+                transitions={
+                    ShareObjectStatus.Draft.value: [
+                        ShareObjectStatus.Submitted.value,
+                        ShareObjectStatus.Rejected.value,
+                        ShareObjectStatus.Approved.value,
+                        ShareObjectStatus.Completed.value
+                    ]
                 }
             ),
         }
@@ -156,10 +158,8 @@ class ShareItemSM:
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value
                     ],
-                    ShareItemStatus.Revoke_Approved.value: [
-                        ShareItemStatus.Revoke_Failed.value,
-                        ShareItemStatus.Revoke_Approved.value
-                    ],
+                    ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Failed.value],
                     ShareItemStatus.Share_Approved.value: [ShareItemStatus.Share_Approved.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
@@ -172,6 +172,7 @@ class ShareItemSM:
                 transitions={
                     ShareItemStatus.Share_Approved.value: [ShareItemStatus.PendingApproval.value],
                     ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Failed.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
                     ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
@@ -182,8 +183,12 @@ class ShareItemSM:
                 name=ShareObjectActions.Reject.value,
                 transitions={
                     ShareItemStatus.Share_Rejected.value: [ShareItemStatus.PendingApproval.value],
+                    ShareItemStatus.Revoke_Approved.value: [ShareItemStatus.Revoke_Approved.value],
+                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Failed.value],
                     ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.Share_Succeeded.value],
                     ShareItemStatus.Revoke_Succeeded.value: [ShareItemStatus.Revoke_Succeeded.value],
+                    ShareItemStatus.Share_In_Progress.value: [ShareItemStatus.Share_In_Progress.value],
+                    ShareItemStatus.Revoke_In_Progress.value: [ShareItemStatus.Revoke_In_Progress.value],
                 }
             ),
             ShareObjectActions.Start.value: Transition(
