@@ -132,6 +132,102 @@ class Ram:
         return retry_share_table, failed_invitations
 
     @staticmethod
+    def accept_lftag_ram_invitation(source, target, principalIAMRole):
+        """
+        Accepts RAM invitations on the target account
+        """
+        retry_share_table = False
+        failed_invitations = []
+        # source = data['source']
+        # target = data['target']
+
+        if source['accountid'] == target.AwsAccountId:
+            log.debug('Skipping RAM invitation management for same account sharing.')
+            return True
+
+        source_session = SessionHelper.remote_session(accountid=source['accountid'])
+        source_ram = source_session.client('ram', region_name=source['region'])
+
+        target_session = SessionHelper.remote_session(accountid=target.AwsAccountId)
+        target_ram = target_session.client('ram', region_name=target.region)
+
+        # resource_arn = (
+        #     f'arn:aws:glue:{source["region"]}:{source["accountid"]}:'
+        #     f'table/{data["source"]["database"]}/{data["source"]["tablename"]}'
+        # )
+        associations = Ram.list_principal_resource_share_associations(source_ram, principalIAMRole)
+        resource_share_arns = [a['resourceShareArn'] for a in associations]
+
+        ram_invitations = Ram.get_resource_share_invitations(
+            target_ram, resource_share_arns, source['accountid'], target['accountid']
+        )
+        log.info(
+            f'Found {len(ram_invitations)} RAM invitations for resourceShareArn: {resource_share_arns}'
+        )
+        for invitation in ram_invitations:
+            if 'LakeFormation' in invitation['resourceShareName']:
+                if invitation['status'] == 'PENDING':
+                    log.info(
+                        f'Invitation {invitation} is in PENDING status accepting it ...'
+                    )
+                    Ram.accept_resource_share_invitation(
+                        target_ram, invitation['resourceShareInvitationArn']
+                    )
+                    # Ram invitation acceptance is slow
+                    time.sleep(5)
+                elif (
+                    invitation['status'] == 'EXPIRED'
+                    or invitation['status'] == 'REJECTED'
+                ):
+                    log.warning(
+                        f'Invitation {invitation} has expired or was rejected. '
+                        'Table flagged for revoke re-share.'
+                        'Deleting the resource share to reset the invitation... '
+                    )
+                    failed_invitations.append(invitation)
+                    retry_share_table = True
+                    source_ram.delete_resource_share(
+                        resourceShareArn=invitation['resourceShareArn']
+                    )
+
+                elif invitation['status'] == 'ACCEPTED':
+                    log.info(
+                        f'Invitation {invitation} already accepted nothing to do ...'
+                    )
+                else:
+                    log.warning(
+                        f'Invitation is in an unknown status adding {invitation["status"]}. '
+                        'Adding it to retry share list ...'
+                    )
+
+        return retry_share_table, failed_invitations
+
+    @staticmethod
+    def list_principal_resource_share_associations(client, principal_arn):
+        associations = []
+        try:
+            log.debug(f'RAM list_resource_share_associations : {principal_arn}')
+
+            paginator = client.get_paginator(
+                'get_resource_share_associations'
+            ).paginate(
+                associationType='PRINCIPAL',
+                principal=principal_arn,
+            )
+            for page in paginator:
+                associations.extend(page['resourceShareAssociations'])
+
+            log.info(f'Found resource_share_associations : {associations}')
+            return associations
+
+        except ClientError as e:
+            log.error(
+                f'Could not find resource share associations for resource {principal_arn} due to: {e}'
+            )
+            raise e
+
+
+    @staticmethod
     def list_resource_share_associations(client, resource_arn):
         associations = []
         try:

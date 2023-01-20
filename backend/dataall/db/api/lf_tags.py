@@ -96,6 +96,7 @@ class LFTag:
             LFTagKey=data['LFTagKey'],
             LFTagValues=data.get('LFTagValues', []),
             description=data.get('description'),
+            owner="DAAdministrators"
 
         )
 

@@ -434,6 +434,8 @@ class Dataset(Stack):
 
         if dataset.lfTagValue:
             lf_tags = {dataset.lfTagKey[i]: dataset.lfTagValue[i] for i in range(len(dataset.lfTagKey))}
+        else:
+            lf_tags = {}
 
         glue_db = CustomResource(
             self,

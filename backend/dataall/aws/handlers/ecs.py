@@ -30,6 +30,17 @@ class Ecs:
             )
 
     @staticmethod
+    @Worker.handler(path='ecs.lftag.share.approve')
+    def approve_lftag_share(engine, task: models.Task):
+        envname = os.environ.get('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+            return DataSharingService.approve_lftag_share(engine, task.targetUri)
+        else:
+            return Ecs.run_share_management_ecs_task(
+                envname, task.targetUri, 'approve_lftag_share'
+            )
+
+    @staticmethod
     @Worker.handler(path='ecs.share.revoke')
     def revoke_share(engine, task: models.Task):
         envname = os.environ.get('envname', 'local')
@@ -38,6 +49,18 @@ class Ecs:
         else:
             return Ecs.run_share_management_ecs_task(
                 envname, task.targetUri, 'revoke_share'
+            )
+
+    @staticmethod
+    @Worker.handler(path='ecs.lftag.share.reject')
+    def reject_lftag_share(engine, task: models.Task):
+        envname = os.environ.get('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+
+            return DataSharingService.reject_lftag_share(engine, task.targetUri)
+        else:
+            return Ecs.run_share_management_ecs_task(
+                envname, task.targetUri, 'reject_lftag_share'
             )
 
     @staticmethod
