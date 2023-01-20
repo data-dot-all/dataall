@@ -130,7 +130,7 @@ def approve_lf_tag_share_object(context: Context, source, lftagShareUri: str = N
         # Create task for lake formation updates
         # TODO: Fix ECS Task for LFTag Shares
         approve_share_task: models.Task = models.Task(
-            action='ecs.share.approve',
+            action='ecs.lftag.share.approve',
             targetUri=lftagShareUri,
             payload={'environmentUri': share.environmentUri},
         )
@@ -168,7 +168,7 @@ def revoke_items_share_object(context: Context, source, input):
         )
 
         revoke_share_task: models.Task = models.Task(
-            action='ecs.share.revoke',
+            action='ecs.lftag.share.revoke',
             targetUri=input.get("shareUri"),
 
 
@@ -519,6 +519,19 @@ def list_lftag_shares_in_my_outbox(context: Context, source, filter: dict = None
         filter = {}
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.list_user_sent_lftag_share_requests(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=None,
+            data=filter,
+            check_perm=None,
+        )
+
+def list_lftag_shares_in_my_inbox(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.list_user_received_lftag_share_requests(
             session=session,
             username=context.username,
             groups=context.groups,

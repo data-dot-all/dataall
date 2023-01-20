@@ -13,6 +13,7 @@ class LFTag(Base):
     LFTagValues = Column(ARRAY(String))
     teams = Column(String, nullable=True)
     description = Column(String, nullable=True)
+    owner = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)

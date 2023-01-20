@@ -121,6 +121,9 @@ const ShareOutboxList = () => {
               mt: 3
             }}
           >
+            <Typography variant="h5" gutterBottom>
+              LF Tag Share Requests
+            </Typography>
             {lftagItems.nodes.length <= 0 ? (
               <Typography color="textPrimary" variant="subtitle2">
                 No LF Tag share requests sent.

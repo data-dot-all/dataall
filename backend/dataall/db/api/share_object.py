@@ -340,6 +340,8 @@ class ShareObject:
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
 
+        lftag: models.LFTag = api.LFTag.get_lf_tag_by_name(session=session, lf_tag_key=lfTagKey)
+
         if principalType == "ConsumptionRole":
             consumption_role: models.ConsumptionRole = api.Environment.get_environment_consumption_role(
                 session,
@@ -430,7 +432,7 @@ class ShareObject:
         # )
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group="DAAdministrators",
+            group=lftag.owner,
             permissions=permissions.SHARE_OBJECT_APPROVER,
             resource_uri=share.lftagShareUri,
             resource_type=models.ShareObject.__name__,
@@ -1381,6 +1383,21 @@ class ShareObject:
         )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
+    def list_user_received_lftag_share_requests(
+        session, username, groups, uri, data=None, check_perm=None
+    ):
+        query = (
+            session.query(models.LFTagShareObject)
+            .join(
+                models.LFTag,
+                models.LFTag.LFTagKey == models.LFTagShareObject.lfTagKey,
+            )
+            .filter(
+                models.LFTag.owner.in_(groups)
+            )
+        )
+        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
+
     @staticmethod
     def list_user_sent_share_requests(
         session, username, groups, uri, data=None, check_perm=None
@@ -1447,6 +1464,7 @@ class ShareObject:
         )
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
+
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
         environment_groups = session.query(models.EnvironmentGroup).filter(
@@ -1503,6 +1521,101 @@ class ShareObject:
                 )
             )
             .delete()
+        )
+
+    @staticmethod
+    def get_lftag_share_data(session, lftag_share_uri):
+        lftag_share: models.LFTagShareObject = session.query(models.LFTagShareObject).get(lftag_share_uri)
+        if not lftag_share:
+            raise exceptions.ObjectNotFound('Share', lftag_share_uri)
+
+        target_environment: models.Environment = session.query(models.Environment).get(
+            lftag_share.environmentUri
+        )
+        if not target_environment:
+            raise exceptions.ObjectNotFound('TargetEnvironment', lftag_share.environmentUri)
+
+        if lftag_share.status != "Approved":
+            raise Exception(
+                'Share not Approved'
+            )
+
+        source_env_list = []
+        tagged_datasets = (
+            session.query(models.Dataset)
+            .filter(
+                and_(
+                    models.Dataset.lfTagKey.contains(f'{{{lftag_share.lfTagKey}}}'),
+                    models.Dataset.lfTagValue.contains(f'{{{lftag_share.lfTagValue}}}')
+                )
+            )
+            .all()
+        )
+
+        tagged_tables = (
+            session.query(models.DatasetTable)
+            .filter(
+                and_(
+                    models.DatasetTable.lfTagKey.contains(f'{{{lftag_share.lfTagKey}}}'),
+                    models.DatasetTable.lfTagValue.contains(f'{{{lftag_share.lfTagValue}}}')
+                )
+            )
+            .all()
+        )
+
+
+        tagged_columns = (
+            session.query(models.DatasetTableColumn)
+            .filter(
+                and_(
+                    models.DatasetTableColumn.lfTagKey.contains(f'{{{lftag_share.lfTagKey}}}'),
+                    models.DatasetTableColumn.lfTagValue.contains(f'{{{lftag_share.lfTagValue}}}')
+                )
+            )
+            .all()
+        )
+
+        # Get All Source Envs for Data Objects (DB, Table, Columns)
+        for db in tagged_datasets:
+            source_env_list.append({'account': db.AwsAccountId, 'region': db.region})
+        for table in tagged_tables:
+            source_env_list.append({'account': table.AWSAccountId, 'region': table.region})
+        for col in tagged_columns:
+            source_env_list.append({'account': col.AWSAccountId, 'region': col.region})
+
+        # De-Duplicate Source Env List
+        seen = set()
+        new_l = []
+        for d in source_env_list:
+            t = tuple(d.items())
+            if t not in seen:
+                seen.add(t)
+                new_l.append(d)
+        source_env_list = new_l
+
+        env_group: models.EnvironmentGroup = (
+            session.query(models.EnvironmentGroup)
+            .filter(
+                and_(
+                    models.EnvironmentGroup.environmentUri == lftag_share.environmentUri,
+                    models.EnvironmentGroup.groupUri == lftag_share.groupUri,
+                )
+            )
+            .first()
+        )
+        if not env_group:
+            raise Exception(
+                f'Share object Team {lftag_share.groupUri} is not a member of the '
+                f'environment {target_environment.name}/{target_environment.AwsAccountId}'
+            )
+
+        return (
+            source_env_list,
+            tagged_datasets,
+            tagged_tables,
+            tagged_columns,
+            lftag_share,
+            target_environment,
         )
 
     @staticmethod
