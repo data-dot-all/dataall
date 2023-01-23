@@ -481,6 +481,15 @@ class Dataset:
         )
 
     @staticmethod
+    def get_dataset_folders(session, dataset_uri):
+        """return the dataset folders"""
+        return (
+            session.query(models.DatasetStorageLocation)
+            .filter(models.DatasetStorageLocation.datasetUri == dataset_uri)
+            .all()
+        )
+
+    @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
         return session.query(models.ShareObject).filter(
             and_(
