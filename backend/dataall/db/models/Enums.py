@@ -156,6 +156,7 @@ class ShareObjectActions(Enum):
     RevokeItems = 'RevokeItems'
     Start = 'Start'
     Finish = 'Finish'
+    FinishPending = 'FinishPending'
     Delete = 'Delete'
 
 

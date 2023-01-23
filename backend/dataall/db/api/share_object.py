@@ -112,6 +112,14 @@ class ShareObjectSM:
                     ],
                 }
             ),
+            ShareObjectActions.FinishPending.value: Transition(
+                name=ShareObjectActions.FinishPending.value,
+                transitions={
+                    ShareObjectStatus.Draft.value: [
+                        ShareObjectStatus.Revoke_In_Progress.value,
+                    ],
+                }
+            ),
             ShareObjectActions.Delete.value: Transition(
                 name=ShareObjectActions.Delete.value,
                 transitions={
@@ -837,6 +845,19 @@ class ShareObject:
                 models.ShareObjectItem.shareUri == share.shareUri,
                 models.ShareObjectItem.itemType == item_type,
                 models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+            )
+        ).all()
+        if shared_items:
+            return True
+        return False
+
+    @staticmethod
+    def check_pending_share_items(session, uri):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_items = session.query(models.ShareObjectItem).filter(
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
             )
         ).all()
         if shared_items:

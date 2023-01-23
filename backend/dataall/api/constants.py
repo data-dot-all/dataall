@@ -193,6 +193,7 @@ class ShareObjectActions(GraphQLEnumMapper):
     RevokeItems = 'RevokeItems'
     Start = 'Start'
     Finish = 'Finish'
+    FinishPending = 'FinishPending'
     Delete = 'Delete'
 
 
