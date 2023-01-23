@@ -36,6 +36,9 @@ data.all to multiple environments on the same or multiple AWS accounts (e.g dev,
 **Note**: If you are not deploying data.all in production mode, you could use the same AWS account as the Tooling 
 and the Deployment account.
 
+Make sure that the AWS services used in data.all are available in the Regions you choose for tooling and deployment. 
+Check out the [Architecture](../architecture/). Moreover, data.all uses [CDK Pipelines](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html) in the Tooling account,
+which means that AWS services used by this construct need to be available in the tooling account (e.g. CodeArtifact).
 
 ## 1. Clone data.all code
 
