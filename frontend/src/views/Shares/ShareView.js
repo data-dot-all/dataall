@@ -647,7 +647,6 @@ const ShareView = () => {
                         </ListItem>
                         <ListItem
                           disableGutters
-                          divider
                           sx={{
                             justifyContent: 'space-between',
                             padding: 2
