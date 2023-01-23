@@ -10,7 +10,7 @@ You can deploy data.all in your AWS accounts by following these steps:
 ## Pre-requisites
 You need to have the tools below up and running to proceed with the deployment:
 
-* python 3.8
+* python 3.8 or higher
 * virtualenv `pip install virtualenv`
 * node
 * npm
@@ -52,7 +52,7 @@ From your personal computer or from Cloud9 in the AWS Console, create a python v
 from the code using python 3.8, then install the necessary deploy requirements with the following commands:
 
 ```bash
-virtualenv venv -p python3.8
+virtualenv venv
 source venv/bin/activate
 pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
