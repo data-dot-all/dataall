@@ -169,7 +169,7 @@ class ShareObjectStatus(GraphQLEnumMapper):
     Submitted = 'Submitted'
     Revoke_In_Progress = 'Revoke_In_Progress'
     Share_In_Progress = 'Share_In_Progress'
-    Completed = 'Completed'
+    Processed = 'Processed'
 
 
 class ShareItemStatus(GraphQLEnumMapper):

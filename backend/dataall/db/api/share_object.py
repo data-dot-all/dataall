@@ -88,7 +88,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Completed.value
+                        ShareObjectStatus.Processed.value
                     ]
                 }
             ),
@@ -106,7 +106,7 @@ class ShareObjectSM:
             ShareObjectActions.Finish.value: Transition(
                 name=ShareObjectActions.Finish.value,
                 transitions={
-                    ShareObjectStatus.Completed.value: [
+                    ShareObjectStatus.Processed.value: [
                         ShareObjectStatus.Share_In_Progress.value,
                         ShareObjectStatus.Revoke_In_Progress.value
                     ],
@@ -119,7 +119,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
-                        ShareObjectStatus.Completed.value
+                        ShareObjectStatus.Processed.value
                     ]
                 }
             ),
@@ -129,7 +129,7 @@ class ShareObjectSM:
                     ShareObjectStatus.Draft.value: [
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
-                        ShareObjectStatus.Completed.value
+                        ShareObjectStatus.Processed.value
                     ]
                 }
             ),
