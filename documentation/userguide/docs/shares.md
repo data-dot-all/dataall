@@ -52,11 +52,11 @@ data asset.
 
 The following window will open. Choose your target environment and team and optionally add a *Request purpose*.
 
-![share_request_form](pictures/shares/share_2_1.png#zoom#shadow)
+![share_request_form](pictures/shares/shares_2_1.png#zoom#shadow)
 
 If instead of to a team, you want to request access for a Consumption role, add it to the request as in the picture below.
 
-![share_request_form](pictures/shares/share_2_2.png#zoom#shadow)
+![share_request_form](pictures/shares/shares_2_2.png#zoom#shadow)
 
 Finally, click on **Send Request**. This will create a share request or object for the corresponding dataset
 and if you have requested a table or folder
@@ -83,14 +83,11 @@ or folder in the dataset.
 Note that the request is in `DRAFT` status and that
 the items that we add are in `PENDINGAPPROVAL`. They are not shared until the request is submitted and processed.
 
-If you have an existing share request with some shared tables and folders, you can add more items
-to the request. In the picture below, we have added the *iot* folder to the request and it is now in `PENDINGAPPROVAL`.
+![add_share](pictures/shares/shares_added.png#zoom#shadow)
 
 To remove an item from the request click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
-which is explained below. That is why only the Folder *HEHE* has the **Delete** button next to it.
-
-![add_share](pictures/shares/shares_added.png#zoom#shadow)
+which is explained below. 
 
 
 ## **Submit a share request (requester)**
@@ -98,15 +95,16 @@ which is explained below. That is why only the Folder *HEHE* has the **Delete** 
 Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state. 
 Approvers can see the request in their received share requests, alongside the current shared items, revoked items, failed items and pending items.
 
+![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
 
 ## **Approve/Reject a share request (approver)**
 
 As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added in the request.
 This is the view that approvers see, it now contains buttons to approve or reject the request.
 
-![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
+![submit_share_2](pictures/shares/shares_submitted_2.png#zoom#shadow)
 
-If the approver **approves** the request, it moves to the `APPROVED` status. Share items IN `PENDINGAPPROVAL` will go to `SHARE_APPROVED`. 
+If the approvers **approve** the request, it moves to the `APPROVED` status. Share items IN `PENDINGAPPROVAL` will go to `SHARE_APPROVED`. 
 Data.all backend starts a sharing task, during which, items and the request
 are in `SHARE_IN_PROGRESS` state. 
 

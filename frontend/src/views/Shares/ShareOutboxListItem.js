@@ -89,7 +89,7 @@ const ShareOutboxListItem = (props) => {
                 }}
             >
               <Typography color="textPrimary" variant="body2">
-                {`Cuurently shared items: ${share.statistics.sharedItems}`}
+                {`Currently shared items: ${share.statistics.sharedItems}`}
               </Typography>
             </Box>
             <Box
