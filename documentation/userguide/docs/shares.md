@@ -87,28 +87,30 @@ the items that we add are in `PENDINGAPPROVAL`. They are not shared until the re
 
 To remove an item from the request click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
-which is explained below. 
-
+which is explained below.
 
 ## **Submit a share request (requester)**
 
 Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state. 
 Approvers can see the request in their received share requests, alongside the current shared items, revoked items, failed items and pending items.
 
-![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
+![submit_share_2](pictures/shares/shares_outbox.png#zoom#shadow)
 
 ## **Approve/Reject a share request (approver)**
 
 As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added in the request.
 This is the view that approvers see, it now contains buttons to approve or reject the request.
 
-![submit_share_2](pictures/shares/shares_submitted_2.png#zoom#shadow)
+![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
 
 If the approvers **approve** the request, it moves to the `APPROVED` status. Share items IN `PENDINGAPPROVAL` will go to `SHARE_APPROVED`. 
+
+![accept_share](pictures/shares/shares_approved.png#zoom#shadow)
+
 Data.all backend starts a sharing task, during which, items and the request
 are in `SHARE_IN_PROGRESS` state. 
 
-![accept_share](pictures/shares/shares_approved.png#zoom#shadow)
+![accept_share](pictures/shares/shares_in_progress.png#zoom#shadow)
 
 When the task is completed, the items go to `SHARE_SUCCEEDED` or `SHARE_FAILED` and the request is `PROCESSED`.
 

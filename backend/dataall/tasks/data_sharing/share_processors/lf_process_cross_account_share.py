@@ -69,6 +69,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             )
 
             for table in self.shared_tables:
+                log.info(f"Sharing table {table.GlueTableName}...")
 
                 share_item = api.ShareObject.find_share_item_by_table(
                     self.session, self.share, table
@@ -112,7 +113,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     return False
 
-                return True
+        return True
 
     def process_revoked_shares(self) -> bool:
         """
@@ -163,7 +164,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
                 return False
 
-            return True
+        return True
 
     def clean_up_share(self) -> bool:
         """"
