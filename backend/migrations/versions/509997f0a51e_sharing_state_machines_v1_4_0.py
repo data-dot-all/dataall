@@ -69,7 +69,7 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Updating share Objects...')
+        print('Updating share Objects in PendingApproval...')
         (
             session.query(ShareObject)
             .filter(
@@ -77,21 +77,33 @@ def upgrade():
             )
             .update(
                 {
-                    ShareObject.status: 'Completed'
+                    ShareObject.status: 'Submitted'
+                }
+            )
+        )
+        print('Updating share Objects in Approved...')
+        (
+            session.query(ShareObject)
+            .filter(
+                ShareObject.status == 'Approved'
+            )
+            .update(
+                {
+                    ShareObject.status: 'Processed'
                 }
             )
         )
 
         print('Share Objects updated successfully')
-        print('Updating share Items..')
+        print('Updating share Items in Draft..')
         (
-            session.query(ShareObject)
+            session.query(ShareObjectItem)
             .filter(
-                ShareObject.status == 'Draft'
+                ShareObjectItem.status == 'Draft'
             )
             .update(
                 {
-                    ShareObject.status: 'PendingApproval'
+                    ShareObjectItem.status: 'PendingApproval'
                 }
             )
         )
@@ -106,11 +118,11 @@ def downgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Updating share Objects...')
+        print('Updating share Objects in PendingApproval...')
         (
             session.query(ShareObject)
             .filter(
-                ShareObject.status == 'Completed'
+                ShareObject.status == 'Submitted'
             )
             .update(
                 {
@@ -118,17 +130,29 @@ def downgrade():
                 }
             )
         )
-
-        print('Share Objects updated successfully')
-        print('Updating share Items..')
+        print('Updating share Objects in Approved...')
         (
             session.query(ShareObject)
             .filter(
-                ShareObject.status == 'PendingApproval'
+                ShareObject.status == 'Processed'
             )
             .update(
                 {
-                    ShareObject.status: 'Draft'
+                    ShareObject.status: 'Approved'
+                }
+            )
+        )
+
+        print('Share Objects updated successfully')
+        print('Updating share Items in Draft..')
+        (
+            session.query(ShareObjectItem)
+            .filter(
+                ShareObjectItem.status == 'PendingApproval'
+            )
+            .update(
+                {
+                    ShareObjectItem.status: 'Draft'
                 }
             )
         )

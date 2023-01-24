@@ -121,7 +121,6 @@ def env2group(environment_group: typing.Callable, env2, user2, group2) -> dataal
         )
 
 
-
 @pytest.fixture(scope='module')
 def share1(
         share: typing.Callable,
@@ -832,7 +831,7 @@ def test_approve_share_request(
 
     # Given the approved share object is processed and the shared items
     # are successfully shared
-    _successfull_processing_for_approved_share_object(db, share1)
+    _successfull_processing_for_share_object(db, share1)
 
 
 @pytest.mark.dependency(depends=["test_approve_share_request"])
@@ -879,7 +878,7 @@ def test_search_shared_items_in_environment(
 
 
 @pytest.mark.dependency(depends=["test_approve_share_request"])
-def test_revoke_all_share_request_completed(
+def test_revoke_items_share_request(
         client,
         share1,
         user2,
@@ -947,7 +946,7 @@ def test_revoke_all_share_request_completed(
 
     assert (
         response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Completed.value
+        == dataall.api.constants.ShareObjectStatus.Processed.value
     )
 
     # Given shared item in status Share_Succeeded
@@ -955,27 +954,12 @@ def test_revoke_all_share_request_completed(
     assert sharedItem['status'] == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
     revoked_items_uris = [node.shareItemUri for node in response.data.getShareObject.get('items').nodes]
 
-    # When revoking all share object
+    # When revoking items from share object
     query = """
-        mutation revokeItemsShareObject($shareUri: String!, $revokedItemUris: [String!]) {
-            revokeItemsShareObject(shareUri: $shareUri, revokedItemUris: $revokedItemUris) {
+        mutation revokeItemsShareObject($input: RevokeItemsInput) {
+            revokeItemsShareObject(input: $input) {
                 shareUri
                 status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
-                }
             }
         }
         """
@@ -983,25 +967,36 @@ def test_revoke_all_share_request_completed(
     response = client.query(
         query,
         username=user2.userName,
-        shareUri=share1.shareUri,
-        revokedItemUris=revoked_items_uris,
+        input={
+            'shareUri': share1.shareUri,
+            'revokedItemUris': revoked_items_uris
+        },
         groups=[group2.name],
     )
-
+    print('Response from revokeItemsShareObject: ', response)
     # Then share object changes to status Rejected
     assert response.data.revokeItemsShareObject.status == 'Revoked'
 
+    response = client.query(
+        getShareObjectQuery,
+        username=user2.userName,
+        shareUri=share1.shareUri,
+        filter={"isShared": True},
+        groups=[group2.name],
+    )
+    print('Response from getShareObjectQuery: ', response)
+
     # Then shared item changes to status Revoke_Approved
-    sharedItem = response.data.revokeItemsShareObject.get('items').nodes[0]
+    sharedItem = response.data.getShareObject.get('items').nodes[0]
     status = sharedItem['status']
     assert status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
 
     # Given the revoked share object is processed and the shared items
     # are successfully revoked. We can re-use the same successful processing function
-    _successfull_processing_for_approved_share_object(db, share1)
+    _successfull_processing_for_share_object(db, share1)
 
 
-@pytest.mark.dependency(depends=["test_revoke_all_items_share_request_completed"])
+@pytest.mark.dependency(depends=["test_revoke_items_share_request"])
 def test_delete_share_object(client, share1, dataset1, group, user2, group2, env2):
     # Given existing share object in status Rejected (-> fixture)
     getShareObjectQuery = """
@@ -1245,9 +1240,9 @@ def test_delete_share_object_remaining_items_error(
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def _successfull_processing_for_approved_share_object(db, share):
+def _successfull_processing_for_share_object(db, share):
     with db.scoped_session() as session:
-        print('Processing approved share with action ShareObjectActions.Start')
+        print('Processing share with action ShareObjectActions.Start')
         share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)
 
         share_items_states = dataall.db.api.ShareObject.get_share_items_states(session, share.shareUri)
@@ -1262,7 +1257,7 @@ def _successfull_processing_for_approved_share_object(db, share):
 
         Share_SM.update_state(session, share, new_share_state)
 
-        print('Processing approved share with action ShareObjectActions.Finish \
+        print('Processing share with action ShareObjectActions.Finish \
             and ShareItemActions.Success')
 
         share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)

@@ -19,24 +19,28 @@ we create an S3 access point per requester group to handle its access to specifi
 **Sharing workflow**
 
 Requesters create a share request and add items to it. Both requesters and approvers can work on this `DRAFT` of
-the request and add and remove items to the request Draft. Items that are added go to the `PENDINGAPPROVAL` status. 
-Items that are shared and are revoked from the Draft, go to `PENDINGREVOKE` status.
+the request and add and delete items to the request Draft. Items that are added go to the `PENDINGAPPROVAL` status.
 
 Once the draft is ready, requesters **submit** the request, which moves to the `SUBMITTED` status. 
-Then, approvers **approve** or **reject** the request which will go to `APPROVED` or `REJECTED` status. Items also vary their status accordingly.
-If the request has been approved, data.all backend triggers the process share task and grants or revoke access to the items approved in the request.
+Then, approvers **approve** or **reject** the request which will go to `APPROVED` or `REJECTED` status and its
+items to `SHARE_APPROVED` or `SHARE_REJECTED` correspondingly.
 
-While the backend is processing the task, items stay in `SHARE_IN_PROGRESS` or in `REVOKE_IN_PROGRESS` and the share request is `IN_PROGRESS`.
-When all items have been processed the Share object is `COMPLETED` and each of the items has either `SUCCEEDED` or `FAILED`.
+When the sharing task starts in the backend, both items and the share object move to `SHARE_IN_PROGRESS`.
+Once all items have been processed, the Share object is `PROCESSED` and each of the items is in either `SHARE_SUCCEEDED` or `SHARE_FAILED`. 
+New items can be added to the share requests, the request will go back to `DRAFT` to be re-processed.
 
-New items can be added to the request or revoked from it. Also, both approvers and requesters have the option to **revoke all** 
-permissions. With this operation, we remove all grants from tables and folders.
+Both approvers and requesters can revoke access to shared items. They open the revoke items window and select which items 
+should be revoked from the share request. The items move to `REVOKE_APPROVED` while the share is in `REVOKED` status.
 
-Revoking all permissions still leaves the share request open. Users can delete the share request with the **delete** button.
-However, the request cannot contain any shared items. Users must revoke individually or with the revoke all functionality any missing shared items before deletion.
+While the revoking task is executing, the items and the request remain in `REVOKE_IN_PROGRESS` until
+the revoke is complete and items go to `REVOKE_FAILED` or `SUCCEEDED`. If there are share items in `PENDINGAPPROVAL` 
+in the share request, it will go back to `DRAFT`. Otherwise, it will go to `PROCESSED`.
+
+Requesters can delete the share request with the **delete** button.
+However, the request cannot contain any shared items. Users must revoke all shared items before deletion.
 
 
-![wf](pictures/shares/shares_sm.png#zoom#shadow)
+![wf](pictures/shares/share_sm.png#zoom#shadow)
 
 
 ### **Create a share request (requester)**
@@ -63,7 +67,7 @@ Anyone can go to the Shares menu on the left side pane and look up the share req
 and that they have sent. Click on **Learn More**
 in the request that you are interested in to start working on your request. 
 
-![add_share](pictures/shares/shares_completed_inbox.png#zoom#shadow)
+![add_share](pictures/shares/shares_inbox.png#zoom#shadow)
 
 ## **Add/delete items**
 When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
@@ -84,80 +88,60 @@ to the request. In the picture below, we have added the *iot* folder to the requ
 
 To remove an item from the request click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
-which is explained below. That is why only the Folder *iot* has the **Delete** button next to it.
+which is explained below. That is why only the Folder *HEHE* has the **Delete** button next to it.
 
 ![add_share](pictures/shares/shares_added.png#zoom#shadow)
 
-
-## **Revoke Items**
-If an item has been previously shared it cannot be directly deleted. First, click on
-**Revoke item** next to the item that you want to revoke access to. The item 
-will go to `PENDINGREVOKE` status and the request to `DRAFT` status. Access is granted until the request is submitted and processed.
-
-In the example above, we have revoked access to the table *videogames* and the folder *pdfs*.
 
 ## **Submit a share request (requester)**
 
 Once the draft is ready, the requesters need to click on the **submit** button. The request should be now in the `SUBMITTED` state. 
 Approvers can see the request in their received share requests, alongside the current shared items, revoked items, failed items and pending items.
 
-![accept_share](pictures/shares/shares_submitted_inbox.png#zoom#shadow)
 
 ## **Approve/Reject a share request (approver)**
 
-As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added or revoked in the request.
+As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added in the request.
 This is the view that approvers see, it now contains buttons to approve or reject the request.
 
 ![submit_share_2](pictures/shares/shares_submitted.png#zoom#shadow)
 
-If the approver **approves** the request, it moves to the `APPROVED` status. Share items will go to `SHARE_APPROVED` and `REVOKE_APPROVED`
-depending on their previous state. Data.all starts a process share task, during the handling of the shares, items and the request
-are `*IN_PROGRESS` states. 
+If the approver **approves** the request, it moves to the `APPROVED` status. Share items IN `PENDINGAPPROVAL` will go to `SHARE_APPROVED`. 
+Data.all backend starts a sharing task, during which, items and the request
+are in `SHARE_IN_PROGRESS` state. 
 
 ![accept_share](pictures/shares/shares_approved.png#zoom#shadow)
 
-When the task is completed, the items go to `*SUCCEEDED` or `*FAILED` and the request is `COMPLETED`.
+When the task is completed, the items go to `SHARE_SUCCEEDED` or `SHARE_FAILED` and the request is `PROCESSED`.
 
 ![accept_share](pictures/shares/shares_completed.png#zoom#shadow)
 
-!!!info "delete after revoke"
-    Items that were shared and have been revoked and are in `REVOKE_SUCCEEDED` status
-    can now be deleted from the share request.
 
-If a dataset is shared, the requester should see the dataset on his or her screen. The role with
+If a dataset is shared, requesters should see the dataset on their screens. Their role with
 regards to the dataset is `SHARED`.
 
 ![accept_share](pictures/shares/shares_dataset.png#zoom#shadow)
 
-
-## **Revoke all items**
-After a project or during clean-up tasks we might want to clean up all shares in a request.
-Approvers and requesters have access to the **Revoke all** button, that deletes all items
-that are not shared and revokes all shared items. 
+## **Revoke Items**
+Both approvers and requesters can click on the button **Revoke items** to remove the share grant from chosen items.
 
 
-Here we have an example of a request before being completely revoked:
+It will open a window where multiple items can be selected for revoke. Once the button "revoke selected items" is
+pressed the consequent revoke task will be triggered.
 
-![accept_share](pictures/shares/shares_revokeall_1.png#zoom#shadow)
 
-And after revoking all, the only left items are those that have been revoked. 
-If we click again on the revoke all button they will be deleted.
+!!! success "Proactive clean-up"
+    In every revoke task, data.all checks if there are no more shared folders or tables in a share request.
+    In such case, data.all automatically cleans up any unnecessary S3 access point or Lake Formation permission.
 
-![accept_share](pictures/shares/shares_revokeall_2.png#zoom#shadow)
 
 ## **Delete share request**
 To delete a share request, it needs to be empty from shared items.
-For example, the following request has some items in `SHARE_SUCCEEDED` and `PENDINGREVOKE` state, therefore
-we receive an error.
+For example, the following request has some items in `SHARE_SUCCEEDED` state, therefore
+we receive an error. Once we have revoked access to all items we can delete the request.
 
 ![share](pictures/shares/shares_delete_unauth.png#zoom#shadow)
 
-
-Once we have revoked access to all items (by using revoke all for example) we can delete the request.
-
-!!! success "Proactive clean-up"
-    If there are no more shared folders or tables in a share request, data.all automatically cleans up any 
-    missing S3 access point or Lake Formation permission.
 
 ## **Consume shared data**
 Data.all tables are Glue tables shared using AWS Lake Formation, therefore any service that reads Glue tables and integrates

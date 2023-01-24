@@ -217,7 +217,6 @@ class DataSharingService:
                 clean_up_tables = processor.clean_up_share()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
-
             existing_pending_items = api.ShareObject.check_pending_share_items(session, share_uri)
             if existing_pending_items:
                 new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishPending.value)
