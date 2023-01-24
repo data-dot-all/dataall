@@ -129,6 +129,7 @@ Both approvers and requesters can click on the button **Revoke items** to remove
 It will open a window where multiple items can be selected for revoke. Once the button "revoke selected items" is
 pressed the consequent revoke task will be triggered.
 
+![accept_share](pictures/shares/shares_revoke.png#zoom#shadow)
 
 !!! success "Proactive clean-up"
     In every revoke task, data.all checks if there are no more shared folders or tables in a share request.

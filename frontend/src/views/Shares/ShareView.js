@@ -296,6 +296,7 @@ function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
     const response = await client.mutate(
@@ -336,17 +337,25 @@ function SharedItem(props) {
                 >
                   Revoke access to this item before deleting
                 </Typography>
-            ) : (
-                <Button
-                  color="primary"
-                  startIcon={<DeleteOutlined fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                  onClick={removeItemFromShareObject}
+            ) : {(item.status === 'Share_Approved' || item.status === 'Revoke_Approved') ? (
+                <Typography
+                  color="textSecondary"
+                  variant="subtitle2"
                 >
-                  Delete
-                </Button>
-            )}
+                  Wait until item is processed
+                </Typography>
+              ) : (
+                  <Button
+                    color="primary"
+                    startIcon={<DeleteOutlined fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="outlined"
+                    onClick={removeItemFromShareObject}
+                  >
+                    Delete
+                  </Button>
+              )}
+            }
             </>
         )}
       </TableCell>
