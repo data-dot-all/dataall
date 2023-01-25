@@ -171,7 +171,7 @@ class DataSharingService:
                 models.ShareableType.StorageLocation.value
             )
             log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
-            if not existing_shared_items:
+            if not existing_shared_items and revoked_folders:
                 log.info("Clean up S3 access points...")
                 clean_up_folders = ProcessS3Share.clean_up_share(
                     dataset=dataset,
@@ -212,7 +212,7 @@ class DataSharingService:
                 models.ShareableType.Table.value
             )
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
-            if not existing_shared_items:
+            if not existing_shared_items and revoked_tables:
                 log.info("Clean up LF remaining resources...")
                 clean_up_tables = processor.clean_up_share()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
