@@ -330,31 +330,32 @@ function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
             <>
-            {(item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed') ? (
+            {
+              (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed') ? (
                 <Typography
                   color="textSecondary"
                   variant="subtitle2"
                 >
                   Revoke access to this item before deleting
                 </Typography>
-            ) : {(item.status === 'Share_Approved' || item.status === 'Revoke_Approved') ? (
-                <Typography
-                  color="textSecondary"
-                  variant="subtitle2"
-                >
-                  Wait until item is processed
-                </Typography>
-              ) : (
-                  <Button
-                    color="primary"
-                    startIcon={<DeleteOutlined fontSize="small" />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    onClick={removeItemFromShareObject}
+              ) : (item.status === 'Share_Approved' || item.status === 'Revoke_Approved') ? (
+                  <Typography
+                    color="textSecondary"
+                    variant="subtitle2"
                   >
-                    Delete
-                  </Button>
-              )}
+                    Wait until item is processed
+                  </Typography>
+                ) : (
+                    <Button
+                      color="primary"
+                      startIcon={<DeleteOutlined fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={removeItemFromShareObject}
+                    >
+                      Delete
+                    </Button>
+              )
             }
             </>
         )}
