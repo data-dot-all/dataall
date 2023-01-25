@@ -521,7 +521,11 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region}'
             f'due to: {error}'
         )
-
+        
+        share_item_SM = api.ShareItemSM(share_item.status)
+        new_state = share_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+        share_item_SM.update_state_single_item(session=self.session, share_item=share_item, new_state=new_state)
+        
         AlarmService().trigger_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
@@ -545,11 +549,11 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        api.ShareObject.update_share_item_status(
-            self.session,
-            share_item.shareItemUri,
-            models.ShareItemStatus.Revoke_Failed.value,
-        )
+        
+        share_item_SM = api.ShareItemSM(share_item.status)
+        new_state = share_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+        share_item_SM.update_state_single_item(session=self.session, share_item=share_item, new_state=new_state)
+        
         AlarmService().trigger_revoke_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )

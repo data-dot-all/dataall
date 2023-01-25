@@ -58,6 +58,7 @@ class ProcessS3Share(S3ShareManager):
         log.info(
             '##### Starting Sharing folders #######'
         )
+        success = True
         for folder in share_folders:
             log.info(f'sharing folder: {folder}')
             sharing_item = api.ShareObject.find_share_item_by_folder(
@@ -93,9 +94,9 @@ class ProcessS3Share(S3ShareManager):
                 sharing_folder.handle_share_failure(e)
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
-                return False
+                success = False
 
-        return True
+        return success
 
     @classmethod
     def process_revoked_shares(
@@ -122,7 +123,7 @@ class ProcessS3Share(S3ShareManager):
         log.info(
             '##### Starting Revoking folders #######'
         )
-
+        success = True
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
             removing_item = api.ShareObject.find_share_item_by_folder(
@@ -156,9 +157,9 @@ class ProcessS3Share(S3ShareManager):
                 removing_folder.handle_revoke_failure(e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
-                return False
+                success = False
 
-        return True
+        return success
 
     @staticmethod
     def clean_up_share(

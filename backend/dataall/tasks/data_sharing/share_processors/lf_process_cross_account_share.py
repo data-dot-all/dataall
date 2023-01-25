@@ -55,7 +55,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         log.info(
             '##### Starting Sharing tables cross account #######'
         )
-
+        success = True
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
         else:
@@ -108,12 +108,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 except Exception as e:
-                    self.handle_share_failure(table, share_item, e)
+                    self.handle_share_failure(table=table, share_item=share_item, error=e)
                     new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-                    return False
+                    success = False
 
-        return True
+        return success
 
     def process_revoked_shares(self) -> bool:
         """
@@ -133,7 +133,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         log.info(
             '##### Starting Revoking tables cross account #######'
         )
-
+        success = True
         for table in self.revoked_tables:
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
@@ -159,12 +159,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             except Exception as e:
-                self.handle_revoke_failure(share_item, table, e)
+                self.handle_revoke_failure(share_item=share_item, table=table, error=e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-                return False
+                success = False
 
-        return True
+        return success
 
     def clean_up_share(self) -> bool:
         """"

@@ -49,7 +49,8 @@ class ProcessLFSameAccountShare(LFShareManager):
         log.info(
             '##### Starting Sharing tables same account #######'
         )
-
+    
+        success = True
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
 
@@ -93,9 +94,9 @@ class ProcessLFSameAccountShare(LFShareManager):
                 self.handle_share_failure(table, share_item, e)
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-                return False
+                success = False
 
-        return True
+        return success
 
     def process_revoked_shares(self) -> bool:
         """
@@ -112,6 +113,7 @@ class ProcessLFSameAccountShare(LFShareManager):
         True if share is revoked successfully
         False if revoke fails
         """
+        success = True
         for table in self.revoked_tables:
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
@@ -145,9 +147,9 @@ class ProcessLFSameAccountShare(LFShareManager):
                 self.handle_revoke_failure(share_item, table, e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-                return False
+                success = False
 
-        return True
+        return success
 
     def clean_up_share(self) -> bool:
         """"
