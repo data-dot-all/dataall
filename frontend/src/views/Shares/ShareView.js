@@ -338,12 +338,12 @@ function SharedItem(props) {
                 >
                   Revoke access to this item before deleting
                 </Typography>
-              ) : (item.status === 'Share_Approved' || item.status === 'Revoke_Approved') ? (
+              ) : (item.status === 'Share_Approved' || item.status === 'Revoke_Approved' || item.status === 'Revoke_In_Progress' || item.status === 'Share_In_Progress') ? (
                   <Typography
                     color="textSecondary"
                     variant="subtitle2"
                   >
-                    Wait until item is processed
+                    Wait until this item is processed
                   </Typography>
                 ) : (
                     <Button
