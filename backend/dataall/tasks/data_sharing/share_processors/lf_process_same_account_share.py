@@ -49,7 +49,7 @@ class ProcessLFSameAccountShare(LFShareManager):
         log.info(
             '##### Starting Sharing tables same account #######'
         )
-    
+
         success = True
         if not self.shared_tables:
             log.info("No tables to share. Skipping...")
