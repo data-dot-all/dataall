@@ -235,10 +235,9 @@ class ShareItemSM:
                 transitions={
                     ShareItemStatus.Deleted.value: [
                         ShareItemStatus.PendingApproval.value,
-                        ShareItemStatus.Share_Approved.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value,
+                        ShareItemStatus.Revoke_Succeeded.value
                     ]
                 }
             ),
@@ -259,8 +258,7 @@ class ShareItemSM:
                         ShareItemStatus.PendingApproval.value,
                         ShareItemStatus.Share_Rejected.value,
                         ShareItemStatus.Share_Failed.value,
-                        ShareItemStatus.Revoke_Succeeded.value,
-                        ShareItemStatus.Share_Approved.value,
+                        ShareItemStatus.Revoke_Succeeded.value
                     ]
                 }
             )
