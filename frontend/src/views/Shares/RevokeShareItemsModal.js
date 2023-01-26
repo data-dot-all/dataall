@@ -29,6 +29,7 @@ const RevokeShareItemsModal = (props) => {
   const params = useParams();
   const [loading, setLoading] = useState(true);
   const [selectionModel, setSelectionModel] = useState([]);
+  const [pageSize, setPageSize] = useState(5);
 
   const fetchShareItems = useCallback(async () => {
     setLoading(true);
@@ -37,6 +38,7 @@ const RevokeShareItemsModal = (props) => {
         shareUri: params.uri,
         filter: {
           ...filter,
+          pageSize: 1000,
           isShared: true,
           isRevokable: true
         }

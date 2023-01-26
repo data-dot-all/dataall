@@ -412,8 +412,9 @@ class ShareObject:
             )
             S3AccessPointName = utils.slugify(
                 share.datasetUri + '-' + share.principalId,
-                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]'
+                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
             )
+
             if not share_item and item:
                 new_share_item: models.ShareObjectItem = models.ShareObjectItem(
                     shareUri=share.shareUri,
@@ -752,6 +753,10 @@ class ShareObject:
             )
             .first()
         )
+        S3AccessPointName = utils.slugify(
+            share.datasetUri + '-' + share.principalId,
+            max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+        )
 
         if not shareItem:
             shareItem = models.ShareObjectItem(
@@ -767,7 +772,7 @@ class ShareObject:
                 GlueTableName=item.GlueTableName
                 if itemType == ShareableType.Table.value
                 else '',
-                S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
+                S3AccessPointName=S3AccessPointName
                 if itemType == ShareableType.StorageLocation.value
                 else '',
             )
