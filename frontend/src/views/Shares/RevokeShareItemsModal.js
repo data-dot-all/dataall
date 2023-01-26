@@ -59,8 +59,6 @@ const RevokeShareItemsModal = (props) => {
 
   const revoke = async () => {
     setLoading(true);
-    console.log("inside revoke")
-    console.log(selectionModel)
     const response = await client.mutate(
       revokeItemsShareObject({
         input: {
@@ -70,13 +68,14 @@ const RevokeShareItemsModal = (props) => {
       })
     );
     if (!response.errors) {
-      enqueueSnackbar('All items if share request revoked', {
+      enqueueSnackbar('Items revoked', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
         },
         variant: 'success'
       });
+      fetchShareItems();
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -128,8 +127,9 @@ const RevokeShareItemsModal = (props) => {
             <DataGrid
               rows={rows}
               columns={header}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
+              pageSize={pageSize}
+              rowsPerPageOptions={[5,10,20]}
+              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
               checkboxSelection
               onSelectionModelChange={(newSelection) => {
                 setSelectionModel(newSelection);
