@@ -7,7 +7,7 @@ from . import (
     ResourcePolicy,
     Environment,
 )
-from .. import api
+from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 
@@ -410,6 +410,10 @@ class ShareObject:
                 )
                 .first()
             )
+            S3AccessPointName = utils.slugify(
+                share.datasetUri + '-' + share.principalId,
+                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]'
+            )
             if not share_item and item:
                 new_share_item: models.ShareObjectItem = models.ShareObjectItem(
                     shareUri=share.shareUri,
@@ -424,7 +428,7 @@ class ShareObject:
                     GlueTableName=item.GlueTableName
                     if itemType == ShareableType.Table.value
                     else '',
-                    S3AccessPointName=f'{share.datasetUri}-{share.principalId}'.lower()
+                    S3AccessPointName=S3AccessPointName
                     if itemType == ShareableType.StorageLocation.value
                     else '',
                 )
