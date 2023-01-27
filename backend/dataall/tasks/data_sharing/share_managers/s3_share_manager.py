@@ -2,7 +2,7 @@ import abc
 import logging
 import json
 
-from ....db import models, api
+from ....db import models, api, utils
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.s3 import S3
 from ....aws.handlers.kms import KMS
@@ -64,7 +64,12 @@ class S3ShareManager:
 
     @staticmethod
     def build_access_point_name(share):
-        return f'{share.datasetUri}-{share.principalId}'.lower()
+        S3AccessPointName = utils.slugify(
+            share.datasetUri + '-' + share.principalId,
+            max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+        )
+        logger.info(f"S3AccessPointName={S3AccessPointName}")
+        return S3AccessPointName
 
     def manage_bucket_policy(self):
         """
@@ -186,7 +191,7 @@ class S3ShareManager:
         access_point_arn = S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name)
         if not access_point_arn:
             logger.info(
-                'Access point does not exists, creating...'
+                f'Access point {self.access_point_name} does not exists, creating...'
             )
             access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.source_environment.region, self.bucket_name, self.access_point_name)
         existing_policy = S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name)
@@ -248,7 +253,9 @@ class S3ShareManager:
                 }
             }
             access_point_policy["Statement"].append(admin_statement)
-        S3.attach_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name, json.dumps(access_point_policy))
+        S3.attach_access_point_policy(
+            account_id=self.source_account_id, region=self.source_environment.region,
+            access_point_name=self.access_point_name, policy=json.dumps(access_point_policy))
 
     def update_dataset_bucket_key_policy(self):
         logger.info(

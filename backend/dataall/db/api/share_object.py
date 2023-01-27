@@ -757,6 +757,7 @@ class ShareObject:
             share.datasetUri + '-' + share.principalId,
             max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
         )
+        logger.info(f"S3AccessPointName={S3AccessPointName}")
 
         if not shareItem:
             shareItem = models.ShareObjectItem(
