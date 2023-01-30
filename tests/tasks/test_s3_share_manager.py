@@ -699,8 +699,8 @@ def test_manage_access_point_and_policy_1(
 
         # Then
         s3_attach_access_point_policy_mock.assert_called()
-
-        new_ap_policy = json.loads(s3_attach_access_point_policy_mock.call_args.args[3])
+        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
+        new_ap_policy = json.loads(policy)
 
         # Asser that access point is in resource
         assert new_ap_policy["Statement"][0]["Resource"] == s3_create_bucket_access_point_mock.return_value
@@ -776,9 +776,10 @@ def test_manage_access_point_and_policy_2(
 
         # Then
         s3_attach_access_point_policy_mock.assert_called()
+        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
 
         # Assert S3 Prefix of share folder in prefix_list
-        new_ap_policy = json.loads(s3_attach_access_point_policy_mock.call_args.args[3])
+        new_ap_policy = json.loads(policy)
         statements = {item["Sid"]: item for item in new_ap_policy["Statement"]}
         prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"]["s3:prefix"]
 
@@ -851,7 +852,8 @@ def test_manage_access_point_and_policy_3(
         s3_attach_access_point_policy_mock.assert_called()
 
         # Assert S3 Prefix of share folder in prefix_list
-        new_ap_policy = json.loads(s3_attach_access_point_policy_mock.call_args.args[3])
+        policy = s3_attach_access_point_policy_mock.call_args.kwargs.get('policy')
+        new_ap_policy = json.loads(policy)
         statements = {item["Sid"]: item for item in new_ap_policy["Statement"]}
         prefix_list = statements[f"{target_environment.SamlGroupName}0"]["Condition"]["StringLike"]["s3:prefix"]
 
