@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 
+
 def random_table_name():
     def cpltz(l):
         return [item.capitalize() for item in l]
@@ -54,6 +55,7 @@ def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organizatio
         label="datasettoshare"
     )
 
+
 @pytest.fixture(scope='module')
 def tables1(table: typing.Callable, dataset1: dataall.db.models.Dataset):
     for i in range(1, 100):
@@ -61,12 +63,14 @@ def tables1(table: typing.Callable, dataset1: dataall.db.models.Dataset):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table1(table: typing.Callable, dataset1: dataall.db.models.Dataset, user: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+def table1(table: typing.Callable, dataset1: dataall.db.models.Dataset,
+           user: dataall.db.models.User) -> dataall.db.models.DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
         username=user.userName
     )
+
 
 @pytest.fixture(scope='module')
 def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
@@ -88,10 +92,11 @@ def env2(
         dashboardsEnabled=False,
     )
 
+
 @pytest.fixture(scope='module')
 def dataset2(
         dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: dataall.db.models.Environment
-             ) -> dataall.db.models.Dataset:
+) -> dataall.db.models.Dataset:
     yield dataset_model(
         organization=org2,
         environment=env2,
@@ -106,28 +111,257 @@ def tables2(table, dataset2):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table2(table: typing.Callable, dataset2: dataall.db.models.Dataset, user2: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+def table2(table: typing.Callable, dataset2: dataall.db.models.Dataset,
+           user2: dataall.db.models.User) -> dataall.db.models.DatasetTable:
     yield table(
         dataset=dataset2,
         name="table2",
         username=user2.userName
     )
 
+
 @pytest.fixture(scope='module')
 def env2group(environment_group: typing.Callable, env2, user2, group2) -> dataall.db.models.EnvironmentGroup:
-        yield environment_group(
-            environment=env2,
-            group=group2,
-        )
+    yield environment_group(
+        environment=env2,
+        group=group2,
+    )
 
 
-@pytest.fixture(scope='module')
-def share1(
+@pytest.fixture(scope='function')
+def share1_draft(
+        db,
+        client,
+        user2,
+        group2,
         share: typing.Callable,
         dataset1: dataall.db.models.Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
-        user2: dataall.db.models.User
+) -> dataall.db.models.ShareObject:
+    share1 = share(
+        dataset=dataset1,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.userName,
+        status=dataall.api.constants.ShareObjectStatus.Draft.value
+    )
+    yield share1
+
+    # Cleanup share
+    # First try to direct delete. This fixture should not have any shared items, but just in case
+    delete_share_object_response = delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1.shareUri
+    )
+
+    if delete_share_object_response.data.deleteShareObject == True:
+        return
+
+    # Given share item in shared states
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1.shareUri,
+        filter={"isShared": True},
+    )
+    revoked_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # Then delete via revoke items if still items present
+    revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1.shareUri,
+        revoked_items_uris=revoked_items_uris
+
+    )
+
+    _successfull_processing_for_share_object(db, share1)
+
+    delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1.shareUri
+    )
+
+
+@pytest.fixture(scope='function')
+def share1_item_pa(
+        share_item: typing.Callable,
+        share1_draft: dataall.db.models.ShareObject,
+        table1: dataall.db.models.DatasetTable
+) -> dataall.db.models.ShareObjectItem:
+    # Cleaned up with share1_draft
+    yield share_item(
+        share=share1_draft,
+        table=table1,
+        status=dataall.api.constants.ShareItemStatus.PendingApproval.value
+    )
+
+
+@pytest.fixture(scope='function')
+def share2_submitted(
+        db,
+        client,
+        user2,
+        group2,
+        share: typing.Callable,
+        dataset1: dataall.db.models.Dataset,
+        env2: dataall.db.models.Environment,
+        env2group: dataall.db.models.EnvironmentGroup,
+) -> dataall.db.models.ShareObject:
+    share2 = share(
+        dataset=dataset1,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.userName,
+        status=dataall.api.constants.ShareObjectStatus.Submitted.value
+    )
+    yield share2
+    # Cleanup share
+    # First try to direct delete
+    delete_share_object_response = delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2.shareUri
+    )
+
+    if delete_share_object_response.data.deleteShareObject == True:
+        return
+
+    # Given share item in shared states
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2.shareUri,
+        filter={"isShared": True},
+    )
+    revoked_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # Then delete via revoke items if still items present
+    revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2.shareUri,
+        revoked_items_uris=revoked_items_uris
+
+    )
+    _successfull_processing_for_share_object(db, share2)
+
+    delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2.shareUri
+    )
+
+
+@pytest.fixture(scope='function')
+def share2_item_pa(
+        share_item: typing.Callable,
+        share2_submitted: dataall.db.models.ShareObject,
+        table1: dataall.db.models.DatasetTable
+) -> dataall.db.models.ShareObjectItem:
+    # Cleaned up with share2
+    yield share_item(
+        share=share2_submitted,
+        table=table1,
+        status=dataall.api.constants.ShareItemStatus.PendingApproval.value
+    )
+
+
+@pytest.fixture(scope='function')
+def share3_processed(
+        db,
+        client,
+        user2,
+        group2,
+        share: typing.Callable,
+        dataset1: dataall.db.models.Dataset,
+        env2: dataall.db.models.Environment,
+        env2group: dataall.db.models.EnvironmentGroup,
+) -> dataall.db.models.ShareObject:
+    share3 = share(
+        dataset=dataset1,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.userName,
+        status=dataall.api.constants.ShareObjectStatus.Processed.value
+    )
+    yield share3
+    # Cleanup share
+    # First try to direct delete
+    delete_share_object_response = delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3.shareUri
+    )
+
+    if delete_share_object_response.data.deleteShareObject == True:
+        return
+
+    # Given share item in shared states
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3.shareUri,
+        filter={"isShared": True},
+    )
+    revoked_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # Then delete via revoke items if still items present
+    revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3.shareUri,
+        revoked_items_uris=revoked_items_uris
+
+    )
+    _successfull_processing_for_share_object(db, share3)
+
+    delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3.shareUri
+    )
+
+
+@pytest.fixture(scope='function')
+def share3_item_shared(
+        share_item: typing.Callable,
+        share3_processed: dataall.db.models.ShareObject,
+        table1: dataall.db.models.DatasetTable
+) -> dataall.db.models.ShareObjectItem:
+    # Cleaned up with share3
+    yield share_item(
+        share=share3_processed,
+        table=table1,
+        status=dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    )
+
+
+@pytest.fixture(scope='function')
+def share4_draft(
+        user2,
+        share: typing.Callable,
+        dataset1: dataall.db.models.Dataset,
+        env2: dataall.db.models.Environment,
+        env2group: dataall.db.models.EnvironmentGroup,
 ) -> dataall.db.models.ShareObject:
     yield share(
         dataset=dataset1,
@@ -138,102 +372,12 @@ def share1(
     )
 
 
-@pytest.fixture(scope='module')
-def share2(
-        share: typing.Callable,
-        dataset2: dataall.db.models.Dataset,
-        env1: dataall.db.models.Environment,
-        env1group: dataall.db.models.EnvironmentGroup,
-        user: dataall.db.models.User
-) -> dataall.db.models.ShareObject:
-    yield share(
-        dataset=dataset2,
-        environment=env1,
-        env_group=env1group,
-        owner=user.userName,
-        status=dataall.api.constants.ShareObjectStatus.Draft.value
-    )
-
-
-@pytest.fixture(scope='module')
-def share_item2_pa(
-        share_item: typing.Callable,
-        share2: dataall.db.models.ShareObject,
-        table2: dataall.db.models.DatasetTable
-) -> dataall.db.models.ShareObjectItem:
-    yield share_item(
-        share=share2,
-        table=table2,
-        status=dataall.api.constants.ShareItemStatus.PendingApproval.value
-    )
-
-
-@pytest.fixture(scope='module')
-def share_item2_shared(
-        share_item: typing.Callable,
-        share2: dataall.db.models.ShareObject,
-        table2: dataall.db.models.DatasetTable
-) -> dataall.db.models.ShareObjectItem:
-    yield share_item(
-        share=share2,
-        table=table2,
-        status=dataall.api.constants.ShareItemStatus.Share_Succeeded.value
-    )
-
-
 def test_init(tables1, tables2):
     assert True
 
 
-def test_create_share_object_unauthorized(client, dataset1, env2, group2, env2group, group3):
-    """
-    Test a user that opens a share request for a group that he does not belong to. It is prevented in the frontend (client side)
-    but here we are checking that it is also unauthorized in the server side.
-    """
-
-    q = """
-      mutation CreateShareObject(
-        $datasetUri: String!
-        $itemType: String
-        $itemUri: String
-        $input: NewShareObjectInput
-      ) {
-        createShareObject(
-          datasetUri: $datasetUri
-          itemType: $itemType
-          itemUri: $itemUri
-          input: $input
-        ) {
-          shareUri
-          created
-        }
-      }
-    """
-
-    response = client.query(
-        q,
-        username='anonymous',
-        groups=[group3.name],
-        datasetUri=dataset1.datasetUri,
-        input={
-            'environmentUri': env2.environmentUri,
-            'groupUri': env2group.groupUri,
-            'principalId': env2group.groupUri,
-            'principalType': dataall.api.constants.PrincipalType.Group.value,
-        },
-    )
-
-    assert 'Unauthorized' in response.errors[0].message
-
-
-@pytest.mark.dependency()
-def test_create_share_object_authorized(client, dataset1, env2, db, user2,
-                                        group2, env2group, env1):
-    """
-    Tests a share that has been created successfully. Dataset admins are not requesters.
-    Request is created by requesting a dataset.
-    """
-    # Given
+# Queries & mutations
+def create_share_object(client, userName, group, groupUri, environmentUri, datasetUri, itemUri=None):
     q = """
       mutation CreateShareObject(
         $datasetUri: String!
@@ -255,120 +399,27 @@ def test_create_share_object_authorized(client, dataset1, env2, db, user2,
       }
     """
 
-    # When
     response = client.query(
         q,
-        username=user2.userName,
-        groups=[group2.name],
-        datasetUri=dataset1.datasetUri,
+        username=userName,
+        groups=[group.name],
+        datasetUri=datasetUri,
+        itemType=dataall.api.constants.ShareableType.Table.value if itemUri else None,
+        itemUri=itemUri,
         input={
-            'environmentUri': env2.environmentUri,
-            'groupUri': env2group.groupUri,
-            'principalId': env2group.groupUri,
+            'environmentUri': environmentUri,
+            'groupUri': groupUri,
+            'principalId': groupUri,
             'principalType': dataall.api.constants.PrincipalType.Group.value,
         },
     )
 
-    # Then share object created with status Draft
-    print('Create share request response: ', response.data.createShareObject)
-    assert response.data.createShareObject.shareUri
-    assert response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
-    assert response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    # Print response
+    print('Create share request response: ', response)
+    return response
 
 
-def test_create_share_object_with_item_authorized(client, dataset1, env2, db, user2,
-                                        group2, env2group, env1, table1):
-    """
-    Tests a share that has been created successfully. Dataset admins are not requesters.
-    Request is created by requesting a folder or a table.
-    """
-    # Given
-    q = """
-      mutation CreateShareObject(
-        $datasetUri: String!
-        $itemType: String
-        $itemUri: String
-        $input: NewShareObjectInput
-      ) {
-        createShareObject(
-          datasetUri: $datasetUri
-          itemType: $itemType
-          itemUri: $itemUri
-          input: $input
-        ) {
-          shareUri
-          created
-          status
-          userRoleForShareObject
-        }
-      }
-    """
-
-    # When
-    response = client.query(
-        q,
-        username=user2.userName,
-        groups=[group2.name],
-        datasetUri=dataset1.datasetUri,
-        itemType=dataall.api.constants.ShareableType.Table.value,
-        itemUri=table1.tableUri,
-        input={
-            'environmentUri': env2.environmentUri,
-            'groupUri': env2group.groupUri,
-            'principalId': env2group.groupUri,
-            'principalType': dataall.api.constants.PrincipalType.Group.value,
-        },
-    )
-
-    # Then share object created with status Draft
-    print('Create share request response: ', response.data.createShareObject)
-    assert response.data.createShareObject.shareUri
-    assert response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.name
-    assert response.data.createShareObject.userRoleForShareObject == 'Requesters'
-
-    # And item has been added to the share request
-    q = """
-        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
-          getShareObject(shareUri: $shareUri) {
-            shareUri
-            created
-            owner
-            status
-            items(filter: $filter) {
-              count
-              page
-              pages
-              hasNext
-              hasPrevious
-              nodes {
-                itemUri
-                shareItemUri
-                itemType
-                itemName
-                status
-                action
-              }
-            }
-          }
-        }
-    """
-
-    response2 = client.query(
-        q,
-        username=user2.userName,
-        groups=[group2.name],
-        shareUri=response.data.createShareObject.shareUri,
-        filter={"isShared": True},
-    )
-    print('Get share request response: ', response2.data.getShareObject)
-    assert response2.data.getShareObject.get('items').nodes[0].itemUri == table1.tableUri
-    assert response2.data.getShareObject.get('items').nodes[0].itemType == dataall.api.constants.ShareableType.Table.name
-
-
-def test_get_share_object(client, share1, user, group):
-    """
-    test get share object. Share object with permissions created in fixture.
-    """
+def get_share_object(client, user, group, shareUri, filter):
     q = """
     query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
       getShareObject(shareUri: $shareUri) {
@@ -420,23 +471,15 @@ def test_get_share_object(client, share1, user, group):
         q,
         username=user.userName,
         groups=[group.name],
-        shareUri=share1.shareUri,
-        filter={},
+        shareUri=shareUri,
+        filter=filter,
     )
-    print(response)
-    assert response.data.getShareObject.shareUri == share1.shareUri
-    assert response.data.getShareObject.get('principal').principalType == dataall.api.constants.PrincipalType.Group.name
-    assert response.data.getShareObject.get('principal').principalIAMRoleName
-    assert response.data.getShareObject.get('principal').SamlGroupName
-    assert response.data.getShareObject.get('principal').region
+    # Print response
+    print('Get share request response: ', response)
+    return response
 
 
-def test_list_dataset_share_objects(
-        client, dataset1, env1, user, user3, env2, db, user2, group2, group, group4
-):
-    """
-    Test listing shares from dataset shares tab
-    """
+def list_dataset_share_objects(client, user, group, datasetUri):
     q = """
         query ListDatasetShareObjects(
               $datasetUri: String!
@@ -484,51 +527,15 @@ def test_list_dataset_share_objects(
         q,
         username=user.userName,
         groups=[group.name],
-        datasetUri=dataset1.datasetUri,
+        datasetUri=datasetUri,
     )
-
-    assert response.data.getDataset.shares.count == 2
-    assert (
-            response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Approvers'
-    )
-
-    response = client.query(
-        q,
-        username=user3.userName,
-        groups=[group4.name],
-        datasetUri=dataset1.datasetUri
-    )
-
-    assert response.data.getDataset.shares.count == 2
-    assert (
-            response.data.getDataset.shares.nodes[0].userRoleForShareObject
-            == 'NoPermission'
-    )
-
-    response = client.query(
-        q,
-        username=user2.userName,
-        groups=[group2.name],
-        datasetUri=dataset1.datasetUri,
-    )
-    assert response.data.getDataset.shares.count == 2
-    assert (
-            response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
-    )
+    # Print response
+    print('List Dataset share objects response: ', response)
+    return response
 
 
-@pytest.mark.dependency(depends=["test_create_share_object_authorized"])
-def test_list_shares_to_me(
-        client,
-        user,
-        group,
-        user2,
-        group2
-):
-    """
-    Test listing shares in your inbox. Group 2 are requesters, group 1 are approvers
-    """
-    getShareRequestsToMeQuery = """
+def get_share_requests_to_me(client, user, group):
+    q = """
         query getShareRequestsToMe($filter: ShareObjectFilter){
             getShareRequestsToMe(filter: $filter){
                 count
@@ -539,32 +546,17 @@ def test_list_shares_to_me(
         }
     """
     response = client.query(
-        getShareRequestsToMeQuery,
+        q,
         username=user.userName,
         groups=[group.name]
     )
-    assert response.data.getShareRequestsToMe.count == 2
-
-    response = client.query(
-        getShareRequestsToMeQuery,
-        username=user2.userName,
-        groups=[group2.name]
-    )
-    assert response.data.getShareRequestsToMe.count == 0
+    # Print response
+    print('Get share requests to me response: ', response)
+    return response
 
 
-@pytest.mark.dependency(depends=["test_create_share_object_authorized"])
-def test_list_shares_from_me(
-        client,
-        user,
-        group,
-        user2,
-        group2
-):
-    """
-    Test listing shares in your outbox. Group 2 are requesters, group 1 are approvers
-    """
-    getShareRequestsFromMeQuery = """
+def get_share_requests_from_me(client, user, group):
+    q = """
         query getShareRequestsFromMe($filter: ShareObjectFilter){
             getShareRequestsFromMe(filter: $filter){
                 count
@@ -575,93 +567,33 @@ def test_list_shares_from_me(
         }
     """
     response = client.query(
-        getShareRequestsFromMeQuery,
-        username=user2.userName,
-        groups=[group2.name]
-    )
-    assert response.data.getShareRequestsFromMe.count == 2
-
-    response = client.query(
-        getShareRequestsFromMeQuery,
+        q,
         username=user.userName,
         groups=[group.name]
     )
-    assert response.data.getShareRequestsFromMe.count == 0
+    # Print response
+    print('Get share requests from me response: ', response)
+    return response
 
-@pytest.mark.dependency()
-def test_add_share_item(
-        share1,
-        tables2,
-        client,
-        user,
-        group
-):
-    # Given existing share object in status Draft (-> fixture)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!) {
-              getShareObject(shareUri: $shareUri) {
+
+def add_share_item(client, user, group, shareUri, itemUri, itemType):
+    q = """
+        mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
+            addSharedItem(shareUri:$shareUri,input:$input){
                 shareUri
-                created
-                owner
+                shareItemUri
+                itemUri
                 status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
-                }
+                action
             }
         }
-    """
+        """
 
     response = client.query(
-        getShareObjectQuery,
-        username=user.userName,
-        shareUri=share1.shareUri,
-        groups=[group.name],
-    )
-
-    print('Response from getShareObject: ', response)
-
-    assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
-
-    # Given existing shareable items (-> fixture)
-    shareableItem = response.data.getShareObject.get('items').nodes[0]
-    itemUri = shareableItem['itemUri']
-    itemType = shareableItem['itemType']
-    shareItemUri = shareableItem['shareItemUri']
-    assert shareItemUri is None
-
-    # When
-    addSharedItemQuery = """
-    mutation AddSharedItem($shareUri:String!,$input:AddSharedItemInput){
-        addSharedItem(shareUri:$shareUri,input:$input){
-            shareUri
-            shareItemUri
-            itemUri
-            status
-            action
-        }
-    }
-    """
-
-    response = client.query(
-        addSharedItemQuery,
+        q,
         username=user.userName,
         groups=[group.name],
-        shareUri=share1.shareUri,
+        shareUri=shareUri,
         input={
             'itemUri': itemUri,
             'itemType': itemType,
@@ -669,59 +601,29 @@ def test_add_share_item(
     )
 
     print('Response from addSharedItem: ', response)
-
-    # Then shared item was added to share object in status PendingApproval
-    assert response.data.addSharedItem.shareUri == share1.shareUri
-    assert response.data.addSharedItem.status == \
-        dataall.api.constants.ShareItemStatus.PendingApproval.name
+    return response
 
 
-@pytest.mark.dependency(depends=["test_add_share_item"])
-def test_submit_share_request(
-        share1,
-        client,
-        user2,
-        group2
-):
-
-    # Given existing share object in status Draft (-> fixture)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
-                }
-            }
-        }
+def remove_share_item(client, user, group, shareItemUri):
+    q = """
+    mutation RemoveSharedItem($shareItemUri: String!) {
+      removeSharedItem(shareItemUri: $shareItemUri)
+    }
     """
 
     response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share1.shareUri,
-        groups=[group2.name],
+        q,
+        username=user.userName,
+        groups=[group.name],
+        shareItemUri=shareItemUri
     )
 
-    print('Response from getShareObject: ', response)
+    print('Response from removeSharedItem: ', response)
+    return response
 
-    # When submit share object
-    query = """
+
+def submit_share_object(client, user, group, shareUri):
+    q = """
         mutation submitShareObject($shareUri:String!){
             submitShareObject(shareUri:$shareUri){
                 status
@@ -747,69 +649,18 @@ def test_submit_share_request(
         """
 
     response = client.query(
-        query,
-        username=user2.userName,
-        shareUri=share1.shareUri,
-        groups=[group2.name],
-    )
-
-    # Then share object status is changed to Submitted
-    assert response.data.submitShareObject.status == \
-        dataall.api.constants.ShareObjectStatus.Submitted.name
-    assert response.data.submitShareObject.userRoleForShareObject == 'Requesters'
-
-    # Then shared item status stays in PendingApproval
-    sharedItem = response.data.submitShareObject.get('items').nodes[0]
-    status = sharedItem['status']
-    status == dataall.api.constants.ShareItemStatus.PendingApproval.name
-
-
-@pytest.mark.dependency(depends=["test_submit_share_request"])
-def test_approve_share_request(
-        share1,
-        client,
-        user,
-        group,
-        db
-):
-
-    # Given existing share object in status  (-> Submitted)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                items {
-                    count
-                    page
-                    pages
-                    hasNext
-                    hasPrevious
-                    nodes {
-                        itemUri
-                        shareItemUri
-                        itemType
-                        itemName
-                        status
-                        action
-                    }
-                }
-            }
-        }
-    """
-
-    response = client.query(
-        getShareObjectQuery,
+        q,
         username=user.userName,
-        shareUri=share1.shareUri,
         groups=[group.name],
+        shareUri=shareUri,
     )
 
-    print('Response from getShareObject: ', response)
+    print('Response from submitShareObject: ', response)
+    return response
 
-    query = """
+
+def approve_share_object(client, user, group, shareUri):
+    q = """
             mutation approveShareObject($shareUri:String!){
                 approveShareObject(shareUri:$shareUri){
                     status
@@ -820,27 +671,77 @@ def test_approve_share_request(
             """
 
     response = client.query(
-        query,
+        q,
         username=user.userName,
-        shareUri=share1.shareUri,
         groups=[group.name],
+        shareUri=shareUri,
     )
-    assert response.data.approveShareObject.status == \
-           dataall.api.constants.ShareObjectStatus.Approved.name
-    assert response.data.approveShareObject.userRoleForShareObject == 'Approvers'
 
-    # Given the approved share object is processed and the shared items
-    # are successfully shared
-    _successfull_processing_for_share_object(db, share1)
+    print('Response from approveShareObject: ', response)
+    return response
 
 
-@pytest.mark.dependency(depends=["test_approve_share_request"])
-def test_search_shared_items_in_environment(
-        client,
-        user2,
-        env2,
-        group2
-):
+def reject_share_object(client, user, group, shareUri):
+    q = """
+    mutation RejectShareObject($shareUri: String!) {
+      rejectShareObject(shareUri: $shareUri) {
+        shareUri
+        status
+      }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[group.name],
+        shareUri=shareUri,
+    )
+
+    print('Response from rejectShareObject: ', response)
+    return response
+
+
+def revoke_items_share_object(client, user, group, shareUri, revoked_items_uris):
+    q = """
+        mutation revokeItemsShareObject($input: RevokeItemsInput) {
+            revokeItemsShareObject(input: $input) {
+                shareUri
+                status
+            }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[group.name],
+        input={
+            'shareUri': shareUri,
+            'revokedItemUris': revoked_items_uris
+        },
+    )
+    print('Response from revokeItemsShareObject: ', response)
+    return response
+
+
+def delete_share_object(client, user, group, shareUri):
+    q = """
+        mutation DeleteShareObject($shareUri: String!){
+          deleteShareObject(shareUri:$shareUri)
+        }
+    """
+    response = client.query(
+        q,
+        username=user,
+        groups=[group.name],
+        shareUri=shareUri,
+    )
+    print('Response from deleteShareObject: ', response)
+    return response
+
+
+def list_datasets_published_in_environment(client, user, group, environmentUri):
     q = """
         query searchEnvironmentDataItems(
             $environmentUri:String!, $filter:EnvironmentDataItemFilter
@@ -868,376 +769,581 @@ def test_search_shared_items_in_environment(
     """
     response = client.query(
         q,
-        username=user2.userName,
-        groups=[group2.name],
-        environmentUri=env2.environmentUri,
+        username=user.userName,
+        groups=[group.name],
+        environmentUri=environmentUri,
         filter={},
     )
-    print("searchEnvironmentDataItems response: ", response.data.searchEnvironmentDataItems)
-    assert response.data.searchEnvironmentDataItems.nodes[0].principalId == group2.name
+    print("searchEnvironmentDataItems response: ", response)
+    return response
 
 
-@pytest.mark.dependency(depends=["test_approve_share_request"])
-def test_revoke_items_share_request(
-        client,
-        share1,
-        user2,
-        group2,
-        db
+# Tests
+def test_create_share_object_unauthorized(client, group3, dataset1, env2, env2group):
+    # Given
+    # Existing dataset, target environment and group
+    # When a user that does not belong to environment and group creates request
+    create_share_object_response = create_share_object(
+        client=client,
+        userName='anonymous',
+        group=group3,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then, user gets Unauthorized error
+    assert 'Unauthorized' in create_share_object_response.errors[0].message
+
+
+def test_create_share_object_authorized(client, user2, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # When a user that belongs to environment and group creates request
+    create_share_object_response = create_share_object(
+        client=client,
+        userName=user2.userName,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+
+
+def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
+    # Given
+    # Existing dataset, table, target environment and group
+    # When a user that belongs to environment and group creates request with table in the request
+    create_share_object_response = create_share_object(
+        client=client,
+        userName=user2.userName,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        itemUri=table1.tableUri
+    )
+
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+
+    # And item has been added to the share request
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=create_share_object_response.data.createShareObject.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemUri == table1.tableUri
+    assert get_share_object_response.data.getShareObject.get('items').nodes[
+               0].itemType == dataall.api.constants.ShareableType.Table.name
+
+
+def test_get_share_object(client, share1_draft, user, group):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the approvers group gets the share object
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share1_draft.shareUri,
+        filter={}
+    )
+    # Then we get the info about the share
+    assert get_share_object_response.data.getShareObject.shareUri == share1_draft.shareUri
+    assert get_share_object_response.data.getShareObject.get(
+        'principal').principalType == dataall.api.constants.PrincipalType.Group.name
+    assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
+    assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
+    assert get_share_object_response.data.getShareObject.get('principal').region
+
+
+def test_list_dataset_share_objects_approvers(
+        client, user, group, share1_draft, dataset1
 ):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from the Approvers group lists the share objects for a dataset
+    list_dataset_share_objects_response = list_dataset_share_objects(
+        client=client,
+        user=user,
+        group=group,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then, userRoleForShareObject is Approvers
+    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
+    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Approvers'
 
-    # Given existing share object in status Completed
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                userRoleForShareObject
-                principal {
-                  principalId
-                  principalType
-                  principalName
-                  principalIAMRoleName
-                  SamlGroupName
-                  environmentUri
-                  environmentName
-                  AwsAccountId
-                  region
-                  organizationUri
-                  organizationName
-                }
-                items(filter: $filter) {
-                  count
-                  page
-                  pages
-                  hasNext
-                  hasPrevious
-                  nodes {
-                    itemUri
-                    shareItemUri
-                    itemType
-                    itemName
-                    status
-                    action
-                  }
-                }
-                dataset {
-                  datasetUri
-                  datasetName
-                  SamlAdminGroupName
-                  environmentName
-                  exists
-                }
-              }
-            }
-    """
 
-    response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share1.shareUri,
+def test_list_dataset_share_objects_unauthorized(
+        client, user3, group4, share1_draft, dataset1
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from neither Approvers or Requesters group lists the share objects for a dataset
+    list_dataset_share_objects_response = list_dataset_share_objects(
+        client=client,
+        user=user3,
+        group=group4,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then, userRoleForShareObject is 'NoPermission'
+    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
+    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'NoPermission'
+
+
+def test_list_dataset_share_objects_requesters(
+        client, user2, group2, share1_draft, dataset1
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from the Requesters group lists the share objects for a dataset
+    list_dataset_share_objects_response = list_dataset_share_objects(
+        client=client,
+        user=user2,
+        group=group2,
+        datasetUri=dataset1.datasetUri
+    )
+    # Then, userRoleForShareObject is 'Requesters'
+    assert list_dataset_share_objects_response.data.getDataset.shares.count == 2
+    assert list_dataset_share_objects_response.data.getDataset.shares.nodes[0].userRoleForShareObject == 'Requesters'
+
+
+def test_list_shares_to_me_approver(
+        client, user, group, share1_draft
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from the Approvers group lists the share objects sent to him
+    get_share_requests_to_me_response = get_share_requests_to_me(client=client, user=user, group=group)
+    # Then he sees the 2 shares
+    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 2
+
+
+def test_list_shares_to_me_requester(
+        client, user2, group2, share1_draft
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the Requesters group lists the share objects sent to him
+    get_share_requests_to_me_response = get_share_requests_to_me(client=client, user=user2, group=group2)
+    # Then he sees None
+    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 0
+
+
+def test_list_shares_from_me_approver(
+        client, user, group, share1_draft
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from the Approvers group lists the share objects sent from him
+    get_share_requests_from_me_response = get_share_requests_from_me(client=client, user=user, group=group)
+    # Then he sees None
+    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 0
+
+
+def test_list_shares_from_me_requester(
+        client, user2, group2, share1_draft
+):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
+    # When a user from the Requesters group lists the share objects sent from him
+    get_share_requests_from_me_response = get_share_requests_from_me(client=client, user=user2, group=group2)
+    # Then he sees the 2 shares
+    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 2
+
+
+def test_add_share_item(
+        client, user2, group2, share1_draft,
+
+):
+    # Given
+    # Existing share object in status Draft (-> fixture share1_draft)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={"isShared": False}
+    )
+    # Given existing shareable items (-> fixture)
+    shareableItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    itemUri = shareableItem['itemUri']
+    itemType = shareableItem['itemType']
+    shareItemUri = shareableItem['shareItemUri']
+    assert shareItemUri is None
+
+    # When we add item
+    add_share_item_response = add_share_item(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        itemUri=itemUri,
+        itemType=itemType
+    )
+
+    # Then shared item was added to share object in status PendingApproval
+    assert add_share_item_response.data.addSharedItem.shareUri == share1_draft.shareUri
+    assert add_share_item_response.data.addSharedItem.status == \
+           dataall.api.constants.ShareItemStatus.PendingApproval.name
+
+
+def test_remove_share_item(
+        client, user2, group2, share1_draft, share1_item_pa
+):
+    # Existing share object in status Draft (-> fixture share1_draft)
+    # with existing share item in status Pending Approval (-> fixture share_item_pa)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
         filter={"isShared": True},
-        groups=[group2.name],
     )
 
-    print('Response from getShareObject: ', response)
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
 
-    assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Processed.value
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share1_item_pa.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
+
+    # When
+    remove_share_item_response = remove_share_item(
+        client=client,
+        user=user2,
+        group=group2,
+        shareItemUri=shareItem.shareItemUri
     )
 
-    # Given shared item in status Share_Succeeded
-    sharedItem = response.data.getShareObject.get('items').nodes[0]
-    assert sharedItem['status'] == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
-    revoked_items_uris = [node.shareItemUri for node in response.data.getShareObject.get('items').nodes]
-
-    # When revoking items from share object
-    query = """
-        mutation revokeItemsShareObject($input: RevokeItemsInput) {
-            revokeItemsShareObject(input: $input) {
-                shareUri
-                status
-            }
-        }
-        """
-
-    response = client.query(
-        query,
-        username=user2.userName,
-        input={
-            'shareUri': share1.shareUri,
-            'revokedItemUris': revoked_items_uris
-        },
-        groups=[group2.name],
+    # Then there are no more shared items added to the request
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={"isShared": True}
     )
-    print('Response from revokeItemsShareObject: ', response)
+
+    assert get_share_object_response.data.getShareObject.get('items').count == 0
+
+
+def test_submit_share_request(
+        client, user2, group2, share1_draft, share1_item_pa,
+):
+    # Given
+    # Existing share object in status Draft (-> fixture share1_draft)
+    # with existing share item in status Pending Approval (-> fixture share1_item_pa)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share1_item_pa.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
+
+    # When
+    # Submit share object
+    submit_share_object_response = submit_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri
+    )
+
+    # Then share object status is changed to Submitted
+    assert submit_share_object_response.data.submitShareObject.status == \
+           dataall.api.constants.ShareObjectStatus.Submitted.name
+    assert submit_share_object_response.data.submitShareObject.userRoleForShareObject == 'Requesters'
+
+    # and share item status stays in PendingApproval
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={"isShared": True}
+    )
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    status = shareItem['status']
+    assert status == dataall.api.constants.ShareItemStatus.PendingApproval.name
+
+
+def test_approve_share_request(
+        db, client, user, group, share2_submitted, share2_item_pa
+):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # with existing share item in status Pending Approval (-> fixture share2_item_pa)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Submitted.value
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share2_item_pa.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
+
+    # When we approve the share object
+    approve_share_object_response = approve_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri
+    )
+
+    # UserRole for shareObject is the Approvers in this case (user, group)
+    assert approve_share_object_response.data.approveShareObject.userRoleForShareObject == 'Approvers'
+
+    # Then share object status is changed to Approved
+    assert approve_share_object_response.data.approveShareObject.status == \
+           dataall.api.constants.ShareObjectStatus.Approved.name
+
+    # and share item status is changed to Share_Approved
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={"isShared": True}
+    )
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Approved.value
+
+    # When approved share object is processed and the shared items successfully shared
+    _successfull_processing_for_share_object(db, share2_submitted)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={"isShared": True}
+    )
+
+    # Then share object status is changed to Processed
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+
+    # And share item status is changed to Share_Succeeded
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+
+
+def test_reject_share_request(
+        client, user, group, share2_submitted, share2_item_pa
+):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # with existing share item in status Pending Approval (-> fixture share2_item_pa)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Submitted.value
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share2_item_pa.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
+
+    # When we reject the share object
+    reject_share_object_response = reject_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri
+    )
+
+    # Then share object status is changed to Rejected
+    assert reject_share_object_response.data.rejectShareObject.status == \
+           dataall.api.constants.ShareObjectStatus.Rejected.name
+
+    # and share item status is changed to Share_Rejected
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={"isShared": True}
+    )
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Rejected.value
+
+
+def test_search_shared_items_in_environment(
+        client, user2, group2, share3_processed, share3_item_shared, env2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed) from env2
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+
+    list_datasets_published_in_environment_response = list_datasets_published_in_environment(
+        client=client,
+        user=user2,
+        group=group2,
+        environmentUri=env2.environmentUri
+    )
+    # Then we get the share information from the environment2
+    assert list_datasets_published_in_environment_response.data.searchEnvironmentDataItems.nodes[
+               0].principalId == group2.name
+
+
+def test_revoke_items_share_request(
+        db, client, user2, group2, share3_processed, share3_item_shared
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share3_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    revoked_items_uris = [node.shareItemUri for node in
+                          get_share_object_response.data.getShareObject.get('items').nodes]
+
+    # When
+    # revoking items from share object
+    revoke_items_share_object_response = revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        revoked_items_uris=revoked_items_uris
+    )
     # Then share object changes to status Rejected
-    assert response.data.revokeItemsShareObject.status == 'Revoked'
+    assert revoke_items_share_object_response.data.revokeItemsShareObject.status == dataall.api.constants.ShareObjectStatus.Revoked.value
 
-    response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share1.shareUri,
-        filter={"isShared": True},
-        groups=[group2.name],
+    # And shared item changes to status Revoke_Approved
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
     )
-    print('Response from getShareObjectQuery: ', response)
-
-    # Then shared item changes to status Revoke_Approved
-    sharedItem = response.data.getShareObject.get('items').nodes[0]
+    sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     status = sharedItem['status']
     assert status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
 
     # Given the revoked share object is processed and the shared items
-    # are successfully revoked. We can re-use the same successful processing function
-    _successfull_processing_for_share_object(db, share1)
+    # When approved share object is processed and the shared items successfully revoked (we re-use same function)
+    _successfull_processing_for_share_object(db, share3_processed)
 
-
-@pytest.mark.dependency(depends=["test_revoke_items_share_request"])
-def test_delete_share_object(client, share1, dataset1, group, user2, group2, env2):
-    # Given existing share object in status Rejected (-> fixture)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                userRoleForShareObject
-                principal {
-                  principalId
-                  principalType
-                  principalName
-                  principalIAMRoleName
-                  SamlGroupName
-                  environmentUri
-                  environmentName
-                  AwsAccountId
-                  region
-                  organizationUri
-                  organizationName
-                }
-                items(filter: $filter) {
-                  count
-                  page
-                  pages
-                  hasNext
-                  hasPrevious
-                  nodes {
-                    itemUri
-                    shareItemUri
-                    itemType
-                    itemName
-                    status
-                    action
-                  }
-                }
-                dataset {
-                  datasetUri
-                  datasetName
-                  SamlAdminGroupName
-                  environmentName
-                  exists
-                }
-              }
-            }
-    """
-
-    response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share1.shareUri,
-        filter={"isShared": True},
-        groups=[group2.name],
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
     )
 
-    print('Response from getShareObject: ', response)
+    # Then share object status is changed to Processed
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+
+    # And share item status is changed to Revoke_Succeeded
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Revoke_Succeeded.value
+
+
+def test_delete_share_object(
+        client, user2, group2, share4_draft
+):
+    # Given
+    # Existing share object in status Draft (-> fixture share4_draft) with no cleanup functions
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share4_draft.shareUri,
+        filter={"isShared": True}
+    )
+
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
 
     # When deleting the share object
-    DeleteShareObjectQuery = """
-        mutation DeleteShareObject($shareUri: String!){
-          deleteShareObject(shareUri:$shareUri)
-        }
-    """
-    response = client.query(
-        DeleteShareObjectQuery,
-        username=user2.userName,
-        groups=[group2.name],
-        shareUri=share1.shareUri,
+    delete_share_object_response = delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share4_draft.shareUri
     )
     # It is successfully deleted
-    assert response.data.deleteShareObject
+    assert delete_share_object_response.data.deleteShareObject
 
 
-@pytest.mark.dependency()
-def test_remove_share_item(
-        share2,
-        share_item2_pa,
-        client,
-        user2,
-        group2
-):
-    # Given existing share object in status Draft with 2 share items (-> fixture)
-    getShareObjectQuery = """
-        query getShareObject($shareUri: String!, $filter: ShareableObjectFilter) {
-              getShareObject(shareUri: $shareUri) {
-                shareUri
-                created
-                owner
-                status
-                userRoleForShareObject
-                principal {
-                  principalId
-                  principalType
-                  principalName
-                  principalIAMRoleName
-                  SamlGroupName
-                  environmentUri
-                  environmentName
-                  AwsAccountId
-                  region
-                  organizationUri
-                  organizationName
-                }
-                items(filter: $filter) {
-                  count
-                  page
-                  pages
-                  hasNext
-                  hasPrevious
-                  nodes {
-                    itemUri
-                    shareItemUri
-                    itemType
-                    itemName
-                    status
-                    action
-                  }
-                }
-                dataset {
-                  datasetUri
-                  datasetName
-                  SamlAdminGroupName
-                  environmentName
-                  exists
-                }
-              }
-            }
-    """
-
-    response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share2.shareUri,
-        filter={"isShared": True},
-        groups=[group2.name],
-    )
-
-    print('Response from getShareObject: ', response)
-
-    assert (
-        response.data.getShareObject.status
-        == dataall.api.constants.ShareObjectStatus.Draft.name
-    )
-
-    # Given existing pendingapproval added items (-> fixture)
-    shareItem = response.data.getShareObject.get('items').nodes[0]
-    assert shareItem.shareItemUri == share_item2_pa.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
-    assert response.data.getShareObject.get('items').count == 1
-
-    # When
-    removeSharedItemQuery = """
-    mutation RemoveSharedItem($shareItemUri: String!) {
-      removeSharedItem(shareItemUri: $shareItemUri)
-    }
-    """
-
-    response = client.query(
-        removeSharedItemQuery,
-        username=user2.userName,
-        groups=[group2.name],
-        shareItemUri=shareItem.shareItemUri
-    )
-
-    print('Response from removeSharedItem: ', response)
-
-    # Then there are no more shared items added to the request
-    response = client.query(
-        getShareObjectQuery,
-        username=user2.userName,
-        shareUri=share2.shareUri,
-        filter={"isShared": True},
-        groups=[group2.name],
-    )
-
-    print('Response from getShareObject: ', response)
-    assert response.data.getShareObject.get('items').count == 0
-
-
-
-@pytest.mark.dependency(depends=["test_remove_share_item"])
 def test_delete_share_object_remaining_items_error(
-        client,
-        share2,
-        share_item2_shared,
-        dataset1,
-        user,
-        group,
-        env2
+        client, user2, group2, share3_processed, share3_item_shared,
 ):
-    # Given existing share object in status Rejected (-> fixture)
-    getShareObjectQuery = """
-            query getShareObject($shareUri: String!) {
-                  getShareObject(shareUri: $shareUri) {
-                    shareUri
-                    created
-                    owner
-                    status
-                    items {
-                        count
-                        page
-                        pages
-                        hasNext
-                        hasPrevious
-                        nodes {
-                            itemUri
-                            shareItemUri
-                            itemType
-                            itemName
-                            status
-                            action
-                        }
-                    }
-                }
-            }
-        """
-
-    response = client.query(
-        getShareObjectQuery,
-        username=user.userName,
-        shareUri=share2.shareUri,
-        groups=[group.name],
+    # Given
+    # Existing share object in status Processed (-> fixture share3_processed)
+    # with existing share item in status Share_Succeeded (-> fixture share_item_shared)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri,
+        filter={"isShared": True}
     )
 
-    print('Response from getShareObject: ', response)
+    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+
+    shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
+    assert shareItem.shareItemUri == share3_item_shared.shareItemUri
+    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When deleting the share object
-    DeleteShareObjectQuery = """
-        mutation DeleteShareObject($shareUri: String!){
-          deleteShareObject(shareUri:$shareUri)
-        }
-    """
-    response = client.query(
-        DeleteShareObjectQuery,
-        username=user.userName,
-        groups=[group.name],
-        shareUri=share2.shareUri,
+    delete_share_object_response = delete_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed.shareUri
     )
-    assert 'UnauthorizedOperation' in response.errors[0].message
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in delete_share_object_response.errors[0].message
 
 
 def _successfull_processing_for_share_object(db, share):
