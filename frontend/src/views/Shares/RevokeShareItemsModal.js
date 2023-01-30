@@ -59,30 +59,39 @@ const RevokeShareItemsModal = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri, filter]);
 
-  const revoke = async () => {
-    setLoading(true);
-    const response = await client.mutate(
-      revokeItemsShareObject({
-        input: {
-          shareUri: share.shareUri,
-          revokedItemUris: selectionModel
-        }
-      })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Items revoked', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      fetchShareItems();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  };
+  const revoke = useCallback(
+    async () => {
+      const response = await client.mutate(
+        revokeItemsShareObject({
+          input: {
+            shareUri: share.shareUri,
+            revokedItemUris: selectionModel
+          }
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Items revoked', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        await fetchShareItems();
+        reloadSharedItems(true);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    },
+    [
+    client,
+    dispatch,
+    fetchShareItems,
+    reloadSharedItems,
+    enqueueSnackbar,
+    share.shareUri
+    ]
+  );
 
 
 

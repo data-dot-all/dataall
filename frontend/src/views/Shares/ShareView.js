@@ -765,6 +765,7 @@ const ShareView = () => {
             share={share}
             onApply={handleRevokeItemModalClose}
             onClose={handleRevokeItemModalClose}
+            reloadSharedItems={fetchShareItems}
             open={isRevokeItemsModalOpen}
           />
         )}
