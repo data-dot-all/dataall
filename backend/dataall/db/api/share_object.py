@@ -21,6 +21,10 @@ SHARE_ITEM_SHARED_STATES = [
     ShareItemStatus.Revoke_Approved.value
 ]
 
+SHARE_ITEM_REVOKABLE_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 class Transition:
     def __init__(self, name, transitions):
@@ -929,7 +933,7 @@ class ShareObject:
         )
         if data:
             if data.get("isRevokable"):
-                tables = tables.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES))
+                tables = tables.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_REVOKABLE_STATES))
 
         # All folders from the dataset with a column isShared
         # marking the folder as part of the shareObject
