@@ -26,6 +26,7 @@ SHARE_ITEM_REVOKABLE_STATES = [
     ShareItemStatus.Revoke_Failed.value,
 ]
 
+
 class Transition:
     def __init__(self, name, transitions):
         self._name = name
