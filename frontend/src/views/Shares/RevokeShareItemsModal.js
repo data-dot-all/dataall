@@ -59,42 +59,33 @@ const RevokeShareItemsModal = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri, filter]);
 
-  const revoke = useCallback(
-    async () => {
-      const response = await client.mutate(
-        revokeItemsShareObject({
-          input: {
-            shareUri: share.shareUri,
-            revokedItemUris: selectionModel
-          }
-        })
-      );
-      if (!response.errors) {
-        enqueueSnackbar('Items revoked', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        await fetchShareItems();
-        reloadSharedItems(true);
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    },
-    [
-    client,
-    dispatch,
-    fetchShareItems,
-    reloadSharedItems,
-    enqueueSnackbar,
-    share.shareUri
-    ]
-  );
 
-
-
+  const revoke = async () => {
+    setLoading(true);
+    const response = await client.mutate(
+      revokeItemsShareObject({
+        input: {
+          shareUri: share.shareUri,
+          revokedItemUris: selectionModel
+        }
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Items revoked', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      await fetchShareItems();
+      reloadSharedItems(true);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
+  };
+  
   useEffect(() => {
     if (client) {
       fetchShareItems().catch((e) =>
@@ -102,7 +93,7 @@ const RevokeShareItemsModal = (props) => {
       );
     }
   }, [client, dispatch, fetchShareItems]);
-
+  
   if (!share) {
     return null;
   }
@@ -181,6 +172,7 @@ RevokeShareItemsModal.propTypes = {
   share: PropTypes.object.isRequired,
   onApply: PropTypes.func,
   onClose: PropTypes.func,
+  reloadSharedItems: PropTypes.func,
   open: PropTypes.bool.isRequired
 };
 
