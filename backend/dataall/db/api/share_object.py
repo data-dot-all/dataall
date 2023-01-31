@@ -963,7 +963,7 @@ class ShareObject:
         )
         if data:
             if data.get("isRevokable"):
-                locations = locations.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES))
+                locations = locations.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_REVOKABLE_STATES))
 
         shareable_objects = tables.union(locations).subquery('shareable_objects')
         query = session.query(shareable_objects)
