@@ -27,12 +27,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {
   BlockOutlined,
   CheckCircleOutlined,
+  CopyAllOutlined,
   DeleteOutlined,
   RemoveCircleOutlineOutlined,
   LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
+import { useTheme } from '@mui/styles';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
@@ -383,6 +386,7 @@ const ShareView = () => {
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [loadingShareItems, setLoadingShareItems] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
@@ -391,6 +395,21 @@ const ShareView = () => {
   const handleAddItemModalClose = () => {setIsAddItemModalOpen(false);};
   const handleRevokeItemModalOpen = () => {setIsRevokeItemsModalOpen(true);};
   const handleRevokeItemModalClose = () => {setIsRevokeItemsModalOpen(false);};
+  const handlePageChange = async (event, value) => {
+    if (value <= sharedItems.pages && value !== sharedItems.page) {
+      await setFilter({ ...filter, isShared: true, page: value });
+    }
+  };
+  const copyNotification = () => {
+    enqueueSnackbar('Copied to clipboard', {
+      anchorOrigin: {
+        horizontal: 'right',
+        vertical: 'top'
+      },
+      variant: 'success'
+    });
+  };
+  
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -403,7 +422,6 @@ const ShareView = () => {
     }
     setLoading(false);
   }, [client, dispatch, params.uri]);
-
   const fetchShareItems = useCallback(
     async (isAddingItem = false) => {
       setLoadingShareItems(true);
@@ -428,13 +446,7 @@ const ShareView = () => {
     },
     [client, dispatch, filter, fetchItem, params.uri]
   );
-
-  const handlePageChange = async (event, value) => {
-    if (value <= sharedItems.pages && value !== sharedItems.page) {
-      await setFilter({ ...filter, isShared: true, page: value });
-    }
-  };
-
+    
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -674,6 +686,70 @@ const ShareView = () => {
                   </Card>
                 </Grid>
               </Grid>
+              <Box sx={{ mb: 3 }}>
+                <Card {...share}>
+                  <Box>
+                    <CardHeader title="Data Consumption details" />
+                    <Divider />
+                  </Box>
+                  <CardContent>
+                    <Box>
+                      <Box>
+                        <Typography display="inline" color="textSecondary" variant="subtitle2">
+                          S3 Access Point name (Folder sharing):
+                        </Typography>
+                        <Typography display="inline" color="textPrimary" variant="subtitle2">
+                          {` ${share.consumptionData.s3AccessPointName || '-'}`}
+                        </Typography>
+                        <Typography color="textPrimary" variant="subtitle2">
+                          <CopyToClipboard
+                            onCopy={() => copyNotification()}
+                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                          >
+                            <IconButton>
+                              <CopyAllOutlined
+                                sx={{
+                                  color:
+                                    theme.palette.mode === 'dark'
+                                      ? theme.palette.primary.contrastText
+                                      : theme.palette.primary.main
+                                }}
+                              />
+                            </IconButton>
+                          </CopyToClipboard>
+                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ mt: 3 }}>
+                        <Typography display="inline" color="textSecondary" variant="subtitle2">
+                          Glue database name (Table sharing):
+                        </Typography>
+                        <Typography display="inline" color="textPrimary" variant="subtitle2">
+                          {` ${share.consumptionData.sharedGlueDatabase || '-'}`}
+                        </Typography>
+                        <Typography color="textPrimary" variant="subtitle2">
+                          <CopyToClipboard
+                            onCopy={() => copyNotification()}
+                            text={`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                          >
+                            <IconButton>
+                              <CopyAllOutlined
+                                sx={{
+                                  color:
+                                    theme.palette.mode === 'dark'
+                                      ? theme.palette.primary.contrastText
+                                      : theme.palette.primary.main
+                                }}
+                              />
+                            </IconButton>
+                          </CopyToClipboard>
+                          {`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
               <Card>
                 <CardHeader
                   title="Shared Items"
