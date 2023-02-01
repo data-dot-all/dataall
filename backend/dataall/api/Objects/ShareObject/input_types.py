@@ -23,6 +23,15 @@ AddSharedItemInput = gql.InputType(
 )
 
 
+RevokeItemsInput = gql.InputType(
+    name='RevokeItemsInput',
+    arguments=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='revokedItemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+    ],
+)
+
+
 class ShareSortField(GraphQLEnumMapper):
     created = 'created'
     updated = 'updated'
@@ -60,6 +69,7 @@ ShareableObjectFilter = gql.InputType(
         gql.Argument(name='term', type=gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument(name='isShared', type=gql.Boolean),
+        gql.Argument(name='isRevokable', type=gql.Boolean),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
     ],

@@ -32,7 +32,7 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import { SET_ERROR } from '../../store/errorReducer';
 import listDatasetsOwnedByEnvGroup from '../../api/Environment/listDatasetsOwnedByEnvGroup';
 import listDatasetTables from '../../api/Dataset/listDatasetTables';
-import getSharedDatasetTables from '../../api/Dataset/getSharedDatasetTables';
+import getSharedDatasetTables from '../../api/DatasetTable/getSharedDatasetTables';
 import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
 import searchEnvironmentDataItems from '../../api/Environment/listDatasetsPublishedInEnvironment';
 import PencilAltIcon from '../../icons/PencilAlt';

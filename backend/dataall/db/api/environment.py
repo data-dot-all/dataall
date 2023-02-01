@@ -17,6 +17,7 @@ from ..api.organization import Organization
 from ..models import EnvironmentGroup
 from ..models.Enums import (
     ShareObjectStatus,
+    ShareItemStatus,
     ShareableType,
     EnvironmentType,
     EnvironmentPermission,
@@ -29,6 +30,15 @@ from ...utils.naming_convention import (
 )
 
 log = logging.getLogger(__name__)
+
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 
 class Environment:
@@ -925,12 +935,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareObjectStatus.Share_Succeeded.value,
-                            ShareObjectStatus.Approved.value,
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == uri,
                 )
             )
@@ -1021,12 +1026,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(
-                        [
-                            ShareObjectStatus.Share_Succeeded.value,
-                            ShareObjectStatus.Approved.value,
-                        ]
-                    ),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == envUri,
                     models.ShareObject.principalId == groupUri,
                 )
@@ -1146,7 +1146,7 @@ class Environment:
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     models.ShareObject.environmentUri == uri,
                 )
             )

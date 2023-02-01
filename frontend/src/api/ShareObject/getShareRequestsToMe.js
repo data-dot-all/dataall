@@ -33,6 +33,10 @@ const getShareRequestsToMe = ({ filter }) => ({
           statistics {
             tables
             locations
+            sharedItems
+            revokedItems
+            failedItems
+            pendingItems
           }
           dataset {
             datasetUri

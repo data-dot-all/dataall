@@ -222,6 +222,23 @@ class Glue:
                 return response
 
     @staticmethod
+    def delete_table(accountid, region, database, tablename):
+        session = SessionHelper.remote_session(accountid=accountid)
+        client = session.client('glue', region_name=region)
+        log.info(
+            'Deleting table {} in database {}'.format(
+                tablename, database
+            )
+        )
+        response = client.delete_table(
+            CatalogId=accountid,
+            DatabaseName=database,
+            Name=tablename
+        )
+
+        return response
+
+    @staticmethod
     def create_resource_link(**data):
         accountid = data['accountid']
         region = data['region']

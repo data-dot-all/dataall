@@ -6,9 +6,19 @@ from sqlalchemy.sql import and_
 from .. import models, api, permissions, exceptions, paginate
 from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from ..models import Dataset
+from ..models.Enums import ShareItemStatus
 from ...utils import json_utils
 
 logger = logging.getLogger(__name__)
+
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 
 class DatasetTable:
@@ -78,7 +88,6 @@ class DatasetTable:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
-    # @has_resource_perm(permissions.LIST_DATASET_TABLES)
     def list_dataset_tables(
         session,
         username: str,
@@ -101,7 +110,6 @@ class DatasetTable:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
-    # @has_resource_perm(permissions.LIST_DATASET_TABLES)
     def get_dataset_table(
         session,
         username: str,
@@ -155,7 +163,7 @@ class DatasetTable:
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == table.tableUri,
-                    models.ShareObjectItem.status == 'Approved',
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
                 )
             )
             .first()
@@ -176,7 +184,7 @@ class DatasetTable:
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, status: List[str]
+        session, environment_uri: str, dataset_uri: str
     ):
         """For a given dataset, returns the list of Tables shared with the environment
         This means looking at approved ShareObject items
@@ -197,7 +205,7 @@ class DatasetTable:
                     models.ShareObject.datasetUri == dataset_uri,  # for this dataset
                     models.ShareObject.environmentUri
                     == environment_uri,  # for this environment
-                    models.ShareObject.status.in_(status),
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                 )
             )
             .all()
@@ -207,12 +215,12 @@ class DatasetTable:
 
     @staticmethod
     def get_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, status: List[str]
+        session, environment_uri: str, dataset_uri: str
     ):
         return [
             {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
             for t in DatasetTable.query_dataset_tables_shared_with_env(
-                session, environment_uri, dataset_uri, status
+                session, environment_uri, dataset_uri
             )
         ]
 
@@ -237,7 +245,9 @@ class DatasetTable:
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
             DatasetTable.update_existing_tables_status(existing_tables, glue_tables)
-
+            logger.info(
+                f'existing_tables={glue_tables}'
+            )
             for table in glue_tables:
                 if table['Name'] not in existing_table_names:
                     logger.info(
@@ -340,22 +350,6 @@ class DatasetTable:
             )
         ).delete()
         session.commit()
-
-    @staticmethod
-    def get_dataset_by_uri(session, table_uri):
-        table: models.DatasetTable = session.query(models.DatasetTable).get(table_uri)
-        if not table:
-            raise Exception(f'DatasetTableNotFound{table_uri}')
-        dataset: Dataset = session.query(Dataset).get(table.datasetUri)
-        if not dataset:
-            raise Exception(f'DatasetNotFound{table.datasetUri}')
-        return dataset
-
-    @staticmethod
-    def list_all_tables(session) -> models.DatasetTable:
-        tables = session.query(models.DatasetTable).all()
-        logging.info(f'All Tables found {tables}')
-        return tables
 
     @staticmethod
     def get_table_by_s3_prefix(session, s3_prefix, accountid, region):

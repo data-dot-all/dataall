@@ -131,7 +131,7 @@ class ResourcePolicy:
         resource_type: str,
     ) -> models.ResourcePolicy:
 
-        ResourcePolicy.validate_add_permission_to_resource_policy_params(
+        ResourcePolicy.validate_attach_resource_policy_params(
             group, permissions, resource_uri, resource_type
         )
 
