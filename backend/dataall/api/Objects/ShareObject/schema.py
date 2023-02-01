@@ -91,6 +91,8 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='datasetName', type=gql.String),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
     ],
 )

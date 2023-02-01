@@ -50,6 +50,8 @@ const getShareObject = ({ shareUri, filter }) => ({
           datasetName
           SamlAdminGroupName
           environmentName
+          AwsAccountId
+          region
           exists
         }
       }

@@ -257,6 +257,8 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
                 'datasetName': ds.name if ds else 'NotFound',
                 'SamlAdminGroupName': ds.SamlAdminGroupName if ds else 'NotFound',
                 'environmentName': env.label if env else 'NotFound',
+                'AwsAccountId': env.AwsAccountId if env else 'NotFound',
+                'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
             }
 
@@ -307,7 +309,7 @@ def resolve_consumption_data(context: Context, source: models.ShareObject, **kwa
             )
             return {
                 's3AccessPointName': S3AccessPointName,
-                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.share.shareUri)[:254] if ds else 'Not created',
+                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
             }
 
 
