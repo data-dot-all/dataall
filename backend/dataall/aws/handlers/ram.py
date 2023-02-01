@@ -141,11 +141,11 @@ class Ram:
         # source = data['source']
         # target = data['target']
 
-        if source['accountid'] == target.AwsAccountId:
+        if source['account'] == target.AwsAccountId:
             log.debug('Skipping RAM invitation management for same account sharing.')
             return True
 
-        source_session = SessionHelper.remote_session(accountid=source['accountid'])
+        source_session = SessionHelper.remote_session(accountid=source['account'])
         source_ram = source_session.client('ram', region_name=source['region'])
 
         target_session = SessionHelper.remote_session(accountid=target.AwsAccountId)
@@ -159,7 +159,7 @@ class Ram:
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
         ram_invitations = Ram.get_resource_share_invitations(
-            target_ram, resource_share_arns, source['accountid'], target['accountid']
+            target_ram, resource_share_arns, source['account'], target.AwsAccountId
         )
         log.info(
             f'Found {len(ram_invitations)} RAM invitations for resourceShareArn: {resource_share_arns}'

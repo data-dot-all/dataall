@@ -343,7 +343,7 @@ class LakeFormation:
             logging.info(f'Successfully create LF Tag {tag_name}')
 
         except ClientError as e:
-            print(f'LF Tag {tag_name} already exists, skippping create attempting update...')
+            logging.info(f'LF Tag {tag_name} already exists, skippping create attempting update...')
             try:
                 lf_client.update_lf_tag(
                     CatalogId=accountid,
@@ -351,9 +351,9 @@ class LakeFormation:
                     TagValuesToAdd=tag_values
                 )
             except ClientError as e:
-                print(f'LF Tag {tag_name} already has value {tag_values}, skippping update...')
-                pass    
-        return True
+                logging.info(f'LF Tag {tag_name} already has value {tag_values}, skippping update...')
+                pass
+        return
 
     @staticmethod
     @Worker.handler('lakeformation.column.assign.lftags')
@@ -536,7 +536,8 @@ class LakeFormation:
                     #         pass
 
                     # Add Tag to Resource
-                    lf_client.add_lf_tags_to_resource(
+                    logging.info(f'Adding LF Tag {tagkey} with Key {lftags_to_assign[tagkey]} to table {dataset_table.GlueTableName}...')
+                    response = lf_client.add_lf_tags_to_resource(
                         CatalogId=dataset_table.AWSAccountId,
                         Resource={
                             'Table': {
@@ -553,6 +554,7 @@ class LakeFormation:
                             },
                         ]
                     )
+                    logging.info(response)
         
         # Remove Existing Tags that are No Longer Assigned
         logging.info(f"Existing Tags: {existing_tags}")

@@ -420,7 +420,7 @@ class ShareObject:
             group=groupUri,
             permissions=permissions.SHARE_OBJECT_REQUESTER,
             resource_uri=share.lftagShareUri,
-            resource_type=models.ShareObject.__name__,
+            resource_type=models.LFTagShareObject.__name__,
         )
         # ResourcePolicy.attach_resource_policy(
         #     session=session,
@@ -429,12 +429,13 @@ class ShareObject:
         #     resource_uri=share.shareUri,
         #     resource_type=models.ShareObject.__name__,
         # )
+        
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=lftag.owner,
             permissions=permissions.SHARE_OBJECT_APPROVER,
             resource_uri=share.lftagShareUri,
-            resource_type=models.ShareObject.__name__,
+            resource_type=models.LFTagShareObject.__name__,
         )
         # if dataset.SamlAdminGroupName != environment.SamlGroupName:
         #     ResourcePolicy.attach_resource_policy(
@@ -1449,6 +1450,7 @@ class ShareObject:
                 )
             )
         )
+
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
 
@@ -1511,7 +1513,7 @@ class ShareObject:
         )
 
     @staticmethod
-    def get_lftag_share_data(session, lftag_share_uri):
+    def get_lftag_share_data(session, lftag_share_uri, status):
         lftag_share: models.LFTagShareObject = session.query(models.LFTagShareObject).get(lftag_share_uri)
         if not lftag_share:
             raise exceptions.ObjectNotFound('Share', lftag_share_uri)
@@ -1522,9 +1524,9 @@ class ShareObject:
         if not target_environment:
             raise exceptions.ObjectNotFound('TargetEnvironment', lftag_share.environmentUri)
 
-        if lftag_share.status != "Approved":
+        if lftag_share.status != status:
             raise Exception(
-                'Share not Approved'
+                f'Share not matching {status}'
             )
 
         source_env_list = []

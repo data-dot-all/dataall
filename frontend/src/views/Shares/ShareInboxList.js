@@ -12,7 +12,7 @@ import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
 import getShareRequestsToMe from '../../api/ShareObject/getShareRequestsToMe';
 import listDatasetShareObjects from '../../api/Dataset/listShareObjects';
-import getLFTagShareRequestsToMe from '../../api/ShareObject/getLFTagShareRequestsFromMe';
+import getLFTagShareRequestsToMe from '../../api/ShareObject/getLFTagShareRequestsToMe';
 import ShareInboxListLFTagItem from './ShareInboxListLFTagItem';
 
 const ShareInboxList = (props) => {
@@ -72,7 +72,7 @@ const ShareInboxList = (props) => {
       })
     );
     if (!lftag_response.errors) {
-      setLFTagItems(lftag_response.data.getLFTagShareRequestsFromMe)
+      setLFTagItems(lftag_response.data.getLFTagShareRequestsToMe)
     } else {
       dispatch({ type: SET_ERROR, error: lftag_response.errors[0].message });
     }

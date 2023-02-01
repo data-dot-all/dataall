@@ -30,7 +30,7 @@ getShareRequestsToMe = gql.QueryField(
 )
 
 getLFTagShareRequestsToMe = gql.QueryField(
-    name='getLFTagShareRequestsFromMe',
+    name='getLFTagShareRequestsToMe',
     args=[gql.Argument(name='filter', type=gql.Ref('ShareObjectFilter'))],
     type=gql.Ref('LFTagShareSearchResult'),
     resolver=list_lftag_shares_in_my_inbox,

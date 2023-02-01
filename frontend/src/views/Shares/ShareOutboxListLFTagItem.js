@@ -20,7 +20,7 @@ import TextAvatar from '../../components/TextAvatar';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
-import submitApproval from '../../api/ShareObject/submitApproval';
+import submitLFTagApproval from '../../api/ShareObject/submitLFTagApproval';
 import PencilAltIcon from '../../icons/PencilAlt';
 
 const ShareOutboxListLFTagItem = (props) => {
@@ -33,8 +33,8 @@ const ShareOutboxListLFTagItem = (props) => {
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
-      submitApproval({
-        shareUri: share.lftagShareUri
+      submitLFTagApproval({
+        lftagShareUri: share.lftagShareUri
       })
     );
     if (!response.errors) {
