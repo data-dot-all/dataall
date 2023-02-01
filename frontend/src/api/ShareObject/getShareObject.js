@@ -13,6 +13,10 @@ const getShareObject = ({ shareUri, filter }) => ({
         owner
         status
         userRoleForShareObject
+        consumptionData {
+          s3AccessPointName
+          sharedGlueDatabase
+        }
         principal {
           principalId
           principalType

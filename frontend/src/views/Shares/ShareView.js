@@ -674,6 +674,43 @@ const ShareView = () => {
                   </Card>
                 </Grid>
               </Grid>
+              <Card {...share}>
+                <Box>
+                  <CardHeader title="Data Consumption details" />
+                  <Divider />
+                </Box>
+                <CardContent>
+                  <Box>
+                    <Box>
+                      <Typography
+                        color="textSecondary"
+                        variant="subtitle2"
+                      >
+                        Folder sharing - S3 Access Point name
+                      </Typography>
+                      <Typography color="textPrimary" variant="subtitle2">
+                        {share.consumptionData.s3AccessPointName || '-'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        color="textSecondary"
+                        variant="subtitle2"
+                      >
+                        Table sharing - Glue database name
+                      </Typography>
+                      <Box sx={{ mt: 1 }}>
+                        <Typography
+                          color="textPrimary"
+                          variant="subtitle2"
+                        >
+                          {share.consumptionData.sharedGlueDatabase || '-'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader
                   title="Shared Items"
