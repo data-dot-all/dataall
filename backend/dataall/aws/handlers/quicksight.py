@@ -206,29 +206,29 @@ class Quicksight:
                 Role=UserRole,
             )
         else:
-            # response = client.register_user(
-            #     UserName=UserName,
-            #     Email=UserName,
-            #     AwsAccountId=AwsAccountId,
-            #     Namespace='default',
-            #     IdentityType='QUICKSIGHT',
-            #     UserRole=UserRole,
-            # )
-
             response = client.register_user(
-                IdentityType='IAM',
+                UserName=UserName,
                 Email=UserName,
-                UserRole=UserRole,
-                IamArn='string',
-                # SessionName='string', Not needed
                 AwsAccountId=AwsAccountId,
                 Namespace='default',
-                UserName=f'something/{UserName}',
-                # CustomPermissionsName='string', Not needed
-                ExternalLoginFederationProviderType='COGNITO',
-                # CustomFederationProviderUrl='string', Not needed
-                ExternalLoginId='string'
+                IdentityType='QUICKSIGHT',
+                UserRole=UserRole,
             )
+
+            # response = client.register_user(
+            #     IdentityType='IAM',
+            #     Email=UserName,
+            #     UserRole=UserRole,
+            #     IamArn='string',
+            #     # SessionName='string', Not needed
+            #     AwsAccountId=AwsAccountId,
+            #     Namespace='default',
+            #     UserName=f'something/{UserName}',
+            #     # CustomPermissionsName='string', Not needed
+            #     ExternalLoginFederationProviderType='COGNITO',
+            #     # CustomFederationProviderUrl='string', Not needed
+            #     ExternalLoginId='string'
+            # )
 
         member = False
 
