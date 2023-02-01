@@ -214,18 +214,19 @@ class Quicksight:
             #     IdentityType='QUICKSIGHT',
             #     UserRole=UserRole,
             # )
+
             response = client.register_user(
                 IdentityType='IAM',
                 Email=UserName,
                 UserRole=UserRole,
                 IamArn='string',
-                #SessionName='string', Not needed
+                # SessionName='string', Not needed
                 AwsAccountId=AwsAccountId,
                 Namespace='default',
                 UserName=f'something/{UserName}',
-                #CustomPermissionsName='string', Not needed
+                # CustomPermissionsName='string', Not needed
                 ExternalLoginFederationProviderType='COGNITO',
-                #CustomFederationProviderUrl='string', Not needed
+                # CustomFederationProviderUrl='string', Not needed
                 ExternalLoginId='string'
             )
 
