@@ -29,18 +29,29 @@ const listDatasetShareObjects = ({ datasetUri, filter }) => ({
               principalId
               principalType
               principalName
+              principalIAMRoleName
+              SamlGroupName
+              environmentUri
+              environmentName
               AwsAccountId
               region
+              organizationUri
+              organizationName
             }
             statistics {
               tables
               locations
+              sharedItems
+              revokedItems
+              failedItems
+              pendingItems
             }
             dataset {
               datasetUri
               datasetName
-              datasetOrganizationName
-              datasetOrganizationUri
+              SamlAdminGroupName
+              environmentName
+              exists
             }
           }
         }

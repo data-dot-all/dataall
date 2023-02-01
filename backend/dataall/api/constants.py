@@ -161,21 +161,47 @@ class ShareObjectPermission(GraphQLEnumMapper):
 
 
 class ShareObjectStatus(GraphQLEnumMapper):
+    Deleted = 'Deleted'
     Approved = 'Approved'
     Rejected = 'Rejected'
-    PendingApproval = 'PendingApproval'
+    Revoked = 'Revoked'
     Draft = 'Draft'
-    Share_In_Progress = 'Share_In_Progress'
-    Share_Failed = 'Share_Failed'
-    Share_Succeeded = 'Share_Succeeded'
+    Submitted = 'Submitted'
     Revoke_In_Progress = 'Revoke_In_Progress'
-    Revoke_Share_Failed = 'Revoke_Share_Failed'
-    Revoke_Share_Succeeded = 'Revoke_Share_Succeeded'
+    Share_In_Progress = 'Share_In_Progress'
+    Processed = 'Processed'
 
 
-class ShareObjectItemAction(GraphQLEnumMapper):
-    New = 'New'
-    Removed = 'Removed'
+class ShareItemStatus(GraphQLEnumMapper):
+    Deleted = 'Deleted'
+    PendingApproval = 'PendingApproval'
+    Share_Approved = 'Share_Approved'
+    Share_Rejected = 'Share_Rejected'
+    Share_In_Progress = 'Share_In_Progress'
+    Share_Succeeded = 'Share_Succeeded'
+    Share_Failed = 'Share_Failed'
+    Revoke_Approved = 'Revoke_Approved'
+    Revoke_In_Progress = 'Revoke_In_Progress'
+    Revoke_Failed = 'Revoke_Failed'
+    Revoke_Succeeded = 'Revoke_Succeeded'
+
+
+class ShareObjectActions(GraphQLEnumMapper):
+    Submit = 'Submit'
+    Approve = 'Approve'
+    Reject = 'Reject'
+    RevokeItems = 'RevokeItems'
+    Start = 'Start'
+    Finish = 'Finish'
+    FinishPending = 'FinishPending'
+    Delete = 'Delete'
+
+
+class ShareItemActions(GraphQLEnumMapper):
+    AddItem = 'AddItem'
+    RemoveItem = 'RemoveItem'
+    Failure = 'Failure'
+    Success = 'Success'
 
 
 class ConfidentialityClassification(GraphQLEnumMapper):

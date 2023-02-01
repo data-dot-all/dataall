@@ -28,6 +28,7 @@ import {
   BlockOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  RemoveCircleOutlineOutlined,
   LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
@@ -37,23 +38,25 @@ import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
+import PlusIcon from '../../icons/Plus';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
-import getShareObject from '../../api/ShareObject/getShareObject';
 import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
 import Pager from '../../components/Pager';
 import Scrollbar from '../../components/Scrollbar';
 import * as Defaults from '../../components/defaults';
 import { PagedResponseDefault } from '../../components/defaults';
-import removeSharedItem from '../../api/ShareObject/removeSharedItem';
-import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
-import PlusIcon from '../../icons/Plus';
 import AddShareItemModal from './AddShareItemModal';
+import RevokeShareItemsModal from './RevokeShareItemsModal';
+import getShareObject from '../../api/ShareObject/getShareObject';
 import approveShareObject from '../../api/ShareObject/approveShareObject';
 import rejectShareObject from '../../api/ShareObject/rejectShareObject';
+import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import submitApproval from '../../api/ShareObject/submitApproval';
+import removeSharedItem from '../../api/ShareObject/removeSharedItem';
+
 
 function ShareViewHeader(props) {
   const {
@@ -134,7 +137,6 @@ function ShareViewHeader(props) {
     }
     setAccepting(false);
   };
-
   const reject = async () => {
     setRejecting(true);
     const response = await client.mutate(
@@ -211,18 +213,9 @@ function ShareViewHeader(props) {
             >
               Refresh
             </Button>
-            <Button
-              color="primary"
-              startIcon={<DeleteOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={remove}
-            >
-              Delete
-            </Button>
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
-                {share.status === 'PendingApproval' && (
+                {share.status === 'Submitted' && (
                   <>
                     <LoadingButton
                       loading={accepting}
@@ -248,19 +241,6 @@ function ShareViewHeader(props) {
                     </LoadingButton>
                   </>
                 )}
-                {share.status === 'Approved' && (
-                  <LoadingButton
-                    loading={rejecting}
-                    color="primary"
-                    startIcon={<LockRounded />}
-                    sx={{ m: 1 }}
-                    onClick={reject}
-                    type="button"
-                    variant="outlined"
-                  >
-                    Revoke
-                  </LoadingButton>
-                )}
               </>
             ) : (
               <>
@@ -279,6 +259,15 @@ function ShareViewHeader(props) {
                 )}
               </>
             )}
+            <Button
+              color="primary"
+              startIcon={<DeleteOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={remove}
+            >
+              Delete
+            </Button>
           </Box>
         )}
       </Grid>
@@ -307,6 +296,7 @@ function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
     const response = await client.mutate(
@@ -327,6 +317,7 @@ function SharedItem(props) {
     }
     setIsRemovingItem(false);
   };
+
   return (
     <TableRow hover>
       <TableCell>{item.itemType === 'Table' ? 'Table' : 'Folder'}</TableCell>
@@ -335,12 +326,38 @@ function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
-        {isRemovingItem ? (
+        {(isRemovingItem) ? (
           <CircularProgress size={15} />
         ) : (
-          <IconButton onClick={removeItemFromShareObject}>
-            <DeleteOutlined fontSize="small" />
-          </IconButton>
+            <>
+            {
+              (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed') ? (
+                <Typography
+                  color="textSecondary"
+                  variant="subtitle2"
+                >
+                  Revoke access to this item before deleting
+                </Typography>
+              ) : (item.status === 'Share_Approved' || item.status === 'Revoke_Approved' || item.status === 'Revoke_In_Progress' || item.status === 'Share_In_Progress') ? (
+                  <Typography
+                    color="textSecondary"
+                    variant="subtitle2"
+                  >
+                    Wait until this item is processed
+                  </Typography>
+                ) : (
+                    <Button
+                      color="primary"
+                      startIcon={<DeleteOutlined fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={removeItemFromShareObject}
+                    >
+                      Delete
+                    </Button>
+              )
+            }
+            </>
         )}
       </TableCell>
     </TableRow>
@@ -369,14 +386,11 @@ const ShareView = () => {
   const [loading, setLoading] = useState(true);
   const [loadingShareItems, setLoadingShareItems] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  const handleAddItemModalOpen = () => {
-    setIsAddItemModalOpen(true);
-  };
-
-  const handleAddItemModalClose = () => {
-    setIsAddItemModalOpen(false);
-  };
-
+  const [isRevokeItemsModalOpen, setIsRevokeItemsModalOpen] = useState(false);
+  const handleAddItemModalOpen = () => {setIsAddItemModalOpen(true);};
+  const handleAddItemModalClose = () => {setIsAddItemModalOpen(false);};
+  const handleRevokeItemModalOpen = () => {setIsRevokeItemsModalOpen(true);};
+  const handleRevokeItemModalClose = () => {setIsRevokeItemsModalOpen(false);};
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -643,7 +657,6 @@ const ShareView = () => {
                         </ListItem>
                         <ListItem
                           disableGutters
-                          divider
                           sx={{
                             justifyContent: 'space-between',
                             padding: 2
@@ -665,15 +678,27 @@ const ShareView = () => {
                 <CardHeader
                   title="Shared Items"
                   action={
-                    <LoadingButton
-                      color="primary"
-                      onClick={handleAddItemModalOpen}
-                      startIcon={<PlusIcon fontSize="small" />}
-                      sx={{ m: 1 }}
-                      variant="outlined"
-                    >
-                      Add Item
-                    </LoadingButton>
+                    <Box>
+                      <LoadingButton
+                        color="primary"
+                        onClick={handleAddItemModalOpen}
+                        startIcon={<PlusIcon fontSize="small" />}
+                        sx={{ m: 1 }}
+                        variant="outlined"
+                      >
+                        Add Item
+                      </LoadingButton>
+                      <LoadingButton
+                        color="error"
+                        startIcon={<RemoveCircleOutlineOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={handleRevokeItemModalOpen}
+                        type="button"
+                        variant="outlined"
+                        >
+                        Revoke Items
+                      </LoadingButton>
+                    </Box>
                   }
                 />
                 <Divider />
@@ -733,6 +758,15 @@ const ShareView = () => {
             onClose={handleAddItemModalClose}
             reloadSharedItems={fetchShareItems}
             open={isAddItemModalOpen}
+          />
+        )}
+        {isRevokeItemsModalOpen && (
+          <RevokeShareItemsModal
+            share={share}
+            onApply={handleRevokeItemModalClose}
+            onClose={handleRevokeItemModalClose}
+            reloadSharedItems={fetchShareItems}
+            open={isRevokeItemsModalOpen}
           />
         )}
       </Box>

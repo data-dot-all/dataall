@@ -238,6 +238,5 @@ def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str,
         return db.api.DatasetTable.get_dataset_tables_shared_with_env(
             session,
             envUri,
-            datasetUri,
-            ["Approved"]
+            datasetUri
         )

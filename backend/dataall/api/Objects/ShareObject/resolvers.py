@@ -1,9 +1,6 @@
 import logging
-import os
 
-from sqlalchemy import and_, or_
 
-from ..Stack import stack_helper
 from .... import db
 from ....api.constants import *
 from ....api.context import Context
@@ -75,16 +72,12 @@ def approve_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
-        # Create task for lake formation updates
         approve_share_task: models.Task = models.Task(
             action='ecs.share.approve',
             targetUri=shareUri,
             payload={'environmentUri': share.environmentUri},
         )
         session.add(approve_share_task)
-
-    # call cdk to update bucket policy of the dataset for folder shares
-    # stack_helper.deploy_stack(context, share.datasetUri)
 
     Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
 
@@ -93,7 +86,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.reject_share_object(
+        return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -101,17 +94,27 @@ def reject_share_object(context: Context, source, shareUri: str = None):
             data=None,
             check_perm=True,
         )
-        # Create task for lake formation updates
-        reject_share_task: models.Task = models.Task(
-            action='ecs.share.reject',
-            targetUri=shareUri,
+
+
+def revoke_items_share_object(context: Context, source, input):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.revoke_items_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=input.get("shareUri"),
+            data=input,
+            check_perm=True,
+        )
+
+        revoke_share_task: models.Task = models.Task(
+            action='ecs.share.revoke',
+            targetUri=input.get("shareUri"),
             payload={'environmentUri': share.environmentUri},
         )
-        session.add(reject_share_task)
+        session.add(revoke_share_task)
 
-    # stack_helper.deploy_stack(context, share.datasetUri)
-
-    Worker.queue(engine=context.engine, task_ids=[reject_share_task.taskUri])
+    Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
 
     return share
 
@@ -121,6 +124,7 @@ def delete_share_object(context: Context, source, shareUri: str = None):
         share = db.api.ShareObject.get_share_by_uri(session, shareUri)
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
+
         db.api.ShareObject.delete_share_object(
             session=session,
             username=context.username,
@@ -128,7 +132,8 @@ def delete_share_object(context: Context, source, shareUri: str = None):
             uri=shareUri,
             check_perm=True,
         )
-        return True
+
+    return True
 
 
 def add_shared_item(context, source, shareUri: str = None, input: dict = None):
@@ -289,31 +294,22 @@ def resolve_group(context: Context, source: models.ShareObject, **kwargs):
     return source.groupUri
 
 
-def get_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
+def resolve_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        tables = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetTable',
-                )
-            )
-            .count()
+        return db.api.ShareObject.resolve_share_object_statistics(
+            session, source.shareUri
         )
-        locations = (
-            session.query(models.ShareObjectItem)
-            .filter(
-                and_(
-                    models.ShareObjectItem.shareUri == source.shareUri,
-                    models.ShareObjectItem.itemType == 'DatasetStorageLocation',
-                )
-            )
-            .count()
+
+
+def resolve_existing_shared_items(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.check_existing_shared_items(
+            session, source.shareUri
         )
-    return {'tables': tables, 'locations': locations}
 
 
 def list_shareable_objects(

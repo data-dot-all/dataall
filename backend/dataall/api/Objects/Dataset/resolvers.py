@@ -537,7 +537,7 @@ def delete_dataset(
         env: models.Environment = db.api.Environment.get_environment_by_uri(
             session, dataset.environmentUri
         )
-        shares = db.api.Dataset.list_dataset_approved_shares(session, datasetUri)
+        shares = db.api.Dataset.list_dataset_shares_with_existing_shared_items(session, datasetUri)
         if shares:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.DELETE_DATASET,

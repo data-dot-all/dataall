@@ -23,12 +23,12 @@ if __name__ == '__main__':
         handler = os.getenv('handler')
 
         if handler == 'approve_share':
-            log.info(f'Starting approval task for share : {share_uri}...')
+            log.info(f'Starting processing task for share : {share_uri}...')
             DataSharingService.approve_share(engine=ENGINE, share_uri=share_uri)
 
-        elif handler == 'reject_share':
-            log.info(f'Starting revoke task for share : {share_uri}...')
-            DataSharingService.reject_share(engine=ENGINE, share_uri=share_uri)
+        elif handler == 'revoke_share':
+            log.info(f'Starting revoking task for share : {share_uri}...')
+            DataSharingService.revoke_share(engine=ENGINE, share_uri=share_uri)
 
         log.info('Sharing task finished successfully')
 

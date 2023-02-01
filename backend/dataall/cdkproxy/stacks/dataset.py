@@ -17,7 +17,7 @@ from aws_cdk import (
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from .manager import stack
 from ... import db
@@ -101,11 +101,12 @@ class Dataset(Stack):
                     and_(
                         models.DatasetTable.datasetUri == self.target_uri,
                         models.DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )
+                .all()
             )
+            logger.info(f'found {len(tables)} shared tables')
         return tables
 
     def get_shared_folders(self) -> typing.List[models.DatasetStorageLocation]:
@@ -139,36 +140,12 @@ class Dataset(Stack):
                     and_(
                         models.DatasetStorageLocation.datasetUri == self.target_uri,
                         models.DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )
                 .all()
             )
-            logger.info(f'found {len(locations)} shared locations')
-
-            if locations:
-                share_items = (
-                    session.query(models.ShareObjectItem)
-                    .join(
-                        models.ShareObject,
-                        models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                    )
-                    .filter(
-                        and_(
-                            models.ShareObject.datasetUri == self.target_uri,
-                            models.ShareObjectItem.itemType == 'DatasetStorageLocation',
-                            models.ShareObject.status
-                            == models.ShareObjectStatus.Approved.value,
-                        )
-                    )
-                    .all()
-                )
-                for item in share_items:
-                    item.status = models.ShareObjectStatus.Share_Succeeded.value
-
-                session.commit()
-
+            logger.info(f'found {len(locations)} shared folders')
         return locations
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
@@ -184,6 +161,13 @@ class Dataset(Stack):
 
         # Required for dynamic stack tagging
         self.target_uri = target_uri
+
+        self.shared_states = [
+            models.Enums.ShareItemStatus.Share_Succeeded.value,
+            models.Enums.ShareItemStatus.Revoke_Approved.value,
+            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
+            models.Enums.ShareItemStatus.Revoke_Failed.value
+        ]
 
         pivot_role_name = SessionHelper.get_delegation_role_name()
 
