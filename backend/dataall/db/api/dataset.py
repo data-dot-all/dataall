@@ -15,13 +15,21 @@ from . import (
 )
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
-from ..models.Enums import Language, ConfidentialityClassification
+from ..models.Enums import Language, ConfidentialityClassification, ShareObjectStatus, ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
 logger = logging.getLogger(__name__)
+
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 
 class Dataset:
@@ -227,6 +235,10 @@ class Dataset:
                 models.ShareObjectItem,
                 models.ShareObjectItem.shareUri == models.ShareObject.shareUri
             )
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+            )
             .filter(
                 or_(
                     models.Dataset.owner == username,
@@ -234,11 +246,11 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     ),
                 )
             )

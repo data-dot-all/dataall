@@ -30,6 +30,7 @@ import {
   CopyAllOutlined,
   DeleteOutlined,
   RemoveCircleOutlineOutlined,
+  RemoveCircleOutlineOutlined,
   LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
@@ -41,6 +42,7 @@ import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
+import PlusIcon from '../../icons/Plus';
 import PlusIcon from '../../icons/Plus';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -395,21 +397,6 @@ const ShareView = () => {
   const handleAddItemModalClose = () => {setIsAddItemModalOpen(false);};
   const handleRevokeItemModalOpen = () => {setIsRevokeItemsModalOpen(true);};
   const handleRevokeItemModalClose = () => {setIsRevokeItemsModalOpen(false);};
-  const handlePageChange = async (event, value) => {
-    if (value <= sharedItems.pages && value !== sharedItems.page) {
-      await setFilter({ ...filter, isShared: true, page: value });
-    }
-  };
-  const copyNotification = () => {
-    enqueueSnackbar('Copied to clipboard', {
-      anchorOrigin: {
-        horizontal: 'right',
-        vertical: 'top'
-      },
-      variant: 'success'
-    });
-  };
-  
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(

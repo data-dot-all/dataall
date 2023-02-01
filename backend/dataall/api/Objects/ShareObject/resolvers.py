@@ -88,6 +88,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.reject_share_object(
+        return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -111,10 +112,28 @@ def revoke_items_share_object(context: Context, source, input):
         revoke_share_task: models.Task = models.Task(
             action='ecs.share.revoke',
             targetUri=input.get("shareUri"),
+
+
+def revoke_items_share_object(context: Context, source, input):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.revoke_items_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=input.get("shareUri"),
+            data=input,
+            check_perm=True,
+        )
+
+        revoke_share_task: models.Task = models.Task(
+            action='ecs.share.revoke',
+            targetUri=input.get("shareUri"),
             payload={'environmentUri': share.environmentUri},
         )
         session.add(revoke_share_task)
+        session.add(revoke_share_task)
 
+    Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
     Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
 
     return share
@@ -126,6 +145,7 @@ def delete_share_object(context: Context, source, shareUri: str = None):
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
 
+
         db.api.ShareObject.delete_share_object(
             session=session,
             username=context.username,
@@ -133,6 +153,8 @@ def delete_share_object(context: Context, source, shareUri: str = None):
             uri=shareUri,
             check_perm=True,
         )
+
+    return True
 
     return True
 
@@ -295,22 +317,6 @@ def resolve_group(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     return source.groupUri
-
-
-def resolve_consumption_data(context: Context, source: models.ShareObject, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
-        if ds:
-            S3AccessPointName = utils.slugify(
-                source.datasetUri + '-' + source.principalId,
-                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
-            )
-            return {
-                's3AccessPointName': S3AccessPointName,
-                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
-            }
 
 
 def resolve_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):

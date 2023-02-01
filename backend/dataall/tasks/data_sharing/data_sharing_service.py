@@ -12,6 +12,11 @@ from ...utils import Parameter
 
 log = logging.getLogger(__name__)
 
+REFRESH_SHARES_STATES = [
+    models.ShareObjectStatus.Approved.value,
+    models.ShareObjectStatus.Revoked.value,
+]
+
 
 class DataSharingService:
     def __init__(self):
@@ -259,7 +264,7 @@ class DataSharingService:
             environments = session.query(models.Environment).all()
             shares = (
                 session.query(models.ShareObject)
-                .filter(models.ShareObject.status.in_(share_object_refreshable_states))
+                .filter(models.ShareObject.status.in_(REFRESH_SHARES_STATES))
                 .all()
             )
 
