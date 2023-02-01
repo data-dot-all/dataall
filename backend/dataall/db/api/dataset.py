@@ -261,8 +261,11 @@ class Dataset:
                 models.ShareObjectItem.shareUri == models.ShareObject.shareUri
             )
             .outerjoin(
-                models.ShareObjectItem,
-                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+                models.LFTagShareObject,
+                and_(
+                    models.Dataset.lfTagKey.contains(f'{{{models.LFTagShareObject.lfTagKey}}}'),
+                    models.Dataset.lfTagValue.contains(f'{{{models.LFTagShareObject.lfTagValue}}}')
+                )
             )
             .filter(
                 or_(
@@ -275,8 +278,16 @@ class Dataset:
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
                     ),
+                    and_(
+                        models.LFTagShareObject.principalId.in_(groups),
+                        models.LFTagShareObject.status == 'Approved'
+                    ),
+                    and_(
+                        models.LFTagShareObject.owner == username,
+                        models.LFTagShareObject.status == 'Approved'
+                    )
                 )
             )
         )

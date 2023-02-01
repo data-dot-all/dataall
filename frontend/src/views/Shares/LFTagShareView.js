@@ -44,8 +44,6 @@ import { useDispatch } from '../../store';
 import getLFTagShareObject from '../../api/ShareObject/getLFTagShareObject';
 import deleteLFTagShareObject from '../../api/ShareObject/deleteLFTagShareObject.js';
 import submitLFTagApproval from '../../api/ShareObject/submitLFTagApproval';
-
-// TO ADD ECS Work
 import approveLFTagShareObject from '../../api/ShareObject/approveLFTagShareObject';
 import rejectLFTagShareObject from '../../api/ShareObject/rejectLFTagShareObject';
 
