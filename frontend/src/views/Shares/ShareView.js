@@ -397,6 +397,21 @@ const ShareView = () => {
   const handleAddItemModalClose = () => {setIsAddItemModalOpen(false);};
   const handleRevokeItemModalOpen = () => {setIsRevokeItemsModalOpen(true);};
   const handleRevokeItemModalClose = () => {setIsRevokeItemsModalOpen(false);};
+  const handlePageChange = async (event, value) => {
+    if (value <= sharedItems.pages && value !== sharedItems.page) {
+      await setFilter({ ...filter, isShared: true, page: value });
+    }
+  };
+  const copyNotification = () => {
+    enqueueSnackbar('Copied to clipboard', {
+      anchorOrigin: {
+        horizontal: 'right',
+        vertical: 'top'
+      },
+      variant: 'success'
+    });
+  };
+  
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(

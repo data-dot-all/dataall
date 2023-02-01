@@ -319,6 +319,22 @@ def resolve_group(context: Context, source: models.ShareObject, **kwargs):
     return source.groupUri
 
 
+def resolve_consumption_data(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
+        if ds:
+            S3AccessPointName = utils.slugify(
+                source.datasetUri + '-' + source.principalId,
+                max_length=50, lowercase=True, regex_pattern='[^a-zA-Z0-9-]', separator='-'
+            )
+            return {
+                's3AccessPointName': S3AccessPointName,
+                'sharedGlueDatabase': (ds.GlueDatabaseName + '_shared_' + source.shareUri)[:254] if ds else 'Not created',
+            }
+
+
 def resolve_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
