@@ -464,7 +464,10 @@ class dataAllBaseInfra(Stack):
                                      ),
                                      iam.PolicyStatement(
                                          sid="RamAssociateResource", effect=iam.Effect.ALLOW,
-                                         actions=["ram:AssociateResourceShare"],
+                                         actions=[
+                                             "ram:AssociateResourceShare", 
+                                             "ram:DisassociateResourceShare"
+                                         ],
                                          resources=[f"arn:aws:ram:*:{self.account}:resource-share/*"],
                                          conditions={"ForAllValues:StringLike": {
                                                  "ram:ResourceShareName": ["LakeFormation*"]}
