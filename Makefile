@@ -63,7 +63,7 @@ coverage: upgrade-pip install-backend install-cdkproxy install-tests
 		--color=yes
 
 deploy-image:
-	docker build -f ${path} -t ${image-tag}:${image-tag} . && \
+	docker build --build-arg MODULE_PATH=${module_path} -f ${path} -t ${image-tag}:${image-tag} . && \
 	aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account}.dkr.ecr.${region}.amazonaws.com && \
 	docker tag ${image-tag}:${image-tag} ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag} && \
 	docker push ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag}

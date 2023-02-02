@@ -1,5 +1,6 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
+ARG MODULE_PATH
 ARG FUNCTION_DIR="/home/app/"
 ARG PYTHON_VERSION=python3.8
 

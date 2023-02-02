@@ -593,7 +593,7 @@ class PipelineStack(Stack):
                         ),
                         commands=[
                             'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                            f"make deploy-image path={module.get(ApplicationComponents.GRAPHQL.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                            f'make deploy-image path="global/tools/backend/api/lambda/Dockerfile" image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name} module_path={module.get("path")}',
                         ],
                         role_policy_statements=self.codebuild_policy,
                         vpc=self.vpc,
