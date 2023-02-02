@@ -1,3 +1,4 @@
+import json
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -20,11 +21,14 @@ class ContainerStack(pyNestedClass):
         id,
         vpc: ec2.Vpc = None,
         vpc_endpoints_sg: ec2.SecurityGroup = None,
+        tooling_account_id=None,
         envname='dev',
         resource_prefix='dataall',
         ecr_repository=None,
         image_tag=None,
         prod_sizing=False,
+        create_pivot_role=False,
+        pivot_role_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -44,7 +48,7 @@ class ContainerStack(pyNestedClass):
             container_insights=True,
         )
 
-        task_role = self.create_task_role(envname, resource_prefix)
+        task_role = self.create_task_role(envname, resource_prefix, pivot_role_name)
 
         cdkproxy_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -59,20 +63,17 @@ class ContainerStack(pyNestedClass):
         cdkproxy_container = cdkproxy_task_definition.add_container(
             f'ShareManagementTaskContainer{envname}',
             container_name=f'container',
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
-            ),
+            image=ecs.ContainerImage.from_ecr_repository(repository=ecr_repository, tag=cdkproxy_image_tag),
             environment={
                 'AWS_REGION': self.region,
                 'envname': envname,
                 'LOGLEVEL': 'DEBUG',
+                'CREATE_PIVOT_ROLE': json.dumps(create_pivot_role),
             },
             command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
-                log_group=self.create_log_group(
-                    envname, resource_prefix, log_group_name='cdkproxy'
-                ),
+                log_group=self.create_log_group(envname, resource_prefix, log_group_name='cdkproxy'),
             ),
         )
 
@@ -90,9 +91,7 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container.container_name,
         )
 
-        scheduled_tasks_sg = self.create_task_sg(
-            envname, resource_prefix, vpc, vpc_endpoints_sg
-        )
+        scheduled_tasks_sg = self.create_task_sg(envname, resource_prefix, vpc, vpc_endpoints_sg)
 
         sync_tables_task = self.set_scheduled_task(
             cluster=cluster,
@@ -105,9 +104,7 @@ class ContainerStack(pyNestedClass):
                 'LOGLEVEL': 'INFO',
             },
             image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='tables-syncer'
-            ),
+            log_group=self.create_log_group(envname, resource_prefix, log_group_name='tables-syncer'),
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-tables-syncer-schedule',
             task_id=f'{resource_prefix}-{envname}-tables-syncer',
@@ -129,9 +126,7 @@ class ContainerStack(pyNestedClass):
                 'LOGLEVEL': 'INFO',
             },
             image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='catalog-indexer'
-            ),
+            log_group=self.create_log_group(envname, resource_prefix, log_group_name='catalog-indexer'),
             schedule_expression=Schedule.expression('rate(6 hours)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-catalog-indexer-schedule',
             task_id=f'{resource_prefix}-{envname}-catalog-indexer',
@@ -153,9 +148,7 @@ class ContainerStack(pyNestedClass):
                 'LOGLEVEL': 'INFO',
             },
             image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='stacks-updater'
-            ),
+            log_group=self.create_log_group(envname, resource_prefix, log_group_name='stacks-updater'),
             schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-stacks-updater-schedule',
             task_id=f'{resource_prefix}-{envname}-stacks-updater',
@@ -177,9 +170,7 @@ class ContainerStack(pyNestedClass):
                 'LOGLEVEL': 'INFO',
             },
             image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='policies-updater'
-            ),
+            log_group=self.create_log_group(envname, resource_prefix, log_group_name='policies-updater'),
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-policies-updater-schedule',
             task_id=f'{resource_prefix}-{envname}-policies-updater',
@@ -188,9 +179,7 @@ class ContainerStack(pyNestedClass):
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(
-            update_bucket_policies_task.task.security_groups
-        )
+        self.ecs_security_groups.extend(update_bucket_policies_task.task.security_groups)
 
         subscriptions_task = self.set_scheduled_task(
             cluster=cluster,
@@ -207,9 +196,7 @@ class ContainerStack(pyNestedClass):
                 'LOGLEVEL': 'INFO',
             },
             image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='subscriptions'
-            ),
+            log_group=self.create_log_group(envname, resource_prefix, log_group_name='subscriptions'),
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-subscriptions-schedule',
             task_id=f'{resource_prefix}-{envname}-subscriptions',
@@ -233,9 +220,7 @@ class ContainerStack(pyNestedClass):
         share_management_container = share_management_task_definition.add_container(
             f'ShareManagementTaskContainer{envname}',
             container_name=f'container',
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
-            ),
+            image=ecs.ContainerImage.from_ecr_repository(repository=ecr_repository, tag=cdkproxy_image_tag),
             environment={
                 'AWS_REGION': self.region,
                 'envname': envname,
@@ -244,9 +229,7 @@ class ContainerStack(pyNestedClass):
             command=['python3.8', '-m', 'dataall.tasks.share_manager'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
-                log_group=self.create_log_group(
-                    envname, resource_prefix, log_group_name='share-manager'
-                ),
+                log_group=self.create_log_group(envname, resource_prefix, log_group_name='share-manager'),
             ),
         )
 
@@ -275,20 +258,14 @@ class ContainerStack(pyNestedClass):
             self,
             f'VPCPrivateSubnetsParam{envname}',
             parameter_name=f'/dataall/{envname}/ecs/private_subnets',
-            string_value=','.join(
-                vpc.select_subnets(
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT
-                ).subnet_ids
-            ),
+            string_value=','.join(vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnet_ids),
         )
 
         ssm.StringParameter(
             self,
             f'SecurityGroup{envname}',
             parameter_name=f'/dataall/{envname}/ecs/security_groups',
-            string_value=','.join(
-                [s.security_group_id for s in sync_tables_task.task.security_groups]
-            ),
+            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
         )
 
         self.ecs_cluster = cluster
@@ -301,7 +278,7 @@ class ContainerStack(pyNestedClass):
             subscriptions_task.task_definition,
         ]
 
-    def create_task_role(self, envname, resource_prefix):
+    def create_task_role(self, envname, resource_prefix, pivot_role_name):
         role_inline_policy = iam.Policy(
             self,
             f'ECSRolePolicy{envname}',
@@ -343,7 +320,7 @@ class ContainerStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f"arn:aws:iam::*:role/{self.node.try_get_context('pivot_role_name') or 'dataallPivotRole'}",
+                        f'arn:aws:iam::*:role/{pivot_role_name}',
                         f'arn:aws:iam::*:role/cdk*',
                         'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
@@ -387,9 +364,7 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSTaskRole{envname}',
             role_name=f'{resource_prefix}-{envname}-ecs-tasks-role',
-            inline_policies={
-                f'ECSRoleInlinePolicy{envname}': role_inline_policy.document
-            },
+            inline_policies={f'ECSRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         )
         task_role.grant_pass_role(task_role)
@@ -487,9 +462,7 @@ class ContainerStack(pyNestedClass):
         task.add_container(
             container_id,
             container_name=container_id,
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=image_tag
-            ),
+            image=ecs.ContainerImage.from_ecr_repository(repository=ecr_repository, tag=image_tag),
             environment=environment,
             command=command,
             logging=ecs.LogDriver.aws_logs(stream_prefix='task', log_group=log_group),
@@ -504,9 +477,7 @@ class ContainerStack(pyNestedClass):
             ),
             vpc=vpc,
             subnet_selection=ec2.SubnetSelection(
-                subnets=vpc.select_subnets(
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT
-                ).subnets
+                subnets=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnets
             ),
             rule_name=scheduled_task_id
             # security_groups=[security_group],

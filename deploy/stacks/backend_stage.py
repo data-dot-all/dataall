@@ -27,6 +27,7 @@ class BackendStage(Stage):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        create_pivot_role=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -51,6 +52,7 @@ class BackendStage(Stage):
             enable_cw_canaries=enable_cw_canaries,
             enable_cw_rum=enable_cw_rum,
             shared_dashboard_sessions=shared_dashboard_sessions,
+            create_pivot_role=create_pivot_role,
             **kwargs,
         )
 
@@ -61,9 +63,7 @@ class BackendStage(Stage):
         NagSuppressions.add_stack_suppressions(
             backend_stack,
             suppressions=[
-                NagPackSuppression(
-                    id=rule_suppressed['id'], reason=rule_suppressed['reason']
-                )
+                NagPackSuppression(id=rule_suppressed['id'], reason=rule_suppressed['reason'])
                 for rule_suppressed in BACKEND_STACK_CDK_NAG_EXCLUSIONS
             ],
             apply_to_nested_stacks=True,

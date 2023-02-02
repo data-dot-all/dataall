@@ -43,6 +43,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        create_pivot_role=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -58,6 +59,9 @@ class BackendStack(Stack):
         )
         vpc = vpc_stack.vpc
         vpc_endpoints_sg = vpc_stack.vpce_security_group
+
+        # TODO we need to think how to handle it better if adding a '-cdk' suffix is not expected
+        self.pivot_role_name = f"dataallPivotRole{'-cdk' if create_pivot_role else ''}"
 
         ParamStoreStack(
             self,
@@ -77,6 +81,7 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             enable_cw_canaries=enable_cw_canaries,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -108,9 +113,7 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        repo = ecr.Repository.from_repository_arn(
-            self, 'ECRREPO', repository_arn=ecr_repository
-        )
+        repo = ecr.Repository.from_repository_arn(self, 'ECRREPO', repository_arn=ecr_repository)
 
         lambda_api_stack = LambdaApiStack(
             self,
@@ -126,6 +129,7 @@ class BackendStack(Stack):
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -136,9 +140,12 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc=vpc,
             vpc_endpoints_sg=vpc_endpoints_sg,
+            tooling_account_id=tooling_account_id,
             ecr_repository=repo,
             image_tag=image_tag,
             prod_sizing=prod_sizing,
+            create_pivot_role=create_pivot_role,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -167,21 +174,13 @@ class BackendStack(Stack):
             pivot_role_in_account_policies = [
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        'ssm:PutParameter'
-                    ],
-                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*']
+                    actions=['ssm:GetParametersByPath', 'ssm:GetParameters', 'ssm:GetParameter', 'ssm:PutParameter'],
+                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/dataall*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=[
-                        'secretsmanager:DescribeSecret',
-                        'secretsmanager:GetSecretValue'
-                    ],
-                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*']
+                    actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
+                    resources=[f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -189,9 +188,9 @@ class BackendStack(Stack):
                         'ssm:DescribeParameters',
                         'quicksight:GetSessionEmbedUrl',
                         'quicksight:ListUserGroups',
-                        'secretsmanager:ListSecrets'
+                        'secretsmanager:ListSecrets',
                     ],
-                    resources=['*']
+                    resources=['*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -209,15 +208,16 @@ class BackendStack(Stack):
                         'quicksight:DescribeDashboardPermissions',
                         'quicksight:SearchDashboards',
                         'quicksight:GetAuthCode',
-                        'quicksight:CreateDataSet'
+                        'quicksight:CreateDataSet',
                     ],
-                    resources=[f'arn:aws:quicksight:*:{self.account}:user/*',
-                               f'arn:aws:quicksight:*:{self.account}:group/*',
-                               f'arn:aws:quicksight:*:{self.account}:datasource/*',
-                               f'arn:aws:quicksight:*:{self.account}:dashboard/*',
-                               f'arn:aws:quicksight:*:{self.account}:dataset/*'
-                               ],
-                )
+                    resources=[
+                        f'arn:aws:quicksight:*:{self.account}:user/*',
+                        f'arn:aws:quicksight:*:{self.account}:group/*',
+                        f'arn:aws:quicksight:*:{self.account}:datasource/*',
+                        f'arn:aws:quicksight:*:{self.account}:dashboard/*',
+                        f'arn:aws:quicksight:*:{self.account}:dataset/*',
+                    ],
+                ),
             ]
 
             for policy in pivot_role_in_account_policies:
@@ -296,9 +296,7 @@ class BackendStack(Stack):
                 cw_alarm_action=monitoring_stack.cw_alarm_action,
                 cognito_identity_pool_id=cognito_stack.identity_pool.ref,
                 cognito_identity_pool_role_arn=cognito_stack.identity_pool_role.role_arn,
-                custom_domain_name=custom_domain.get('hosted_zone_name')
-                if custom_domain
-                else None,
+                custom_domain_name=custom_domain.get('hosted_zone_name') if custom_domain else None,
             )
 
         if enable_cw_canaries:

@@ -14,7 +14,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
-        return_value="dataall-pivot-role-name-pytest",
+        return_value='dataall-pivot-role-name-pytest',
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_target',
@@ -32,9 +32,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
         'dataall.aws.handlers.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
-    mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
-    )
+    mocker.patch('dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=env,
@@ -43,11 +41,15 @@ def patch_methods(mocker, db, env, another_group, permissions):
         'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_group_permissions',
         return_value=[permission.name for permission in permissions],
     )
+    mocker.patch(
+        'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
+        return_value='*****',
+    )
 
 
 @pytest.fixture(scope='function', autouse=True)
 def template(env):
-    app = App()
+    app = App(context={'create_pivot_role': 'false'})
     EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
     return json.dumps(app.synth().get_stack_by_name('Environment').template)
 

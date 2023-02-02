@@ -87,9 +87,7 @@ class PipelineStack(Stack):
                     'sts:GetServiceBearerToken',
                 ],
                 resources=['*'],
-                conditions={
-                    'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
-                },
+                conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
             ),
             iam.PolicyStatement(
                 actions=[
@@ -182,21 +180,19 @@ class PipelineStack(Stack):
         )
         for policy in self.codebuild_policy:
             self.pipeline_iam_role.add_to_policy(policy)
-            
-        if self.source == "github":
+
+        if self.source == 'github':
             source = CodePipelineSource.git_hub(
-                repo_string="awslabs/aws-dataall",
+                repo_string='awslabs/aws-dataall',
                 branch=self.git_branch,
-                authentication=SecretValue.secrets_manager(secret_id="github-access-token-secret")
+                authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
             )
-            
+
         else:
             source = CodePipelineSource.code_commit(
-                        repository=codecommit.Repository.from_repository_name(
-                            self, 'sourcerepo', repository_name='dataall'
-                        ),
-                        branch=self.git_branch,
-                    )
+                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
+                branch=self.git_branch,
+            )
 
         self.pipeline = pipelines.CodePipeline(
             self,
@@ -217,7 +213,7 @@ class PipelineStack(Stack):
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
-                    'echo ${CODEBUILD_SOURCE_VERSION}'
+                    'echo ${CODEBUILD_SOURCE_VERSION}',
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
@@ -226,12 +222,10 @@ class PipelineStack(Stack):
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
-                        "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
-                            value=git_branch
-                        ),
+                        'DATAALL_REPO_BRANCH': codebuild.BuildEnvironmentVariable(value=git_branch),
                     }
                 )
-            )
+            ),
         )
 
         self.pipeline.node.add_dependency(self.aurora_devdb)
@@ -240,13 +234,9 @@ class PipelineStack(Stack):
 
         self.image_tag = f'{git_branch}-{str(uuid.uuid4())[:8]}'
 
-        repository_name = self.set_ecr_stage(
-            {'envname': git_branch, 'account': self.account, 'region': self.region}
-        )
+        repository_name = self.set_ecr_stage({'envname': git_branch, 'account': self.account, 'region': self.region})
 
-        target_envs = target_envs or [
-            {'envname': 'dev', 'account': self.account, 'region': self.region}
-        ]
+        target_envs = target_envs or [{'envname': 'dev', 'account': self.account, 'region': self.region}]
 
         for target_env in target_envs:
             self.pipeline_bucket.grant_read(iam.AccountPrincipal(target_env['account']))
@@ -311,22 +301,18 @@ class PipelineStack(Stack):
                     f'envname {env["envname"]} is created to use AWS resources. '
                     f'It must match the pattern ^[a-zA-Z0-9-_]+$'
                 )
-            if (
-                env['account'] == self.account
-                and env['region'] == self.region
-                and env['envname'] == git_branch
-            ):
+            if env['account'] == self.account and env['region'] == self.region and env['envname'] == git_branch:
                 raise ValueError(
                     f'Seems like tooling account and deployment '
                     f'account are the same in the same region with the same envname and git_branch.'
                     f'Try a different envname than git_branch for it to work'
                 )
             if (
-                    env.get("internet_facing", True) not in [True, False]
-                    or env.get("with_approval", False) not in [True, False]
-                    or env.get("prod_sizing", False) not in [True, False]
-                    or env.get("enable_cw_canaries", False) not in [True, False]
-                    or env.get("enable_cw_rum", False) not in [True, False]
+                env.get('internet_facing', True) not in [True, False]
+                or env.get('with_approval', False) not in [True, False]
+                or env.get('prod_sizing', False) not in [True, False]
+                or env.get('enable_cw_canaries', False) not in [True, False]
+                or env.get('enable_cw_rum', False) not in [True, False]
             ):
                 raise ValueError(
                     f'Data type not supported in one of cdk.json variables (internet_facing,with_approvalprod_sizing,enable_cw_canaries,enable_cw_rum) \n'
@@ -382,7 +368,7 @@ class PipelineStack(Stack):
                         'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
-                        "python -m venv env",
+                        'python -m venv env',
                         '. env/bin/activate',
                         'make check-security',
                     ],
@@ -492,7 +478,6 @@ class PipelineStack(Stack):
                 ),
             )
 
-
     def set_ecr_stage(
         self,
         target_env,
@@ -522,9 +507,7 @@ class PipelineStack(Stack):
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
                         ),
-                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'lambdas-{self.image_tag}'
-                        ),
+                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
                 ),
                 commands=[
@@ -543,9 +526,7 @@ class PipelineStack(Stack):
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
                         ),
-                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'cdkproxy-{self.image_tag}'
-                        ),
+                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'cdkproxy-{self.image_tag}'),
                     },
                 ),
                 commands=[
@@ -584,6 +565,7 @@ class PipelineStack(Stack):
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
+                create_pivot_role=target_env.get('create_pivot_role', False),
             )
         )
         return backend_stage
@@ -592,9 +574,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        migration_wave = self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage"
-        )
+        migration_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-dbmigration-stage")
         migration_wave.add_post(
             pipelines.CodeBuildStep(
                 id='MigrateDB',
@@ -640,7 +620,7 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
-                install_commands=["n 14.18.3"],
+                install_commands=['n 14.18.3'],
                 commands=[
                     f'export REACT_APP_STAGE={target_env["envname"]}',
                     f'export envname={target_env["envname"]}',
@@ -679,12 +659,10 @@ class PipelineStack(Stack):
                 *front_stage_actions,
                 self.cw_rum_config_action(target_env),
             )
-        self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-frontend-stage"
-        ).add_post(*front_stage_actions)
-        self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-docs-stage"
-        ).add_post(
+        self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-frontend-stage").add_post(
+            *front_stage_actions
+        )
+        self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-docs-stage").add_post(
             pipelines.CodeBuildStep(
                 id='UpdateDocumentation',
                 build_environment=codebuild.BuildEnvironment(
@@ -788,9 +766,7 @@ class PipelineStack(Stack):
                             'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                                 value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
                             ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                value=f'frontend-{self.image_tag}'
-                            ),
+                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'frontend-{self.image_tag}'),
                         },
                     ),
                     commands=[
@@ -831,9 +807,7 @@ class PipelineStack(Stack):
                             'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                                 value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
                             ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                value=f'userguide-{self.image_tag}'
-                            ),
+                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
                         },
                     ),
                     commands=[
@@ -848,17 +822,17 @@ class PipelineStack(Stack):
                     vpc=self.vpc,
                 ),
             ],
-            post=self.evaluate_post_albfront_stage(target_env)
+            post=self.evaluate_post_albfront_stage(target_env),
         )
 
     def evaluate_post_albfront_stage(self, target_env):
-        if target_env.get("enable_cw_rum", False):
-            post=[
+        if target_env.get('enable_cw_rum', False):
+            post = [
                 self.cognito_config_action(target_env),
                 self.cw_rum_config_action(target_env),
             ]
         else:
-            post=[
+            post = [
                 self.cognito_config_action(target_env),
             ]
         return post
@@ -895,9 +869,7 @@ class PipelineStack(Stack):
                 resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
             ),
         )
-        self.pipeline.add_wave(
-            f'{self.resource_prefix}-{self.git_branch}-release-stage'
-        ).add_post(
+        self.pipeline.add_wave(f'{self.resource_prefix}-{self.git_branch}-release-stage').add_post(
             pipelines.CodeBuildStep(
                 id='GitRelease',
                 build_environment=codebuild.BuildEnvironment(

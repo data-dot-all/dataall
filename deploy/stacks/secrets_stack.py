@@ -18,6 +18,7 @@ class SecretsManagerStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         enable_cw_canaries=False,
+        pivot_role_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -51,7 +52,7 @@ class SecretsManagerStack(pyNestedClass):
             self,
             f'PivotRoleNameSecret{envname}',
             name=f'dataall-pivot-role-name-{envname}',
-            secret_string='dataallPivotRole',
+            secret_string=pivot_role_name,
             kms_key_id=self.pivot_role_name_key.key_id,
             description=f'Stores dataall pivot role name for environment {envname}',
         )
@@ -70,9 +71,7 @@ class SecretsManagerStack(pyNestedClass):
                 f'canary-user',
                 secret_name=f'{resource_prefix}-{envname}-cognito-canary-user',
                 generate_secret_string=sm.SecretStringGenerator(
-                    secret_string_template=json.dumps(
-                        {'username': f'cwcanary-{self.account}'}
-                    ),
+                    secret_string_template=json.dumps({'username': f'cwcanary-{self.account}'}),
                     generate_string_key='password',
                     include_space=False,
                     password_length=12,

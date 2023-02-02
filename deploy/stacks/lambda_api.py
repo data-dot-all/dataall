@@ -27,6 +27,7 @@ from aws_cdk.aws_ec2 import (
 
 from .pyNestedStack import pyNestedClass
 
+
 class LambdaApiStack(pyNestedClass):
     def __init__(
         self,
@@ -44,6 +45,7 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
+        pivot_role_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -59,7 +61,7 @@ class LambdaApiStack(pyNestedClass):
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
             description='dataall es search function',
-            role=self.create_function_role(envname, resource_prefix, 'esproxy'),
+            role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
@@ -79,7 +81,7 @@ class LambdaApiStack(pyNestedClass):
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql'),
+            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -93,15 +95,13 @@ class LambdaApiStack(pyNestedClass):
             tracing=_lambda.Tracing.ACTIVE,
         )
 
-        self.aws_handler_dlq = self.set_dlq(
-            f'{resource_prefix}-{envname}-awsworker-dlq'
-        )
+        self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
             description='dataall aws worker for aws asynchronous tasks function',
-            role=self.create_function_role(envname, resource_prefix, 'awsworker'),
+            role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['aws_handler.handler']
             ),
@@ -142,7 +142,7 @@ class LambdaApiStack(pyNestedClass):
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
 
-    def create_function_role(self, envname, resource_prefix, fn_name):
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
 
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
@@ -181,9 +181,7 @@ class LambdaApiStack(pyNestedClass):
                     actions=[
                         'sts:AssumeRole',
                     ],
-                    resources=[
-                        f"arn:aws:iam::*:role/{self.node.try_get_context('pivot_role_name') or 'dataallPivotRole'}"
-                    ],
+                    resources=[f'arn:aws:iam::*:role/{pivot_role_name}'],
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -200,9 +198,7 @@ class LambdaApiStack(pyNestedClass):
                     actions=[
                         'iam:PassRole',
                     ],
-                    resources=[
-                        f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}*'
-                    ],
+                    resources=[f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}*'],
                 ),
                 iam.PolicyStatement(
                     actions=[
@@ -240,7 +236,7 @@ class LambdaApiStack(pyNestedClass):
                         'xray:GetSamplingRules',
                         'xray:GetSamplingTargets',
                         'xray:GetSamplingStatisticSummaries',
-                        'cognito-idp:ListGroups'
+                        'cognito-idp:ListGroups',
                     ],
                     resources=['*'],
                 ),
@@ -250,9 +246,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             role_name,
             role_name=role_name,
-            inline_policies={
-                f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document
-            },
+            inline_policies={f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
         return role
@@ -293,16 +287,16 @@ class LambdaApiStack(pyNestedClass):
         )
 
         # Create IP set if IP filtering enabled in CDK.json
-        ip_set_regional=None
-        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+        ip_set_regional = None
+        if custom_waf_rules and custom_waf_rules.get('allowed_ip_list'):
             ip_set_regional = wafv2.CfnIPSet(
                 self,
-                "DataallRegionalIPSet",
-                name=f"{resource_prefix}-{envname}-ipset-regional",
-                description=f"IP addresses allowed for Dataall {envname}",
-                addresses=custom_waf_rules.get("allowed_ip_list"),
-                ip_address_version="IPV4",
-                scope="REGIONAL"
+                'DataallRegionalIPSet',
+                name=f'{resource_prefix}-{envname}-ipset-regional',
+                description=f'IP addresses allowed for Dataall {envname}',
+                addresses=custom_waf_rules.get('allowed_ip_list'),
+                ip_address_version='IPV4',
+                scope='REGIONAL',
             )
 
         acl = wafv2.CfnWebACL(
@@ -315,7 +309,7 @@ class LambdaApiStack(pyNestedClass):
                 metric_name='waf-apigw',
                 sampled_requests_enabled=True,
             ),
-            rules=self.get_waf_rules(envname,custom_waf_rules,ip_set_regional),
+            rules=self.get_waf_rules(envname, custom_waf_rules, ip_set_regional),
         )
 
         wafv2.CfnWebACLAssociation(
@@ -360,13 +354,11 @@ class LambdaApiStack(pyNestedClass):
         )
         if not internet_facing:
             if apig_vpce:
-                api_vpc_endpoint = (
-                    InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
-                        self,
-                        f'APIVpcEndpoint{envname}',
-                        vpc_endpoint_id=apig_vpce,
-                        port=443,
-                    )
+                api_vpc_endpoint = InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
+                    self,
+                    f'APIVpcEndpoint{envname}',
+                    vpc_endpoint_id=apig_vpce,
+                    port=443,
                 )
             else:
                 api_vpc_endpoint = InterfaceVpcEndpoint(
@@ -388,9 +380,7 @@ class LambdaApiStack(pyNestedClass):
                         actions=['execute-api:Invoke'],
                         resources=['execute-api:/*'],
                         effect=iam.Effect.DENY,
-                        conditions={
-                            'StringNotEquals': {'aws:SourceVpce': api_vpc_endpoint_id}
-                        },
+                        conditions={'StringNotEquals': {'aws:SourceVpce': api_vpc_endpoint_id}},
                     ),
                     iam.PolicyStatement(
                         principals=[iam.AnyPrincipal()],
@@ -540,9 +530,7 @@ class LambdaApiStack(pyNestedClass):
             self,
             f'{resource_prefix}-{envname}-apigatewaylogs-role',
             assumed_by=iam.ServicePrincipal('apigateway.amazonaws.com'),
-            inline_policies={
-                f'{resource_prefix}-{envname}-apigateway-policy': iam_policy
-            },
+            inline_policies={f'{resource_prefix}-{envname}-apigateway-policy': iam_policy},
         )
         stage: apigw.CfnStage = gw.deployment_stage.node.default_child
         stage.access_log_setting = apigw.CfnStage.AccessLogSettingProperty(
@@ -596,11 +584,11 @@ class LambdaApiStack(pyNestedClass):
         return api_policy
 
     @staticmethod
-    def get_waf_rules(envname,custom_waf_rules=None,ip_set_regional=None):
+    def get_waf_rules(envname, custom_waf_rules=None, ip_set_regional=None):
         waf_rules = []
         priority = 0
         if custom_waf_rules:
-            if custom_waf_rules.get("allowed_geo_list"):
+            if custom_waf_rules.get('allowed_geo_list'):
                 waf_rules.append(
                     wafv2.CfnWebACL.RuleProperty(
                         name='GeoMatch',
@@ -608,7 +596,7 @@ class LambdaApiStack(pyNestedClass):
                             not_statement=wafv2.CfnWebACL.NotStatementProperty(
                                 statement=wafv2.CfnWebACL.StatementProperty(
                                     geo_match_statement=wafv2.CfnWebACL.GeoMatchStatementProperty(
-                                        country_codes=custom_waf_rules.get("allowed_geo_list")
+                                        country_codes=custom_waf_rules.get('allowed_geo_list')
                                     )
                                 )
                             )
@@ -623,16 +611,14 @@ class LambdaApiStack(pyNestedClass):
                     )
                 )
                 priority += 1
-            if custom_waf_rules.get("allowed_ip_list"):
+            if custom_waf_rules.get('allowed_ip_list'):
                 waf_rules.append(
                     wafv2.CfnWebACL.RuleProperty(
                         name='IPMatch',
                         statement=wafv2.CfnWebACL.StatementProperty(
                             not_statement=wafv2.CfnWebACL.NotStatementProperty(
                                 statement=wafv2.CfnWebACL.StatementProperty(
-                                    ip_set_reference_statement={
-                                        "arn" : ip_set_regional.attr_arn
-                                    }
+                                    ip_set_reference_statement={'arn': ip_set_regional.attr_arn}
                                 )
                             )
                         ),
@@ -758,9 +744,7 @@ class LambdaApiStack(pyNestedClass):
             wafv2.CfnWebACL.RuleProperty(
                 name='APIGatewayRateLimit',
                 statement=wafv2.CfnWebACL.StatementProperty(
-                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(
-                        aggregate_key_type='IP', limit=1000
-                    )
+                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(aggregate_key_type='IP', limit=1000)
                 ),
                 action=wafv2.CfnWebACL.RuleActionProperty(block={}),
                 visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
@@ -774,9 +758,7 @@ class LambdaApiStack(pyNestedClass):
         priority += 1
         return waf_rules
 
-    def create_sns_topic(
-        self, construct_id, envname, lambda_function, param_name, topic_name=None
-    ):
+    def create_sns_topic(self, construct_id, envname, lambda_function, param_name, topic_name=None):
         key = kms.Key(
             self,
             topic_name,
