@@ -5,7 +5,6 @@ from ....db import exceptions
 from ....db.models import Group
 from backend.aws.cognito import Cognito
 
-
 log = logging.getLogger()
 
 

@@ -1,10 +1,10 @@
-core:
-    graphql_api: "core/backend/docker/prod/lambda/Dockerfile"
-    ecs_tasks: "core/backend/docker/prod/ecs/Dockerfile"
-    frontend_views: "core/frontend"
 modules:
     -   name: "Dashboards"
         graphql_api: "modules/notebooks/backend/api/lambda/Dockerfile"
+            dependencies:
+                - Environment
+                - Dataset
+                - Datasets/list_all_datasets
     -   name: "DataPipelines"
         graphql_api: "modules/datapipelines/backend/api/lambda/Dockerfile"
     -   name: "Datasets"

@@ -20,12 +20,13 @@ COPY common/backend/requirements.txt ./requirements.txt
 RUN $PYTHON_VERSION -m pip install -U pip
 RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
 
+#TODO AS LAMBDA LAYER for Global
 COPY common/backend/. ./backend/
-COPY core_new/_db_core/. ./backend/db/core/
+COPY modules/notebooks/backend/db/. ./backend/db/module/
+# until here
 
 
 COPY modules/notebooks/backend/api/. ./backend/api/Objects
-COPY modules/notebooks/backend/db/. ./backend/db/module/
 
 
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.

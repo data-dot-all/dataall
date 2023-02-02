@@ -1,3 +1,4 @@
+from backend.api import gql
 from ..constants import *
 
 

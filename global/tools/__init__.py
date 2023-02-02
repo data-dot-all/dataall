@@ -1,0 +1,1 @@
+from .modularization import ApplicationComponents, Core, Module
