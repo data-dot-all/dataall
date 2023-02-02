@@ -532,27 +532,6 @@ class PipelineStack(Stack):
         )
         ecr_stage.add_post(
             pipelines.CodeBuildStep(
-                id='CoreLambdaImage',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
-                    privileged=True,
-                    environment_variables={
-                        'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
-                        ),
-                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'lambdas-{self.image_tag.lower()}'
-                        ),
-                    },
-                ),
-                commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                    f"make deploy-image type=lambda path={self.core.get(ApplicationComponents.GRAPHQL.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
-                ],
-                role_policy_statements=self.codebuild_policy,
-                vpc=self.vpc,
-            ),
-            pipelines.CodeBuildStep(
                 id='CoreECSImage',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
@@ -568,7 +547,7 @@ class PipelineStack(Stack):
                 ),
                 commands=[
                     'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                    f"make deploy-image path={self.core.get(ApplicationComponents.ECS.value)} image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                    f'make deploy-image path="global/tools/backend/long_async_tasks/docker/Dockerfile" image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name}',
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
@@ -593,7 +572,7 @@ class PipelineStack(Stack):
                         ),
                         commands=[
                             'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
-                            f'make deploy-image path="global/tools/backend/api/lambda/Dockerfile" image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name} module_path={module.get("path")}',
+                            f'make deploy-image path="global/tools/backend/api/docker/Dockerfile" image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name} module_path={module.get("path")}',
                         ],
                         role_policy_statements=self.codebuild_policy,
                         vpc=self.vpc,
