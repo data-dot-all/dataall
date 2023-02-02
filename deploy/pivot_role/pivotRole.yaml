@@ -598,11 +598,12 @@ Resources:
               - "quicksight:ListUserGroups"
               - "quicksight:RegisterUser"
               - "quicksight:DescribeDashboardPermissions"
+              - "quicksight:UpdateDashboardPermissions"
               - "quicksight:GetAuthCode"
               - "quicksight:CreateGroupMembership"
               - "quicksight:DescribeAccountSubscription"
             Resource:
-            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/dataall"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:datasource/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/*"

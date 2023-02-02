@@ -24,11 +24,9 @@ def setup_cognito(
         'Parameter'
     ]['Value']
 
-    if internet_facing == 'True':
+    if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
-
-    if custom_domain == 'False':
         signin_singout_link = ssm.get_parameter(
             Name=f'/dataall/{envname}/CloudfrontDistributionDomainName'
         )['Parameter']['Value']

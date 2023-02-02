@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.sql import and_
 
 from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary
+from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from ..models import Dataset
 from ..models.Enums import ShareItemStatus
 from ...utils import json_utils
@@ -72,6 +72,18 @@ class DatasetTable:
                 session, username, table.tableUri, 'DatasetTable', data.get('terms', [])
             )
         session.commit()
+
+        # ADD DATASET TABLE PERMISSIONS
+        environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        permission_group = set([dataset.SamlAdminGroupName, environment.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
+        for group in permission_group:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=group,
+                permissions=permissions.DATASET_TABLE_READ,
+                resource_uri=table.tableUri,
+                resource_type=models.DatasetTable.__name__,
+            )
         return table
 
     @staticmethod
@@ -259,6 +271,17 @@ class DatasetTable:
                     )
                     session.add(updated_table)
                     session.commit()
+                    # ADD DATASET TABLE PERMISSIONS
+                    env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+                    permission_group = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
+                    for group in permission_group:
+                        ResourcePolicy.attach_resource_policy(
+                            session=session,
+                            group=group,
+                            permissions=permissions.DATASET_TABLE_READ,
+                            resource_uri=updated_table.tableUri,
+                            resource_type=models.DatasetTable.__name__,
+                        )
                 else:
                     logger.info(
                         f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'

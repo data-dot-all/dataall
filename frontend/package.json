@@ -36,9 +36,11 @@
     "dayjs": "^1.11.0",
     "formik": "^2.2.9",
     "graphql-tag": "^2.12.6",
+    "json5": "^2.2.2",
     "jwt-decode": "^3.1.2",
     "notistack": "^2.0.3",
     "nprogress": "^0.2.0",
+    "nth-check": "^2.0.1",
     "prop-types": "^15.8.1",
     "react": "^17.0.2",
     "react-apexcharts": "^1.4.0",
@@ -57,9 +59,12 @@
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
   },
+  "resolutions": {
+    "nth-check": "^2.0.1"
+  },
   "devDependencies": {
-    "prettier": "^2.6.1",
-    "env-cmd": "^10.1.0"
+    "env-cmd": "^10.1.0",
+    "prettier": "^2.6.1"
   },
   "eslintConfig": {
     "extends": [
