@@ -32,7 +32,8 @@
         "enable_cw_rum":  "boolean_SET_CLOUDWATCH_RUM_APP_MONITOR|DEFAULT=false",
         "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false",
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
-        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false"
+        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
+        "create_pivot_role": false
       }
     ]
   }

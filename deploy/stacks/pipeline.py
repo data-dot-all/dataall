@@ -182,21 +182,19 @@ class PipelineStack(Stack):
         )
         for policy in self.codebuild_policy:
             self.pipeline_iam_role.add_to_policy(policy)
-            
-        if self.source == "github":
+
+        if self.source == 'github':
             source = CodePipelineSource.git_hub(
-                repo_string="awslabs/aws-dataall",
+                repo_string='awslabs/aws-dataall',
                 branch=self.git_branch,
-                authentication=SecretValue.secrets_manager(secret_id="github-access-token-secret")
+                authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
             )
-            
+
         else:
             source = CodePipelineSource.code_commit(
-                        repository=codecommit.Repository.from_repository_name(
-                            self, 'sourcerepo', repository_name='dataall'
-                        ),
-                        branch=self.git_branch,
-                    )
+                repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
+                branch=self.git_branch,
+            )
 
         self.pipeline = pipelines.CodePipeline(
             self,
@@ -378,7 +376,7 @@ class PipelineStack(Stack):
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
-                        "python -m venv env",
+                        'python -m venv env',
                         '. env/bin/activate',
                         'make check-security',
                     ],
@@ -486,7 +484,6 @@ class PipelineStack(Stack):
                 ),
             )
 
-
     def set_ecr_stage(
         self,
         target_env,
@@ -516,9 +513,7 @@ class PipelineStack(Stack):
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{self.resource_prefix}-{target_env['envname']}-repository"
                         ),
-                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'lambdas-{self.image_tag}'
-                        ),
+                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
                 ),
                 commands=[
@@ -536,9 +531,7 @@ class PipelineStack(Stack):
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                             value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
                         ),
-                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                            value=f'cdkproxy-{self.image_tag}'
-                        ),
+                        'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'cdkproxy-{self.image_tag}'),
                     },
                 ),
                 commands=[
@@ -577,6 +570,7 @@ class PipelineStack(Stack):
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
+                create_pivot_role=target_env.get('create_pivot_role', False),
             )
         )
         return backend_stage
@@ -780,9 +774,7 @@ class PipelineStack(Stack):
                             'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                                 value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
                             ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                value=f'frontend-{self.image_tag}'
-                            ),
+                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'frontend-{self.image_tag}'),
                         },
                     ),
                     commands=[
@@ -823,9 +815,7 @@ class PipelineStack(Stack):
                             'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
                                 value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
                             ),
-                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(
-                                value=f'userguide-{self.image_tag}'
-                            ),
+                            'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
                         },
                     ),
                     commands=[

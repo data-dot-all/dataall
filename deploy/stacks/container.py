@@ -20,11 +20,14 @@ class ContainerStack(pyNestedClass):
         id,
         vpc: ec2.Vpc = None,
         vpc_endpoints_sg: ec2.SecurityGroup = None,
+        tooling_account_id=None,
         envname='dev',
         resource_prefix='dataall',
         ecr_repository=None,
         image_tag=None,
         prod_sizing=False,
+        create_pivot_role=False,
+        pivot_role_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -44,7 +47,7 @@ class ContainerStack(pyNestedClass):
             container_insights=True,
         )
 
-        self.task_role = self.create_task_role(envname, resource_prefix)
+        self.task_role = self.create_task_role(envname, resource_prefix, pivot_role_name)
 
         cdkproxy_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -66,6 +69,7 @@ class ContainerStack(pyNestedClass):
                 'AWS_REGION': self.region,
                 'envname': envname,
                 'LOGLEVEL': 'DEBUG',
+                'CREATE_PIVOT_ROLE': json.dumps(create_pivot_role),
             },
             command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(
@@ -286,9 +290,7 @@ class ContainerStack(pyNestedClass):
             self,
             f'SecurityGroup{envname}',
             parameter_name=f'/dataall/{envname}/ecs/security_groups',
-            string_value=','.join(
-                [s.security_group_id for s in sync_tables_task.task.security_groups]
-            ),
+            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
         )
 
         self.ecs_cluster = cluster
@@ -301,7 +303,7 @@ class ContainerStack(pyNestedClass):
             subscriptions_task.task_definition,
         ]
 
-    def create_task_role(self, envname, resource_prefix):
+    def create_task_role(self, envname, resource_prefix, pivot_role_name):
         role_inline_policy = iam.Policy(
             self,
             f'ECSRolePolicy{envname}',
@@ -343,7 +345,7 @@ class ContainerStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f"arn:aws:iam::*:role/{self.node.try_get_context('pivot_role_name') or 'dataallPivotRole'}",
+                        f'arn:aws:iam::*:role/{pivot_role_name}',
                         f'arn:aws:iam::*:role/cdk*',
                         'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
@@ -387,9 +389,7 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSTaskRole{envname}',
             role_name=f'{resource_prefix}-{envname}-ecs-tasks-role',
-            inline_policies={
-                f'ECSRoleInlinePolicy{envname}': role_inline_policy.document
-            },
+            inline_policies={f'ECSRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         )
         task_role.grant_pass_role(task_role)
