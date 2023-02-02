@@ -12,7 +12,6 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
 from aws_cdk.pipelines import CodePipelineSource
 
-from common import ApplicationComponents
 
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
@@ -554,7 +553,7 @@ class PipelineStack(Stack):
             ),
         )
         for module in self.modules:
-            if module.get(ApplicationComponents.GRAPHQL.value):
+            if module.get("path"):
                 ecr_stage.add_post(
                     pipelines.CodeBuildStep(
                         id=f'{module.get("name")}LambdaImage',
