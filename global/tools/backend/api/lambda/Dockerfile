@@ -16,17 +16,15 @@ RUN yum -y install python38-devel
 
 ## Global code
 WORKDIR ${FUNCTION_DIR}
-COPY global/tools/backend/requirements.txt ./requirements.txt
+COPY global/. ./
 RUN $PYTHON_VERSION -m pip install -U pip
-RUN $PYTHON_VERSION -m pip install -r requirements.txt -t .
+RUN $PYTHON_VERSION -m pip install -r tools/backend/requirements.txt -t .
 
-COPY global/tools/backend/. ./backend/
-COPY global/core/backend/api. ./backend/api/Objects
-COPY global/core/backend/db/. ./backend/db/module/
 
-### Add your module code
-COPY modules/datasets/backend/api/. ./backend/api/Objects
-COPY modules/datasets/backend/db/. ./backend/db/module/
+# Module code
+COPY ${MODULE_PATH}/backend/api/. ./core/backend/api/
+COPY ${MODULE_PATH}/backend/db/models/. ./core/backend/db/models/
+COPY ${MODULE_PATH}/backend/db/operations/. ./core/backend/db/operations/
 
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}
