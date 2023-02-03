@@ -622,7 +622,7 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_approval(session, username, dataset, share)
+        api.Notification.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -664,7 +664,7 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_approval(session, username, dataset, share)
+        api.Notification.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod
