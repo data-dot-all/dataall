@@ -30,6 +30,8 @@ class MonitoringStack(pyNestedClass):
         ecs_task_definitions: [ecs.FargateTaskDefinition] = None,
         backend_api=None,
         opensearch_domain: str = None,
+        opensearch_serverless_collection_id: str = None,
+        opensearch_serverless_collection_name: str = None,
         queue_name: str = None,
         **kwargs,
     ):
@@ -44,6 +46,8 @@ class MonitoringStack(pyNestedClass):
             lambdas,
             database,
             opensearch_domain,
+            opensearch_serverless_collection_id,
+            opensearch_serverless_collection_name,
             queue_name,
             envname,
             resource_prefix,
@@ -108,6 +112,8 @@ class MonitoringStack(pyNestedClass):
         lambdas,
         database,
         openseach_domain,
+        opensearch_serverless_collection_id,
+        opensearch_serverless_collection_name,
         queue_name,
         envname,
         resource_prefix,
@@ -131,11 +137,19 @@ class MonitoringStack(pyNestedClass):
         self.set_aurora_alarms(
             f'{resource_prefix}-{envname}-aurora-alarm', database, self.cw_alarm_action
         )
-        self.set_es_alarms(
-            f'{resource_prefix}-{envname}-opensearch-alarm',
-            openseach_domain,
-            self.cw_alarm_action,
-        )
+        if openseach_domain:
+            self.set_es_alarms(
+                f'{resource_prefix}-{envname}-opensearch-alarm',
+                openseach_domain,
+                self.cw_alarm_action,
+            )
+        if opensearch_serverless_collection_id:
+            self.set_aoss_alarms(
+                f'{resource_prefix}-{envname}-opensearch-serverless-alarm',
+                opensearch_serverless_collection_id,
+                opensearch_serverless_collection_name,
+                self.cw_alarm_action,
+            )
         self.set_sqs_alarms(
             f'{resource_prefix}-{envname}-sqs-alarm',
             queue_name,
@@ -424,6 +438,45 @@ class MonitoringStack(pyNestedClass):
             cw_alarm_action,
         )
 
+    def set_aoss_alarms(self, alarm_name, collection_id, collection_name, cw_alarm_action):
+        self._set_aoss_alarm(
+            collection_id,
+            collection_name,
+            f'{alarm_name}-collection-ActiveCollection',
+            'ActiveCollection',
+            1,
+            cw.ComparisonOperator.LESS_THAN_THRESHOLD,
+            1,
+            1,
+            'max',
+            cw_alarm_action,
+            cw.TreatMissingData.BREACHING,
+        )
+        self._set_aoss_alarm(
+            collection_id,
+            collection_name,
+            f'{alarm_name}-collection-IngestionRequestErrors',
+            'IngestionRequestErrors',
+            1,
+            cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            5,
+            1,
+            'max',
+            cw_alarm_action,
+        )
+        self._set_aoss_alarm(
+            collection_id,
+            collection_name,
+            f'{alarm_name}-collection-SearchRequestErrors',
+            'SearchRequestErrors',
+            1,
+            cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            5,
+            1,
+            'max',
+            cw_alarm_action,
+        )
+
     def _set_es_alarm(
         self,
         domain_name,
@@ -451,6 +504,43 @@ class MonitoringStack(pyNestedClass):
             comparison_operator=comparison_operator,
             evaluation_periods=evaluation_periods,
             treat_missing_data=cw.TreatMissingData.MISSING,
+        )
+        cw_alarm.add_alarm_action(cw_alarm_action)
+        cw_alarm.add_ok_action(cw_alarm_action)
+
+    def _set_aoss_alarm(
+        self,
+        collection_id,
+        collection_name,
+        alarm_name,
+        metric_name,
+        threshold,
+        comparison_operator,
+        period,
+        evaluation_periods,
+        statistic,
+        cw_alarm_action,
+        treat_missing_data=cw.TreatMissingData.MISSING,
+    ) -> None:
+        cw_alarm = cw.Alarm(
+            self,
+            alarm_name,
+            alarm_name=alarm_name,
+            metric=cw.Metric(
+                metric_name=metric_name,
+                namespace='AWS/AOSS',
+                dimensions_map={
+                    'CollectionId': collection_id,
+                    'CollectionName': collection_name,
+                    'ClientId': self.account,
+                },
+                period=Duration.minutes(period),
+                statistic=statistic,
+            ),
+            threshold=threshold,
+            comparison_operator=comparison_operator,
+            evaluation_periods=evaluation_periods,
+            treat_missing_data=treat_missing_data,
         )
         cw_alarm.add_alarm_action(cw_alarm_action)
         cw_alarm.add_ok_action(cw_alarm_action)

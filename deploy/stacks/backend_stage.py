@@ -27,6 +27,7 @@ class BackendStage(Stage):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        enable_opensearch_serverless=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -51,6 +52,7 @@ class BackendStage(Stage):
             enable_cw_canaries=enable_cw_canaries,
             enable_cw_rum=enable_cw_rum,
             shared_dashboard_sessions=shared_dashboard_sessions,
+            enable_opensearch_serverless=enable_opensearch_serverless,
             **kwargs,
         )
 

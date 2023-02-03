@@ -207,11 +207,9 @@ class PipelineStack(Stack):
                 'Synth',
                 input=source,
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.STANDARD_6_0,
                 ),
                 commands=[
-                    'n 16.15.1',
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -584,6 +582,7 @@ class PipelineStack(Stack):
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
+                enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
             )
         )
         return backend_stage

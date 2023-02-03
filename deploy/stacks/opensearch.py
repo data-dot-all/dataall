@@ -1,3 +1,4 @@
+from typing import Optional, List
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_iam as iam,
@@ -20,8 +21,10 @@ class OpenSearchStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         vpc: ec2.Vpc = None,
+        vpc_endpoints_sg: ec2.SecurityGroup = None,
         lambdas=None,
         ecs_security_groups: [ec2.SecurityGroup] = None,
+        ecs_task_role: Optional[iam.Role] = None,
         prod_sizing=False,
         **kwargs,
     ):
@@ -135,3 +138,11 @@ class OpenSearchStack(pyNestedClass):
             parameter_name=f'/dataall/{envname}/elasticsearch/security_group_id',
             string_value=db_security_group.security_group_id,
         )
+
+    @property
+    def domain_name(self) -> str:
+        return self.domain.domain_name
+
+    @property
+    def domain_endpoint(self) -> str:
+        return self.domain.domain_endpoint

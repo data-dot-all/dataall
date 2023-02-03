@@ -14,6 +14,7 @@ from .dbmigration import DBMigrationStack
 from .lambda_api import LambdaApiStack
 from .monitoring import MonitoringStack
 from .opensearch import OpenSearchStack
+from .opensearch_serverless import OpenSearchServerlessStack
 from .param_store_stack import ParamStoreStack
 from .s3_resources import S3ResourcesStack
 from .secrets_stack import SecretsManagerStack
@@ -43,6 +44,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        enable_opensearch_serverless=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -251,21 +253,25 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        opensearch_stack = OpenSearchStack(
-            self,
-            f'OpenSearch',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            vpc=vpc,
-            lambdas=[
+        opensearch_args = {
+            "envname": envname,
+            "resource_prefix": resource_prefix,
+            "vpc": vpc,
+            "vpc_endpoints_sg": vpc_endpoints_sg,
+            "lambdas": [
                 lambda_api_stack.aws_handler,
                 lambda_api_stack.api_handler,
                 lambda_api_stack.elasticsearch_proxy_handler,
             ],
-            ecs_security_groups=ecs_stack.ecs_security_groups,
-            prod_sizing=prod_sizing,
+            "ecs_security_groups": ecs_stack.ecs_security_groups,
+            "ecs_task_role": ecs_stack.ecs_task_role,
+            "prod_sizing": prod_sizing,
             **kwargs,
-        )
+        }
+        if enable_opensearch_serverless:
+            opensearch_stack = OpenSearchServerlessStack(self, f'OpenSearchServerless', **opensearch_args)
+        else:
+            opensearch_stack = OpenSearchStack(self, f'OpenSearch', **opensearch_args)
 
         monitoring_stack = MonitoringStack(
             self,
@@ -281,7 +287,9 @@ class BackendStack(Stack):
             ecs_cluster=ecs_stack.ecs_cluster,
             ecs_task_definitions=ecs_stack.ecs_task_definitions,
             backend_api=lambda_api_stack.backend_api_name,
-            opensearch_domain=opensearch_stack.domain.domain_name,
+            opensearch_domain=opensearch_stack.domain_name if not enable_opensearch_serverless else None,
+            opensearch_serverless_collection_id=opensearch_stack.collection_id if enable_opensearch_serverless else None,
+            opensearch_serverless_collection_name=opensearch_stack.collection_name if enable_opensearch_serverless else None,
             queue_name=sqs_stack.queue.queue_name,
             **kwargs,
         )
