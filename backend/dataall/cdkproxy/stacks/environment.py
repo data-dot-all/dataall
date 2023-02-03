@@ -72,8 +72,8 @@ class EnvironmentSetup(Stack):
 
     # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
     # a nested stack
-    def init_quicksight(self, environment: models.Environment):
-        Quicksight.create_quicksight_group(environment.AwsAccountId, 'dataall')
+    # def init_quicksight(self, environment: models.Environment):
+    #     Quicksight.create_quicksight_group(environment.AwsAccountId, 'dataall')
 
     # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
     # a nested stack
