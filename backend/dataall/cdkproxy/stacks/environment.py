@@ -30,6 +30,7 @@ from botocore.exceptions import ClientError
 
 from .manager import stack
 from .pivot_role import PivotRole
+from .sagemakerstudio import SageMakerDomain
 from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
@@ -77,20 +78,20 @@ class EnvironmentSetup(Stack):
 
     # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
     # a nested stack
-    def check_sagemaker_studio(self, engine, environment: models.Environment):
-        logger.info('check sagemaker studio domain creation')
-
-        try:
-            dataall_created_domain = ParameterStoreManager.client(
-                AwsAccountId=environment.AwsAccountId, region=environment.region
-            ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
-            return None
-        except ClientError as e:
-            logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
-            existing_domain = SagemakerStudio.get_sagemaker_studio_domain(environment.AwsAccountId, environment.region)
-            existing_domain_id = existing_domain.get('DomainId', False)
-            if existing_domain_id:
-                return existing_domain_id
+    # def check_sagemaker_studio(self, engine, environment: models.Environment):
+    #     logger.info('check sagemaker studio domain creation')
+    #
+    #     try:
+    #         dataall_created_domain = ParameterStoreManager.client(
+    #             AwsAccountId=environment.AwsAccountId, region=environment.region
+    #         ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
+    #         return None
+    #     except ClientError as e:
+    #         logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
+    #         existing_domain = SagemakerStudio.get_sagemaker_studio_domain(environment.AwsAccountId, environment.region)
+    #         existing_domain_id = existing_domain.get('DomainId', False)
+    #         if existing_domain_id:
+    #             return existing_domain_id
 
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
@@ -181,7 +182,7 @@ class EnvironmentSetup(Stack):
 
         self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
 
-        roles_sagemaker_dependency_group = DependencyGroup()
+        sagemaker_dependency_group = DependencyGroup()
 
         # if self._environment.dashboardsEnabled:
         #     logger.warning('ensure_quicksight_default_group')
@@ -190,7 +191,7 @@ class EnvironmentSetup(Stack):
         group_roles = self.create_or_import_environment_groups_roles()
 
         for group_role in group_roles:
-            roles_sagemaker_dependency_group.add(group_role)
+            sagemaker_dependency_group.add(group_role)
 
         default_environment_bucket = s3.Bucket(
             self,
@@ -262,7 +263,7 @@ class EnvironmentSetup(Stack):
         )
 
         default_role = self.create_or_import_environment_default_role()
-        roles_sagemaker_dependency_group.add(default_role)
+        sagemaker_dependency_group.add(default_role)
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -278,8 +279,9 @@ class EnvironmentSetup(Stack):
                 'externalId': SessionHelper.get_external_id_secret(),
                 'resourcePrefix': self._environment.resourcePrefix,
             }
-            self.pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
-            self.pivot_role = self.pivot_role_stack.pivot_role
+            pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
+            self.pivot_role = pivot_role_stack.pivot_role
+            sagemaker_dependency_group.add(pivot_role_stack)
         else:
             self.pivot_role = iam.Role.from_role_arn(
                 self,
@@ -503,6 +505,10 @@ class EnvironmentSetup(Stack):
                 central_account,
                 self._environment,
             )
+
+        # SageMaker Studio domain
+        sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain', environment=self._environment, sagemaker_principals=[default_role, group_roles])
+        sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
 
         # self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
         #
