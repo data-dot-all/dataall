@@ -11,13 +11,12 @@ from . import (
     has_tenant_perm,
     ResourcePolicy,
     Permission,
-    KeyValueTag,
-    ShareItemSM
+    KeyValueTag
 )
 from ..api.organization import Organization
+from ..api.share_object import ShareItemSM
 from ..models import EnvironmentGroup
 from ..models.Enums import (
-    ShareItemStatus,
     ShareableType,
     EnvironmentType,
     EnvironmentPermission,
