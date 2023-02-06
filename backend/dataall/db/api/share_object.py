@@ -13,19 +13,6 @@ from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectAction
 
 logger = logging.getLogger(__name__)
 
-SHARE_ITEM_SHARED_STATES = [
-    ShareItemStatus.Share_Succeeded.value,
-    ShareItemStatus.Share_In_Progress.value,
-    ShareItemStatus.Revoke_Failed.value,
-    ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Approved.value
-]
-
-SHARE_ITEM_REVOKABLE_STATES = [
-    ShareItemStatus.Share_Succeeded.value,
-    ShareItemStatus.Revoke_Failed.value,
-]
-
 
 class Transition:
     def __init__(self, name, transitions):
@@ -305,6 +292,23 @@ class ShareItemSM:
         )
         self._state = new_state
         return True
+
+    @staticmethod
+    def get_share_item_shared_states():
+        return [
+            ShareItemStatus.Share_Succeeded.value,
+            ShareItemStatus.Share_In_Progress.value,
+            ShareItemStatus.Revoke_Failed.value,
+            ShareItemStatus.Revoke_In_Progress.value,
+            ShareItemStatus.Revoke_Approved.value
+        ]
+
+    @staticmethod
+    def get_share_item_revokable_states():
+        return [
+            ShareItemStatus.Share_Succeeded.value,
+            ShareItemStatus.Revoke_Failed.value,
+        ]
 
 
 class ShareObject:
@@ -827,7 +831,7 @@ class ShareObject:
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
-        shared_share_items_states = [x for x in SHARE_ITEM_SHARED_STATES if x in share_items_states]
+        shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in share_items_states]
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Delete.value)
@@ -850,10 +854,11 @@ class ShareObject:
     @staticmethod
     def check_existing_shared_items(session, uri):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = session.query(models.ShareObjectItem).filter(
             and_(
                 models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+                models.ShareObjectItem.status.in_(share_item_shared_states)
             )
         ).all()
         if shared_items:
@@ -863,11 +868,12 @@ class ShareObject:
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
         share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = session.query(models.ShareObjectItem).filter(
             and_(
                 models.ShareObjectItem.shareUri == share.shareUri,
                 models.ShareObjectItem.itemType == item_type,
-                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+                models.ShareObjectItem.status.in_(share_item_shared_states)
             )
         ).all()
         if shared_items:
@@ -916,6 +922,7 @@ class ShareObject:
         share: models.ShareObject = data.get(
             'share', ShareObject.get_share_by_uri(session, uri)
         )
+        share_item_revokable_states = ShareItemSM.get_share_item_revokable_states()
         datasetUri = share.datasetUri
 
         # All tables from dataset with a column isShared
@@ -944,7 +951,7 @@ class ShareObject:
         )
         if data:
             if data.get("isRevokable"):
-                tables = tables.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_REVOKABLE_STATES))
+                tables = tables.filter(models.ShareObjectItem.status.in_(share_item_revokable_states))
 
         # All folders from the dataset with a column isShared
         # marking the folder as part of the shareObject
@@ -973,7 +980,7 @@ class ShareObject:
         )
         if data:
             if data.get("isRevokable"):
-                locations = locations.filter(models.ShareObjectItem.status.in_(SHARE_ITEM_REVOKABLE_STATES))
+                locations = locations.filter(models.ShareObjectItem.status.in_(share_item_revokable_states))
 
         shareable_objects = tables.union(locations).subquery('shareable_objects')
         query = session.query(shareable_objects)
@@ -1308,6 +1315,7 @@ class ShareObject:
 
     @staticmethod
     def resolve_share_object_statistics(session, uri, **kwargs):
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         tables = (
             session.query(models.ShareObjectItem)
             .filter(
@@ -1333,7 +1341,7 @@ class ShareObject:
             .filter(
                 and_(
                     models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
             .count()

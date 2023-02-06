@@ -12,24 +12,17 @@ from . import (
     KeyValueTag,
     Vote,
     Stack,
+    ShareItemSM,
 )
 from . import Organization
 from .. import models, exceptions, permissions, paginate
-from ..models.Enums import Language, ConfidentialityClassification, ShareObjectStatus, ShareItemStatus
+from ..models.Enums import Language, ConfidentialityClassification
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
 logger = logging.getLogger(__name__)
-
-SHARE_ITEM_SHARED_STATES = [
-    ShareItemStatus.Share_Succeeded.value,
-    ShareItemStatus.Share_In_Progress.value,
-    ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Approved.value,
-    ShareItemStatus.Revoke_Failed.value,
-]
 
 
 class Dataset:
@@ -224,6 +217,7 @@ class Dataset:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(models.Dataset)
             .outerjoin(
@@ -241,11 +235,11 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                 )
             )
