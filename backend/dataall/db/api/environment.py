@@ -5,7 +5,7 @@ from sqlalchemy import or_, case, func
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from .. import exceptions, permissions, models
+from .. import exceptions, permissions, models, api
 from . import (
     has_resource_perm,
     has_tenant_perm,
@@ -14,7 +14,6 @@ from . import (
     KeyValueTag
 )
 from ..api.organization import Organization
-from ..api.share_object import ShareItemSM
 from ..models import EnvironmentGroup
 from ..models.Enums import (
     ShareableType,
@@ -861,7 +860,7 @@ class Environment:
     def paginated_shared_with_environment_datasets(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
@@ -953,7 +952,7 @@ class Environment:
     def paginated_shared_with_environment_group_datasets(
         session, username, groups, envUri, groupUri, data=None, check_perm=None
     ) -> dict:
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
@@ -1075,7 +1074,7 @@ class Environment:
     def paginated_environment_data_items(
         session, username, groups, uri, data=None, check_perm=None
     ):
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
