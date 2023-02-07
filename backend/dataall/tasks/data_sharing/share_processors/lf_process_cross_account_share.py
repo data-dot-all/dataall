@@ -39,7 +39,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         4) For each shared table:
             a) update its status to SHARE_IN_PROGRESS with Action Start
             b) check if share item exists on glue catalog raise error if not and flag share item status to failed
-            c) grant external account (target account) access to table -> creates RAM inviation
+            c) grant external account (target account) access to table -> create RAM invitation and revoke_iamallowedgroups_super_permission_from_table
             d) accept pending RAM invitation
             e) create resource link for table in target account
             f) grant permission to table for requester team IAM role in source account

@@ -37,6 +37,7 @@ class LFShareManager:
         self.source_environment = source_environment
         self.target_environment = target_environment
         self.shared_db_name = self.build_shared_db_name()
+        self.principals = self.get_share_principals()
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -81,7 +82,7 @@ class LFShareManager:
         """
         return (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
 
-    def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
+    def build_share_data(self, table: models.DatasetTable) -> dict:
         """
         Build aws dict for boto3 operations on Glue and LF from share data
         Parameters
@@ -103,7 +104,7 @@ class LFShareManager:
             'target': {
                 'accountid': self.target_environment.AwsAccountId,
                 'region': self.target_environment.region,
-                'principals': principals,
+                'principals': self.principals,
                 'database': self.shared_db_name,
             },
         }
