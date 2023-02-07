@@ -349,10 +349,7 @@ def test_build_share_data(
         },
     }
 
-    data = processor_same_account.build_share_data(
-        principals=[f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"],
-        table=table1
-    )
+    data = processor_same_account.build_share_data(table=table1)
     assert data == data_same_account
 
     data_cross_account = {
@@ -370,10 +367,7 @@ def test_build_share_data(
         },
     }
 
-    data = processor_cross_account.build_share_data(
-        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
-        table=table1
-    )
+    data = processor_cross_account.build_share_data(table=table1)
     assert data == data_cross_account
 
 
