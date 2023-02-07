@@ -237,6 +237,23 @@ class Pipeline:
                     models.DataPipeline.label.ilike(filter.get('term') + '%%'),
                 )
             )
+        if filter and filter.get('region'):
+            if len(filter.get('region')) > 0:
+                query = query.filter(
+                    models.DataPipeline.region.in_(filter.get('region'))
+                )
+        if filter and filter.get('tags'):
+            if len(filter.get('tags')) > 0:
+                query = query.filter(
+                    or_(
+                        *[models.DataPipeline.tags.any(tag) for tag in filter.get('tags')]
+                    )
+                )
+        if filter and filter.get('type'):
+            if len(filter.get('type')) > 0:
+                query = query.filter(
+                    models.DataPipeline.devStrategy.in_(filter.get('type'))
+                )
         return query
 
     @staticmethod

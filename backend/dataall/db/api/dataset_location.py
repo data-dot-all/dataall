@@ -3,22 +3,11 @@ from typing import List
 
 from sqlalchemy import and_, or_
 
-from . import has_tenant_perm, has_resource_perm, Glossary
+from . import has_tenant_perm, has_resource_perm, Glossary, ShareItemSM
 from .. import models, paginate, permissions, exceptions
 from .dataset import Dataset
-from ..models.Enums import ShareItemStatus
 
 logger = logging.getLogger(__name__)
-
-
-SHARE_ITEM_SHARED_STATES = [
-    ShareItemStatus.Share_Succeeded.value,
-    ShareItemStatus.Share_In_Progress.value,
-    ShareItemStatus.Revoke_Failed.value,
-    ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Approved.value,
-    ShareItemStatus.Revoke_Failed.value,
-]
 
 
 class DatasetStorageLocation:
@@ -158,12 +147,13 @@ class DatasetStorageLocation:
         location = DatasetStorageLocation.get_location_by_uri(
             session, data['locationUri']
         )
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == location.locationUri,
-                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+                    models.ShareObjectItem.status.in_(share_item_shared_states)
                 )
             )
             .first()

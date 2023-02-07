@@ -13,6 +13,7 @@ def permissions(db):
         for p in (
             dataall.db.permissions.DATASET_READ
             + dataall.db.permissions.DATASET_WRITE
+            + dataall.db.permissions.DATASET_TABLE_READ
             + dataall.db.permissions.ORGANIZATION_ALL
             + dataall.db.permissions.ENVIRONMENT_ALL
         ):

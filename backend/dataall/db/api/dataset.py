@@ -12,24 +12,17 @@ from . import (
     KeyValueTag,
     Vote,
     Stack,
+    ShareItemSM,
 )
 from . import Organization
 from .. import models, exceptions, permissions, paginate
-from ..models.Enums import Language, ConfidentialityClassification, ShareObjectStatus, ShareItemStatus
+from ..models.Enums import Language, ConfidentialityClassification
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
 logger = logging.getLogger(__name__)
-
-SHARE_ITEM_SHARED_STATES = [
-    ShareItemStatus.Share_Succeeded.value,
-    ShareItemStatus.Share_In_Progress.value,
-    ShareItemStatus.Revoke_In_Progress.value,
-    ShareItemStatus.Revoke_Approved.value,
-    ShareItemStatus.Revoke_Failed.value,
-]
 
 
 class Dataset:
@@ -224,6 +217,7 @@ class Dataset:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(models.Dataset)
             .outerjoin(
@@ -241,11 +235,11 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                 )
             )
@@ -383,11 +377,13 @@ class Dataset:
 
     @staticmethod
     def transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=dataset.stewards,
-            resource_uri=dataset.datasetUri,
-        )
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=new_stewards,
@@ -395,6 +391,23 @@ class Dataset:
             resource_uri=dataset.datasetUri,
             resource_type=models.Dataset.__name__,
         )
+
+        dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if dataset.stewards != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=new_stewards,
+                permissions=permissions.DATASET_TABLE_READ,
+                resource_uri=tableUri,
+                resource_type=models.DatasetTable.__name__,
+            )
+
         dataset_shares = (
             session.query(models.ShareObject)
             .filter(models.ShareObject.datasetUri == dataset.datasetUri)
@@ -412,11 +425,6 @@ class Dataset:
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
                     resource_uri=share.shareUri,
                 )
         return dataset
@@ -475,6 +483,15 @@ class Dataset:
         return (
             session.query(models.DatasetTable)
             .filter(models.DatasetTable.datasetUri == dataset_uri)
+            .all()
+        )
+
+    @staticmethod
+    def get_dataset_folders(session, dataset_uri):
+        """return the dataset folders"""
+        return (
+            session.query(models.DatasetStorageLocation)
+            .filter(models.DatasetStorageLocation.datasetUri == dataset_uri)
             .all()
         )
 
@@ -539,6 +556,11 @@ class Dataset:
         ResourcePolicy.delete_resource_policy(
             session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
         )
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.SamlAdminGroupName != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session, resource_uri=uri, group=env.SamlGroupName
+            )
         if dataset.stewards:
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.stewards

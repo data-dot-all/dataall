@@ -91,9 +91,20 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='datasetName', type=gql.String),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
     ],
 )
+
+ConsumptionData = gql.ObjectType(
+    name='ConsumptionData',
+    fields=[
+        gql.Field(name='s3AccessPointName', type=gql.String),
+        gql.Field(name='sharedGlueDatabase', type=gql.String),
+    ],
+)
+
 ShareObject = gql.ObjectType(
     name='ShareObject',
     fields=[
@@ -105,6 +116,7 @@ ShareObject = gql.ObjectType(
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
+        gql.Field(name='consumptionData', type=gql.Ref('ConsumptionData'), resolver=resolve_consumption_data),
         gql.Field(name='existingSharedItems', type=gql.Boolean, resolver=resolve_existing_shared_items),
         gql.Field(
             name='statistics',
