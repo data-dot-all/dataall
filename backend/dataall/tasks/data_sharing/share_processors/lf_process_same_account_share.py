@@ -32,14 +32,14 @@ class ProcessLFSameAccountShare(LFShareManager):
     def process_approved_shares(self) -> bool:
         """
         1) Grant ALL permissions to pivotRole for source database in source account
-        2) Gets share principals and build shared db name
-        3) Creates the shared database in target account if it doesn't exist
+        2) Get share principals (requester IAM role and QS groups) and build shared db name
+        3) Create the shared database in target account if it doesn't exist
         4) For each shared table:
             a) update its status to SHARE_IN_PROGRESS with Action Start
             b) check if share item exists on glue catalog raise error if not and flag share item status to failed
             c) create resource link in account
-            d) grant permission to table for team role in account
-            e) grant permission to resource link table for team role in account
+            d) grant permission to table for requester team IAM role in account
+            e) grant permission to resource link table for requester team IAM role in account
             f) update share item status to SHARE_SUCCESSFUL with Action Success
 
         Returns
@@ -114,6 +114,8 @@ class ProcessLFSameAccountShare(LFShareManager):
         False if revoke fails
         """
         success = True
+        shared_db_name = self.build_shared_db_name()
+        principals = self.get_share_principals()
         for table in self.revoked_tables:
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
@@ -132,11 +134,12 @@ class ProcessLFSameAccountShare(LFShareManager):
             try:
                 self.check_share_item_exists_on_glue_catalog(share_item, table)
 
-                log.info(f'Starting revoke access for table: {table.GlueTableName}')
+                log.info(f'Starting revoke access for table: {table.GlueTableName} in database {shared_db_name} '
+                         f'For principals {principals}')
 
-                self.revoke_table_resource_link_access(table)
+                self.revoke_table_resource_link_access(table, principals)
 
-                self.revoke_source_table_access(table)
+                self.revoke_source_table_access(table, principals)
 
                 self.delete_resource_link_table(table)
 
