@@ -162,7 +162,7 @@ class LFShareManager:
         """
         Creates the shared database if does not exists.
         1) Grants pivot role ALL permission on shareddb
-        2) Grant Team role DESCRIBE Only permission
+        2) Grant principals DESCRIBE Only permission
 
         Parameters
         ----------
@@ -271,12 +271,13 @@ class LFShareManager:
             )
             raise e
 
-    def revoke_table_resource_link_access(self, table: models.DatasetTable):
+    def revoke_table_resource_link_access(self, table: models.DatasetTable, principals: [str]):
         """
         Revokes access to glue table resource link
         Parameters
         ----------
         table : models.DatasetTable
+        principals: List of strings. IAM role arn and Quicksight groups
 
         Returns
         -------
@@ -295,36 +296,38 @@ class LFShareManager:
             )
             return True
 
-        logger.info(
-            f'Revoking resource link access '
-            f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
-            f'for principal {self.env_group.environmentIAMRoleArn}'
-        )
-        LakeFormation.batch_revoke_permissions(
-            SessionHelper.remote_session(self.target_environment.AwsAccountId).client(
-                'lakeformation', region_name=self.target_environment.region
-            ),
-            self.target_environment.AwsAccountId,
-            [
-                {
-                    'Id': str(uuid.uuid4()),
-                    'Principal': {
-                        'DataLakePrincipalIdentifier': self.env_group.environmentIAMRoleArn
-                    },
-                    'Resource': {
-                        'Table': {
-                            'DatabaseName': self.shared_db_name,
-                            'Name': table.GlueTableName,
-                            'CatalogId': self.target_environment.AwsAccountId,
-                        }
-                    },
-                    'Permissions': ['DESCRIBE'],
-                }
-            ],
-        )
+        for principal in principals:
+            logger.info(
+                f'Revoking resource link access '
+                f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
+                f'for principal {principal}'
+
+            )
+            LakeFormation.batch_revoke_permissions(
+                SessionHelper.remote_session(self.target_environment.AwsAccountId).client(
+                    'lakeformation', region_name=self.target_environment.region
+                ),
+                self.target_environment.AwsAccountId,
+                [
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal': {
+                            'DataLakePrincipalIdentifier': principal
+                        },
+                        'Resource': {
+                            'Table': {
+                                'DatabaseName': self.shared_db_name,
+                                'Name': table.GlueTableName,
+                                'CatalogId': self.target_environment.AwsAccountId,
+                            }
+                        },
+                        'Permissions': ['DESCRIBE'],
+                    }
+                ],
+            )
         return True
 
-    def revoke_source_table_access(self, table):
+    def revoke_source_table_access(self, table, principals: [str]):
         """
         Revokes access to the source glue table
         Parameters
@@ -351,14 +354,14 @@ class LFShareManager:
         logger.info(
             f'Revoking source table access '
             f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
-            f'for principal {self.env_group.environmentIAMRoleArn}'
+            f'for principals {principals}'
         )
         LakeFormation.revoke_source_table_access(
             target_accountid=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             source_database=self.dataset.GlueDatabaseName,
             source_table=table.GlueTableName,
-            target_principal=self.env_group.environmentIAMRoleArn,
+            target_principals=principals,
             source_accountid=self.source_environment.AwsAccountId,
         )
         return True

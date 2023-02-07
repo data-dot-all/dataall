@@ -12,11 +12,6 @@ from ...utils import Parameter
 
 log = logging.getLogger(__name__)
 
-REFRESH_SHARES_STATES = [
-    models.ShareObjectStatus.Approved.value,
-    models.ShareObjectStatus.Revoked.value,
-]
-
 
 class DataSharingService:
     def __init__(self):
@@ -259,11 +254,12 @@ class DataSharingService:
         -------
         true if refresh succeeds
         """
+        share_object_refreshable_states = api.ShareObjectSM.get_share_object_refreshable_states()
         with engine.scoped_session() as session:
             environments = session.query(models.Environment).all()
             shares = (
                 session.query(models.ShareObject)
-                .filter(models.ShareObject.status.in_(REFRESH_SHARES_STATES))
+                .filter(models.ShareObject.status.in_(share_object_refreshable_states))
                 .all()
             )
 

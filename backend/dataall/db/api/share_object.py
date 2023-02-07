@@ -149,6 +149,13 @@ class ShareObjectSM:
         )
         self._state = new_state
         return True
+    
+    @staticmethod
+    def get_share_object_refreshable_states():
+        return [
+            ShareObjectStatus.Approved.value,
+            ShareObjectStatus.Revoked.value
+        ]
 
 
 class ShareItemSM:
