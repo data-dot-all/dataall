@@ -122,14 +122,37 @@ the server hosting the documentation.
 
 ### VPC facing architecture
 In this architecture, data.all static sites are deployed on an AWS internal application load
-balancer (ALB) deployed on the VPC's private subnet. 
-This ALB is reachable only from Amazon VPCs and not from the internet. 
-Also, APIs are private and accessible only through VPC endpoints.
+balancer (ALB) deployed on the VPC's private subnet. Data.all static sites are hosted on Amazon ECS using docker containers through nginx server.
 
 
-Finally, data.all static sites are hosted on Amazon ECS using docker containers through nginx server.
+The ALB is reachable only from Amazon VPCs and not from the internet. Also, APIs are private and accessible only through VPC endpoints. 
+For this kind of architecture, the following resources need to be provisioned as pre-requisite for the deployment:
+- Route 53 private hosted zone
+- ACM certificate
+- For the above you will also need a VPC which needs to be provided as input for the deployment. Check the backend VPC section to review the VPC requirements.
+
+With the following commands you can create the ACM certificate and Route 53 private hosted zone:
+1.	`cd` to empty directory
+2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem`
+3.	This command will create a no password file to load in ACM: `openssl rsa -in dataallkey.pem -out dataallkeynopwd.pem `
+4.	`aws route53 create-hosted-zone --name <domain-name> --vpc VPCRegion=<vpc_region>,VPCId=<vpc-id> --caller-reference 07:12:22 --query HostedZone.Id --output text `
+5.	`aws acm import-certificate --region us-east-1 --certificate fileb://<filepath to cert> --private-key fileb://<filepath to no password key> --query CertificateArn --output text`
 
 
+#### VPC facing + corporate network
+As stated above, the application in this case is accessible only from within the VPC. However, some customers require the ability to 
+connect from outside the VPC but within the corporate network. 
+
+As part of the deployment, data.all creates an API gateway and accesses it with the URL `https://<gateway-id>.execute-api.<region>.amazonaws.com`
+This works when we access the application from the VPC; but when we are outside of the VPC, the execute-api VPC endpoint needs to be added to the URL. 
+Hence the URL should be: `https://<gateway-id>.<execute-api-vpc-endpoint-id>.execute-api.<region>.amazonaws.com`.
+For this requirement we need to modify the code in `deploy/stacks/lambda_api.py` and adjust the api URL accordingly.
+
+
+In addition, a new inbound rule needs to be added to the security group for the VPC endpoint to allow all inbound HHTPS on 443 for 10.0.0.0/8. 
+
+
+![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
 
 - Third party libraries: data.all static sites libraries are stored on AWS CodeArtifact which
 ensures third party libraries availability, encryption using AWS KMS and
@@ -140,25 +163,36 @@ image, and does not rely on Dockerhub. Docker images are built with AWS
 CodePipeline and stored on Amazon ECR which ensures image availability,
 and vulnerabilities scanning.
 
-
-![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
-
-
 ## Backend Components <a name="backend"></a>
 
 ![Screenshot](img/architecture_backend.drawio.png#zoom#shadow)
 
-### VPC
+### Backend VPC
 
+#### Created by data.all
+If we do not provide a VPC ID for the different infrastructure accounts in the deployment configuration (aka cdk.json), 
 data.all creates its own VPC in the account where it is set up, with usual configuration.
-All compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
+All backend compute is hosted in the **private subnets**, and communicates with AWS Services through a **NAT Gateway**.
 
 All data.all Lambda functions and ECS tasks are running inside this VPC and in private
 subnets. 
 
-
-
 ![Screenshot](img/architecture_vpc.drawio.png#zoom#shadow)
+
+#### Created outside of data.all
+There are 2 scenarios where we might want to provide our own VPCs:
+1) Organization guidelines. In your organization there are certain policies and mechanisms to create VPCs.
+2) Frontend needs to be hosted in data.all VPC facing architecture
+
+When providing the VPC, make sure that your VPC resembles the above image. In addition:
+1.	Make sure it is deployed in at least 2 Availability Zones (AZ)
+2.	Make sure ONLY 1 private subnet in each AZ
+3.	Make sure at least 1 public subnet. Data.all needs to download packages, hence needs public access
+4.	Make sure that the VPC created does not have an S3 VPC endpoint
+
+Here is a screenshot of the creation of the VPC: 
+![Screenshot](img/vpc_setup.png#zoom#shadow)
+
 
 ### Backend AWS API Gateway
 data.all backend main entry point is an AWS API Gateway that exposes a
