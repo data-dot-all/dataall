@@ -87,7 +87,6 @@ class LFShareManager:
         Build aws dict for boto3 operations on Glue and LF from share data
         Parameters
         ----------
-        principals : team role
         table : dataset table
 
         Returns

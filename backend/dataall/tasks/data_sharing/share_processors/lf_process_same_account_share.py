@@ -84,7 +84,7 @@ class ProcessLFSameAccountShare(LFShareManager):
                 log.info(f'Starting sharing access for table: {table.GlueTableName}')
                 self.check_share_item_exists_on_glue_catalog(share_item, table)
 
-                data = self.build_share_data(principals, table)
+                data = self.build_share_data(table)
                 self.create_resource_link(**data)
 
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)

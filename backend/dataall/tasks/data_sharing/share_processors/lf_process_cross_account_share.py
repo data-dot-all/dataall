@@ -90,7 +90,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                     self.check_share_item_exists_on_glue_catalog(share_item, table)
 
-                    data = self.build_share_data(principals, table)
+                    data = self.build_share_data(table)
                     self.share_table_with_target_account(**data)
 
                     (
