@@ -194,6 +194,8 @@ class S3ShareManager:
                 f'Access point {self.access_point_name} does not exists, creating...'
             )
             access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.source_environment.region, self.bucket_name, self.access_point_name)
+            # Access point creation is slow
+            time.sleep(5)
         existing_policy = S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
