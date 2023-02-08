@@ -161,7 +161,7 @@ const WorksheetView = () => {
             page: 1,
             pageSize: 10000,
             term: '',
-            itemTypes: 'DatasetTable'
+            uniqueDatasets: true
           }
         })
       );

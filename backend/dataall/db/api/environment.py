@@ -935,11 +935,14 @@ class Environment:
             datasetUri = data.get('datasetUri')
             q = q.filter(models.ShareObject.datasetUri == datasetUri)
 
+        if data.get("uniqueDatasets", False):
+            q = q.distinct(models.ShareObject.datasetUri)
+
         if data.get('itemTypes', None):
-            itemTypes = data.get('itemTypes')
-            q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
-            )
+                itemTypes = data.get('itemTypes')
+                q = q.filter(
+                    or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+                )
         if data.get('term'):
             term = data.get('term')
             q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
