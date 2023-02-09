@@ -3,8 +3,8 @@ import logging
 from sqlalchemy import and_, or_, literal
 
 from .. import models, exceptions, paginate, permissions
-from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset
-from ..models.Enums import ShareObjectStatus
+from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset, ShareItemSM
+from ..models.Enums import ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -184,6 +184,8 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+
         shared = (
             session.query(
                 models.ShareObject.datasetUri.label('datasetUri'),
@@ -197,7 +199,7 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),
@@ -298,6 +300,7 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
@@ -317,7 +320,7 @@ class RedshiftCluster:
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
                         models.ShareObject.owner == username,
                         models.ShareObject.principalId.in_(groups),

@@ -10,47 +10,11 @@ import {
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { LoadingButton } from '@mui/lab';
-import { CheckCircleOutlined } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { useState } from 'react';
 import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import submitApproval from '../../api/ShareObject/submitApproval';
-import PencilAltIcon from '../../icons/PencilAlt';
 
 const ShareOutboxListItem = (props) => {
   const { share, reload } = props;
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-  const client = useClient();
-  const [submitting, setSubmitting] = useState(false);
-  const submit = async () => {
-    setSubmitting(true);
-    const response = await client.mutate(
-      submitApproval({
-        shareUri: share.shareUri
-      })
-    );
-    if (!response.errors) {
-      enqueueSnackbar('Share request submitted', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-      await reload();
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setSubmitting(false);
-  };
   return (
     <Card
       key={share.shareUri}
@@ -59,7 +23,7 @@ const ShareOutboxListItem = (props) => {
       }}
     >
       <Grid container>
-        <Grid item md={10} xs={6}>
+        <Grid item md={9} xs={6}>
           <CardHeader
             avatar={<TextAvatar name={share.owner} />}
             disableTypography
@@ -110,42 +74,57 @@ const ShareOutboxListItem = (props) => {
           >
             <Typography color="textSecondary" variant="body1">
               {`Read access to Dataset: ${share.dataset.datasetName} 
-                for the Principal: ${share.principal.principalName} 
+                for Principal: ${share.principal.principalName} 
                 from Environment: ${share.principal.environmentName}`}
             </Typography>
           </Box>
         </Grid>
-        <Grid item md={2} xs={6}>
-          {(share.status === 'PendingApproval' ||
-            share.status === 'Approved') && (
-            <Box sx={{ ml: 7 }}>
-              <LoadingButton
-                color="primary"
-                startIcon={<PencilAltIcon fontSize="small" />}
-                sx={{ mt: 6, mb: 1, mr: 1 }}
-                onClick={() => navigate(`/console/shares/${share.shareUri}`)}
-                type="button"
-                variant="outlined"
-              >
-                Update
-              </LoadingButton>
+        <Grid item justifyContent="flex-end" md={3} xs={6} spacing={2}>
+            <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  pt: 3,
+                  pb: 0.5
+                }}
+            >
+              <Typography color="textPrimary" variant="body2">
+                {`Currently shared items: ${share.statistics.sharedItems}`}
+              </Typography>
             </Box>
-          )}
-          {share.status === 'Draft' && (
-            <Box sx={{ ml: 7 }}>
-              <LoadingButton
-                loading={submitting}
-                color="success"
-                startIcon={<CheckCircleOutlined />}
-                sx={{ mt: 6, mb: 1, mr: 1 }}
-                onClick={submit}
-                type="button"
-                variant="outlined"
-              >
-                Submit
-              </LoadingButton>
+            <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  py: 0.5,
+                }}
+            >
+              <Typography color="textPrimary" variant="body2">
+                {`Revoked items: ${share.statistics.revokedItems}`}
+              </Typography>
             </Box>
-          )}
+            <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  py: 0.5,
+                }}
+            >
+              <Typography color="textPrimary" variant="body2">
+                {`Failed items: ${share.statistics.failedItems}`}
+              </Typography>
+            </Box>
+            <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  py: 0.5
+                }}
+            >
+              <Typography color="textPrimary" variant="body2">
+                {`Pending items: ${share.statistics.pendingItems}`}
+              </Typography>
+            </Box>
         </Grid>
       </Grid>
       <Divider />

@@ -38,6 +38,9 @@ DataPipelineFilter = gql.InputType(
     name='DataPipelineFilter',
     arguments=[
         gql.Argument(name='term', type=gql.String),
+        gql.Argument(name='region', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='type', type=gql.ArrayType(gql.String)),
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
     ],
