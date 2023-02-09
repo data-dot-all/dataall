@@ -935,6 +935,9 @@ class Environment:
             datasetUri = data.get('datasetUri')
             q = q.filter(models.ShareObject.datasetUri == datasetUri)
 
+        if data.get("uniqueDatasets", False):
+            q = q.distinct(models.ShareObject.datasetUri)
+
         if data.get('itemTypes', None):
             itemTypes = data.get('itemTypes')
             q = q.filter(
