@@ -97,12 +97,11 @@ class OpenSearchServerlessStack(pyNestedClass):
             ),
         )
 
-        self.host: str = str(self.cfn_collection.attr_collection_endpoint).replace('https://', '')
         ssm.StringParameter(
             self,
             'ElasticSearchEndpointParameter',
             parameter_name=f'/dataall/{envname}/elasticsearch/endpoint',
-            string_value=self.host,
+            string_value=f'{self.cfn_collection.name}.{self.region}.aoss.amazonaws.com',
         )
 
         ssm.StringParameter(
@@ -126,10 +125,6 @@ class OpenSearchServerlessStack(pyNestedClass):
     @property
     def collection_name(self) -> str:
         return self.cfn_collection.name
-
-    @property
-    def collection_endpoint(self) -> str:
-        return self.host
 
     @staticmethod
     def _get_encryption_policy(collection_name: str, kms_key_arn: Optional[str] = None) -> str:

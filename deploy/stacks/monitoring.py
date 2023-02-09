@@ -111,7 +111,7 @@ class MonitoringStack(pyNestedClass):
         backend_api,
         lambdas,
         database,
-        openseach_domain,
+        opensearch_domain,
         opensearch_serverless_collection_id,
         opensearch_serverless_collection_name,
         queue_name,
@@ -137,13 +137,13 @@ class MonitoringStack(pyNestedClass):
         self.set_aurora_alarms(
             f'{resource_prefix}-{envname}-aurora-alarm', database, self.cw_alarm_action
         )
-        if openseach_domain:
+        if opensearch_domain:
             self.set_es_alarms(
                 f'{resource_prefix}-{envname}-opensearch-alarm',
-                openseach_domain,
+                opensearch_domain,
                 self.cw_alarm_action,
             )
-        if opensearch_serverless_collection_id:
+        else:
             self.set_aoss_alarms(
                 f'{resource_prefix}-{envname}-opensearch-serverless-alarm',
                 opensearch_serverless_collection_id,
