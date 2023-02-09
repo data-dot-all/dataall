@@ -34,6 +34,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
     def process_approved_shares(self) -> bool:
         """
         1) Grant ALL permissions to pivotRole for source database in source account
+<<<<<<< HEAD
         2) Gets share principals and build shared db name
         3) Creates the shared database in target account if it doesn't exist
         4) For each shared table:
@@ -44,6 +45,18 @@ class ProcessLFCrossAccountShare(LFShareManager):
             e) create resource link on target account
             f) grant permission to table for team role in source account
             g) grant permission to resource link table for team role in target account
+=======
+        2) Get share principals (requester IAM role and QS groups) and build shared db name
+        3) Create the shared database in target account if it doesn't exist
+        4) For each shared table:
+            a) update its status to SHARE_IN_PROGRESS with Action Start
+            b) check if share item exists on glue catalog raise error if not and flag share item status to failed
+            c) grant external account (target account) access to table -> create RAM invitation and revoke_iamallowedgroups_super_permission_from_table
+            d) accept pending RAM invitation
+            e) create resource link for table in target account
+            f) grant permission to table for requester team IAM role in source account
+            g) grant permission to resource link table for requester team IAM role in target account
+>>>>>>> main
             h) update share item status to SHARE_SUCCESSFUL with Action Success
 
         Returns
@@ -90,7 +103,11 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                     self.check_share_item_exists_on_glue_catalog(share_item, table)
 
+<<<<<<< HEAD
                     data = self.build_share_data(principals, table)
+=======
+                    data = self.build_share_data(table)
+>>>>>>> main
                     self.share_table_with_target_account(**data)
 
                     (
@@ -134,6 +151,11 @@ class ProcessLFCrossAccountShare(LFShareManager):
             '##### Starting Revoking tables cross account #######'
         )
         success = True
+<<<<<<< HEAD
+=======
+        shared_db_name = self.build_shared_db_name()
+        principals = self.get_share_principals()
+>>>>>>> main
         for table in self.revoked_tables:
             share_item = api.ShareObject.find_share_item_by_table(
                 self.session, self.share, table
@@ -147,11 +169,20 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                 self.check_share_item_exists_on_glue_catalog(share_item, table)
 
+<<<<<<< HEAD
                 log.info(f'Starting revoke access for table: {table.GlueTableName}')
 
                 self.revoke_table_resource_link_access(table)
 
                 self.revoke_source_table_access(table)
+=======
+                log.info(f'Starting revoke access for table: {table.GlueTableName} in database {shared_db_name} '
+                         f'For principals {principals}')
+
+                self.revoke_table_resource_link_access(table, principals)
+
+                self.revoke_source_table_access(table, principals)
+>>>>>>> main
 
                 self.delete_resource_link_table(table)
 

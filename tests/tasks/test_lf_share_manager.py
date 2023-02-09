@@ -349,10 +349,14 @@ def test_build_share_data(
         },
     }
 
+<<<<<<< HEAD
     data = processor_same_account.build_share_data(
         principals=[f"arn:aws:iam::{source_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"],
         table=table1
     )
+=======
+    data = processor_same_account.build_share_data(table=table1)
+>>>>>>> main
     assert data == data_same_account
 
     data_cross_account = {
@@ -370,10 +374,14 @@ def test_build_share_data(
         },
     }
 
+<<<<<<< HEAD
     data = processor_cross_account.build_share_data(
         principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
         table=table1
     )
+=======
+    data = processor_cross_account.build_share_data(table=table1)
+>>>>>>> main
     assert data == data_cross_account
 
 
@@ -488,7 +496,12 @@ def test_revoke_table_resource_link_access(
     )
 
     processor_same_account.revoke_table_resource_link_access(
+<<<<<<< HEAD
         table=table2
+=======
+        table=table2,
+        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
+>>>>>>> main
     )
     # Then
     glue_mock.assert_called_once()
@@ -499,7 +512,12 @@ def test_revoke_table_resource_link_access(
     lf_mock.reset_mock()
 
     processor_cross_account.revoke_table_resource_link_access(
+<<<<<<< HEAD
         table=table2
+=======
+        table=table2,
+        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"],
+>>>>>>> main
     )
     # Then
     glue_mock.assert_called_once()
@@ -529,7 +547,12 @@ def test_revoke_source_table_access(
     )
 
     processor_same_account.revoke_source_table_access(
+<<<<<<< HEAD
         table=table2
+=======
+        table=table2,
+        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_same_account.principalIAMRoleName}"]
+>>>>>>> main
     )
     # Then
     glue_mock.assert_called_once()
@@ -540,7 +563,12 @@ def test_revoke_source_table_access(
     lf_mock.reset_mock()
 
     processor_cross_account.revoke_source_table_access(
+<<<<<<< HEAD
         table=table2
+=======
+        table=table2,
+        principals=[f"arn:aws:iam::{target_environment.AwsAccountId}:role/{share_cross_account.principalIAMRoleName}"]
+>>>>>>> main
     )
     # Then
     glue_mock.assert_called_once()

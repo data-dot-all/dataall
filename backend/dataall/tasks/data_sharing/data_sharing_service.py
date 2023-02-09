@@ -259,11 +259,16 @@ class DataSharingService:
         -------
         true if refresh succeeds
         """
+        share_object_refreshable_states = api.ShareObjectSM.get_share_object_refreshable_states()
         with engine.scoped_session() as session:
             environments = session.query(models.Environment).all()
             shares = (
                 session.query(models.ShareObject)
+<<<<<<< HEAD
                 .filter(models.ShareObject.status.in_(REFRESH_SHARES_STATES))
+=======
+                .filter(models.ShareObject.status.in_(share_object_refreshable_states))
+>>>>>>> main
                 .all()
             )
 

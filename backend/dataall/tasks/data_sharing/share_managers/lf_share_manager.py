@@ -37,6 +37,10 @@ class LFShareManager:
         self.source_environment = source_environment
         self.target_environment = target_environment
         self.shared_db_name = self.build_shared_db_name()
+<<<<<<< HEAD
+=======
+        self.principals = self.get_share_principals()
+>>>>>>> main
 
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
@@ -81,12 +85,19 @@ class LFShareManager:
         """
         return (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
 
+<<<<<<< HEAD
     def build_share_data(self, principals: [str], table: models.DatasetTable) -> dict:
+=======
+    def build_share_data(self, table: models.DatasetTable) -> dict:
+>>>>>>> main
         """
         Build aws dict for boto3 operations on Glue and LF from share data
         Parameters
         ----------
+<<<<<<< HEAD
         principals : team role
+=======
+>>>>>>> main
         table : dataset table
 
         Returns
@@ -103,7 +114,11 @@ class LFShareManager:
             'target': {
                 'accountid': self.target_environment.AwsAccountId,
                 'region': self.target_environment.region,
+<<<<<<< HEAD
                 'principals': principals,
+=======
+                'principals': self.principals,
+>>>>>>> main
                 'database': self.shared_db_name,
             },
         }
@@ -162,7 +177,11 @@ class LFShareManager:
         """
         Creates the shared database if does not exists.
         1) Grants pivot role ALL permission on shareddb
+<<<<<<< HEAD
         2) Grant Team role DESCRIBE Only permission
+=======
+        2) Grant principals DESCRIBE Only permission
+>>>>>>> main
 
         Parameters
         ----------
@@ -271,12 +290,20 @@ class LFShareManager:
             )
             raise e
 
+<<<<<<< HEAD
     def revoke_table_resource_link_access(self, table: models.DatasetTable):
+=======
+    def revoke_table_resource_link_access(self, table: models.DatasetTable, principals: [str]):
+>>>>>>> main
         """
         Revokes access to glue table resource link
         Parameters
         ----------
         table : models.DatasetTable
+<<<<<<< HEAD
+=======
+        principals: List of strings. IAM role arn and Quicksight groups
+>>>>>>> main
 
         Returns
         -------
@@ -295,6 +322,7 @@ class LFShareManager:
             )
             return True
 
+<<<<<<< HEAD
         logger.info(
             f'Revoking resource link access '
             f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
@@ -325,6 +353,40 @@ class LFShareManager:
         return True
 
     def revoke_source_table_access(self, table):
+=======
+        for principal in principals:
+            logger.info(
+                f'Revoking resource link access '
+                f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
+                f'for principal {principal}'
+
+            )
+            LakeFormation.batch_revoke_permissions(
+                SessionHelper.remote_session(self.target_environment.AwsAccountId).client(
+                    'lakeformation', region_name=self.target_environment.region
+                ),
+                self.target_environment.AwsAccountId,
+                [
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal': {
+                            'DataLakePrincipalIdentifier': principal
+                        },
+                        'Resource': {
+                            'Table': {
+                                'DatabaseName': self.shared_db_name,
+                                'Name': table.GlueTableName,
+                                'CatalogId': self.target_environment.AwsAccountId,
+                            }
+                        },
+                        'Permissions': ['DESCRIBE'],
+                    }
+                ],
+            )
+        return True
+
+    def revoke_source_table_access(self, table, principals: [str]):
+>>>>>>> main
         """
         Revokes access to the source glue table
         Parameters
@@ -351,14 +413,22 @@ class LFShareManager:
         logger.info(
             f'Revoking source table access '
             f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
+<<<<<<< HEAD
             f'for principal {self.env_group.environmentIAMRoleArn}'
+=======
+            f'for principals {principals}'
+>>>>>>> main
         )
         LakeFormation.revoke_source_table_access(
             target_accountid=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             source_database=self.dataset.GlueDatabaseName,
             source_table=table.GlueTableName,
+<<<<<<< HEAD
             target_principal=self.env_group.environmentIAMRoleArn,
+=======
+            target_principals=principals,
+>>>>>>> main
             source_accountid=self.source_environment.AwsAccountId,
         )
         return True
