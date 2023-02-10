@@ -101,7 +101,7 @@ class OpenSearchServerlessStack(pyNestedClass):
             self,
             'ElasticSearchEndpointParameter',
             parameter_name=f'/dataall/{envname}/elasticsearch/endpoint',
-            string_value=f'{self.cfn_collection.name}.{self.region}.aoss.amazonaws.com',
+            string_value=f'{self.cfn_collection.attr_id}.{self.region}.aoss.amazonaws.com',
         )
 
         ssm.StringParameter(
