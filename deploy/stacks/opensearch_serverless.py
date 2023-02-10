@@ -23,7 +23,6 @@ class OpenSearchServerlessStack(pyNestedClass):
         vpc: ec2.Vpc = None,
         vpc_endpoints_sg: ec2.SecurityGroup = None,
         lambdas: Optional[List[_lambda.Function]] = None,
-        ecs_security_groups: Optional[List[ec2.SecurityGroup]] = None,
         ecs_task_role: Optional[iam.Role] = None,
         prod_sizing=False,
         **kwargs,
@@ -171,7 +170,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         return json.dumps(policy)
 
     @staticmethod
-    def _get_access_policy(collection_name: str, index_name: str, principal_arns: List[str]) -> str:
+    def _get_access_policy(collection_name: str, principal_arns: List[str]) -> str:
         policy = [
             {
                 "Rules": [
