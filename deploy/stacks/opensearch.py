@@ -21,10 +21,8 @@ class OpenSearchStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         vpc: ec2.Vpc = None,
-        vpc_endpoints_sg: ec2.SecurityGroup = None,
         lambdas=None,
         ecs_security_groups: [ec2.SecurityGroup] = None,
-        ecs_task_role: Optional[iam.Role] = None,
         prod_sizing=False,
         **kwargs,
     ):

@@ -49,7 +49,11 @@ class BackendStack(Stack):
     ):
         super().__init__(scope, id, **kwargs)
 
-        vpc_stack = VpcStack(
+        self.resource_prefix = resource_prefix
+        self.envname = envname
+        self.prod_sizing = prod_sizing
+
+        self.vpc_stack = VpcStack(
             self,
             id='Vpc',
             envname=envname,
@@ -58,8 +62,8 @@ class BackendStack(Stack):
             vpc_id=vpc_id,
             **kwargs,
         )
-        vpc = vpc_stack.vpc
-        vpc_endpoints_sg = vpc_stack.vpce_security_group
+        vpc = self.vpc_stack.vpc
+        vpc_endpoints_sg = self.vpc_stack.vpce_security_group
 
         ParamStoreStack(
             self,
@@ -114,7 +118,7 @@ class BackendStack(Stack):
             self, 'ECRREPO', repository_arn=ecr_repository
         )
 
-        lambda_api_stack = LambdaApiStack(
+        self.lambda_api_stack = LambdaApiStack(
             self,
             f'Lambdas',
             envname=envname,
@@ -131,7 +135,7 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        ecs_stack = ContainerStack(
+        self.ecs_stack = ContainerStack(
             self,
             f'ECS',
             envname=envname,
@@ -243,56 +247,53 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc=vpc,
             lambdas=[
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
+                self.lambda_api_stack.aws_handler,
+                self.lambda_api_stack.api_handler,
             ],
-            ecs_security_groups=ecs_stack.ecs_security_groups,
+            ecs_security_groups=self.ecs_stack.ecs_security_groups,
             codebuild_dbmigration_sg=dbmigration_stack.codebuild_sg,
             prod_sizing=prod_sizing,
             quicksight_monitoring_sg=quicksight_monitoring_sg,
             **kwargs,
         )
 
-        opensearch_args = {
-            "envname": envname,
-            "resource_prefix": resource_prefix,
-            "vpc": vpc,
-            "vpc_endpoints_sg": vpc_endpoints_sg,
-            "lambdas": [
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
-                lambda_api_stack.elasticsearch_proxy_handler,
-            ],
-            "ecs_security_groups": ecs_stack.ecs_security_groups,
-            "ecs_task_role": ecs_stack.ecs_task_role,
-            "prod_sizing": prod_sizing,
-            **kwargs,
-        }
-        if enable_opensearch_serverless:
-            opensearch_stack = OpenSearchServerlessStack(self, f'OpenSearchServerless', **opensearch_args)
-        else:
-            opensearch_stack = OpenSearchStack(self, f'OpenSearch', **opensearch_args)
-
-        monitoring_stack = MonitoringStack(
+        self.monitoring_stack = MonitoringStack(
             self,
             f'CWDashboards',
             envname=envname,
             resource_prefix=resource_prefix,
             lambdas=[
-                lambda_api_stack.aws_handler,
-                lambda_api_stack.api_handler,
-                lambda_api_stack.elasticsearch_proxy_handler,
+                self.lambda_api_stack.aws_handler,
+                self.lambda_api_stack.api_handler,
+                self.lambda_api_stack.elasticsearch_proxy_handler,
             ],
             database=aurora_stack.cluster.cluster_identifier,
-            ecs_cluster=ecs_stack.ecs_cluster,
-            ecs_task_definitions=ecs_stack.ecs_task_definitions,
-            backend_api=lambda_api_stack.backend_api_name,
-            opensearch_domain=opensearch_stack.domain_name if not enable_opensearch_serverless else None,
-            opensearch_serverless_collection_id=opensearch_stack.collection_id if enable_opensearch_serverless else None,
-            opensearch_serverless_collection_name=opensearch_stack.collection_name if enable_opensearch_serverless else None,
+            ecs_cluster=self.ecs_stack.ecs_cluster,
+            ecs_task_definitions=self.ecs_stack.ecs_task_definitions,
+            backend_api=self.lambda_api_stack.backend_api_name,
             queue_name=sqs_stack.queue.queue_name,
             **kwargs,
         )
+
+        self.opensearch_args = {
+            "envname": envname,
+            "resource_prefix": resource_prefix,
+            "vpc": vpc,
+            "vpc_endpoints_sg": vpc_endpoints_sg,
+            "lambdas": [
+                self.lambda_api_stack.aws_handler,
+                self.lambda_api_stack.api_handler,
+                self.lambda_api_stack.elasticsearch_proxy_handler,
+            ],
+            "ecs_security_groups": self.ecs_stack.ecs_security_groups,
+            "ecs_task_role": self.ecs_stack.ecs_task_role,
+            "prod_sizing": prod_sizing,
+            **kwargs,
+        }
+        if enable_opensearch_serverless:
+            self.create_opensearch_serverless_stack()
+        else:
+            self.create_opensearch_stack()
 
         if enable_cw_rum:
             CloudWatchRumStack(
@@ -301,7 +302,7 @@ class BackendStack(Stack):
                 envname=envname,
                 resource_prefix=resource_prefix,
                 tooling_account_id=tooling_account_id,
-                cw_alarm_action=monitoring_stack.cw_alarm_action,
+                cw_alarm_action=self.monitoring_stack.cw_alarm_action,
                 cognito_identity_pool_id=cognito_stack.identity_pool.ref,
                 cognito_identity_pool_role_arn=cognito_stack.identity_pool_role.role_arn,
                 custom_domain_name=custom_domain.get('hosted_zone_name')
@@ -317,6 +318,23 @@ class BackendStack(Stack):
                 resource_prefix=resource_prefix,
                 vpc=vpc,
                 logs_bucket=s3_resources_stack.logs_bucket,
-                cw_alarm_action=monitoring_stack.cw_alarm_action,
+                cw_alarm_action=self.monitoring_stack.cw_alarm_action,
                 internet_facing=internet_facing,
             )
+
+    def create_opensearch_stack(self):
+        os_stack = OpenSearchStack(self, 'OpenSearch', **self.opensearch_args)
+        self.set_es_alarms(
+            alarm_name=f'{self.resource_prefix}-{self.envname}-opensearch-alarm',
+            domain_name=os_stack.domain_name,
+            cw_alarm_action=self.monitoring_stack.cw_alarm_action,
+        )
+
+    def create_opensearch_serverless_stack(self):
+        aoss_stack = OpenSearchServerlessStack(self, 'OpenSearchServerless', **self.opensearch_args)
+        self.monitoring_stack.set_aoss_alarms(
+            alarm_name=f'{self.resource_prefix}-{self.envname}-opensearch-serverless-alarm',
+            collection_id=aoss_stack.collection_id,
+            collection_name=aoss_stack.collection_name,
+            cw_alarm_action=self.monitoring_stack.cw_alarm_action,
+        )
