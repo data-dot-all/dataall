@@ -73,10 +73,11 @@ def connect(envname='local'):
             verify_certs=True,
             connection_class=opensearchpy.RequestsHttpConnection,
         )
-        try:
+
+        # Avoid calling GET /info endpoint because it is not available in OpenSearch Serverless
+        if service != "aoss":
             print(es.info())
-        except opensearchpy.exceptions.NotFoundError:
-            print('Get /info is not available in OpenSearch Serverless')
+
         if not es.indices.exists(index='dataall-index'):
             es.indices.create(index='dataall-index', body=CREATE_INDEX_REQUEST_BODY)
             print('Create "dataall-index" for dev env')
