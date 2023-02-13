@@ -940,6 +940,10 @@ class Environment:
             q = q.filter(
                 or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
             )
+
+        if data.get("uniqueDatasets", False):
+            q = q.distinct(models.ShareObject.datasetUri)
+
         if data.get('term'):
             term = data.get('term')
             q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
