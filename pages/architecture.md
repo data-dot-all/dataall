@@ -146,10 +146,15 @@ connect from outside the VPC but within the corporate network.
 As part of the deployment, data.all creates an API gateway and accesses it with the URL `https://<gateway-id>.execute-api.<region>.amazonaws.com`
 This works when we access the application from the VPC; but when we are outside of the VPC, the execute-api VPC endpoint needs to be added to the URL. 
 Hence the URL should be: `https://<gateway-id>.<execute-api-vpc-endpoint-id>.execute-api.<region>.amazonaws.com`.
-For this requirement we need to modify the code in `deploy/stacks/lambda_api.py` and adjust the api URL accordingly.
+For this requirement we need to modify the code in `deploy/stacks/lambda_api.py` and adjust the api URL accordingly. 
+In addition, a new inbound rule needs to be added to the security group for the VPC endpoint to allow all inbound HHTPS on 443 for 10.0.0.0/8.
 
 
-In addition, a new inbound rule needs to be added to the security group for the VPC endpoint to allow all inbound HHTPS on 443 for 10.0.0.0/8. 
+After it is deployed, How do I connect (or simulate the connection) between my VPN and data.all VPC? The following
+resources might be helpful for testing and connecting the deployment:
+- [Support post](https://aws.amazon.com/premiumsupport/knowledge-center/route53-resolve-with-inbound-endpoint/)
+- [Workshop](https://catalog.workshops.aws/networking/en-US/intermediate/3-hybrid-dns/10-hybrid-dns-overview)
+- [Reference architecture](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/hybrid-dns_route53-resolver-endpoint-ra.pdf)
 
 
 ![](img/architecture_frontend_vpc.drawio.png#zoom#shadow)
@@ -185,10 +190,9 @@ There are 2 scenarios where we might want to provide our own VPCs:
 2) Frontend needs to be hosted in data.all VPC facing architecture
 
 When providing the VPC, make sure that your VPC resembles the above image. In addition:
-1.	Make sure it is deployed in at least 2 Availability Zones (AZ)
-2.	Make sure ONLY 1 private subnet in each AZ
-3.	Make sure at least 1 public subnet. Data.all needs to download packages, hence needs public access
-4.	Make sure that the VPC created does not have an S3 VPC endpoint
+1. Make sure it is deployed in at least 2 Availability Zones (AZ)
+2. Make sure at least 1 public subnet. Data.all needs to download packages, hence needs public access
+3. Make sure that the VPC created does not have an S3 VPC endpoint
 
 Here is a screenshot of the creation of the VPC: 
 ![Screenshot](img/vpc_setup.png#zoom#shadow)
