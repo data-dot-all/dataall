@@ -25,7 +25,7 @@ class OpenSearchStack(pyNestedClass):
         prod_sizing=False,
         **kwargs,
     ):
-        super().__init__(scope, id, **kwargs)
+        super().__init__(scope, id)
 
         db_security_group = ec2.SecurityGroup(
             self,

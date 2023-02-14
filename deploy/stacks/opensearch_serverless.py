@@ -27,7 +27,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         prod_sizing=False,
         **kwargs,
     ):
-        super().__init__(scope, id, **kwargs)
+        super().__init__(scope, id)
 
         self.cfn_collection = opensearchserverless.CfnCollection(
             self,
@@ -91,7 +91,6 @@ class OpenSearchServerlessStack(pyNestedClass):
             type='data',
             policy=self._get_access_policy(
                 collection_name=self.cfn_collection.name,
-                index_name='datall-index',
                 principal_arns=principal_arns,
             ),
         )

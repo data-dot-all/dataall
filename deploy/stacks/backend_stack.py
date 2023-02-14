@@ -324,10 +324,9 @@ class BackendStack(Stack):
 
     def create_opensearch_stack(self):
         os_stack = OpenSearchStack(self, 'OpenSearch', **self.opensearch_args)
-        self.set_es_alarms(
+        self.monitoring_stack.set_es_alarms(
             alarm_name=f'{self.resource_prefix}-{self.envname}-opensearch-alarm',
             domain_name=os_stack.domain_name,
-            cw_alarm_action=self.monitoring_stack.cw_alarm_action,
         )
 
     def create_opensearch_serverless_stack(self):
@@ -336,5 +335,4 @@ class BackendStack(Stack):
             alarm_name=f'{self.resource_prefix}-{self.envname}-opensearch-serverless-alarm',
             collection_id=aoss_stack.collection_id,
             collection_name=aoss_stack.collection_name,
-            cw_alarm_action=self.monitoring_stack.cw_alarm_action,
         )
