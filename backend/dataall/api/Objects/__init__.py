@@ -38,11 +38,11 @@ from . import (
     Notification,
     Vpc,
     Tenant,
-    SagemakerNotebook,
     KeyValueTag,
     Vote,
 )
 
+from dataall.modules.notebooks import gql as SagemakerNotebook
 
 def bootstrap():
     classes = {

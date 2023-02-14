@@ -1,13 +1,15 @@
-from .... import db
-from ..Stack import stack_helper
-from ....api.constants import SagemakerNotebookRole
-from ....api.context import Context
-from ....aws.handlers.sagemaker import Sagemaker
-from ....db import permissions, models
-from ....db.api import ResourcePolicy, Notebook, KeyValueTag, Stack
+from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
+
+from dataall import db
+from dataall.api.context import Context
+from dataall.aws.handlers.sagemaker import Sagemaker
+from dataall.db import models, permissions
+from dataall.db.api import KeyValueTag, Notebook, ResourcePolicy, Stack
+from dataall.api.Objects.Stack import stack_helper
 
 
 def create_notebook(context: Context, source, input: dict = None):
+    """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
     with context.engine.scoped_session() as session:
 
         notebook = Notebook.create_notebook(
@@ -33,6 +35,9 @@ def create_notebook(context: Context, source, input: dict = None):
 
 
 def list_notebooks(context, source, filter: dict = None):
+    """Lists all SageMaker notebooks using the given filter. 
+    If the filter is not provided, all notebooks are returned. """
+
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -47,6 +52,7 @@ def list_notebooks(context, source, filter: dict = None):
 
 
 def get_notebook(context, source, notebookUri: str = None):
+    """Retrieve a SageMaker notebook by URI."""
     with context.engine.scoped_session() as session:
         return Notebook.get_notebook(
             session=session,
@@ -58,7 +64,8 @@ def get_notebook(context, source, notebookUri: str = None):
         )
 
 
-def resolve_status(context, source: models.SagemakerNotebook, **kwargs):
+def resolve_notebook_status(context, source: models.SagemakerNotebook, **kwargs):
+    """Resolves the status of a notebook."""
     if not source:
         return None
     return Sagemaker.get_notebook_instance_status(
@@ -69,6 +76,7 @@ def resolve_status(context, source: models.SagemakerNotebook, **kwargs):
 
 
 def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+    """Starts a sagemaker notebook instance"""
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -92,6 +100,7 @@ def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str =
 
 
 def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+    """Stops a notebook instance."""
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -117,6 +126,7 @@ def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = 
 def get_notebook_presigned_url(
     context, source: models.SagemakerNotebook, notebookUri: str = None
 ):
+    """Creates and returns a presigned url for a notebook"""
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -145,6 +155,9 @@ def delete_notebook(
     notebookUri: str = None,
     deleteFromAWS: bool = None,
 ):
+    """Deletes the SageMaker notebook.
+    Deletes the notebooks stack from AWS if deleteFromAWS is True"""
+    
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -180,7 +193,7 @@ def delete_notebook(
 
     return True
 
-
+#TODO: check for the code duplication
 def resolve_environment(context, source, **kwargs):
     if not source:
         return None
@@ -202,10 +215,10 @@ def resolve_user_role(context: Context, source: models.SagemakerNotebook):
     if not source:
         return None
     if source.owner == context.username:
-        return SagemakerNotebookRole.Creator.value
+        return SagemakerNotebookRole.CREATOR.value
     elif context.groups and source.SamlAdminGroupName in context.groups:
-        return SagemakerNotebookRole.Admin.value
-    return SagemakerNotebookRole.NoPermission.value
+        return SagemakerNotebookRole.ADMIN.value
+    return SagemakerNotebookRole.NO_PERMISSION.value
 
 
 def resolve_stack(context: Context, source: models.SagemakerNotebook, **kwargs):
