@@ -1,11 +1,15 @@
+"""ORM models for sagemaker notebooks"""
+
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import query_expression
 
-from .. import Base
-from .. import Resource, utils
+from dataall.db import Base
+from dataall.db import Resource, utils
 
 
 class SagemakerNotebook(Resource, Base):
+    """Describes ORM model for sagemaker notebooks"""
+
     __tablename__ = 'sagemaker_notebook'
     environmentUri = Column(String, nullable=False)
     notebookUri = Column(String, primary_key=True, default=utils.uuid('notebook'))

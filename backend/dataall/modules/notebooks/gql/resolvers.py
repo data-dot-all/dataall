@@ -4,8 +4,9 @@ from dataall import db
 from dataall.api.context import Context
 from dataall.aws.handlers.sagemaker import Sagemaker
 from dataall.db import models, permissions
-from dataall.db.api import KeyValueTag, Notebook, ResourcePolicy, Stack
+from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
 from dataall.api.Objects.Stack import stack_helper
+from dataall.modules.notebooks.services import Notebook
 
 
 def create_notebook(context: Context, source, input: dict = None):
@@ -35,8 +36,10 @@ def create_notebook(context: Context, source, input: dict = None):
 
 
 def list_notebooks(context, source, filter: dict = None):
-    """Lists all SageMaker notebooks using the given filter. 
-    If the filter is not provided, all notebooks are returned. """
+    """
+    Lists all SageMaker notebooks using the given filter.
+    If the filter is not provided, all notebooks are returned.
+    """
 
     if not filter:
         filter = {}
@@ -155,8 +158,10 @@ def delete_notebook(
     notebookUri: str = None,
     deleteFromAWS: bool = None,
 ):
-    """Deletes the SageMaker notebook.
-    Deletes the notebooks stack from AWS if deleteFromAWS is True"""
+    """
+    Deletes the SageMaker notebook.
+    Deletes the notebooks stack from AWS if deleteFromAWS is True
+    """
     
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
