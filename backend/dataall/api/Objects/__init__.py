@@ -42,8 +42,6 @@ from . import (
     Vote,
 )
 
-from dataall.modules.notebooks import gql as SagemakerNotebook
-
 def bootstrap():
     classes = {
         gql.ObjectType: [],
