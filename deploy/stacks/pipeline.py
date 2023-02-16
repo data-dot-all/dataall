@@ -210,7 +210,6 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -359,7 +358,6 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
                         f'export schema_name=validation',
@@ -378,7 +376,6 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         "python -m venv env",
@@ -419,7 +416,6 @@ class PipelineStack(Stack):
                                 'build': {
                                     'commands': [
                                         'set -eu',
-                                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                         f'export envname={self.git_branch}',
                                         'python -m venv env',
@@ -526,7 +522,6 @@ class PipelineStack(Stack):
                     },
                 ),
                 commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
@@ -547,7 +542,6 @@ class PipelineStack(Stack):
                     },
                 ),
                 commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
