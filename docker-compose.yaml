@@ -29,7 +29,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 graphql_server.py"
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 local_graphql_server.py"
     expose:
       - 5000
     ports:
