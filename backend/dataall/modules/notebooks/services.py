@@ -10,13 +10,14 @@ from dataall.db.api import (
     ResourcePolicy,
     Environment,
 )
-from dataall.db import models, exceptions, permissions, paginate
+from dataall.db import models, exceptions, paginate
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.models import SagemakerNotebook
+from  dataall.modules.notebooks import permissions
 
 logger = logging.getLogger(__name__)
 

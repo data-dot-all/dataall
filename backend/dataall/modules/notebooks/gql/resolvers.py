@@ -3,10 +3,12 @@ from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 from dataall import db
 from dataall.api.context import Context
 from dataall.aws.handlers.sagemaker import Sagemaker
-from dataall.db import models, permissions
+from dataall.db import models
 from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
 from dataall.api.Objects.Stack import stack_helper
 from dataall.modules.notebooks.services import Notebook
+from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks import permissions
 
 
 def create_notebook(context: Context, source, input: dict = None):
@@ -67,7 +69,7 @@ def get_notebook(context, source, notebookUri: str = None):
         )
 
 
-def resolve_notebook_status(context, source: models.SagemakerNotebook, **kwargs):
+def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
     """Resolves the status of a notebook."""
     if not source:
         return None
@@ -78,7 +80,7 @@ def resolve_notebook_status(context, source: models.SagemakerNotebook, **kwargs)
     )
 
 
-def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Starts a sagemaker notebook instance"""
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -102,7 +104,7 @@ def start_notebook(context, source: models.SagemakerNotebook, notebookUri: str =
     return 'Starting'
 
 
-def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = None):
+def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Stops a notebook instance."""
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
@@ -127,7 +129,7 @@ def stop_notebook(context, source: models.SagemakerNotebook, notebookUri: str = 
 
 
 def get_notebook_presigned_url(
-    context, source: models.SagemakerNotebook, notebookUri: str = None
+    context, source: SagemakerNotebook, notebookUri: str = None
 ):
     """Creates and returns a presigned url for a notebook"""
     with context.engine.scoped_session() as session:
@@ -154,7 +156,7 @@ def get_notebook_presigned_url(
 
 def delete_notebook(
     context,
-    source: models.SagemakerNotebook,
+    source: SagemakerNotebook,
     notebookUri: str = None,
     deleteFromAWS: bool = None,
 ):
@@ -216,7 +218,7 @@ def resolve_organization(context, source, **kwargs):
         return session.query(models.Organization).get(env.organizationUri)
 
 
-def resolve_user_role(context: Context, source: models.SagemakerNotebook):
+def resolve_user_role(context: Context, source: SagemakerNotebook):
     if not source:
         return None
     if source.owner == context.username:
@@ -226,7 +228,7 @@ def resolve_user_role(context: Context, source: models.SagemakerNotebook):
     return SagemakerNotebookRole.NO_PERMISSION.value
 
 
-def resolve_stack(context: Context, source: models.SagemakerNotebook, **kwargs):
+def resolve_stack(context: Context, source: SagemakerNotebook, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
