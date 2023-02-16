@@ -1,3 +1,6 @@
+""""
+Creates a CloudFormation stack for SageMaker notebooks using cdk
+"""
 import logging
 import os
 
@@ -10,34 +13,42 @@ from aws_cdk import (
     CfnOutput,
 )
 
-from .manager import stack
-from ... import db
-from ...db import models
-from ...db.api import Environment
-from ...utils.cdk_nag_utils import CDKNagUtil
-from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.db.models import EnvironmentGroup
+
+from dataall.cdkproxy.stacks.manager import stack
+from dataall.db import Engine, get_engine
+from dataall.db.api import Environment
+from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
 
 
 @stack(stack='notebook')
 class SagemakerNotebook(Stack):
+    """
+    Creation of a notebook stack.
+    Having imported the notebook module, the class registers itself using @stack
+    Then it will be reachable by HTTP request from GraphQL lambda
+    """
+
     module_name = __file__
 
-    def get_engine(self) -> db.Engine:
+    def get_engine(self) -> Engine:
         envname = os.environ.get('envname', 'local')
-        engine = db.get_engine(envname=envname)
+        engine = get_engine(envname=envname)
         return engine
 
-    def get_target(self, target_uri) -> models.SagemakerNotebook:
+    def get_target(self, target_uri) -> SagemakerNotebook:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            notebook = session.query(models.SagemakerNotebook).get(target_uri)
+            notebook = session.query(SagemakerNotebook).get(target_uri)
         return notebook
 
     def get_env_group(
-        self, notebook: models.SagemakerNotebook
-    ) -> models.EnvironmentGroup:
+        self, notebook: SagemakerNotebook
+    ) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
             env = Environment.get_environment_group(
