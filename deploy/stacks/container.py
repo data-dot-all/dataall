@@ -44,15 +44,15 @@ class ContainerStack(pyNestedClass):
             container_insights=True,
         )
 
-        task_role = self.create_task_role(envname, resource_prefix)
+        self.task_role = self.create_task_role(envname, resource_prefix)
 
         cdkproxy_task_definition = ecs.FargateTaskDefinition(
             self,
             f'{resource_prefix}-{envname}-cdkproxy',
             cpu=1024,
             memory_limit_mib=2048,
-            task_role=task_role,
-            execution_role=task_role,
+            task_role=self.task_role,
+            execution_role=self.task_role,
             family=f'{resource_prefix}-{envname}-cdkproxy',
         )
 
@@ -111,7 +111,7 @@ class ContainerStack(pyNestedClass):
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-tables-syncer-schedule',
             task_id=f'{resource_prefix}-{envname}-tables-syncer',
-            task_role=task_role,
+            task_role=self.task_role,
             vpc=vpc,
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
@@ -135,7 +135,7 @@ class ContainerStack(pyNestedClass):
             schedule_expression=Schedule.expression('rate(6 hours)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-catalog-indexer-schedule',
             task_id=f'{resource_prefix}-{envname}-catalog-indexer',
-            task_role=task_role,
+            task_role=self.task_role,
             vpc=vpc,
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
@@ -159,7 +159,7 @@ class ContainerStack(pyNestedClass):
             schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-stacks-updater-schedule',
             task_id=f'{resource_prefix}-{envname}-stacks-updater',
-            task_role=task_role,
+            task_role=self.task_role,
             vpc=vpc,
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
@@ -183,7 +183,7 @@ class ContainerStack(pyNestedClass):
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-policies-updater-schedule',
             task_id=f'{resource_prefix}-{envname}-policies-updater',
-            task_role=task_role,
+            task_role=self.task_role,
             vpc=vpc,
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
@@ -213,7 +213,7 @@ class ContainerStack(pyNestedClass):
             schedule_expression=Schedule.expression('rate(15 minutes)'),
             scheduled_task_id=f'{resource_prefix}-{envname}-subscriptions-schedule',
             task_id=f'{resource_prefix}-{envname}-subscriptions',
-            task_role=task_role,
+            task_role=self.task_role,
             vpc=vpc,
             security_group=scheduled_tasks_sg,
             prod_sizing=prod_sizing,
@@ -225,8 +225,8 @@ class ContainerStack(pyNestedClass):
             f'{resource_prefix}-{envname}-share-manager',
             cpu=1024,
             memory_limit_mib=2048,
-            task_role=task_role,
-            execution_role=task_role,
+            task_role=self.task_role,
+            execution_role=self.task_role,
             family=f'{resource_prefix}-{envname}-share-manager',
         )
 
@@ -512,3 +512,7 @@ class ContainerStack(pyNestedClass):
             # security_groups=[security_group],
         )
         return scheduled_task
+
+    @property
+    def ecs_task_role(self) -> iam.Role:
+        return self.task_role

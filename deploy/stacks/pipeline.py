@@ -207,11 +207,9 @@ class PipelineStack(Stack):
                 'Synth',
                 input=source,
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    'n 16.15.1',
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -357,10 +355,9 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='ValidateDBMigrations',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
                         f'export schema_name=validation',
@@ -376,10 +373,9 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='SecurityChecks',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         "python -m venv env",
@@ -392,7 +388,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='Lint',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
                         'pip install --upgrade pip',
@@ -411,7 +407,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='IntegrationTests',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     partial_build_spec=codebuild.BuildSpec.from_object(
                         dict(
@@ -419,9 +415,7 @@ class PipelineStack(Stack):
                             phases={
                                 'build': {
                                     'commands': [
-                                        'n 16.15.1',
                                         'set -eu',
-                                        'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                                         f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                         f'export envname={self.git_branch}',
                                         'python -m venv env',
@@ -447,7 +441,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
                         'mkdir -p source_build',
@@ -478,7 +472,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
                         'mkdir -p source_build',
@@ -516,7 +510,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='LambdaImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -528,7 +522,6 @@ class PipelineStack(Stack):
                     },
                 ),
                 commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
@@ -537,7 +530,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='ECSImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -549,7 +542,6 @@ class PipelineStack(Stack):
                     },
                 ),
                 commands=[
-                    'yum -y install shadow-utils wget && yum -y install openssl-devel bzip2-devel libffi-devel postgresql-devel',
                     f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
                 role_policy_statements=self.codebuild_policy,
@@ -584,6 +576,7 @@ class PipelineStack(Stack):
                 enable_cw_rum=target_env.get('enable_cw_rum', False),
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
+                enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
             )
         )
         return backend_stage
@@ -599,7 +592,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='MigrateDB',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
@@ -637,10 +630,9 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='DeployFrontEnd',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
-                install_commands=["n 14.18.3"],
                 commands=[
                     f'export REACT_APP_STAGE={target_env["envname"]}',
                     f'export envname={target_env["envname"]}',
@@ -688,7 +680,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='UpdateDocumentation',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
                     f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -713,7 +705,7 @@ class PipelineStack(Stack):
         return pipelines.CodeBuildStep(
             id='ConfigureRUM',
             build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
             ),
             commands=[
                 f'export envname={target_env["envname"]}',
@@ -739,7 +731,7 @@ class PipelineStack(Stack):
         return pipelines.CodeBuildStep(
             id='ConfigureCognito',
             build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
             ),
             commands=[
                 f'export envname={target_env["envname"]}',
@@ -781,7 +773,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='FrontendImage',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                         compute_type=codebuild.ComputeType.LARGE,
                         privileged=True,
                         environment_variables={
@@ -824,7 +816,7 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='UserGuideImage',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                         compute_type=codebuild.ComputeType.LARGE,
                         privileged=True,
                         environment_variables={
@@ -901,7 +893,7 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='GitRelease',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
