@@ -25,7 +25,7 @@ class OpenSearchStack(pyNestedClass):
         prod_sizing=False,
         **kwargs,
     ):
-        super().__init__(scope, id, **kwargs)
+        super().__init__(scope, id)
 
         db_security_group = ec2.SecurityGroup(
             self,
@@ -135,3 +135,11 @@ class OpenSearchStack(pyNestedClass):
             parameter_name=f'/dataall/{envname}/elasticsearch/security_group_id',
             string_value=db_security_group.security_group_id,
         )
+
+    @property
+    def domain_name(self) -> str:
+        return self.domain.domain_name
+
+    @property
+    def domain_endpoint(self) -> str:
+        return self.domain.domain_endpoint

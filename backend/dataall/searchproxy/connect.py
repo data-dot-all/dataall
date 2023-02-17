@@ -55,15 +55,17 @@ def connect(envname='local'):
         secret = creds.secret_key
         token = creds.token
 
+        host = utils.Parameter.get_parameter(env=envname, path='elasticsearch/endpoint')
+        service = utils.Parameter.get_parameter(env=envname, path='elasticsearch/service') or 'es'
+
         awsauth = AWS4Auth(
             access_key,
             secret,
             os.getenv('AWS_REGION', 'eu-west-1'),
-            'es',
+            service,
             session_token=token,
         )
 
-        host = utils.Parameter.get_parameter(env=envname, path='elasticsearch/endpoint')
         es = opensearchpy.OpenSearch(
             hosts=[{'host': host, 'port': 443}],
             http_auth=awsauth,
@@ -71,7 +73,11 @@ def connect(envname='local'):
             verify_certs=True,
             connection_class=opensearchpy.RequestsHttpConnection,
         )
-        print(es.info())
+
+        # Avoid calling GET /info endpoint because it is not available in OpenSearch Serverless
+        if service != "aoss":
+            print(es.info())
+
         if not es.indices.exists(index='dataall-index'):
             es.indices.create(index='dataall-index', body=CREATE_INDEX_REQUEST_BODY)
             print('Create "dataall-index" for dev env')
