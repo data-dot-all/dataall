@@ -1,4 +1,5 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM ${ACCOUNTID}.dkr.ecr.eu-west-1.amazonaws.com/ecr-public/amazonlinux/amazonlinux:2
+#FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG FUNCTION_DIR="/home/app/"
 ARG PYTHON_VERSION=python3.8

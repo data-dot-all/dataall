@@ -1,4 +1,5 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM ${ACCOUNTID}.dkr.ecr.eu-west-1.amazonaws.com/ecr-public/amazonlinux/amazonlinux:2
+#FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG NODE_VERSION=16
 ARG NVM_VERSION=v0.37.2
