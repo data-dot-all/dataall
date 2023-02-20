@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class SgmStudioNotebook:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_NOTEBOOKS)
+    @has_tenant_perm(permissions.MANAGE_SGMSTUDIO_NOTEBOOKS)
     @has_resource_perm(permissions.CREATE_SGMSTUDIO_NOTEBOOK)
     def create_notebook(session, username, groups, uri, data=None, check_perm=None):
 
