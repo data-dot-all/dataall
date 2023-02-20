@@ -28,6 +28,7 @@ SagemakerNotebook = gql.ObjectType(
         gql.Field(name="InstanceType", type=gql.String),
         gql.Field(name="RoleArn", type=gql.String),
         gql.Field(name="VolumeSizeInGB", type=gql.Integer),
+        # TODO Should it be deleted?
         gql.Field(
             name="userRoleForNotebook",
             type=SagemakerNotebookRole.toGraphQLEnum(),
