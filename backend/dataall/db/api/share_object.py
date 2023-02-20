@@ -351,6 +351,13 @@ class ShareObject:
             'environment',
             api.Environment.get_environment_by_uri(session, environmentUri),
         )
+
+        if environment.region != dataset.region:
+            raise exceptions.UnauthorizedOperation(
+                action=permissions.CREATE_SHARE_OBJECT,
+                message=f'Requester Team {groupUri} works in region {environment.region} and the requested dataset is stored in region {dataset.region}',
+            )
+
         if principalType == models.PrincipalType.ConsumptionRole.value:
             consumption_role: models.ConsumptionRole = api.Environment.get_environment_consumption_role(
                 session,
