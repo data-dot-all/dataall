@@ -4,6 +4,7 @@ import logging
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
+from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
     has_tenant_perm,
     has_resource_perm,
@@ -86,6 +87,14 @@ class Notebook:
         )
         session.add(notebook)
         session.commit()
+
+        # Creates a record that environment resources has been created
+        resource = EnvironmentResource(
+            environmentUri=env.environmentUri,
+            resourceUri=notebook.notebookUri,
+            resourceType="notebook"
+        )
+        session.add(resource)
 
         notebook.NotebookInstanceName = NamingConventionService(
             target_uri=notebook.notebookUri,

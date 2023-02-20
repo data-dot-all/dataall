@@ -23,6 +23,7 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
+from ...core.environment.models import EnvironmentResource
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -1289,61 +1290,45 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    def list_environment_objects(session, environment_uri):
-        environment_objects = []
+    def count_environment_objects(session, environment_uri):
         datasets = (
             session.query(models.Dataset.label, models.Dataset.datasetUri)
             .filter(models.Dataset.environmentUri == environment_uri)
-            .all()
+            .count()
         )
-        notebooks = (
-            session.query(
-                models.SagemakerNotebook.label,
-                models.SagemakerNotebook.notebookUri,
-            )
-            .filter(models.SagemakerNotebook.environmentUri == environment_uri)
-            .all()
+        resources = (
+            session.query(EnvironmentResource)
+            .filter(EnvironmentResource.environmentUri == environment_uri)
+            .count()
         )
+
         ml_studios = (
             session.query(
                 models.SagemakerStudioUserProfile.label,
                 models.SagemakerStudioUserProfile.sagemakerStudioUserProfileUri,
             )
             .filter(models.SagemakerStudioUserProfile.environmentUri == environment_uri)
-            .all()
+            .count()
         )
         redshift_clusters = (
             session.query(
                 models.RedshiftCluster.label, models.RedshiftCluster.clusterUri
             )
             .filter(models.RedshiftCluster.environmentUri == environment_uri)
-            .all()
+            .count()
         )
         pipelines = (
             session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
             .filter(models.DataPipeline.environmentUri == environment_uri)
-            .all()
+            .count()
         )
         dashboards = (
             session.query(models.Dashboard.label, models.Dashboard.dashboardUri)
             .filter(models.Dashboard.environmentUri == environment_uri)
-            .all()
+            .count()
         )
-        if datasets:
-            environment_objects.append({'type': 'Datasets', 'data': datasets})
-        if notebooks:
-            environment_objects.append({'type': 'Notebooks', 'data': notebooks})
-        if ml_studios:
-            environment_objects.append({'type': 'MLStudios', 'data': ml_studios})
-        if redshift_clusters:
-            environment_objects.append(
-                {'type': 'RedshiftClusters', 'data': redshift_clusters}
-            )
-        if pipelines:
-            environment_objects.append({'type': 'Pipelines', 'data': pipelines})
-        if dashboards:
-            environment_objects.append({'type': 'Dashboards', 'data': dashboards})
-        return environment_objects
+
+        return resources + datasets + ml_studios + redshift_clusters + pipelines + dashboards
 
     @staticmethod
     def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
@@ -1376,9 +1361,9 @@ class Environment:
             'environment', Environment.get_environment_by_uri(session, uri)
         )
 
-        environment_objects = Environment.list_environment_objects(session, uri)
+        has_resources = Environment.count_environment_objects(session, uri)
 
-        if environment_objects:
+        if has_resources:
             raise exceptions.EnvironmentResourcesFound(
                 action='Delete Environment',
                 message='Delete all environment related objects before proceeding',
