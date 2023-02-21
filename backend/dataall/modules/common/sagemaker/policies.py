@@ -1,9 +1,18 @@
-from .service_policy import ServicePolicy
+from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
+
+from dataall.db import permissions
+from dataall.modules.common.sagemaker.permissions import CREATE_NOTEBOOK
 
 
 class Sagemaker(ServicePolicy):
-    def get_statements(self):
+    def get_statements(self, group_permissions, **kwargs):
+        if (
+            CREATE_NOTEBOOK not in group_permissions and
+            permissions.CREATE_SGMSTUDIO_NOTEBOOK not in group_permissions
+        ):
+            return []
+
         statements = [
             iam.PolicyStatement(
                 actions=[
