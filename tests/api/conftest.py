@@ -1,3 +1,4 @@
+from dataall.modules.notebooks.models import SagemakerNotebook
 from .client import *
 from dataall.db import models
 
@@ -498,7 +499,7 @@ def cluster(env_fixture, org_fixture, client, group):
 
 
 @pytest.fixture(scope='module')
-def sgm_notebook(client, tenant, group, env_fixture) -> dataall.db.models.SagemakerNotebook:
+def sgm_notebook(client, tenant, group, env_fixture) -> SagemakerNotebook:
     response = client.query(
         """
         mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){

@@ -35,7 +35,6 @@ def test_get_environment(client, org1, env1, group):
                 SamlGroupName
                 owner
                 dashboardsEnabled
-                notebooksEnabled
                 mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
@@ -57,7 +56,6 @@ def test_get_environment(client, org1, env1, group):
     assert response.data.getEnvironment.owner == 'alice'
     assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
     assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.notebooksEnabled
     assert response.data.getEnvironment.mlStudiosEnabled
     assert response.data.getEnvironment.pipelinesEnabled
     assert response.data.getEnvironment.warehousesEnabled
@@ -88,8 +86,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
 
 
 def test_update_env(client, org1, env1, group):
-    response = client.query(
-        """
+    query =  """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
                 organization{
@@ -103,63 +100,55 @@ def test_update_env(client, org1, env1, group):
                 tags
                 resourcePrefix
                 dashboardsEnabled
-                notebooksEnabled
                 mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
-
+                parameters {
+                    key
+                    value
+                }
             }
         }
-        """,
+    """
+
+    response = client.query(query,
         username='alice',
         environmentUri=env1.environmentUri,
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'notebooksEnabled': False,
             'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
+            'parameters': [
+                {
+                    'key': 'notebooksEnabled',
+                    'value': 'True'
+                }
+            ],
             'resourcePrefix': 'customer-prefix_AZ390 ',
         },
         groups=[group.name],
     )
     assert 'InvalidInput' in response.errors[0].message
 
-    response = client.query(
-        """
-        mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
-            updateEnvironment(environmentUri:$environmentUri,input:$input){
-                organization{
-                    organizationUri
-                }
-                label
-                AwsAccountId
-                region
-                SamlGroupName
-                owner
-                tags
-                resourcePrefix
-                dashboardsEnabled
-                notebooksEnabled
-                mlStudiosEnabled
-                pipelinesEnabled
-                warehousesEnabled
-
-            }
-        }
-        """,
+    response = client.query(query,
         username='alice',
         environmentUri=env1.environmentUri,
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'notebooksEnabled': False,
             'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
+            'parameters': [
+                {
+                    'key': 'notebooksEnabled',
+                    'value': 'True'
+                }
+            ],
             'resourcePrefix': 'customer-prefix',
         },
         groups=[group.name],
@@ -178,6 +167,9 @@ def test_update_env(client, org1, env1, group):
     assert not response.data.updateEnvironment.mlStudiosEnabled
     assert not response.data.updateEnvironment.pipelinesEnabled
     assert not response.data.updateEnvironment.warehousesEnabled
+    assert response.data.updateEnvironment.parameters
+    assert response.data.updateEnvironment.parameters[0]["key"] == "notebooksEnabled"
+    assert response.data.updateEnvironment.parameters[0]["value"] == "True"
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
 

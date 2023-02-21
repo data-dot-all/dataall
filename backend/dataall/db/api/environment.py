@@ -23,7 +23,7 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
-from ...core.environment.models import EnvironmentResource
+from dataall.core.environment.models import EnvironmentResource, EnvironmentParameter
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -64,9 +64,7 @@ class Environment:
             resourcePrefix=data.get('resourcePrefix'),
         )
 
-        env.parameters = {}
-        for parameter in data.get("parameters"):
-            env.parameters[parameter.get("key")] = parameter.get("value")
+        Environment._update_env_parameters(env, data)
 
         session.add(env)
         session.commit()
@@ -200,8 +198,7 @@ class Environment:
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
 
-        for parameter in data.get("parameters"):
-            environment.parameters[parameter.get("key")] = parameter.get("value")
+        Environment._update_env_parameters(environment, data)
 
         ResourcePolicy.attach_resource_policy(
             session=session,
@@ -211,6 +208,13 @@ class Environment:
             resource_type=models.Environment.__name__,
         )
         return environment
+
+    @staticmethod
+    def _update_env_parameters(env: models.Environment, data):
+        """Removes old parameters and creates new parameters associated with the environment"""
+        params = data.get("parameters")
+        if params:
+            env.parameters = [EnvironmentParameter(param.get("key"), param.get("value")) for param in params]
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
