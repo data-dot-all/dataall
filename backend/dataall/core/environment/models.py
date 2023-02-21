@@ -1,13 +1,13 @@
 """The package contains the database models that are related to the environment"""
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, ForeignKey
 from dataall.db import Resource, Base
 
 
 class EnvironmentParameter(Resource, Base):
     """Represent the parameter of the environment"""
     __tablename__ = 'environment_parameters'
-    environmentUri = Column(String, primary_key=True)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), primary_key=True)
     paramKey = Column('paramKey', String, primary_key=True),
     paramValue = Column('paramValue', String, nullable=True)
 

@@ -64,6 +64,11 @@ class Environment:
             warehousesEnabled=data.get('warehousesEnabled', True),
             resourcePrefix=data.get('resourcePrefix'),
         )
+
+        env.parameters = {}
+        for parameter in data.get("parameters"):
+            env.parameters[parameter.get("key")] = parameter.get("value")
+
         session.add(env)
         session.commit()
 
@@ -197,6 +202,9 @@ class Environment:
             environment.warehousesEnabled = data.get('warehousesEnabled')
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
+
+        for parameter in data.get("parameters"):
+            environment.parameters[parameter.get("key")] = parameter.get("value")
 
         ResourcePolicy.attach_resource_policy(
             session=session,

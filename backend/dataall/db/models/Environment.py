@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, String
-from sqlalchemy.orm import query_expression
+from sqlalchemy.orm import query_expression, relationship
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from .. import Base
 from .. import Resource, utils
@@ -40,3 +41,9 @@ class Environment(Resource, Base):
     subscriptionsProducersTopicImported = Column(Boolean, default=False)
     subscriptionsConsumersTopicName = Column(String)
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
+
+    parameters = relationship("EnvironmentParameter",
+        primaryjoin="Environment.environmentUri==EnvironmentParameter.environmentUri",
+        collection_class=attribute_mapped_collection('paramKey'),
+        cascade="all, delete-orphan"
+    )
