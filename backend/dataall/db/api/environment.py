@@ -58,7 +58,6 @@ class Environment:
             EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             dashboardsEnabled=data.get('dashboardsEnabled', False),
-            notebooksEnabled=data.get('notebooksEnabled', True),
             mlStudiosEnabled=data.get('mlStudiosEnabled', True),
             pipelinesEnabled=data.get('pipelinesEnabled', True),
             warehousesEnabled=data.get('warehousesEnabled', True),
@@ -192,8 +191,6 @@ class Environment:
             environment.tags = data.get('tags')
         if 'dashboardsEnabled' in data.keys():
             environment.dashboardsEnabled = data.get('dashboardsEnabled')
-        if 'notebooksEnabled' in data.keys():
-            environment.notebooksEnabled = data.get('notebooksEnabled')
         if 'mlStudiosEnabled' in data.keys():
             environment.mlStudiosEnabled = data.get('mlStudiosEnabled')
         if 'pipelinesEnabled' in data.keys():

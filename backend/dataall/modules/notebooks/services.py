@@ -53,7 +53,7 @@ class Notebook:
 
         env = Environment.get_environment_by_uri(session, uri)
 
-        if not env.notebooksEnabled:
+        if not env.parameters["notebooksEnabled"]:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_NOTEBOOK,
                 message=f'Notebooks feature is disabled for the environment {env.label}',

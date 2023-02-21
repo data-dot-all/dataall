@@ -83,6 +83,9 @@ def upgrade():
         session.add_all(params)
         print("Migration of the environmental parameters has been complete")
 
+        op.drop_column("environment", "notebookEnabled")
+        print("Dropped the columns from the environment table ")
+
         print("Creating of environment_resources table...")
         op.create_table(
             "environment_resources",
