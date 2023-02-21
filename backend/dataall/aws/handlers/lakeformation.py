@@ -23,14 +23,15 @@ class LakeFormation:
 
             response = lf_client.describe_resource(ResourceArn=resource_arn)
 
-            log.debug(f'LF data location already registered: {response}')
+            log.info(f'LF data location already registered: {response}')
 
             return response['ResourceInfo']
 
         except ClientError as e:
-            log.error(
+            log.info(
                 f'LF data location for resource {resource_arn} not found due to {e}'
             )
+            return False
 
     @staticmethod
     def grant_pivot_role_all_database_permissions(accountid, region, database):
