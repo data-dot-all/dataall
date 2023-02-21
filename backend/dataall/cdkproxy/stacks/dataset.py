@@ -545,6 +545,6 @@ class Dataset(Stack):
 
         Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.Dataset, target_type="dataset")
 
         CDKNagUtil.check_rules(self)

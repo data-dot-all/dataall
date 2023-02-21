@@ -14,6 +14,7 @@ from aws_cdk import (
 )
 
 from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks import models
 from dataall.db.models import EnvironmentGroup
 
 from dataall.cdkproxy.stacks.manager import stack
@@ -143,6 +144,6 @@ class SagemakerNotebook(Stack):
             value=notebook.NotebookInstanceName,
         )
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.SagemakerNotebook, target_type="notebook")
 
         CDKNagUtil.check_rules(self)
