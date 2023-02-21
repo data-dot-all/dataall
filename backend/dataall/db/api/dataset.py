@@ -171,13 +171,13 @@ class Dataset:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
 
-        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-crawler'
-        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-profiler'
+        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-crawler'
+        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-profiler'
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-trigger'
-        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-dataquality'
+        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-trigger'
+        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dataquality'
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-dqtrigger'
+        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dqtrigger'
         return dataset
 
     @staticmethod
