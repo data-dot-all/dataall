@@ -3,6 +3,8 @@ import logging
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
+from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS
+
 from .. import exceptions, permissions, paginate, models
 from . import (
     has_tenant_perm,
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class SgmStudioNotebook:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_SGMSTUDIO_NOTEBOOKS)
+    @has_tenant_perm(MANAGE_NOTEBOOKS)
     @has_resource_perm(permissions.CREATE_SGMSTUDIO_NOTEBOOK)
     def create_notebook(session, username, groups, uri, data=None, check_perm=None):
 

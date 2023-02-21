@@ -61,9 +61,6 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print("Initializing permissions...")
-        Permission.init_permissions(session)
-        print("Permissions initialized successfully")
 
         print("Creating of environment_parameters table...")
         op.create_table(
