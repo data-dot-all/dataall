@@ -1,7 +1,6 @@
 import pytest
 
-import dataall
-
+from dataall.modules.notebooks.models import SagemakerNotebook
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
@@ -10,17 +9,18 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module')
-def env1(env, org1, user, group, tenant, module_mocker):
+def env1(env, org1, user, group, tenant, db, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
         'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
     )
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1',
+               parameters={"notebooksEnabled": "True"})
     yield env1
 
 
 @pytest.fixture(scope='module', autouse=True)
-def sgm_notebook(client, tenant, group, env1) -> dataall.db.models.SagemakerNotebook:
+def sgm_notebook(client, tenant, group, env1) -> SagemakerNotebook:
     response = client.query(
         """
         mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){

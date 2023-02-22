@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.db import models, api
+from dataall.modules.notebooks.models import SagemakerNotebook
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -160,9 +161,9 @@ def sgm_studio(db, env: models.Environment) -> models.SagemakerStudioUserProfile
 
 
 @pytest.fixture(scope='module', autouse=True)
-def notebook(db, env: models.Environment) -> models.SagemakerNotebook:
+def notebook(db, env: models.Environment) -> SagemakerNotebook:
     with db.scoped_session() as session:
-        notebook = models.SagemakerNotebook(
+        notebook = SagemakerNotebook(
             label='thistable',
             NotebookInstanceStatus='RUNNING',
             owner='me',

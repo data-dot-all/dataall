@@ -297,7 +297,10 @@ def dataset(client, patch_es):
 def env(client):
     cache = {}
 
-    def factory(org, envname, owner, group, account, region, desc='test'):
+    def factory(org, envname, owner, group, account, region, desc='test', parameters=None):
+        if parameters == None:
+            parameters = {}
+
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
             return cache[key]
@@ -314,6 +317,10 @@ def env(client):
                     region
                     name
                     owner
+                    parameters {
+                        key
+                        value
+                    }
                 }
             }""",
             username=f'{owner}',
@@ -328,6 +335,7 @@ def env(client):
                 'SamlGroupName': f'{group}',
                 'dashboardsEnabled': True,
                 'vpcId': 'vpc-123456',
+                'parameters': [{'key': k, 'value': v} for k, v in parameters.items()]
             },
         )
         cache[key] = response.data.createEnvironment
