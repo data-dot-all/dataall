@@ -18,7 +18,8 @@ from dataall.utils.naming_convention import (
 )
 from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.models import SagemakerNotebook
-from  dataall.modules.notebooks import permissions
+from dataall.modules.notebooks import permissions
+from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,8 @@ class Notebook:
     """
     
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_NOTEBOOKS)
-    @has_resource_perm(permissions.CREATE_NOTEBOOK)
+    @has_tenant_perm(MANAGE_NOTEBOOKS)
+    @has_resource_perm(CREATE_NOTEBOOK)
     def create_notebook(
         session, username, groups, uri, data=None, check_perm=None
     ) -> SagemakerNotebook:
@@ -48,14 +49,14 @@ class Notebook:
             groups=groups,
             uri=uri,
             group=data['SamlAdminGroupName'],
-            permission_name=permissions.CREATE_NOTEBOOK,
+            permission_name=CREATE_NOTEBOOK,
         )
 
         env = Environment.get_environment_by_uri(session, uri)
 
-        if not env.parameters["notebooksEnabled"]:
+        if not bool(env.get_param("notebooksEnabled", False)):
             raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_NOTEBOOK,
+                action=CREATE_NOTEBOOK,
                 message=f'Notebooks feature is disabled for the environment {env.label}',
             )
 

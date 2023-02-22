@@ -10,6 +10,14 @@ AwsEnvironmentInput = gql.InputType(
     ],
 )
 
+ModifyEnvironmentParameterInput = gql.InputType(
+    name='ModifyEnvironmentParameterInput',
+    arguments=[
+        gql.Argument('key', gql.String),
+        gql.Argument('value', gql.String)
+    ]
+)
+
 NewEnvironmentInput = gql.InputType(
     name='NewEnvironmentInput',
     arguments=[
@@ -29,15 +37,9 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('EnvironmentDefaultIAMRoleName', gql.String),
         gql.Argument('resourcePrefix', gql.String),
-    ],
-)
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
 
-ModifyEnvironmentParameterInput = gql.InputType(
-    name='ModifyEnvironmentParameterInput',
-    arguments=[
-        gql.Argument('key', gql.String),
-        gql.Argument('value', gql.String)
-    ]
+    ],
 )
 
 ModifyEnvironmentInput = gql.InputType(

@@ -1,6 +1,5 @@
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy.orm import query_expression, relationship
-from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from .. import Base
 from .. import Resource, utils
@@ -47,3 +46,9 @@ class Environment(Resource, Base):
         cascade="all, delete-orphan",
         lazy="joined"
     )
+
+    def get_param(self, key, default=None):
+        for param in self.parameters:
+            if param.key == key:
+                return param.value
+        return default
