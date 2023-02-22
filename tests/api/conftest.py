@@ -440,7 +440,8 @@ def org_fixture(org, user, group, tenant):
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
-    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
+    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1',
+               parameters={'notebooksEnabled': 'True'})
     yield env1
 
 
