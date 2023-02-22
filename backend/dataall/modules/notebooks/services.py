@@ -24,7 +24,7 @@ from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS, CREAT
 logger = logging.getLogger(__name__)
 
 
-class Notebook:
+class NotebookService:
     """
     Encapsulate the logic of interactions with sagemaker notebooks.
     Allows basic CRUD operations on notebooks.
@@ -41,7 +41,7 @@ class Notebook:
         Throws an exception if notebook are not enabled for the environment
         """
 
-        Notebook.validate_params(data)
+        NotebookService.validate_params(data)
 
         Environment.check_group_environment_permission(
             session=session,
@@ -156,7 +156,7 @@ class Notebook:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Notebook.query_user_notebooks(session, username, groups, data),
+            query=NotebookService.query_user_notebooks(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -164,7 +164,7 @@ class Notebook:
     @staticmethod
     @has_resource_perm(permissions.GET_NOTEBOOK)
     def get_notebook(session, username, groups, uri, data=None, check_perm=True):
-        return Notebook.get_notebook_by_uri(session, uri)
+        return NotebookService.get_notebook_by_uri(session, uri)
 
     @staticmethod
     def get_notebook_by_uri(session, uri) -> SagemakerNotebook:

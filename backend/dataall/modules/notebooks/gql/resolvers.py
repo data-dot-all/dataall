@@ -6,7 +6,7 @@ from dataall.aws.handlers.sagemaker import Sagemaker
 from dataall.db import models
 from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
 from dataall.api.Objects.Stack import stack_helper
-from dataall.modules.notebooks.services import Notebook
+from dataall.modules.notebooks.services import NotebookService
 from dataall.modules.notebooks.models import SagemakerNotebook
 from dataall.modules.notebooks import permissions
 
@@ -15,7 +15,7 @@ def create_notebook(context: Context, source, input: dict = None):
     """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
     with context.engine.scoped_session() as session:
 
-        notebook = Notebook.create_notebook(
+        notebook = NotebookService.create_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -46,7 +46,7 @@ def list_notebooks(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return Notebook.paginated_user_notebooks(
+        return NotebookService.paginated_user_notebooks(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -59,7 +59,7 @@ def list_notebooks(context, source, filter: dict = None):
 def get_notebook(context, source, notebookUri: str = None):
     """Retrieve a SageMaker notebook by URI."""
     with context.engine.scoped_session() as session:
-        return Notebook.get_notebook(
+        return NotebookService.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -90,7 +90,7 @@ def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             resource_uri=notebookUri,
             permission_name=permissions.UPDATE_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = NotebookService.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -114,7 +114,7 @@ def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             resource_uri=notebookUri,
             permission_name=permissions.UPDATE_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = NotebookService.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -140,7 +140,7 @@ def get_notebook_presigned_url(
             resource_uri=notebookUri,
             permission_name=permissions.GET_NOTEBOOK,
         )
-        notebook = Notebook.get_notebook(
+        notebook = NotebookService.get_notebook(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -173,7 +173,7 @@ def delete_notebook(
             groups=context.groups,
             username=context.username,
         )
-        notebook = Notebook.get_notebook_by_uri(session, notebookUri)
+        notebook = NotebookService.get_notebook_by_uri(session, notebookUri)
         env: models.Environment = db.api.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
