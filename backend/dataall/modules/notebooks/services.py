@@ -163,7 +163,7 @@ class NotebookService:
 
     @staticmethod
     @has_resource_perm(permissions.GET_NOTEBOOK)
-    def get_notebook(session, username, groups, uri, data=None, check_perm=True):
+    def get_notebook(session, username, groups, uri, data=None, check_perm=True) -> SagemakerNotebook:
         return NotebookService.get_notebook_by_uri(session, uri)
 
     @staticmethod

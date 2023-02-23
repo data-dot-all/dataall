@@ -73,11 +73,7 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
     """Resolves the status of a notebook."""
     if not source:
         return None
-    return SagemakerClient.get_notebook_instance_status(
-        AwsAccountId=source.AWSAccountId,
-        region=source.region,
-        NotebookInstanceName=source.NotebookInstanceName,
-    )
+    return SagemakerClient(source).get_notebook_instance_status()
 
 
 def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
@@ -98,9 +94,7 @@ def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             data=None,
             check_perm=True,
         )
-        SagemakerClient.start_instance(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
+        SagemakerClient(notebook).start_instance()
     return 'Starting'
 
 
@@ -122,9 +116,7 @@ def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             data=None,
             check_perm=True,
         )
-        SagemakerClient.stop_instance(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
+        SagemakerClient(notebook).stop_instance()
     return 'Stopping'
 
 
@@ -148,9 +140,7 @@ def get_notebook_presigned_url(
             data=None,
             check_perm=True,
         )
-        url = SagemakerClient.presigned_url(
-            notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
-        )
+        url = SagemakerClient(notebook).presigned_url()
         return url
 
 

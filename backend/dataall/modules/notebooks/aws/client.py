@@ -1,6 +1,7 @@
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
+from dataall.modules.notebooks.models import SagemakerNotebook
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
@@ -11,80 +12,46 @@ class SagemakerClient:
     A Sagemaker notebooks proxy client that is used to send requests to AWS
     """
 
-    @staticmethod
-    def client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('sagemaker', region_name=region)
+    def __init__(self, notebook: SagemakerNotebook):
+        session = SessionHelper.remote_session(notebook.AWSAccountId)
+        self._client = session.client('sagemaker', region_name=notebook.region)
+        self._instance_name = notebook.NotebookInstanceName
 
-    @staticmethod
-    def get_notebook_instance_status(AwsAccountId, region, NotebookInstanceName):
+    def get_notebook_instance_status(self) -> str:
+        """Remote call to AWS to check the notebook's status"""
         try:
-            client = SagemakerClient.client(AwsAccountId, region)
-            response = client.describe_notebook_instance(
-                NotebookInstanceName=NotebookInstanceName
+            response = self._client.describe_notebook_instance(
+                NotebookInstanceName=self._instance_name
             )
             return response.get('NotebookInstanceStatus', 'NOT FOUND')
         except ClientError as e:
             logger.error(
-                f'Could not retrieve instance {NotebookInstanceName} status due to: {e} '
+                f'Could not retrieve instance {self._instance_name} status due to: {e} '
             )
             return 'NOT FOUND'
 
-    @staticmethod
-    def presigned_url(AwsAccountId, region, NotebookInstanceName):
+    def presigned_url(self):
+        """Creates a presigned url for a notebook instance by sending request to AWS"""
         try:
-            client = SagemakerClient.client(AwsAccountId, region)
-            response = client.create_presigned_notebook_instance_url(
-                NotebookInstanceName=NotebookInstanceName
+            response = self._client.create_presigned_notebook_instance_url(
+                NotebookInstanceName=self._instance_name
             )
             return response['AuthorizedUrl']
         except ClientError as e:
             raise e
 
-    @staticmethod
-    def presigned_url_jupyterlab(AwsAccountId, region, NotebookInstanceName):
+    def start_instance(self):
+        """Starts the notebooks instance by sending a request to AWS"""
         try:
-            client = SagemakerClient.client(AwsAccountId, region)
-            response = client.create_presigned_notebook_instance_url(
-                NotebookInstanceName=NotebookInstanceName
-            )
-            url_parts = response['AuthorizedUrl'].split('?authToken')
-            url = url_parts[0] + '/lab' + '?authToken' + url_parts[1]
-            return url
-        except ClientError as e:
-            raise e
-
-    @staticmethod
-    def start_instance(AwsAccountId, region, NotebookInstanceName):
-        try:
-            client = SagemakerClient.client(AwsAccountId, region)
-            status = SagemakerClient.get_notebook_instance_status(
-                AwsAccountId, region, NotebookInstanceName
-            )
-            client.start_notebook_instance(NotebookInstanceName=NotebookInstanceName)
+            status = self.get_notebook_instance_status()
+            self._client.start_notebook_instance(NotebookInstanceName=self._instance_name)
             return status
         except ClientError as e:
             return e
 
-    @staticmethod
-    def stop_instance(AwsAccountId, region, NotebookInstanceName):
+    def stop_instance(self) -> None:
+        """Stops the notebooks instance by sending a request to AWS"""
         try:
-            client = SagemakerClient.client(AwsAccountId, region)
-            client.stop_notebook_instance(NotebookInstanceName=NotebookInstanceName)
-        except ClientError as e:
-            raise e
-
-    @staticmethod
-    def get_security_groups(AwsAccountId, region):
-        try:
-            session = SessionHelper.remote_session(AwsAccountId)
-            client = session.client('ec2', region_name=region)
-            response = client.describe_security_groups()
-            sgnames = [SG['GroupName'] for SG in response['SecurityGroups']]
-            sgindex = [
-                i for i, s in enumerate(sgnames) if 'DefaultLinuxSecurityGroup' in s
-            ]
-            SecurityGroupIds = [response['SecurityGroups'][sgindex[0]]['GroupId']]
-            return SecurityGroupIds
+            self._client.stop_notebook_instance(NotebookInstanceName=self._instance_name)
         except ClientError as e:
             raise e
