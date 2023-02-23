@@ -15,6 +15,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
 from dataall.searchproxy import connect, run_query
 from dataall.modules.loader import load_modules
+from dataall.core.config import config
 
 import logging
 
@@ -32,6 +33,7 @@ Base.metadata.create_all(engine.engine)
 CDKPROXY_URL = (
     'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
 )
+config.set_property("cdk_proxy_url", CDKPROXY_URL)
 
 load_modules()
 init_permissions(engine)
@@ -88,7 +90,6 @@ def request_context(headers, mock=False):
         schema=schema,
         username=username,
         groups=groups,
-        cdkproxyurl=CDKPROXY_URL,
     )
     return context.__dict__
 

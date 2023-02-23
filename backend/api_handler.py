@@ -44,7 +44,6 @@ def resolver_adapter(resolver):
                 username=info.context['username'],
                 groups=info.context['groups'],
                 schema=info.context['schema'],
-                cdkproxyurl=info.context['cdkproxyurl'],
             ),
             source=obj or None,
             **kwargs,
@@ -143,7 +142,6 @@ def handler(event, context):
             'username': username,
             'groups': groups,
             'schema': SCHEMA,
-            'cdkproxyurl': None,
         }
     else:
         raise Exception(f'Could not initialize user context from event {event}')

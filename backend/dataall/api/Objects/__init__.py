@@ -90,7 +90,6 @@ def resolver_adapter(resolver):
                 username=info.context['username'],
                 groups=info.context['groups'],
                 schema=info.context['schema'],
-                cdkproxyurl=info.context['cdkproxyurl'],
             ),
             source=obj or None,
             **kwargs,

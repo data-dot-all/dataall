@@ -9,6 +9,7 @@ from ....aws.handlers.ecs import Ecs
 from ....db import models
 from ....utils import Parameter
 
+from dataall.core.config import config
 
 def get_stack_with_cfn_resources(context: Context, targetUri: str, environmentUri: str):
     with context.engine.scoped_session() as session:
@@ -60,7 +61,7 @@ def deploy_stack(context, targetUri):
         envname = os.getenv('envname', 'local')
 
         if envname in ['local', 'pytest', 'dkrcompose']:
-            requests.post(f'{context.cdkproxyurl}/stack/{stack.stackUri}')
+            requests.post(f'{config.get_property("cdk_proxy_url")}/stack/{stack.stackUri}')
 
         else:
             cluster_name = Parameter().get_parameter(

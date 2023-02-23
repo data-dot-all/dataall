@@ -67,7 +67,6 @@ def app(db, es):
                 'username': username,
                 'groups': groups,
                 'es': es,
-                'cdkproxyurl': 'cdkproxyurl',
             },
             debug=app.debug,
         )
