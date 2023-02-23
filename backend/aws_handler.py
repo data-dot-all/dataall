@@ -4,6 +4,7 @@ import os
 
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import get_engine
+from dataall.modules.loader import load_modules
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL'))
@@ -12,6 +13,8 @@ log = logging.getLogger(__name__)
 ENVNAME = os.getenv('envname', 'local')
 
 engine = get_engine(envname=ENVNAME)
+
+load_modules()
 
 
 def handler(event, context=None):
