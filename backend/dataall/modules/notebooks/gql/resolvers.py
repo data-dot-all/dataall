@@ -2,7 +2,7 @@ from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
 from dataall import db
 from dataall.api.context import Context
-from dataall.aws.handlers.sagemaker import Sagemaker
+from dataall.modules.notebooks.aws.client import SagemakerClient
 from dataall.db import models
 from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
 from dataall.api.Objects.Stack import stack_helper
@@ -73,7 +73,7 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
     """Resolves the status of a notebook."""
     if not source:
         return None
-    return Sagemaker.get_notebook_instance_status(
+    return SagemakerClient.get_notebook_instance_status(
         AwsAccountId=source.AWSAccountId,
         region=source.region,
         NotebookInstanceName=source.NotebookInstanceName,
@@ -98,7 +98,7 @@ def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             data=None,
             check_perm=True,
         )
-        Sagemaker.start_instance(
+        SagemakerClient.start_instance(
             notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
         )
     return 'Starting'
@@ -122,7 +122,7 @@ def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             data=None,
             check_perm=True,
         )
-        Sagemaker.stop_instance(
+        SagemakerClient.stop_instance(
             notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
         )
     return 'Stopping'
@@ -148,7 +148,7 @@ def get_notebook_presigned_url(
             data=None,
             check_perm=True,
         )
-        url = Sagemaker.presigned_url(
+        url = SagemakerClient.presigned_url(
             notebook.AWSAccountId, notebook.region, notebook.NotebookInstanceName
         )
         return url

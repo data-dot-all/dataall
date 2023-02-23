@@ -1,12 +1,16 @@
 import logging
 
-from .sts import SessionHelper
+from dataall.aws.handlers.sts import SessionHelper
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
 
-class Sagemaker:
+class SagemakerClient:
+    """
+    A Sagemaker notebooks proxy client that is used to send requests to AWS
+    """
+
     @staticmethod
     def client(AwsAccountId, region):
         session = SessionHelper.remote_session(AwsAccountId)
@@ -15,7 +19,7 @@ class Sagemaker:
     @staticmethod
     def get_notebook_instance_status(AwsAccountId, region, NotebookInstanceName):
         try:
-            client = Sagemaker.client(AwsAccountId, region)
+            client = SagemakerClient.client(AwsAccountId, region)
             response = client.describe_notebook_instance(
                 NotebookInstanceName=NotebookInstanceName
             )
@@ -29,7 +33,7 @@ class Sagemaker:
     @staticmethod
     def presigned_url(AwsAccountId, region, NotebookInstanceName):
         try:
-            client = Sagemaker.client(AwsAccountId, region)
+            client = SagemakerClient.client(AwsAccountId, region)
             response = client.create_presigned_notebook_instance_url(
                 NotebookInstanceName=NotebookInstanceName
             )
@@ -40,7 +44,7 @@ class Sagemaker:
     @staticmethod
     def presigned_url_jupyterlab(AwsAccountId, region, NotebookInstanceName):
         try:
-            client = Sagemaker.client(AwsAccountId, region)
+            client = SagemakerClient.client(AwsAccountId, region)
             response = client.create_presigned_notebook_instance_url(
                 NotebookInstanceName=NotebookInstanceName
             )
@@ -53,8 +57,8 @@ class Sagemaker:
     @staticmethod
     def start_instance(AwsAccountId, region, NotebookInstanceName):
         try:
-            client = Sagemaker.client(AwsAccountId, region)
-            status = Sagemaker.get_notebook_instance_status(
+            client = SagemakerClient.client(AwsAccountId, region)
+            status = SagemakerClient.get_notebook_instance_status(
                 AwsAccountId, region, NotebookInstanceName
             )
             client.start_notebook_instance(NotebookInstanceName=NotebookInstanceName)
@@ -65,7 +69,7 @@ class Sagemaker:
     @staticmethod
     def stop_instance(AwsAccountId, region, NotebookInstanceName):
         try:
-            client = Sagemaker.client(AwsAccountId, region)
+            client = SagemakerClient.client(AwsAccountId, region)
             client.stop_notebook_instance(NotebookInstanceName=NotebookInstanceName)
         except ClientError as e:
             raise e
