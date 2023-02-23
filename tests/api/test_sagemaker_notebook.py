@@ -2,6 +2,18 @@ import pytest
 
 from dataall.modules.notebooks.models import SagemakerNotebook
 
+class MockSagemakerClient:
+    def start_instance(self):
+        return "Starting"
+
+    def stop_instance(self):
+        return True
+
+    def get_notebook_instance_status(self):
+        return "INSERVICE"
+
+
+
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
     org1 = org('testorg', user.userName, group.name)
@@ -64,15 +76,8 @@ def sgm_notebook(client, tenant, group, env1) -> SagemakerNotebook:
 @pytest.fixture(scope='module', autouse=True)
 def patch_aws(module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.sagemaker.Sagemaker.start_instance',
-        return_value='Starting',
-    )
-    module_mocker.patch(
-        'dataall.aws.handlers.sagemaker.Sagemaker.stop_instance', return_value=True
-    )
-    module_mocker.patch(
-        'dataall.aws.handlers.sagemaker.Sagemaker.get_notebook_instance_status',
-        return_value='INSERVICE',
+        "dataall.modules.notebooks.gql.resolvers.client",
+        return_value=MockSagemakerClient(),
     )
 
 

@@ -55,3 +55,8 @@ class SagemakerClient:
             self._client.stop_notebook_instance(NotebookInstanceName=self._instance_name)
         except ClientError as e:
             raise e
+
+
+def client(notebook: SagemakerNotebook) -> SagemakerClient:
+    """Factory method to retrieve the client to send request to AWS"""
+    return SagemakerClient(notebook)
