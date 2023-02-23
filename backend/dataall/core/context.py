@@ -1,0 +1,37 @@
+"""
+API for request context.
+Request context is a storage for associated with the request and should accessible from any part of application
+that in the request scope
+
+The class uses Flask's approach to handle request: ThreadLocal
+That approach should work fine for AWS Lambdas and local server that uses Flask app
+"""
+
+from dataclasses import dataclass
+from typing import List
+
+from dataall.db.connection import Engine
+from threading import local
+import opensearchpy
+
+
+_request_storage = local()
+
+
+@dataclass(frozen=True)
+class RequestContext:
+    """Contains API for every graphql request"""
+    db_engine: Engine
+    username: str
+    groups: List[str]
+    es_engine: opensearchpy.OpenSearch
+
+
+def get_context() -> RequestContext:
+    """Retrieves context associated with a request"""
+    return _request_storage.context
+
+
+def set_context(context: RequestContext) -> None:
+    """Retrieves context associated with a request"""
+    _request_storage.context = context

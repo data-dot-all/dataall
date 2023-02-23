@@ -16,6 +16,7 @@ from dataall.db import get_engine, Base, create_schema_and_tables, init_permissi
 from dataall.searchproxy import connect, run_query
 from dataall.modules.loader import load_modules
 from dataall.core.config import config
+from dataall.core.context import set_context, RequestContext
 
 import logging
 
@@ -84,6 +85,10 @@ def request_context(headers, mock=False):
                 permissions=db.permissions.TENANT_ALL,
                 tenant_name='dataall',
             )
+
+    set_context(RequestContext(engine, username, groups, es))
+
+    # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
     context = Context(
         engine=engine,
         es=es,
@@ -132,16 +137,18 @@ def esproxy():
 def graphql_server():
     print('.............................')
     # GraphQL queries are always sent as POST
-    print(request.data)
+    logger.debug(request.data)
     data = request.get_json()
-    print(request_context(request.headers, mock=True))
+
+    context = request_context(request.headers, mock=True)
+    logger.debug(context)
 
     # Note: Passing the request to the context is optional.
     # In Flask, the current request is always accessible as flask.request
     success, result = graphql_sync(
         schema,
         data,
-        context_value=request_context(request.headers, mock=True),
+        context_value=context,
         debug=app.debug,
     )
 

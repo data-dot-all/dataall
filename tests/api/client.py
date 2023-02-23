@@ -7,6 +7,7 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify, Response
 from munch import DefaultMunch
 import dataall
+from dataall.core.context import set_context, RequestContext
 
 
 class ClientWrapper:
@@ -58,6 +59,9 @@ def app(db, es):
 
         username = request.headers.get('Username', 'anonym')
         groups = json.loads(request.headers.get('Groups', '[]'))
+
+        set_context(RequestContext(db, username, groups, es))
+
         success, result = graphql_sync(
             schema,
             data,

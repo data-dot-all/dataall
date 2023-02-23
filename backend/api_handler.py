@@ -12,6 +12,7 @@ from ariadne import (
 from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
+from dataall.core.context import set_context, RequestContext
 from dataall.db import init_permissions, get_engine, api, permissions
 from dataall.modules.loader import load_modules
 from dataall.searchproxy import connect
@@ -136,6 +137,8 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
+        set_context(RequestContext(ENGINE, username, groups, ES))
+
         app_context = {
             'engine': ENGINE,
             'es': ES,
@@ -143,6 +146,7 @@ def handler(event, context):
             'groups': groups,
             'schema': SCHEMA,
         }
+
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
