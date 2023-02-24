@@ -8,6 +8,9 @@ from flask import Flask, request, jsonify, Response
 from munch import DefaultMunch
 import dataall
 from dataall.core.context import set_context, RequestContext
+from dataall.core.config import config
+
+config.set_property("cdk_proxy_url", "mock_url")
 
 
 class ClientWrapper:

@@ -6,8 +6,6 @@ from sqlalchemy.orm import Query
 
 from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
-    has_tenant_perm,
-    has_resource_perm,
     ResourcePolicy,
     Environment,
 )
@@ -20,6 +18,7 @@ from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.models import SagemakerNotebook
 from dataall.modules.notebooks import permissions
 from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +30,8 @@ class NotebookService:
     """
     
     @staticmethod
-    @has_tenant_perm(MANAGE_NOTEBOOKS)
-    @has_resource_perm(CREATE_NOTEBOOK)
+    @has_tenant_permission(MANAGE_NOTEBOOKS)
+    @has_resource_permission(CREATE_NOTEBOOK)
     def create_notebook(
         session, username, groups, uri, data=None, check_perm=None
     ) -> SagemakerNotebook:
@@ -162,7 +161,7 @@ class NotebookService:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.GET_NOTEBOOK)
+    @has_resource_permission(permissions.GET_NOTEBOOK)
     def get_notebook(session, username, groups, uri, data=None, check_perm=True) -> SagemakerNotebook:
         return NotebookService.get_notebook_by_uri(session, uri)
 

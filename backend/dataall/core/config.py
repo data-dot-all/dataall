@@ -16,15 +16,12 @@ class _Config:
     def get_property(self, key: str) -> Any:
         """Retrieves a copy of the property"""
         if key not in self._config:
-            raise KeyError
+            raise KeyError(f"Couldn't find a property {key} in the config")
 
         return copy.deepcopy(self._config[key])
 
     def set_property(self, key: str, value: Any) -> None:
         """Sets a property into the config"""
-        if key not in self._config:
-            raise KeyError
-
         self._config[key] = value
 
     @staticmethod

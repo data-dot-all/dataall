@@ -13,3 +13,4 @@ PyYAML==6.0
 requests==2.27.1
 requests_aws4auth==1.1.1
 sqlalchemy==1.3.16
+deprecated==1.14.1

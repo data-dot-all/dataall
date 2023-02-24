@@ -1,7 +1,12 @@
 from ..api.resource_policy import ResourcePolicy
 from ..api.tenant_policy import TenantPolicy
+from deprecated import deprecated
 
 
+@deprecated(
+    reason="old API. Should be removed at the end of modularization. Use dataall.core.permission_checker",
+    action="once"
+)
 def has_resource_perm(permission):
     def decorator(f):
         static_func = False
@@ -38,6 +43,10 @@ def has_resource_perm(permission):
     return decorator
 
 
+@deprecated(
+    reason="old API. Should be removed at the end of modularization. Use dataall.core.permission_checker",
+    action="once"
+)
 def has_tenant_perm(permission):
     def decorator(f):
         static_func = False

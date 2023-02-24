@@ -21,7 +21,6 @@ except ImportError:
 log = logging.getLogger(__name__)
 ENVNAME = os.getenv('envname', 'local')
 
-
 class Engine:
     def __init__(self, dbconfig: DbConfig):
         self.dbconfig = dbconfig
@@ -67,6 +66,9 @@ class Engine:
             raise e
         finally:
             s.close()
+
+    def current_session(self):
+        return self._session
 
     def dispose(self):
         self.engine.dispose()
