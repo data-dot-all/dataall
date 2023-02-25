@@ -1,15 +1,13 @@
 """A service layer for sagemaker notebooks"""
 import logging
 
-from sqlalchemy import or_
-from sqlalchemy.orm import Query
-
 from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
     ResourcePolicy,
     Environment,
 )
-from dataall.db import models, exceptions, paginate
+from dataall.db import models, exceptions
+from dataall.modules.notebooks.db.repositories import NotebookRepository
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -76,8 +74,8 @@ class NotebookService:
             VolumeSizeInGB=data.get('VolumeSizeInGB', 32),
             InstanceType=data.get('InstanceType', 'ml.t3.medium'),
         )
-        session.add(notebook)
-        session.commit()
+
+        NotebookRepository(session).save_notebook(notebook)
 
         # Creates a record that environment resources has been created
         resource = EnvironmentResource(
@@ -123,32 +121,9 @@ class NotebookService:
             raise exceptions.RequiredParameter('name')
 
     @staticmethod
-    def _query_user_notebooks(session, username, groups, filter) -> Query:
-        query = session.query(SagemakerNotebook).filter(
-            or_(
-                SagemakerNotebook.owner == username,
-                SagemakerNotebook.SamlAdminGroupName.in_(groups),
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    SagemakerNotebook.description.ilike(
-                        filter.get('term') + '%%'
-                    ),
-                    SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
-                )
-            )
-        return query
-
-    @staticmethod
     # TODO NO PERMISSION CHECK!
-    def paginated_user_notebooks(session, username, groups, data=None) -> dict:
-        return paginate(
-            query=NotebookService._query_user_notebooks(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
+    def list_user_notebooks(session, username, groups, data=None) -> dict:
+        return NotebookRepository(session).paginated_user_notebooks(username, groups, data)
 
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
@@ -156,7 +131,7 @@ class NotebookService:
         """Gets a notebook by uri"""
         if not uri:
             raise exceptions.RequiredParameter('URI')
-        notebook = session.query(SagemakerNotebook).get(uri)
+        notebook = NotebookRepository(session).find_notebook(uri)
         if not notebook:
             raise exceptions.ObjectNotFound('SagemakerNotebook', uri)
         return notebook

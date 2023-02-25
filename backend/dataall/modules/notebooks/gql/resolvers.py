@@ -45,7 +45,7 @@ def list_notebooks(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return NotebookService.paginated_user_notebooks(
+        return NotebookService.list_user_notebooks(
             session=session,
             username=context.username,
             groups=context.groups,
