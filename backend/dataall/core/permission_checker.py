@@ -3,8 +3,19 @@ Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
 from dataall.core.context import RequestContext, get_context
-from dataall.db.api import TenantPolicy, ResourcePolicy
+from dataall.db.api import TenantPolicy, ResourcePolicy, Environment
 
+
+def _check_group_environment_permission(session, permission, uri, admin_group):
+    context: RequestContext = get_context()
+    Environment.check_group_environment_permission(
+        session=session,
+        username=context.username,
+        groups=context.groups,
+        uri=uri,
+        group=admin_group,
+        permission_name=permission,
+    )
 
 def _check_tenant_permission(session, permission):
     context: RequestContext = get_context()
@@ -42,7 +53,6 @@ def has_resource_permission(permission):
             fn = f.__func__
         except AttributeError:
             fn = f
-
 
         def decorated(*args, uri, **kwargs):
             context: RequestContext = get_context()
@@ -88,6 +98,38 @@ def has_tenant_permission(permission: str):
                     _check_tenant_permission(session, permission)
 
             return fn(*args, **kwargs)
+
+        if static_func:
+            return staticmethod(decorated)
+        else:
+            return decorated
+
+    return decorator
+
+
+# TODO: Can be de-duplicated if admin_group is retrived from somewhere else
+def has_group_permission(permission):
+    def decorator(f):
+        static_func = False
+        try:
+            f.__func__
+            static_func = True
+            fn = f.__func__
+        except AttributeError:
+            fn = f
+
+        def decorated(*args, data, uri, **kwargs):
+            context: RequestContext = get_context()
+            db = context.db_engine
+            # TODO: why we expect that client will tell us what the admin group is? Can be security issue!!
+            admin_group = data['SamlAdminGroupName']
+            # trying to re-use the open session if there is one
+            if not db.current_session():
+                _check_group_environment_permission(db.current_session(), permission, uri, admin_group)
+            else:
+                with db.scoped_session() as session:
+                    _check_group_environment_permission(session, permission, uri, admin_group)
+            return fn(*args, uri=uri, data=data, **kwargs)
 
         if static_func:
             return staticmethod(decorated)

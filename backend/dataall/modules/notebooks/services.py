@@ -18,7 +18,7 @@ from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.models import SagemakerNotebook
 from dataall.modules.notebooks import permissions
 from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
 
@@ -32,25 +32,16 @@ class NotebookService:
     @staticmethod
     @has_tenant_permission(MANAGE_NOTEBOOKS)
     @has_resource_permission(CREATE_NOTEBOOK)
+    @has_group_permission(CREATE_NOTEBOOK)
     def create_notebook(
-        session, username, groups, uri, data=None, check_perm=None
+        session, username, groups, uri, data=None
     ) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
         Throws an exception if notebook are not enabled for the environment
         """
 
-        NotebookService.validate_params(data)
-
-        Environment.check_group_environment_permission(
-            session=session,
-            username=username,
-            groups=groups,
-            uri=uri,
-            group=data['SamlAdminGroupName'],
-            permission_name=CREATE_NOTEBOOK,
-        )
-
+        NotebookService._validate_params(data)
         env = Environment.get_environment_by_uri(session, uri)
 
         if not bool(env.get_param("notebooksEnabled", False)):
@@ -123,7 +114,7 @@ class NotebookService:
         return notebook
 
     @staticmethod
-    def validate_params(data):
+    def _validate_params(data):
         if not data:
             raise exceptions.RequiredParameter('data')
         if not data.get('environmentUri'):
@@ -132,7 +123,7 @@ class NotebookService:
             raise exceptions.RequiredParameter('name')
 
     @staticmethod
-    def query_user_notebooks(session, username, groups, filter) -> Query:
+    def _query_user_notebooks(session, username, groups, filter) -> Query:
         query = session.query(SagemakerNotebook).filter(
             or_(
                 SagemakerNotebook.owner == username,
@@ -151,22 +142,18 @@ class NotebookService:
         return query
 
     @staticmethod
-    def paginated_user_notebooks(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    # TODO NO PERMISSION CHECK!
+    def paginated_user_notebooks(session, username, groups, data=None) -> dict:
         return paginate(
-            query=NotebookService.query_user_notebooks(session, username, groups, data),
+            query=NotebookService._query_user_notebooks(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
-    def get_notebook(session, username, groups, uri, data=None, check_perm=True) -> SagemakerNotebook:
-        return NotebookService.get_notebook_by_uri(session, uri)
-
-    @staticmethod
-    def get_notebook_by_uri(session, uri) -> SagemakerNotebook:
+    def get_notebook(session, uri) -> SagemakerNotebook:
+        """Gets a notebook by uri"""
         if not uri:
             raise exceptions.RequiredParameter('URI')
         notebook = session.query(SagemakerNotebook).get(uri)

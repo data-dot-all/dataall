@@ -20,8 +20,7 @@ def create_notebook(context: Context, source, input: dict = None):
             username=context.username,
             groups=context.groups,
             uri=input['environmentUri'],
-            data=input,
-            check_perm=True,
+            data=input
         )
 
         Stack.create_stack(
@@ -50,23 +49,14 @@ def list_notebooks(context, source, filter: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 
 def get_notebook(context, source, notebookUri: str = None):
     """Retrieve a SageMaker notebook by URI."""
     with context.engine.scoped_session() as session:
-        return NotebookService.get_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=notebookUri,
-            data=None,
-            check_perm=True,
-        )
+        return NotebookService.get_notebook(session=session, uri=notebookUri)
 
 
 def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
@@ -86,14 +76,7 @@ def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             resource_uri=notebookUri,
             permission_name=permissions.UPDATE_NOTEBOOK,
         )
-        notebook = NotebookService.get_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=notebookUri,
-            data=None,
-            check_perm=True,
-        )
+        notebook = NotebookService.get_notebook(session=session, uri=notebookUri)
         client(notebook).start_instance()
     return 'Starting'
 
@@ -163,7 +146,7 @@ def delete_notebook(
             groups=context.groups,
             username=context.username,
         )
-        notebook = NotebookService.get_notebook_by_uri(session, notebookUri)
+        notebook = NotebookService.get_notebook(session, uri=notebookUri)
         env: models.Environment = db.api.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
