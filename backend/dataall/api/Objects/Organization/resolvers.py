@@ -175,3 +175,16 @@ def list_organization_groups(
             data=filter,
             check_perm=True,
         )
+
+
+def resolve_organization_by_env(context, source, **kwargs):
+    """
+    Resolves the organization for environmental resource.
+    """
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        env: models.Environment = session.query(models.Environment).get(
+            source.environmentUri
+        )
+        return session.query(models.Organization).get(env.organizationUri)

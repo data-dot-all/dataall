@@ -702,3 +702,11 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
                 message='Pivot role name could not be found on AWS Secretsmanager',
             )
         return pivot_role_name
+
+
+def resolve_environment(context, source, **kwargs):
+    """Resolves the environment for a environmental resource"""
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return session.query(models.Environment).get(source.environmentUri)

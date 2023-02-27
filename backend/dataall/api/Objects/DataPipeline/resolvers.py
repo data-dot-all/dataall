@@ -111,14 +111,6 @@ def get_pipeline(context: Context, source, DataPipelineUri: str = None):
         )
 
 
-def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-    return env
-
-
 def resolve_user_role(context: Context, source: models.DataPipeline):
     if not source:
         return None
@@ -153,15 +145,6 @@ def list_pipeline_environments(context: Context, source: models.DataPipeline, fi
             data=filter,
             check_perm=None,
         )
-
-
-def get_pipeline_org(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-        org = session.query(models.Organization).get(env.organizationUri)
-    return org
 
 
 def get_clone_url_http(context: Context, source: models.DataPipeline, **kwargs):

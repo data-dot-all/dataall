@@ -25,4 +25,3 @@ class SagemakerNotebook(Resource, Base):
     SubnetId = Column(String, nullable=True)
     VolumeSizeInGB = Column(Integer, nullable=True)
     InstanceType = Column(String, nullable=True)
-    userRoleForNotebook = query_expression()

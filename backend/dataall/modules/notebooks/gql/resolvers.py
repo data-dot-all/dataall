@@ -77,24 +77,6 @@ def delete_notebook(
     return True
 
 
-# TODO: check for the code duplication
-def resolve_environment(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        return session.query(models.Environment).get(source.environmentUri)
-
-
-def resolve_organization(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
-        return session.query(models.Organization).get(env.organizationUri)
-
-
 def resolve_user_role(context: Context, source: SagemakerNotebook):
     if not source:
         return None
@@ -105,7 +87,7 @@ def resolve_user_role(context: Context, source: SagemakerNotebook):
     return SagemakerNotebookRole.NO_PERMISSION.value
 
 
-def resolve_stack(context: Context, source: SagemakerNotebook, **kwargs):
+def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(

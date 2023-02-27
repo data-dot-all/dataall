@@ -1,12 +1,13 @@
 """Defines the schema of the SageMaker notebooks"""
 from dataall.api import gql
 from dataall.modules.notebooks.gql.resolvers import (
-    resolve_environment,
-    resolve_organization,
-    resolve_stack,
+    resolve_notebook_stack,
     resolve_notebook_status,
     resolve_user_role,
 )
+
+from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
 
 from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
@@ -28,7 +29,6 @@ SagemakerNotebook = gql.ObjectType(
         gql.Field(name="InstanceType", type=gql.String),
         gql.Field(name="RoleArn", type=gql.String),
         gql.Field(name="VolumeSizeInGB", type=gql.Integer),
-        # TODO Should it be deleted?
         gql.Field(
             name="userRoleForNotebook",
             type=SagemakerNotebookRole.toGraphQLEnum(),
@@ -43,9 +43,9 @@ SagemakerNotebook = gql.ObjectType(
         gql.Field(
             name="organization",
             type=gql.Ref("Organization"),
-            resolver=resolve_organization,
+            resolver=resolve_organization_by_env,
         ),
-        gql.Field(name="stack", type=gql.Ref("Stack"), resolver=resolve_stack),
+        gql.Field(name="stack", type=gql.Ref("Stack"), resolver=resolve_notebook_stack),
     ],
 )
 

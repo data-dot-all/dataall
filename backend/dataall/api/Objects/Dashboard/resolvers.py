@@ -204,12 +204,6 @@ def get_dashboard_organization(context: Context, source: models.Dashboard, **kwa
     return org
 
 
-def get_dashboard_environment(context: Context, source: models.Dashboard, **kwargs):
-    with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-    return env
-
-
 def request_dashboard_share(
     context: Context,
     source: models.Dashboard,

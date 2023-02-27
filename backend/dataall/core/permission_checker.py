@@ -109,7 +109,6 @@ def has_tenant_permission(permission: str):
     return decorator
 
 
-# TODO: Can be de-duplicated if admin_group is retrived from somewhere else
 def has_group_permission(permission):
     def decorator(f):
         static_func = False

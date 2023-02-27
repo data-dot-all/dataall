@@ -220,23 +220,6 @@ def delete_sagemaker_studio_user_profile(
     return True
 
 
-def resolve_environment(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        return session.query(models.Environment).get(source.environmentUri)
-
-
-def resolve_organization(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
-        return session.query(models.Organization).get(env.organizationUri)
-
-
 def resolve_stack(
     context: Context, source: models.SagemakerStudioUserProfile, **kwargs
 ):
