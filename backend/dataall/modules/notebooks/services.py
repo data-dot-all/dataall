@@ -6,7 +6,7 @@ from dataall.core.context import get_context as context
 from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
     ResourcePolicy,
-    Environment, KeyValueTag,
+    Environment, KeyValueTag, Stack,
 )
 from dataall.db import models, exceptions
 from dataall.modules.notebooks.aws.client import client
@@ -110,7 +110,17 @@ class NotebookService:
                     resource_type=SagemakerNotebook.__name__,
                 )
 
-            return notebook
+            Stack.create_stack(
+                session=session,
+                environment_uri=notebook.environmentUri,
+                target_type='notebook',
+                target_uri=notebook.notebookUri,
+                target_label=notebook.label,
+            )
+
+        stack_helper.deploy_stack(context=context, targetUri=notebook.notebookUri)
+
+        return notebook
 
     @staticmethod
     def _validate_params(data):

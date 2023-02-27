@@ -12,21 +12,7 @@ from dataall.modules.notebooks import permissions
 
 def create_notebook(context: Context, source: SagemakerNotebook, input: dict = None):
     """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
-
-    notebook = NotebookService().create_notebook(uri=source.notebookUri, data=input)
-
-    with context.engine.scoped_session() as session:
-        Stack.create_stack(
-            session=session,
-            environment_uri=notebook.environmentUri,
-            target_type='notebook',
-            target_uri=notebook.notebookUri,
-            target_label=notebook.label,
-        )
-
-    stack_helper.deploy_stack(context=context, targetUri=notebook.notebookUri)
-
-    return notebook
+    return NotebookService().create_notebook(uri=source.notebookUri, data=input)
 
 
 def list_notebooks(context, source, filter: dict = None):
