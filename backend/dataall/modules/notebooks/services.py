@@ -1,5 +1,9 @@
 """A service layer for sagemaker notebooks"""
+import contextlib
+import dataclasses
+import inspect
 import logging
+from dataclasses import dataclass, field
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
@@ -11,7 +15,6 @@ from dataall.db.api import (
 from dataall.db import models, exceptions
 from dataall.modules.notebooks.aws.client import client
 from dataall.modules.notebooks.db.repositories import NotebookRepository
-from dataall.modules.notebooks.gql.resolvers import NotebookCreationRequest
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -25,6 +28,27 @@ from dataall.core.permission_checker import has_resource_permission, has_tenant_
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class NotebookCreationRequest:
+    label: str
+    VpcId: str
+    SubnetId: str
+    SamlAdminGroupName: str
+    environment: dict = field(default_factory=dict)
+    description: str = "No description provided"
+    VolumeSizeInGB: int = 32
+    InstanceType: str = "ml.t3.medium"
+    tags: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, env):
+        fields = set([f.name for f in dataclasses.fields(cls)])
+        return cls(**{
+            k: v for k, v in env.items()
+            if k in fields
+        })
+
+
 class NotebookService:
     """
     Encapsulate the logic of interactions with sagemaker notebooks.
@@ -34,7 +58,7 @@ class NotebookService:
     @has_tenant_permission(MANAGE_NOTEBOOKS)
     @has_resource_permission(CREATE_NOTEBOOK)
     @has_group_permission(CREATE_NOTEBOOK)
-    def create_notebook(*, uri: str, request: NotebookCreationRequest) -> SagemakerNotebook:
+    def create_notebook(*, uri: str, admin_group: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
         Throws an exception if notebook are not enabled for the environment
@@ -49,9 +73,9 @@ class NotebookService:
                     message=f'Notebooks feature is disabled for the environment {env.label}',
                 )
 
-            env_group: models.EnvironmentGroup = request.environment
-            if env_group is None:
-                Environment.get_environment_group(
+            env_group = request.environment
+            if not env_group:
+                env_group = Environment.get_environment_group(
                     session,
                     group_uri=request.SamlAdminGroupName,
                     environment_uri=env.environmentUri,
@@ -67,7 +91,7 @@ class NotebookService:
                 region=env.region,
                 RoleArn=env_group.environmentIAMRoleArn,
                 owner=context().username,
-                SamlAdminGroupName=request.SamlAdminGroupName,
+                SamlAdminGroupName=admin_group,
                 tags=request.tags,
                 VpcId=request.VpcId,
                 SubnetId=request.SubnetId,
@@ -100,7 +124,7 @@ class NotebookService:
                 resource_type=SagemakerNotebook.__name__,
             )
 
-            if env.SamlGroupName != notebook.SamlAdminGroupName:
+            if env.SamlGroupName != admin_group:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
@@ -200,4 +224,4 @@ class NotebookService:
 
 
 def _session():
-    return context().db_engine.session()
+    return context().db_engine.scoped_session()

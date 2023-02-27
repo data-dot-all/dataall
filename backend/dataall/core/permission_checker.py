@@ -118,18 +118,17 @@ def has_group_permission(permission):
         except AttributeError:
             fn = f
 
-        def decorated(*args, data, uri, **kwargs):
+        def decorated(*args, admin_group, uri, **kwargs):
             context: RequestContext = get_context()
             db = context.db_engine
-            # TODO: why we expect that client will tell us what the admin group is? Can be security issue!!
-            admin_group = data['SamlAdminGroupName']
+
             # trying to re-use the open session if there is one
             if not db.current_session():
                 _check_group_environment_permission(db.current_session(), permission, uri, admin_group)
             else:
                 with db.scoped_session() as session:
                     _check_group_environment_permission(session, permission, uri, admin_group)
-            return fn(*args, uri=uri, data=data, **kwargs)
+            return fn(*args, uri=uri, admin_group=admin_group, **kwargs)
 
         if static_func:
             return staticmethod(decorated)

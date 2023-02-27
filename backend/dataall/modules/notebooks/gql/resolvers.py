@@ -1,19 +1,21 @@
-from dataclasses import dataclass, field
-
 from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
 from dataall.api.context import Context
 from dataall.db import models, exceptions
 from dataall.api.Objects.Stack import stack_helper
-from dataall.modules.notebooks.services import NotebookService
+from dataall.modules.notebooks.services import NotebookService, NotebookCreationRequest
 from dataall.modules.notebooks.models import SagemakerNotebook
 
 
 def create_notebook(context: Context, source: SagemakerNotebook, input: dict = None):
     """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
     RequestValidator.validate_creation_request(input)
-    request = NotebookCreationRequest(**input)
-    return NotebookService().create_notebook(uri=source.notebookUri, request=request)
+    request = NotebookCreationRequest.from_dict(input)
+    return NotebookService.create_notebook(
+        uri=input["environmentUri"],
+        admin_group=input["SamlAdminGroupName"],
+        request=request
+    )
 
 
 def list_notebooks(context, source, filter: dict = None):
@@ -30,7 +32,7 @@ def list_notebooks(context, source, filter: dict = None):
 def get_notebook(context, source, notebookUri: str = None):
     """Retrieve a SageMaker notebook by URI."""
     RequestValidator.required_uri(notebookUri)
-    NotebookService.get_notebook(uri=notebookUri)
+    return NotebookService.get_notebook(uri=notebookUri)
 
 
 def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
@@ -43,14 +45,14 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
 def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Starts a sagemaker notebook instance"""
     RequestValidator.required_uri(notebookUri)
-    NotebookService.start_notebook(notebookUri)
+    NotebookService.start_notebook(uri=notebookUri)
     return 'Starting'
 
 
 def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Stops a notebook instance."""
     RequestValidator.required_uri(notebookUri)
-    NotebookService.stop_notebook(notebookUri)
+    NotebookService.stop_notebook(uri=notebookUri)
     return 'Stopping'
 
 
@@ -138,14 +140,3 @@ class RequestValidator:
             raise exceptions.RequiredParameter(name)
 
 
-@dataclass
-class NotebookCreationRequest:
-    label: str
-    VpcId: str
-    SubnetId: str
-    SamlAdminGroupName: str
-    environment: dict
-    description: str = "No description provided"
-    VolumeSizeInGB: int = 32
-    InstanceType: str = "ml.t3.medium"
-    tags: list[str] = field(default_factory=list)

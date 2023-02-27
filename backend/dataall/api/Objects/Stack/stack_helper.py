@@ -12,6 +12,7 @@ from ....utils import Parameter
 from dataall.core.config import config
 from dataall.core.context import get_context
 
+
 def get_stack_with_cfn_resources(context: Context, targetUri: str, environmentUri: str):
     with context.engine.scoped_session() as session:
         env: models.Environment = session.query(models.Environment).get(environmentUri)
@@ -55,7 +56,8 @@ def save_describe_stack_task(session, environment, stack, target_uri):
 
 
 def deploy_stack(context, targetUri):
-    with context.engine.scoped_session() as session:
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
         stack: models.Stack = db.api.Stack.get_stack_by_target_uri(
             session, target_uri=targetUri
         )
@@ -76,7 +78,7 @@ def deploy_stack(context, targetUri):
                 )
                 session.add(task)
                 session.commit()
-                Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+                Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
         return stack
 
@@ -93,7 +95,8 @@ def deploy_dataset_stack(context, dataset: models.Dataset):
 def delete_stack(
     context, target_uri, accountid, cdk_role_arn, region, target_type=None
 ):
-    with context.engine.scoped_session() as session:
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
         stack: models.Stack = db.api.Stack.find_stack_by_target_uri(
             session, target_uri=target_uri
         )
@@ -111,7 +114,7 @@ def delete_stack(
         )
         session.add(task)
 
-    Worker.queue(context.engine, [task.taskUri])
+    Worker.queue(context.db_engine, [task.taskUri])
     return True
 
 

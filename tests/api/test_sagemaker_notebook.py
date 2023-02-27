@@ -2,6 +2,7 @@ import pytest
 
 from dataall.modules.notebooks.models import SagemakerNotebook
 
+
 class MockSagemakerClient:
     def start_instance(self):
         return "Starting"
@@ -76,7 +77,7 @@ def sgm_notebook(client, tenant, group, env1) -> SagemakerNotebook:
 @pytest.fixture(scope='module', autouse=True)
 def patch_aws(module_mocker):
     module_mocker.patch(
-        "dataall.modules.notebooks.gql.resolvers.client",
+        "dataall.modules.notebooks.services.client",
         return_value=MockSagemakerClient(),
     )
 
