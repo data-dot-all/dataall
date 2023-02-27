@@ -492,6 +492,7 @@ class dataAllBaseInfra(Stack):
                                          sid="RamRead", effect=iam.Effect.ALLOW,
                                          actions=[
                                              "glue:PutResourcePolicy",
+                                             "glue:DeleteResourcePolicy",
                                              "ram:Get*",
                                              "ram:List*"
                                          ],

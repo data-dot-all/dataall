@@ -403,6 +403,7 @@ Resources:
             Effect: Allow
             Action:
               - 'glue:PutResourcePolicy'
+              - 'glue:DeleteResourcePolicy'
               - 'ram:Get*'
               - 'ram:List*'
             Resource: '*'
