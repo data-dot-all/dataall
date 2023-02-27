@@ -87,14 +87,6 @@ def get_notebook_presigned_url(
     context, source: SagemakerNotebook, notebookUri: str = None
 ):
     """Creates and returns a presigned url for a notebook"""
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=notebookUri,
-            permission_name=permissions.GET_NOTEBOOK,
-        )
     notebook = NotebookService.get_notebook(uri=notebookUri)
     url = client(notebook).presigned_url()
     return url
