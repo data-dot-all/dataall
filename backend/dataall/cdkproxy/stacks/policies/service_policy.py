@@ -72,6 +72,7 @@ class ServicePolicy(object):
                             'kms:Encrypt',
                             'kms:ReEncrypt*',
                             'kms:GenerateDataKey*',
+                            'kms:CreateGrant',
                             'secretsmanager:GetSecretValue',
                             'secretsmanager:DescribeSecret',
                             'secretsmanager:ListSecrets',
