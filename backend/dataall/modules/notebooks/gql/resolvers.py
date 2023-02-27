@@ -79,41 +79,8 @@ def delete_notebook(
     Deletes the SageMaker notebook.
     Deletes the notebooks stack from AWS if deleteFromAWS is True
     """
-    
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            resource_uri=notebookUri,
-            permission_name=permissions.DELETE_NOTEBOOK,
-            groups=context.groups,
-            username=context.username,
-        )
-    notebook = NotebookService.get_notebook(uri=notebookUri)
-    with context.engine.scoped_session() as session:
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, notebook.environmentUri
-        )
 
-        KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
-
-        session.delete(notebook)
-
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            resource_uri=notebook.notebookUri,
-            group=notebook.SamlAdminGroupName,
-        )
-
-    if deleteFromAWS:
-        stack_helper.delete_stack(
-            context=context,
-            target_uri=notebookUri,
-            accountid=env.AwsAccountId,
-            cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='notebook',
-        )
-
+    NotebookService.delete_notebook(uri=notebookUri, delete_from_aws=deleteFromAWS)
     return True
 
 #TODO: check for the code duplication

@@ -10,6 +10,7 @@ from ....db import models
 from ....utils import Parameter
 
 from dataall.core.config import config
+from dataall.core.context import get_context
 
 def get_stack_with_cfn_resources(context: Context, targetUri: str, environmentUri: str):
     with context.engine.scoped_session() as session:
@@ -117,7 +118,8 @@ def delete_stack(
 def delete_repository(
     context, target_uri, accountid, cdk_role_arn, region, repo_name
 ):
-    with context.engine.scoped_session() as session:
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
         task = models.Task(
             targetUri=target_uri,
             action='repo.datapipeline.delete',
@@ -129,5 +131,5 @@ def delete_repository(
             },
         )
         session.add(task)
-    Worker.queue(context.engine, [task.taskUri])
+    Worker.queue(context.db_engine, [task.taskUri])
     return True

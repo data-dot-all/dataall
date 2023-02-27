@@ -1,11 +1,12 @@
 """A service layer for sagemaker notebooks"""
 import logging
 
+from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
 from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
     ResourcePolicy,
-    Environment,
+    Environment, KeyValueTag,
 )
 from dataall.db import models, exceptions
 from dataall.modules.notebooks.aws.client import client
@@ -137,11 +138,7 @@ class NotebookService:
             raise exceptions.RequiredParameter('URI')
 
         with _session() as session:
-            notebook = NotebookRepository(session).find_notebook(uri)
-
-        if not notebook:
-            raise exceptions.ObjectNotFound('SagemakerNotebook', uri)
-        return notebook
+            return NotebookService._get_notebook(session, uri)
 
     @staticmethod
     @has_resource_permission(permissions.UPDATE_NOTEBOOK)
@@ -151,21 +148,58 @@ class NotebookService:
 
     @staticmethod
     @has_resource_permission(permissions.UPDATE_NOTEBOOK)
-    def stop_notebook(*, uri):
+    def stop_notebook(*, uri: str) -> None:
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).stop_instance()
 
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
-    def get_notebook_presigned_url(*, uri):
+    def get_notebook_presigned_url(*, uri: str) -> str:
         """Creates and returns a presigned url for a notebook"""
         notebook = NotebookService.get_notebook(uri=uri)
         return client(notebook).presigned_url()
 
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
-    def get_notebook_status(notebook: SagemakerNotebook):
+    def get_notebook_status(notebook: SagemakerNotebook) -> str:
         return client(notebook.notebookUri).get_notebook_instance_status()
+
+    @staticmethod
+    @has_resource_permission(permissions.DELETE_NOTEBOOK)
+    def delete_notebook(*, uri: str, delete_from_aws: bool):
+        with _session() as session:
+            notebook = NotebookService._get_notebook(session, uri)
+            KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
+
+            session.delete(notebook)
+
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                resource_uri=notebook.notebookUri,
+                group=notebook.SamlAdminGroupName,
+            )
+
+            env: models.Environment = Environment.get_environment_by_uri(
+                session, notebook.environmentUri
+            )
+
+        if delete_from_aws:
+            stack_helper.delete_stack(
+                context=None,
+                target_uri=uri,
+                accountid=env.AwsAccountId,
+                cdk_role_arn=env.CDKRoleArn,
+                region=env.region,
+                target_type='notebook',
+            )
+
+    @staticmethod
+    def _get_notebook(session, uri) -> SagemakerNotebook:
+        notebook = NotebookRepository(session).find_notebook(uri)
+
+        if not notebook:
+            raise exceptions.ObjectNotFound('SagemakerNotebook', uri)
+        return notebook
 
 
 def _session():
