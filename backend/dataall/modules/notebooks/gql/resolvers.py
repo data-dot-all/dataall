@@ -1,18 +1,19 @@
+from dataclasses import dataclass, field
+
 from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
-from dataall import db
 from dataall.api.context import Context
-from dataall.db import models
-from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
+from dataall.db import models, exceptions
 from dataall.api.Objects.Stack import stack_helper
 from dataall.modules.notebooks.services import NotebookService
 from dataall.modules.notebooks.models import SagemakerNotebook
-from dataall.modules.notebooks import permissions
 
 
 def create_notebook(context: Context, source: SagemakerNotebook, input: dict = None):
     """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
-    return NotebookService().create_notebook(uri=source.notebookUri, data=input)
+    RequestValidator.validate_creation_request(input)
+    request = NotebookCreationRequest(**input)
+    return NotebookService().create_notebook(uri=source.notebookUri, request=request)
 
 
 def list_notebooks(context, source, filter: dict = None):
@@ -28,6 +29,7 @@ def list_notebooks(context, source, filter: dict = None):
 
 def get_notebook(context, source, notebookUri: str = None):
     """Retrieve a SageMaker notebook by URI."""
+    RequestValidator.required_uri(notebookUri)
     NotebookService.get_notebook(uri=notebookUri)
 
 
@@ -40,18 +42,21 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
 
 def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Starts a sagemaker notebook instance"""
+    RequestValidator.required_uri(notebookUri)
     NotebookService.start_notebook(notebookUri)
     return 'Starting'
 
 
 def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Stops a notebook instance."""
+    RequestValidator.required_uri(notebookUri)
     NotebookService.stop_notebook(notebookUri)
     return 'Stopping'
 
 
 def get_notebook_presigned_url(context, source: SagemakerNotebook, notebookUri: str = None):
     """Creates and returns a presigned url for a notebook"""
+    RequestValidator.required_uri(notebookUri)
     return NotebookService.get_notebook_presigned_url(uri=notebookUri)
 
 
@@ -65,7 +70,7 @@ def delete_notebook(
     Deletes the SageMaker notebook.
     Deletes the notebooks stack from AWS if deleteFromAWS is True
     """
-
+    RequestValidator.required_uri(notebookUri)
     NotebookService.delete_notebook(uri=notebookUri, delete_from_aws=deleteFromAWS)
     return True
 
@@ -105,3 +110,42 @@ def resolve_stack(context: Context, source: SagemakerNotebook, **kwargs):
         targetUri=source.notebookUri,
         environmentUri=source.environmentUri,
     )
+
+
+class RequestValidator:
+    """Aggregates all validation logic for operating with notebooks"""
+    @staticmethod
+    def required_uri(uri):
+        if not uri:
+            raise exceptions.RequiredParameter('URI')
+
+    @staticmethod
+    def validate_creation_request(data):
+        required = RequestValidator._required
+        if not data:
+            raise exceptions.RequiredParameter('data')
+        if not data.get('label'):
+            raise exceptions.RequiredParameter('name')
+
+        required(data, "environmentUri")
+        required(data, "VpcId")
+        required(data, "SubnetId")
+        required(data, "SamlAdminGroupName")
+
+    @staticmethod
+    def _required(data: dict, name: str):
+        if not data.get(name):
+            raise exceptions.RequiredParameter(name)
+
+
+@dataclass
+class NotebookCreationRequest:
+    label: str
+    VpcId: str
+    SubnetId: str
+    SamlAdminGroupName: str
+    environment: dict
+    description: str = "No description provided"
+    VolumeSizeInGB: int = 32
+    InstanceType: str = "ml.t3.medium"
+    tags: list[str] = field(default_factory=list)

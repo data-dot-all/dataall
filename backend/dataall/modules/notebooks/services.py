@@ -11,6 +11,7 @@ from dataall.db.api import (
 from dataall.db import models, exceptions
 from dataall.modules.notebooks.aws.client import client
 from dataall.modules.notebooks.db.repositories import NotebookRepository
+from dataall.modules.notebooks.gql.resolvers import NotebookCreationRequest
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -33,14 +34,13 @@ class NotebookService:
     @has_tenant_permission(MANAGE_NOTEBOOKS)
     @has_resource_permission(CREATE_NOTEBOOK)
     @has_group_permission(CREATE_NOTEBOOK)
-    def create_notebook(uri, data=None) -> SagemakerNotebook:
+    def create_notebook(*, uri: str, request: NotebookCreationRequest) -> SagemakerNotebook:
         """
         Creates a notebook and attach policies to it
         Throws an exception if notebook are not enabled for the environment
         """
 
         with _session() as session:
-            NotebookService._validate_params(data)
             env = Environment.get_environment_by_uri(session, uri)
 
             if not bool(env.get_param("notebooksEnabled", False)):
@@ -49,31 +49,30 @@ class NotebookService:
                     message=f'Notebooks feature is disabled for the environment {env.label}',
                 )
 
-            env_group: models.EnvironmentGroup = data.get(
-                'environment',
+            env_group: models.EnvironmentGroup = request.environment
+            if env_group is None:
                 Environment.get_environment_group(
                     session,
-                    group_uri=data['SamlAdminGroupName'],
+                    group_uri=request.SamlAdminGroupName,
                     environment_uri=env.environmentUri,
-                ),
-            )
+                )
 
             notebook = SagemakerNotebook(
-                label=data.get('label', 'Untitled'),
+                label=request.label,
                 environmentUri=env.environmentUri,
-                description=data.get('description', 'No description provided'),
-                NotebookInstanceName=slugify(data.get('label'), separator=''),
+                description=request.description,
+                NotebookInstanceName=slugify(request.label, separator=''),
                 NotebookInstanceStatus='NotStarted',
                 AWSAccountId=env.AwsAccountId,
                 region=env.region,
                 RoleArn=env_group.environmentIAMRoleArn,
                 owner=context().username,
-                SamlAdminGroupName=data.get('SamlAdminGroupName', env.SamlGroupName),
-                tags=data.get('tags', []),
-                VpcId=data.get('VpcId'),
-                SubnetId=data.get('SubnetId'),
-                VolumeSizeInGB=data.get('VolumeSizeInGB', 32),
-                InstanceType=data.get('InstanceType', 'ml.t3.medium'),
+                SamlAdminGroupName=request.SamlAdminGroupName,
+                tags=request.tags,
+                VpcId=request.VpcId,
+                SubnetId=request.SubnetId,
+                VolumeSizeInGB=request.VolumeSizeInGB,
+                InstanceType=request.InstanceType,
             )
 
             NotebookRepository(session).save_notebook(notebook)
@@ -95,7 +94,7 @@ class NotebookService:
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
-                group=data['SamlAdminGroupName'],
+                group=request.SamlAdminGroupName,
                 permissions=permissions.NOTEBOOK_ALL,
                 resource_uri=notebook.notebookUri,
                 resource_type=SagemakerNotebook.__name__,
@@ -123,15 +122,6 @@ class NotebookService:
         return notebook
 
     @staticmethod
-    def _validate_params(data):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('name')
-
-    @staticmethod
     def list_user_notebooks(filter) -> dict:
         with _session() as session:
             return NotebookRepository(session).paginated_user_notebooks(
@@ -144,9 +134,6 @@ class NotebookService:
     @has_resource_permission(permissions.GET_NOTEBOOK)
     def get_notebook(*, uri) -> SagemakerNotebook:
         """Gets a notebook by uri"""
-        if not uri:
-            raise exceptions.RequiredParameter('URI')
-
         with _session() as session:
             return NotebookService._get_notebook(session, uri)
 
