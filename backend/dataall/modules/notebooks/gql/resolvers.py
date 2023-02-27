@@ -2,7 +2,6 @@ from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
 from dataall import db
 from dataall.api.context import Context
-from dataall.modules.notebooks.aws.client import client
 from dataall.db import models
 from dataall.db.api import KeyValueTag, ResourcePolicy, Stack
 from dataall.api.Objects.Stack import stack_helper
@@ -50,46 +49,24 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
     """Resolves the status of a notebook."""
     if not source:
         return None
-    return client(source).get_notebook_instance_status()
+    return NotebookService.get_notebook_status(source)
 
 
 def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Starts a sagemaker notebook instance"""
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=notebookUri,
-            permission_name=permissions.UPDATE_NOTEBOOK,
-        )
-    notebook = NotebookService.get_notebook(uri=notebookUri)
-    client(notebook).start_instance()
+    NotebookService.start_notebook(notebookUri)
     return 'Starting'
 
 
 def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
     """Stops a notebook instance."""
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=notebookUri,
-            permission_name=permissions.UPDATE_NOTEBOOK,
-        )
-    notebook = NotebookService.get_notebook(uri=notebookUri)
-    client(notebook).stop_instance()
+    NotebookService.stop_notebook(notebookUri)
     return 'Stopping'
 
 
-def get_notebook_presigned_url(
-    context, source: SagemakerNotebook, notebookUri: str = None
-):
+def get_notebook_presigned_url(context, source: SagemakerNotebook, notebookUri: str = None):
     """Creates and returns a presigned url for a notebook"""
-    notebook = NotebookService.get_notebook(uri=notebookUri)
-    url = client(notebook).presigned_url()
-    return url
+    return NotebookService.get_notebook_presigned_url(uri=notebookUri)
 
 
 def delete_notebook(

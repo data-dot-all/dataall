@@ -8,6 +8,7 @@ from dataall.db.api import (
     Environment,
 )
 from dataall.db import models, exceptions
+from dataall.modules.notebooks.aws.client import client
 from dataall.modules.notebooks.db.repositories import NotebookRepository
 from dataall.utils.naming_convention import (
     NamingConventionService,
@@ -37,7 +38,7 @@ class NotebookService:
         Throws an exception if notebook are not enabled for the environment
         """
 
-        with NotebookService._session() as session:
+        with _session() as session:
             NotebookService._validate_params(data)
             env = Environment.get_environment_by_uri(session, uri)
 
@@ -120,9 +121,8 @@ class NotebookService:
             raise exceptions.RequiredParameter('name')
 
     @staticmethod
-    # TODO NO PERMISSION CHECK!
     def list_user_notebooks(filter) -> dict:
-        with NotebookService._session() as session:
+        with _session() as session:
             return NotebookRepository(session).paginated_user_notebooks(
                 username=context().username,
                 groups=context().groups,
@@ -136,7 +136,7 @@ class NotebookService:
         if not uri:
             raise exceptions.RequiredParameter('URI')
 
-        with NotebookService._session() as session:
+        with _session() as session:
             notebook = NotebookRepository(session).find_notebook(uri)
 
         if not notebook:
@@ -144,5 +144,29 @@ class NotebookService:
         return notebook
 
     @staticmethod
-    def _session():
-        return context().db_engine.session()
+    @has_resource_permission(permissions.UPDATE_NOTEBOOK)
+    def start_notebook(*, uri):
+        notebook = NotebookService.get_notebook(uri=uri)
+        client(notebook).start_instance()
+
+    @staticmethod
+    @has_resource_permission(permissions.UPDATE_NOTEBOOK)
+    def stop_notebook(*, uri):
+        notebook = NotebookService.get_notebook(uri=uri)
+        client(notebook).stop_instance()
+
+    @staticmethod
+    @has_resource_permission(permissions.GET_NOTEBOOK)
+    def get_notebook_presigned_url(*, uri):
+        """Creates and returns a presigned url for a notebook"""
+        notebook = NotebookService.get_notebook(uri=uri)
+        return client(notebook).presigned_url()
+
+    @staticmethod
+    @has_resource_permission(permissions.GET_NOTEBOOK)
+    def get_notebook_status(notebook: SagemakerNotebook):
+        return client(notebook.notebookUri).get_notebook_instance_status()
+
+
+def _session():
+    return context().db_engine.session()
