@@ -102,7 +102,7 @@ Environment = gql.ObjectType(
             type=gql.ArrayType(gql.Ref('Vpc')),
             resolver=resolve_vpc_list,
         ),
-        gql.Field('parameters',type=gql.ArrayType(EnvironmentParameter))
+        gql.Field('parameters', type=gql.ArrayType(EnvironmentParameter))
     ],
 )
 

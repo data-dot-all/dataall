@@ -41,7 +41,8 @@ class Environment(Resource, Base):
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
 
     # Eager loading of the parameters, deletes the params automatically that are not associated with environment
-    parameters = relationship("EnvironmentParameter",
+    parameters = relationship(
+        "EnvironmentParameter",
         primaryjoin="Environment.environmentUri==EnvironmentParameter.environmentUri",
         cascade="all, delete-orphan",
         lazy="joined"

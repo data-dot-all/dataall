@@ -34,5 +34,3 @@ RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_NOTEBOOKS] = "List notebooks on this en
 RESOURCES_ALL_WITH_DESC[GET_NOTEBOOK] = "General permission to list notebooks"
 RESOURCES_ALL_WITH_DESC[DELETE_NOTEBOOK] = "Permission to delete notebooks"
 RESOURCES_ALL_WITH_DESC[UPDATE_NOTEBOOK] = "Permission to edit notebooks"
-
-

@@ -17,6 +17,7 @@ def _check_group_environment_permission(session, permission, uri, admin_group):
         permission_name=permission,
     )
 
+
 def _check_tenant_permission(session, permission):
     context: RequestContext = get_context()
     TenantPolicy.check_user_tenant_permission(
@@ -26,6 +27,7 @@ def _check_tenant_permission(session, permission):
         tenant_name='dataall',
         permission_name=permission
     )
+
 
 def _check_resource_permission(session, uri, permission):
     context: RequestContext = get_context()

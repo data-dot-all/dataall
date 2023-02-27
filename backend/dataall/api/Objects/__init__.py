@@ -42,6 +42,7 @@ from . import (
     Vote,
 )
 
+
 def bootstrap():
     classes = {
         gql.ObjectType: [],

@@ -8,8 +8,8 @@ from dataall.modules.common.sagemaker.permissions import CREATE_NOTEBOOK
 class Sagemaker(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
         if (
-            CREATE_NOTEBOOK not in group_permissions and
-            permissions.CREATE_SGMSTUDIO_NOTEBOOK not in group_permissions
+            CREATE_NOTEBOOK not in group_permissions
+            and permissions.CREATE_SGMSTUDIO_NOTEBOOK not in group_permissions
         ):
             return []
 

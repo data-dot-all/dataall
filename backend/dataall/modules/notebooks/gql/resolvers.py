@@ -76,7 +76,8 @@ def delete_notebook(
     NotebookService.delete_notebook(uri=notebookUri, delete_from_aws=deleteFromAWS)
     return True
 
-#TODO: check for the code duplication
+
+# TODO: check for the code duplication
 def resolve_environment(context, source, **kwargs):
     if not source:
         return None
@@ -138,5 +139,3 @@ class RequestValidator:
     def _required(data: dict, name: str):
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
-
-
