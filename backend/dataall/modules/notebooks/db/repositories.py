@@ -26,12 +26,12 @@ class NotebookRepository:
         """Finds a notebook. Returns None if the notebook doesn't exist"""
         return self._session.query(SagemakerNotebook).get(uri)
 
-    def paginated_user_notebooks(self, username, groups, data=None) -> dict:
+    def paginated_user_notebooks(self, username, groups, filter=None) -> dict:
         """Returns a page of user notebooks"""
         return paginate(
-            query=self._query_user_notebooks(username, groups, data),
-            page=data.get('page', NotebookRepository._DEFAULT_PAGE),
-            page_size=data.get('pageSize', NotebookRepository._DEFAULT_PAGE_SIZE),
+            query=self._query_user_notebooks(username, groups, filter),
+            page=filter.get('page', NotebookRepository._DEFAULT_PAGE),
+            page_size=filter.get('pageSize', NotebookRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
 
     def _query_user_notebooks(self, username, groups, filter) -> Query:

@@ -11,18 +11,12 @@ from dataall.modules.notebooks.models import SagemakerNotebook
 from dataall.modules.notebooks import permissions
 
 
-def create_notebook(context: Context, source, input: dict = None):
+def create_notebook(context: Context, source: SagemakerNotebook, input: dict = None):
     """Creates a SageMaker notebook. Deploys the notebooks stack into AWS"""
+
+    notebook = NotebookService().create_notebook(uri=source.notebookUri, data=input)
+
     with context.engine.scoped_session() as session:
-
-        notebook = NotebookService.create_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=input['environmentUri'],
-            data=input
-        )
-
         Stack.create_stack(
             session=session,
             environment_uri=notebook.environmentUri,
@@ -44,19 +38,12 @@ def list_notebooks(context, source, filter: dict = None):
 
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return NotebookService.list_user_notebooks(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            data=filter,
-        )
+    return NotebookService.list_user_notebooks(filter)
 
 
 def get_notebook(context, source, notebookUri: str = None):
     """Retrieve a SageMaker notebook by URI."""
-    with context.engine.scoped_session() as session:
-        return NotebookService.get_notebook(session=session, uri=notebookUri)
+    NotebookService.get_notebook(uri=notebookUri)
 
 
 def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
@@ -76,8 +63,8 @@ def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             resource_uri=notebookUri,
             permission_name=permissions.UPDATE_NOTEBOOK,
         )
-        notebook = NotebookService.get_notebook(session=session, uri=notebookUri)
-        client(notebook).start_instance()
+    notebook = NotebookService.get_notebook(uri=notebookUri)
+    client(notebook).start_instance()
     return 'Starting'
 
 
@@ -91,15 +78,8 @@ def stop_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
             resource_uri=notebookUri,
             permission_name=permissions.UPDATE_NOTEBOOK,
         )
-        notebook = NotebookService.get_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=notebookUri,
-            data=None,
-            check_perm=True,
-        )
-        client(notebook).stop_instance()
+    notebook = NotebookService.get_notebook(uri=notebookUri)
+    client(notebook).stop_instance()
     return 'Stopping'
 
 
@@ -115,16 +95,9 @@ def get_notebook_presigned_url(
             resource_uri=notebookUri,
             permission_name=permissions.GET_NOTEBOOK,
         )
-        notebook = NotebookService.get_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=notebookUri,
-            data=None,
-            check_perm=True,
-        )
-        url = client(notebook).presigned_url()
-        return url
+    notebook = NotebookService.get_notebook(uri=notebookUri)
+    url = client(notebook).presigned_url()
+    return url
 
 
 def delete_notebook(
@@ -146,7 +119,8 @@ def delete_notebook(
             groups=context.groups,
             username=context.username,
         )
-        notebook = NotebookService.get_notebook(session, uri=notebookUri)
+    notebook = NotebookService.get_notebook(uri=notebookUri)
+    with context.engine.scoped_session() as session:
         env: models.Environment = db.api.Environment.get_environment_by_uri(
             session, notebook.environmentUri
         )
