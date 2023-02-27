@@ -3,8 +3,6 @@ from typing import List
 
 from aws_cdk import aws_iam
 
-from ....db import permissions
-
 logger = logging.getLogger()
 
 
