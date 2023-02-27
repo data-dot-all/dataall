@@ -35,7 +35,7 @@ def sgm_notebook(client, tenant, group, env_fixture) -> SagemakerNotebook:
         }
         """,
         input={
-            'label': 'my pipeline',
+            'label': 'my best notebook ever',
             'SamlAdminGroupName': group.name,
             'tags': [group.name],
             'environmentUri': env_fixture.environmentUri,

@@ -32,46 +32,13 @@ def env1(env, org1, user, group, tenant, db, module_mocker):
     yield env1
 
 
-@pytest.fixture(scope='module', autouse=True)
-def sgm_notebook(client, tenant, group, env1) -> SagemakerNotebook:
-    response = client.query(
-        """
-        mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){
-            createSagemakerNotebook(input:$input){
-                notebookUri
-                label
-                description
-                tags
-                owner
-                userRoleForNotebook
-                SamlAdminGroupName
-                VpcId
-                SubnetId
-                VolumeSizeInGB
-                InstanceType
-            }
-        }
-        """,
-        input={
-            'label': 'my pipeline',
-            'SamlAdminGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env1.environmentUri,
-            'VpcId': 'vpc-123567',
-            'SubnetId': 'subnet-123567',
-            'VolumeSizeInGB': 32,
-            'InstanceType': 'ml.m5.xlarge',
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    assert response.data.createSagemakerNotebook.notebookUri
-    assert response.data.createSagemakerNotebook.SamlAdminGroupName == group.name
-    assert response.data.createSagemakerNotebook.VpcId == 'vpc-123567'
-    assert response.data.createSagemakerNotebook.SubnetId == 'subnet-123567'
-    assert response.data.createSagemakerNotebook.InstanceType == 'ml.m5.xlarge'
-    assert response.data.createSagemakerNotebook.VolumeSizeInGB == 32
-    return response.data.createSagemakerNotebook
+def test_sgm_notebook(sgm_notebook, group):
+    assert sgm_notebook.notebookUri
+    assert sgm_notebook.SamlAdminGroupName == group.name
+    assert sgm_notebook.VpcId == 'vpc-123567'
+    assert sgm_notebook.SubnetId == 'subnet-123567'
+    assert sgm_notebook.InstanceType == 'ml.m5.xlarge'
+    assert sgm_notebook.VolumeSizeInGB == 32
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -83,8 +50,7 @@ def patch_aws(module_mocker):
 
 
 def test_list_notebooks(client, env1, db, org1, user, group, sgm_notebook, patch_aws):
-    response = client.query(
-        """
+    query = """
         query ListSagemakerNotebooks($filter:SagemakerNotebookFilter){
             listSagemakerNotebooks(filter:$filter){
                 count
@@ -100,11 +66,24 @@ def test_list_notebooks(client, env1, db, org1, user, group, sgm_notebook, patch
                 }
             }
         }
-        """,
+        """
+
+    response = client.query(
+        query,
         filter=None,
         username=user.userName,
         groups=[group.name],
     )
+
+    assert len(response.data.listSagemakerNotebooks['nodes']) == 1
+
+    response = client.query(
+        query,
+        filter={"term": "my best"},
+        username=user.userName,
+        groups=[group.name],
+    )
+
     assert len(response.data.listSagemakerNotebooks['nodes']) == 1
 
 
