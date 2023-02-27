@@ -77,7 +77,7 @@ class NotebookService:
             if not env_group:
                 env_group = Environment.get_environment_group(
                     session,
-                    group_uri=request.SamlAdminGroupName,
+                    group_uri=admin_group,
                     environment_uri=env.environmentUri,
                 )
 

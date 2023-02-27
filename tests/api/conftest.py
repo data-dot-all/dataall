@@ -1,4 +1,3 @@
-from dataall.modules.notebooks.models import SagemakerNotebook
 from .client import *
 from dataall.db import models
 
@@ -440,8 +439,7 @@ def org_fixture(org, user, group, tenant):
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
-    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1',
-               parameters={'notebooksEnabled': 'True'})
+    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
 
@@ -505,42 +503,6 @@ def cluster(env_fixture, org_fixture, client, group):
     )
     print(res)
     yield res.data.createRedshiftCluster
-
-
-@pytest.fixture(scope='module')
-def sgm_notebook(client, tenant, group, env_fixture) -> SagemakerNotebook:
-    response = client.query(
-        """
-        mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){
-            createSagemakerNotebook(input:$input){
-                notebookUri
-                label
-                description
-                tags
-                owner
-                userRoleForNotebook
-                SamlAdminGroupName
-                VpcId
-                SubnetId
-                VolumeSizeInGB
-                InstanceType
-            }
-        }
-        """,
-        input={
-            'label': 'my pipeline',
-            'SamlAdminGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env_fixture.environmentUri,
-            'VpcId': 'vpc-123567',
-            'SubnetId': 'subnet-123567',
-            'VolumeSizeInGB': 32,
-            'InstanceType': 'ml.m5.xlarge',
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createSagemakerNotebook
 
 
 @pytest.fixture(scope='module')
