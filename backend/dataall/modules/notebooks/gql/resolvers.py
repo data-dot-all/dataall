@@ -113,8 +113,6 @@ class RequestValidator:
             raise exceptions.RequiredParameter('name')
 
         required(data, "environmentUri")
-        required(data, "VpcId")
-        required(data, "SubnetId")
         required(data, "SamlAdminGroupName")
 
     @staticmethod
