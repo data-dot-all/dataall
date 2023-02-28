@@ -7,6 +7,7 @@
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
     "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
+    "tooling_vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",
     "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
     "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
