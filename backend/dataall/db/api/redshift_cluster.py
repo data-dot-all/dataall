@@ -2,8 +2,8 @@ import logging
 
 from sqlalchemy import and_, or_, literal
 
-from .. import models, exceptions, paginate, permissions
-from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset, ShareItemSM
+from .. import models, api, exceptions, paginate, permissions
+from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset
 from ..models.Enums import ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
@@ -184,7 +184,7 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
@@ -300,7 +300,7 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
