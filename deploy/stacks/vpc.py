@@ -22,6 +22,7 @@ class VpcStack(pyNestedClass):
         vpc_endpoints_sg=None,
         cidr=None,
         resource_prefix=None,
+        restricted_nacl=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -29,7 +30,7 @@ class VpcStack(pyNestedClass):
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
-            self.create_new_vpc(cidr, envname, resource_prefix)
+            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
@@ -107,7 +108,7 @@ class VpcStack(pyNestedClass):
                 description=f'{resource_prefix}-{envname}-cidrBlock',
             )
 
-    def create_new_vpc(self, cidr, envname, resource_prefix):
+    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl):
         self.vpc = ec2.Vpc(
             self,
             'VPC',
@@ -125,6 +126,22 @@ class VpcStack(pyNestedClass):
             ],
             nat_gateways=1,
         )
+        if restricted_nacl:
+            nacl = ec2.NetworkAcl(
+                self, "RestrictedNACL",
+                vpc=self.vpc,
+                network_acl_name=f'{resource_prefix}-{envname}-restrictedNACL'
+            )
+            #TODO: COMPLETE NACL RULES
+            nacl.add_entry(
+                "entry1",
+                cidr=,
+                traffic=ec2.AclTraffic.all_traffic(),
+                rule_number=100,
+                traffic=ec2.TrafficDirection.INGRESS,
+                direction=None,
+            )
+
         flowlog_log_group = logs.LogGroup(
             self,
             f'{resource_prefix}/{envname}/flowlogs',
@@ -209,7 +226,7 @@ class VpcStack(pyNestedClass):
                 private_dns_enabled=True,
                 security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
             )
-
+        #TODO: test that changing private_dns_enabled=True does not affect previous settings. Needed for restricted nacl
         self.vpc.add_interface_endpoint(
             id='code_artifact_repo_endpoint',
             service=cast(
@@ -217,7 +234,7 @@ class VpcStack(pyNestedClass):
                 ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
             ),
             subnets=ec2.SubnetSelection(subnets=self.vpc.private_subnets),
-            private_dns_enabled=False,
+            private_dns_enabled=True,
             security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
         )
         self.vpc.add_interface_endpoint(
@@ -227,6 +244,6 @@ class VpcStack(pyNestedClass):
                 ec2.InterfaceVpcEndpointAwsService('codeartifact.api'),
             ),
             subnets=ec2.SubnetSelection(subnets=self.vpc.private_subnets),
-            private_dns_enabled=False,
+            private_dns_enabled=True,
             security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
         )
