@@ -182,8 +182,8 @@ class NotebookService:
 
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
-    def get_notebook_status(notebook: SagemakerNotebook) -> str:
-        return client(notebook.notebookUri).get_notebook_instance_status()
+    def get_notebook_status(*, uri) -> str:
+        return client(uri).get_notebook_instance_status()
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_NOTEBOOK)

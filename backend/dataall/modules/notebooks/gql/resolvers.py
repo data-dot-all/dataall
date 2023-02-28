@@ -39,7 +39,7 @@ def resolve_notebook_status(context, source: SagemakerNotebook, **kwargs):
     """Resolves the status of a notebook."""
     if not source:
         return None
-    return NotebookService.get_notebook_status(source)
+    return NotebookService.get_notebook_status(uri=source.notebookUri)
 
 
 def start_notebook(context, source: SagemakerNotebook, notebookUri: str = None):
