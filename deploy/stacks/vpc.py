@@ -130,9 +130,9 @@ class VpcStack(pyNestedClass):
             nacl = ec2.NetworkAcl(
                 self, "RestrictedNACL",
                 vpc=self.vpc,
-                network_acl_name=f'{resource_prefix}-{envname}-restrictedNACL'
+                network_acl_name=f'{resource_prefix}-{envname}-restrictedNACL',
+                subnet_selection=ec2.SubnetSelection(subnets=self.vpc.private_subnets + self.vpc.public_subnets),
             )
-            #TODO: COMPLETE NACL RULES
             nacl.add_entry(
                 "entryOutbound",
                 cidr=ec2.AclCidr.any_ipv4(),
