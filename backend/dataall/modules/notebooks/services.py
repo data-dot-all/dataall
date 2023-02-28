@@ -7,6 +7,7 @@ from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
+from dataall.core.environment.db.repositories import EnvironmentResourceRepository
 from dataall.core.environment.models import EnvironmentResource
 from dataall.db.api import (
     ResourcePolicy,
@@ -53,6 +54,8 @@ class NotebookService:
     """
     Encapsulate the logic of interactions with sagemaker notebooks.
     """
+
+    _NOTEBOOK_RESOURCE_TYPE = "notebook"
 
     @staticmethod
     @has_tenant_permission(MANAGE_NOTEBOOKS)
@@ -102,12 +105,11 @@ class NotebookService:
             NotebookRepository(session).save_notebook(notebook)
 
             # Creates a record that environment resources has been created
-            resource = EnvironmentResource(
-                environmentUri=env.environmentUri,
-                resourceUri=notebook.notebookUri,
-                resourceType="notebook"
+            EnvironmentResourceRepository(session).create(
+                environment_uri=notebook.environmentUri,
+                resource_uri=notebook.notebookUri,
+                resource_type=NotebookService._NOTEBOOK_RESOURCE_TYPE
             )
-            session.add(resource)
 
             notebook.NotebookInstanceName = NamingConventionService(
                 target_uri=notebook.notebookUri,
@@ -192,6 +194,11 @@ class NotebookService:
             notebook = NotebookService._get_notebook(session, uri)
             KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
 
+            EnvironmentResourceRepository(session).delete(
+                environment_uri=notebook.environmentUri,
+                resource_uri=notebook.notebookUri,
+                resource_type=NotebookService._NOTEBOOK_RESOURCE_TYPE
+            )
             session.delete(notebook)
 
             ResourcePolicy.delete_resource_policy(

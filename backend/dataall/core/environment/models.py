@@ -25,3 +25,9 @@ class EnvironmentResource(Base):
     environmentUri = Column(String, primary_key=True)
     resourceUri = Column(String, primary_key=True)
     resourceType = Column(String, nullable=False)
+
+    def __init__(self, environment_uri, resource_uri, resource_type):
+        self.environmentUri = environment_uri
+        self.resourceType = resource_type
+        self.resourceUri = resource_uri
+
