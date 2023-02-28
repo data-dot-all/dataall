@@ -160,7 +160,7 @@ class VpcStack(pyNestedClass):
             nacl.add_entry(
                 "entryInboundCustomTCP",
                 cidr=ec2.AclCidr.any_ipv4(),
-                traffic=ec2.AclTraffic.tcp_port_range(start_port=32768, end_port=65535),
+                traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
                 rule_number=102,
                 direction=ec2.TrafficDirection.INGRESS,
                 rule_action=ec2.Action.ALLOW
