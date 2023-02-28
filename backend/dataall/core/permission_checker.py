@@ -2,6 +2,8 @@
 Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
+import contextlib
+
 from dataall.core.context import RequestContext, get_context
 from dataall.db.api import TenantPolicy, ResourcePolicy, Environment
 
@@ -39,6 +41,34 @@ def _check_resource_permission(session, uri, permission):
         permission_name=permission,
     )
 
+@contextlib.contextmanager
+def _get_session():
+    context: RequestContext = get_context()
+    db = context.db_engine
+
+    # trying to re-use the open session if there is one
+    if db.current_session():
+        yield db.current_session()
+    else:
+        yield db.scoped_session()
+
+
+def _process_func(func):
+    """Helper function that helps decorate methods/functions"""
+    def no_decorated(f):
+        return f
+
+    static_func = False
+    try:
+        func.__func__
+        static_func = True
+        fn = func.__func__
+    except AttributeError:
+        fn = func
+
+    # returns a function to call and static decorator if applied
+    return fn, staticmethod if static_func else no_decorated
+
 
 def has_resource_permission(permission):
     """
@@ -48,29 +78,15 @@ def has_resource_permission(permission):
     hence it has URI - it must be decorated with this decorator
     """
     def decorator(f):
-        static_func = False
-        try:
-            f.__func__
-            static_func = True
-            fn = f.__func__
-        except AttributeError:
-            fn = f
+        fn, fn_decorator = _process_func(f)
 
         def decorated(*args, uri, **kwargs):
-            context: RequestContext = get_context()
-            db = context.db_engine
-            # trying to re-use the open session if there is one
-            if not db.current_session():
-                _check_resource_permission(db.current_session(), uri, permission)
-            else:
-                with db.scoped_session() as session:
-                    _check_resource_permission(session, uri, permission)
+            with _get_session() as session:
+                _check_resource_permission(session, uri, permission)
+
             return fn(*args, uri=uri, **kwargs)
 
-        if static_func:
-            return staticmethod(decorated)
-        else:
-            return decorated
+        return fn_decorator(decorated)
 
     return decorator
 
@@ -81,59 +97,34 @@ def has_tenant_permission(permission: str):
     All the information about the user is retrieved from RequestContext
     """
     def decorator(f):
-        static_func = False
-        try:
-            f.__func__
-            static_func = True
-            fn = f.__func__
-        except AttributeError:
-            fn = f
+        fn, fn_decorator = _process_func(f)
 
         def decorated(*args, **kwargs):
             context: RequestContext = get_context()
             db = context.db_engine
-            # trying to re-use the open session if there is one
-            if not db.current_session():
-                _check_tenant_permission(db.current_session(), permission)
-            else:
-                with db.scoped_session() as session:
-                    _check_tenant_permission(session, permission)
+            with _get_session() as session:
+                _check_tenant_permission(session, permission)
 
             return fn(*args, **kwargs)
 
-        if static_func:
-            return staticmethod(decorated)
-        else:
-            return decorated
+        return fn_decorator(decorated)
 
     return decorator
 
 
 def has_group_permission(permission):
     def decorator(f):
-        static_func = False
-        try:
-            f.__func__
-            static_func = True
-            fn = f.__func__
-        except AttributeError:
-            fn = f
+        fn, fn_decorator = _process_func(f)
 
         def decorated(*args, admin_group, uri, **kwargs):
             context: RequestContext = get_context()
             db = context.db_engine
 
-            # trying to re-use the open session if there is one
-            if not db.current_session():
-                _check_group_environment_permission(db.current_session(), permission, uri, admin_group)
-            else:
-                with db.scoped_session() as session:
-                    _check_group_environment_permission(session, permission, uri, admin_group)
+            with _get_session() as session:
+                _check_group_environment_permission(session, permission, uri, admin_group)
+
             return fn(*args, uri=uri, admin_group=admin_group, **kwargs)
 
-        if static_func:
-            return staticmethod(decorated)
-        else:
-            return decorated
+        return fn_decorator(decorated)
 
     return decorator
