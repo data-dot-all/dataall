@@ -134,13 +134,46 @@ class VpcStack(pyNestedClass):
             )
             #TODO: COMPLETE NACL RULES
             nacl.add_entry(
-                "entry1",
-                cidr=,
+                "entryOutbound",
+                cidr=ec2.AclCidr.any_ipv4(),
                 traffic=ec2.AclTraffic.all_traffic(),
                 rule_number=100,
-                traffic=ec2.TrafficDirection.INGRESS,
-                direction=None,
+                direction=ec2.TrafficDirection.EGRESS,
+                rule_action=ec2.Action.ALLOW
             )
+            nacl.add_entry(
+                "entryInboundHTTPS",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port(443),
+                rule_number=100,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundHTTP",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port(80),
+                rule_number=101,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundCustomTCP",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port_range(start_port=32768, end_port=65535),
+                rule_number=102,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundAllInVPC",
+                cidr=ec2.AclCidr.ipv4("10.0.0.0/16"),
+                traffic=ec2.AclTraffic.all_traffic(),
+                rule_number=103,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+
 
         flowlog_log_group = logs.LogGroup(
             self,
