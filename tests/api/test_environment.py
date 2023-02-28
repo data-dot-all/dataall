@@ -20,8 +20,8 @@ def env1(env, org1, user, group, tenant, module_mocker):
     yield env1
 
 
-def test_get_environment(client, org1, env1, group):
-    response = client.query(
+def get_env(client, env1, group):
+    return client.query(
         """
         query GetEnv($environmentUri:String!){
             getEnvironment(environmentUri:$environmentUri){
@@ -42,6 +42,10 @@ def test_get_environment(client, org1, env1, group):
                  EcsTaskArn
                  EcsTaskId
                 }
+                parameters {
+                    key
+                    value
+                }
             }
         }
         """,
@@ -49,6 +53,9 @@ def test_get_environment(client, org1, env1, group):
         environmentUri=env1.environmentUri,
         groups=[group.name],
     )
+
+def test_get_environment(client, org1, env1, group):
+    response = get_env(client, env1, group)
     assert (
         response.data.getEnvironment.organization.organizationUri
         == org1.organizationUri
@@ -171,6 +178,48 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.parameters[0]["key"] == "notebooksEnabled"
     assert response.data.updateEnvironment.parameters[0]["value"] == "True"
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
+
+
+def test_update_params(client, org1, env1, group):
+    def update_params(parameters):
+        return client.query(
+            query,
+            username='alice',
+            environmentUri=env1.environmentUri,
+            input=parameters,
+            groups=[group.name],
+        )
+
+    query = """
+        mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
+            updateEnvironment(environmentUri:$environmentUri,input:$input){
+                parameters {
+                    key
+                    value
+                }
+            }
+        }
+    """
+
+    notebooks_enabled = {'parameters': [ {'key': 'notebooksEnabled','value': 'True'}]}
+    environment = update_params(notebooks_enabled).data.updateEnvironment
+    assert len(environment.parameters)
+    assert environment.parameters[0]["key"] == "notebooksEnabled"
+    assert environment.parameters[0]["value"] == "True"
+
+    # parameters should be rewritten. Notebooks should go away
+    dashboards_enabled = {'parameters': [{'key': 'dashboardsEnabled', 'value': 'True'}]}
+    environment = update_params(dashboards_enabled).data.updateEnvironment
+    assert len(environment.parameters)
+    assert environment.parameters[0]["key"] == "dashboardsEnabled"
+    assert environment.parameters[0]["value"] == "True"
+
+    # retrieve the environment one more time via GraphQL API, to check if it's correct
+    response = get_env(client, env1, group)
+    environment = response.data.getEnvironment
+    assert len(environment.parameters) == 1
+    assert environment.parameters[0]["key"] == "dashboardsEnabled"
+    assert environment.parameters[0]["value"] == "True"
 
 
 def test_unauthorized_update(client, org1, env1):
