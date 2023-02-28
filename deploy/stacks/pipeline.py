@@ -398,7 +398,7 @@ class PipelineStack(Stack):
                         '. env/bin/activate',
                         'make lint',
                         'cd frontend',
-                        f'aws codeartifact login --tool npm --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run lint',
                     ],
