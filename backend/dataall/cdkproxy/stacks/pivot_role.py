@@ -476,7 +476,7 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='RamRead',
                     effect=iam.Effect.ALLOW,
-                    actions=['glue:PutResourcePolicy', 'ram:Get*', 'ram:List*'],
+                    actions=['glue:PutResourcePolicy', 'glue:DeleteResourcePolicy', 'ram:Get*', 'ram:List*'],
                     resources=['*'],
                 ),
                 # Security Groups

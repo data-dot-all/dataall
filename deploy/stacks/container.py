@@ -69,7 +69,6 @@ class ContainerStack(pyNestedClass):
                 'AWS_REGION': self.region,
                 'envname': envname,
                 'LOGLEVEL': 'DEBUG',
-                'CREATE_PIVOT_ROLE': json.dumps(create_pivot_role),
             },
             command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(

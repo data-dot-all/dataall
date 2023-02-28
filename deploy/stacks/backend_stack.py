@@ -67,6 +67,7 @@ class BackendStack(Stack):
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
 
         # TODO we need to think how to handle it better if adding a '-cdk' suffix is not expected
+        # TODO: what about having the pivotRole name as the cdk.json parameter instead of the boolean flag?
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if create_pivot_role else ''}"
 
         ParamStoreStack(
@@ -78,6 +79,7 @@ class BackendStack(Stack):
             enable_cw_canaries=enable_cw_canaries,
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
+            create_pivot_role=create_pivot_role,
             **kwargs,
         )
 
