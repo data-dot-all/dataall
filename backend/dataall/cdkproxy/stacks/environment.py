@@ -67,14 +67,10 @@ class EnvironmentSetup(Stack):
                 raise Exception('ObjectNotFound')
         return target
 
-    def get_environment_defautl_vpc(self, engine, environmentUri) -> models.Vpc:
+    def get_environment_default_vpc(self, engine, environmentUri) -> models.Vpc:
         with engine.scoped_session() as session:
             return db.api.Vpc.get_environment_default_vpc(session, environmentUri)
 
-    # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
-    # a nested stack
-    # def init_quicksight(self, environment: models.Environment):
-    #     Quicksight.create_quicksight_group(environment.AwsAccountId, 'dataall')
 
     # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
     # a nested stack
@@ -167,6 +163,14 @@ class EnvironmentSetup(Stack):
         self.target_uri = target_uri
 
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
+        self.external_id = SessionHelper.get_external_id_secret()
+        self.dataall_central_account = SessionHelper.get_account()
+        self.create_pivot_role = ParameterStoreManager.get_parameter_value(
+            AwsAccountId=self.dataall_central_account,
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
+        )
+
 
         self.engine = self.get_engine()
 
@@ -182,14 +186,11 @@ class EnvironmentSetup(Stack):
 
         self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
 
+        # Create dependency group - Sagemaker depends on group IAM roles and pivotRole
         sagemaker_dependency_group = DependencyGroup()
 
-        # if self._environment.dashboardsEnabled:
-        #     logger.warning('ensure_quicksight_default_group')
-        #     self.init_quicksight(environment=self._environment)
-
+        # Creating environment IAM roles
         group_roles = self.create_or_import_environment_groups_roles()
-
         for group_role in group_roles:
             sagemaker_dependency_group.add(group_role)
 
@@ -269,14 +270,12 @@ class EnvironmentSetup(Stack):
             default_environment_bucket,
             self._environment.EnvironmentDefaultAthenaWorkGroup,
         )
-        central_account = SessionHelper.get_account()
-        create_pivot_role = json.loads(self.node.try_get_context('create_pivot_role'))
-        self.pivot_role_name = SessionHelper.get_delegation_role_name()
-        if create_pivot_role:
+
+        if self.create_pivot_role:
             config = {
                 'roleName': self.pivot_role_name,
-                'accountId': central_account,
-                'externalId': SessionHelper.get_external_id_secret(),
+                'accountId': self.dataall_central_account,
+                'externalId': self.external_id,
                 'resourcePrefix': self._environment.resourcePrefix,
             }
             pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
@@ -451,7 +450,7 @@ class EnvironmentSetup(Stack):
             else:
                 topic = self.create_topic(
                     self._environment.subscriptionsProducersTopicName,
-                    central_account,
+                    self.dataall_central_account,
                     self._environment,
                 )
 
@@ -465,7 +464,7 @@ class EnvironmentSetup(Stack):
 
             policy.document.add_statements(
                 iam.PolicyStatement(
-                    principals=[iam.AccountPrincipal(central_account)],
+                    principals=[iam.AccountPrincipal(self.dataall_central_account)],
                     effect=iam.Effect.ALLOW,
                     actions=[
                         'sqs:ReceiveMessage',
@@ -502,7 +501,7 @@ class EnvironmentSetup(Stack):
 
             self.create_topic(
                 self._environment.subscriptionsConsumersTopicName,
-                central_account,
+                self.dataall_central_account,
                 self._environment,
             )
 

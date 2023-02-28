@@ -184,7 +184,7 @@ class SessionHelper:
 
     @classmethod
     def get_account(cls, session=None):
-        """Returns the aws account id associated with the default session, or the priovided session
+        """Returns the aws account id associated with the default session, or the provided session
         Args:
             session(object, optional) : boto3 session
         Returns :

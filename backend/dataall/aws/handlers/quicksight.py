@@ -54,7 +54,7 @@ class Quicksight:
             else:
                 raise e
         except client.exceptions.ResourceNotFoundException:
-            pass
+            return identity_region
         return identity_region
 
     @staticmethod
