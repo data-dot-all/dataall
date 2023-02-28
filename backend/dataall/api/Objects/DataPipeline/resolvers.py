@@ -52,7 +52,7 @@ def create_pipeline(context: Context, source, input=None):
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
 
-    stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+    stack_helper.deploy_stack(pipeline.DataPipelineUri)
 
     return pipeline
 
@@ -80,7 +80,7 @@ def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict 
             check_perm=True,
         )
     if (pipeline.template == ""):
-        stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+        stack_helper.deploy_stack(pipeline.DataPipelineUri)
 
     return pipeline
 
@@ -232,7 +232,6 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.DataPipelineUri,
         environmentUri=source.environmentUri,
     )
@@ -382,7 +381,6 @@ def delete_pipeline(
 
     if deleteFromAWS:
         stack_helper.delete_repository(
-            context=context,
             target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
@@ -391,21 +389,17 @@ def delete_pipeline(
         )
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
-                context=context,
                 target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='cdkpipeline',
             )
         else:
             stack_helper.delete_stack(
-                context=context,
                 target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='pipeline',
             )
 
     return True

@@ -38,7 +38,7 @@ def create_dataset(context: Context, source, input=None):
             session=session, es=context.es, datasetUri=dataset.datasetUri
         )
 
-    stack_helper.deploy_dataset_stack(context, dataset)
+    stack_helper.deploy_dataset_stack(dataset)
 
     dataset.userRoleForDataset = DatasetRole.Creator.value
 
@@ -76,7 +76,7 @@ def import_dataset(context: Context, source, input=None):
             session=session, es=context.es, datasetUri=dataset.datasetUri
         )
 
-    stack_helper.deploy_dataset_stack(context, dataset)
+    stack_helper.deploy_dataset_stack(dataset)
 
     dataset.userRoleForDataset = DatasetRole.Creator.value
 
@@ -222,7 +222,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
         )
         indexers.upsert_dataset(session, context.es, datasetUri)
 
-    stack_helper.deploy_dataset_stack(context, updated_dataset)
+    stack_helper.deploy_dataset_stack(updated_dataset)
 
     return updated_dataset
 
@@ -493,7 +493,6 @@ def get_dataset_stack(context: Context, source: models.Dataset, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.datasetUri,
         environmentUri=source.environmentUri,
     )
@@ -575,14 +574,12 @@ def delete_dataset(
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            context=context,
             target_uri=datasetUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
-            target_type='dataset',
         )
-        stack_helper.deploy_stack(context, dataset.environmentUri)
+        stack_helper.deploy_stack(dataset.environmentUri)
     return True
 
 

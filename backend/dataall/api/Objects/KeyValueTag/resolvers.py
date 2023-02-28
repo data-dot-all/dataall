@@ -27,5 +27,5 @@ def update_key_value_tags(context: Context, source, input=None):
             data=input,
             check_perm=True,
         )
-        stack_helper.deploy_stack(context=context, targetUri=input['targetUri'])
+        stack_helper.deploy_stack(targetUri=input['targetUri'])
         return kv_tags

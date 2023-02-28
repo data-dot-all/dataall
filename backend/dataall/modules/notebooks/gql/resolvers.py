@@ -91,7 +91,6 @@ def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.notebookUri,
         environmentUri=source.environmentUri,
     )

@@ -69,7 +69,7 @@ def create_environment(context: Context, source, input=None):
             target_uri=env.environmentUri,
             target_label=env.label,
         )
-    stack_helper.deploy_stack(context, targetUri=env.environmentUri)
+    stack_helper.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value
     return env
 
@@ -99,9 +99,7 @@ def update_environment(
         if input.get('dashboardsEnabled') or (
             environment.resourcePrefix != previous_resource_prefix
         ):
-            stack_helper.deploy_stack(
-                context=context, targetUri=environment.environmentUri
-            )
+            stack_helper.deploy_stack(targetUri=environment.environmentUri)
     return environment
 
 
@@ -116,7 +114,7 @@ def invite_group(context: Context, source, input):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -153,7 +151,7 @@ def update_group_permissions(context, source, input):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -169,7 +167,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -507,7 +505,6 @@ def generate_environment_access_token(
 
 def get_environment_stack(context: Context, source: models.Environment, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
     )
@@ -537,12 +534,10 @@ def delete_environment(
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            context=context,
             target_uri=environmentUri,
             accountid=environment.AwsAccountId,
             cdk_role_arn=environment.CDKRoleArn,
             region=environment.region,
-            target_type='environment',
         )
 
     return True
@@ -597,7 +592,7 @@ def enable_subscriptions(
         environment.subscriptionsConsumersTopicImported = False
         environment.subscriptionsEnabled = True
         session.commit()
-        stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -618,7 +613,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
         environment.subscriptionsProducersTopicImported = False
         environment.subscriptionsEnabled = False
         session.commit()
-        stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 

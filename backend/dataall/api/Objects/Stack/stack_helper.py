@@ -13,8 +13,9 @@ from dataall.core.config import config
 from dataall.core.context import get_context
 
 
-def get_stack_with_cfn_resources(context: Context, targetUri: str, environmentUri: str):
-    with context.engine.scoped_session() as session:
+def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
         env: models.Environment = session.query(models.Environment).get(environmentUri)
         stack: models.Stack = db.api.Stack.find_stack_by_target_uri(
             session, target_uri=targetUri
@@ -33,7 +34,7 @@ def get_stack_with_cfn_resources(context: Context, targetUri: str, environmentUr
             return stack
 
         cfn_task = save_describe_stack_task(session, env, stack, targetUri)
-        Worker.queue(engine=context.engine, task_ids=[cfn_task.taskUri])
+        Worker.queue(engine=context.db_engine, task_ids=[cfn_task.taskUri])
     return stack
 
 
@@ -55,7 +56,7 @@ def save_describe_stack_task(session, environment, stack, target_uri):
     return cfn_task
 
 
-def deploy_stack(context, targetUri):
+def deploy_stack(targetUri):
     context = get_context()
     with context.db_engine.scoped_session() as session:
         stack: models.Stack = db.api.Stack.get_stack_by_target_uri(
@@ -83,17 +84,17 @@ def deploy_stack(context, targetUri):
         return stack
 
 
-def deploy_dataset_stack(context, dataset: models.Dataset):
+def deploy_dataset_stack(dataset: models.Dataset):
     """
     Each dataset stack deployment triggers environment stack update
     to rebuild teams IAM roles data access policies
     """
-    deploy_stack(context, dataset.datasetUri)
-    deploy_stack(context, dataset.environmentUri)
+    deploy_stack(dataset.datasetUri)
+    deploy_stack(dataset.environmentUri)
 
 
 def delete_stack(
-    context, target_uri, accountid, cdk_role_arn, region, target_type=None
+    target_uri, accountid, cdk_role_arn, region
 ):
     context = get_context()
     with context.db_engine.scoped_session() as session:
@@ -119,7 +120,7 @@ def delete_stack(
 
 
 def delete_repository(
-    context, target_uri, accountid, cdk_role_arn, region, repo_name
+    target_uri, accountid, cdk_role_arn, region, repo_name
 ):
     context = get_context()
     with context.db_engine.scoped_session() as session:

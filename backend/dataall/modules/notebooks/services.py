@@ -1,9 +1,9 @@
 """A service layer for sagemaker notebooks"""
 import contextlib
 import dataclasses
-import inspect
 import logging
 from dataclasses import dataclass, field
+from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
@@ -34,11 +34,11 @@ class NotebookCreationRequest:
     VpcId: str
     SubnetId: str
     SamlAdminGroupName: str
-    environment: dict = field(default_factory=dict)
+    environment: Dict = field(default_factory=dict)
     description: str = "No description provided"
     VolumeSizeInGB: int = 32
     InstanceType: str = "ml.t3.medium"
-    tags: list[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, env):
@@ -141,7 +141,7 @@ class NotebookService:
                 target_label=notebook.label,
             )
 
-        stack_helper.deploy_stack(context=context, targetUri=notebook.notebookUri)
+        stack_helper.deploy_stack(targetUri=notebook.notebookUri)
 
         return notebook
 
@@ -206,12 +206,10 @@ class NotebookService:
 
         if delete_from_aws:
             stack_helper.delete_stack(
-                context=None,
                 target_uri=uri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
-                region=env.region,
-                target_type='notebook',
+                region=env.region
             )
 
     @staticmethod

@@ -42,7 +42,7 @@ def create(
         )
         cluster.CFNStackName = stack.name if stack else None
 
-    stack_helper.deploy_stack(context=context, targetUri=cluster.clusterUri)
+    stack_helper.deploy_stack(targetUri=cluster.clusterUri)
     cluster.userRoleForCluster = RedshiftClusterRole.Creator.value
     return cluster
 
@@ -121,7 +121,7 @@ def import_cluster(context: Context, source, environmentUri: str, clusterInput: 
     log.info('Updating imported cluster iam_roles')
     Worker.queue(engine=context.engine, task_ids=[redshift_assign_role_task.taskUri])
 
-    stack_helper.deploy_stack(context=context, targetUri=cluster.clusterUri)
+    stack_helper.deploy_stack(targetUri=cluster.clusterUri)
 
     return cluster
 
@@ -262,12 +262,10 @@ def delete(
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            context=context,
             target_uri=clusterUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='redshiftcluster',
+            region=env.region
         )
 
     return True
@@ -526,7 +524,6 @@ def resolve_stack(context: Context, source: models.RedshiftCluster, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.clusterUri,
         environmentUri=source.environmentUri,
     )
