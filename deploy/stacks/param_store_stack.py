@@ -86,5 +86,5 @@ class ParamStoreStack(pyNestedClass):
             self,
             f'dataallCreationPivotRole{envname}',
             parameter_name=f"/dataall/{envname}/pivotRole/createdAsPartOfEnvironmentStack",
-            string_value=create_pivot_role,
+            string_value=str(create_pivot_role),
         )
