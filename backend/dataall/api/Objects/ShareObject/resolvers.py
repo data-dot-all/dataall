@@ -128,7 +128,6 @@ def approve_lf_tag_share_object(context: Context, source, lftagShareUri: str = N
         )
 
         # Create task for lake formation updates
-        # TODO: Fix ECS Task for LFTag Shares
         approve_share_task: models.Task = models.Task(
             action='ecs.lftag.share.approve',
             targetUri=lftagShareUri,

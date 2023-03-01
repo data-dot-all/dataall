@@ -61,8 +61,19 @@ class DataSharingService:
                 lftag_share,
                 target_environment
             ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Rejected')
+            Share_SM = api.ShareObjectSM(lftag_share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+            
+            # revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+            # (
+            #     revoked_tables,
+            #     revoked_folders
+            # ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
+            # new_state = revoked_item_SM.run_transition(models.ShareObjectActions.Start.value)
+            # revoked_item_SM.update_state(session, share_uri, new_state)
 
-        return LFTagShareRevoke(
+        revoked_lftag_share_succeed = LFTagShareRevoke(
             session,
             source_env_list,
             tagged_datasets,
@@ -71,117 +82,10 @@ class DataSharingService:
             lftag_share,
             target_environment
         ).revoke_share()
-
-        # principalIAMRoleARN = f"arn:aws:iam::{target_environment.AwsAccountId}:role/{lftag_share.principalIAMRoleName}"
-        
-        # for db in tagged_datasets:
-        #     shared_db_name = (db.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-
-        #     # Delete a resource link to the shared DB
-        #     Glue.delete_database(
-        #         accountid=target_environment.AwsAccountId,
-        #         region=target_environment.region,
-        #         database=shared_db_name,
-        #         role_arn=principalIAMRoleARN
-        #     )
-        #     log.info("RESOURCE LINK DB DELETED")
-        
-        # for table in tagged_tables:
-        #     shared_db_name = (table.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-        #     # Delete a resource link to the shared Table
-        #     Glue.batch_delete_tables(
-        #         accountid=target_environment.AwsAccountId,
-        #         region=target_environment.region,
-        #         database=shared_db_name,
-        #         tables=[table.GlueTableName],
-        #         role_arn=principalIAMRoleARN
-        #     )
-        #     log.info("RESOURCE LINK TABLE-COLS DELETED")
-            
-        #     hasTables = Glue.has_tables(
-        #         accountid=target_environment.AwsAccountId,
-        #         region=target_environment.region,
-        #         database=shared_db_name,
-        #         role_arn=principalIAMRoleARN
-        #     )
-
-        #     if not hasTables:
-        #         Glue.delete_database(
-        #             accountid=target_environment.AwsAccountId,
-        #             region=target_environment.region,
-        #             database=shared_db_name,
-        #             role_arn=principalIAMRoleARN
-        #         )
-        
-        # for col in tagged_columns:
-        #     shared_db_name = (col.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-        #     # Delete a resource link to the shared Table
-        #     Glue.batch_delete_tables(
-        #         accountid=target_environment.AwsAccountId,
-        #         region=target_environment.region,
-        #         database=shared_db_name,
-        #         tables=[col.GlueTableName],
-        #         role_arn=principalIAMRoleARN
-        #     )
-        #     log.info("RESOURCE LINK TABLE-COLS DELETED")
-            
-        #     hasTables = Glue.has_tables(
-        #         accountid=target_environment.AwsAccountId,
-        #         region=target_environment.region,
-        #         database=shared_db_name,
-        #         role_arn=principalIAMRoleARN
-        #     )
-        #     if not hasTables:
-        #         Glue.delete_database(
-        #             accountid=target_environment.AwsAccountId,
-        #             region=target_environment.region,
-        #             database=shared_db_name,
-        #             role_arn=principalIAMRoleARN
-        #         )
-
-        
-        # # Delete External LF Tag Expressions Data Permissions 
-        # for source_env in source_env_list:
-        #     log.info(
-        #         f'Revoking Access for External Principal: {principalIAMRoleARN}'
-        #     )
-        #     aws_session = SessionHelper.remote_session(accountid=source_env['account'])
-        #     client = aws_session.client('lakeformation', region_name=source_env['region'])
-        #     revoke_entries = [
-        #         {
-        #             'Id': str(uuid.uuid4()),
-        #             'Principal': {
-        #                 'DataLakePrincipalIdentifier': principalIAMRoleARN
-        #             },
-        #             'Resource': {
-        #                 'LFTagPolicy': {
-        #                     'CatalogId': source_env['account'],
-        #                     'ResourceType': 'DATABASE',
-        #                     'Expression': [{'TagKey': lftag_share.lfTagKey, 'TagValues': [lftag_share.lfTagValue]}]
-        #                 }
-        #             },
-        #             'Permissions': ['DESCRIBE']
-        #         },
-        #         {
-        #             'Id': str(uuid.uuid4()),
-        #             'Principal': {
-        #                 'DataLakePrincipalIdentifier': principalIAMRoleARN
-        #             },
-        #             'Resource': {
-        #                 'LFTagPolicy': {
-        #                     'CatalogId': source_env['account'],
-        #                     'ResourceType': 'TABLE',
-        #                     'Expression': [{'TagKey': lftag_share.lfTagKey, 'TagValues': [lftag_share.lfTagValue]}]
-        #                 }
-        #             },
-        #             'Permissions': ['SELECT', 'DESCRIBE'],
-        #         }
-        #     ]
-        #     LakeFormation.batch_revoke_permissions(
-        #         client, source_env['account'], revoke_entries
-        #     )
-
-        # return
+        log.info(f'revoking tables succeeded = {revoked_lftag_share_succeed}')
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+        Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+        return revoked_lftag_share_succeed
 
 
     @classmethod
@@ -226,7 +130,12 @@ class DataSharingService:
                 target_environment
             ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Approved')
 
-        return LFTagShareApproval(
+            Share_SM = api.ShareObjectSM(lftag_share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+
+
+        approved_lftag_share_succeed = LFTagShareApproval(
             session,
             source_env_list,
             tagged_datasets,
@@ -236,326 +145,11 @@ class DataSharingService:
             target_environment
         ).approve_share()
 
+        log.info(f'sharing tables succeeded = {approved_lftag_share_succeed}')
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+        Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+        return approved_lftag_share_succeed if approved_lftag_share_succeed else False
 
-        # Create LF Tag in Consumer Account (if not exist already)
-        # lf_client = LakeFormation.create_lf_client(target_environment.AwsAccountId, target_environment.region)
-        # # LakeFormation.create_or_update_lf_tag(
-        # #     accountid=target_environment.AwsAccountId,
-        # #     lf_client=lf_client,
-        # #     tag_name=lftag_share.lfTagKey,
-        # #     tag_values=[lftag_share.lfTagValue]
-        # # )
-        # # log.info("TAG CREATED IN TARGET ENV")
-
-        # # # Grant Consumer LF Tag Permissions (if not already)
-        # # LakeFormation.grant_lftag_data_permissions_to_principal(
-        # #     source_acct=target_environment.AwsAccountId,
-        # #     source_region=target_environment.region,
-        # #     principal=lftag_share.principalIAMRoleName,
-        # #     tag_name=lftag_share.lfTagKey,
-        # #     tag_values=[lftag_share.lfTagValue],
-        # #     iamRole=True
-        # # )
-        # # log.info("PERMISSIONS GRANTED IN TARGET ENV FOR TARGET TAG")
-
-        # For Each Source Env -
-        # - Ensure V3 of LF Data Catalog Settings for Source and Target
-        # - Revoke Permissions for IAMAllowedPrincipals on the DB, Tables, and Columns
-        # - Grant LF Tag Permissions (only DESCRIBE to Consumer IAM ROLE with NO GRANTABLE)
-        # - Grant LF Tag DATA Permissions (DESCRIBE DB and SELECT DESCRIBE Table to Consumer IAM ROLE with NO GRANTABLE)
-        # principalIAMRoleARN = f"arn:aws:iam::{target_environment.AwsAccountId}:role/{lftag_share.principalIAMRoleName}"
-        # for source_env in source_env_list:
-        #     # MAY NOT NEED
-        #     # LakeFormation.grant_lftag_permissions_to_external_acct(
-        #     #     source_acct=source_env['account'],
-        #     #     source_region=source_env['region'],
-        #     #     principal=principalIAMRoleARN,
-        #     #     tag_name=lftag_share.lfTagKey,
-        #     #     tag_values=[lftag_share.lfTagValue],
-        #     #     permissions=["DESCRIBE"]
-        #     # )
-        #     # log.info("EXTERNAL IAM Role LF TAG PERMISSIONS GRANTED IN SOURCE ENV FOR SOURCE TAG")
-
-        #     LakeFormation.grant_lftag_data_permissions_to_principal(
-        #         source_acct=source_env['account'],
-        #         source_region=source_env['region'],
-        #         principal=principalIAMRoleARN,
-        #         tag_name=lftag_share.lfTagKey,
-        #         tag_values=[lftag_share.lfTagValue],
-        #         permissionsWithGrant=False
-        #     )
-        #     log.info("EXTERNAL ACCT DATA PERMISSIONS GRANTED IN SOURCE ENV FOR SOURCE TAG")
-
-        #     # Accept RAM Invites For Each
-        #     Ram.accept_lftag_ram_invitation(source_env, target_environment, principalIAMRoleARN)
-
-        # # For Each Dataset (Glue DB)
-        # for db in tagged_datasets:
-        #     shared_db_name = (db.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-
-        #     # Create a resource link to the shared table
-        #     DataSharingService.create_lftag_resource_link_db(db, target_environment, principalIAMRoleARN, shared_db_name)
-        #     log.info("RESOURCE LINK CREATED")
-            
-        # # For Each Data Table
-        # for table in tagged_tables:
-        #     shared_db_name = (table.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-        #     data = DataSharingService.build_lftag_share_data(target_environment, [principalIAMRoleARN], table, shared_db_name)
-            
-        #     # Create Shared DB if not Exist Already
-        #     log.info(
-        #         f'Creating shared db ...'
-        #         f'{target_environment.AwsAccountId}://{shared_db_name}'
-        #     )
-
-        #     database = Glue.create_database(
-        #         target_environment.AwsAccountId,
-        #         shared_db_name,
-        #         target_environment.region,
-        #         f's3://{table.S3BucketName}',
-        #         principalIAMRoleARN=principalIAMRoleARN
-        #     )
-        #     log.info("SHARED DB CREATED")
-
-        #     # Create a resource link to the shared table
-        #     DataSharingService.create_lftag_resource_link(data, principalIAMRoleARN)
-        #     log.info("RESOURCE LINK CREATED")
-
-        # for col in tagged_columns:
-        #     shared_db_name = (col.GlueDatabaseName + '_shared_' + lftag_share_uri)[:254]
-        #     data = DataSharingService.build_lftag_share_data(target_environment, [principalIAMRoleARN], col, shared_db_name)
-            
-        #     # Create Shared DB if not Exist Already
-        #     log.info(
-        #         f'Creating shared db ...'
-        #         f'{target_environment.AwsAccountId}://{shared_db_name}'
-        #     )
-            
-        #     with engine.scoped_session() as session:
-        #         col_table = api.DatasetTable.get_dataset_table_by_uri(session, col.tableUri)
-
-        #     database = Glue.create_database(
-        #         target_environment.AwsAccountId,
-        #         shared_db_name,
-        #         target_environment.region,
-        #         f's3://{col_table.S3BucketName}',
-        #         principalIAMRoleARN=principalIAMRoleARN
-        #     )
-        #     log.info("SHARED DB CREATED")
-
-        #     # Create a resource link to the shared table
-        #     DataSharingService.create_lftag_resource_link(data, principalIAMRoleARN)
-        #     log.info("RESOURCE LINK CREATED")
-
-        # # For Each Data Table Column
-            
-        #     # Grant LF-tag permissions to the consumer account
-        #     # LakeFormation.grant_lftag_permissions_to_external_acct(
-        #     #     source_acct=table.AWSAccountId,
-        #     #     source_region=table.region,
-        #     #     external_acct=target_environment.AwsAccountId,
-        #     #     tag_name=lftag_share.lfTagKey,
-        #     #     tag_values=[lftag_share.lfTagValue],
-        #     #     permissions=["DESCRIBE"]
-        #     # )
-        #     # LakeFormation.grant_lftag_permissions_to_external_acct(
-        #     #     source_acct=table.AWSAccountId,
-        #     #     source_region=table.region,
-        #     #     principal=f"arn:aws:iam::{table.AWSAccountId}:role/{lftag_share.principalIAMRoleName}",
-        #     #     tag_name=lftag_share.lfTagKey,
-        #     #     tag_values=[lftag_share.lfTagValue],
-        #     #     permissions=["DESCRIBE"]
-        #     # )
-        #     # log.info("EXTERNAL ACCT LF TAG PERMISSIONS GRANTED IN SOURCE ENV FOR SOURCE TAG")
-
-        #     # Grant data permissions to the consumer account
-        #     # LakeFormation.grant_lftag_data_permissions_to_principal(
-        #     #     source_acct=table.AWSAccountId,
-        #     #     source_region=table.region,
-        #     #     principal=target_environment.AwsAccountId,
-        #     #     tag_name=lftag_share.lfTagKey,
-        #     #     tag_values=[lftag_share.lfTagValue],
-        #     #     iamRole=False,
-        #     #     permissionsWithGrant=True
-        #     # )
-        #     # LakeFormation.grant_lftag_data_permissions_to_principal(
-        #     #     source_acct=table.AWSAccountId,
-        #     #     source_region=table.region,
-        #     #     principal=lftag_share.principalIAMRoleName,
-        #     #     tag_name=lftag_share.lfTagKey,
-        #     #     tag_values=[lftag_share.lfTagValue],
-        #     #     iamRole=True,
-        #     #     permissionsWithGrant=True
-        #     # )
-        #     # log.info("EXTERNAL ACCT DATA PERMISSIONS GRANTED IN SOURCE ENV FOR SOURCE TAG")
-
-        #     # Create Shared DB if not Exist Already
-        #     # log.info(
-        #     #     f'Creating shared db ...'
-        #     #     f'{target_environment.AwsAccountId}://{shared_db_name}'
-        #     # )
-
-        #     # database = Glue.create_database(
-        #     #     target_environment.AwsAccountId,
-        #     #     shared_db_name,
-        #     #     target_environment.region,
-        #     #     f's3://{table.S3BucketName}',
-        #     # )
-        #     # log.info("SHARED DB CREATED")
-
-        #     # LakeFormation.grant_pivot_role_all_database_permissions(
-        #     #     target_environment.AwsAccountId, target_environment.region, shared_db_name
-        #     # )
-
-        #     # # Build Dict of Data For Source and Target 
-        #     # principals = [f"arn:aws:iam::{target_environment.AwsAccountId}:role/{lftag_share.principalIAMRoleName}"]
-        #     # data = DataSharingService.build_lftag_share_data(target_environment, principals, table, shared_db_name)
-            
-        #     # # Revoke IAM Allowed Groups
-        #     # source_lf_client = LakeFormation.create_lf_client(table.AWSAccountId, table.region)
-            
-        #     # LakeFormation.revoke_iamallowedgroups_super_permission_from_table(
-        #     #     source_lf_client,
-        #     #     data['source']['accountid'],
-        #     #     data['source']['database'],
-        #     #     data['source']['tablename'],
-        #     # )
-
-        #     # # Create a resource link to the shared table
-        #     # DataSharingService.create_lftag_resource_link(data)
-        #     # log.info("RESOURCE LINK CREATED")
-
-        #     # # Assign LF-Tag to the target database
-        #     # lf_client.add_lf_tags_to_resource(
-        #     #     CatalogId=target_environment.AwsAccountId,
-        #     #     Resource={
-        #     #         'Table': {
-        #     #             'CatalogId': target_environment.AwsAccountId,
-        #     #             'DatabaseName': shared_db_name,
-        #     #             'Name': table.GlueTableName,
-        #     #         }
-        #     #     },
-        #     #     LFTags=[
-        #     #         {
-        #     #             'CatalogId': target_environment.AwsAccountId,
-        #     #             'TagKey': lftag_share.lfTagKey,
-        #     #             'TagValues': [lftag_share.lfTagValue]
-        #     #         },
-        #     #     ]
-        #     # )
-        #     # log.info("TAG ASSIGNED TO SHARED TABLE")
-
-        # return True
-
-    # @staticmethod
-    # def create_lftag_resource_link(data, principalIAMRoleARN) -> dict:
-    #     """
-    #     Creates a resource link to the source shared Glue table
-    #     Parameters
-    #     ----------
-    #     data : data of source and target accounts
-
-    #     Returns
-    #     -------
-    #     boto3 creation response
-    #     """
-    #     source = data['source']
-    #     target = data['target']
-
-    #     target_database = target['database']
-    #     resource_link_input = {
-    #         'Name': source['tablename'],
-    #         'TargetTable': {
-    #             'CatalogId': data['source']['accountid'],
-    #             'DatabaseName': source['database'],
-    #             'Name': source['tablename'],
-    #         },
-    #     }
-
-    #     try:
-    #         resource_link = Glue.create_resource_link(
-    #             accountid=target['accountid'],
-    #             region=target['region'],
-    #             database=target_database,
-    #             resource_link_name=source['tablename'],
-    #             resource_link_input=resource_link_input,
-    #             principalRoleArn=principalIAMRoleARN
-    #         )
-
-    #         return resource_link
-
-    #     except ClientError as e:
-    #         log.warning(
-    #             f'Resource Link {resource_link_input} was not created due to: {e}'
-    #         )
-    #         raise e
-
-    # @staticmethod
-    # def create_lftag_resource_link_db(db, target_env, principalIAMRoleARN, shared_db_name) -> dict:
-    #     """
-    #     Creates a resource link to the source shared Glue Database
-    #     Parameters
-    #     ----------
-    #     data : data of source and target accounts
-
-    #     Returns
-    #     -------
-    #     boto3 creation response
-    #     """
-    #     resource_link_input = {
-    #         'Name': shared_db_name,
-    #         'TargetDatabase': {
-    #             'CatalogId': db.AwsAccountId,
-    #             'DatabaseName': db.GlueDatabaseName,
-    #         },
-    #     }
-
-    #     try:
-    #         resource_link = Glue.create_resource_link_db(
-    #             accountid=target_env.AwsAccountId,
-    #             region=target_env.region,
-    #             database=shared_db_name,
-    #             resource_link_name=shared_db_name,
-    #             resource_link_input=resource_link_input,
-    #             principalRoleArn=principalIAMRoleARN
-    #         )
-
-    #         return resource_link
-
-    #     except ClientError as e:
-    #         log.warning(
-    #             f'Resource Link {resource_link_input} was not created due to: {e}'
-    #         )
-    #         raise e
-
-    # @staticmethod
-    # def build_lftag_share_data(target_environment, principals, table, shared_db_name) -> dict:
-    #     """
-    #     Build aws dict for boto3 operations on Glue and LF from share data
-    #     Parameters
-    #     ----------
-    #     principals : team role
-    #     table : dataset table
-
-    #     Returns
-    #     -------
-    #     dict for boto3 operations
-    #     """
-    #     data = {
-    #         'source': {
-    #             'accountid': table.AWSAccountId,
-    #             'region': table.region,
-    #             'database': table.GlueDatabaseName,
-    #             'tablename': table.GlueTableName,
-    #         },
-    #         'target': {
-    #             'accountid': target_environment.AwsAccountId,
-    #             'region': target_environment.region,
-    #             'principals': principals,
-    #             'database': shared_db_name,
-    #         },
-    #     }
-    #     return data
 
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
