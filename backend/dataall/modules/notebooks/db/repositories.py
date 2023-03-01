@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
 from dataall.db import paginate
-from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 
 
 class NotebookRepository:

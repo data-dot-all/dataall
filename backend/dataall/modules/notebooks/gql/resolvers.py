@@ -1,10 +1,10 @@
 from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
 
 from dataall.api.context import Context
-from dataall.db import models, exceptions
+from dataall.db import exceptions
 from dataall.api.Objects.Stack import stack_helper
-from dataall.modules.notebooks.services import NotebookService, NotebookCreationRequest
-from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks.services.services import NotebookService, NotebookCreationRequest
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 
 
 def create_notebook(context: Context, source: SagemakerNotebook, input: dict = None):

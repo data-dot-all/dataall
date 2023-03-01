@@ -15,7 +15,7 @@ class EnvironmentResourceRepository:
             resource_type=resource_type
         )
 
-        self._session.save(resource)
+        self._session.add(resource)
 
     def delete(self, environment_uri, resource_uri, resource_type):
         """Deletes an environment resource"""
@@ -25,4 +25,4 @@ class EnvironmentResourceRepository:
             resource_type=resource_type
         )
 
-        self._session.delete(resource)
+        self._session.query(EnvironmentResource).filter(EnvironmentResource == resource).delete()

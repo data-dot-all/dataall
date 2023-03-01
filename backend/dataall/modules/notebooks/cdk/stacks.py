@@ -13,8 +13,8 @@ from aws_cdk import (
     CfnOutput,
 )
 
-from dataall.modules.notebooks.models import SagemakerNotebook
-from dataall.modules.notebooks import models
+from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.modules.notebooks.db import models
 from dataall.db.models import EnvironmentGroup
 
 from dataall.cdkproxy.stacks.manager import stack
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @stack(stack='notebook')
-class SagemakerNotebook(Stack):
+class NotebookStack(Stack):
     """
     Creation of a notebook stack.
     Having imported the notebook module, the class registers itself using @stack
@@ -44,7 +44,7 @@ class SagemakerNotebook(Stack):
     def get_target(self, target_uri) -> SagemakerNotebook:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            notebook = session.query(SagemakerNotebook).get(target_uri)
+            notebook = session.query(NotebookStack).get(target_uri)
         return notebook
 
     def get_env_group(

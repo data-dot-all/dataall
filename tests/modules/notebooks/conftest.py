@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 from tests.api.client import client, app
 from tests.api.conftest import *
 

@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.modules.notebooks.models import SagemakerNotebook
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.db import models
 from tests.cdkproxy.conftest import org, env
 

@@ -1,7 +1,6 @@
 """ORM models for sagemaker notebooks"""
 
 from sqlalchemy import Column, String, Integer
-from sqlalchemy.orm import query_expression
 
 from dataall.db import Base
 from dataall.db import Resource, utils

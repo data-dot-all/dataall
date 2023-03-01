@@ -100,8 +100,6 @@ def has_tenant_permission(permission: str):
         fn, fn_decorator = _process_func(f)
 
         def decorated(*args, **kwargs):
-            context: RequestContext = get_context()
-            db = context.db_engine
             with _get_session() as session:
                 _check_tenant_permission(session, permission)
 
@@ -117,9 +115,6 @@ def has_group_permission(permission):
         fn, fn_decorator = _process_func(f)
 
         def decorated(*args, admin_group, uri, **kwargs):
-            context: RequestContext = get_context()
-            db = context.db_engine
-
             with _get_session() as session:
                 _check_group_environment_permission(session, permission, uri, admin_group)
 
