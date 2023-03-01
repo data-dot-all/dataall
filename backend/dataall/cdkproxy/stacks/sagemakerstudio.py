@@ -46,6 +46,7 @@ class SageMakerDomain(NestedStack):
             existing_domain_id = existing_domain.get('DomainId', False)
             if existing_domain_id:
                 return existing_domain_id
+            return None
 
     def __init__(self, scope: Construct, construct_id: str, environment: models.Environment, sagemaker_principals, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -90,6 +91,7 @@ class SageMakerDomain(NestedStack):
             )
 
             try:
+                print("looking for default VPC")
                 default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
                 vpc_id = default_vpc.vpc_id
                 subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]

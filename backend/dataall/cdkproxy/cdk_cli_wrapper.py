@@ -122,8 +122,6 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-            create_pivot_role = os.getenv('CREATE_PIVOT_ROLE', 'false')
-            logger.info(f'CREATE_PIVOT_ROLE={create_pivot_role}')
             cmd = [
                 '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
@@ -146,8 +144,6 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f"target_uri='{stack.targetUri}'",
                 '-c',
                 "data='{}'",
-                '-c',
-                f"create_pivot_role='{create_pivot_role}'",
                 # skips synth step when no changes apply
                 '--app',
                 f'"{sys.executable} {app_path}"',

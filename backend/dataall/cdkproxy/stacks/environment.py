@@ -475,7 +475,7 @@ class EnvironmentSetup(Stack):
 
             sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain',
                                                      environment=self._environment,
-                                                     sagemaker_principals=[default_role, group_roles]
+                                                     sagemaker_principals=[default_role] + group_roles
                                                      )
             sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
 
