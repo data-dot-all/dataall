@@ -16,8 +16,6 @@ from aws_cdk import (
     aws_sqs as sqs,
     aws_sns_subscriptions as sns_subs,
     aws_kms as kms,
-    aws_ec2 as ec2,
-    aws_sagemaker as sagemaker,
     aws_athena,
     RemovalPolicy,
     Stack,
@@ -26,7 +24,6 @@ from aws_cdk import (
     Tags,
 )
 from constructs import DependencyGroup
-from botocore.exceptions import ClientError
 
 from .manager import stack
 from .pivot_role import PivotRole
@@ -34,11 +31,7 @@ from .sagemakerstudio import SageMakerDomain
 from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
-from ...aws.handlers.quicksight import Quicksight
 from ...aws.handlers.parameter_store import ParameterStoreManager
-from ...aws.handlers.sagemaker_studio import (
-    SagemakerStudio,
-)
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...utils.cdk_nag_utils import CDKNagUtil
@@ -66,28 +59,6 @@ class EnvironmentSetup(Stack):
             if not target:
                 raise Exception('ObjectNotFound')
         return target
-
-    def get_environment_default_vpc(self, engine, environmentUri) -> models.Vpc:
-        with engine.scoped_session() as session:
-            return db.api.Vpc.get_environment_default_vpc(session, environmentUri)
-
-
-    # TODO need to refactor this since as well since assumes data all pivot role which is going to be created as part of
-    # a nested stack
-    # def check_sagemaker_studio(self, engine, environment: models.Environment):
-    #     logger.info('check sagemaker studio domain creation')
-    #
-    #     try:
-    #         dataall_created_domain = ParameterStoreManager.client(
-    #             AwsAccountId=environment.AwsAccountId, region=environment.region
-    #         ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
-    #         return None
-    #     except ClientError as e:
-    #         logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
-    #         existing_domain = SagemakerStudio.get_sagemaker_studio_domain(environment.AwsAccountId, environment.region)
-    #         existing_domain_id = existing_domain.get('DomainId', False)
-    #         if existing_domain_id:
-    #             return existing_domain_id
 
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
@@ -158,15 +129,12 @@ class EnvironmentSetup(Stack):
             )[:1024],
             **kwargs,
         )
-
-        # Required for dynamic stack tagging
+        # Read input
         self.target_uri = target_uri
-
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
         self.create_pivot_role = ParameterStoreManager.get_parameter_value(
-            AwsAccountId=self.dataall_central_account,
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
@@ -186,14 +154,7 @@ class EnvironmentSetup(Stack):
 
         self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
 
-        # Create dependency group - Sagemaker depends on group IAM roles and pivotRole
-        sagemaker_dependency_group = DependencyGroup()
-
-        # Creating environment IAM roles
-        group_roles = self.create_or_import_environment_groups_roles()
-        for group_role in group_roles:
-            sagemaker_dependency_group.add(group_role)
-
+        # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
             'EnvironmentDefaultBucket',
@@ -263,14 +224,17 @@ class EnvironmentSetup(Stack):
             destination_key_prefix='profiling/code',
         )
 
+        # Create or import IAM roles
         default_role = self.create_or_import_environment_default_role()
-        sagemaker_dependency_group.add(default_role)
+        group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
             self._environment.EnvironmentDefaultAthenaWorkGroup,
         )
+        self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
 
+        # Create or import Pivot role
         if self.create_pivot_role:
             config = {
                 'roleName': self.pivot_role_name,
@@ -280,7 +244,6 @@ class EnvironmentSetup(Stack):
             }
             pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
             self.pivot_role = pivot_role_stack.pivot_role
-            sagemaker_dependency_group.add(pivot_role_stack)
         else:
             self.pivot_role = iam.Role.from_role_arn(
                 self,
@@ -288,7 +251,7 @@ class EnvironmentSetup(Stack):
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
 
-        # Lakeformation default settings
+        # Lakeformation default settings custom resource
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__), '../assets/lakeformationdefaultsettings').resolve()
         )
@@ -318,6 +281,23 @@ class EnvironmentSetup(Stack):
             on_failure=lambda_destination.SqsDestination(lakeformation_cr_dlq),
             runtime=_lambda.Runtime.PYTHON_3_9,
         )
+        LakeformationDefaultSettingsProvider = cr.Provider(
+            self,
+            f'{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider',
+            on_event_handler=lf_default_settings_custom_resource,
+        )
+
+        default_lf_settings = CustomResource(
+            self,
+            f'{self._environment.resourcePrefix}DefaultLakeFormationSettings',
+            service_token=LakeformationDefaultSettingsProvider.service_token,
+            resource_type='Custom::LakeformationDefaultSettings',
+            properties={
+                'DataLakeAdmins': [
+                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
+                ]
+            },
+        )
 
         ssm.StringParameter(
             self,
@@ -334,7 +314,6 @@ class EnvironmentSetup(Stack):
         )
 
         # Glue database custom resource
-
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
         )
@@ -379,26 +358,7 @@ class EnvironmentSetup(Stack):
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
         )
 
-        LakeformationDefaultSettingsProvider = cr.Provider(
-            self,
-            f'{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider',
-            on_event_handler=lf_default_settings_custom_resource,
-        )
-
-        default_lf_settings = CustomResource(
-            self,
-            f'{self._environment.resourcePrefix}DefaultLakeFormationSettings',
-            service_token=LakeformationDefaultSettingsProvider.service_token,
-            resource_type='Custom::LakeformationDefaultSettings',
-            properties={
-                'DataLakeAdmins': [
-                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
-                ]
-            },
-        )
-
-        self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
-
+        # Create SNS topics for subscriptions
         if self._environment.subscriptionsEnabled:
             queue_key = kms.Key(
                 self,
@@ -505,92 +465,20 @@ class EnvironmentSetup(Stack):
                 self._environment,
             )
 
-        # SageMaker Studio domain
-        sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain', environment=self._environment, sagemaker_principals=[default_role, group_roles])
-        sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
+        # Create or import SageMaker Studio domain if ML Studio enabled
+        if self._environment.mlStudiosEnabled:
+            # Create dependency group - Sagemaker depends on group IAM roles
+            sagemaker_dependency_group = DependencyGroup()
+            sagemaker_dependency_group.add(default_role)
+            for group_role in group_roles:
+                sagemaker_dependency_group.add(group_role)
 
-        # self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
-        #
-        # if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
-        #
-        #     sagemaker_domain_role = iam.Role(
-        #         self,
-        #         'RoleForSagemakerStudioUsers',
-        #         assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-        #         role_name='RoleSagemakerStudioUsers',
-        #         managed_policies=[
-        #             iam.ManagedPolicy.from_managed_policy_arn(
-        #                 self,
-        #                 id='SagemakerFullAccess',
-        #                 managed_policy_arn='arn:aws:iam::aws:policy/AmazonSageMakerFullAccess',
-        #             ),
-        #             iam.ManagedPolicy.from_managed_policy_arn(
-        #                 self, id='S3FullAccess', managed_policy_arn='arn:aws:iam::aws:policy/AmazonS3FullAccess'
-        #             ),
-        #         ],
-        #     )
-        #
-        #     sagemaker_domain_key = kms.Key(
-        #         self,
-        #         'SagemakerDomainKmsKey',
-        #         alias='SagemakerStudioDomain',
-        #         enable_key_rotation=True,
-        #         policy=iam.PolicyDocument(
-        #             assign_sids=True,
-        #             statements=[
-        #                 iam.PolicyStatement(
-        #                     resources=['*'],
-        #                     effect=iam.Effect.ALLOW,
-        #                     principals=[
-        #                         iam.AccountPrincipal(account_id=self._environment.AwsAccountId),
-        #                         sagemaker_domain_role,
-        #                         default_role,
-        #                     ]
-        #                     + group_roles,
-        #                     actions=['kms:*'],
-        #                 )
-        #             ],
-        #         ),
-        #     )
-        #     sagemaker_domain_key.node.add_dependency(roles_sagemaker_dependency_group)
-        #
-        #     try:
-        #         default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
-        #         vpc_id = default_vpc.vpc_id
-        #         subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
-        #         subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
-        #         subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
-        #     except Exception as e:
-        #         logger.error(
-        #             f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation."
-        #         )
-        #
-        #     sagemaker_domain = sagemaker.CfnDomain(
-        #         self,
-        #         'SagemakerStudioDomain',
-        #         domain_name=f'SagemakerStudioDomain-{self._environment.region}-{self._environment.AwsAccountId}',
-        #         auth_mode='IAM',
-        #         default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
-        #             execution_role=sagemaker_domain_role.role_arn,
-        #             security_groups=[],
-        #             sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
-        #                 notebook_output_option='Allowed',
-        #                 s3_kms_key_id=sagemaker_domain_key.key_id,
-        #                 s3_output_path=f's3://sagemaker-{self._environment.region}-{self._environment.AwsAccountId}',
-        #             ),
-        #         ),
-        #         vpc_id=vpc_id,
-        #         subnet_ids=subnet_ids,
-        #         app_network_access_type='VpcOnly',
-        #         kms_key_id=sagemaker_domain_key.key_id,
-        #     )
-        #
-        #     ssm.StringParameter(
-        #         self,
-        #         'SagemakerStudioDomainId',
-        #         string_value=sagemaker_domain.attr_domain_id,
-        #         parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
-        #     )
+            sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain',
+                                                     environment=self._environment,
+                                                     sagemaker_principals=[default_role, group_roles]
+                                                     )
+            sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
+
 
         TagsUtil.add_tags(self)
 

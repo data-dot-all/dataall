@@ -16,10 +16,12 @@ class ParameterStoreManager:
         pass
 
     @staticmethod
-    def client(AwsAccountId=None, region=None):
+    def client(AwsAccountId=None, region=None, cdkrole=None):
         if AwsAccountId:
-            session = SessionHelper.remote_session(AwsAccountId)
+            print(f"SSM Parameter cdkrole:{cdkrole}")
+            session = SessionHelper.remote_session(AwsAccountId, cdkrole, region)
         else:
+            print(f"SSM Parameter central session:{cdkrole}")
             session = SessionHelper.get_session()
         return session.client('ssm', region_name=region)
 

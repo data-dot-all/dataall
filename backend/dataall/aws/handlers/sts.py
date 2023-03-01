@@ -158,6 +158,17 @@ class SessionHelper:
         return 'arn:aws:iam::{}:role/{}'.format(accountid, cls.get_delegation_role_name())
 
     @classmethod
+    def get_cdk_look_up_role_arn(cls, accountid, region):
+        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid using CDK Toolkit role
+        Args:
+            accountid(string) : aws account id
+        Returns:
+                string : arn of the CDKToolkit role on the target aws account id
+        """
+        print("get look up role")
+        return 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(accountid, accountid, region)
+
+    @classmethod
     def get_delegation_role_id(cls, accountid):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:
@@ -171,7 +182,7 @@ class SessionHelper:
         return response['Role']['RoleId']
 
     @classmethod
-    def remote_session(cls, accountid):
+    def remote_session(cls, accountid, cdkrole=None, region=None):
         """Creates a remote boto3 session on the remote AWS account , assuming the delegation Role
         Args:
             accountid(string) : aws account id
@@ -179,7 +190,12 @@ class SessionHelper:
             boto3.session.Session: boto3 Session, on the target aws accountid, assuming the delegation role
         """
         base_session = cls.get_session()
-        session = SessionHelper.get_session(base_session=base_session, role_arn=cls.get_delegation_role_arn(accountid))
+        if cdkrole:
+            print("get_cdkrole_session")
+            role_arn = cls.get_cdk_look_up_role_arn(accountid=accountid, region=region)
+        else:
+            role_arn = cls.get_delegation_role_arn(accountid=accountid)
+        session = SessionHelper.get_session(base_session=base_session, role_arn=role_arn)
         return session
 
     @classmethod

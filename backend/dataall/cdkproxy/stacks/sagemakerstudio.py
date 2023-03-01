@@ -1,15 +1,20 @@
 import logging
 import os
+import pathlib
 from constructs import Construct
 from aws_cdk import (
+    custom_resources as cr,
     cloudformation_include as cfn_inc,
     aws_ec2 as ec2,
     aws_iam as iam,
     aws_kms as kms,
+    aws_lambda as _lambda,
     aws_sagemaker as sagemaker,
     aws_ssm as ssm,
-    Stack,
-    NestedStack
+    CustomResource,
+    Duration,
+    NestedStack,
+    Stack
 )
 from botocore.exceptions import ClientError
 from .manager import stack
@@ -30,10 +35,9 @@ class SageMakerDomain(NestedStack):
 
     def check_sagemaker_studio(self, environment: models.Environment):
         logger.info('check sagemaker studio domain creation')
-
         try:
             dataall_created_domain = ParameterStoreManager.client(
-                AwsAccountId=environment.AwsAccountId, region=environment.region
+                AwsAccountId=environment.AwsAccountId, region=environment.region, cdkrole=True
             ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
             return None
         except ClientError as e:

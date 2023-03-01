@@ -6,7 +6,7 @@ class PivotRole(NestedStack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         # Create Pivot IAM Role
-        self.create_pivot_role(
+        self.pivot_role = self.create_pivot_role(
             name=config['roleName'],
             principal_id=config['accountId'],
             external_id=config['externalId'],

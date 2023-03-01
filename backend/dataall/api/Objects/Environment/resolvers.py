@@ -14,6 +14,7 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
+from ....aws.handlers.parameter_store import ParameterStoreManager
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -52,8 +53,15 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        cdk_role_name = check_environment(context, source, input=input)
+        print("environment create resolver 1")
+        create_pivot_role = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
+        )
+        print("environment create resolver 2")
+        cdk_role_name = f"cdk-hnb659fds-cfn-exec-role-{input.get('AwsAccountId')}-{input.get('region')}" if create_pivot_role else check_environment(context, source, input=input)
         input['cdk_role_name'] = cdk_role_name
+        print(cdk_role_name)
         env = Environment.create_environment(
             session=session,
             username=context.username,
