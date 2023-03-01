@@ -213,7 +213,7 @@ function ShareViewHeader(props) {
             >
               Refresh
             </Button>
-            <Button
+            {/* <Button
               color="primary"
               startIcon={<DeleteOutlined fontSize="small" />}
               sx={{ m: 1 }}
@@ -221,10 +221,10 @@ function ShareViewHeader(props) {
               onClick={remove}
             >
               Delete
-            </Button>
+            </Button> */}
             {share.userRoleForShareObject === 'Approvers' ? (
               <>
-                {share.status === 'PendingApproval' && (
+                {share.status === 'Submitted' && (
                   <>
                     <LoadingButton
                       loading={accepting}
@@ -260,7 +260,7 @@ function ShareViewHeader(props) {
                     type="button"
                     variant="outlined"
                   >
-                    Revoke
+                    Reject
                   </LoadingButton>
                 )}
               </>
@@ -281,6 +281,15 @@ function ShareViewHeader(props) {
                 )}
               </>
             )}
+            <Button
+              color="primary"
+              startIcon={<DeleteOutlined fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={remove}
+            >
+              Delete
+            </Button>
           </Box>
         )}
       </Grid>

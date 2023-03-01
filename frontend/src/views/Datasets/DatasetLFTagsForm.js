@@ -31,6 +31,8 @@ const DatasetLFTagsForm = (props) => {
   const client = useClient();
   const [tagsDict, setTagsDict] = useState([]);
   const [lfTagOptions, setLFTagOptions] = useState({});
+  const [tagAccessGroups, setTagAccessGroups] = useState([])
+  const [popUp, setPopUp] = useState(false)
 
 //   const fetchGroups = async (environment) => {
 //   try {
@@ -68,11 +70,28 @@ const DatasetLFTagsForm = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
+
+  const getGroupsWithTagAccess = async () => {
+    try {
+      const response = await client.query(getGroupsWithLFTagAccess());
+      if (!response.errors && response.data.listLFTagsAll.group.length > 0) {
+        setTagAccessGroups(response.data.listLFTagsAll.groups);
+        setPopUp(true)
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   const handleLFTagChange = (idx, field) => (e) => {
     const { value } = e.target;
     // console.log(value)
     // console.log(lfTagOptions)
     // console.log(Object.keys(lfTagOptions))
+
+    // getGroupsWithTagAccess()
     setTagsDict((prevstate) => {
       const rows = [...prevstate];
       if (field === 'lfTagKey') {

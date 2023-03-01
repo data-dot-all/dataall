@@ -164,6 +164,15 @@ class ShareObjectSM:
         self._state = new_state
         return True
 
+    def update_lftag_state(self, session, share, new_state):
+        logger.info(f"Updating share object {share.lftagShareUri} in DB from {self._state} to state {new_state}")
+        ShareObject.update_lftag_share_object_status(
+            session=session,
+            shareUri=share.lftagShareUri,
+            status=new_state
+        )
+        self._state = new_state
+        return True
 
 class ShareItemSM:
     def __init__(self, state):
@@ -709,50 +718,29 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.LFTagShareObject:
         share = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
-
-        if share.status == ShareObjectStatus.PendingApproval.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.SUBMIT_SHARE_OBJECT,
-                message='ShareObject is in PendingApproval state',
-            )
-
-        share.status = ShareObjectStatus.PendingApproval.value
-
-        return share
-
-    @staticmethod
-    @has_resource_perm(permissions.SUBMIT_SHARE_OBJECT)
-    def submit_lf_tag_share_object(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> models.LFTagShareObject:
-        share = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
-
-        if share.status == ShareObjectStatus.PendingApproval.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.SUBMIT_SHARE_OBJECT,
-                message='ShareObject is in PendingApproval state',
-            )
-        # (
-        #     session.query(models.ShareObjectItem)
-        #     .filter(
-        #         and_(
-        #             models.ShareObjectItem.shareUri == uri,
-        #             models.ShareObjectItem.status != ShareObjectStatus.Approved.value,
-        #         )
+        lftag: models.LFTag = api.LFTag.get_lf_tag_by_name(session=session, lf_tag_key=share.lfTagKey)
+        # share_items_states = ShareObject.get_share_items_states(session, uri)
+        # valid_states = [ShareItemStatus.PendingApproval.value]
+        # valid_share_items_states = [x for x in valid_states if x in share_items_states]
+        # if valid_share_items_states == []:
+        #     raise exceptions.ShareItemsFound(
+        #         action='Submit Share Object',
+        #         message='The request is empty of pending items. Add items to share request.',
         #     )
-        #     .update(
-        #         {models.ShareObjectItem.status: ShareObjectStatus.PendingApproval.value}
-        #     )
-        # )
-        share.status = ShareObjectStatus.PendingApproval.value
-        # api.Notification.notify_share_object_submission(
-        #     session, username, dataset, share
-        # )
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Submit.value)
+
+        # for item_state in share_items_states:
+
+        #     Item_SM = ShareItemSM(item_state)
+        #     new_state = Item_SM.run_transition(ShareObjectActions.Submit.value)
+        #     Item_SM.update_state(session, share.shareUri, new_state)
+
+        Share_SM.update_lftag_state(session, share, new_share_state)
+        api.Notification.notify_lftag_share_object_submission(
+            session, username, lftag, share
+        )
+
         return share
 
     @staticmethod
@@ -801,31 +789,17 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.LFTagShareObject:
         share = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
+        lftag: models.LFTag = api.LFTag.get_lf_tag_by_name(session=session, lf_tag_key=share.lfTagKey)
+        # share_items_states = ShareObject.get_share_items_states(session, uri)
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Approve.value)
+        
+        # for item_state in share_items_states:
+        #     Item_SM = ShareItemSM(item_state)
+        #     new_state = Item_SM.run_transition(ShareObjectActions.Approve.value)
+        #     Item_SM.update_state(session, share.shareUri, new_state)
 
-        # dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-
-        if share.status != ShareObjectStatus.PendingApproval.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.APPROVE_SHARE_OBJECT,
-                message='ShareObject is not in PendingApproval state',
-            )
-
-        # (
-        #     session.query(models.ShareObjectItem)
-        #     .filter(
-        #         and_(
-        #             models.ShareObjectItem.shareUri == uri,
-        #         )
-        #     )
-        #     .update(
-        #         {
-        #             models.ShareObjectItem.status: ShareObjectStatus.Approved.value,
-        #         }
-        #     )
-        # )
-
-        share.status = ShareObjectStatus.Approved.value
-
+        Share_SM.update_lftag_state(session, share, new_share_state)
         # ResourcePolicy.attach_resource_policy(
         #     session=session,
         #     group=share.groupUri,
@@ -833,8 +807,19 @@ class ShareObject:
         #     resource_uri=dataset.datasetUri,
         #     resource_type=models.Dataset.__name__,
         # )
+        environment: models.Environment = api.Environment.get_environment_by_uri(session, share.environmentUri)
 
-        # api.Notification.notify_share_object_approval(session, username, dataset, share)
+        lf_tag_permission = models.LFTagPermissions(
+            SamlGroupName=share.groupUri,
+            environmentUri=share.environmentUri,
+            environmentLabel=share.environmentUri,
+            awsAccount=environment.AwsAccountId,
+            tagKey=share.lfTagKey,
+            tagValues=share.lfTagValue
+        )
+        session.add(lf_tag_permission)
+
+        api.Notification.notify_lftag_share_object_approval(session, username, lftag, share)
         return share
 
     @staticmethod
@@ -924,35 +909,28 @@ class ShareObject:
     ) -> models.LFTagShareObject:
 
         share = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
+        lftag: models.LFTag = api.LFTag.get_lf_tag_by_name(session=session, lf_tag_key=share.lfTagKey)
 
-        # dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+    #     share_items_states = ShareObject.get_share_items_states(session, uri)
 
-        if share.status == ShareObjectStatus.Rejected.value:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.REJECT_SHARE_OBJECT,
-                message='ShareObject is not in Rejected state',
-            )
-        # (
-        #     session.query(models.ShareObjectItem)
-        #     .filter(
-        #         and_(
-        #             models.ShareObjectItem.shareUri == uri,
-        #         )
-        #     )
-        #     .update(
-        #         {
-        #             models.ShareObjectItem.status: ShareObjectStatus.Rejected.value,
-        #         }
-        #     )
-        # )
-        share.status = ShareObjectStatus.Rejected.value
-        # ResourcePolicy.delete_resource_policy(
-        #     session=session,
-        #     group=share.groupUri,
-        #     resource_uri=dataset.datasetUri,
-        # )
-        # api.Notification.notify_share_object_approval(session, username, dataset, share)
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
+
+    #     for item_state in share_items_states:
+    #         Item_SM = ShareItemSM(item_state)
+    #         new_state = Item_SM.run_transition(ShareObjectActions.Reject.value)
+    #         Item_SM.update_state(session, share.shareUri, new_state)
+
+        Share_SM.update_lftag_state(session, share, new_share_state)
+
+    #     ResourcePolicy.delete_resource_policy(
+    #         session=session,
+    #         group=share.groupUri,
+    #         resource_uri=dataset.datasetUri,
+    #     )
+        api.Notification.notify_lftag_share_object_approval(session, username, lftag, share)
         return share
+
 
     @staticmethod
     @has_resource_perm(permissions.GET_SHARE_OBJECT)
@@ -1162,50 +1140,24 @@ class ShareObject:
         return True
 
     @staticmethod
-    def check_existing_shared_items(session, uri):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_items = session.query(models.ShareObjectItem).filter(
-            and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
-            )
-        ).all()
-        if shared_items:
-            return True
-        return False
-
-    @staticmethod
-    def check_existing_shared_items_of_type(session, uri, item_type):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_items = session.query(models.ShareObjectItem).filter(
-            and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.itemType == item_type,
-                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
-            )
-        ).all()
-        if shared_items:
-            return True
-        return False
-
-    @staticmethod
-    def check_pending_share_items(session, uri):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_items = session.query(models.ShareObjectItem).filter(
-            and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
-            )
-        ).all()
-        if shared_items:
-            return True
-        return False
-
-    @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
     def delete_lf_tag_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: models.LFTagShareObject = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
-        session.delete(share)
+        # share_items_states = ShareObject.get_share_items_states(session, uri)
+        # shared_share_items_states = [x for x in SHARE_ITEM_SHARED_STATES if x in share_items_states]
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Delete.value)
+        # for item_state in share_items_states:
+        #     Item_SM = ShareItemSM(item_state)
+        #     new_state = Item_SM.run_transition(ShareObjectActions.Delete.value)
+        #     Item_SM.update_state(session, share.shareUri, new_state)
+        # if shared_share_items_states:
+        #     raise exceptions.ShareItemsFound(
+        #         action='Delete share object',
+        #         message='There are shared items in this request. Revoke access to these items before deleting the request.',
+        #     )
+        if new_share_state == ShareObjectStatus.Deleted.value:
+            session.delete(share)
         return True
 
     @staticmethod
@@ -1249,11 +1201,44 @@ class ShareObject:
         return False
 
     @staticmethod
-    @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
-    def delete_lf_tag_share_object(session, username, groups, uri, data=None, check_perm=None):
-        share: models.LFTagShareObject = ShareObject.get_lf_tag_share_object_by_uri(session, uri)
-        session.delete(share)
-        return True
+    def check_existing_shared_items(session, uri):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_items = session.query(models.ShareObjectItem).filter(
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+            )
+        ).all()
+        if shared_items:
+            return True
+        return False
+
+    @staticmethod
+    def check_existing_shared_items_of_type(session, uri, item_type):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_items = session.query(models.ShareObjectItem).filter(
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.itemType == item_type,
+                models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
+            )
+        ).all()
+        if shared_items:
+            return True
+        return False
+
+    @staticmethod
+    def check_pending_share_items(session, uri):
+        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        shared_items = session.query(models.ShareObjectItem).filter(
+            and_(
+                models.ShareObjectItem.shareUri == share.shareUri,
+                models.ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
+            )
+        ).all()
+        if shared_items:
+            return True
+        return False
 
     @staticmethod
     def get_share_item_by_uri(session, uri):
@@ -1444,30 +1429,6 @@ class ShareObject:
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
-    def list_user_sent_lftag_share_requests(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
-        query = (
-            session.query(models.LFTagShareObject)
-            .join(
-                models.Environment,
-                models.Environment.environmentUri == models.LFTagShareObject.environmentUri,
-            )
-            .filter(
-                or_(
-                    models.LFTagShareObject.owner == username,
-                    and_(
-                        models.Environment.SamlGroupName.in_(groups),
-                        models.LFTagShareObject.principalType == PrincipalType.Group.value,
-                    ),
-                )
-            )
-        )
-
-        return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
-
-
-    @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
         environment_groups = session.query(models.EnvironmentGroup).filter(
             models.EnvironmentGroup.environmentUri == environment_uri
@@ -1492,6 +1453,18 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, shareUri)
+        share.status = status
+        session.commit()
+        return share
+
+    @staticmethod
+    def update_lftag_share_object_status(
+            session,
+            shareUri: str,
+            status: str,
+    ) -> models.LFTagShareObject:
+
+        share = ShareObject.get_lf_tag_share_object_by_uri(session, shareUri)
         share.status = status
         session.commit()
         return share
@@ -1901,3 +1874,11 @@ class ShareObject:
             .count()
         )
         return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items, 'failedItems': failed_items, 'pendingItems': pending_items}
+
+
+    @staticmethod
+    def add_lftag_permission():
+        lftag_permission = models.LFTagPermissions(
+
+        )
+        return True
