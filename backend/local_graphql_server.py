@@ -14,7 +14,7 @@ from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
 from dataall.searchproxy import connect, run_query
-from dataall.modules.loader import load_modules
+from dataall.modules.loader import load_modules, ImportMode
 from dataall.core.config import config
 from dataall.core.context import set_context, RequestContext
 
@@ -36,7 +36,7 @@ CDKPROXY_URL = (
 )
 config.set_property("cdk_proxy_url", CDKPROXY_URL)
 
-load_modules()
+load_modules(modes=[ImportMode.API, ImportMode.TASKS])
 init_permissions(engine)
 
 

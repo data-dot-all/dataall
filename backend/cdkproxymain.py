@@ -10,7 +10,7 @@ from fastapi import FastAPI, BackgroundTasks, status, Response
 import dataall.cdkproxy.cdk_cli_wrapper as wrapper
 from dataall.cdkproxy.stacks import StackManager
 from dataall import db
-from dataall.modules.loader import load_modules
+from dataall.modules.loader import load_modules, ImportMode
 
 print('\n'.join(sys.path))
 
@@ -21,7 +21,7 @@ logger.warning(
     f"Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get('DH_DOCKER_VERSION')}"
 )
 
-load_modules()
+load_modules(modes=[ImportMode.CDK])
 StackManager.registered_stacks()
 
 

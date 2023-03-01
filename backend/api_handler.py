@@ -14,7 +14,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.core.context import set_context, RequestContext
 from dataall.db import init_permissions, get_engine, api, permissions
-from dataall.modules.loader import load_modules
+from dataall.modules.loader import load_modules, ImportMode
 from dataall.searchproxy import connect
 
 logger = logging.getLogger()
@@ -25,7 +25,7 @@ start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
 
-load_modules()
+load_modules(modes=[ImportMode.API])
 SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
