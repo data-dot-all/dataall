@@ -31,16 +31,16 @@ def get_trust_account(context: Context, source, **kwargs):
     return current_account
 
 
-def check_environment(context: Context, source, input=None):
+def check_environment(context: Context, source, cdkrole=None, input=None):
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
     account = input.get('AwsAccountId')
     region = input.get('region')
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region)
+    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region, cdkrole=cdkrole)
 
     if input.get('dashboardsEnabled'):
-        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account)
+        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, cdkrole=cdkrole)
 
     return cdk_role_name
 
@@ -59,7 +59,10 @@ def create_environment(context: Context, source, input=None):
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
         print("environment create resolver 2")
-        cdk_role_name = f"cdk-hnb659fds-cfn-exec-role-{input.get('AwsAccountId')}-{input.get('region')}" if create_pivot_role else check_environment(context, source, input=input)
+        print(create_pivot_role)
+        print(f"bool{bool(create_pivot_role)}")
+        cdkrole = True if create_pivot_role is True else None
+        cdk_role_name = check_environment(context, source, cdkrole=cdkrole, input=input)
         input['cdk_role_name'] = cdk_role_name
         print(cdk_role_name)
         env = Environment.create_environment(

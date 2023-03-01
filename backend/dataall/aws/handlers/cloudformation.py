@@ -16,14 +16,14 @@ class CloudFormation:
         pass
 
     @staticmethod
-    def client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
+    def client(AwsAccountId, region, cdkrole=None):
+        session = SessionHelper.remote_session(AwsAccountId, cdkrole)
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
-    def check_existing_cdk_toolkit_stack(AwsAccountId, region):
-        cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region)
+    def check_existing_cdk_toolkit_stack(AwsAccountId, region, cdkrole=None):
         try:
+            cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, cdkrole=cdkrole)
             response = cfn.describe_stacks(StackName='CDKToolkit')
         except cfn.exceptions.ClientError as e:
             print(e)

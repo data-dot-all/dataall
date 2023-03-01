@@ -19,14 +19,14 @@ class Quicksight:
         pass
 
     @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
+    def get_quicksight_client(AwsAccountId, region='eu-west-1', cdkrole=None):
         """Returns a boto3 quicksight client in the provided account/region
         Args:
             AwsAccountId(str) : aws account id
             region(str) : aws region
         Returns : boto3.client ("quicksight")
         """
-        session = SessionHelper.remote_session(AwsAccountId)
+        session = SessionHelper.remote_session(AwsAccountId, cdkrole)
         return session.client('quicksight', region_name=region)
 
     @staticmethod
@@ -70,14 +70,14 @@ class Quicksight:
         return session.client('quicksight', region_name=identity_region)
 
     @staticmethod
-    def check_quicksight_enterprise_subscription(AwsAccountId):
+    def check_quicksight_enterprise_subscription(AwsAccountId, cdkrole=None):
         """Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's subscription. A successful API call returns an AccountInfo object that includes an account's name, subscription status, authentication type, edition, and notification email address.
         Args:
             AwsAccountId(str) : aws account id
         Returns: bool
             True if Quicksight Enterprise Edition is enabled in the AWS Account
         """
-        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId)
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, cdkrole=cdkrole)
         try:
             response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
             if not response['AccountInfo']:
