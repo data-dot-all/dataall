@@ -16,10 +16,12 @@ services:
       - db
     environment:
       envname: 'dkrcompose'
+      config_location: "/config.json"
       AWS_DEFAULT_REGION: "eu-west-1"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - ./config.json:/config.json
     restart:
       on-failure:60
     platform:
@@ -36,10 +38,12 @@ services:
       - 5000:5000
     environment:
       envname: 'dkrcompose'
+      config_location: "/config.json"
       AWS_DEFAULT_REGION: "eu-west-1"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - ./config.json:/config.json
     depends_on:
       - db
       - elasticsearch

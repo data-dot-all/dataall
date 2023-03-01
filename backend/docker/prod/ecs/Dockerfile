@@ -52,6 +52,9 @@ ADD backend/dataall /dataall
 ADD backend/blueprints /blueprints
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
+ENV config_location="/config.json"
+COPY config.json /config.json
+
 RUN mkdir -p dataall/cdkproxy/assets/glueprofilingjob/jars
 RUN mkdir -p blueprints/ml_data_pipeline/engine/glue/jars
 RUN curl https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar --output dataall/cdkproxy/assets/glueprofilingjob/jars/deequ-$DEEQU_VERSION.jar
