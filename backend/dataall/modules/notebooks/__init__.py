@@ -1,7 +1,4 @@
 """Contains the code related to SageMaker notebooks"""
-from dataall.modules.notebooks import gql, cdk, services
+from dataall.modules.notebooks import gql, cdk
 
-# importing of the common code
-import dataall.modules.common.sagemaker as common
-
-__all__ = ["gql", "cdk", "services", "common"]
+__all__ = ["gql", "cdk"]

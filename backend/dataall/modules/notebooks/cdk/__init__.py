@@ -3,5 +3,6 @@ This package contains modules that are used to create a CloudFormation stack in 
 The code is invoked in ECS Fargate to initialize the creation of the stack
 """
 from dataall.modules.notebooks.cdk import stacks
+from dataall.modules.common.sagemaker import policies
 
-__all__ = ["stacks"]
+__all__ = ["stacks", "policies"]

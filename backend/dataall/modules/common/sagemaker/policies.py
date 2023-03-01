@@ -5,7 +5,7 @@ from dataall.db import permissions
 from dataall.modules.common.sagemaker.permissions import CREATE_NOTEBOOK
 
 
-class Sagemaker(ServicePolicy):
+class SagemakerPolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
         if (
             CREATE_NOTEBOOK not in group_permissions
