@@ -6,6 +6,7 @@ import shutil
 
 from aws_cdk import (
     custom_resources as cr,
+    aws_ec2 as ec2,
     aws_s3 as s3,
     aws_s3_deployment,
     aws_iam as iam,
@@ -138,7 +139,6 @@ class EnvironmentSetup(Stack):
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
-
 
         self.engine = self.get_engine()
 
@@ -473,12 +473,25 @@ class EnvironmentSetup(Stack):
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
 
+            try:
+                print("looking for default VPC")
+                default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
+                vpc_id = default_vpc.vpc_id
+                subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
+                subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
+                subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
+            except Exception as e:
+                logger.error(
+                    f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation."
+                )
+
             sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain',
                                                      environment=self._environment,
-                                                     sagemaker_principals=[default_role] + group_roles
+                                                     sagemaker_principals=[default_role] + group_roles,
+                                                     vpc_id=vpc_id,
+                                                     subnet_ids=subnet_ids
                                                      )
             sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
-
 
         TagsUtil.add_tags(self)
 
