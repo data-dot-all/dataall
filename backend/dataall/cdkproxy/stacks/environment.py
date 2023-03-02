@@ -135,10 +135,10 @@ class EnvironmentSetup(Stack):
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
-        self.create_pivot_role = ParameterStoreManager.get_parameter_value(
+        self.create_pivot_role = bool(ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
-        )
+        ))
 
         self.engine = self.get_engine()
 
@@ -235,7 +235,7 @@ class EnvironmentSetup(Stack):
         self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
 
         # Create or import Pivot role
-        if self.create_pivot_role:
+        if self.create_pivot_role is True:
             config = {
                 'roleName': self.pivot_role_name,
                 'accountId': self.dataall_central_account,

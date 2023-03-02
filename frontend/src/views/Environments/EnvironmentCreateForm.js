@@ -57,6 +57,7 @@ const EnvironmentCreateForm = (props) => {
   const { settings } = useSettings();
   const [organization, setOrganization] = useState({});
   const [trustedAccount, setTrustedAccount] = useState(null);
+  const [createPivotRole, setCreatePivotRole] = useState(null);
   const [pivotRoleName, setPivotRoleName] = useState(null);
   const [loading, setLoading] = useState(true);
   const groupOptions = groups
@@ -76,6 +77,14 @@ const EnvironmentCreateForm = (props) => {
     const response = await client.query(getTrustAccount());
     if (!response.errors) {
       setTrustedAccount(response.data.getTrustAccount);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  }, [client, dispatch]);
+  const fetchCreatePivotRole = useCallback(async () => {
+    const response = await client.query(getCreatePivotRole());
+    if (!response.errors) {
+      setCreatePivotRole(response.data.getCreatePivotRole);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -138,9 +147,12 @@ const EnvironmentCreateForm = (props) => {
       getRoleName().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      getCreatePivotRole().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client, dispatch, fetchItem, fetchTrustedAccount, getRoleName]);
+  }, [client, dispatch, fetchItem, fetchTrustedAccount, getRoleName, fetchCreatePivotRole]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -264,7 +276,7 @@ const EnvironmentCreateForm = (props) => {
             <CardContent>
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                  1. Bootstrap your AWS account with AWS CDK
+                  Bootstrap your AWS account with AWS CDK
                 </Typography>
                 <Typography color="textPrimary" variant="subtitle2">
                   <CopyToClipboard
@@ -285,60 +297,68 @@ const EnvironmentCreateForm = (props) => {
                   {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
                 </Typography>
               </Box>
-              <Box>
-                <Box>
-                  <Typography color="textSecondary" variant="subtitle2">
-                    2. Create an IAM role named <b>{pivotRoleName}</b> using AWS
-                    CloudFormation stack below
-                  </Typography>
-                </Box>
-                <Grid container justifyContent="space-between" spacing={3}>
-                  <Grid item lg={6} xl={6} xs={6}>
-                    <Button
-                      color="primary"
-                      startIcon={<CloudDownloadOutlined fontSize="small" />}
-                      sx={{ mt: 1, mb: 2, ml: 2 }}
-                      variant="outlined"
-                      onClick={() => {
-                        getPivotRoleUrl().catch((e) =>
-                          dispatch({ type: SET_ERROR, error: e.message })
-                        );
-                      }}
-                    >
-                      CloudFormation stack
-                    </Button>
-                    <Button
-                      color="primary"
-                      startIcon={<CopyAllOutlined fontSize="small" />}
-                      sx={{ mt: 1, mb: 2, ml: 2 }}
-                      variant="outlined"
-                      onClick={() => {
-                        copyPivotRoleName().catch((e) =>
-                          dispatch({ type: SET_ERROR, error: e.message })
-                        );
-                      }}
-                    >
-                      Pivot role name
-                    </Button>
-                    <Button
-                      color="primary"
-                      startIcon={<CopyAllOutlined fontSize="small" />}
-                      sx={{ mt: 1, mb: 2, ml: 2 }}
-                      variant="outlined"
-                      onClick={() => {
-                        getExternalId().catch((e) =>
-                          dispatch({ type: SET_ERROR, error: e.message })
-                        );
-                      }}
-                    >
-                      External Id
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Box>
+              {createPivotRole ? (
+                    <Box>
+                      <Box>
+                        <Typography color="textSecondary" variant="subtitle2">
+                          Create an IAM role named <b>{pivotRoleName}</b> using AWS
+                          CloudFormation stack below
+                        </Typography>
+                      </Box>
+                      <Grid container justifyContent="space-between" spacing={3}>
+                        <Grid item lg={6} xl={6} xs={6}>
+                          <Button
+                            color="primary"
+                            startIcon={<CloudDownloadOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              getPivotRoleUrl().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            CloudFormation stack
+                          </Button>
+                          <Button
+                            color="primary"
+                            startIcon={<CopyAllOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              copyPivotRoleName().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            Pivot role name
+                          </Button>
+                          <Button
+                            color="primary"
+                            startIcon={<CopyAllOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              getExternalId().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            External Id
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                ): (
+                    <Box>
+                      <Typography color="textSecondary" variant="subtitle2">
+                        As part of the environment CloudFormation stack data.all will create an IAM role (Pivot Role) to manage AWS operations in the environment AWS Account.
+                      </Typography>
+                    </Box>
+                  )}
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                  3. Manage your environment features
+                  Manage your environment features: make sure that the services needed for each feature are available in your AWS Account.
                 </Typography>
               </Box>
             </CardContent>

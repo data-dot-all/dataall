@@ -31,6 +31,14 @@ def get_trust_account(context: Context, source, **kwargs):
     return current_account
 
 
+def get_create_pivot_role_manually():
+    ssm_param = bool(ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
+        ))
+    return False if ssm_param is True else False
+
+
 def check_environment(context: Context, source, cdkrole=None, input=None):
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
