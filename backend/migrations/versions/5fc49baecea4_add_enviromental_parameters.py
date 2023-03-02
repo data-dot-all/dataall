@@ -10,7 +10,6 @@ from typing import List
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
-from dataall.db.api.permission import Permission
 from dataall.db import Resource
 
 
@@ -56,7 +55,6 @@ def upgrade():
         2) Migration xxxEnabled to the environment_parameters table
         3) Dropping the xxxEnabled columns from the environment_parameters
         4) Migration every resource allocated for the environment to the environment_resources
-        5) Updates the permissions
     """
     try:
         bind = op.get_bind()
@@ -67,7 +65,7 @@ def upgrade():
             "environment_parameters",
             Column("environmentUri", String, primary_key=True),
             Column("paramKey", String, primary_key=True),
-            Column("paramValue", String, nullable=True),
+            Column("paramValue", String, nullable=False),
         )
         print("Creation of environment_parameters is done")
 
@@ -75,7 +73,9 @@ def upgrade():
         envs: List[Environment] = session.query(Environment).all()
         params: List[EnvironmentParameter] = []
         for env in envs:
-            _add_param_if_exists(params, env, "notebooksEnabled", env.notebooksEnabled)
+            _add_param_if_exists(
+                params, env, "notebooksEnabled", str(env.notebooksEnabled).lower()  # for frontend
+            )
 
         session.add_all(params)
         print("Migration of the environmental parameters has been complete")
@@ -88,7 +88,7 @@ def upgrade():
             "environment_resources",
             Column("environmentUri", String, primary_key=True),
             Column("resourceUri", String, primary_key=True),
-            Column("resourceType", String, nullable=True),
+            Column("resourceType", String, nullable=False),
         )
         print("Environment_resources table has been created")
 
@@ -98,7 +98,7 @@ def upgrade():
         notebooks = session.query(SagemakerNotebook).all()
         for notebook in notebooks:
             _add_resource(resources, notebook.environmentUri, notebook.notebookUri, "notebook")
-
+        session.add_all(resources)
         session.commit()
 
     except Exception as ex:
@@ -106,14 +106,40 @@ def upgrade():
 
 
 def downgrade():
-    # TODO: complete the rollback
-    op.drop_table("environment_resources")
+    try:
+        bind = op.get_bind()
+        session = orm.Session(bind=bind)
+
+        op.drop_table("environment_resources")
+        op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
+
+        params = session.query(EnvironmentParameter).all()
+        envs = []
+        for param in params:
+            envs.append(Environment(
+                environmentUri=param.environmentUri,
+                notebooksEnabled=params["notebooksEnabled"] == "true"
+            ))
+
+        session.add_all(envs)
+        op.drop_table("environment_parameters")
+
+    except Exception as ex:
+        print(f"Failed to execute the rollback script due to: {ex}")
 
 
 def _add_param_if_exists(params: List[EnvironmentParameter], env: Environment, key, val) -> None:
     if val is not None:
-        params.append(EnvironmentParameter(environmentUri=env.environmentUri, paramKey=key, paramValue=str(val)))
+        params.append(EnvironmentParameter(
+            environmentUri=env.environmentUri,
+            paramKey=key,
+            paramValue=str(val).lower()
+        ))
 
 
-def _add_resource(resources: List[EnvironmentParameter], envUri, uri, type) -> None:
-    resources.append(EnvironmentResource(environmentUri=envUri, resourceUri=uri, resourceType=type))
+def _add_resource(resources: List[EnvironmentParameter], env_uri, uri, type) -> None:
+    resources.append(EnvironmentResource(
+        environmentUri=env_uri,
+        resourceUri=uri,
+        resourceType=type
+    ))
