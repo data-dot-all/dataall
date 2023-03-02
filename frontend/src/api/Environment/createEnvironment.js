@@ -14,10 +14,13 @@ const createEnvironment = (input) => ({
         AwsAccountId
         created
         dashboardsEnabled
-        notebooksEnabled
         mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
+        parameters {
+          key
+          value
+        }
       }
     }
   `

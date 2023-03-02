@@ -51,8 +51,8 @@ const EnvironmentFeatures = (props) => {
               Notebooks
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.notebooksEnabled ? 'success' : 'error'}>
-                {environment.notebooksEnabled ? 'Enabled' : 'Disabled'}
+              <Label color={environment.parameters["notebooksEnabled"] === 'true' ? 'success' : 'error'}>
+                {environment.parameters["notebooksEnabled"] === 'true' ? 'Enabled' : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

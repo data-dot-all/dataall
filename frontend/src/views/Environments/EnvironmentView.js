@@ -122,13 +122,11 @@ const EnvironmentView = () => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      setEnv(response.data.getEnvironment);
-      setStack(response.data.getEnvironment.stack);
-      setIsAdmin(
-        ['Admin', 'Owner'].indexOf(
-          response.data.getEnvironment.userRoleInEnvironment
-        ) !== -1
-      );
+      const environment = response.data.getEnvironment
+      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      setEnv(environment);
+      setStack(environment.stack);
+      setIsAdmin(['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1);
     } else {
       const error = response.errors
         ? response.errors[0].message
