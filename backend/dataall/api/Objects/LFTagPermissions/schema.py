@@ -9,7 +9,7 @@ LFTagPermission = gql.ObjectType(
         gql.Field(name='environmentLabel', type=gql.String),
         gql.Field(name='awsAccount', type=gql.String),
         gql.Field(name='tagKey', type=gql.String),
-        gql.Field(name='tagValues', type=gql.ArrayType(gql.String))
+        gql.Field(name='tagValues', type=gql.String)
     ],
 )
 

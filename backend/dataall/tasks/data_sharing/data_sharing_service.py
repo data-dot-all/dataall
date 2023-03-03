@@ -60,7 +60,7 @@ class DataSharingService:
                 tagged_columns,
                 lftag_share,
                 target_environment
-            ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Rejected')
+            ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Revoked')
             Share_SM = api.ShareObjectSM(lftag_share.status)
             new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
             Share_SM.update_lftag_state(session, lftag_share, new_share_state)
@@ -85,6 +85,11 @@ class DataSharingService:
         log.info(f'revoking tables succeeded = {revoked_lftag_share_succeed}')
         new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
         Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+
+        # WORKAROUND: To Get Share Back to Draft Status
+        new_share_state = Share_SM.run_transition(models.Enums.ShareItemActions.AddItem.value)
+        Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+
         return revoked_lftag_share_succeed
 
 

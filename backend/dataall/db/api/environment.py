@@ -872,7 +872,6 @@ class Environment:
     def paginated_shared_with_environment_datasets(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
@@ -968,7 +967,6 @@ class Environment:
     def paginated_shared_with_environment_group_datasets(
         session, username, groups, envUri, groupUri, data=None, check_perm=None
     ) -> dict:
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
@@ -1090,7 +1088,6 @@ class Environment:
     def paginated_environment_data_items(
         session, username, groups, uri, data=None, check_perm=None
     ):
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),

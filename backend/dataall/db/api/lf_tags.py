@@ -125,22 +125,22 @@ class LFTagPermissions:
 
         return result
 
-    @staticmethod
-    def update_lftag_permissions_if_not_exist(
-        session, username, group, tagkey, tagval
-    ) -> dict:
+    # @staticmethod
+    # def update_lftag_permissions_if_not_exist(
+    #     session, username, group, tagkey, tagval
+    # ) -> dict:
         
-        lf_permission = (
-            session.query(models.LFTagPermissions)
-            .filter(
-                and_(
-                    models.LFTagPermissions.SamlGroupName==group,
-                    models.LFTagPermissions.tagKey==tagkey,
-                    models.LFTagPermissions.tagValues.contains(f'{{{tagkey}}}'),
-                )
-            )
-            .first()
-        )
+    #     lf_permission = (
+    #         session.query(models.LFTagPermissions)
+    #         .filter(
+    #             and_(
+    #                 models.LFTagPermissions.SamlGroupName==group,
+    #                 models.LFTagPermissions.tagKey==tagkey,
+    #                 models.LFTagPermissions.tagValues.contains(f'{{{tagkey}}}'),
+    #             )
+    #         )
+    #         .first()
+    #     )
         
         # if not lf_permission:
         #     lf_tag_permission =models.LFTagPermissions(

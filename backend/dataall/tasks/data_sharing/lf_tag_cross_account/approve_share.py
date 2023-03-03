@@ -58,6 +58,12 @@ class LFTagShareApproval:
 
         principalIAMRoleARN = f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.lftag_share.principalIAMRoleName}"
         for source_env in self.source_env_list:
+            log.info("Updating LF Data Lake Settings If Not CrossAccountVersion 3")
+            LakeFormation.check_or_update_data_lake_settings_v3(
+                source_acct=source_env['account'],
+                source_region=source_env['region']
+            )
+
             LakeFormation.grant_lftag_data_permissions_to_principal(
                 source_acct=source_env['account'],
                 source_region=source_env['region'],

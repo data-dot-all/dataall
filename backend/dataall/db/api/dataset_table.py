@@ -173,7 +173,6 @@ class DatasetTable:
         check_perm: bool = False,
     ):
         table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(
@@ -206,7 +205,6 @@ class DatasetTable:
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         env_tables_shared = (
             session.query(models.DatasetTable)  # all tables
             .join(

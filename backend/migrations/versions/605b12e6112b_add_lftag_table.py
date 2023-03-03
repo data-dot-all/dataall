@@ -1,7 +1,7 @@
 """add_lftag_table
 
 Revision ID: 605b12e6112b
-Revises: 04d92886fabe
+Revises: 509997f0a51e
 Create Date: 2022-12-23 09:33:32.564299
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy import String
 
 # revision identifiers, used by Alembic.
 revision = '605b12e6112b'
-down_revision = '04d92886fabe'
+down_revision = '509997f0a51e'
 branch_labels = None
 depends_on = None
 

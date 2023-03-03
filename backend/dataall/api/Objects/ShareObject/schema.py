@@ -14,7 +14,6 @@ ShareItem = gql.ObjectType(
         gql.Field(name='shareItemUri', type=gql.ID),
         gql.Field('itemUri', gql.String),
         gql.Field(name='status', type=gql.Ref('ShareItemStatus')),
-        gql.Field(name='status', type=gql.Ref('ShareItemStatus')),
         gql.Field(name='action', type=gql.String),
         gql.Field('itemType', ShareableType.toGraphQLEnum()),
         gql.Field('itemName', gql.String),

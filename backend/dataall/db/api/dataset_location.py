@@ -159,7 +159,6 @@ class DatasetStorageLocation:
         location = DatasetStorageLocation.get_location_by_uri(
             session, data['locationUri']
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(

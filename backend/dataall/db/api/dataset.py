@@ -103,13 +103,13 @@ class Dataset:
         session.add(dataset)
         session.commit()
 
-        Dataset._add_lf_tag_permission_for_dataset(
-            session=session,
-            env=environment,
-            owner=data['SamlAdminGroupName'],
-            tagkeys=data.get("lfTagKey"),
-            tagvals=data.get("lfTagValue")
-        )
+        # Dataset._add_lf_tag_permission_for_dataset(
+        #     session=session,
+        #     env=environment,
+        #     owner=data['SamlAdminGroupName'],
+        #     tagkeys=data.get("lfTagKey"),
+        #     tagvals=data.get("lfTagValue")
+        # )
 
         Dataset._set_dataset_aws_resources(dataset, data, environment)
 
@@ -249,7 +249,6 @@ class Dataset:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(models.Dataset)
             .outerjoin(

@@ -310,7 +310,6 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(

@@ -115,25 +115,6 @@ class Notification:
         return notifications
 
     @staticmethod
-    def notify_lftag_share_object_approval(
-        session, username: str, lftag: models.LFTag, share: models.ShareObject
-    ):
-        notifications = []
-        targeted_users = [share.owner, lftag.owner]
-        for user in targeted_users:
-            notifications.append(
-                Notification.create(
-                    session=session,
-                    username=user,
-                    notification_type=models.NotificationType.SHARE_OBJECT_REJECTED,
-                    target_uri=f'{share.lftagShareUri}|{lftag.LFTagKey}',
-                    message=f'User {username} approved share request for LFTag {lftag.LFTagKey}',
-                )
-            )
-            session.add_all(notifications)
-        return notifications
-
-    @staticmethod
     def notify_new_data_available_from_owners(
         session, dataset: models.Dataset, share: models.ShareObject, s3_prefix
     ):

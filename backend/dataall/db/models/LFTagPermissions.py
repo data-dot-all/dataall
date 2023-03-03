@@ -14,4 +14,6 @@ class LFTagPermissions(Base):
     environmentLabel = Column(String, nullable=False)
     awsAccount = Column(String, nullable=False)
     tagKey = Column(String, nullable=False)
-    tagValues = Column(ARRAY(String))
+    tagValues = Column(String)
+    # tagValues = Column(postgresql.ARRAY(String))
+

@@ -1,7 +1,7 @@
 """sharing_state_machines_v1_4_0
 
 Revision ID: 509997f0a51e
-Revises: 04d92886fabe
+Revises: d05f9a5b215e
 Create Date: 2023-01-04 10:28:17.842210
 
 """
@@ -18,7 +18,7 @@ from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = '509997f0a51e'
-down_revision = '04d92886fabe'
+down_revision = 'd05f9a5b215e'
 branch_labels = None
 depends_on = None
 

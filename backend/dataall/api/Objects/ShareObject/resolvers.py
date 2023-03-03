@@ -145,7 +145,6 @@ def approve_lf_tag_share_object(context: Context, source, lftagShareUri: str = N
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.reject_share_object(
-        return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -155,20 +154,20 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         )
 
 
-def revoke_items_share_object(context: Context, source, input):
-    with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.revoke_items_share_object(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=input.get("shareUri"),
-            data=input,
-            check_perm=True,
-        )
+# def revoke_items_share_object(context: Context, source, input):
+#     with context.engine.scoped_session() as session:
+#         share = db.api.ShareObject.revoke_items_share_object(
+#             session=session,
+#             username=context.username,
+#             groups=context.groups,
+#             uri=input.get("shareUri"),
+#             data=input,
+#             check_perm=True,
+#         )
 
-        revoke_share_task: models.Task = models.Task(
-            action='ecs.share.revoke',
-            targetUri=input.get("shareUri"),
+#         revoke_share_task: models.Task = models.Task(
+#             action='ecs.share.revoke',
+#             targetUri=input.get("shareUri"),
 
 
 def revoke_items_share_object(context: Context, source, input):
@@ -190,7 +189,6 @@ def revoke_items_share_object(context: Context, source, input):
         session.add(revoke_share_task)
         session.add(revoke_share_task)
 
-    Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
     Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
 
     return share

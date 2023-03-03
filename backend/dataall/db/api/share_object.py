@@ -914,7 +914,7 @@ class ShareObject:
     #     share_items_states = ShareObject.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
-        new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.RevokeItems.value)
 
     #     for item_state in share_items_states:
     #         Item_SM = ShareItemSM(item_state)
@@ -928,6 +928,19 @@ class ShareObject:
     #         group=share.groupUri,
     #         resource_uri=dataset.datasetUri,
     #     )
+        (
+            session.query(models.LFTagPermissions)
+            .filter(
+                and_(
+                    models.LFTagPermissions.SamlGroupName == share.groupUri,
+                    models.LFTagPermissions.environmentUri == share.environmentUri,
+                    models.LFTagPermissions.tagKey == share.lfTagKey,
+                    models.LFTagPermissions.tagValues == share.lfTagValue
+                )
+            )
+            .delete(synchronize_session='fetch')
+        )
+
         api.Notification.notify_lftag_share_object_approval(session, username, lftag, share)
         return share
 

@@ -246,11 +246,11 @@ function ShareViewHeader(props) {
                       type="button"
                       variant="outlined"
                     >
-                      Reject
+                      Reject / Delete
                     </LoadingButton>
                   </>
                 )}
-                {share.status === 'Approved' && (
+                {share.status === 'Processed' && (
                   <LoadingButton
                     loading={rejecting}
                     color="primary"
@@ -260,7 +260,7 @@ function ShareViewHeader(props) {
                     type="button"
                     variant="outlined"
                   >
-                    Reject
+                    Revoke
                   </LoadingButton>
                 )}
               </>

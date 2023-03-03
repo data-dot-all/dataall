@@ -30,7 +30,6 @@ import {
   CopyAllOutlined,
   DeleteOutlined,
   RemoveCircleOutlineOutlined,
-  RemoveCircleOutlineOutlined,
   LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
@@ -42,7 +41,6 @@ import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
 import PlusIcon from '../../icons/Plus';
 import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';

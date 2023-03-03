@@ -1,6 +1,6 @@
 import logging
 import uuid
-
+import boto3
 
 from botocore.exceptions import ClientError
 from .service_handlers import Worker
@@ -700,4 +700,35 @@ class LakeFormation:
                     },
                     Permissions=permissions,
                 )
+        return True
+    
+    @staticmethod
+    def check_or_update_data_lake_settings_v3(source_acct, source_region):
+        try:
+            logging.info(f'Checking CrossAccountVersion of LF...')
+            lf_client=LakeFormation.create_lf_client(accountid=source_acct, region=source_region)
+
+            lf_settings = lf_client.get_data_lake_settings(
+                CatalogId=source_acct
+            )
+            
+            lf_settings = lf_settings["DataLakeSettings"]
+            cross_account_version = '1'
+            if lf_settings.get("Parameters"):
+                cross_account_version = lf_settings["Parameters"].get("CROSS_ACCOUNT_VERSION", '1')     
+                log.info(f"Cross Account Version Detected: {cross_account_version}")
+            
+            if cross_account_version != '3':
+                log.info("Updating to Cross Account Version 3...")
+                lf_settings["Parameters"] = {"CROSS_ACCOUNT_VERSION" : '3'}
+                lf_client.put_data_lake_settings(
+                    CatalogId=source_acct,
+                    DataLakeSettings=lf_settings
+                )
+        except ClientError as e:
+            logging.error(
+                f'Failed to Update LF Settings to Cross Account Version 3 for {source_acct} '
+                f'due to: {e}'
+            )
+            raise e
         return True

@@ -71,19 +71,19 @@ const DatasetLFTagsForm = (props) => {
     }
   };
 
-  const getGroupsWithTagAccess = async () => {
-    try {
-      const response = await client.query(getGroupsWithLFTagAccess());
-      if (!response.errors && response.data.listLFTagsAll.group.length > 0) {
-        setTagAccessGroups(response.data.listLFTagsAll.groups);
-        setPopUp(true)
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
+  // const getGroupsWithTagAccess = async () => {
+  //   try {
+  //     const response = await client.query(getGroupsWithLFTagAccess());
+  //     if (!response.errors && response.data.listLFTagsAll.group.length > 0) {
+  //       setTagAccessGroups(response.data.listLFTagsAll.groups);
+  //       setPopUp(true)
+  //     } else {
+  //       dispatch({ type: SET_ERROR, error: response.errors[0].message });
+  //     }
+  //   } catch (e) {
+  //     dispatch({ type: SET_ERROR, error: e.message });
+  //   }
+  // };
 
   const handleLFTagChange = (idx, field) => (e) => {
     const { value } = e.target;
