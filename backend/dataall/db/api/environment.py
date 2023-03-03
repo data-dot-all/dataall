@@ -24,6 +24,7 @@ from ..models.Enums import (
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
 from dataall.core.environment.models import EnvironmentResource, EnvironmentParameter
+from ...core.environment.db.repositories import EnvironmentParameterRepository
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -64,10 +65,10 @@ class Environment:
             resourcePrefix=data.get('resourcePrefix'),
         )
 
-        Environment._update_env_parameters(env, data)
-
         session.add(env)
         session.commit()
+
+        Environment._update_env_parameters(session, env, data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -198,7 +199,7 @@ class Environment:
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
 
-        Environment._update_env_parameters(environment, data)
+        Environment._update_env_parameters(session, environment, data)
 
         ResourcePolicy.attach_resource_policy(
             session=session,
@@ -210,11 +211,17 @@ class Environment:
         return environment
 
     @staticmethod
-    def _update_env_parameters(env: models.Environment, data):
+    def _update_env_parameters(session, env: models.Environment, data):
         """Removes old parameters and creates new parameters associated with the environment"""
         params = data.get("parameters")
-        if params:
-            env.parameters = [EnvironmentParameter(param.get("key"), param.get("value")) for param in params]
+        if not params:
+            return
+
+        env_uri = env.environmentUri
+        new_params = [EnvironmentParameter(
+            env_uri, param.get("key"), param.get("value")
+        ) for param in params]
+        EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
@@ -1415,6 +1422,8 @@ class Environment:
             )
             session.delete(share)
 
+        EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
+
         return session.delete(environment)
 
     @staticmethod
@@ -1460,3 +1469,8 @@ class Environment:
             resource_uri=uri,
             permission_name=permission_name,
         )
+
+    @staticmethod
+    def get_environment_parameters(session, env_uri):
+        return EnvironmentParameterRepository(session).get_params(env_uri)
+

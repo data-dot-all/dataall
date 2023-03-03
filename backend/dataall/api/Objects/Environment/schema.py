@@ -43,7 +43,7 @@ EnvironmentGroupPermissionSearchResult = gql.ObjectType(
 
 
 EnvironmentParameter = gql.ObjectType(
-    name='parameter',
+    name='EnvironmentParameter',
     fields=[
         gql.Field(name='key', type=gql.String),
         gql.Field(name='value', type=gql.String),
@@ -102,7 +102,11 @@ Environment = gql.ObjectType(
             type=gql.ArrayType(gql.Ref('Vpc')),
             resolver=resolve_vpc_list,
         ),
-        gql.Field('parameters', type=gql.ArrayType(EnvironmentParameter))
+        gql.Field(
+            name='parameters',
+            resolver=resolve_parameters,
+            type=gql.ArrayType(gql.Ref('EnvironmentParameter')),
+        ),
     ],
 )
 

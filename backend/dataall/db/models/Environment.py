@@ -39,17 +39,3 @@ class Environment(Resource, Base):
     subscriptionsProducersTopicImported = Column(Boolean, default=False)
     subscriptionsConsumersTopicName = Column(String)
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
-
-    # Eager loading of the parameters, deletes the params automatically that are not associated with environment
-    parameters = relationship(
-        "EnvironmentParameter",
-        primaryjoin="Environment.environmentUri==EnvironmentParameter.environmentUri",
-        cascade="all, delete-orphan",
-        lazy="joined"
-    )
-
-    def get_param(self, key, default=None):
-        for param in self.parameters:
-            if param.key == key:
-                return param.value
-        return default

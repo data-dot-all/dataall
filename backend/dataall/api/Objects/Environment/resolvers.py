@@ -705,3 +705,11 @@ def resolve_environment(context, source, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return session.query(models.Environment).get(source.environmentUri)
+
+
+def resolve_parameters(context, source: models.Environment, **kwargs):
+    """Resolves a parameters for the environment"""
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return Environment.get_environment_parameters(session, source.environmentUri)
