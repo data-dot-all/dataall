@@ -163,6 +163,61 @@ class LakeFormation:
             )
 
     @staticmethod
+    def revoke_iamallowedgroups_super_permission_from_database(
+        client, accountid, database
+    ):
+        """
+        When upgrading to LF tables can still have IAMAllowedGroups permissions
+        Unless this is revoked the table can not be shared using LakeFormation
+        :param client:
+        :param accountid:
+        :param database:
+        :param table:
+        :return:
+        """
+        try:
+            log.info(
+                f'Revoking IAMAllowedGroups Super '
+                f'permission for dataset {database}'
+            )
+            LakeFormation.batch_revoke_permissions(
+                client,
+                accountid,
+                entries=[
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal': {'DataLakePrincipalIdentifier': 'EVERYONE'},
+                        'Resource': {
+                            'Database': {
+                                'CatalogId': accountid,
+                                'Name': database
+                            },
+                        },
+                        'Permissions': ['ALL'],
+                        'PermissionsWithGrantOption': [],
+                    },
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal': {'DataLakePrincipalIdentifier': 'EVERYONE'},
+                        'Resource': {
+                            'Table': {
+                                'CatalogId': accountid,
+                                'DatabaseName': database,
+                                'TableWildcard': {}
+                            },
+                        },
+                        'Permissions': ['ALL'],
+                        'PermissionsWithGrantOption': [],
+                    }
+                ],
+            )
+        except ClientError as e:
+            log.debug(
+                f'Could not revoke IAMAllowedGroups Super '
+                f'permission on dataset {database} due to {e}'
+            )
+
+    @staticmethod
     def batch_revoke_permissions(client, accountid, entries):
         """
         Batch revoke permissions to entries

@@ -57,6 +57,42 @@ class LFTagShareApproval:
         """
 
         principalIAMRoleARN = f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.lftag_share.principalIAMRoleName}"
+
+
+        # Revoke All IAMAllowed Permissions For All Cross Account LF Tag Shares
+        for db in self.tagged_datasets:
+            if db.AwsAccountId != self.target_environment.AwsAccountId:
+                source_lf_client = LakeFormation.create_lf_client(db.AwsAccountId, db.region)
+                LakeFormation.revoke_iamallowedgroups_super_permission_from_database(
+                    source_lf_client,
+                    db.AwsAccountId,
+                    db.GlueDatabaseName
+                )
+                time.sleep(1)
+        
+        for table in self.tagged_tables:
+            if table.AWSAccountId != self.target_environment.AwsAccountId:
+                source_lf_client = LakeFormation.create_lf_client(table.AWSAccountId, table.region)
+                LakeFormation.revoke_iamallowedgroups_super_permission_from_table(
+                    source_lf_client,
+                    table.AWSAccountId,
+                    table.GlueDatabaseName,
+                    table.GlueTableName,
+                )
+                time.sleep(1)
+
+        for col in self.tagged_columns:
+            if col.AWSAccountId != self.target_environment.AwsAccountId:
+                source_lf_client = LakeFormation.create_lf_client(col.AWSAccountId, col.region)
+                LakeFormation.revoke_iamallowedgroups_super_permission_from_table(
+                    source_lf_client,
+                    col.AWSAccountId,
+                    col.GlueDatabaseName,
+                    col.GlueTableName,
+                )
+                time.sleep(1)
+
+        # For Each Source Enforce LF Cross Account Version 3 and Grant LFTag Data Permissions
         for source_env in self.source_env_list:
             log.info("Updating LF Data Lake Settings If Not CrossAccountVersion 3")
             LakeFormation.check_or_update_data_lake_settings_v3(
@@ -78,7 +114,8 @@ class LFTagShareApproval:
             if source_env['account'] != self.target_environment.AwsAccountId:
                 Ram.accept_lftag_ram_invitation(source_env, self.target_environment, principalIAMRoleARN)
 
-        # For Each Dataset (Glue DB)
+
+        # For Each Dataset (Glue DB) Create Resource Link for Shared DB
         for db in self.tagged_datasets:
             if db.AwsAccountId != self.target_environment.AwsAccountId:
                 shared_db_name = (db.GlueDatabaseName + '_shared_' + self.lftag_share.lftagShareUri)[:254]
@@ -87,12 +124,12 @@ class LFTagShareApproval:
                 self.create_lftag_resource_link_db(db, self.target_environment, principalIAMRoleARN, shared_db_name)
                 log.info("RESOURCE LINK CREATED")
             
-        # For Each Data Table
+        # For Each Data Table Create Shared DB and Resource Link for Shared Table
         for table in self.tagged_tables:
             if table.AWSAccountId != self.target_environment.AwsAccountId:
                 shared_db_name = (table.GlueDatabaseName + '_shared_' + self.lftag_share.lftagShareUri)[:254]
                 data = self.build_lftag_share_data(self.target_environment, [principalIAMRoleARN], table, shared_db_name)
-                
+
                 # Create Shared DB if not Exist Already
                 log.info(
                     f'Creating shared db ...'
@@ -112,11 +149,12 @@ class LFTagShareApproval:
                 self.create_lftag_resource_link(data, principalIAMRoleARN)
                 log.info("RESOURCE LINK CREATED")
 
+        # For Each Data Table Column Create Shared DB and Resource Link for Shared Table
         for col in self.tagged_columns:
             if col.AWSAccountId != self.target_environment.AwsAccountId:
                 shared_db_name = (col.GlueDatabaseName + '_shared_' + self.lftag_share.lftagShareUri)[:254]
                 data = self.build_lftag_share_data(self.target_environment, [principalIAMRoleARN], col, shared_db_name)
-                
+
                 # Create Shared DB if not Exist Already
                 log.info(
                     f'Creating shared db ...'
