@@ -259,7 +259,6 @@ class VpcStack(pyNestedClass):
                 private_dns_enabled=True,
                 security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
             )
-        #TODO: test that changing private_dns_enabled=True does not affect previous settings. Needed for restricted nacl
         self.vpc.add_interface_endpoint(
             id='code_artifact_repo_endpoint',
             service=cast(
