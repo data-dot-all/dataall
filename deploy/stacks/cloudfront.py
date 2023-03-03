@@ -262,13 +262,17 @@ class CloudfrontDistro(pyNestedClass):
                 zone_name=custom_domain_name,
             )
 
-            certificate = acm.Certificate(
-                self,
-                'CustomDomainCertificate',
-                domain_name=custom_domain_name,
-                subject_alternative_names=[f'*.{custom_domain_name}'],
-                validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
-            )
+            if custom_domain.get('certificate_arn'):
+                certificate = acm.Certificate.from_certificate_arn(self, "CustomDomainCertificate",
+                                                                custom_domain.get('certificate_arn'))
+            else:
+                certificate = acm.Certificate(
+                    self,
+                    'CustomDomainCertificate',
+                    domain_name=custom_domain_name,
+                    subject_alternative_names=[f'*.{custom_domain_name}'],
+                    validation=acm.CertificateValidation.from_dns(hosted_zone=hosted_zone),
+                )
 
             frontend_alias_configuration = (
                 cloudfront.ViewerCertificate.from_acm_certificate(
