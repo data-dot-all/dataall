@@ -1,9 +1,12 @@
 import logging
 import uuid
 
-from botocore.exceptions import ClientError
 
+from botocore.exceptions import ClientError
+from .service_handlers import Worker
 from .sts import SessionHelper
+from ... import db
+from ...db import models
 
 log = logging.getLogger('aws:lakeformation')
 
@@ -11,6 +14,13 @@ log = logging.getLogger('aws:lakeformation')
 class LakeFormation:
     def __init__(self):
         pass
+
+    @staticmethod
+    def create_lf_client(accountid, region):
+        session = SessionHelper.remote_session(accountid)
+        lf_client = session.client('lakeformation', region_name=region)
+
+        return lf_client
 
     @staticmethod
     def describe_resource(resource_arn, accountid, region):
@@ -319,3 +329,375 @@ class LakeFormation:
                     f'due to: {e}'
                 )
                 raise e
+
+    @staticmethod
+    def create_lf_tag(accountid, lf_client, tag_name, tag_values):
+        try:
+            # aws_session = SessionHelper.remote_session(accountid)
+            # lakeformation = aws_session.client('lakeformation', region_name=region)
+
+            logging.info(f'Creating LF Tag {tag_name} ...')
+
+            lf_client.create_lf_tag(
+                CatalogId=accountid,
+                TagKey=tag_name,
+                TagValues=tag_values
+            )
+            logging.info(f'Successfully create LF Tag {tag_name}')
+
+        except ClientError as e:
+            logging.error(
+                f'Failed to create LF Tag  {tag_name} '
+                f'due to: {e}'
+            )
+            raise e
+
+
+    @staticmethod
+    def create_or_update_lf_tag(accountid, lf_client, tag_name, tag_values):
+        try:
+            logging.info(f'Creating LF Tag {tag_name} ...')
+            if type(tag_values) != list:
+                tag_values=[tag_values]
+
+            lf_client.create_lf_tag(
+                CatalogId=accountid,
+                TagKey=tag_name,
+                TagValues=tag_values
+            )
+            logging.info(f'Successfully create LF Tag {tag_name}')
+
+
+        except ClientError as e:
+            logging.info(f'LF Tag {tag_name} already exists, skippping create attempting update...')
+            try:
+                lf_client.update_lf_tag(
+                    CatalogId=accountid,
+                    TagKey=tag_name,
+                    TagValuesToAdd=tag_values
+                )
+            except ClientError as e:
+                logging.info(f'LF Tag {tag_name} already has value {tag_values}, skippping update...')
+                pass
+        return
+
+    @staticmethod
+    @Worker.handler('lakeformation.column.assign.lftags')
+    def update_column_lf_tags(engine, task: models.Task):
+        with engine.scoped_session() as session:
+            column: models.DatasetTableColumn = session.query(
+                models.DatasetTableColumn
+            ).get(task.targetUri)
+        
+        # Check if LF Tag Already Assigned to Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        lf_client = LakeFormation.create_lf_client(column.AWSAccountId, column.region)
+        table_tags = LakeFormation.get_table_lf_tags(
+            lf=lf_client, 
+            account=column.AWSAccountId,
+            db_name=column.GlueDatabaseName,
+            table_name=column.GlueTableName
+        )
+
+        # Create a Dictionary of Existing Tag Key Value Pairs on Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        existing_tags = {}
+        if table_tags.get('LFTagsOnColumns'):
+            for tag in table_tags.get('LFTagsOnColumns'):
+                if tag['Name'] == column.name:
+                    for col_tag in tag["LFTags"]:
+                        if col_tag["TagKey"] in existing_tags.keys():
+                            existing_tags[col_tag["TagKey"]].append(col_tag["TagValues"])
+                        else:
+                            existing_tags[col_tag["TagKey"]] = col_tag["TagValues"]
+        logging.info(f"Existing Tags: {existing_tags}")
+
+        if column.lfTagKey:
+            lftags_to_assign = {column.lfTagKey[i]: column.lfTagValue[i] for i in range(len(column.lfTagKey))}
+            logging.info(f"Tags To Assign: {lftags_to_assign}")
+
+            # For Each LF Tag To Assign Check if Already Assigned and Assign if Not
+            for tagkey in lftags_to_assign:
+                if tagkey in existing_tags.keys() and lftags_to_assign[tagkey] in existing_tags[tagkey]:
+                    logging.info("Tag Already Assigned, skipping...")
+                    existing_tags[tagkey].remove(lftags_to_assign[tagkey])
+                    if len(existing_tags[tagkey]) == 0:
+                        existing_tags.pop(tagkey)
+                else:
+                    logging.info(f"Assigning LF Tag {tagkey} with value {lftags_to_assign[tagkey]} to Table...")
+                    LakeFormation.create_or_update_lf_tag(
+                        accountid=column.AWSAccountId,
+                        lf_client=lf_client,
+                        tag_name=tagkey,
+                        tag_values=[lftags_to_assign[tagkey]]
+                    )
+                    # try:
+                    #     lf_client.create_lf_tag(
+                    #         CatalogId=column.AWSAccountId,
+                    #         TagKey=tagkey,
+                    #         TagValues=[lftags_to_assign[tagkey]]
+                    #     )
+                    #     print(f'Successfully create LF Tag {tagkey}')
+                    # except ClientError as e:
+                    #     print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+                    #     try:
+                    #         lf_client.update_lf_tag(
+                    #             CatalogId=column.AWSAccountId,
+                    #             TagKey=tagkey,
+                    #             TagValuesToAdd=[lftags_to_assign[tagkey]]
+                    #         )
+                    #     except ClientError as e:
+                    #         print(f'LF Tag {tagkey} already has value {lftags_to_assign[tagkey]}, skippping update...')
+                    #         pass
+
+                    # Add Tag to Resource
+                    lf_client.add_lf_tags_to_resource(
+                        CatalogId=column.AWSAccountId,
+                        Resource={
+                            'TableWithColumns': {
+                                'CatalogId': column.AWSAccountId,
+                                'DatabaseName': column.GlueDatabaseName,
+                                'Name': column.GlueTableName,
+                                'ColumnNames': [column.name]
+                            },
+                        },
+                        LFTags=[
+                            {
+                                'CatalogId': column.AWSAccountId,
+                                'TagKey': tagkey,
+                                'TagValues': [lftags_to_assign[tagkey]]
+                            },
+                        ]
+                    )
+
+        # Remove Existing Tags that are No Longer Assigned
+        logging.info(f"Existing Tags: {existing_tags}")
+        if len(existing_tags.keys()) > 0:
+            for key in existing_tags:
+                lf_client.remove_lf_tags_from_resource(
+                    CatalogId=column.AWSAccountId,
+                    Resource={
+                        'TableWithColumns': {
+                            'CatalogId': column.AWSAccountId,
+                            'DatabaseName': column.GlueDatabaseName,
+                            'Name': column.GlueTableName,
+                            'ColumnNames': [column.name]
+                        },
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': column.AWSAccountId,
+                            'TagKey': key,
+                            'TagValues': existing_tags[key]
+                        },
+                    ]
+                )
+        return True
+
+    @staticmethod
+    @Worker.handler('lakeformation.table.assign.lftags')
+    def update_table_lf_tags(engine, task: models.Task):
+        with engine.scoped_session() as session:
+            dataset_table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+                session, task.targetUri
+            )
+
+        # Check if LF Tag Already Assigned to Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        lf_client = LakeFormation.create_lf_client(dataset_table.AWSAccountId, dataset_table.region)
+        table_tags = LakeFormation.get_table_lf_tags(
+            lf=lf_client, 
+            account=dataset_table.AWSAccountId,
+            db_name=dataset_table.GlueDatabaseName,
+            table_name=dataset_table.GlueTableName
+        )
+
+        # Create a Dictionary of Existing Tag Key Value Pairs on Resource
+        logging.info(f'Check if LF Tag Already Assigned...')
+        existing_tags = {}
+        if table_tags.get('LFTagsOnTable'):
+            for tag in table_tags.get('LFTagsOnTable'):
+                if tag["TagKey"] in existing_tags.keys():
+                    existing_tags[tag["TagKey"]].append(tag["TagValues"])
+                else:
+                    existing_tags[tag["TagKey"]] = tag["TagValues"]
+        logging.info(f"Existing Tags: {existing_tags}")
+
+        if dataset_table.lfTagKey:
+            lftags_to_assign = {dataset_table.lfTagKey[i]: dataset_table.lfTagValue[i] for i in range(len(dataset_table.lfTagKey))}
+            logging.info(f"Tags To Assign: {lftags_to_assign}")
+
+            # For Each LF Tag To Assign Check if Already Assigned and Assign if Not
+            for tagkey in lftags_to_assign:
+                if tagkey in existing_tags.keys() and lftags_to_assign[tagkey] in existing_tags[tagkey]:
+                    logging.info("Tag Already Assigned, skipping...")
+                    existing_tags[tagkey].remove(lftags_to_assign[tagkey])
+                    if len(existing_tags[tagkey]) == 0:
+                        existing_tags.pop(tagkey)
+                else:
+                    logging.info(f"Assigning LF Tag {tagkey} with value {lftags_to_assign[tagkey]} to Table...")
+                    LakeFormation.create_or_update_lf_tag(
+                        accountid=dataset_table.AWSAccountId,
+                        lf_client=lf_client,
+                        tag_name=tagkey,
+                        tag_values=[lftags_to_assign[tagkey]]
+                    )
+                    # try:
+                    #     lf_client.create_lf_tag(
+                    #         CatalogId=dataset_table.AWSAccountId,
+                    #         TagKey=tagkey,
+                    #         TagValues=[lftags_to_assign[tagkey]]
+                    #     )
+                    #     print(f'Successfully create LF Tag {tagkey}')
+                    # except ClientError as e:
+                    #     print(f'LF Tag {tagkey} already exists, skippping create attempting update...')
+                    #     try:
+                    #         lf_client.update_lf_tag(
+                    #             CatalogId=dataset_table.AWSAccountId,
+                    #             TagKey=tagkey,
+                    #             TagValuesToAdd=[lftags_to_assign[tagkey]]
+                    #         )
+                    #     except ClientError as e:
+                    #         print(f'LF Tag {tagkey} already has value {lftags_to_assign[tagkey]}, skippping update...')
+                    #         pass
+
+                    # Add Tag to Resource
+                    logging.info(f'Adding LF Tag {tagkey} with Key {lftags_to_assign[tagkey]} to table {dataset_table.GlueTableName}...')
+                    response = lf_client.add_lf_tags_to_resource(
+                        CatalogId=dataset_table.AWSAccountId,
+                        Resource={
+                            'Table': {
+                                'CatalogId': dataset_table.AWSAccountId,
+                                'DatabaseName': dataset_table.GlueDatabaseName,
+                                'Name': dataset_table.GlueTableName,
+                            }
+                        },
+                        LFTags=[
+                            {
+                                'CatalogId': dataset_table.AWSAccountId,
+                                'TagKey': tagkey,
+                                'TagValues': [lftags_to_assign[tagkey]]
+                            },
+                        ]
+                    )
+                    logging.info(response)
+        
+        # Remove Existing Tags that are No Longer Assigned
+        logging.info(f"Existing Tags: {existing_tags}")
+        if len(existing_tags.keys()) > 0:
+            for key in existing_tags:
+                lf_client.remove_lf_tags_from_resource(
+                    CatalogId=dataset_table.AWSAccountId,
+                    Resource={
+                        'Table': {
+                            'CatalogId': dataset_table.AWSAccountId,
+                            'DatabaseName': dataset_table.GlueDatabaseName,
+                            'Name': dataset_table.GlueTableName,
+                        }
+                    },
+                    LFTags=[
+                        {
+                            'CatalogId': dataset_table.AWSAccountId,
+                            'TagKey': key,
+                            'TagValues': existing_tags[key]
+                        },
+                    ]
+                )
+
+        return True
+
+
+    @staticmethod
+    def get_table_lf_tags(lf, account, db_name, table_name):
+        table_tags = lf.get_resource_lf_tags(
+            CatalogId=account,
+            Resource={
+                'Table': {
+                    'CatalogId': account,
+                    'DatabaseName': db_name,
+                    'Name': table_name
+                }
+            },
+            ShowAssignedLFTags=True
+        )
+        return table_tags
+
+    @staticmethod
+    def get_column_lf_tags(lf, account, db_name, table_name, column_name):
+        table_tags = lf.get_resource_lf_tags(
+            CatalogId=account,
+            Resource={
+                'Table': {
+                    'CatalogId': account,
+                    'DatabaseName': db_name,
+                    'Name': table_name
+                }
+            },
+            ShowAssignedLFTags=True
+        )
+        return table_tags
+
+
+    @staticmethod
+    def grant_lftag_data_permissions_to_principal(source_acct, source_region, principal, tag_name, tag_values, permissionsWithGrant=False):
+        try:
+            logging.info(f'Adding LF Tag {tag_name} Permissions for Principal {principal} in Account {source_acct}...')
+            lf_client=LakeFormation.create_lf_client(accountid=source_acct, region=source_region)
+
+            response = lf_client.batch_grant_permissions(
+                CatalogId=source_acct,
+                Entries=[
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal':{'DataLakePrincipalIdentifier': principal},
+                        'Resource':{
+                            'LFTagPolicy': {
+                                'CatalogId': source_acct,
+                                'ResourceType': 'DATABASE',
+                                'Expression': [{'TagKey': tag_name, 'TagValues': tag_values}]
+                            }
+                        },
+                        'Permissions': ['DESCRIBE'],
+                        'PermissionsWithGrantOption': ['DESCRIBE'] if permissionsWithGrant else []
+                    },
+                    {
+                        'Id': str(uuid.uuid4()),
+                        'Principal':{'DataLakePrincipalIdentifier': principal},
+                        'Resource':{
+                            'LFTagPolicy': {
+                                'CatalogId': source_acct,
+                                'ResourceType': 'TABLE',
+                                'Expression': [{'TagKey': tag_name, 'TagValues': tag_values}]
+                            }
+                        },
+                        'Permissions': ['SELECT', 'DESCRIBE'],
+                        'PermissionsWithGrantOption': ['SELECT', 'DESCRIBE'] if permissionsWithGrant else []
+                    }
+                ]
+            )
+            logging.info(f'Successfully grant LF Tag Permissions to {principal}')
+
+        except ClientError as e:
+            logging.error(
+                f'Failed to grant LF Tag Permissions for {principal} '
+                f'due to: {e}'
+            )
+            raise e
+        return True
+
+
+    @staticmethod
+    def grant_lftag_permissions_to_external_acct(source_acct, source_region, principal, tag_name, tag_values, permissions):
+        lf_client = LakeFormation.create_lf_client(source_acct, source_region)
+        lf_client.grant_permissions(
+                    Principal={'DataLakePrincipalIdentifier': principal},
+                    Resource={
+                        'LFTag': {
+                            'CatalogId': source_acct,
+                            'TagKey': tag_name,
+                            'TagValues': tag_values
+                        }
+                    },
+                    Permissions=permissions,
+                )
+        return True

@@ -2,6 +2,7 @@ from sqlalchemy import Column, String
 
 from .. import Base
 from .. import Resource, utils
+from sqlalchemy.dialects import postgresql
 
 
 class DatasetTableColumn(Resource, Base):
@@ -18,3 +19,5 @@ class DatasetTableColumn(Resource, Base):
     columnType = Column(
         String, default='column'
     )  # can be either "column" or "partition"
+    lfTagKey = Column(postgresql.ARRAY(String))
+    lfTagValue = Column(postgresql.ARRAY(String))

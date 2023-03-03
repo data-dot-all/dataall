@@ -116,6 +116,7 @@ listEnvironmentInvitedGroups = gql.QueryField(
     resolver=list_environment_invited_groups,
 )
 
+
 listEnvironmentGroups = gql.QueryField(
     name='listEnvironmentGroups',
     type=gql.Ref('GroupSearchResult'),

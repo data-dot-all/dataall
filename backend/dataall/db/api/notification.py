@@ -30,6 +30,23 @@ class Notification:
         return notifications
 
     @staticmethod
+    def notify_lftag_share_object_submission(
+        session, username: str, lftag: models.LFTag,share: models.LFTagShareObject
+    ):
+        notifications = []
+        notifications.append(
+            Notification.create(
+                session=session,
+                username=lftag.owner,
+                notification_type=models.NotificationType.SHARE_OBJECT_SUBMITTED,
+                target_uri=f'{share.lftagShareUri}|{lftag.LFTagKey}',
+                message=f'User {username} submitted share request for LFTag {lftag.LFTagKey}',
+            )
+        )
+        session.add_all(notifications)
+        return notifications
+
+    @staticmethod
     def get_dataset_stewards(session, dataset):
         stewards = list()
         stewards.append(dataset.SamlAdminGroupName)
@@ -56,6 +73,25 @@ class Notification:
             )
             session.add_all(notifications)
         return notifications
+    
+    @staticmethod
+    def notify_lftag_share_object_approval(
+        session, username: str, lftag: models.LFTag, share: models.ShareObject
+    ):
+        notifications = []
+        targeted_users = [share.owner, lftag.owner]
+        for user in targeted_users:
+            notifications.append(
+                Notification.create(
+                    session=session,
+                    username=user,
+                    notification_type=models.NotificationType.SHARE_OBJECT_APPROVED,
+                    target_uri=f'{share.lftagShareUri}|{lftag.LFTagKey}',
+                    message=f'User {username} approved share request for LFTag {lftag.LFTagKey}',
+                )
+            )
+            session.add_all(notifications)
+        return notifications
 
     @staticmethod
     def notify_share_object_rejection(
@@ -73,6 +109,25 @@ class Notification:
                     notification_type=models.NotificationType.SHARE_OBJECT_REJECTED,
                     target_uri=f'{share.shareUri}|{dataset.datasetUri}',
                     message=f'User {username} approved share request for dataset {dataset.label}',
+                )
+            )
+            session.add_all(notifications)
+        return notifications
+
+    @staticmethod
+    def notify_lftag_share_object_approval(
+        session, username: str, lftag: models.LFTag, share: models.ShareObject
+    ):
+        notifications = []
+        targeted_users = [share.owner, lftag.owner]
+        for user in targeted_users:
+            notifications.append(
+                Notification.create(
+                    session=session,
+                    username=user,
+                    notification_type=models.NotificationType.SHARE_OBJECT_REJECTED,
+                    target_uri=f'{share.lftagShareUri}|{lftag.LFTagKey}',
+                    message=f'User {username} approved share request for LFTag {lftag.LFTagKey}',
                 )
             )
             session.add_all(notifications)

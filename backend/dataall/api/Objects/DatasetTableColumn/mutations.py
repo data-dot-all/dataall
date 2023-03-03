@@ -18,3 +18,13 @@ updateDatasetTableColumn = gql.MutationField(
     type=gql.Ref('DatasetTableColumn'),
     resolver=update_table_column,
 )
+
+updateTableColumnLFTag = gql.MutationField(
+    name='updateTableColumnLFTag',
+    args=[
+        gql.Argument(name='columnUri', type=gql.String),
+        gql.Argument(name='input', type=gql.Ref('DatasetTableColumnLFTagInput')),
+    ],
+    type=gql.Ref('DatasetTableColumn'),
+    resolver=update_table_column_lf_tags,
+)

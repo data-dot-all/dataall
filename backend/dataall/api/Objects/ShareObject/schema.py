@@ -14,6 +14,7 @@ ShareItem = gql.ObjectType(
         gql.Field(name='shareItemUri', type=gql.ID),
         gql.Field('itemUri', gql.String),
         gql.Field(name='status', type=gql.Ref('ShareItemStatus')),
+        gql.Field(name='status', type=gql.Ref('ShareItemStatus')),
         gql.Field(name='action', type=gql.String),
         gql.Field('itemType', ShareableType.toGraphQLEnum()),
         gql.Field('itemName', gql.String),
@@ -150,6 +151,37 @@ ShareObject = gql.ObjectType(
     ],
 )
 
+LFTagShareObject = gql.ObjectType(
+    name='LFTagShareObject',
+    fields=[
+        gql.Field(name='lftagShareUri', type=gql.ID),
+        gql.Field(name='status', type=gql.Ref('ShareObjectStatus')),
+        gql.Field(name='owner', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='deleted', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='lfTagKey', type=gql.String),
+        gql.Field(name='lfTagValue', type=gql.String),
+        gql.Field(
+            name='principal', resolver=resolve_principal, type=gql.Ref('Principal')
+        ),
+        gql.Field(
+            name='environment',
+            resolver=resolve_environment,
+            type=gql.Ref('Environment'),
+        ),
+        gql.Field(
+            name='group',
+            resolver=resolve_group,
+            type=gql.String,
+        ),
+        gql.Field(
+            name='userRoleForShareObject',
+            type=gql.Ref('ShareObjectPermission'),
+            resolver=resolve_lftag_user_role,
+        ),
+    ],
+)
 
 ShareSearchResult = gql.ObjectType(
     name='ShareSearchResult',
@@ -163,5 +195,20 @@ ShareSearchResult = gql.ObjectType(
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('ShareObject'))),
+    ],
+)
+
+LFTagShareSearchResult = gql.ObjectType(
+    name='LFTagShareSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='pageSize', type=gql.Integer),
+        gql.Field(name='nextPage', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='previousPage', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('LFTagShareObject'))),
     ],
 )

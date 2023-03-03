@@ -23,6 +23,8 @@ const listDatasetTableColumns = ({ tableUri, filter }) => ({
           description
           typeName
           columnType
+          lfTagKey
+          lfTagValue
           terms {
             count
             page

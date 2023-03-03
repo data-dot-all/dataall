@@ -49,6 +49,28 @@ def create_share_object(
             check_perm=True,
         )
 
+def create_lf_tag_share(
+    context: Context,
+    source,
+    lfTagKey: str = None,
+    lfTagValue: str = None,
+    input: dict = None,
+):
+    with context.engine.scoped_session() as session:
+        environment: models.Environment = db.api.Environment.get_environment_by_uri(
+            session, input['environmentUri']
+        )
+        input['environment'] = environment
+        input["lfTagKey"] = lfTagKey
+        input["lfTagValue"] = lfTagValue
+        return db.api.ShareObject.create_lf_tag_share(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environment.environmentUri,
+            data=input,
+            check_perm=True,
+        )
 
 def submit_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
@@ -61,6 +83,16 @@ def submit_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
+def submit_lf_tag_share_object(context: Context, source, lftagShareUri: str = None):
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.submit_lf_tag_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=lftagShareUri,
+            data=None,
+            check_perm=False,
+        )
 
 def approve_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
@@ -84,9 +116,35 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 
     return share
 
+def approve_lf_tag_share_object(context: Context, source, lftagShareUri: str = None):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.approve_lf_tag_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=lftagShareUri,
+            data=None,
+            check_perm=True,
+        )
+
+        # Create task for lake formation updates
+        approve_share_task: models.Task = models.Task(
+            action='ecs.lftag.share.approve',
+            targetUri=lftagShareUri,
+            payload={'environmentUri': share.environmentUri},
+        )
+        session.add(approve_share_task)
+
+    # call cdk to update bucket policy of the dataset for folder shares
+    # stack_helper.deploy_stack(context, share.datasetUri)
+
+    Worker.queue(engine=context.engine, task_ids=[approve_share_task.taskUri])
+
+    return share
 
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
+        return db.api.ShareObject.reject_share_object(
         return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
@@ -111,20 +169,63 @@ def revoke_items_share_object(context: Context, source, input):
         revoke_share_task: models.Task = models.Task(
             action='ecs.share.revoke',
             targetUri=input.get("shareUri"),
+
+
+def revoke_items_share_object(context: Context, source, input):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.revoke_items_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=input.get("shareUri"),
+            data=input,
+            check_perm=True,
+        )
+
+        revoke_share_task: models.Task = models.Task(
+            action='ecs.share.revoke',
+            targetUri=input.get("shareUri"),
             payload={'environmentUri': share.environmentUri},
         )
         session.add(revoke_share_task)
+        session.add(revoke_share_task)
 
+    Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
     Worker.queue(engine=context.engine, task_ids=[revoke_share_task.taskUri])
 
     return share
 
+def reject_lf_tag_share_object(context: Context, source, lftagShareUri: str = None):
+    with context.engine.scoped_session() as session:
+        share = db.api.ShareObject.reject_lf_tag_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=lftagShareUri,
+            data=None,
+            check_perm=True,
+        )
+
+        # Create task for lake formation updates
+        reject_share_task: models.Task = models.Task(
+            action='ecs.lftag.share.reject',
+            targetUri=lftagShareUri,
+            payload={'environmentUri': share.environmentUri},
+        )
+        session.add(reject_share_task)
+
+    # stack_helper.deploy_stack(context, share.datasetUri)
+
+    Worker.queue(engine=context.engine, task_ids=[reject_share_task.taskUri])
+
+    return share
 
 def delete_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         share = db.api.ShareObject.get_share_by_uri(session, shareUri)
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
+
 
         db.api.ShareObject.delete_share_object(
             session=session,
@@ -134,6 +235,17 @@ def delete_share_object(context: Context, source, shareUri: str = None):
             check_perm=True,
         )
 
+    return True
+
+def delete_lf_tag_share_object(context: Context, source, lftagShareUri: str = None):
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.delete_lf_tag_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=lftagShareUri,
+            check_perm=True,
+        )
     return True
 
 
@@ -216,6 +328,16 @@ def get_share_object(context, source, shareUri: str = None):
             check_perm=True,
         )
 
+def get_lf_tag_share_object(context, source, lftagShareUri: str = None):
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.get_lf_tag_share_object(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=lftagShareUri,
+            data=None,
+            check_perm=True,
+        )
 
 def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
     if not source:
@@ -244,6 +366,20 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
         else:
             return ShareObjectPermission.NoPermission.value
 
+def resolve_lftag_user_role(context: Context, source: models.ShareObject, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        isAdmin = db.api.TenantPolicy.is_tenant_admin(context.groups)
+        if isAdmin:
+            return ShareObjectPermission.Approvers.value
+        elif (
+            source.owner == context.username
+            or source.principalId in context.groups
+        ):
+            return ShareObjectPermission.Requesters.value
+        else:
+            return ShareObjectPermission.NoPermission.value
 
 def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
     if not source:
@@ -368,6 +504,35 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
         filter = {}
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.list_user_sent_share_requests(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=None,
+            data=filter,
+            check_perm=None,
+        )
+
+def list_lftag_shares_in_my_outbox(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+
+    with context.engine.scoped_session() as session:
+        log.info(f"GROUP: {context.groups}")
+        log.info(f"OWNER: {context.username}")
+        return db.api.ShareObject.list_user_sent_lftag_share_requests(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=None,
+            data=filter,
+            check_perm=None,
+        )
+
+def list_lftag_shares_in_my_inbox(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return db.api.ShareObject.list_user_received_lftag_share_requests(
             session=session,
             username=context.username,
             groups=context.groups,

@@ -2,6 +2,7 @@ import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import ObjectBrief from '../../components/ObjectBrief';
 import ObjectMetadata from '../../components/ObjectMetadata';
+import LFTagBrief from '../../components/LFTagBrief';
 
 const TableOverview = (props) => {
   const { table, ...other } = props;
@@ -33,6 +34,14 @@ const TableOverview = (props) => {
           admins={table.dataset.SamlAdminGroupName || '-'}
           created={table.created}
           status={table.LastGlueTableStatus}
+        />
+      </Grid>
+      <Grid item lg={12} xl={6} xs={12}>
+        <LFTagBrief
+          title="LF-Tags"
+          lftagkeys={table.lfTagKey}
+          lftagvalues={table.lfTagValue}
+          objectType="table"
         />
       </Grid>
     </Grid>

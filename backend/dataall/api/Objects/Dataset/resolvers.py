@@ -4,6 +4,8 @@ import logging
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
+from sqlalchemy import and_, or_
+
 from ..Stack import stack_helper
 from .... import db
 from ....api.constants import (
@@ -116,6 +118,21 @@ def resolve_user_role(context: Context, source: models.Dataset, **kwargs):
                 share.owner == context.username or share.principalId in context.groups
             ):
                 return DatasetRole.Shared.value
+            else:
+                lftagshare = (
+                    session.query(models.LFTagShareObject)
+                    .filter(
+                        and_(
+                            models.LFTagShareObject.lfTagKey.in_(source.lfTagKey),
+                            models.LFTagShareObject.lfTagValue.in_(source.lfTagValue)
+                        )
+                    )
+                    .first()
+                )
+                if lftagshare and (
+                    lftagshare.owner == context.username or lftagshare.principalId in context.groups
+                ):
+                    return DatasetRole.Shared.value
     return DatasetRole.NoPermission.value
 
 

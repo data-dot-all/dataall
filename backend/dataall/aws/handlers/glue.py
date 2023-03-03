@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 
 from .service_handlers import Worker
 from .sts import SessionHelper
+from .lakeformation import LakeFormation
 from ... import db
 from ...db import models
 
@@ -15,15 +16,15 @@ class Glue:
         pass
 
     @staticmethod
-    def create_database(accountid, database, region, location):
+    def create_database(accountid, database, region, location, principalIAMRoleARN=None):
         try:
             existing_database = Glue.database_exists(
-                accountid=accountid, database=database, region=region
+                accountid=accountid, database=database, region=region, role_arn=principalIAMRoleARN
             )
             if existing_database:
                 glue_database_created = True
             else:
-                Glue._create_glue_database(accountid, database, region, location)
+                Glue._create_glue_database(accountid, database, region, location, role_arn=principalIAMRoleARN)
                 glue_database_created = True
             return glue_database_created
         except ClientError as e:
@@ -33,9 +34,11 @@ class Glue:
             raise e
 
     @staticmethod
-    def _create_glue_database(accountid, database, region, location):
+    def _create_glue_database(accountid, database, region, location, role_arn=None):
         try:
             aws_session = SessionHelper.remote_session(accountid=accountid)
+            if role_arn:
+                aws_session = SessionHelper.get_session(base_session=aws_session, role_arn=role_arn)
             glue = aws_session.client('glue', region_name=region)
             db_input = {
                 'Name': database,
@@ -64,6 +67,8 @@ class Glue:
         database = data.get('database', 'UnknownDatabaseName')
         region = data.get('region', 'eu-west-1')
         session = SessionHelper.remote_session(accountid)
+        if  data.get('role_arn'):
+            session = SessionHelper.get_session(base_session=session, role_arn=data.get('role_arn'))
         try:
             glue_client = session.client('glue', region_name=region)
             glue_client.get_database(CatalogId=data['accountid'], Name=database)
@@ -245,11 +250,14 @@ class Glue:
         database = data['database']
         resource_link_name = data['resource_link_name']
         resource_link_input = data['resource_link_input']
+        principalRoleArn = data.get("principalRoleArn", None)
         log.info(
             f'Creating ResourceLink {resource_link_name} in database {accountid}://{database}'
         )
         try:
             session = SessionHelper.remote_session(accountid=accountid)
+            if principalRoleArn:
+                session = SessionHelper.get_session(base_session=session, role_arn=principalRoleArn)
             glue = session.client('glue', region_name=region)
             resource_link = Glue.table_exists(
                 accountid=accountid,
@@ -271,6 +279,57 @@ class Glue:
                     f'Successfully created ResourceLink {resource_link_name} in database {accountid}://{database}'
                 )
             return resource_link
+        except ClientError as e:
+            log.error(
+                f'Could not create ResourceLink {resource_link_name} '
+                f'in database {accountid}://{database} '
+                f'due to: {e}'
+            )
+            raise e
+
+    @staticmethod
+    def create_resource_link_db(**data):
+        accountid = data['accountid']
+        region = data['region']
+        database = data['database']
+        resource_link_name = data['resource_link_name']
+        resource_link_input = data['resource_link_input']
+        principalRoleArn = data.get("principalRoleArn", None)
+        log.info(
+            f'Creating Database ResourceLink {resource_link_name} in  {accountid}'
+        )
+        try:
+            session = SessionHelper.remote_session(accountid=accountid)
+            if principalRoleArn:
+                session = SessionHelper.get_session(base_session=session, role_arn=principalRoleArn)
+            
+            glue = session.client('glue', region_name=region)
+            resource_link = Glue.database_exists(
+                accountid=accountid,
+                region=region,
+                database=database,
+            )
+            if resource_link:        
+                log.info(
+                    f'Database ResourceLink {resource_link_name} already exists in account {accountid}'
+                )
+            else:
+                resource_link = glue.create_database(
+                    CatalogId=accountid,
+                    DatabaseInput=resource_link_input,
+                )
+                log.info(
+                    f'Successfully created ResourceLink {resource_link_name} in database {accountid}'
+                )
+        except ClientError as e:
+            log.error(
+                f'Could not create ResourceLink {resource_link_name} '
+                f'in database {accountid}://{database} '
+                f'due to: {e}'
+            )
+            return resource_link
+
+
         except ClientError as e:
             log.error(
                 f'Could not create ResourceLink {resource_link_name} '
@@ -333,6 +392,8 @@ class Glue:
         log.info(f'Deleting database {accountid}://{database} ...')
         try:
             session = SessionHelper.remote_session(accountid=accountid)
+            if data.get('role_arn'):
+                session = SessionHelper.get_session(base_session=session, role_arn=data.get('role_arn'))
             glue = session.client('glue', region_name=region)
             if Glue.database_exists(
                 accountid=accountid,
@@ -345,6 +406,32 @@ class Glue:
             log.error(
                 f'Could not delete database {database} '
                 f'in account {accountid} '
+                f'due to: {e}'
+            )
+            raise e
+
+    @staticmethod
+    def has_tables(**data):
+        accountid = data['accountid']
+        region = data['region']
+        database = data['database']
+        
+        log.info(f'Getting tables from database {database}...')
+        try:
+            session = SessionHelper.remote_session(accountid=accountid)
+            if data.get('role_arn'):
+                session = SessionHelper.get_session(base_session=session, role_arn=data.get('role_arn'))
+            glue = session.client('glue', region_name=region)
+
+            resp = glue.get_tables(CatalogId=accountid,DatabaseName=database)
+
+            if len(resp.get('TableList')) > 0:
+                return True
+            else:
+                return False
+        except ClientError as e:
+            log.error(
+                f'Could not get tables from {accountid}://{database} '
                 f'due to: {e}'
             )
             raise e
@@ -363,6 +450,8 @@ class Glue:
         log.info(f'Batch deleting tables: {tables}')
         try:
             session = SessionHelper.remote_session(accountid=accountid)
+            if data.get('role_arn'):
+                session = SessionHelper.get_session(base_session=session, role_arn=data.get('role_arn'))
             glue = session.client('glue', region_name=region)
             if Glue.database_exists(
                 accountid=accountid,
@@ -628,12 +717,19 @@ class Glue:
             )
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
             glue_client = aws.client('glue', region_name=dataset_table.region)
+            lf_client = aws.client('lakeformation', region_name=dataset_table.region)
             glue_table = {}
             try:
                 glue_table = glue_client.get_table(
                     CatalogId=dataset_table.AWSAccountId,
                     DatabaseName=dataset_table.GlueDatabaseName,
                     Name=dataset_table.name,
+                )
+                table_tags = LakeFormation.get_table_lf_tags(
+                    lf=lf_client, 
+                    account=dataset_table.AWSAccountId,
+                    db_name=dataset_table.GlueDatabaseName,
+                    table_name=dataset_table.name
                 )
             except glue_client.exceptions.ClientError as e:
                 log.error(
@@ -643,7 +739,7 @@ class Glue:
                     f'{e}'
                 )
             db.api.DatasetTable.sync_table_columns(
-                session, dataset_table, glue_table['Table']
+                session, dataset_table, glue_table['Table'], table_tags
             )
         return True
 

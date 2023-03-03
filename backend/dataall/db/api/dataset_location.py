@@ -2,12 +2,24 @@ import logging
 from typing import List
 
 from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_
 
 from . import has_tenant_perm, has_resource_perm, Glossary
 from .. import models, api, paginate, permissions, exceptions
 from .dataset import Dataset
+from ..models.Enums import ShareItemStatus
 
 logger = logging.getLogger(__name__)
+
+
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_Failed.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 
 class DatasetStorageLocation:
@@ -153,7 +165,7 @@ class DatasetStorageLocation:
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == location.locationUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states)
+                    models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
                 )
             )
             .first()

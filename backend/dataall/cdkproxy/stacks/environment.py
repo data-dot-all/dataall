@@ -17,6 +17,7 @@ from aws_cdk import (
     aws_kms as kms,
     aws_ec2 as ec2,
     aws_sagemaker as sagemaker,
+    aws_lakeformation as lakeformation,
     aws_athena,
     RemovalPolicy,
     Stack,
@@ -32,6 +33,7 @@ from .policies.data_policy import DataPolicy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
+from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sagemaker_studio import (
     SagemakerStudio,
@@ -153,6 +155,14 @@ class EnvironmentSetup(Stack):
                 )
                 .all()
             )
+
+    # @staticmethod
+    # def list_lf_tags(engine):
+    #     with engine.scoped_session() as session:
+    #         lf_tags = db.api.LFTag.list_all_lf_tags(session)
+
+    #     lftag_dict = {lftag.LFTagKey : lftag.LFTagValues for lftag in lf_tags}
+    #     return lftag_dict
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
@@ -281,6 +291,9 @@ class EnvironmentSetup(Stack):
             f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
         )
 
+        # Get LF Tags To Create
+        # lf_tags_dict = self.list_lf_tags(self.engine)
+
         # Lakeformation default settings
         entry_point = str(
             pathlib.PosixPath(
@@ -392,7 +405,9 @@ class EnvironmentSetup(Stack):
             properties={
                 'DataLakeAdmins': [
                     f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
-                ]
+                ],
+                # 'LFTags': lf_tags_dict,
+                # 'EnvAdminRole': self._environment.EnvironmentDefaultIAMRoleArn
             },
         )
 

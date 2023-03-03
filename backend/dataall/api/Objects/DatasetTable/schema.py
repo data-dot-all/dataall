@@ -39,6 +39,8 @@ DatasetTable = gql.ObjectType(
         gql.Field(name='LastGlueTableStatus', type=gql.String),
         gql.Field(name='S3Prefix', type=gql.String),
         gql.Field(name='GlueTableConfig', type=gql.String),
+        gql.Field('lfTagKey', gql.ArrayType(gql.String)),
+        gql.Field('lfTagValue', gql.ArrayType(gql.String)),
         gql.Field(
             name='GlueTableProperties',
             type=gql.String,

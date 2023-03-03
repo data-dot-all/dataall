@@ -15,13 +15,21 @@ from . import (
 )
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
-from ..models.Enums import Language, ConfidentialityClassification
+from ..models.Enums import Language, ConfidentialityClassification, ShareObjectStatus, ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 
 logger = logging.getLogger(__name__)
+
+SHARE_ITEM_SHARED_STATES = [
+    ShareItemStatus.Share_Succeeded.value,
+    ShareItemStatus.Share_In_Progress.value,
+    ShareItemStatus.Revoke_In_Progress.value,
+    ShareItemStatus.Revoke_Approved.value,
+    ShareItemStatus.Revoke_Failed.value,
+]
 
 
 class Dataset:
@@ -86,12 +94,22 @@ class Dataset:
             topics=data.get('topics', []),
             businessOwnerEmail=data.get('businessOwnerEmail'),
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
+            lfTagKey=data.get("lfTagKey"),
+            lfTagValue=data.get("lfTagValue"),
             stewards=data.get('stewards')
             if data.get('stewards')
             else data['SamlAdminGroupName'],
         )
         session.add(dataset)
         session.commit()
+
+        Dataset._add_lf_tag_permission_for_dataset(
+            session=session,
+            env=environment,
+            owner=data['SamlAdminGroupName'],
+            tagkeys=data.get("lfTagKey"),
+            tagvals=data.get("lfTagValue")
+        )
 
         Dataset._set_dataset_aws_resources(dataset, data, environment)
 
@@ -129,6 +147,21 @@ class Dataset:
                 resource_type=models.Dataset.__name__,
             )
         return dataset
+
+    @staticmethod
+    def _add_lf_tag_permission_for_dataset(session, env, owner, tagkeys, tagvals):
+        if tagkeys:
+            for i in range(0, len(tagkeys)):
+                lf_tag_permission = models.LFTagPermissions(
+                    SamlGroupName=owner,
+                    environmentUri=env.environmentUri,
+                    environmentLabel=env.label,
+                    awsAccount=env.AwsAccountId,
+                    tagKey=tagkeys[i],
+                    tagValues=tagvals[i]
+                )
+                session.add(lf_tag_permission)
+        return True
 
     @staticmethod
     def _set_dataset_aws_resources(dataset: models.Dataset, data, environment):
@@ -227,6 +260,13 @@ class Dataset:
                 models.ShareObjectItem,
                 models.ShareObjectItem.shareUri == models.ShareObject.shareUri
             )
+            .outerjoin(
+                models.LFTagShareObject,
+                and_(
+                    models.Dataset.lfTagKey.contains(f'{{{models.LFTagShareObject.lfTagKey}}}'),
+                    models.Dataset.lfTagValue.contains(f'{{{models.LFTagShareObject.lfTagValue}}}')
+                )
+            )
             .filter(
                 or_(
                     models.Dataset.owner == username,
@@ -234,12 +274,20 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES),
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        models.ShareObjectItem.status.in_(SHARE_ITEM_SHARED_STATES)
                     ),
+                    and_(
+                        models.LFTagShareObject.principalId.in_(groups),
+                        models.LFTagShareObject.status == 'Approved'
+                    ),
+                    and_(
+                        models.LFTagShareObject.owner == username,
+                        models.LFTagShareObject.status == 'Approved'
+                    )
                 )
             )
         )

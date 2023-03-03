@@ -4,18 +4,152 @@ import os
 from .share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
 from .share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 from .share_processors.s3_process_share import ProcessS3Share
+from .lf_tag_cross_account.approve_share import (
+    LFTagShareApproval
+)
+from .lf_tag_cross_account.revoke_share import (
+    LFTagShareRevoke
+)
 
+from ...aws.handlers.glue import Glue
+from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.ram import Ram
 from ...aws.handlers.sts import SessionHelper
 from ...db import api, models, Engine
 from ...utils import Parameter
-
+from botocore.exceptions import ClientError
+import uuid 
 log = logging.getLogger(__name__)
+
+REFRESH_SHARES_STATES = [
+    models.ShareObjectStatus.Approved.value,
+    models.ShareObjectStatus.Revoked.value,
+]
 
 
 class DataSharingService:
     def __init__(self):
         pass
+
+    @classmethod
+    def reject_lftag_share(cls, engine: Engine, lftag_share_uri: str):
+        """
+        1) Retrieves share related model objects
+        2) Build shared database name (unique db per team for a dataset)
+        3) Grants pivot role ALL permissions on dataset db and its tables
+        4) Calls sharing revoke service
+
+        * Delete Resource Link in Target Consumer Account (as Principal Consumer IAM Role)
+        * If Table Share Delete Shared DB as well if no other tables exist
+        * Delete External Shares from Producer Accounts to Target Consumer IAM Role
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns
+        -------
+        True if reject succeeds
+        """
+        with engine.scoped_session() as session:
+            (
+                source_env_list,
+                tagged_datasets,
+                tagged_tables,
+                tagged_columns,
+                lftag_share,
+                target_environment
+            ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Rejected')
+            Share_SM = api.ShareObjectSM(lftag_share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+            
+            # revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+            # (
+            #     revoked_tables,
+            #     revoked_folders
+            # ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
+            # new_state = revoked_item_SM.run_transition(models.ShareObjectActions.Start.value)
+            # revoked_item_SM.update_state(session, share_uri, new_state)
+
+        revoked_lftag_share_succeed = LFTagShareRevoke(
+            session,
+            source_env_list,
+            tagged_datasets,
+            tagged_tables,
+            tagged_columns,
+            lftag_share,
+            target_environment
+        ).revoke_share()
+        log.info(f'revoking tables succeeded = {revoked_lftag_share_succeed}')
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+        Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+        return revoked_lftag_share_succeed
+
+
+    @classmethod
+    def approve_lftag_share(cls, engine: Engine, lftag_share_uri: str) -> bool:
+        """
+        1) Create LF Tag in Consumer Account (if not exist already)
+        2) Grant Consumer LF Tag Permissions (if not already)
+        2) Retrieve All Data Objects with LF Tag Key Value
+        3) For Each Data Object (i.e. DB, Table, Column)
+
+            1) Grant LF-tag permissions to the consumer account. --> FROM PRODUCER ACCT
+            2) Grant data permissions to the consumer account.  --> FROM PRODUCER ACCT
+            3) Optionally, revoke permissions for IAMAllowedPrincipals on the database, tables, and columns.
+            4) Create a resource link to the shared table. 
+            5) Assign LF-Tag to the target database.
+
+        Parameters
+        ----------
+        engine : db.engine
+        lftag_share_uri : lftag share uri
+
+        Returns
+        -------
+        True if approve succeeds
+        """
+        with engine.scoped_session() as session:
+            
+            """
+            Need
+            1 - Set of All Source Environments with Tag
+            2 - All Datasets (DBs) Tagged with Tag Key, Value
+            3 - All Tables Tagged with Tag Key, Value
+            4 - All Columns Tagged with Tag Key, Value
+            5 - Target Environment
+            """
+            (
+                source_env_list,
+                tagged_datasets,
+                tagged_tables,
+                tagged_columns,
+                lftag_share,
+                target_environment
+            ) = api.ShareObject.get_lftag_share_data(session, lftag_share_uri, 'Approved')
+
+            Share_SM = api.ShareObjectSM(lftag_share.status)
+            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+
+
+        approved_lftag_share_succeed = LFTagShareApproval(
+            session,
+            source_env_list,
+            tagged_datasets,
+            tagged_tables,
+            tagged_columns,
+            lftag_share,
+            target_environment
+        ).approve_share()
+
+        log.info(f'sharing tables succeeded = {approved_lftag_share_succeed}')
+        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+        Share_SM.update_lftag_state(session, lftag_share, new_share_state)
+        return approved_lftag_share_succeed if approved_lftag_share_succeed else False
+
 
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
@@ -259,7 +393,7 @@ class DataSharingService:
             environments = session.query(models.Environment).all()
             shares = (
                 session.query(models.ShareObject)
-                .filter(models.ShareObject.status.in_(share_object_refreshable_states))
+                .filter(models.ShareObject.status.in_(REFRESH_SHARES_STATES))
                 .all()
             )
 

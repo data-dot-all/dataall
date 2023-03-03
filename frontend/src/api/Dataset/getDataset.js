@@ -25,6 +25,8 @@ const getDataset = (datasetUri) => ({
         stewards
         IAMDatasetAdminRoleArn
         businessOwnerDelegationEmails
+        lfTagKey
+        lfTagValue
         stack {
           stack
           status

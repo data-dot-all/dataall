@@ -16,13 +16,21 @@ import {
   Container,
   FormHelperText,
   Grid,
+  Divider,
   Link,
   MenuItem,
   TextField,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   Typography
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
+import { DeleteOutlined } from '@mui/icons-material';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
@@ -35,6 +43,7 @@ import ChipInput from '../../components/TagsInput';
 import TopicsData from '../../components/topics/TopicsData';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
+import DatasetLFTagsForm from './DatasetLFTagsForm';
 
 const DatasetCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -44,6 +53,7 @@ const DatasetCreateForm = (props) => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
+  const [datasetLFTags, setDatasetLFTags] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState([
     'Unclassified',
@@ -93,6 +103,10 @@ const DatasetCreateForm = (props) => {
     }
   };
 
+  // const handleDatasetLFTags = tags => {
+  //   setDatasetLFTags(tags);
+  // };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -114,7 +128,9 @@ const DatasetCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
-          confidentiality: values.confidentiality
+          confidentiality: values.confidentiality,
+          lfTagKey: datasetLFTags ? datasetLFTags.map((d) => d.lfTagKey) : [],
+          lfTagValue: datasetLFTags ? datasetLFTags.map((d) => d.lfTagValue) : []
         })
       );
       if (!response.errors) {
@@ -209,7 +225,7 @@ const DatasetCreateForm = (props) => {
                 confidentiality: '',
                 SamlGroupName: '',
                 tags: [],
-                topics: []
+                topics: [],
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -225,7 +241,7 @@ const DatasetCreateForm = (props) => {
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: Yup.string()
                   .max(255)
-                  .required('*Confidentiality is required')
+                  .required('*Confidentiality is required'),
               })}
               onSubmit={async (
                 values,
@@ -477,6 +493,13 @@ const DatasetCreateForm = (props) => {
                           />
                         </CardContent>
                       </Card>
+                    </Grid>
+                    <Grid item lg={12} md={6} xs={12}>
+                      <Box sx={{ mt: 3 }}>
+                        <DatasetLFTagsForm
+                          handleDatasetLFTags={setDatasetLFTags}
+                        />
+                      </Box>
                       <Box
                         sx={{
                           display: 'flex',

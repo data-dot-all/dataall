@@ -18,6 +18,7 @@ const ShareInboxListItem = (props) => {
   const { share, reload } = props;
   const classes = useCardStyle();
 
+
   return (
     <Card
       key={share.shareUri}

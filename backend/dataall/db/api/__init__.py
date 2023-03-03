@@ -18,8 +18,10 @@ from .dataset_table import DatasetTable
 from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
+from .share_object import ShareObject, ShareObjectSM, ShareItemSM
 from .notebook import Notebook
 from .sgm_studio_notebook import SgmStudioNotebook
 from .dashboard import Dashboard
 from .pipeline import Pipeline
+from.lf_tags import LFTag, LFTagPermissions
 from .worksheet import Worksheet
