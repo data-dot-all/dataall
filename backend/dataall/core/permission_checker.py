@@ -41,6 +41,7 @@ def _check_resource_permission(session, uri, permission):
         permission_name=permission,
     )
 
+
 @contextlib.contextmanager
 def _get_session():
     context: RequestContext = get_context()

@@ -5,6 +5,7 @@ from typing import Any, Dict
 import os
 from pathlib import Path
 
+
 class _Config:
     """A container of properties in the configuration file
      and any other that can be specified/overwritten later in the application"""
@@ -31,7 +32,7 @@ class _Config:
     @staticmethod
     def _path_to_file() -> str:
         """Tries to get a property. If not defined it tries to resolve the config from the current file's directory"""
-        path = os.getenv( "config_location")
+        path = os.getenv("config_location")
         if path:
             return path
         return os.path.join(Path(__file__).parents[3], "config.json")

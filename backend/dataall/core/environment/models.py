@@ -31,4 +31,3 @@ class EnvironmentResource(Base):
         self.environmentUri = environment_uri
         self.resourceType = resource_type
         self.resourceUri = resource_uri
-

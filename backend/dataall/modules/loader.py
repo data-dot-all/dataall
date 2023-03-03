@@ -62,4 +62,3 @@ def _import_submodule(module: str, mode: ImportMode) -> None:
         log.info("Imported module %s", full_name)
     except ModuleNotFoundError:
         raise ValueError(f"{mode.value} submodule can't be found under {full_name}")
-

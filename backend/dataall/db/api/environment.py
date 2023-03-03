@@ -1473,4 +1473,3 @@ class Environment:
     @staticmethod
     def get_environment_parameters(session, env_uri):
         return EnvironmentParameterRepository(session).get_params(env_uri)
-
