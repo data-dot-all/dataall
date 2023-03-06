@@ -19,6 +19,7 @@ from aws_cdk import (
     aws_kms as kms,
     aws_athena,
     RemovalPolicy,
+    CfnOutput,
     Stack,
     Duration,
     CustomResource,
@@ -493,6 +494,14 @@ class EnvironmentSetup(Stack):
                                                      )
             sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
 
+        # print the IAM role arn for this service account
+        CfnOutput(
+            self,
+            'pivotRoleName',
+            export_name='pivotRoleName',
+            value=self.pivot_role_name,
+            description='pivotRoleName',
+        )
         TagsUtil.add_tags(self)
 
         CDKNagUtil.check_rules(self)
