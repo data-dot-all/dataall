@@ -11,6 +11,7 @@ from .parameter_store import ParameterStoreManager
 logger = logging.getLogger('QuicksightHandler')
 logger.setLevel(logging.DEBUG)
 
+
 class Quicksight:
 
     _DEFAULT_GROUP_NAME = 'dataall'
