@@ -180,7 +180,7 @@ class Dataset(Stack):
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
             quicksight_default_group = Quicksight.create_quicksight_group(
-                dataset.AwsAccountId, 'dataall'
+                dataset.AwsAccountId, Quicksight.DEFAULT_GROUP_NAME
             )
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
