@@ -13,7 +13,11 @@ logger.setLevel(logging.DEBUG)
 
 class Quicksight:
 
-    DEFAULT_GROUP_NAME = 'dataall'
+    _DEFAULT_GROUP_NAME = 'dataall'
+
+    @property
+    def DEFAULT_GROUP_NAME(self) -> str:
+        return type(self)._DEFAULT_GROUP_NAME
 
     def __init__(self):
         pass
@@ -128,7 +132,7 @@ class Quicksight:
         return group
 
     @staticmethod
-    def describe_group(client, AwsAccountId, GroupName=Quicksight.DEFAULT_GROUP_NAME):
+    def describe_group(client, AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
