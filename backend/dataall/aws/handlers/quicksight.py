@@ -104,7 +104,7 @@ class Quicksight:
             raise Exception('Access denied to Quicksight for data.all PivotRole')
 
     @staticmethod
-    def create_quicksight_group(AwsAccountId, GroupName=Quicksight.DEFAULT_GROUP_NAME):
+    def create_quicksight_group(AwsAccountId, GroupName=_DEFAULT_GROUP_NAME):
         """Creates a Quicksight group called GroupName
         Args:
             AwsAccountId(str):  aws account
@@ -132,7 +132,7 @@ class Quicksight:
         return group
 
     @staticmethod
-    def describe_group(client, AwsAccountId, GroupName=DEFAULT_GROUP_NAME):
+    def describe_group(client, AwsAccountId, GroupName=_DEFAULT_GROUP_NAME):
         try:
             response = client.describe_group(
                 AwsAccountId=AwsAccountId, GroupName=GroupName, Namespace='default'
