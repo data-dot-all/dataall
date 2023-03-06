@@ -1,4 +1,7 @@
-"""A service layer for sagemaker notebooks"""
+"""
+A service layer for sagemaker notebooks
+Central part for working with notebooks
+"""
 import contextlib
 import dataclasses
 import logging
@@ -30,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class NotebookCreationRequest:
+    """A request dataclass for notebook creation. Adds default values for missed parameters"""
     label: str
     VpcId: str
     SubnetId: str
@@ -42,6 +46,7 @@ class NotebookCreationRequest:
 
     @classmethod
     def from_dict(cls, env):
+        """Copies only required fields from the dictionary and creates an instance of class"""
         fields = set([f.name for f in dataclasses.fields(cls)])
         return cls(**{
             k: v for k, v in env.items()
@@ -149,6 +154,7 @@ class NotebookService:
 
     @staticmethod
     def list_user_notebooks(filter) -> dict:
+        """List existed user notebooks. Filters only required notebooks by the filter param"""
         with _session() as session:
             return NotebookRepository(session).paginated_user_notebooks(
                 username=context().username,
@@ -166,12 +172,14 @@ class NotebookService:
     @staticmethod
     @has_resource_permission(permissions.UPDATE_NOTEBOOK)
     def start_notebook(*, uri):
+        """Starts notebooks instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).start_instance()
 
     @staticmethod
     @has_resource_permission(permissions.UPDATE_NOTEBOOK)
     def stop_notebook(*, uri: str) -> None:
+        """Stop notebook instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).stop_instance()
 
@@ -185,11 +193,13 @@ class NotebookService:
     @staticmethod
     @has_resource_permission(permissions.GET_NOTEBOOK)
     def get_notebook_status(*, uri) -> str:
+        """Retrieves notebook status"""
         return client(uri).get_notebook_instance_status()
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_NOTEBOOK)
     def delete_notebook(*, uri: str, delete_from_aws: bool):
+        """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             notebook = NotebookService._get_notebook(session, uri)
             KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')

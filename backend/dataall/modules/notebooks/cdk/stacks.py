@@ -31,7 +31,7 @@ class NotebookStack(Stack):
     """
     Creation of a notebook stack.
     Having imported the notebook module, the class registers itself using @stack
-    Then it will be reachable by HTTP request from GraphQL lambda
+    Then it will be reachable by HTTP request / using SQS from GraphQL lambda
     """
 
     module_name = __file__

@@ -6,6 +6,11 @@ from dataall.modules.common.sagemaker.permissions import CREATE_NOTEBOOK
 
 
 class SagemakerPolicy(ServicePolicy):
+    """
+    Creates a sagemaker policy for accessing and interacting with notebooks
+    Shared between ML studio and notebooks
+    """
+
     def get_statements(self, group_permissions, **kwargs):
         if (
             CREATE_NOTEBOOK not in group_permissions

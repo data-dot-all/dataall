@@ -1,4 +1,4 @@
-"""Defines the schema of the SageMaker notebooks"""
+"""Defines the object types of the SageMaker notebooks"""
 from dataall.api import gql
 from dataall.modules.notebooks.gql.resolvers import (
     resolve_notebook_stack,
