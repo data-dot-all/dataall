@@ -46,6 +46,7 @@ class PipelineStack(Stack):
             cidr='10.0.0.0/16',
             resource_prefix=resource_prefix,
             vpc_id=self.node.try_get_context('tooling_vpc_id'),
+            restricted_nacl=self.node.try_get_context('tooling_vpc_restricted_nacl'),
             **kwargs,
         )
         self.vpc = self.vpc_stack.vpc
@@ -391,11 +392,13 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make lint',
                         'cd frontend',
+                        f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run lint',
                     ],
