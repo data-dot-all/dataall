@@ -16,7 +16,7 @@ from dataall.db import get_engine, Base, create_schema_and_tables, init_permissi
 from dataall.searchproxy import connect, run_query
 from dataall.modules.loader import load_modules, ImportMode
 from dataall.core.config import config
-from dataall.core.context import set_context, RequestContext
+from dataall.core.context import set_context, dispose_context, RequestContext
 
 import logging
 
@@ -152,6 +152,7 @@ def graphql_server():
         debug=app.debug,
     )
 
+    dispose_context()
     status_code = 200 if success else 400
     return jsonify(result), status_code
 

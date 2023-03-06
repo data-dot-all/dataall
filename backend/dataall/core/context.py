@@ -35,3 +35,8 @@ def get_context() -> RequestContext:
 def set_context(context: RequestContext) -> None:
     """Retrieves context associated with a request"""
     _request_storage.context = context
+
+
+def dispose_context() -> None:
+    """Dispose context after the request completion"""
+    _request_storage.context = None

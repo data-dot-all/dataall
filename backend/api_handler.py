@@ -12,7 +12,7 @@ from ariadne import (
 from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
-from dataall.core.context import set_context, RequestContext
+from dataall.core.context import set_context, dispose_context, RequestContext
 from dataall.db import init_permissions, get_engine, api, permissions
 from dataall.modules.loader import load_modules, ImportMode
 from dataall.searchproxy import connect
@@ -154,6 +154,8 @@ def handler(event, context):
     success, response = graphql_sync(
         schema=executable_schema, data=query, context_value=app_context
     )
+
+    dispose_context()
     response = json.dumps(response)
 
     log.info('Lambda Response %s', response)

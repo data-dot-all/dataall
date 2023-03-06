@@ -7,7 +7,7 @@ from ariadne.asgi import GraphQL
 from flask import Flask, request, jsonify, Response
 from dotted.collection import DottedCollection
 import dataall
-from dataall.core.context import set_context, RequestContext
+from dataall.core.context import set_context, RequestContext, dispose_context
 
 
 class ClientWrapper:
@@ -74,6 +74,7 @@ def app(db):
             debug=app.debug,
         )
 
+        dispose_context()
         status_code = 200 if success else 400
         return jsonify(result), status_code
 
