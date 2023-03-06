@@ -167,7 +167,7 @@ class VpcStack(pyNestedClass):
             )
             nacl.add_entry(
                 "entryInboundAllInVPC",
-                cidr=ec2.AclCidr.ipv4("10.0.0.0/16"),
+                cidr=self.vpc.vpc_cidr_block,
                 traffic=ec2.AclTraffic.all_traffic(),
                 rule_number=103,
                 direction=ec2.TrafficDirection.INGRESS,
