@@ -51,7 +51,8 @@ def check_environment(context: Context, source, pivot_role_as_part_of_environmen
     account = input.get('AwsAccountId')
     region = input.get('region')
     cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region, cdkrole=pivot_role_as_part_of_environment)
-    if pivot_role_as_part_of_environment is False:
+    if pivot_role_as_part_of_environment == False:
+        log.info("Check if PivotRole exist in the account")
         pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account)
         try:
             IAM.get_role(account_id=account, role_arn=pivot_role_arn, region=region, cdkrole=pivot_role_as_part_of_environment)
@@ -76,13 +77,13 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        pivot_role_as_part_of_environment = ParameterStoreManager.get_parameter_value(
+        pivot_role_as_part_of_environment = True if ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
-        )
+        ) == "True" else False
+        log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         cdk_role_name = check_environment(context, source, pivot_role_as_part_of_environment=pivot_role_as_part_of_environment, input=input)
         input['cdk_role_name'] = cdk_role_name
-        log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         env = Environment.create_environment(
             session=session,
             username=context.username,
