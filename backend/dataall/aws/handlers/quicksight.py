@@ -32,7 +32,7 @@ class Quicksight:
             cdkrole(bool) : flag to use cdk look up role instead of pivot role
         Returns : boto3.client ("quicksight")
         """
-        session = SessionHelper.remote_session(accountid=AwsAccountId, cdkrole=cdkrole,region=region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, cdkrole=cdkrole, region=region)
         return session.client('quicksight', region_name=region)
 
     @staticmethod

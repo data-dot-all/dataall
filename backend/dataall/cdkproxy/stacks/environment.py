@@ -136,7 +136,7 @@ class EnvironmentSetup(Stack):
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
-        pivot_role_as_part_of_environment_stack= ParameterStoreManager.get_parameter_value(
+        pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
