@@ -17,6 +17,10 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value='dataall-pivot-role-name-pytest',
     )
     mocker.patch(
+        'dataall.aws.handlers.parameter_store.ParameterStoreManager.get_parameter_value',
+        return_value='False',
+    )
+    mocker.patch(
         'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_target',
         return_value=env,
     )

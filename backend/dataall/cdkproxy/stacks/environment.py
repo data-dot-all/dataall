@@ -473,7 +473,8 @@ class EnvironmentSetup(Stack):
             sagemaker_dependency_group.add(default_role)
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
-
+            vpc_id = None
+            subnet_ids = []
             try:
                 print("looking for default VPC")
                 default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
