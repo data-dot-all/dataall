@@ -192,7 +192,7 @@ class SessionHelper:
             boto3.session.Session: boto3 Session, on the target aws accountid, assuming the delegation role
         """
         base_session = cls.get_session()
-        if cdkrole:
+        if cdkrole is True:
             log.info(f"Remote boto3 session using cdk_look_up_role_arn for account={accountid} and region={region}")
             role_arn = cls.get_cdk_look_up_role_arn(accountid=accountid, region=region)
         else:

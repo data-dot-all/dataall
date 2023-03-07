@@ -106,7 +106,7 @@ class Quicksight:
             raise Exception('Quicksight Enterprise Subscription not found')
 
         except client.exceptions.AccessDeniedException:
-            raise Exception('Access denied to Quicksight for data.all PivotRole')
+            raise Exception('Access denied to Quicksight for selected role')
 
     @staticmethod
     def create_quicksight_group(AwsAccountId, GroupName=_DEFAULT_GROUP_NAME):
