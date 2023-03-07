@@ -45,7 +45,10 @@ def check_environment(context: Context, source, cdkrole=None, input=None):
     cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region, cdkrole=cdkrole)
 
     if input.get('dashboardsEnabled'):
-        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, cdkrole=cdkrole)
+        pass
+        #TODO: LOOK FOR ALTERNATIVES, the cdk_look_up role does not have quicksight:DescribeAccountSubscription permission
+        #Maybe we can add it in a different part of the application -> e.g. start session
+        #existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, region=region, cdkrole=cdkrole)
 
     return cdk_role_name
 

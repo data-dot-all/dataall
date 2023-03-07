@@ -31,7 +31,7 @@ class PivotRole(NestedStack):
 
         role = iam.Role(
             self,
-            'DataAllPivotRole',
+            'DataAllPivotRole-cdk',
             role_name=name,
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('glue.amazonaws.com'),

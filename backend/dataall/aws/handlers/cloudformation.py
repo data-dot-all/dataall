@@ -17,7 +17,7 @@ class CloudFormation:
 
     @staticmethod
     def client(AwsAccountId, region, cdkrole=None):
-        session = SessionHelper.remote_session(AwsAccountId, cdkrole)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, cdkrole=cdkrole, region=region)
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
@@ -25,7 +25,7 @@ class CloudFormation:
         try:
             cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, cdkrole=cdkrole)
             response = cfn.describe_stacks(StackName='CDKToolkit')
-        except cfn.exceptions.ClientError as e:
+        except ClientError as e:
             print(e)
             raise Exception('CDKToolkitNotFound')
 
@@ -39,7 +39,7 @@ class CloudFormation:
             )
             cdk_role_name = response['StackResourceDetail']['PhysicalResourceId']
             return cdk_role_name
-        except cfn.exceptions.ClientError as e:
+        except ClientError as e:
             raise Exception('CDKToolkitDeploymentActionRoleNotFound')
 
     @staticmethod

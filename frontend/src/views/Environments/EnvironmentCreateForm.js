@@ -359,7 +359,7 @@ const EnvironmentCreateForm = (props) => {
                   )}
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                  Manage your environment features: make sure that the services needed for each feature are available in your AWS Account.
+                  Make sure that the services needed for the selected environment features are available in your AWS Account.
                 </Typography>
               </Box>
             </CardContent>

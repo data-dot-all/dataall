@@ -186,14 +186,17 @@ class SessionHelper:
         """Creates a remote boto3 session on the remote AWS account , assuming the delegation Role
         Args:
             accountid(string) : aws account id
+            cdkrole(bool) : flag to use cdk look up role instead of pivot role
+            region(string) : aws region
         Returns :
             boto3.session.Session: boto3 Session, on the target aws accountid, assuming the delegation role
         """
         base_session = cls.get_session()
         if cdkrole:
-            print("get_cdkrole_session")
+            log.info(f"Remote boto3 session using cdk_look_up_role_arn for account={accountid} and region={region}")
             role_arn = cls.get_cdk_look_up_role_arn(accountid=accountid, region=region)
         else:
+            log.info(f"Remote boto3 session using pivot role for account= {accountid}")
             role_arn = cls.get_delegation_role_arn(accountid=accountid)
         session = SessionHelper.get_session(base_session=base_session, role_arn=role_arn)
         return session
