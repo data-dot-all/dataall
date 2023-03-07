@@ -12,9 +12,9 @@ getTrustAccount = gql.QueryField(
 )
 
 getCreatePivotRole = gql.QueryField(
-    name='getCreatePivotRole',
+    name='getPivotRoleAsPartOfEnvironment',
     type=gql.Boolean,
-    resolver=get_create_pivot_role_manually,
+    resolver=get_pivot_role_as_part_of_environment,
 )
 
 checkEnvironment = gql.QueryField(

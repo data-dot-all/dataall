@@ -31,9 +31,9 @@ def get_trust_account(context: Context, source, **kwargs):
     return current_account
 
 
-def get_create_pivot_role_manually(context: Context, source, **kwargs):
+def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     ssm_param = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack")
-    return False if ssm_param == "True" else False
+    return True if ssm_param == "True" else False
 
 
 def check_environment(context: Context, source, cdkrole=None, input=None):
@@ -58,18 +58,13 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        print("environment create resolver 1")
-        create_pivot_role = ParameterStoreManager.get_parameter_value(
+        pivot_role_as_part_of_environment = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
-        print("environment create resolver 2")
-        print(create_pivot_role)
-        print(f"bool{bool(create_pivot_role)}")
-        cdkrole = True if create_pivot_role is True else None
-        cdk_role_name = check_environment(context, source, cdkrole=cdkrole, input=input)
+        cdk_role_name = check_environment(context, source, cdkrole=pivot_role_as_part_of_environment, input=input)
         input['cdk_role_name'] = cdk_role_name
-        print(cdk_role_name)
+        log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         env = Environment.create_environment(
             session=session,
             username=context.username,
