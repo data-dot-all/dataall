@@ -17,6 +17,9 @@ def _env(
     module_mocker.patch(
         'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
     )
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 

@@ -15,6 +15,9 @@ def patch_check_env(module_mocker):
         'dataall.api.Objects.Environment.resolvers.check_environment',
         return_value='CDKROLENAME',
     )
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -605,6 +608,9 @@ def org_fixture(org, user, group, tenant):
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
