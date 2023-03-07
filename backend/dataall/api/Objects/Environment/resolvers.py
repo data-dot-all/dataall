@@ -56,7 +56,7 @@ def check_environment(context: Context, source, pivot_role_as_part_of_environmen
         try:
             IAM.get_role(account_id=account, role_arn=pivot_role_arn, region=region, cdkrole=pivot_role_as_part_of_environment)
         except ClientError as e:
-            raise Exception('PivotRole not found')
+            raise Exception('PivotRole Not found')
 
     if input.get('dashboardsEnabled') and pivot_role_as_part_of_environment is False:
         existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, region=region, cdkrole=pivot_role_as_part_of_environment)

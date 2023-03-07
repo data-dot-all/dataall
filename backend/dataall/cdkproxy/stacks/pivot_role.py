@@ -70,7 +70,7 @@ class PivotRole(NestedStack):
         return iam.ManagedPolicy(
             self,
             'PivotRolePolicy0',
-            managed_policy_name=f'{env_resource_prefix}-pivotrole-policy-0',
+            managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-0',
             statements=[
                 # Athena permissions
                 iam.PolicyStatement(
@@ -309,7 +309,7 @@ class PivotRole(NestedStack):
         return iam.ManagedPolicy(
             self,
             'PivotRolePolicy1',
-            managed_policy_name=f'{env_resource_prefix}-pivotrole-policy-1',
+            managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-1',
             statements=[
                 # Redshift
                 iam.PolicyStatement(
@@ -575,7 +575,7 @@ class PivotRole(NestedStack):
         return iam.ManagedPolicy(
             self,
             'PivotRolePolicy2',
-            managed_policy_name=f'{env_resource_prefix}-pivotrole-policy-2',
+            managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-2',
             statements=[
                 # LakeFormation
                 iam.PolicyStatement(
@@ -725,7 +725,7 @@ class PivotRole(NestedStack):
         return iam.ManagedPolicy(
             self,
             'PivotRolePolicy3',
-            managed_policy_name=f'{env_resource_prefix}-pivotrole-policy-3',
+            managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-3',
             statements=[
                 # SSM Parameter Store
                 iam.PolicyStatement(
