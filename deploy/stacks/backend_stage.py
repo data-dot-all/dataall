@@ -28,7 +28,7 @@ class BackendStage(Stage):
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
         enable_opensearch_serverless=False,
-        create_pivot_role=False,
+        pivot_role_as_part_of_environment=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -54,7 +54,7 @@ class BackendStage(Stage):
             enable_cw_rum=enable_cw_rum,
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_opensearch_serverless=enable_opensearch_serverless,
-            create_pivot_role=create_pivot_role,
+            pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
             **kwargs,
         )
 

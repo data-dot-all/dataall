@@ -44,7 +44,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
-        create_pivot_role=False,
+        pivot_role_as_part_of_environment=False,
         enable_opensearch_serverless=False,
         **kwargs,
     ):
@@ -68,7 +68,7 @@ class BackendStack(Stack):
 
         # TODO we need to think how to handle it better if adding a '-cdk' suffix is not expected
         # TODO: what about having the pivotRole name as the cdk.json parameter instead of the boolean flag?
-        self.pivot_role_name = f"dataallPivotRole{'-cdk' if create_pivot_role else ''}"
+        self.pivot_role_name = f"dataallPivotRole{'-cdk' if pivot_role_as_part_of_environment else ''}"
 
         ParamStoreStack(
             self,
@@ -79,7 +79,7 @@ class BackendStack(Stack):
             enable_cw_canaries=enable_cw_canaries,
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
-            create_pivot_role=create_pivot_role,
+            pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
             **kwargs,
         )
 
@@ -150,11 +150,9 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc=vpc,
             vpc_endpoints_sg=vpc_endpoints_sg,
-            tooling_account_id=tooling_account_id,
             ecr_repository=repo,
             image_tag=image_tag,
             prod_sizing=prod_sizing,
-            create_pivot_role=create_pivot_role,
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )

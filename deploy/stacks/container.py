@@ -20,13 +20,11 @@ class ContainerStack(pyNestedClass):
         id,
         vpc: ec2.Vpc = None,
         vpc_endpoints_sg: ec2.SecurityGroup = None,
-        tooling_account_id=None,
         envname='dev',
         resource_prefix='dataall',
         ecr_repository=None,
         image_tag=None,
         prod_sizing=False,
-        create_pivot_role=False,
         pivot_role_name=None,
         **kwargs,
     ):

@@ -8,4 +8,4 @@ const getPivotRoleAsPartOfEnvironment = () => ({
   `
 });
 
-export default getPivotRoleAsPartOfEnvironmente;
+export default getPivotRoleAsPartOfEnvironment;
