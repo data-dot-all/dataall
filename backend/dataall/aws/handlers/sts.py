@@ -165,7 +165,7 @@ class SessionHelper:
         Returns:
                 string : arn of the CDKToolkit role on the target aws account id
         """
-        print("get look up role")
+        print(f"Getting CDK look up role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-lookup-role-{accountid}-{region}")
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(accountid, accountid, region)
 
     @classmethod

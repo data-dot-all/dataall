@@ -80,9 +80,12 @@ class Quicksight:
         """Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's subscription. A successful API call returns an AccountInfo object that includes an account's name, subscription status, authentication type, edition, and notification email address.
         Args:
             AwsAccountId(str) : aws account id
+            cdkrole(bool) : flag to use cdk look up role instead of pivot role
+            region(str): aws region
         Returns: bool
             True if Quicksight Enterprise Edition is enabled in the AWS Account
         """
+        logger.info(f'Checking Quicksight subscription in AWS account = {AwsAccountId}')
         client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, cdkrole=cdkrole, region=region)
         try:
             response = client.describe_account_subscription(AwsAccountId=AwsAccountId)

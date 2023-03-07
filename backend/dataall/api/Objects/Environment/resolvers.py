@@ -36,19 +36,34 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, cdkrole=None, input=None):
+def check_environment(context: Context, source, pivot_role_as_part_of_environment=None, input=None):
+    """ Checks necessary resources for environment deployment.
+    - Check CDKToolkit exists in Account
+    - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
+    - Check if Quicksight Enterprise Subscription is created in Account if Dashboards is enabled
+    Args:
+        pivot_role_as_part_of_environment: flag to create pivot role as part of environment stack
+        input: environment creation input
+    """
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
     account = input.get('AwsAccountId')
     region = input.get('region')
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region, cdkrole=cdkrole)
+    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region, cdkrole=pivot_role_as_part_of_environment)
+    if pivot_role_as_part_of_environment is False:
+        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account)
+        try:
+            IAM.get_role(account_id=account, role_arn=pivot_role_arn, region=region, cdkrole=pivot_role_as_part_of_environment)
+        except ClientError as e:
+            raise Exception('PivotRole not found')
 
-    if input.get('dashboardsEnabled'):
+    if input.get('dashboardsEnabled') and pivot_role_as_part_of_environment is False:
+        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, region=region, cdkrole=pivot_role_as_part_of_environment)
+    else:
         pass
         #TODO: LOOK FOR ALTERNATIVES, the cdk_look_up role does not have quicksight:DescribeAccountSubscription permission
         #Maybe we can add it in a different part of the application -> e.g. start session
-        #existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account, region=region, cdkrole=cdkrole)
 
     return cdk_role_name
 
@@ -65,7 +80,7 @@ def create_environment(context: Context, source, input=None):
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
         )
-        cdk_role_name = check_environment(context, source, cdkrole=pivot_role_as_part_of_environment, input=input)
+        cdk_role_name = check_environment(context, source, pivot_role_as_part_of_environment=pivot_role_as_part_of_environment, input=input)
         input['cdk_role_name'] = cdk_role_name
         log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         env = Environment.create_environment(
