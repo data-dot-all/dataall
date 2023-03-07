@@ -131,24 +131,15 @@ For this kind of architecture, the following resources need to be provisioned as
 - ACM certificate
 - For the above you will also need a VPC which needs to be provided as input for the deployment. Check the backend VPC section to review the VPC requirements.
 
+Although it is not a pre-requisite per se, to use this architecture customers need a way to connect with the data.all VPC. Typically,
+this is achieved by connecting the VPN to the VPC in data.all.
+
 With the following commands you can create the ACM certificate and Route 53 private hosted zone:
 1.	`cd` to empty directory
 2.	This command will create your pem and a paraphrase password file: `openssl req -x509 -newkey rsa:4096 -days 1825 -keyout dataallkey.pem -out dataall.pem`
 3.	This command will create a no password file to load in ACM: `openssl rsa -in dataallkey.pem -out dataallkeynopwd.pem `
 4.	`aws route53 create-hosted-zone --name <domain-name> --vpc VPCRegion=<vpc_region>,VPCId=<vpc-id> --caller-reference 07:12:22 --query HostedZone.Id --output text `
 5.	`aws acm import-certificate --region us-east-1 --certificate fileb://<filepath to cert> --private-key fileb://<filepath to no password key> --query CertificateArn --output text`
-
-
-#### VPC facing + corporate network
-As stated above, the application in this case is accessible only from within the VPC. However, some customers require the ability to 
-connect from outside the VPC but within the corporate network. 
-
-As part of the deployment, data.all creates an API gateway and accesses it with the URL `https://<gateway-id>.execute-api.<region>.amazonaws.com`
-This works when we access the application from the VPC; but when we are outside of the VPC, the execute-api VPC endpoint needs to be added to the URL. 
-Hence the URL should be: `https://<gateway-id>.<execute-api-vpc-endpoint-id>.execute-api.<region>.amazonaws.com`.
-For this requirement we need to modify the code in `deploy/stacks/lambda_api.py` and adjust the api URL accordingly. 
-In addition, a new inbound rule needs to be added to the security group for the VPC endpoint to allow all inbound HHTPS on 443 for 10.0.0.0/8.
-
 
 After it is deployed, How do I connect (or simulate the connection) between my VPN and data.all VPC? The following
 resources might be helpful for testing and connecting the deployment:
