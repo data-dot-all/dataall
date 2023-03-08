@@ -108,7 +108,7 @@ class DBMigrationStack(pyNestedClass):
                                 'python -m venv env',
                                 '. env/bin/activate',
                                 'pip install -r backend/requirements.txt',
-                                'pip install alembic',
+                                'pip install "alembic==1.9.4"',
                                 'export PYTHONPATH=backend',
                                 f'export envname={envname}',
                                 f'alembic -c backend/alembic.ini upgrade head',
