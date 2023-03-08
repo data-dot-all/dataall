@@ -181,7 +181,10 @@ class LambdaApiStack(pyNestedClass):
                     actions=[
                         'sts:AssumeRole',
                     ],
-                    resources=[f'arn:aws:iam::*:role/{pivot_role_name}'],
+                    resources=[
+                        f'arn:aws:iam::*:role/{pivot_role_name}',
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*'
+                    ],
                 ),
                 iam.PolicyStatement(
                     actions=[
