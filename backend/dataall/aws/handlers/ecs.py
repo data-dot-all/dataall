@@ -63,6 +63,7 @@ class Ecs:
                 subnets,
                 [
                     {'name': 'shareUri', 'value': share_uri},
+                    {'name': 'config_location', 'value': '/config.json'},
                     {'name': 'envname', 'value': envname},
                     {'name': 'handler', 'value': handler},
                     {
@@ -119,6 +120,7 @@ class Ecs:
                 subnets,
                 [
                     {'name': 'stackUri', 'value': stack_uri},
+                    {'name': 'config_location', 'value': '/config.json'},
                     {'name': 'envname', 'value': envname},
                     {
                         'name': 'AWS_REGION',
