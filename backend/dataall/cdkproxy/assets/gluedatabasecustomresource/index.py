@@ -25,6 +25,9 @@ def on_event(event, context):
 
 
 def on_create(event):
+    """Creates if it does not exist Glue database for the data.all Dataset
+    Grants permissions to Database Administrators = dataset Admin team IAM role, pivotRole, dataset IAM role
+    """
     AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
     AWS_REGION = os.environ.get('AWS_REGION')
     DEFAULT_ENV_ROLE_ARN = os.environ.get('DEFAULT_ENV_ROLE_ARN')
@@ -67,11 +70,13 @@ def on_create(event):
                     'Alter'.upper(),
                     'Create_table'.upper(),
                     'Drop'.upper(),
+                    'Describe'.upper(),
                 ],
                 'PermissionsWithGrantOption': [
                     'Alter'.upper(),
                     'Create_table'.upper(),
                     'Drop'.upper(),
+                    'Describe'.upper(),
                 ],
             }
         )

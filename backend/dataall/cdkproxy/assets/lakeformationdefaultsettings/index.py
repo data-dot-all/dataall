@@ -11,11 +11,14 @@ def validate_principals(principals):
     iam_client = boto3.client('iam')
     validated_principals = []
     for principal in principals:
-        try:
-            iam_client.get_role(RoleName=principal.split("/")[-1])
-        except Exception as e:
-            print(f'Failed to get role {principal} due to: {e}')
-        validated_principals.append(principal)
+        if ":role/" in principal:
+            print(f'Principal {principal} is an IAM role, validating....')
+            try:
+                iam_client.get_role(RoleName=principal.split("/")[-1])
+                print(f'Adding principal {principal} to validated principals')
+                validated_principals.append(principal)
+            except Exception as e:
+                print(f'Failed to get role {principal} due to: {e}')
     return validated_principals
 
 def on_event(event, context):
@@ -35,6 +38,7 @@ def on_event(event, context):
 
 def on_create(event):
     """"Adds the PivotRole to the existing Data Lake Administrators
+    Before adding any principal, it validates it exists if it is an IAM role
     """
     AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
     AWS_REGION = os.environ.get('AWS_REGION')
@@ -52,13 +56,14 @@ def on_create(event):
 
         new_admins = props.get('DataLakeAdmins', [])
         new_admins.extend(existing_admins or [])
+        validated_new_admins = validate_principals(new_admins)
 
         response = lf_client.put_data_lake_settings(
             CatalogId=AWS_ACCOUNT,
             DataLakeSettings={
                 'DataLakeAdmins': [
                     {'DataLakePrincipalIdentifier': principal}
-                    for principal in validate_principals(new_admins)
+                    for principal in validated_new_admins
                 ]
             },
         )
@@ -78,7 +83,8 @@ def on_update(event):
 
 
 def on_delete(event):
-    """"Removes the PivotRole to the existing Data Lake Administrators
+    """"Removes the PivotRole from the existing Data Lake Administrators
+    Before adding any principal, it validates it exists if it is an IAM role
     """
     AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
     AWS_REGION = os.environ.get('AWS_REGION')
@@ -116,3 +122,4 @@ def on_delete(event):
     return {
         'PhysicalResourceId': f'LakeFormationDefaultSettings{AWS_ACCOUNT}{AWS_REGION}'
     }
+
