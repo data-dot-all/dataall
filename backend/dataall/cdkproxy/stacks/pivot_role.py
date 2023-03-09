@@ -702,6 +702,7 @@ class PivotRole(NestedStack):
                         f'arn:aws:quicksight:*:{self.account}:dashboard/*',
                         f'arn:aws:quicksight:*:{self.account}:namespace/default',
                         f'arn:aws:quicksight:*:{self.account}:account/*',
+                        f'arn:aws:quicksight:*:{self.account}:*',
                     ],
                 ),
                 iam.PolicyStatement(

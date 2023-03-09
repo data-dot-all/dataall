@@ -610,6 +610,7 @@ Resources:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:*"
           - Sid: QuickSightSession
             Effect: Allow
             Action:
