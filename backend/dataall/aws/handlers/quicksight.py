@@ -18,21 +18,20 @@ class Quicksight:
 
     @property
     def DEFAULT_GROUP_NAME(self) -> str:
-        return type(self)._DEFAULT_GROUP_NAME
+        return _DEFAULT_GROUP_NAME
 
     def __init__(self):
         pass
 
     @staticmethod
-    def get_quicksight_client(AwsAccountId, region='eu-west-1', cdkrole=None):
+    def get_quicksight_client(AwsAccountId, region='eu-west-1'):
         """Returns a boto3 quicksight client in the provided account/region
         Args:
             AwsAccountId(str) : aws account id
             region(str) : aws region
-            cdkrole(bool) : flag to use cdk look up role instead of pivot role
         Returns : boto3.client ("quicksight")
         """
-        session = SessionHelper.remote_session(accountid=AwsAccountId, cdkrole=cdkrole, region=region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, region=region)
         return session.client('quicksight', region_name=region)
 
     @staticmethod
@@ -76,17 +75,16 @@ class Quicksight:
         return session.client('quicksight', region_name=identity_region)
 
     @staticmethod
-    def check_quicksight_enterprise_subscription(AwsAccountId, cdkrole=None, region=None):
+    def check_quicksight_enterprise_subscription(AwsAccountId, region=None):
         """Use the DescribeAccountSubscription operation to receive a description of a Amazon QuickSight account's subscription. A successful API call returns an AccountInfo object that includes an account's name, subscription status, authentication type, edition, and notification email address.
         Args:
             AwsAccountId(str) : aws account id
-            cdkrole(bool) : flag to use cdk look up role instead of pivot role
             region(str): aws region
         Returns: bool
             True if Quicksight Enterprise Edition is enabled in the AWS Account
         """
         logger.info(f'Checking Quicksight subscription in AWS account = {AwsAccountId}')
-        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, cdkrole=cdkrole, region=region)
+        client = Quicksight.get_quicksight_client(AwsAccountId=AwsAccountId, region=region)
         try:
             response = client.describe_account_subscription(AwsAccountId=AwsAccountId)
             if not response['AccountInfo']:
@@ -120,7 +118,6 @@ class Quicksight:
         """
         client = Quicksight.get_quicksight_client_in_identity_region(AwsAccountId)
         group = Quicksight.describe_group(client, AwsAccountId, GroupName)
-
         if not group:
             logger.info(f'Attempting to create Quicksight group `{GroupName}...')
             response = client.create_group(
