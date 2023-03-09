@@ -7,6 +7,16 @@ def clean_props(**props):
     data = {k: props[k] for k in props.keys() if k != 'ServiceToken'}
     return data
 
+def validate_principals(principals):
+    iam_client = boto3.client('iam')
+    validated_principals = []
+    for principal in principals:
+        try:
+            iam_client.get_role(RoleName=principal.split("/")[-1])
+        except Exception as e:
+            print(f'Failed to get role {principal} due to: {e}')
+        validated_principals.append(principal)
+    return validated_principals
 
 def on_event(event, context):
     AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
@@ -48,12 +58,12 @@ def on_create(event):
             DataLakeSettings={
                 'DataLakeAdmins': [
                     {'DataLakePrincipalIdentifier': principal}
-                    for principal in new_admins
+                    for principal in validate_principals(new_admins)
                 ]
             },
         )
         print(
-            f'Successfully configured AWS LakeFormation data lake admins: {new_admins}| {response}'
+            f'Successfully configured AWS LakeFormation data lake admins: {validated_new_admins}| {response}'
         )
     except ClientError as e:
         print(f'Failed to setup AWS LakeFormation data lake admins due to: {e}')
@@ -93,7 +103,7 @@ def on_delete(event):
             DataLakeSettings={
                 'DataLakeAdmins': [
                     {'DataLakePrincipalIdentifier': principal}
-                    for principal in existing_admins_admins
+                    for principal in validate_principals(existing_admins_admins)
                 ]
             },
         )

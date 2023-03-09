@@ -325,6 +325,7 @@ class EnvironmentSetup(Stack):
         )
 
         # Glue database custom resource
+        # This Lambda is triggered with the creation of each dataset
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
         )
