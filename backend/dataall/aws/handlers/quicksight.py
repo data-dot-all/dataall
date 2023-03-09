@@ -116,7 +116,7 @@ class Quicksight:
         group = Quicksight.describe_group(client, AwsAccountId, GroupName)
         if not group:
             if GroupName == Quicksight._DEFAULT_GROUP_NAME:
-                logger.info(f'Initializing data.all default group')
+                logger.info(f'Initializing data.all default group = {GroupName}')
                 Quicksight.check_quicksight_enterprise_subscription(AwsAccountId)
 
             logger.info(f'Attempting to create Quicksight group `{GroupName}...')

@@ -44,9 +44,8 @@ logger = logging.getLogger(__name__)
 
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
-    """
-    - Deploy common environment resources: 
-        - default environment S3 Bucket, 
+    """Deploy common environment resources:
+        - default environment S3 Bucket,
         - pivotRole (if configured)
         - SNS topic (if subscriptions are enabled)
         - SM Studio domain (if ML studio is enabled)

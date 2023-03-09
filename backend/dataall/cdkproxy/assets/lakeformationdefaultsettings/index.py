@@ -7,6 +7,7 @@ def clean_props(**props):
     data = {k: props[k] for k in props.keys() if k != 'ServiceToken'}
     return data
 
+
 def validate_principals(principals):
     iam_client = boto3.client('iam')
     validated_principals = []
@@ -20,6 +21,7 @@ def validate_principals(principals):
             except Exception as e:
                 print(f'Failed to get role {principal} due to: {e}')
     return validated_principals
+
 
 def on_event(event, context):
     AWS_ACCOUNT = os.environ.get('AWS_ACCOUNT')
@@ -104,17 +106,18 @@ def on_delete(event):
         for added_admin in added_admins:
             existing_admins.remove(added_admin)
 
+        validated_new_admins = validate_principals(existing_admins)
         response = lf_client.put_data_lake_settings(
             CatalogId=AWS_ACCOUNT,
             DataLakeSettings={
                 'DataLakeAdmins': [
                     {'DataLakePrincipalIdentifier': principal}
-                    for principal in validate_principals(existing_admins_admins)
+                    for principal in validated_new_admins
                 ]
             },
         )
         print(
-            f'Successfully configured AWS LakeFormation data lake admins: {existing_admins}| {response}'
+            f'Successfully configured AWS LakeFormation data lake admins: {validated_new_admins}| {response}'
         )
     except ClientError as e:
         print(f'Failed to setup AWS LakeFormation data lake admins due to: {e}')
@@ -122,4 +125,3 @@ def on_delete(event):
     return {
         'PhysicalResourceId': f'LakeFormationDefaultSettings{AWS_ACCOUNT}{AWS_REGION}'
     }
-
