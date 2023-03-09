@@ -44,6 +44,15 @@ logger = logging.getLogger(__name__)
 
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
+    """
+    - Deploy common environment resources: 
+        - default environment S3 Bucket, 
+        - pivotRole (if configured)
+        - SNS topic (if subscriptions are enabled)
+        - SM Studio domain (if ML studio is enabled)
+    - Deploy team specific resources: teams IAM roles, Athena workgroups
+    - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
+    """
     module_name = __file__
 
     @staticmethod
@@ -225,7 +234,7 @@ class EnvironmentSetup(Stack):
             destination_key_prefix='profiling/code',
         )
 
-        # Create or import IAM roles
+        # Create or import team IAM roles
         default_role = self.create_or_import_environment_default_role()
         group_roles = self.create_or_import_environment_groups_roles()
 
@@ -253,6 +262,7 @@ class EnvironmentSetup(Stack):
             )
 
         # Lakeformation default settings custom resource
+        # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__), '../assets/lakeformationdefaultsettings').resolve()
         )
