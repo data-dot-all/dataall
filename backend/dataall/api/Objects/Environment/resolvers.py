@@ -36,11 +36,10 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region, dashboardsEnabled, pivot_role_as_part_of_environment=None):
+def check_environment(context: Context, source, account_id, region, pivot_role_as_part_of_environment=None):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
-    - Check if Quicksight Enterprise Subscription is created in Account if Dashboards is enabled
     Args:
         pivot_role_as_part_of_environment: flag to create pivot role as part of environment stack
         input: environment creation input
@@ -59,14 +58,6 @@ def check_environment(context: Context, source, account_id, region, dashboardsEn
             )
 
     cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region, cdkrole=pivot_role_as_part_of_environment)
-
-    if dashboardsEnabled is True and pivot_role_as_part_of_environment is False:
-        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account_id, region=region, cdkrole=pivot_role_as_part_of_environment)
-    else:
-        pass
-        # TODO: LOOK FOR ALTERNATIVES, the cdk_look_up role does not have quicksight:DescribeAccountSubscription permission
-        # Maybe we can add it in a different part of the application -> e.g. start session
-
     return cdk_role_name
 
 
@@ -85,7 +76,6 @@ def create_environment(context: Context, source, input=None):
         log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         cdk_role_name = check_environment(context, source,
                                           pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
-                                          dashboardsEnabled=input.get('dashboardsEnabled'),
                                           account_id=input.get('AwsAccountId'),
                                           region=input.get('region')
                                           )
@@ -130,8 +120,8 @@ def update_environment(
         cdk_role_name = check_environment(context, source,
                                           pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
                                           account_id=environment.AwsAccountId,
-                                          region=environment.region,
-                                          dashboardsEnabled=input.get('dashboardsEnabled'))
+                                          region=environment.region
+                                          )
 
         previous_resource_prefix = environment.resourcePrefix
 
