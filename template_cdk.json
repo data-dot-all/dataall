@@ -34,7 +34,8 @@
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_quicksight_monitoring": "boolean_ENABLE_CONNECTION_QUICKSIGHT_RDS|DEFAULT=false",
         "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
-        "pivot_role_as_part_of_environment": "boolean_CREATE_PIVOT_ROLE_AS_PART_OF_ENVIRONMENT_STACK|DEFAULT=false"
+        "pivot_role_as_part_of_environment": "boolean_CREATE_PIVOT_ROLE_AS_PART_OF_ENVIRONMENT_STACK|DEFAULT=false",
+        "update_dataall_stacks_in_cicd_pipeline": "boolean_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false"
       }
     ]
   }

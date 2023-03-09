@@ -283,6 +283,11 @@ class PipelineStack(Stack):
                 target_env,
             )
 
+            if target_env.get('update_dataall_stacks_in_cicd_pipeline', False):
+                self.set_trigger_dataall_stacks_update(
+                    target_env
+                )
+                
             if target_env.get('internet_facing', True):
                 self.set_cloudfront_stage(
                     target_env,
@@ -599,6 +604,32 @@ class PipelineStack(Stack):
                     f'while [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "SUCCEEDED" ] && [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" != "FAILED" ]; do echo "running migration"; aws codebuild batch-get-builds --ids $(jq -r .build.id codebuild-id.json) --profile buildprofile --region {target_env.get("region", self.region)} > codebuild-output.json; echo "$(jq -r .builds[0].buildStatus codebuild-output.json)"; sleep 5; done',
                     'if [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" = "FAILED" ]; then echo "Failed";  cat codebuild-output.json; exit -1; fi',
                     'cat codebuild-output.json ',
+                ],
+                role_policy_statements=self.codebuild_policy,
+                vpc=self.vpc,
+            ),
+        )
+
+    def set_trigger_dataall_stacks_update(
+        self,
+        target_env,
+    ):
+        wave = self.pipeline.add_wave(
+            f"{self.resource_prefix}-{target_env['envname']}-update-stacks-stage"
+        )
+        wave.add_post(
+            pipelines.CodeBuildStep(
+                id='UpdateDataallStacks',
+                build_environment=codebuild.BuildEnvironment(
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+                ),
+                commands=[
+                    'mkdir ~/.aws/ && touch ~/.aws/config',
+                    'echo "[profile ecsprofile]" > ~/.aws/config',
+                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-dbmigration-role" >> ~/.aws/config',
+                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    'aws sts get-caller-identity --profile ecsprofile',
+                    f'aws ecs run-task --task-definition "arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:task-definition/{self.resource_prefix}-{target_env["envname"]}-stacks-updater:340" --cluster "arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/{self.resource_prefix}-{target_env["envname"]}-cluster" --launch-type "FARGATE" --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxx,subnet-xxxx,subnet-xxxx], securityGroups=[sg-xxxx],assignPublicIp=DISABLED}'
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
