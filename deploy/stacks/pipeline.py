@@ -610,26 +610,59 @@ class PipelineStack(Stack):
             ),
         )
 
-    def set_trigger_dataall_stacks_update(
+    def set_stacks_update_stage(self, target_env):
+        update_stacks_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-update-stacks")
+
+        td_family = f'{self.resource_prefix}-{target_env["envname"]}-stacks-updater'
+        cluster_name = f'{self.resource_prefix}-{target_env["envname"]}-cluster'
+
+        update_stacks_wave.add_post(
+            pipelines.CodeBuildStep(
+                id=f"{self.resource_prefix}-{target_env['envname']}-update-stacks",
+                build_environment=codebuild.BuildEnvironment(
+                    build_image=codebuild.LinuxBuildImage.from_ecr_repository(self.custom_ecr_image, "latest")),
+                commands=[
+                    "mkdir ~/.aws/ && touch ~/.aws/config",
+                    'echo "[profile buildprofile]" > ~/.aws/config',
+                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-stackupdater-role" >> ~/.aws/config',
+                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    "aws sts get-caller-identity --profile buildprofile",
+                    f"subnet_ids=$(aws --profile buildprofile ssm get-parameter --name '/dataall/{target_env['envname']}/ecs/private_subnets' --query 'Parameter.Value' --output text)",
+                    f"security_group_id=$(aws --profile buildprofile ssm get-parameter --name '/dataall/{target_env['envname']}/ecs/scheduled_tasks/security_group_id' --query 'Parameter.Value' --output text)",
+                    'network_config="awsvpcConfiguration={subnets=[$subnet_ids],securityGroups=[$security_group_id],assignPublicIp=DISABLED}"',
+                    f'aws --profile buildprofile ecs run-task --task-definition {td_family} --cluster {cluster_name} --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
+                ],
+                role_policy_statements=self.codebuild_policy,
+                vpc=self.vpc,
+                security_groups=[self.codebuild_sg],
+            ),
+        )
+    def set_stacks_updater_stage(
         self,
         target_env,
     ):
         wave = self.pipeline.add_wave(
-            f"{self.resource_prefix}-{target_env['envname']}-update-stacks-stage"
+            f"{self.resource_prefix}-{target_env['envname']}-stacks-updater-stage"
         )
         wave.add_post(
             pipelines.CodeBuildStep(
-                id='UpdateDataallStacks',
+                id='StacksUpdater',
                 build_environment=codebuild.BuildEnvironment(
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
-                    'echo "[profile ecsprofile]" > ~/.aws/config',
-                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-dbmigration-role" >> ~/.aws/config',
+                    'echo "[profile buildprofile]" > ~/.aws/config',
+                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-stackupdater-role" >> ~/.aws/config',
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
-                    'aws sts get-caller-identity --profile ecsprofile',
-                    f'aws ecs run-task --task-definition "arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:task-definition/{self.resource_prefix}-{target_env["envname"]}-stacks-updater:340" --cluster "arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/{self.resource_prefix}-{target_env["envname"]}-cluster" --launch-type "FARGATE" --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxx,subnet-xxxx,subnet-xxxx], securityGroups=[sg-xxxx],assignPublicIp=DISABLED}'
+                    'aws sts get-caller-identity --profile buildprofile',
+                    f"export cluster_name=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cluster/name --profile buildprofile --output text --query 'Parameter.Value')",
+                    f"export private_subnets=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/private_subnets --profile buildprofile --output text --query 'Parameter.Value')",
+                    f"export security_groups=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/security_groups --profile buildprofile --output text --query 'Parameter.Value')",
+                    f"export task_definition=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/task_def_arn/stacks_updater --profile buildprofile --output text --query 'Parameter.Value')",
+                    'network_config="awsvpcConfiguration={subnets=[$private_subnets],securityGroups=[$security_groups],assignPublicIp=DISABLED}"',
+                    f'cluster_arn="arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/$cluster_name"'
+                    f'aws ecs run-task --task-definition $task_definition --cluster "$cluster_arn" --launch-type "FARGATE" --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
                 ],
                 role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
