@@ -7,8 +7,8 @@ from ...db.models import Environment
 
 class SagemakerStudio:
     @staticmethod
-    def client(AwsAccountId, region, cdkrole=None):
-        session = SessionHelper.remote_session(accountid=AwsAccountId, cdkrole=cdkrole, region=region)
+    def client(AwsAccountId, region, role=None):
+        session = SessionHelper.remote_session(accountid=AwsAccountId, role=role, region=region)
         return session.client('sagemaker', region_name=region)
 
     @staticmethod
@@ -17,7 +17,7 @@ class SagemakerStudio:
         Sagemaker studio domain is limited to one per account,
         RETURN: an existing domain or None if no domain is in the AWS account
         """
-        client = SagemakerStudio.client(AwsAccountId=AwsAccountId, cdkrole=True, region=region)
+        client = SagemakerStudio.client(AwsAccountId=AwsAccountId, role=True, region=region)
         existing_domain = dict()
         try:
             domain_id_paginator = client.get_paginator('list_domains')
