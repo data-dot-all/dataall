@@ -53,7 +53,7 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
             accountid=environment.AwsAccountId, region=environment.region
         )
-        role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, region=region, role=cdk_look_up_role_arn)
+        role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
         if not role:
             raise exceptions.AWSResourceNotFound(
                 action='CHECK_PIVOT_ROLE',

@@ -53,7 +53,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
 
 @pytest.fixture(scope='function', autouse=True)
 def template(env):
-    app = App(context={'create_pivot_role': 'false'})
+    app = App()
     EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
     return json.dumps(app.synth().get_stack_by_name('Environment').template)
 

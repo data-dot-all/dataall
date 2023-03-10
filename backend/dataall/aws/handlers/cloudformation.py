@@ -17,7 +17,7 @@ class CloudFormation:
 
     @staticmethod
     def client(AwsAccountId, region, role=None):
-        session = SessionHelper.remote_session(accountid=AwsAccountId, role=role, region=region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId, role=role)
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
