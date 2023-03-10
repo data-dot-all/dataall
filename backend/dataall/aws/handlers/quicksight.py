@@ -27,7 +27,7 @@ class Quicksight:
             region(str) : aws region
         Returns : boto3.client ("quicksight")
         """
-        session = SessionHelper.remote_session(accountid=AwsAccountId, region=region)
+        session = SessionHelper.remote_session(accountid=AwsAccountId)
         return session.client('quicksight', region_name=region)
 
     @staticmethod
@@ -67,7 +67,7 @@ class Quicksight:
 
         """
         identity_region = Quicksight.get_identity_region(AwsAccountId)
-        session = SessionHelper.remote_session(AwsAccountId)
+        session = SessionHelper.remote_session(accountid=AwsAccountId)
         return session.client('quicksight', region_name=identity_region)
 
     @staticmethod

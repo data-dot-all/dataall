@@ -19,7 +19,7 @@ class ParameterStoreManager:
     def client(AwsAccountId=None, region=None, role=None):
         if AwsAccountId:
             print(f"SSM Parameter remote session with role:{role if role else 'PivotRole'}")
-            session = SessionHelper.remote_session(AwsAccountId, role)
+            session = SessionHelper.remote_session(accountid=AwsAccountId, role=role)
         else:
             print("SSM Parameter session in central account")
             session = SessionHelper.get_session()

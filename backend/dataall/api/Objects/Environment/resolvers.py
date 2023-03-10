@@ -36,7 +36,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region, pivot_role_as_part_of_environment=None):
+def check_environment(context: Context, source, account_id, region, pivot_role_as_part_of_environment=False):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
@@ -47,6 +47,7 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
+    cdk_look_up_role_arn = None
     if pivot_role_as_part_of_environment == False:
         log.info("Check if PivotRole exist in the account")
         pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
@@ -72,10 +73,7 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        pivot_role_as_part_of_environment = True if ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
-        ) == "True" else False
+        pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
         log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         cdk_role_name = check_environment(context, source,
                                           pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
