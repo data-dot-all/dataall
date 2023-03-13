@@ -319,7 +319,7 @@ class ContainerStack(pyNestedClass):
                 iam.AccountPrincipal(tooling_account_id),
             ),
         )
-        self.build_project_role.add_to_policy(
+        cicd_stacks_updater_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
                     "secretsmanager:GetSecretValue",
