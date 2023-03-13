@@ -284,7 +284,7 @@ class PipelineStack(Stack):
             )
 
             if target_env.get('update_dataall_stacks_in_cicd_pipeline', False):
-                self.set_trigger_dataall_stacks_update(
+                self.set_stacks_updater_stage(
                     target_env
                 )
                 
@@ -610,33 +610,6 @@ class PipelineStack(Stack):
             ),
         )
 
-    def set_stacks_update_stage(self, target_env):
-        update_stacks_wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-update-stacks")
-
-        td_family = f'{self.resource_prefix}-{target_env["envname"]}-stacks-updater'
-        cluster_name = f'{self.resource_prefix}-{target_env["envname"]}-cluster'
-
-        update_stacks_wave.add_post(
-            pipelines.CodeBuildStep(
-                id=f"{self.resource_prefix}-{target_env['envname']}-update-stacks",
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.from_ecr_repository(self.custom_ecr_image, "latest")),
-                commands=[
-                    "mkdir ~/.aws/ && touch ~/.aws/config",
-                    'echo "[profile buildprofile]" > ~/.aws/config',
-                    f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-stackupdater-role" >> ~/.aws/config',
-                    'echo "credential_source = EcsContainer" >> ~/.aws/config',
-                    "aws sts get-caller-identity --profile buildprofile",
-                    f"subnet_ids=$(aws --profile buildprofile ssm get-parameter --name '/dataall/{target_env['envname']}/ecs/private_subnets' --query 'Parameter.Value' --output text)",
-                    f"security_group_id=$(aws --profile buildprofile ssm get-parameter --name '/dataall/{target_env['envname']}/ecs/scheduled_tasks/security_group_id' --query 'Parameter.Value' --output text)",
-                    'network_config="awsvpcConfiguration={subnets=[$subnet_ids],securityGroups=[$security_group_id],assignPublicIp=DISABLED}"',
-                    f'aws --profile buildprofile ecs run-task --task-definition {td_family} --cluster {cluster_name} --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
-                ],
-                role_policy_statements=self.codebuild_policy,
-                vpc=self.vpc,
-                security_groups=[self.codebuild_sg],
-            ),
-        )
     def set_stacks_updater_stage(
         self,
         target_env,

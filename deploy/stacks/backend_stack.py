@@ -152,6 +152,7 @@ class BackendStack(Stack):
             image_tag=image_tag,
             prod_sizing=prod_sizing,
             pivot_role_name=self.pivot_role_name,
+            tooling_account_id=tooling_account_id,
             **kwargs,
         )
 
