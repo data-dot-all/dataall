@@ -26,7 +26,7 @@ class ContainerStack(pyNestedClass):
         image_tag=None,
         prod_sizing=False,
         pivot_role_name=None,
-        tooling_account_id=None
+        tooling_account_id=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
