@@ -330,6 +330,8 @@ class ContainerStack(pyNestedClass):
                     "ssm:GetParametersByPath",
                     "ssm:GetParameters",
                     "ssm:GetParameter",
+                    "iam:PassRole",
+                    "ecs:RunTask"
                 ],
                 resources=[
                     f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*",
@@ -337,6 +339,8 @@ class ContainerStack(pyNestedClass):
                     f"arn:aws:kms:{self.region}:{self.account}:key/*",
                     f"arn:aws:ssm:*:{self.account}:parameter/*dataall*",
                     f"arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*",
+                    f"arn:aws:ecs:*:{self.account}:task-definition/{resource_prefix}-{envname}:*",
+                    f"arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role",
                 ],
             )
         )
