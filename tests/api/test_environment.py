@@ -90,7 +90,10 @@ def test_get_environment_object_not_found(client, org1, env1, group):
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_update_env(client, org1, env1, group):
+def test_update_env(client, org1, env1, group, module_mocker):
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     response = client.query(
         """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
@@ -184,7 +187,10 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
 
-def test_unauthorized_update(client, org1, env1):
+def test_unauthorized_update(client, org1, env1, module_mocker):
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     response = client.query(
         """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){

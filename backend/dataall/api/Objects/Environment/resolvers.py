@@ -110,10 +110,7 @@ def update_environment(
             message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
         )
 
-    pivot_role_as_part_of_environment = True if ParameterStoreManager.get_parameter_value(
-        region=os.getenv('AWS_REGION', 'eu-west-1'),
-        parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
-    ) == "True" else False
+    pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
     log.info(f"Updating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
     with context.engine.scoped_session() as session:
 
