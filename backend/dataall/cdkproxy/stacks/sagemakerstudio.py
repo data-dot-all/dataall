@@ -45,7 +45,9 @@ class SageMakerDomain(NestedStack):
             return None
         except ClientError as e:
             logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
-            existing_domain = SagemakerStudio.get_sagemaker_studio_domain(environment.AwsAccountId, environment.region)
+            existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
+                AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
+            )
             existing_domain_id = existing_domain.get('DomainId', False)
             if existing_domain_id:
                 return existing_domain_id
