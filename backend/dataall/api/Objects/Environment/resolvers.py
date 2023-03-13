@@ -52,7 +52,7 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
         log.info("Check if PivotRole exist in the account")
         pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
-            accountid=environment.AwsAccountId, region=environment.region
+            accountid=account_id, region=region
         )
         role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
         if not role:
