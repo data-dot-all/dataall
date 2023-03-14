@@ -176,13 +176,8 @@ class Dataset(Stack):
         env = self.get_env(dataset)
 
         env_group = self.get_env_group(dataset)
-
-        quicksight_default_group_arn = None
-        if env.dashboardsEnabled:
-            quicksight_default_group = Quicksight.create_quicksight_group(
-                dataset.AwsAccountId, Quicksight.DEFAULT_GROUP_NAME
-            )
-            quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
+        identity_region = 'us-east-1'
+        quicksight_default_group_arn = f'arn:aws:quicksight:{identity_region}:{env.AwsAccountId}:group/{Quicksight._DEFAULT_GROUP_NAME}' if env.dashboardsEnabled else None
 
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
