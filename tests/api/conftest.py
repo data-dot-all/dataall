@@ -616,7 +616,10 @@ def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(env_fixture, org_fixture, dataset, group) -> dataall.db.models.Dataset:
+def dataset_fixture(env_fixture, org_fixture, dataset, group, module_mocker) -> dataall.db.models.Dataset:
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
     yield dataset(
         org=org_fixture,
         env=env_fixture,

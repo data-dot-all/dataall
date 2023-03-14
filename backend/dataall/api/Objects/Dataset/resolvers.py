@@ -22,8 +22,16 @@ from ....searchproxy import indexers
 log = logging.getLogger(__name__)
 
 
+def check_dataset_account(environment):
+    if environment.dashboardsEnabled:
+        Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
+    return True
+
 def create_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = Dataset.create_dataset(
             session=session,
             username=context.username,
@@ -56,6 +64,9 @@ def import_dataset(context: Context, source, input=None):
         raise exceptions.RequiredParameter('group')
 
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = Dataset.create_dataset(
             session=session,
             username=context.username,

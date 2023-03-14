@@ -29,8 +29,11 @@ def env1(
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset1(db, env1, org1, group, user, dataset) -> models.Dataset:
+def dataset1(db, env1, org1, group, user, dataset, module_mocker) -> models.Dataset:
     with db.scoped_session() as session:
+        module_mocker.patch(
+            'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+        )
         yield dataset(
             org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
         )

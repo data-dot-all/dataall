@@ -53,7 +53,11 @@ def dataset1(
     env1: dataall.db.models.Environment,
     dataset: typing.Callable,
     group,
+    module_mocker,
 ) -> dataall.db.models.Dataset:
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
     d = dataset(org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name)
     print(d)
     yield d
