@@ -225,6 +225,8 @@ def get_dataset_stewards_group(context, source: models.Dataset, **kwargs):
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
         updated_dataset = Dataset.update_dataset(
             session=session,
             username=context.username,
