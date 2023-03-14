@@ -38,7 +38,7 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
 
 def check_environment(context: Context, source, account_id, region, pivot_role_as_part_of_environment=False):
     """ Checks necessary resources for environment deployment.
-    - Check CDKToolkit exists in Account
+    - Check CDKToolkit exists in Account assuming cdk_look_up_role
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
     Args:
         pivot_role_as_part_of_environment: flag to create pivot role as part of environment stack
@@ -47,19 +47,16 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
-    cdk_look_up_role_arn = None
+
+    pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
+    cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
+        accountid=account_id, region=region
+    )
+    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(
+        AwsAccountId=account_id, region=region, role=cdk_look_up_role_arn
+    )
     if pivot_role_as_part_of_environment == False:
         log.info("Check if PivotRole exist in the account")
-        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
-        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
-            accountid=account_id, region=region
-        )
-        cdk_role = IAM.get_role(account_id=account_id, role_arn=cdk_look_up_role_arn, role=cdk_look_up_role_arn)
-        if not cdk_role:
-            raise exceptions.AWSResourceNotFound(
-                action='CHECK_CDK_TOOLKIT',
-                message='The CDKToolkit has not been created in the Environment AWS Account',
-            )
         role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
         if not role:
             raise exceptions.AWSResourceNotFound(
@@ -67,7 +64,6 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
                 message='Pivot Role has not been created in the Environment AWS Account',
             )
 
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account_id, region=region, role=cdk_look_up_role_arn)
     return cdk_role_name
 
 
