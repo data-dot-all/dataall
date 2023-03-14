@@ -14,6 +14,7 @@ from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
+from ....aws.handlers.quicksight import Quicksight
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
@@ -26,6 +27,7 @@ def check_dataset_account(environment):
     if environment.dashboardsEnabled:
         Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
     return True
+
 
 def create_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
