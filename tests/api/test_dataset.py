@@ -111,7 +111,10 @@ def test_list_datasets(client, dataset1, group):
     assert response.data.listDatasets.nodes[0].datasetUri == dataset1.datasetUri
 
 
-def test_update_dataset(dataset1, client, patch_es, group, group2):
+def test_update_dataset(dataset1, client, patch_es, group, group2, module_mocker):
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
