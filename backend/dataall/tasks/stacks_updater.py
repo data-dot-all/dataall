@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import time
 
 from .. import db
 from ..db import models
@@ -47,6 +48,7 @@ def update_stack(session, envname, target_uri):
         while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
             log.info(f"Update for {stack.name}//{stack.stackUri} is not complete, waiting for 30 seconds...")
             time.sleep(30)
+        log.info(f"Update for {stack.name}//{stack.stackUri} COMPLETE")
     else:
         log.info(
             f'Stack update is already running... Skipping stack {stack.name}//{stack.stackUri}'

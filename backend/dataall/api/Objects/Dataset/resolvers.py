@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 def check_dataset_account(environment):
     if environment.dashboardsEnabled:
         Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
-        Quicksight.create_quicksight_group(environment.AwsAccountId, Quicksight._DEFAULT_GROUP_NAME)
+        Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
     return True
 
 
