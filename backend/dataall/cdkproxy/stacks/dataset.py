@@ -91,11 +91,11 @@ class Dataset(Stack):
         env = self.get_env(dataset)
 
         env_group = self.get_env_group(dataset)
-        
+
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
             quicksight_default_group_arn = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
-        
+
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
