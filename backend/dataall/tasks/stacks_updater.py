@@ -42,8 +42,11 @@ def update_stack(session, envname, target_uri):
         session, target_uri=target_uri
     )
     cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
-    if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
-        stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
+    if not Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
+        stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack_uri=stack.stackUri)
+        while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
+            log.info(f"Update for {stack.name}//{stack.stackUri} is not complete, waiting for 30 seconds...")
+            time.sleep(30)
     else:
         log.info(
             f'Stack update is already running... Skipping stack {stack.name}//{stack.stackUri}'
