@@ -70,84 +70,6 @@ class Dataset(Stack):
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_shared_tables(self) -> typing.List[models.ShareObjectItem]:
-        engine = self.get_engine()
-        with engine.scoped_session() as session:
-            tables = (
-                session.query(
-                    models.DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
-                    models.DatasetTable.GlueTableName.label('GlueTableName'),
-                    models.DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
-                    models.DatasetTable.region.label('SourceRegion'),
-                    models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                    models.Environment.region.label('TargetRegion'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri == models.DatasetTable.tableUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        models.DatasetTable.datasetUri == self.target_uri,
-                        models.DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status.in_(self.shared_states)
-                    )
-                )
-                .all()
-            )
-            logger.info(f'found {len(tables)} shared tables')
-        return tables
-
-    def get_shared_folders(self) -> typing.List[models.DatasetStorageLocation]:
-        engine = self.get_engine()
-        with engine.scoped_session() as session:
-            locations = (
-                session.query(
-                    models.DatasetStorageLocation.locationUri.label('locationUri'),
-                    models.DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    models.DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                    models.Environment.AwsAccountId.label('AwsAccountId'),
-                    models.Environment.region.label('region'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri
-                        == models.DatasetStorageLocation.locationUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        models.DatasetStorageLocation.datasetUri == self.target_uri,
-                        models.DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status.in_(self.shared_states)
-                    )
-                )
-                .all()
-            )
-            logger.info(f'found {len(locations)} shared folders')
-        return locations
-
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(
             scope,
@@ -162,13 +84,6 @@ class Dataset(Stack):
         # Required for dynamic stack tagging
         self.target_uri = target_uri
 
-        self.shared_states = [
-            models.Enums.ShareItemStatus.Share_Succeeded.value,
-            models.Enums.ShareItemStatus.Revoke_Approved.value,
-            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-            models.Enums.ShareItemStatus.Revoke_Failed.value
-        ]
-
         pivot_role_name = SessionHelper.get_delegation_role_name()
 
         dataset = self.get_target()
@@ -177,7 +92,7 @@ class Dataset(Stack):
 
         env_group = self.get_env_group(dataset)
         identity_region = 'us-east-1'
-        quicksight_default_group_arn = f'arn:aws:quicksight:{identity_region}:{env.AwsAccountId}:group/{Quicksight._DEFAULT_GROUP_NAME}' if env.dashboardsEnabled else None
+        quicksight_default_group_arn = f'arn:aws:quicksight:{identity_region}:{env.AwsAccountId}:group/default/{Quicksight._DEFAULT_GROUP_NAME}' if env.dashboardsEnabled else None
 
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
