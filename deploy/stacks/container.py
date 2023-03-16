@@ -554,7 +554,7 @@ class ContainerStack(pyNestedClass):
             rule_name=scheduled_task_id
             # security_groups=[security_group],
         )
-        return scheduled_task, task_definition
+        return scheduled_task, task
 
     @property
     def ecs_task_role(self) -> iam.Role:
