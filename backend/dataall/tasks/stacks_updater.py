@@ -39,8 +39,8 @@ def update_stacks(engine, envname):
                 env_running = check_stack(session, envname, environment.environmentUri)
                 log.info(f"Update for {environment.environmentUri} is not complete" if env_running else f"Update for {environment.environmentUri} is COMPLETE")
                 environments_being_updated.append(env_running)
-            if retries > 30:
-                log.info("Maximum number of retries exceeded, continuing task...")
+            if retries > 60:
+                log.info("Maximum number of retries exceeded (30mins), continuing task...")
                 break
 
         log.info("Update for all environments COMPLETE or maximum number of retries exceeded")
