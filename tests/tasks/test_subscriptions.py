@@ -127,7 +127,7 @@ def share(
             itemName=table.GlueTableName,
             GlueDatabaseName=table.GlueDatabaseName,
             GlueTableName=table.GlueTableName,
-            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
 

@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.sql import and_
 
 from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
+from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment, ShareItemSM
 from ..models import Dataset
 from ...utils import json_utils
 
@@ -78,7 +78,6 @@ class DatasetTable:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
-    # @has_resource_perm(permissions.LIST_DATASET_TABLES)
     def list_dataset_tables(
         session,
         username: str,
@@ -101,7 +100,6 @@ class DatasetTable:
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
-    # @has_resource_perm(permissions.LIST_DATASET_TABLES)
     def get_dataset_table(
         session,
         username: str,
@@ -150,12 +148,13 @@ class DatasetTable:
         check_perm: bool = False,
     ):
         table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(
                 and_(
                     models.ShareObjectItem.itemUri == table.tableUri,
-                    models.ShareObjectItem.status == 'Approved',
+                    models.ShareObjectItem.status.in_(share_item_shared_states)
                 )
             )
             .first()
@@ -176,12 +175,13 @@ class DatasetTable:
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, status: List[str]
+        session, environment_uri: str, dataset_uri: str
     ):
         """For a given dataset, returns the list of Tables shared with the environment
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         env_tables_shared = (
             session.query(models.DatasetTable)  # all tables
             .join(
@@ -197,7 +197,7 @@ class DatasetTable:
                     models.ShareObject.datasetUri == dataset_uri,  # for this dataset
                     models.ShareObject.environmentUri
                     == environment_uri,  # for this environment
-                    models.ShareObject.status.in_(status),
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
             .all()
@@ -207,12 +207,12 @@ class DatasetTable:
 
     @staticmethod
     def get_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str, status: List[str]
+        session, environment_uri: str, dataset_uri: str
     ):
         return [
             {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
             for t in DatasetTable.query_dataset_tables_shared_with_env(
-                session, environment_uri, dataset_uri, status
+                session, environment_uri, dataset_uri
             )
         ]
 
@@ -237,7 +237,9 @@ class DatasetTable:
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
             DatasetTable.update_existing_tables_status(existing_tables, glue_tables)
-
+            logger.info(
+                f'existing_tables={glue_tables}'
+            )
             for table in glue_tables:
                 if table['Name'] not in existing_table_names:
                     logger.info(
@@ -340,22 +342,6 @@ class DatasetTable:
             )
         ).delete()
         session.commit()
-
-    @staticmethod
-    def get_dataset_by_uri(session, table_uri):
-        table: models.DatasetTable = session.query(models.DatasetTable).get(table_uri)
-        if not table:
-            raise Exception(f'DatasetTableNotFound{table_uri}')
-        dataset: Dataset = session.query(Dataset).get(table.datasetUri)
-        if not dataset:
-            raise Exception(f'DatasetNotFound{table.datasetUri}')
-        return dataset
-
-    @staticmethod
-    def list_all_tables(session) -> models.DatasetTable:
-        tables = session.query(models.DatasetTable).all()
-        logging.info(f'All Tables found {tables}')
-        return tables
 
     @staticmethod
     def get_table_by_s3_prefix(session, s3_prefix, accountid, region):

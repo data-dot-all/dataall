@@ -465,7 +465,7 @@ class dataAllBaseInfra(Stack):
                                      iam.PolicyStatement(
                                          sid="RamAssociateResource", effect=iam.Effect.ALLOW,
                                          actions=[
-                                             "ram:AssociateResourceShare", 
+                                             "ram:AssociateResourceShare",
                                              "ram:DisassociateResourceShare"
                                          ],
                                          resources=[f"arn:aws:ram:*:{self.account}:resource-share/*"],

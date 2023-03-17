@@ -12,6 +12,7 @@ from . import (
     KeyValueTag,
     Vote,
     Stack,
+    ShareItemSM,
 )
 from . import Organization
 from .. import models, exceptions, permissions, paginate
@@ -216,11 +217,16 @@ class Dataset:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(models.Dataset)
             .outerjoin(
                 models.ShareObject,
                 models.ShareObject.datasetUri == models.Dataset.datasetUri,
+            )
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
             )
             .filter(
                 or_(
@@ -229,11 +235,11 @@ class Dataset:
                     models.Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
-                        models.ShareObject.status == 'Approved',
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                     and_(
                         models.ShareObject.owner == username,
-                        models.ShareObject.status == 'Approved',
+                        models.ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                 )
             )
@@ -514,12 +520,12 @@ class Dataset:
         return query.all()
 
     @staticmethod
-    def list_dataset_approved_shares(session, dataset_uri) -> [models.ShareObject]:
+    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [models.ShareObject]:
         query = session.query(models.ShareObject).filter(
             and_(
                 models.ShareObject.datasetUri == dataset_uri,
                 models.ShareObject.deleted.is_(None),
-                models.ShareObject.status == 'Approved',
+                models.ShareObject.existingSharedItems.is_(True),
             )
         )
         return query.all()
@@ -540,7 +546,7 @@ class Dataset:
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
         dataset = Dataset.get_dataset_by_uri(session, uri)
-        Dataset._delete_dataset_not_approved_share_objects(session, uri)
+        Dataset._delete_dataset_shares_with_no_shared_items(session, uri)
         Dataset._delete_dataset_term_links(session, uri)
         Dataset._delete_dataset_tables(session, dataset.datasetUri)
         Dataset._delete_dataset_locations(session, dataset.datasetUri)
@@ -562,13 +568,13 @@ class Dataset:
         return True
 
     @staticmethod
-    def _delete_dataset_not_approved_share_objects(session, dataset_uri):
+    def _delete_dataset_shares_with_no_shared_items(session, dataset_uri):
         share_objects = (
             session.query(models.ShareObject)
             .filter(
                 and_(
                     models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.status != 'Approved',
+                    models.ShareObject.existingSharedItems.is_(False),
                 )
             )
             .all()

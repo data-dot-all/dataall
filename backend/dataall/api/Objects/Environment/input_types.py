@@ -107,6 +107,7 @@ EnvironmentDataItemFilter = gql.InputType(
         gql.Argument('term', gql.String),
         gql.Argument('page', gql.Integer),
         gql.Argument('pageSize', gql.Integer),
+        gql.Argument('uniqueDatasets', gql.Boolean)
     ],
 )
 

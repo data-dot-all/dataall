@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 
-from .Enums import ShareObjectStatus
+from .Enums import ShareItemStatus
 from .. import Base, utils
 
 
@@ -23,5 +23,5 @@ class ShareObjectItem(Base):
     GlueDatabaseName = Column(String, nullable=True)
     GlueTableName = Column(String, nullable=True)
     S3AccessPointName = Column(String, nullable=True)
-    status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
+    status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
     action = Column(String, nullable=True)
