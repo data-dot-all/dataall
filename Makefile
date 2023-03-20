@@ -76,12 +76,12 @@ assume-role:
 	rm .assume_role_json
 
 drop-tables: upgrade-pip install-backend
-	pip install 'alembic==1.9.4'
+	pip install 'alembic'
 	export PYTHONPATH=./backend && \
 	python backend/migrations/drop_tables.py
 
 upgrade-db: upgrade-pip install-backend
-	pip install 'alembic==1.9.4'
+	pip install 'alembic'
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
 
