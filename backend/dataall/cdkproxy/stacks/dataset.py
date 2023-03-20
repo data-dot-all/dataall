@@ -327,16 +327,35 @@ class Dataset(Stack):
             on_event_handler=glue_db_handler,
         )
 
-        storage_location = CfnResource(
+        datalake_location_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
-            'DatasetStorageLocation',
-            type='AWS::LakeFormation::Resource',
-            properties={
-                'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
-                'UseServiceLinkedRole': False,
-            },
+            "DatalakeLocationCustomResourceHandlerArnParameter",
+            string_parameter_name=f"/dataall/{dataset.environmentUri}/cfn/lf/datalakelocation/lambda/arn",
         )
+
+        datalake_location_handler = _lambda.Function.from_function_attributes(
+            self,
+            "DatalakeLocationHandler",
+            function_arn=datalake_location_handler_arn.string_value,
+            same_environment=True,
+        )
+
+        datalake_location_provider = cr.Provider(
+            self,
+            f"{env.resourcePrefix}DatasetStorageLocation",
+            on_event_handler=datalake_location_handler,
+        )
+
+        # storage_location = CfnResource(
+        #     self,
+        #     'DatasetStorageLocation',
+        #     type='AWS::LakeFormation::Resource',
+        #     properties={
+        #         'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+        #         'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
+        #         'UseServiceLinkedRole': False,
+        #     },
+        # )
         dataset_admins = [
             dataset_admin_role.role_arn,
             f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',

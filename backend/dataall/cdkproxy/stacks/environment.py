@@ -369,6 +369,45 @@ class EnvironmentSetup(Stack):
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
         )
 
+        # Data lake location custom resource
+        entry_point = str(
+            pathlib.PosixPath(
+                os.path.dirname(__file__), "../assets/datalakelocationcustomresource"
+            ).resolve()
+        )
+
+        datalakelocation_cr_dlq = self.set_dlq(
+            f'{self._environment.resourcePrefix}-datalakelocationcr-{self._environment.environmentUri}'
+        )
+        datalake_location_custom_resource = _lambda.Function(
+            self,
+            "DatalakeLocationCustomResourceHandler",
+            role=self.pivot_role,
+            handler="index.on_event",
+            code=_lambda.Code.from_asset(entry_point),
+            memory_size=512,
+            description="This Lambda function is a client to register data lake location",
+            timeout=Duration.seconds(5 * 60),
+            environment={"envname": self._environment.name},
+            dead_letter_queue_enabled=True,
+            dead_letter_queue=datalakelocation_cr_dlq,
+            on_failure=lambda_destination.SqsDestination(datalakelocation_cr_dlq),
+            runtime=_lambda.Runtime.PYTHON_3_9,
+        )
+
+        ssm.StringParameter(
+            self,
+            "DatalakeLocationCustomResourceFunctionArn",
+            string_value=datalake_location_custom_resource.function_arn,
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/datalakelocation/lambda/arn",
+        )
+        ssm.StringParameter(
+            self,
+            "DatalakeLocationCustomResourceFunctionName",
+            string_value=datalake_location_custom_resource.function_name,
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/datalakelocation/lambda/name",
+        )
+
         # Create SNS topics for subscriptions
         if self._environment.subscriptionsEnabled:
             queue_key = kms.Key(
