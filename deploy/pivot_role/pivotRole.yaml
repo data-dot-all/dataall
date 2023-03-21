@@ -502,6 +502,7 @@ Resources:
           - Sid: LakeFormation
             Effect: Allow
             Action:
+              - "lakeformation:RegisterResource"
               - "lakeformation:AddLFTagsToResource"
               - "lakeformation:RemoveLFTagsFromResource"
               - "lakeformation:GetResourceLFTags"

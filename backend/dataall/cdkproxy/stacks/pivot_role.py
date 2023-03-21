@@ -582,6 +582,7 @@ class PivotRole(NestedStack):
                     sid='LakeFormation',
                     effect=iam.Effect.ALLOW,
                     actions=[
+                        'lakeformation:RegisterResource',
                         'lakeformation:AddLFTagsToResource',
                         'lakeformation:RemoveLFTagsFromResource',
                         'lakeformation:GetResourceLFTags',
