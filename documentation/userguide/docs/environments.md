@@ -9,17 +9,11 @@ users store data and work with data.**
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
     Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
 
-## :material-hammer-screwdriver: **Bootstrap your AWS account**
-*data.all*does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
+## :material-hammer-screwdriver: **AWS account Pre-requisited**
+*data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
 steps on that AWS account in each region you want to use.
 
-### 1. Create AWS IAM role
-<span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
-the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
-organization and click on link an environment to see this form)
-
-
-### 2. Setup AWS CDK
+### 1. CDK Bootstrap
 
 <span style="color:grey">*data.all*</span> uses AWS CDK to deploy and manage resources on your AWS account.
 AWS CDK requires some resources to exist on the AWS account, and provides a command called `bootstrap` to deploy these
@@ -27,16 +21,19 @@ specific resources.
 
 Moreover, we need to trust data.all infrastructure account.
 data.all codebase and CI/CD resources are in the data.all **tooling account**,
-while all the resources used by the platform
-are located in a **infrastructure account**. From this last one we will deploy environments and other resources
+and all the application resources used by the platform
+are located in a **infrastructure account**. 
+
+From the infrastructure account we will deploy environments and other resources
 inside each of our business accounts (the ones to be boostraped).
 
 
-To boostrap the AWS account using AWS CDK, you need :
+To boostrap the AWS account using AWS CDK, you need the following (which are already fulfilled if you open AWS CloudShell from the environment account).
 
 1. to have AWS credentials configured in ~/.aws/credentials or as environment variables.
-2. to install cdk : `npm install -g aws-cdk`
-3. to run the following command :
+2. to install cdk: `npm install -g aws-cdk`
+
+Then, you can copy/paste the following command from the UI and run it using the credentials of the environment account:
 ````bash
 cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_ENVIRONMENT_AWS_ACCOUNT_NUMBER/ENVIRONMENT_REGION
 ````
@@ -51,8 +48,14 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````
 
 
+### 2. (For manually created pivotRole) AWS IAM role
+<span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
+the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
+organization and click on link an environment to see this form)
 
-### 3. Enable AWS Lake Formation
+
+
+### 3. (For new accounts) AWS Lake Formation Service role
 <span style="color:grey">*data.all*</span> relies on AWS Lake Formation to manage access to your structured data.
 If AWS Lake Formation has never been
 activated on your AWS account, you need to create
@@ -67,7 +70,7 @@ aws iam create-service-linked-role --aws-service-name lakeformation.amazonaws.co
     role name AWSServiceRoleForLakeFormationDataAccess has been taken in this account, please try a different suffix.
     <b>You can skip this step, as this indicates the Lake formation service-linked role exists.</b>
 
-### 4. Amazon Quicksight
+### 4. (For Dashboards) Subscribe to Amazon Quicksight
 
 This is an optional step. To link environments with <i><b>Dashboards enabled</b></i> , you will also need a running Amazon QuickSight subscription
 on the bootstraped account. If you have not subscribed to Quicksight before, go to your AWS account and choose the
