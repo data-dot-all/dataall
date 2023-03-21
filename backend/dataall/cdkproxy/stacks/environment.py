@@ -45,7 +45,8 @@ logger = logging.getLogger(__name__)
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     """Deploy common environment resources:
-        - default environment S3 Bucket,
+        - default environment S3 Bucket
+        - Lambdas used as custom resources in dataset stacks
         - pivotRole (if configured)
         - SNS topic (if subscriptions are enabled)
         - SM Studio domain (if ML studio is enabled)
@@ -382,16 +383,25 @@ class EnvironmentSetup(Stack):
         datalake_location_custom_resource = _lambda.Function(
             self,
             "DatalakeLocationCustomResourceHandler",
+            function_name=f'{self._environment.resourcePrefix}-datalakelocation-handler-{self._environment.environmentUri}',
             role=self.pivot_role,
             handler="index.on_event",
             code=_lambda.Code.from_asset(entry_point),
-            memory_size=512,
-            description="This Lambda function is a client to register data lake location",
+            memory_size=1664,
+            description='This Lambda function is a cloudformation custom resource provider for LakeFormation Storage Locations '
+                        'as the Cfn resource cannot handle pivotRole updates',
             timeout=Duration.seconds(5 * 60),
-            environment={"envname": self._environment.name},
+            environment={
+                'envname': self._environment.name,
+                'LOG_LEVEL': 'DEBUG',
+                'AWS_ACCOUNT': self._environment.AwsAccountId,
+                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
+                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
+            },
             dead_letter_queue_enabled=True,
             dead_letter_queue=datalakelocation_cr_dlq,
             on_failure=lambda_destination.SqsDestination(datalakelocation_cr_dlq),
+            tracing=_lambda.Tracing.ACTIVE,
             runtime=_lambda.Runtime.PYTHON_3_9,
         )
 

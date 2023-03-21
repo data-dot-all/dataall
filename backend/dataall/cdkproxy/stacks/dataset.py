@@ -33,6 +33,16 @@ logger = logging.getLogger(__name__)
 
 @stack(stack='dataset')
 class Dataset(Stack):
+    """Deploy common dataset resources:
+            - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
+            - dataset IAM role
+            - Lambdas used as custom resources in dataset stacks
+            - pivotRole (if configured)
+            - SNS topic (if subscriptions are enabled)
+            - SM Studio domain (if ML studio is enabled)
+        - Deploy team specific resources: teams IAM roles, Athena workgroups
+        - Set
+    """
     module_name = __file__
 
     def get_engine(self) -> db.Engine:
@@ -81,15 +91,11 @@ class Dataset(Stack):
             )[:1024],
             **kwargs)
 
-        # Required for dynamic stack tagging
+        # Read input
         self.target_uri = target_uri
-
-        pivot_role_name = SessionHelper.get_delegation_role_name()
-
+        self.pivot_role_name = SessionHelper.get_delegation_role_name()
         dataset = self.get_target()
-
         env = self.get_env(dataset)
-
         env_group = self.get_env_group(dataset)
 
         quicksight_default_group_arn = None
@@ -97,6 +103,7 @@ class Dataset(Stack):
             quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
+        # Dataset S3 Bucket and KMS key
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
@@ -116,7 +123,7 @@ class Dataset(Stack):
                             principals=[
                                 iam.AccountPrincipal(account_id=dataset.AwsAccountId),
                                 iam.ArnPrincipal(
-                                    f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}'
+                                    f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
                                 ),
                             ],
                             actions=['kms:*'],
@@ -190,7 +197,7 @@ class Dataset(Stack):
                 enabled=True,
             )
 
-        # Dataset Admin and ETL User
+        # Dataset IAM role - ETL policies
         dataset_admin_policy = iam.Policy(
             self,
             'DatasetAdminPolicy',
@@ -302,30 +309,26 @@ class Dataset(Stack):
                 iam.AccountPrincipal(os.environ.get('CURRENT_AWS_ACCOUNT')),
                 iam.AccountPrincipal(dataset.AwsAccountId),
                 iam.ArnPrincipal(
-                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{pivot_role_name}'
+                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
-        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
-            self,
-            'GlueDbCRArnParameter',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
-        )
+        # Datalake location custom resource: registers the S3 location in LakeFormation
+        # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
+        # It replaces the following (just because it causes Cfn issues when handling upgrades of pivotRole)
 
-        glue_db_handler = _lambda.Function.from_function_attributes(
-            self,
-            'CustomGlueDatabaseHandler',
-            function_arn=glue_db_handler_arn.string_value,
-            same_environment=True,
-        )
-
-        GlueDatabase = cr.Provider(
-            self,
-            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=glue_db_handler,
-        )
+        # storage_location = CfnResource(
+        #     self,
+        #     'DatasetStorageLocation',
+        #     type='AWS::LakeFormation::Resource',
+        #     properties={
+        #         'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+        #         'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+        #         'UseServiceLinkedRole': False,
+        #     },
+        # )
 
         datalake_location_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
@@ -342,32 +345,58 @@ class Dataset(Stack):
 
         datalake_location_provider = cr.Provider(
             self,
-            f"{env.resourcePrefix}DatasetStorageLocation",
+            f"{env.resourcePrefix}DatalakeLocationProvider",
             on_event_handler=datalake_location_handler,
         )
 
-        # storage_location = CfnResource(
-        #     self,
-        #     'DatasetStorageLocation',
-        #     type='AWS::LakeFormation::Resource',
-        #     properties={
-        #         'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-        #         'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
-        #         'UseServiceLinkedRole': False,
-        #     },
-        # )
+        datalake_location = CustomResource(
+            self,
+            f'{env.resourcePrefix}DatalakeLocation',
+            service_token=datalake_location_provider.service_token,
+            resource_type='Custom::DataLakeLocation',
+            properties={
+                "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
+                "UseServiceLinkedRole": False,
+                "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}",
+            },
+        )
+
+        # Define dataset admin groups (those with data access grant)
+
         dataset_admins = [
             dataset_admin_role.role_arn,
-            f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
+            f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
             env_group.environmentIAMRoleArn,
         ]
         if quicksight_default_group_arn:
             dataset_admins.append(quicksight_default_group_arn)
 
+        # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
+        # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
+
+        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
+            self,
+            'GlueDbCRArnParameter',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
+        )
+
+        glue_db_handler = _lambda.Function.from_function_attributes(
+            self,
+            'CustomGlueDatabaseHandler',
+            function_arn=glue_db_handler_arn.string_value,
+            same_environment=True,
+        )
+
+        glue_db_provider = cr.Provider(
+            self,
+            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
+            on_event_handler=glue_db_handler,
+        )
+
         glue_db = CustomResource(
             self,
             f'{env.resourcePrefix}DatasetDatabase',
-            service_token=GlueDatabase.service_token,
+            service_token=glue_db_provider.service_token,
             resource_type='Custom::GlueDatabase',
             properties={
                 'CatalogId': dataset.AwsAccountId,
@@ -382,6 +411,8 @@ class Dataset(Stack):
                 'DatabaseAdministrators': dataset_admins,
             },
         )
+
+        # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
 
         glue.CfnCrawler(
             self,
@@ -425,7 +456,7 @@ class Dataset(Stack):
             'DatasetGlueProfilingJob',
             name=dataset.GlueProfilingJobName,
             role=iam.ArnPrincipal(
-                f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}'
+                f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
             ).arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(
