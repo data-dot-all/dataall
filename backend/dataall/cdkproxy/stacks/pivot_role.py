@@ -584,6 +584,7 @@ class PivotRole(NestedStack):
                     actions=[
                         'lakeformation:RegisterResource',
                         'lakeformation:DeregisterResource',
+                        'lakeformation:UpdateResource',
                         'lakeformation:AddLFTagsToResource',
                         'lakeformation:RemoveLFTagsFromResource',
                         'lakeformation:GetResourceLFTags',

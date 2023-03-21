@@ -503,7 +503,8 @@ Resources:
             Effect: Allow
             Action:
               - "lakeformation:RegisterResource"
-              - 'lakeformation:DeregisterResource'
+              - "lakeformation:DeregisterResource"
+              - "lakeformation:UpdateResource"
               - "lakeformation:AddLFTagsToResource"
               - "lakeformation:RemoveLFTagsFromResource"
               - "lakeformation:GetResourceLFTags"
