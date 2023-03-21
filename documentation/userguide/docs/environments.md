@@ -9,31 +9,29 @@ users store data and work with data.**
     To ensure correct data access and AWS resources isolation, onboard one environment in each AWS account.
     Despite being possible, **we strongly discourage users to use the same AWS account for multiple environments**.
 
-## :material-hammer-screwdriver: **AWS account Pre-requisited**
+## :material-hammer-screwdriver: **AWS account Pre-requisites**
 *data.all* does not create AWS accounts. You need to provide an AWS account and complete the following bootstraping
-steps on that AWS account in each region you want to use.
+steps.
 
 ### 1. CDK Bootstrap
 
 <span style="color:grey">*data.all*</span> uses AWS CDK to deploy and manage resources on your AWS account.
 AWS CDK requires some resources to exist on the AWS account, and provides a command called `bootstrap` to deploy these
-specific resources.
+specific resources in a particular AWS region.
 
-Moreover, we need to trust data.all infrastructure account.
+In this step we establish a trust relationship between the data.all infrastructure account and the accounts to be linked as environments.
 data.all codebase and CI/CD resources are in the data.all **tooling account**,
 and all the application resources used by the platform
-are located in a **infrastructure account**. 
-
-From the infrastructure account we will deploy environments and other resources
-inside each of our business accounts (the ones to be boostraped).
-
+are located in a **infrastructure account**. From the infrastructure account we will deploy environments and other resources
+inside each of our business accounts. We are granting permissions to the infrastructure account 
+by setting the `--trust` parameter in the cdk bootstrap command.
 
 To boostrap the AWS account using AWS CDK, you need the following (which are already fulfilled if you open AWS CloudShell from the environment account).
 
 1. to have AWS credentials configured in ~/.aws/credentials or as environment variables.
 2. to install cdk: `npm install -g aws-cdk`
 
-Then, you can copy/paste the following command from the UI and run it using the credentials of the environment account:
+Then, you can copy/paste the following command from the UI and run from your local machine or CloudShell:
 ````bash
 cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://YOUR_ENVIRONMENT_AWS_ACCOUNT_NUMBER/ENVIRONMENT_REGION
 ````
@@ -48,12 +46,29 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````
 
 
-### 2. (For manually created pivotRole) AWS IAM role
-<span style="color:grey">*data.all*</span> assumes a IAM role named **PivotRole** to be able to call AWS SDK APIs on your account. You can download
-the AWS CloudFormation stack from <span style="color:grey">*data.all*</span> environment creation form. (Navigate to an
-organization and click on link an environment to see this form)
+### 2. (For manual) Pivot role
+<span style="color:grey">*data.all*</span> assumes a certain IAM role to be able to call AWS SDK APIs on your account. 
+The Pivot Role is a super role in the environment account and thus, it is 
+protected to be assumed only by the data.all central account using an external Id.
 
+Since release V1.5.0, the Pivot Role can be created as part of the environment CDK stack, given that the trust between data.all and the environment account
+is already explicitly granted in the bootstraping of the account. To enable the creation of Pivot Roles as part
+of the environment stack, the `cdk.json` parameter `pivot_role_as_part_of_environment` needs to be set to `true`. 
+When an environment is linked to data.all a nested stack creates a role called **dataallPivotRole-cdk**.
 
+For versions prior to V1.5.0 or if `pivot_role_as_part_of_environment` is `false` the Pivot Role needs to be created manually.
+In this case, the AWS CloudFormation stack of the role can be downloaded from <span style="color:grey">*data.all*</span> environment creation form. 
+(Navigate to an organization and click on link an environment to see this form). Fill the CloudFormation stack with the parameters
+available in data.all UI to create the role named **dataallPivotRole**. 
+
+!!! note "Upgrading from manual to cdk-created Pivot Role"
+    If you have existing environments that were linked to data.all using a manually created Pivot Role you can
+    still benefit from V1.5.0 `pivot_role_as_part_of_environment` feature. You just need to update that parameter in
+    the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
+    will contain the nested cdk-pivotRole stack (no actions needed) and existing environments can be updated by: a) manually, 
+    by clicking on "update stack" in the environment>stack tab  b) automatically, wait for the `stack-updater` ECS task that 
+    runs daily overnight c) automatically, set the added `update_dataall_stacks_in_cicd_pipeline` parameter to `true` in 
+    the `cdk.json` config file. The `stack-updater` ECS task will be triggered from the CICD pipeline
 
 ### 3. (For new accounts) AWS Lake Formation Service role
 <span style="color:grey">*data.all*</span> relies on AWS Lake Formation to manage access to your structured data.
