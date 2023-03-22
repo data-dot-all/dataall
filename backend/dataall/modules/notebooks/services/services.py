@@ -194,7 +194,8 @@ class NotebookService:
     @has_resource_permission(permissions.GET_NOTEBOOK)
     def get_notebook_status(*, uri) -> str:
         """Retrieves notebook status"""
-        return client(uri).get_notebook_instance_status()
+        notebook = NotebookService.get_notebook(uri=uri)
+        return client(notebook).get_notebook_instance_status()
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_NOTEBOOK)

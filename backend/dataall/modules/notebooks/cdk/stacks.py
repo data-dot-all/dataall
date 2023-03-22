@@ -44,7 +44,7 @@ class NotebookStack(Stack):
     def get_target(self, target_uri) -> SagemakerNotebook:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            notebook = session.query(NotebookStack).get(target_uri)
+            notebook = session.query(SagemakerNotebook).get(target_uri)
         return notebook
 
     def get_env_group(
