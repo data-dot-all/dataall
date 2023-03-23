@@ -22,6 +22,7 @@ from sqlalchemy import and_, or_
 from .manager import stack
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
+from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...db.api import Environment
@@ -414,16 +415,23 @@ class Dataset(Stack):
             on_event_handler=glue_db_handler,
         )
 
-        storage_location = CfnResource(
-            self,
-            'DatasetStorageLocation',
-            type='AWS::LakeFormation::Resource',
-            properties={
-                'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
-                'UseServiceLinkedRole': False,
-            },
+        existing_location = LakeFormation.describe_resource(
+            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            accountid=env.AwsAccountId,
+            region=env.region
         )
+
+        if not existing_location:
+            storage_location = CfnResource(
+                self,
+                'DatasetStorageLocation',
+                type='AWS::LakeFormation::Resource',
+                properties={
+                    'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
+                    'UseServiceLinkedRole': False,
+                },
+            )
         dataset_admins = [
             dataset_admin_role.role_arn,
             f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',

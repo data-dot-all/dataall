@@ -179,9 +179,9 @@ class dataAllBaseInfra(Stack):
                                              "logs:PutLogEvents"
                                          ],
                                          resources=[
-                                             f"arn:aws:logs:*:{self.account}:/aws-glue/*",
-                                             f"arn:aws:logs:*:{self.account}:/aws-lambda/*",
-                                             f"arn:aws:logs:*:{self.account}:/{env_resource_prefix}*"
+                                             f"arn:aws:logs:*:{self.account}:log-group:/aws-glue/*",
+                                             f"arn:aws:logs:*:{self.account}:log-group:/aws/lambda/*",
+                                             f"arn:aws:logs:*:{self.account}:log-group:/{env_resource_prefix}*",
                                          ]
                                      ),
                                      # Logging
@@ -492,6 +492,7 @@ class dataAllBaseInfra(Stack):
                                          sid="RamRead", effect=iam.Effect.ALLOW,
                                          actions=[
                                              "glue:PutResourcePolicy",
+                                             "glue:DeleteResourcePolicy",
                                              "ram:Get*",
                                              "ram:List*"
                                          ],

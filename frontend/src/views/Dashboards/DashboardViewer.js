@@ -21,7 +21,10 @@ const DashboardViewer = ({ dashboard }) => {
       getReaderSession(dashboard.dashboardUri)
     );
     if (!response.errors) {
-      setSessionUrl(response.data.getReaderSession);
+      // the API operation provides the URL with an auth_code value that enables one (and only one) sign-on to a user session
+      // Auth_code is consumed by the embedDashboard so subsequent opening in the new tab will fail. We are removing
+      // the code from the url (part after '?') used by the button because the user session is already authenticated.
+      setSessionUrl(response.data.getReaderSession.split('?')[0]);
       const options = {
         url: response.data.getReaderSession,
         scrolling: 'no',
@@ -65,7 +68,7 @@ const DashboardViewer = ({ dashboard }) => {
               startIcon={<FaExternalLinkAlt size={15} />}
               variant="outlined"
             >
-              View in Quicksight
+              View in new tab
             </Button>
           </Box>
           <div ref={dashboardRef} />

@@ -133,9 +133,9 @@ Resources:
               - 'logs:CreateLogStream'
               - 'logs:PutLogEvents'
             Resource:
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/aws-glue/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/aws-lambda/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws-glue/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
           - Sid: Logging
             Action:
               - 'logs:PutLogEvents'
@@ -403,6 +403,7 @@ Resources:
             Effect: Allow
             Action:
               - 'glue:PutResourcePolicy'
+              - 'glue:DeleteResourcePolicy'
               - 'ram:Get*'
               - 'ram:List*'
             Resource: '*'

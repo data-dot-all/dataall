@@ -73,7 +73,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
             <KeyValueTagUpdateForm
               targetType={targetType}
               targetUri={targetUri}
-              tags={items.length > 0 ? items : [{ key: '', value: '' }]}
+              tags={items.length > 0 ? items : [{ key: '', value: '', cascade: false }]}
               closeUpdate={closeUpdate}
             />
           ) : (
