@@ -16,7 +16,7 @@ class ParamStoreStack(pyNestedClass):
         enable_cw_canaries=False,
         quicksight_enabled=False,
         shared_dashboard_sessions='anonymous',
-        pivot_role_as_part_of_environment=False,
+        enable_pivot_role_auto_create=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -86,5 +86,5 @@ class ParamStoreStack(pyNestedClass):
             self,
             f'dataallCreationPivotRole{envname}',
             parameter_name=f"/dataall/{envname}/pivotRole/createdAsPartOfEnvironmentStack",
-            string_value=str(pivot_role_as_part_of_environment),
+            string_value=str(enable_pivot_role_auto_create),
         )

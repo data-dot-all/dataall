@@ -283,7 +283,7 @@ class PipelineStack(Stack):
                 target_env,
             )
 
-            if target_env.get('update_dataall_stacks_in_cicd_pipeline', False):
+            if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(
                     target_env
                 )
@@ -575,7 +575,7 @@ class PipelineStack(Stack):
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False),
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
-                pivot_role_as_part_of_environment=target_env.get('pivot_role_as_part_of_environment', False),
+                enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
             )
         )
         return backend_stage

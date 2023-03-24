@@ -53,21 +53,21 @@ protected to be assumed only by the data.all central account using an external I
 
 Since release V1.5.0, the Pivot Role can be created as part of the environment CDK stack, given that the trust between data.all and the environment account
 is already explicitly granted in the bootstraping of the account. To enable the creation of Pivot Roles as part
-of the environment stack, the `cdk.json` parameter `pivot_role_as_part_of_environment` needs to be set to `true`. 
+of the environment stack, the `cdk.json` parameter `enable_pivot_role_auto_create` needs to be set to `true`. 
 When an environment is linked to data.all a nested stack creates a role called **dataallPivotRole-cdk**.
 
-For versions prior to V1.5.0 or if `pivot_role_as_part_of_environment` is `false` the Pivot Role needs to be created manually.
+For versions prior to V1.5.0 or if `enable_pivot_role_auto_create` is `false` the Pivot Role needs to be created manually.
 In this case, the AWS CloudFormation stack of the role can be downloaded from <span style="color:grey">*data.all*</span> environment creation form. 
 (Navigate to an organization and click on link an environment to see this form). Fill the CloudFormation stack with the parameters
 available in data.all UI to create the role named **dataallPivotRole**. 
 
 !!! note "Upgrading from manual to cdk-created Pivot Role"
     If you have existing environments that were linked to data.all using a manually created Pivot Role you can
-    still benefit from V1.5.0 `pivot_role_as_part_of_environment` feature. You just need to update that parameter in
+    still benefit from V1.5.0 `enable_pivot_role_auto_create` feature. You just need to update that parameter in
     the `cdk.json` configuration of your deployment. Once the CICD pipeline has completed: new linked environments 
     will contain the nested cdk-pivotRole stack (no actions needed) and existing environments can be updated by: a) manually, 
     by clicking on "update stack" in the environment>stack tab  b) automatically, wait for the `stack-updater` ECS task that 
-    runs daily overnight c) automatically, set the added `update_dataall_stacks_in_cicd_pipeline` parameter to `true` in 
+    runs daily overnight c) automatically, set the added `enable_update_dataall_stacks_in_cicd_pipeline` parameter to `true` in 
     the `cdk.json` config file. The `stack-updater` ECS task will be triggered from the CICD pipeline
 
 ### 3. (For new accounts) AWS Lake Formation Service role

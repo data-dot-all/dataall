@@ -44,7 +44,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
-        pivot_role_as_part_of_environment=False,
+        enable_pivot_role_auto_create=False,
         enable_opensearch_serverless=False,
         **kwargs,
     ):
@@ -66,7 +66,7 @@ class BackendStack(Stack):
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
 
-        self.pivot_role_name = f"dataallPivotRole{'-cdk' if pivot_role_as_part_of_environment else ''}"
+        self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
 
         ParamStoreStack(
             self,
@@ -77,7 +77,7 @@ class BackendStack(Stack):
             enable_cw_canaries=enable_cw_canaries,
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
-            pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
+            enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             **kwargs,
         )
 
