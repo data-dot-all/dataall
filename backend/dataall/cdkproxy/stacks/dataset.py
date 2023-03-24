@@ -316,19 +316,9 @@ class Dataset(Stack):
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
+        # Using a custom resource instead of Cfn resource just because it causes Cfn issues when handling upgrades of pivotRole
         # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
         # It replaces the following (just because it causes Cfn issues when handling upgrades of pivotRole)
-
-        # storage_location = CfnResource(
-        #     self,
-        #     'DatasetStorageLocation',
-        #     type='AWS::LakeFormation::Resource',
-        #     properties={
-        #         'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-        #         'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
-        #         'UseServiceLinkedRole': False,
-        #     },
-        # )
 
         datalake_location_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
