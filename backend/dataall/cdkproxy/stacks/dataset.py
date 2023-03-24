@@ -36,12 +36,10 @@ class Dataset(Stack):
     """Deploy common dataset resources:
             - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
             - dataset IAM role
-            - Lambdas used as custom resources in dataset stacks
-            - pivotRole (if configured)
-            - SNS topic (if subscriptions are enabled)
-            - SM Studio domain (if ML studio is enabled)
-        - Deploy team specific resources: teams IAM roles, Athena workgroups
-        - Set
+            - custom resource from environment Lambda to create glue database and grant permissions
+            - custom resource from environment Lambda to register S3 location in LF
+            - Glue crawler
+            - Glue profiling job
     """
     module_name = __file__
 

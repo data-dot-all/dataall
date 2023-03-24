@@ -535,7 +535,7 @@ class EnvironmentSetup(Stack):
             vpc_id = None
             subnet_ids = []
             try:
-                print("looking for default VPC")
+                logger.info("looking for default VPC")
                 default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
                 vpc_id = default_vpc.vpc_id
                 subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
