@@ -50,7 +50,11 @@ def register(props):
 
 
 def on_update(event):
-    update(event["ResourceProperties"])
+    props = event["ResourceProperties"]
+    if not _is_resource_registered(props["ResourceArn"]):
+        register(props)
+    else:
+        update(props)
 
 
 def update(props):
