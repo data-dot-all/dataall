@@ -502,6 +502,7 @@ Resources:
               - "lakeformation:RegisterResource"
               - "lakeformation:DeregisterResource"
               - "lakeformation:UpdateResource"
+              - "lakeformation:DescribeResource"
               - "lakeformation:AddLFTagsToResource"
               - "lakeformation:RemoveLFTagsFromResource"
               - "lakeformation:GetResourceLFTags"
@@ -535,7 +536,6 @@ Resources:
               - 'lakeformation:GetTableObjects'
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
-              - 'lakeformation:DescribeResource'
             Resource: '*'
           - Sid: Compute
             Effect: Allow
