@@ -15,6 +15,9 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
+RETRIES = 30
+SLEEP_TIME = 30
+
 
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
@@ -45,13 +48,13 @@ def update_stack(session, envname, target_uri, wait=False):
         if wait:
             retries = 1
             while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{stack.stackUri}'):
-                log.info(f"Update for {stack.name}//{stack.stackUri} is not complete, waiting for 30 seconds...")
-                time.sleep(30)
+                log.info(f"Update for {stack.name}//{stack.stackUri} is not complete, waiting for {SLEEP_TIME} seconds...")
+                time.sleep(SLEEP_TIME)
                 retries = retries + 1
-                if retries > 30:
-                    log.info("Maximum number of retries exceeded, continuing task...")
+                if retries > RETRIES:
+                    log.info(f"Maximum number of retries exceeded ({RETRIES} retries), continuing task...")
                     break
-            log.info(f"Update for {stack.name}//{stack.stackUri} COMPLETE or maximum number of retries exceeded")
+            log.info(f"Update for {stack.name}//{stack.stackUri} COMPLETE or maximum number of retries exceeded ({RETRIES} retries)")
     else:
         log.info(
             f'Stack update is already running... Skipping stack {stack.name}//{stack.stackUri}'
