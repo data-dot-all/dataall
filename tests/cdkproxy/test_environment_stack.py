@@ -29,7 +29,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=[another_group],
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.sagemakerstudio.SageMakerDomain.check_sagemaker_studio',
+        'dataall.cdkproxy.stacks.sagemakerstudio.SageMakerDomain.check_existing_sagemaker_studio_domain',
         return_value=True,
     )
     mocker.patch(

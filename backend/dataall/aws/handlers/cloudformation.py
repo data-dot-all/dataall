@@ -26,7 +26,7 @@ class CloudFormation:
             cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, role=role)
             response = cfn.describe_stacks(StackName='CDKToolkit')
         except ClientError as e:
-            print(e)
+            log.exception(e)
             raise Exception('CDKToolkitNotFound')
 
         stacks = response['Stacks']

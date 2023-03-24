@@ -16,6 +16,7 @@ DEFAULT_CDK_ROLE_ARN = os.environ.get('DEFAULT_CDK_ROLE_ARN')
 glue_client = boto3.client('glue', region_name=AWS_REGION)
 lf_client = boto3.client('lakeformation', region_name=AWS_REGION)
 
+
 def clean_props(**props):
     data = {k: props[k] for k in props.keys() if k != 'ServiceToken'}
     return data

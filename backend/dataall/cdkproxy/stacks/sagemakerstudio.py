@@ -36,7 +36,7 @@ class SageMakerDomain(NestedStack):
     def check_existing_sagemaker_studio_domain(self, environment: models.Environment):
         logger.info('Check if there is an existing sagemaker studio domain in the account')
         try:
-            logger.info(f'check sagemaker studio domain created as part of data.all environment stack.')
+            logger.info('check sagemaker studio domain created as part of data.all environment stack.')
             cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
                 accountid=environment.AwsAccountId, region=environment.region
             )
@@ -50,7 +50,6 @@ class SageMakerDomain(NestedStack):
                 AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
             )
             return existing_domain.get('DomainId', False)
-
 
     def __init__(self, scope: Construct, construct_id: str, environment: models.Environment, sagemaker_principals, vpc_id, subnet_ids, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)

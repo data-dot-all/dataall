@@ -101,6 +101,7 @@ class Quicksight:
 
         except client.exceptions.AccessDeniedException:
             raise Exception('Access denied to Quicksight for selected role')
+        return False
 
     @staticmethod
     def create_quicksight_group(AwsAccountId, GroupName=_DEFAULT_GROUP_NAME):

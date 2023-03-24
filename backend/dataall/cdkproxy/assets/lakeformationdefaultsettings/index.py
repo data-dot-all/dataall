@@ -12,6 +12,7 @@ AWS_REGION = os.environ.get('AWS_REGION')
 lf_client = boto3.client("lakeformation", region_name=os.environ.get("AWS_REGION"))
 iam_client = boto3.client('iam')
 
+
 def clean_props(**props):
     data = {k: props[k] for k in props.keys() if k != 'ServiceToken'}
     return data

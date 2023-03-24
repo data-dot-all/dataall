@@ -384,8 +384,7 @@ class PivotRole(NestedStack):
                     sid='DeleteENI',
                     effect=iam.Effect.ALLOW,
                     actions=['ec2:DeleteNetworkInterface'],
-                    resources=['*'],
-                    conditions={'StringEquals': {'aws:ResourceTag/dataall': 'True'}},
+                    resources=[f'arn:aws:ec2:*:{self.account}:network-interface/*'],
                 ),
                 # SageMaker
                 iam.PolicyStatement(
