@@ -318,6 +318,13 @@ class Dataset(Stack):
         # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
         # It replaces the following (just because it causes Cfn issues when handling upgrades of pivotRole)
 
+        # Custom resources IAM role
+        self.pivot_role = iam.Role.from_role_arn(
+            self,
+            f'PivotRole{env.environmentUri}',
+            f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+        )
+
         datalake_location_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
             "DatalakeLocationCustomResourceHandlerArnParameter",
@@ -335,6 +342,7 @@ class Dataset(Stack):
             self,
             f"{env.resourcePrefix}DatalakeLocationProvider",
             on_event_handler=datalake_location_handler,
+            role=self.pivot_role,
         )
 
         datalake_location = CustomResource(
@@ -379,6 +387,7 @@ class Dataset(Stack):
             self,
             f'{env.resourcePrefix}GlueDbCustomResourceProvider',
             on_event_handler=glue_db_handler,
+            role=self.pivot_role,
         )
 
         glue_db = CustomResource(
