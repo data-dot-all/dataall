@@ -52,7 +52,7 @@ def check_environment(context: Context, source, account_id, region, pivot_role_a
         accountid=account_id, region=region
     )
     cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(
-        AwsAccountId=account_id, region=region, role=cdk_look_up_role_arn
+        AwsAccountId=account_id, region=region
     )
     if not pivot_role_as_part_of_environment:
         log.info("Check if PivotRole exist in the account")

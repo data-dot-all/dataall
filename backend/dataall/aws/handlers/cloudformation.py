@@ -21,7 +21,8 @@ class CloudFormation:
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
-    def check_existing_cdk_toolkit_stack(AwsAccountId, region, role=None):
+    def check_existing_cdk_toolkit_stack(AwsAccountId, region):
+        role = SessionHelper.get_cdk_look_up_role_arn(accountid=AwsAccountId, region=region)
         try:
             cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, role=role)
             response = cfn.describe_stacks(StackName='CDKToolkit')
