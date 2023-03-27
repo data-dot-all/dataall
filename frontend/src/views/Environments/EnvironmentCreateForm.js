@@ -45,7 +45,6 @@ import ChipInput from '../../components/TagsInput';
 import getPivotRolePresignedUrl from '../../api/Environment/getPivotRolePresignedUrl';
 import getPivotRoleExternalId from '../../api/Environment/getPivotRoleExternalId';
 import getPivotRoleName from '../../api/Environment/getPivotRoleName';
-import getPivotRoleAsPartOfEnvironment from '../../api/Environment/getPivotRoleAsPartOfEnvironment';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -58,7 +57,6 @@ const EnvironmentCreateForm = (props) => {
   const { settings } = useSettings();
   const [organization, setOrganization] = useState({});
   const [trustedAccount, setTrustedAccount] = useState(null);
-  const [pivotRoleAsPartOfEnvironment, setPivotRoleAsPartOfEnvironment] = useState(null);
   const [pivotRoleName, setPivotRoleName] = useState(null);
   const [loading, setLoading] = useState(true);
   const groupOptions = groups
@@ -78,14 +76,6 @@ const EnvironmentCreateForm = (props) => {
     const response = await client.query(getTrustAccount());
     if (!response.errors) {
       setTrustedAccount(response.data.getTrustAccount);
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  }, [client, dispatch]);
-  const fetchPivotRoleAsPartOfEnvironment = useCallback(async () => {
-    const response = await client.query(getPivotRoleAsPartOfEnvironment());
-    if (!response.errors) {
-      setPivotRoleAsPartOfEnvironment(response.data.getPivotRoleAsPartOfEnvironment);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -141,6 +131,8 @@ const EnvironmentCreateForm = (props) => {
     });
   };
   useEffect(() => {
+    console.log("ENABLE_PIVOT_ROLE_AUTO_CREATE")
+    console.log(process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE)
     if (client) {
       fetchTrustedAccount().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
@@ -148,12 +140,9 @@ const EnvironmentCreateForm = (props) => {
       getRoleName().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchPivotRoleAsPartOfEnvironment().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
-  }, [client, dispatch, fetchItem, fetchTrustedAccount, getRoleName, fetchPivotRoleAsPartOfEnvironment]);
+  }, [client, dispatch, fetchItem, fetchTrustedAccount, getRoleName]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -298,7 +287,7 @@ const EnvironmentCreateForm = (props) => {
                   {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
                 </Typography>
               </Box>
-              {pivotRoleAsPartOfEnvironment ? (
+              {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE == 'True' ? (
                    <Box>
                       <Typography color="textSecondary" variant="subtitle2">
                         As part of the environment CloudFormation stack data.all will create an IAM role (Pivot Role) to manage AWS operations in the environment AWS Account.

@@ -11,12 +11,6 @@ getTrustAccount = gql.QueryField(
     test_scope='Environment',
 )
 
-getCreatePivotRole = gql.QueryField(
-    name='getPivotRoleAsPartOfEnvironment',
-    type=gql.Boolean,
-    resolver=get_pivot_role_as_part_of_environment,
-)
-
 checkEnvironment = gql.QueryField(
     name='checkEnvironment',
     args=[gql.Argument(name='input', type=gql.Ref('AwsEnvironmentInput'))],

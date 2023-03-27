@@ -147,7 +147,7 @@ class EnvironmentSetup(Stack):
         self.dataall_central_account = SessionHelper.get_account()
         pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/createdAsPartOfEnvironmentStack"
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate"
         )
         self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == "True" else False
         self.engine = self.get_engine()

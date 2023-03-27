@@ -33,6 +33,11 @@ def create_react_env_file(
     search_api_url = f'{api_url}search/api'
     print(f'Search API: {search_api_url}')
 
+    pivot_role_auto_create = ssm.get_parameter(Name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate")['Parameter'][
+        'Value'
+    ]
+    print(f'PivotRole auto-create is enabled: {pivot_role_auto_create}')
+
     if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
@@ -63,6 +68,7 @@ REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
 REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
+REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE={pivot_role_auto_create}
 """
         print('.env content: \n', file_content)
         f.write(file_content)
@@ -119,13 +125,14 @@ if __name__ == '__main__':
     custom_domain = os.environ.get('custom_domain', 'False')
     region = os.environ.get('deployment_region', 'eu-west-1')
     enable_cw_rum = os.environ.get('enable_cw_rum', 'False')
+    pivot_role_auto_create = os.environ.get('enable_pivot_role_auto_create', 'True')
     print(
         f'Creating React .env file with params: '
         f'(region={region},envname={envname},resource_prefix={resource_prefix}'
         f'internet_facing={internet_facing},custom_domain={custom_domain},'
-        f'cw_rum_enabled={enable_cw_rum})'
+        f'cw_rum_enabled={enable_cw_rum},pivot_role_auto_create={pivot_role_auto_create})'
     )
     create_react_env_file(
-        region, envname, resource_prefix, internet_facing, custom_domain, enable_cw_rum
+        region, envname, resource_prefix, internet_facing, custom_domain, enable_cw_rum, pivot_role_auto_create
     )
     print(f'React .env created successfully')
