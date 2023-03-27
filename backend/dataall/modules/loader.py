@@ -22,7 +22,7 @@ class ImportMode(Enum):
     The values represent a submodule and should exist
     """
 
-    API = "gql"
+    API = "api"
     CDK = "cdk"
     TASKS = "tasks"
 

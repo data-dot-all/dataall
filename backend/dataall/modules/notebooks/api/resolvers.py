@@ -1,4 +1,4 @@
-from dataall.modules.notebooks.gql.enums import SagemakerNotebookRole
+from dataall.modules.notebooks.api.enums import SagemakerNotebookRole
 
 from dataall.api.context import Context
 from dataall.db import exceptions

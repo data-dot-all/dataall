@@ -1,6 +1,6 @@
 """The module defines GraphQL mutations for the SageMaker notebooks"""
 from dataall.api import gql
-from dataall.modules.notebooks.gql.resolvers import (
+from dataall.modules.notebooks.api.resolvers import (
     create_notebook,
     delete_notebook,
     start_notebook,
