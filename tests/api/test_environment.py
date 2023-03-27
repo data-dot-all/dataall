@@ -11,14 +11,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
@@ -90,10 +83,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
     assert 'UnauthorizedOperation' in response.errors[0].message
 
 
-def test_update_env(client, org1, env1, group, module_mocker):
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
+def test_update_env(client, org1, env1, group):
     response = client.query(
         """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
@@ -187,10 +177,7 @@ def test_update_env(client, org1, env1, group, module_mocker):
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
 
-def test_unauthorized_update(client, org1, env1, module_mocker):
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
+def test_unauthorized_update(client, org1, env1):
     response = client.query(
         """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){

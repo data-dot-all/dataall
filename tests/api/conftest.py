@@ -21,8 +21,10 @@ def patch_check_env(module_mocker):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def patch_check_env(module_mocker):
-    module_mocker.patch('dataall.utils.Parameter.get_parameter', return_value='unknownvalue')
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)

@@ -11,25 +11,15 @@ def _org(db, org, tenant, user, group) -> models.Organization:
 
 @pytest.fixture(scope='module')
 def _env(
-    db, _org: models.Organization, user, group, module_mocker, env
+    db, _org: models.Organization, user, group, env
 ) -> models.Environment:
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
-    )
     env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module', autouse=True)
-def _dataset(db, _env, _org, group, user, dataset, module_mocker) -> models.Dataset:
+def _dataset(db, _env, _org, group, user, dataset) -> models.Dataset:
     with db.scoped_session() as session:
-        module_mocker.patch(
-            'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
-        )
         yield dataset(
             org=_org, env=_env, name='dataset1', owner=user.userName, group=group.name
         )
