@@ -354,6 +354,7 @@ class Dataset(Stack):
                 "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
                 "UseServiceLinkedRole": False,
                 "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}",
+                'LambdaArn': datalake_location_handler_arn.string_value
             },
         )
 
@@ -406,6 +407,7 @@ class Dataset(Stack):
                     'CreateTableDefaultPermissions': [],
                 },
                 'DatabaseAdministrators': dataset_admins,
+                'LambdaArn': glue_db_handler_arn.string_value
             },
         )
 
