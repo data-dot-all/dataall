@@ -10,7 +10,7 @@ def create_react_env_file(
     resource_prefix,
     internet_facing='True',
     custom_domain='False',
-    cw_rum_enabled='False',
+    cw_rum_enabled='False'
 ):
     ssm = boto3.client('ssm', region_name=region)
     user_pool_id = ssm.get_parameter(Name=f'/dataall/{envname}/cognito/userpool')[
@@ -125,14 +125,13 @@ if __name__ == '__main__':
     custom_domain = os.environ.get('custom_domain', 'False')
     region = os.environ.get('deployment_region', 'eu-west-1')
     enable_cw_rum = os.environ.get('enable_cw_rum', 'False')
-    pivot_role_auto_create = os.environ.get('enable_pivot_role_auto_create', 'True')
     print(
         f'Creating React .env file with params: '
         f'(region={region},envname={envname},resource_prefix={resource_prefix}'
         f'internet_facing={internet_facing},custom_domain={custom_domain},'
-        f'cw_rum_enabled={enable_cw_rum},pivot_role_auto_create={pivot_role_auto_create})'
+        f'cw_rum_enabled={enable_cw_rum})'
     )
     create_react_env_file(
-        region, envname, resource_prefix, internet_facing, custom_domain, enable_cw_rum, pivot_role_auto_create
+        region, envname, resource_prefix, internet_facing, custom_domain, enable_cw_rum
     )
     print(f'React .env created successfully')
