@@ -28,7 +28,6 @@ from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.modules.loader import all_modules
 
 log = logging.getLogger(__name__)
 

@@ -1,16 +1,15 @@
 """Load modules that are specified in the configuration file"""
 import importlib
-import inspect
 import logging
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Protocol, runtime_checkable
+from typing import List
 
 from dataall.core.config import config
 
 log = logging.getLogger(__name__)
 
 _MODULE_PREFIX = "dataall.modules"
-_IMPORTED = []
 
 
 class ImportMode(Enum):
@@ -29,16 +28,15 @@ class ImportMode(Enum):
     TASKS = "tasks"
 
 
-@runtime_checkable
-class ModuleInterface(Protocol):
+class ModuleInterface(ABC):
     """
     An interface of the module. The implementation should be part of __init__.py of the module
     Contains an API that will be called from core part
     """
-
-    def initialize(self, modes: List[ImportMode]):
-        # Initialize the module
-        ...
+    @classmethod
+    @abstractmethod
+    def is_supported(cls, modes: List[ImportMode]):
+        pass
 
 
 def load_modules(modes: List[ImportMode]) -> None:
@@ -68,24 +66,16 @@ def load_modules(modes: List[ImportMode]) -> None:
 
         log.info(f"Module {name} is loaded")
 
+    for module in ModuleInterface.__subclasses__():
+        if module.is_supported(modes):
+            module()
+
     log.info("All modules have been imported")
 
 
 def _import_module(name):
     try:
-        module = importlib.import_module(f"{_MODULE_PREFIX}.{name}")
-        _inspect_module_interface(module)
-
+        importlib.import_module(f"{_MODULE_PREFIX}.{name}")
         return True
     except ModuleNotFoundError:
         return False
-
-
-def _inspect_module_interface(module):
-    classes = inspect.getmembers(module, inspect.isclass)
-    for class_name, _class in classes:
-        if issubclass(_class, ModuleInterface):
-            _IMPORTED.append(_class())
-            return
-
-    raise ImportError(f"No class implementing ModuleInterface in {module}")
