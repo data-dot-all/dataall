@@ -1,14 +1,16 @@
 """Load modules that are specified in the configuration file"""
 import importlib
+import inspect
 import logging
 from enum import Enum
-from typing import List
+from typing import List, Protocol, runtime_checkable
 
 from dataall.core.config import config
 
 log = logging.getLogger(__name__)
 
 _MODULE_PREFIX = "dataall.modules"
+_IMPORTED = []
 
 
 class ImportMode(Enum):
@@ -27,6 +29,15 @@ class ImportMode(Enum):
     TASKS = "tasks"
 
 
+@runtime_checkable
+class ModuleInterface(Protocol):
+    # An interface of the module. The implementation should be part of __init__.py of the module
+
+    def initialize(self, modes: List[ImportMode]):
+        # Initialize the module
+        ...
+
+
 def load_modules(modes: List[ImportMode]) -> None:
     """
     Loads all modules from the config
@@ -38,7 +49,7 @@ def load_modules(modes: List[ImportMode]) -> None:
         log.info('"modules" has not been found in the config file. Nothing to load')
         return
 
-    log.info("Loading %d modules that have been found in the config", len(modules))
+    log.info("Found %d modules that have been found in the config", len(modules))
     for module in modules:
         name, props = module.popitem()
         active = props["active"]
@@ -46,23 +57,38 @@ def load_modules(modes: List[ImportMode]) -> None:
         if not active:
             raise ValueError(f"Status is not defined for {name} module")
 
+        if active.lower() != "true":
+            log.info(f"Module {name} is not active. Skipping...")
+            continue
+
         if active.lower() == "true" and not _import_module(name):
             raise ValueError(f"Couldn't find module {name} under modules directory")
 
+        log.info(f"Module {name} is loaded")
 
-def _import_module(module):
+    log.info("Initiating all modules")
+
+    for interface in _IMPORTED:
+        interface.initialize(modes)
+
+    log.info("All modules have been imported and initiated")
+
+
+def _import_module(name):
     try:
-        importlib.import_module(f'{_MODULE_PREFIX}.{module}')
+        module = importlib.import_module(f"{_MODULE_PREFIX}.{name}")
+        _inspect_module_interface(module)
+
         return True
     except ModuleNotFoundError:
         return False
 
 
-def _import_submodule(module: str, mode: ImportMode) -> None:
-    """Import a module with the given name."""
-    full_name = f"{_MODULE_PREFIX}.{module}.{mode.value}"
-    try:
-        importlib.import_module(full_name)
-        log.info("Imported module %s", full_name)
-    except ModuleNotFoundError:
-        raise ValueError(f"{mode.value} submodule can't be found under {full_name}")
+def _inspect_module_interface(module):
+    classes = inspect.getmembers(module, inspect.isclass)
+    for class_name, _class in classes:
+        if issubclass(_class, ModuleInterface):
+            _IMPORTED.append(_class())
+            return
+
+    raise ImportError(f"No class implementing ModuleInterface in {module}")
