@@ -47,7 +47,7 @@ def patch_aws(module_mocker):
     )
 
 
-def test_list_notebooks(client, env1, db, org1, user, group, sgm_notebook, patch_aws):
+def test_list_notebooks(client, user, group, sgm_notebook):
     query = """
         query ListSagemakerNotebooks($filter:SagemakerNotebookFilter){
             listSagemakerNotebooks(filter:$filter){
@@ -85,9 +85,7 @@ def test_list_notebooks(client, env1, db, org1, user, group, sgm_notebook, patch
     assert len(response.data.listSagemakerNotebooks['nodes']) == 1
 
 
-def test_nopermissions_list_notebooks(
-    client, env1, db, org1, user2, group2, sgm_notebook, patch_aws
-):
+def test_nopermissions_list_notebooks(client, user2, group2, sgm_notebook):
     response = client.query(
         """
         query ListSagemakerNotebooks($filter:SagemakerNotebookFilter){
@@ -113,7 +111,7 @@ def test_nopermissions_list_notebooks(
     assert len(response.data.listSagemakerNotebooks['nodes']) == 0
 
 
-def test_get_notebook(client, env1, db, org1, user, group, sgm_notebook, patch_aws):
+def test_get_notebook(client, user, group, sgm_notebook):
 
     response = client.query(
         """
@@ -131,7 +129,7 @@ def test_get_notebook(client, env1, db, org1, user, group, sgm_notebook, patch_a
     assert response.data.getSagemakerNotebook.notebookUri == sgm_notebook.notebookUri
 
 
-def test_action_notebook(client, env1, db, org1, user, group, sgm_notebook, patch_aws):
+def test_action_notebook(client, user, group, sgm_notebook):
     response = client.query(
         """
         mutation stopSagemakerNotebook($notebookUri:String!){
@@ -157,7 +155,7 @@ def test_action_notebook(client, env1, db, org1, user, group, sgm_notebook, patc
     assert response.data.startSagemakerNotebook == 'Starting'
 
 
-def test_delete_notebook(client, env1, db, org1, user, group, patch_aws, sgm_notebook):
+def test_delete_notebook(client, user, group, sgm_notebook):
 
     response = client.query(
         """
