@@ -1300,46 +1300,6 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    def count_environment_objects(session, environment_uri):
-        datasets = (
-            session.query(models.Dataset.label, models.Dataset.datasetUri)
-            .filter(models.Dataset.environmentUri == environment_uri)
-            .count()
-        )
-
-        ml_studios = (
-            session.query(
-                models.SagemakerStudioUserProfile.label,
-                models.SagemakerStudioUserProfile.sagemakerStudioUserProfileUri,
-            )
-            .filter(models.SagemakerStudioUserProfile.environmentUri == environment_uri)
-            .count()
-        )
-        redshift_clusters = (
-            session.query(
-                models.RedshiftCluster.label, models.RedshiftCluster.clusterUri
-            )
-            .filter(models.RedshiftCluster.environmentUri == environment_uri)
-            .count()
-        )
-        pipelines = (
-            session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
-            .filter(models.DataPipeline.environmentUri == environment_uri)
-            .count()
-        )
-        dashboards = (
-            session.query(models.Dashboard.label, models.Dashboard.dashboardUri)
-            .filter(models.Dashboard.environmentUri == environment_uri)
-            .count()
-        )
-
-        if all_modules.has_allocated_resources(session, environment_uri):
-            return True
-
-        if datasets + ml_studios + redshift_clusters + pipelines + dashboards > 0:
-            return True
-
-    @staticmethod
     def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
         if not data:
             raise exceptions.RequiredParameter('data')
@@ -1369,14 +1329,6 @@ class Environment:
         environment = data.get(
             'environment', Environment.get_environment_by_uri(session, uri)
         )
-
-        has_resources = Environment.count_environment_objects(session, uri)
-
-        if has_resources:
-            raise exceptions.EnvironmentResourcesFound(
-                action='Delete Environment',
-                message='Delete all environment related objects before proceeding',
-            )
 
         env_groups = (
             session.query(models.EnvironmentGroup)

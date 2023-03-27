@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ARRAY, Integer, Boolean
+from sqlalchemy import Column, String, ARRAY, Integer, Boolean, ForeignKey
 from sqlalchemy.orm import query_expression
 
 from .. import utils, Resource, Base
@@ -6,7 +6,7 @@ from .. import utils, Resource, Base
 
 class RedshiftCluster(Resource, Base):
     __tablename__ = 'redshiftcluster'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     organizationUri = Column(String, nullable=False)
     clusterUri = Column(String, primary_key=True, default=utils.uuid('cluster'))
     clusterArn = Column(String)

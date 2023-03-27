@@ -40,33 +40,6 @@ class ModuleInterface(Protocol):
         # Initialize the module
         ...
 
-    def has_allocated_resources(self, session, environment_uri):
-        # Check if the module has allocated resources
-        ...
-
-
-class _CompositeModuleInterface:
-    """
-    An implementation of ModuleInterface that combines all imported interfaces
-    Needed just not to expose the imported modules
-    """
-
-    def initialize(self, modes: List[ImportMode]):
-        for module in _IMPORTED:
-            module.initialize(modes)
-
-    def has_allocated_resources(self, session, environment_uri):
-        """
-        Check if the imported modules has allocated resources
-        """
-        for module in _IMPORTED:
-            if module.has_allocated_resources(session, environment_uri):
-                return True
-        return False
-
-
-all_modules = _CompositeModuleInterface()
-
 
 def load_modules(modes: List[ImportMode]) -> None:
     """
@@ -95,10 +68,7 @@ def load_modules(modes: List[ImportMode]) -> None:
 
         log.info(f"Module {name} is loaded")
 
-    log.info("Initiating all modules")
-    all_modules.initialize(modes)
-
-    log.info("All modules have been imported and initiated")
+    log.info("All modules have been imported")
 
 
 def _import_module(name):

@@ -80,11 +80,12 @@ def upgrade():
         op.drop_column("environment", "notebooksEnabled")
         print("Dropped the columns from the environment table ")
 
-        op.create_foreign_key(
-            'fk_notebook_env_uri',
-            'sagemaker_notebook', 'environment',
-            ['environmentUri'], ['environmentUri'],
-        )
+        create_foreign_key_to_env(op, 'sagemaker_notebook')
+        create_foreign_key_to_env(op, 'dataset')
+        create_foreign_key_to_env(op, 'sagemaker_studio_user_profile')
+        create_foreign_key_to_env(op, 'redshiftcluster')
+        create_foreign_key_to_env(op, 'datapipeline')
+        create_foreign_key_to_env(op, 'dashboard')
 
         print("Saving new MANAGE_SGMSTUDIO_NOTEBOOKS permission")
         Permission.init_permissions(session)
@@ -143,3 +144,11 @@ def _add_param_if_exists(params: List[EnvironmentParameter], env: Environment, k
             paramKey=key,
             paramValue=str(val).lower()
         ))
+
+
+def create_foreign_key_to_env(op, table: str):
+    op.create_foreign_key(
+        f"fk_{table}_env_uri",
+        table, "environment",
+        ["environmentUri"], ["environmentUri"],
+    )

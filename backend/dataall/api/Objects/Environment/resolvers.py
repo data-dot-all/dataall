@@ -5,7 +5,7 @@ import os
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from sqlalchemy import and_
+from sqlalchemy import and_, exc
 
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
@@ -523,14 +523,20 @@ def delete_environment(
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
 
-        db.api.Environment.delete_environment(
-            session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data={'environment': environment},
-            check_perm=True,
-        )
+        try:
+            db.api.Environment.delete_environment(
+                session,
+                username=context.username,
+                groups=context.groups,
+                uri=environmentUri,
+                data={'environment': environment},
+                check_perm=True,
+            )
+        except exc.IntegrityError:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Delete Environment',
+                message='Delete all environment related objects before proceeding',
+            )
 
     if deleteFromAWS:
         stack_helper.delete_stack(

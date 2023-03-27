@@ -23,6 +23,3 @@ class NotebookInterface:
 
         log.info("Sagemaker notebooks has been imported")
 
-    def has_allocated_resources(self, session, environment_uri):
-        return NotebookRepository(session).count_notebooks(environment_uri) > 0
-
