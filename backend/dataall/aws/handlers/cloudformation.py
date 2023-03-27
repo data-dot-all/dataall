@@ -27,11 +27,7 @@ class CloudFormation:
             cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, role=role)
             response = cfn.describe_stacks(StackName='CDKToolkit')
         except ClientError as e:
-            log.exception(e)
-            raise Exception('CDKToolkitNotFound')
-
-        stacks = response['Stacks']
-        if not len(stacks):
+            log.exception(f'CDKToolkitNotFound: {e}')
             raise Exception('CDKToolkitNotFound')
 
         try:
@@ -41,7 +37,8 @@ class CloudFormation:
             cdk_role_name = response['StackResourceDetail']['PhysicalResourceId']
             return cdk_role_name
         except ClientError as e:
-            raise Exception('CDKToolkitDeploymentActionRoleNotFound')
+            log.exception(f'CDKToolkitDeploymentActionRoleNotFound: {e}')
+            raise Exception(f'CDKToolkitDeploymentActionRoleNotFound: {e}')
 
     @staticmethod
     @Worker.handler(path='cloudformation.stack.delete')
