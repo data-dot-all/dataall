@@ -87,14 +87,11 @@ def upgrade():
         op.drop_column("environment", "notebooksEnabled")
         print("Dropped the columns from the environment table ")
 
-        print("Creating of environment_resources table...")
-        op.create_table(
-            "environment_resources",
-            Column("environmentUri", String, primary_key=True),
-            Column("resourceUri", String, primary_key=True),
-            Column("resourceType", String, nullable=False),
+        op.create_foreign_key(
+            'fk_notebook_env_uri',
+            'sagemaker_notebook', 'environment',
+            ['environmentUri'], ['environmentUri'],
         )
-        print("Environment_resources table has been created")
 
         print("Filling the environment_resources table with the data")
         resources = []
@@ -137,7 +134,7 @@ def downgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
-        op.drop_table("environment_resources")
+        op.drop_constraint("fk_notebook_env_uri", "sagemaker_notebook")
         op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
 
         params = session.query(EnvironmentParameter).all()
