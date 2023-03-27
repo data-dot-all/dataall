@@ -459,7 +459,7 @@ class Dataset(Stack):
             },
         )
 
-        glue.CfnCrawler(
+        crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
             description=f'datall Glue Crawler for bucket {dataset.S3BucketName}',
@@ -475,6 +475,7 @@ class Dataset(Stack):
                 ]
             ),
         )
+        crawler.node.add_dependency(dataset_bucket)
 
         job_args = {
             '--additional-python-modules': 'pydeequ,great_expectations,requests',
