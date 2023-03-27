@@ -13,16 +13,42 @@ class _Config:
     def __init__(self):
         self._config = _Config._read_config_file()
 
-    def get_property(self, key: str) -> Any:
-        """Retrieves a copy of the property"""
-        if key not in self._config:
-            raise KeyError(f"Couldn't find a property {key} in the config")
+    def get_property(self, key: str, default=None) -> Any:
+        """
+        Retrieves a copy of the property
+        Config uses dot as a separator to navigate easy to the needed property e.g.
+        some.needed.parameter is equivalent of config["some"]["needed"]["parameter"]
+        It enables fast navigation for any nested parameter
+        """
+        res = self._config
 
-        return copy.deepcopy(self._config[key])
+        props = key.split(".")
+
+        # going through the hierarchy of json
+        for prop in props:
+            if prop not in res:
+                if default is not None:
+                    return default
+
+                raise KeyError(f"Couldn't find a property {key} in the config")
+
+            res = res[prop]
+        return copy.deepcopy(res)
 
     def set_property(self, key: str, value: Any) -> None:
-        """Sets a property into the config"""
-        self._config[key] = value
+        """
+        Sets a property into the config
+        If the property has dot it will be split to nested levels
+        """
+        conf = self._config
+        props = key.split(".")
+
+        for i, prop in enumerate(props):
+            if i == len(props) - 1:
+                conf[prop] = value
+            else:
+                conf[prop] = conf[prop] if prop in conf is not None else {}
+                conf = conf[prop]
 
     @staticmethod
     def _read_config_file() -> Dict[str, Any]:

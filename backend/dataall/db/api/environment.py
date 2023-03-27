@@ -1333,7 +1333,7 @@ class Environment:
             .count()
         )
 
-        if all_modules.has_allocated_resources(environment_uri):
+        if all_modules.has_allocated_resources(session, environment_uri):
             return True
 
         if datasets + ml_studios + redshift_clusters + pipelines + dashboards > 0:

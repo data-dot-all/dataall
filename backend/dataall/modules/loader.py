@@ -40,7 +40,7 @@ class ModuleInterface(Protocol):
         # Initialize the module
         ...
 
-    def has_allocated_resources(self, environment_uri):
+    def has_allocated_resources(self, session, environment_uri):
         # Check if the module has allocated resources
         ...
 
@@ -55,12 +55,12 @@ class _CompositeModuleInterface:
         for module in _IMPORTED:
             module.initialize(modes)
 
-    def has_allocated_resources(self, environment_uri):
+    def has_allocated_resources(self, session, environment_uri):
         """
         Check if the imported modules has allocated resources
         """
         for module in _IMPORTED:
-            if module.has_allocated_resources(environment_uri):
+            if module.has_allocated_resources(session, environment_uri):
                 return True
         return False
 
@@ -80,8 +80,7 @@ def load_modules(modes: List[ImportMode]) -> None:
         return
 
     log.info("Found %d modules that have been found in the config", len(modules))
-    for module in modules:
-        name, props = module.popitem()
+    for name, props in modules.items():
         active = props["active"]
 
         if not active:
@@ -97,9 +96,7 @@ def load_modules(modes: List[ImportMode]) -> None:
         log.info(f"Module {name} is loaded")
 
     log.info("Initiating all modules")
-
-    for interface in _IMPORTED:
-        interface.initialize(modes)
+    all_modules.initialize(modes)
 
     log.info("All modules have been imported and initiated")
 
