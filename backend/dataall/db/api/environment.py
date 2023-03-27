@@ -22,12 +22,13 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
-from dataall.core.environment.models import EnvironmentResource, EnvironmentParameter
+from dataall.core.environment.models import EnvironmentParameter
 from ...core.environment.db.repositories import EnvironmentParameterRepository
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.loader import all_modules
 
 log = logging.getLogger(__name__)
 
@@ -1305,11 +1306,6 @@ class Environment:
             .filter(models.Dataset.environmentUri == environment_uri)
             .count()
         )
-        resources = (
-            session.query(EnvironmentResource)
-            .filter(EnvironmentResource.environmentUri == environment_uri)
-            .count()
-        )
 
         ml_studios = (
             session.query(
@@ -1337,7 +1333,11 @@ class Environment:
             .count()
         )
 
-        return resources + datasets + ml_studios + redshift_clusters + pipelines + dashboards
+        if all_modules.has_allocated_resources(environment_uri):
+            return True
+
+        if datasets + ml_studios + redshift_clusters + pipelines + dashboards > 0:
+            return True
 
     @staticmethod
     def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):

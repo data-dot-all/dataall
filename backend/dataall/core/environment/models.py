@@ -18,16 +18,3 @@ class EnvironmentParameter(Base):
 
     def __repr__(self):
         return f'EnvironmentParameter(paramKey={self.key}, paramValue={self.value})'
-
-
-class EnvironmentResource(Base):
-    """Represents a resource that is allocated in the AWS and belongs to the environment"""
-    __tablename__ = "environment_resources"
-    environmentUri = Column(String, primary_key=True)
-    resourceUri = Column(String, primary_key=True)
-    resourceType = Column(String, nullable=False)
-
-    def __init__(self, environment_uri, resource_uri, resource_type):
-        self.environmentUri = environment_uri
-        self.resourceType = resource_type
-        self.resourceUri = resource_uri

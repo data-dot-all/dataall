@@ -51,3 +51,10 @@ class NotebookRepository:
                 )
             )
         return query
+
+    def count_notebooks(self, environment_uri):
+        return (
+            self._session.query(SagemakerNotebook)
+            .filter(SagemakerNotebook.environmentUri == environment_uri)
+            .count()
+        )

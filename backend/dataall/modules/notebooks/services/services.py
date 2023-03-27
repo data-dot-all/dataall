@@ -10,7 +10,7 @@ from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
-from dataall.core.environment.db.repositories import EnvironmentResourceRepository, EnvironmentParameterRepository
+from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.db.api import (
     ResourcePolicy,
     Environment, KeyValueTag, Stack,
@@ -109,13 +109,6 @@ class NotebookService:
 
             NotebookRepository(session).save_notebook(notebook)
 
-            # Creates a record that environment resources has been created
-            EnvironmentResourceRepository(session).create(
-                environment_uri=notebook.environmentUri,
-                resource_uri=notebook.notebookUri,
-                resource_type=NotebookService._NOTEBOOK_RESOURCE_TYPE
-            )
-
             notebook.NotebookInstanceName = NamingConventionService(
                 target_uri=notebook.notebookUri,
                 target_label=notebook.label,
@@ -204,12 +197,6 @@ class NotebookService:
         with _session() as session:
             notebook = NotebookService._get_notebook(session, uri)
             KeyValueTag.delete_key_value_tags(session, notebook.notebookUri, 'notebook')
-
-            EnvironmentResourceRepository(session).delete(
-                environment_uri=notebook.environmentUri,
-                resource_uri=notebook.notebookUri,
-                resource_type=NotebookService._NOTEBOOK_RESOURCE_TYPE
-            )
             session.delete(notebook)
 
             ResourcePolicy.delete_resource_policy(

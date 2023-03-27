@@ -31,11 +31,41 @@ class ImportMode(Enum):
 
 @runtime_checkable
 class ModuleInterface(Protocol):
-    # An interface of the module. The implementation should be part of __init__.py of the module
+    """
+    An interface of the module. The implementation should be part of __init__.py of the module
+    Contains an API that will be called from core part
+    """
 
     def initialize(self, modes: List[ImportMode]):
         # Initialize the module
         ...
+
+    def has_allocated_resources(self, environment_uri):
+        # Check if the module has allocated resources
+        ...
+
+
+class _CompositeModuleInterface:
+    """
+    An implementation of ModuleInterface that combines all imported interfaces
+    Needed just not to expose the imported modules
+    """
+
+    def initialize(self, modes: List[ImportMode]):
+        for module in _IMPORTED:
+            module.initialize(modes)
+
+    def has_allocated_resources(self, environment_uri):
+        """
+        Check if the imported modules has allocated resources
+        """
+        for module in _IMPORTED:
+            if module.has_allocated_resources(environment_uri):
+                return True
+        return False
+
+
+all_modules = _CompositeModuleInterface()
 
 
 def load_modules(modes: List[ImportMode]) -> None:

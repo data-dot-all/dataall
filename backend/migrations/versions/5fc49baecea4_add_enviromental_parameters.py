@@ -38,13 +38,6 @@ class EnvironmentParameter(Resource, Base):
     paramValue = Column(String, nullable=True)
 
 
-class EnvironmentResource(Resource, Base):
-    __tablename__ = "environment_resources"
-    environmentUri = Column(String, primary_key=True)
-    resourceUri = (Column(String, primary_key=True),)
-    resourceType = Column(String, nullable=False)
-
-
 class SagemakerNotebook(Resource, Base):
     __tablename__ = "sagemaker_notebook"
     environmentUri = Column(String, nullable=False)
@@ -92,15 +85,6 @@ def upgrade():
             'sagemaker_notebook', 'environment',
             ['environmentUri'], ['environmentUri'],
         )
-
-        print("Filling the environment_resources table with the data")
-        resources = []
-
-        notebooks = session.query(SagemakerNotebook).all()
-        for notebook in notebooks:
-            _add_resource(resources, notebook.environmentUri, notebook.notebookUri, "notebook")
-        session.add_all(resources)
-        session.commit()
 
         print("Saving new MANAGE_SGMSTUDIO_NOTEBOOKS permission")
         Permission.init_permissions(session)
@@ -159,11 +143,3 @@ def _add_param_if_exists(params: List[EnvironmentParameter], env: Environment, k
             paramKey=key,
             paramValue=str(val).lower()
         ))
-
-
-def _add_resource(resources: List[EnvironmentParameter], env_uri, uri, type) -> None:
-    resources.append(EnvironmentResource(
-        environmentUri=env_uri,
-        resourceUri=uri,
-        resourceType=type
-    ))
