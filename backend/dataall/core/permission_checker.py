@@ -3,9 +3,16 @@ Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
 import contextlib
+from typing import Protocol
 
 from dataall.core.context import RequestContext, get_context
 from dataall.db.api import TenantPolicy, ResourcePolicy, Environment
+
+
+class Identifiable(Protocol):
+    """Protocol to identify resources for checking permissions"""
+    def get_uri(self) -> str:
+        ...
 
 
 def _check_group_environment_permission(session, permission, uri, admin_group):
@@ -71,7 +78,7 @@ def _process_func(func):
     return fn, staticmethod if static_func else no_decorated
 
 
-def has_resource_permission(permission):
+def has_resource_permission(permission: str, resource_name: str = None):
     """
     Decorator that check if a user has access to the resource.
     The method or function decorated with this decorator must have a URI of accessing resource
@@ -81,11 +88,18 @@ def has_resource_permission(permission):
     def decorator(f):
         fn, fn_decorator = _process_func(f)
 
-        def decorated(*args, uri, **kwargs):
+        def decorated(*args, **kwargs):
+            uri: str
+            if resource_name:
+                resource: Identifiable = kwargs[resource_name]
+                uri = resource.get_uri()
+            else:
+                uri = kwargs["uri"]
+
             with _get_session() as session:
                 _check_resource_permission(session, uri, permission)
 
-            return fn(*args, uri=uri, **kwargs)
+            return fn(*args, **kwargs)
 
         return fn_decorator(decorated)
 
