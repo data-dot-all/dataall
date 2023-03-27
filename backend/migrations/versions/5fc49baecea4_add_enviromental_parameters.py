@@ -11,7 +11,10 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import Resource
-
+from dataall.db.api.permission import Permission
+from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType
+from dataall.db.permissions import MANAGE_SGMSTUDIO_NOTEBOOKS
+from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"
@@ -55,6 +58,7 @@ def upgrade():
         2) Migration xxxEnabled to the environment_parameters table
         3) Dropping the xxxEnabled columns from the environment_parameters
         4) Migration every resource allocated for the environment to the environment_resources
+        5) Migrate permissions
     """
     try:
         bind = op.get_bind()
@@ -99,6 +103,29 @@ def upgrade():
         for notebook in notebooks:
             _add_resource(resources, notebook.environmentUri, notebook.notebookUri, "notebook")
         session.add_all(resources)
+        session.commit()
+
+        print("Saving new MANAGE_SGMSTUDIO_NOTEBOOKS permission")
+        Permission.init_permissions(session)
+
+        manage_notebooks = Permission.get_permission_by_name(
+            session, MANAGE_NOTEBOOKS, PermissionType.TENANT.name
+        )
+        manage_mlstudio = Permission.get_permission_by_name(
+            session, MANAGE_SGMSTUDIO_NOTEBOOKS, PermissionType.TENANT.name
+        )
+
+        permissions = (
+            session.query(TenantPolicyPermission)
+            .filter(TenantPolicyPermission.permission == manage_notebooks.permissionUri)
+            .all()
+        )
+
+        for permission in permissions:
+            session.add(TenantPolicyPermission(
+                sid=permission.sid,
+                permissionUri=manage_mlstudio.permissionUri,
+            ))
         session.commit()
 
     except Exception as ex:

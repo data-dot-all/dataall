@@ -25,7 +25,7 @@ from dataall.utils.naming_convention import (
 from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.services import permissions
-from dataall.modules.common.sagemaker.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
+from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
