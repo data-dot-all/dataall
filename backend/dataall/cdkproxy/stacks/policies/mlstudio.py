@@ -1,7 +1,7 @@
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 
 from dataall.db import permissions
-from dataall.modules.common.sagemaker.statements import create_sagemaker_statements
+from dataall.modules.common.sagemaker.cdk.statements import create_sagemaker_statements
 
 
 class SagemakerPolicy(ServicePolicy):
