@@ -40,13 +40,17 @@ def load_modules(modes: List[ImportMode]) -> None:
 
     log.info("Loading %d modules that have been found in the config", len(modules))
     for module in modules:
-        if not _check_if_module_exists(module):
-            raise ValueError(f"Couldn't find module {module} under modules directory")
-        for mode in modes:
-            _import_submodule(module, mode)
+        name, props = module.popitem()
+        active = props["active"]
+
+        if not active:
+            raise ValueError(f"Status is not defined for {name} module")
+
+        if active.lower() == "true" and not _import_module(name):
+            raise ValueError(f"Couldn't find module {name} under modules directory")
 
 
-def _check_if_module_exists(module):
+def _import_module(module):
     try:
         importlib.import_module(f'{_MODULE_PREFIX}.{module}')
         return True

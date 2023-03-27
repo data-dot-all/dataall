@@ -1,3 +1,9 @@
 {
-    "modules": ["notebooks"]
+    "modules": [
+        {
+            "notebooks": {
+                "active": "true"
+            }
+        }
+    ]
 }

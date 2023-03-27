@@ -4,7 +4,7 @@ Contains all submodules that can be plugged into the main functionality
 How to migrate to a new module:
 1) Create your python module
 2) Create the following submodules:
-    a) gql
+    a) api
     b) tasks
     3) cdk
 
