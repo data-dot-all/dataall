@@ -36,14 +36,15 @@ def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
     return True if ssm_param == "True" else False
 
 
-def check_environment(context: Context, source, account_id, region, pivot_role_as_part_of_environment=False):
+def check_environment(context: Context, source, account_id, region):
     """ Checks necessary resources for environment deployment.
     - Check CDKToolkit exists in Account assuming cdk_look_up_role
     - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
     Args:
-        pivot_role_as_part_of_environment: flag to create pivot role as part of environment stack
         input: environment creation input
     """
+    pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
+    log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
@@ -75,10 +76,7 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
-        log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
         cdk_role_name = check_environment(context, source,
-                                          pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
                                           account_id=input.get('AwsAccountId'),
                                           region=input.get('region')
                                           )
@@ -112,13 +110,10 @@ def update_environment(
             message=f'User: {context.username} is not part of the group {input["SamlGroupName"]}',
         )
 
-    pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
-    log.info(f"Updating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
     with context.engine.scoped_session() as session:
 
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
         cdk_role_name = check_environment(context, source,
-                                          pivot_role_as_part_of_environment=pivot_role_as_part_of_environment,
                                           account_id=environment.AwsAccountId,
                                           region=environment.region
                                           )
