@@ -49,18 +49,6 @@ def _check_resource_permission(session, uri, permission):
     )
 
 
-@contextlib.contextmanager
-def _get_session():
-    context: RequestContext = get_context()
-    db = context.db_engine
-
-    # trying to re-use the open session if there is one
-    if db.current_session():
-        yield db.current_session()
-    else:
-        yield db.scoped_session()
-
-
 def _process_func(func):
     """Helper function that helps decorate methods/functions"""
     def no_decorated(f):
@@ -96,7 +84,7 @@ def has_resource_permission(permission: str, resource_name: str = None):
             else:
                 uri = kwargs["uri"]
 
-            with _get_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 _check_resource_permission(session, uri, permission)
 
             return fn(*args, **kwargs)
@@ -115,7 +103,7 @@ def has_tenant_permission(permission: str):
         fn, fn_decorator = _process_func(f)
 
         def decorated(*args, **kwargs):
-            with _get_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 _check_tenant_permission(session, permission)
 
             return fn(*args, **kwargs)
@@ -130,7 +118,7 @@ def has_group_permission(permission):
         fn, fn_decorator = _process_func(f)
 
         def decorated(*args, admin_group, uri, **kwargs):
-            with _get_session() as session:
+            with get_context().db_engine.scoped_session() as session:
                 _check_group_environment_permission(session, permission, uri, admin_group)
 
             return fn(*args, uri=uri, admin_group=admin_group, **kwargs)

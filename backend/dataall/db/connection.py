@@ -68,9 +68,6 @@ class Engine:
         finally:
             s.close()
 
-    def current_session(self):
-        return self._session
-
     def dispose(self):
         self.engine.dispose()
 
