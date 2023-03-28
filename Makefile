@@ -49,7 +49,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
-	pytest --fixtures -v -ra tests/api/
+	python -m pytest -v -ra tests/
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \
