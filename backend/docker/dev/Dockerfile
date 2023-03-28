@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:latest
+FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG NODE_VERSION=16
 ARG NVM_VERSION=v0.37.2
