@@ -12,7 +12,7 @@ class SagemakerStudio:
         return session.client('sagemaker', region_name=region)
 
     @staticmethod
-    def get_sagemaker_studio_domain(AwsAccountId, region, role):
+    def get_sagemaker_studio_domain(AwsAccountId, region, role=None):
         """
         Sagemaker studio domain is limited to one per account,
         RETURN: an existing domain or None if no domain is in the AWS account
