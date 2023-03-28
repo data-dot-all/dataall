@@ -29,7 +29,6 @@ def validate_principals(principals):
                 validated_principals.append(principal)
             except Exception as e:
                 log.exception(f'Failed to get role {principal} due to: {e}')
-                raise Exception(f'Failed to get role {principal} due to: {e}')
     return validated_principals
 
 
