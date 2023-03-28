@@ -50,8 +50,7 @@ def upgrade():
         1) creation of the environment_parameters and environment_resources tables
         2) Migration xxxEnabled to the environment_parameters table
         3) Dropping the xxxEnabled columns from the environment_parameters
-        4) Migration every resource allocated for the environment to the environment_resources
-        5) Migrate permissions
+        4) Migrate permissions
     """
     try:
         bind = op.get_bind()

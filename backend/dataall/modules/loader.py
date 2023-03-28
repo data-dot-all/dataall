@@ -17,10 +17,6 @@ class ImportMode(Enum):
 
     Since there are different infrastructure components that requires only part
     of functionality to be loaded, there should be different loading modes
-
-    Keys represent loading mode while value a suffix im module loading.
-    For example, API will try to load a graphql functionality under a module directory
-    The values represent a submodule and should exist
     """
 
     API = "api"
