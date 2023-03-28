@@ -315,46 +315,23 @@ class Dataset(Stack):
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
         # Using a custom resource instead of Cfn resource just because it causes Cfn issues when handling upgrades of pivotRole
-        # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
-        # It replaces the following (just because it causes Cfn issues when handling upgrades of pivotRole)
+        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
 
-        # Custom resources IAM role
-        self.pivot_role = iam.Role.from_role_arn(
+        datalake_location_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
-            f'PivotRole{env.environmentUri}',
-            f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
-        )
-
-        datalake_location_handler_arn = ssm.StringParameter.from_string_parameter_name(
-            self,
-            "DatalakeLocationCustomResourceHandlerArnParameter",
-            string_parameter_name=f"/dataall/{dataset.environmentUri}/cfn/lf/datalakelocation/lambda/arn",
-        )
-
-        datalake_location_handler = _lambda.Function.from_function_attributes(
-            self,
-            "DatalakeLocationHandler",
-            function_arn=datalake_location_handler_arn.string_value,
-            same_environment=True,
-        )
-
-        datalake_location_provider = cr.Provider(
-            self,
-            f"{env.resourcePrefix}DatalakeLocationProvider",
-            on_event_handler=datalake_location_handler,
-            role=self.pivot_role,
+            'DataLocationHandlerProviderServiceToken',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
         )
 
         datalake_location = CustomResource(
             self,
             f'{env.resourcePrefix}DatalakeLocation',
-            service_token=datalake_location_provider.service_token,
+            service_token=datalake_location_service_token,
             resource_type='Custom::DataLakeLocation',
             properties={
                 "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
                 "UseServiceLinkedRole": False,
-                "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}",
-                'LambdaArn': datalake_location_handler_arn.string_value
+                "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}"
             },
         )
 
@@ -369,32 +346,18 @@ class Dataset(Stack):
             dataset_admins.append(quicksight_default_group_arn)
 
         # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
-        # Get the lambda arn from SSM, this Lambda is created as part of the environment stack
+        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
 
-        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
+        glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
-            'GlueDbCRArnParameter',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
-        )
-
-        glue_db_handler = _lambda.Function.from_function_attributes(
-            self,
-            'CustomGlueDatabaseHandler',
-            function_arn=glue_db_handler_arn.string_value,
-            same_environment=True,
-        )
-
-        glue_db_provider = cr.Provider(
-            self,
-            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=glue_db_handler,
-            role=self.pivot_role,
+            'GlueDBHandlerProviderServiceToken',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
         glue_db = CustomResource(
             self,
             f'{env.resourcePrefix}DatasetDatabase',
-            service_token=glue_db_provider.service_token,
+            service_token=glue_db_provider_service_token,
             resource_type='Custom::GlueDatabase',
             properties={
                 'CatalogId': dataset.AwsAccountId,
@@ -406,8 +369,7 @@ class Dataset(Stack):
                     'Name': f'{dataset.GlueDatabaseName}',
                     'CreateTableDefaultPermissions': [],
                 },
-                'DatabaseAdministrators': dataset_admins,
-                'LambdaArn': glue_db_handler_arn.string_value
+                'DatabaseAdministrators': dataset_admins
             },
         )
 

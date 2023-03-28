@@ -356,18 +356,31 @@ class EnvironmentSetup(Stack):
             runtime=_lambda.Runtime.PYTHON_3_9,
         )
 
+        glue_db_provider = cr.Provider(
+            self,
+            f'{self._environment.resourcePrefix}GlueDbCustomResourceProvider',
+            on_event_handler=gluedb_custom_resource
+        )
+
         ssm.StringParameter(
             self,
             'GlueCustomResourceFunctionArn',
             string_value=gluedb_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/arn',
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
         )
 
         ssm.StringParameter(
             self,
             'GlueCustomResourceFunctionName',
             string_value=gluedb_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
+        )
+
+        ssm.StringParameter(
+            self,
+            'GlueCustomResourceProviderServiceToken',
+            string_value=glue_db_provider.service_token,
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
         # Data lake location custom resource
@@ -405,17 +418,31 @@ class EnvironmentSetup(Stack):
             runtime=_lambda.Runtime.PYTHON_3_9,
         )
 
+        datalake_location_provider = cr.Provider(
+            self,
+            f"{self._environment.resourcePrefix}DatalakeLocationProvider",
+            on_event_handler=datalake_location_custom_resource
+        )
+
         ssm.StringParameter(
             self,
             "DatalakeLocationCustomResourceFunctionArn",
             string_value=datalake_location_custom_resource.function_arn,
-            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/datalakelocation/lambda/arn",
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/lambda/arn",
         )
+
         ssm.StringParameter(
             self,
             "DatalakeLocationCustomResourceFunctionName",
             string_value=datalake_location_custom_resource.function_name,
-            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/lf/datalakelocation/lambda/name",
+            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/lambda/name",
+        )
+
+        ssm.StringParameter(
+            self,
+            'DataLocationCustomResourceProviderServiceToken',
+            string_value=datalake_location_provider.service_token,
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
         )
 
         # Create SNS topics for subscriptions

@@ -9,7 +9,6 @@ logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger(__name__)
 
 lf_client = boto3.client("lakeformation", region_name=os.environ.get("AWS_REGION"))
-lambda_client = boto3.client("lambda", region_name=os.environ.get("AWS_REGION"))
 
 
 def on_event(event, context):
@@ -29,30 +28,10 @@ def on_create(event):
     If not registered, it registers the location.
     """
     props = event["ResourceProperties"]
-    lambda_policy_remove_duplicates(props)
     if not _is_resource_registered(props["ResourceArn"]):
         register(props)
     else:
         update(props)
-
-
-def lambda_policy_remove_duplicates(props):
-    log.info(f"Removing unnecessary Lambda policy statements from Lambda: {props['LambdaArn']}")
-    response = lambda_client.get_policy(FunctionName=props["LambdaArn"])
-    policy = json.loads(response.get("Policy"))
-    log.info(f"Lambda Policy statements:{policy.get('Statement')}")
-
-    for statement in policy.get("Statement")[:-1]:
-        log.info(f"Removing statement {statement.get('Sid')}....")
-        try:
-            lambda_client.remove_permission(FunctionName=props["LambdaArn"], StatementId=statement.get("Sid"))
-        except ClientError as e:
-            log.exception(f"Could not remove Lambda policy statement: {statement.get('Sid')}")
-            raise Exception(f"Could not remove Lambda policy statement: {statement.get('Sid')} , received {str(e)}")
-
-    response = lambda_client.get_policy(FunctionName=props["LambdaArn"])
-    policy = json.loads(response.get("Policy"))
-    log.info(f"Resulting Lambda policy: {policy}")
 
 
 def _is_resource_registered(resource_arn: str):
