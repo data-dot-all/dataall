@@ -325,7 +325,7 @@ class Dataset(Stack):
 
         datalake_location = CustomResource(
             self,
-            f'{env.resourcePrefix}DatalakeLocation',
+            f'{env.resourcePrefix}DatalakeLocationCustomResource',
             service_token=datalake_location_service_token.string_value,
             resource_type='Custom::DataLakeLocation',
             properties={
@@ -356,7 +356,7 @@ class Dataset(Stack):
 
         glue_db = CustomResource(
             self,
-            f'{env.resourcePrefix}DatasetDatabase',
+            f'{env.resourcePrefix}DatabaseCustomResource',
             service_token=glue_db_provider_service_token.string_value,
             resource_type='Custom::GlueDatabase',
             properties={
