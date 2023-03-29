@@ -46,7 +46,9 @@ logger = logging.getLogger(__name__)
 class EnvironmentSetup(Stack):
     """Deploy common environment resources:
         - default environment S3 Bucket
-        - Lambdas used as custom resources in dataset stacks
+        - Lambda + Provider for dataset Glue Databases custom resource
+        - Lambda + Provider for dataset Data Lake location custom resource
+        - SSM parameters for the Lambdas and Providers
         - pivotRole (if configured)
         - SNS topic (if subscriptions are enabled)
         - SM Studio domain (if ML studio is enabled)

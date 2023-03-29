@@ -36,8 +36,8 @@ class Dataset(Stack):
     """Deploy common dataset resources:
             - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
             - dataset IAM role
-            - custom resource from environment Lambda to create glue database and grant permissions
-            - custom resource from environment Lambda to register S3 location in LF
+            - custom resource to create glue database and grant permissions
+            - custom resource to register S3 location in LF
             - Glue crawler
             - Glue profiling job
     """
