@@ -52,7 +52,6 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
     setOpenUpdateForm(false);
   };
 
-
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
@@ -73,7 +72,11 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
             <KeyValueTagUpdateForm
               targetType={targetType}
               targetUri={targetUri}
-              tags={items.length > 0 ? items : [{ key: '', value: '', cascade: false }]}
+              tags={
+                items.length > 0
+                  ? items
+                  : [{ key: '', value: '', cascade: false }]
+              }
               closeUpdate={closeUpdate}
             />
           ) : (
@@ -100,7 +103,9 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                           <TableRow>
                             <TableCell>Key</TableCell>
                             <TableCell>Value</TableCell>
-                            {targetType == 'environment' && (<TableCell>Cascade enabled</TableCell>)}
+                            {targetType == 'environment' && (
+                              <TableCell>Cascade enabled</TableCell>
+                            )}
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -108,15 +113,17 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                             <TableRow>
                               <TableCell>{tag.key || '-'}</TableCell>
                               <TableCell>{tag.value || '-'}</TableCell>
-                              {targetType == 'environment' && (<TableCell>
-                                <Switch
-                                      defaultChecked={tag.cascade}
-                                      color="primary"
-                                      edge="start"
-                                      name="cascade"
-                                      disabled={true}
-                                    />
-                              </TableCell>)}
+                              {targetType == 'environment' && (
+                                <TableCell>
+                                  <Switch
+                                    defaultChecked={tag.cascade}
+                                    color="primary"
+                                    edge="start"
+                                    name="cascade"
+                                    disabled={true}
+                                  />
+                                </TableCell>
+                              )}
                             </TableRow>
                           ))}
                         </TableBody>

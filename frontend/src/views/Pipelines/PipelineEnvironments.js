@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -34,16 +34,18 @@ const PipelineEnvironments = (props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-      if (client && pipeline) {
-        console.log("useeffect")
-        console.log(pipeline)
-        const environmentsSorted = pipeline.developmentEnvironments.nodes.sort((a, b) => {
+    if (client && pipeline) {
+      console.log('useeffect');
+      console.log(pipeline);
+      const environmentsSorted = pipeline.developmentEnvironments.nodes.sort(
+        (a, b) => {
           return a.order - b.order;
-        });
-        setEnvironments(environmentsSorted)
-        console.log(environments)
-      }
-    }, [client, pipeline]);
+        }
+      );
+      setEnvironments(environmentsSorted);
+      console.log(environments);
+    }
+  }, [client, pipeline]);
 
   return (
     <>
@@ -57,11 +59,11 @@ const PipelineEnvironments = (props) => {
                 <Box>
                   <Table size="small">
                     <colgroup>
-                        <col width="5%" />
-                        <col width="10%" />
-                        <col width="35%" />
-                        <col width="35%" />
-                        <col width="15%" />
+                      <col width="5%" />
+                      <col width="10%" />
+                      <col width="35%" />
+                      <col width="35%" />
+                      <col width="15%" />
                     </colgroup>
                     {environments > 0 && (
                       <TableHead>
@@ -75,17 +77,18 @@ const PipelineEnvironments = (props) => {
                       </TableHead>
                     )}
                     <TableBody>
-                      {environments && (environments.map((e) => (
-                        <>
-                          <TableRow id="addr0" key={e.envPipelineUri}>
-                            <TableCell>{e.order}</TableCell>
-                            <TableCell>{e.stage}</TableCell>
-                            <TableCell>{e.environmentLabel}</TableCell>
-                            <TableCell>{e.samlGroupName}</TableCell>
-                            <TableCell>{e.AwsAccountId}</TableCell>
-                          </TableRow>
-                        </>
-                      )))}
+                      {environments &&
+                        environments.map((e) => (
+                          <>
+                            <TableRow id="addr0" key={e.envPipelineUri}>
+                              <TableCell>{e.order}</TableCell>
+                              <TableCell>{e.stage}</TableCell>
+                              <TableCell>{e.environmentLabel}</TableCell>
+                              <TableCell>{e.samlGroupName}</TableCell>
+                              <TableCell>{e.AwsAccountId}</TableCell>
+                            </TableRow>
+                          </>
+                        ))}
                     </TableBody>
                   </Table>
                 </Box>

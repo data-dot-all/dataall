@@ -50,9 +50,7 @@ const GlossaryAssociations = ({ glossary }) => {
     );
     if (!response.errors) {
       setIsAdmin(
-        ['Admin'].indexOf(
-          response.data.getGlossary.userRoleForGlossary
-        ) !== -1
+        ['Admin'].indexOf(response.data.getGlossary.userRoleForGlossary) !== -1
       );
       setItems(response.data.getGlossary.associations);
     } else {

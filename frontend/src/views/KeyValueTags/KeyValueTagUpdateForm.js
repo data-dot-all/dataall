@@ -32,7 +32,7 @@ const KeyValueTagUpdateForm = (props) => {
   const client = useClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [kvTags, setKeyValueTags] = useState(
-    tags && tags.length > 0 ? tags : [{ key: '', value: '', cascade: false}]
+    tags && tags.length > 0 ? tags : [{ key: '', value: '', cascade: false }]
   );
 
   const handleAddKeyValueRow = () => {
@@ -83,7 +83,11 @@ const KeyValueTagUpdateForm = (props) => {
           targetType,
           tags:
             kvTags.length > 0
-              ? kvTags.map((k) => ({ key: k.key, value: k.value, cascade: k.cascade }))
+              ? kvTags.map((k) => ({
+                  key: k.key,
+                  value: k.value,
+                  cascade: k.cascade
+                }))
               : []
         })
       );
@@ -125,7 +129,9 @@ const KeyValueTagUpdateForm = (props) => {
                         <TableRow>
                           <TableCell>Key</TableCell>
                           <TableCell>Value</TableCell>
-                          {targetType == 'environment' && (<TableCell>Cascade enabled</TableCell>)}
+                          {targetType == 'environment' && (
+                            <TableCell>Cascade enabled</TableCell>
+                          )}
                         </TableRow>
                       </TableHead>
                     )}
@@ -151,16 +157,21 @@ const KeyValueTagUpdateForm = (props) => {
                                 variant="outlined"
                               />
                             </TableCell>
-                            {targetType == 'environment' && (<TableCell>
+                            {targetType == 'environment' && (
+                              <TableCell>
                                 <Switch
-                                      color="primary"
-                                      edge="start"
-                                      name="cascade"
-                                      checked={kvTags[idx].cascade}
-                                      value={kvTags[idx].cascade}
-                                      onChange={handleKeyValueChange(idx, 'cascade')}
-                                    />
-                              </TableCell>)}
+                                  color="primary"
+                                  edge="start"
+                                  name="cascade"
+                                  checked={kvTags[idx].cascade}
+                                  value={kvTags[idx].cascade}
+                                  onChange={handleKeyValueChange(
+                                    idx,
+                                    'cascade'
+                                  )}
+                                />
+                              </TableCell>
+                            )}
                             <td>
                               <IconButton
                                 onClick={() => {

@@ -38,9 +38,9 @@ const OrganizationTeamInviteForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
 
   const filter = {
-    type: "organization",
+    type: 'organization',
     uri: organization.organizationUri
-  }
+  };
 
   const fetchGroups = useCallback(async () => {
     try {

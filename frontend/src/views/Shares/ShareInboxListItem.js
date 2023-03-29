@@ -84,51 +84,51 @@ const ShareInboxListItem = (props) => {
           </Box>
         </Grid>
         <Grid item justifyContent="flex-end" md={3} xs={6} spacing={2}>
-            <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  pt: 3,
-                  pb: 0.5
-                }}
-            >
-              <Typography color="textPrimary" variant="body2">
-                {`Currently shared items: ${share.statistics.sharedItems}`}
-              </Typography>
-            </Box>
-            <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  py: 0.5,
-                }}
-            >
-              <Typography color="textPrimary" variant="body2">
-                {`Revoked items: ${share.statistics.revokedItems}`}
-              </Typography>
-            </Box>
-            <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  py: 0.5,
-                }}
-            >
-              <Typography color="textPrimary" variant="body2">
-                {`Failed items: ${share.statistics.failedItems}`}
-              </Typography>
-            </Box>
-            <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  py: 0.5
-                }}
-            >
-              <Typography color="textPrimary" variant="body2">
-                {`Pending items: ${share.statistics.pendingItems}`}
-              </Typography>
-            </Box>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              pt: 3,
+              pb: 0.5
+            }}
+          >
+            <Typography color="textPrimary" variant="body2">
+              {`Currently shared items: ${share.statistics.sharedItems}`}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              py: 0.5
+            }}
+          >
+            <Typography color="textPrimary" variant="body2">
+              {`Revoked items: ${share.statistics.revokedItems}`}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              py: 0.5
+            }}
+          >
+            <Typography color="textPrimary" variant="body2">
+              {`Failed items: ${share.statistics.failedItems}`}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              py: 0.5
+            }}
+          >
+            <Typography color="textPrimary" variant="body2">
+              {`Pending items: ${share.statistics.pendingItems}`}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
       <Divider />

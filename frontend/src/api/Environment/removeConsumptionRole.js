@@ -1,6 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const removeConsumptionRoleFromEnvironment = ({ environmentUri, consumptionRoleUri }) => ({
+const removeConsumptionRoleFromEnvironment = ({
+  environmentUri,
+  consumptionRoleUri
+}) => ({
   variables: {
     environmentUri,
     consumptionRoleUri

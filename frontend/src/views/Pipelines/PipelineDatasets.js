@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import {useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -11,17 +11,16 @@ import {
 } from '@mui/material';
 import useClient from '../../hooks/useClient';
 import { useDispatch } from '../../store';
-import getDataset from "../../api/Dataset/getDataset";
-import {SET_ERROR} from "../../store/errorReducer";
-
+import getDataset from '../../api/Dataset/getDataset';
+import { SET_ERROR } from '../../store/errorReducer';
 
 const PipelineDatasets = (props) => {
   const { pipeline } = props;
   const client = useClient();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [inputDataset, setInputDataset] = useState("");
-  const [outputDataset, setOutputDataset] = useState("");
+  const [inputDataset, setInputDataset] = useState('');
+  const [outputDataset, setOutputDataset] = useState('');
 
   const fetchDatasets = useCallback(async () => {
     setLoading(true);
@@ -31,20 +30,22 @@ const PipelineDatasets = (props) => {
         setInputDataset(response.data.getDataset.label);
       } else {
         const error = response.errors
-            ? response.errors[0].message
-            : 'Dataset not found';
-        dispatch({type: SET_ERROR, error});
+          ? response.errors[0].message
+          : 'Dataset not found';
+        dispatch({ type: SET_ERROR, error });
       }
     }
     if (pipeline.outputDatasetUri) {
-      const response = await client.query(getDataset(pipeline.outputDatasetUri));
+      const response = await client.query(
+        getDataset(pipeline.outputDatasetUri)
+      );
       if (!response.errors && response.data.getDataset !== null) {
         setOutputDataset(response.data.getDataset.label);
       } else {
         const error = response.errors
-            ? response.errors[0].message
-            : 'Dataset not found';
-        dispatch({type: SET_ERROR, error});
+          ? response.errors[0].message
+          : 'Dataset not found';
+        dispatch({ type: SET_ERROR, error });
       }
     }
     setLoading(false);
@@ -52,10 +53,11 @@ const PipelineDatasets = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchDatasets().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchDatasets().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, dispatch, fetchDatasets]);
-
 
   return (
     <Card {...pipeline}>

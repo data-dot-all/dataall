@@ -5,12 +5,8 @@ const deleteDataPipelineEnvironment = ({ envPipelineUri }) => ({
     envPipelineUri
   },
   mutation: gql`
-    mutation deleteDataPipelineEnvironment(
-      $envPipelineUri: String!
-    ) {
-      deleteDataPipelineEnvironment(
-        envPipelineUri: $envPipelineUri
-      )
+    mutation deleteDataPipelineEnvironment($envPipelineUri: String!) {
+      deleteDataPipelineEnvironment(envPipelineUri: $envPipelineUri)
     }
   `
 });

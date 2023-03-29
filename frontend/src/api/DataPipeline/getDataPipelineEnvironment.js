@@ -7,7 +7,7 @@ const getDataPipelineEnvironment = (envPipelineUri) => ({
   query: gql`
     query getDataPipelineEnvironment($envPipelineUri: String!) {
       getDataPipelineEnvironment(envPipelineUri: $envPipelineUri) {
-        envPipelineUri       
+        envPipelineUri
         environmentUri
         environmentLabel
         pipelineUri

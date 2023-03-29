@@ -243,7 +243,9 @@ const NotebookCreateForm = (props) => {
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().nullable(),
                 VpcId: Yup.string().min(1).required('*VPC ID is required'),
-                SubnetId: Yup.string().min(1).required('*Subnet ID is required'),
+                SubnetId: Yup.string()
+                  .min(1)
+                  .required('*Subnet ID is required'),
                 InstanceType: Yup.string()
                   .min(1)
                   .required('*Instance type is required'),
@@ -373,13 +375,14 @@ const NotebookCreateForm = (props) => {
                                 setFieldValue('VolumeSizeInGB', value);
                               }}
                             />
-                            {touched.VolumeSizeInGB && errors.VolumeSizeInGB && (
-                              <Box sx={{ mt: 2 }}>
-                                <FormHelperText error>
-                                  {errors.VolumeSizeInGB}
-                                </FormHelperText>
-                              </Box>
-                            )}
+                            {touched.VolumeSizeInGB &&
+                              errors.VolumeSizeInGB && (
+                                <Box sx={{ mt: 2 }}>
+                                  <FormHelperText error>
+                                    {errors.VolumeSizeInGB}
+                                  </FormHelperText>
+                                </Box>
+                              )}
                           </Box>
                         </CardContent>
                       </Card>

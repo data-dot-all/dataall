@@ -39,7 +39,6 @@ import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import FeedComments from '../Feed/FeedComments';
 
-
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
   return (
@@ -143,8 +142,9 @@ const PipelineView = () => {
   const [tabs, setTabs] = useState([
     { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
     { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }]);
-    const handleDeleteObjectModalOpen = () => {
+    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
+  ]);
+  const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
   };
 
@@ -165,7 +165,7 @@ const PipelineView = () => {
     }
     setLoading(false);
   }, [client, dispatch, params.uri, stack]);
-  
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -263,7 +263,11 @@ const PipelineView = () => {
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
-                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkpipeline" : "pipeline"}
+                targetType={
+                  pipeline.devStrategy == 'cdk-trunk'
+                    ? 'cdkpipeline'
+                    : 'pipeline'
+                }
               />
             )}
           </Box>

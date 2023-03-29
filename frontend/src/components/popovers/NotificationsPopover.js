@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Avatar,
   Badge,
@@ -47,50 +47,57 @@ const NotificationsPopover = () => {
       fetchItems({ unread: true });
     }
     setLoading(false);
-  },[client]);
+  }, [client]);
 
-  const fetchItems = useCallback(async (notificationFilter) => {
-    setLoading(true);
-    let filter = Object.assign({}, Defaults.SelectListFilter, notificationFilter)
-    const response = await client.query(
-      listNotifications(filter)
-    );
-    if (!response.errors) {
-      setNotifications(response.data.listNotifications.nodes);
-    }
-    setLoading(false);
-  },[client]);
+  const fetchItems = useCallback(
+    async (notificationFilter) => {
+      setLoading(true);
+      let filter = Object.assign(
+        {},
+        Defaults.SelectListFilter,
+        notificationFilter
+      );
+      const response = await client.query(listNotifications(filter));
+      if (!response.errors) {
+        setNotifications(response.data.listNotifications.nodes);
+      }
+      setLoading(false);
+    },
+    [client]
+  );
 
-
-  const markAsRead = useCallback(async (notificationUri) => {
-    const response = await client.mutate(
-      markNotificationAsRead(notificationUri)
-    );
-  },[client]);
+  const markAsRead = useCallback(
+    async (notificationUri) => {
+      const response = await client.mutate(
+        markNotificationAsRead(notificationUri)
+      );
+    },
+    [client]
+  );
 
   const handleRemoveNotification = (idx) => {
-    let notificiationUri = notifications[idx].notificationUri
+    let notificiationUri = notifications[idx].notificationUri;
     setNotifications((prevstate) => {
       const rows = [...prevstate];
       rows.splice(idx, 1);
       return rows;
     });
-    setCountInbox(countInbox - 1)
-    markAsRead(notificiationUri)
+    setCountInbox(countInbox - 1);
+    markAsRead(notificiationUri);
   };
 
   const clearNotifications = (idx) => {
-    let readNotifications = notifications
-    setNotifications([])
-    setCountInbox(0)
-    readNotifications.forEach(note => {
-      markAsRead(note.notificationUri)
+    let readNotifications = notifications;
+    setNotifications([]);
+    setCountInbox(0);
+    readNotifications.forEach((note) => {
+      markAsRead(note.notificationUri);
     });
   };
 
   useEffect(() => {
     if (client) {
-      getCountInbox()
+      getCountInbox();
     }
   }, [client]);
 
@@ -162,13 +169,13 @@ const NotificationsPopover = () => {
                         </Link>
                       }
                     />
-                  <IconButton
-                    onClick={() => {
-                      handleRemoveNotification(idx);
-                    }}
-                  >
-                    <DeleteOutlined fontSize="small" />
-                  </IconButton>
+                    <IconButton
+                      onClick={() => {
+                        handleRemoveNotification(idx);
+                      }}
+                    >
+                      <DeleteOutlined fontSize="small" />
+                    </IconButton>
                   </ListItem>
                 ))}
             </List>

@@ -30,9 +30,8 @@ import ChipInput from '../../components/TagsInput';
 import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
 import updateDataPipeline from '../../api/DataPipeline/updateDataPipeline';
 import listEnvironments from '../../api/Environment/listEnvironments';
-import PipelineEnvironmentEditForm from "./PipelineEnvironmentEditForm";
+import PipelineEnvironmentEditForm from './PipelineEnvironmentEditForm';
 import * as Defaults from '../../components/defaults';
-
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();
@@ -48,9 +47,9 @@ const PipelineEditForm = (props) => {
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
 
-  const handleCountEnvironmentValid = state => {
+  const handleCountEnvironmentValid = (state) => {
     setCountEnvironmentsValid(state);
-      };
+  };
 
   const fetchItem = useCallback(async () => {
     setLoadingPipeline(true);
@@ -100,49 +99,52 @@ const PipelineEditForm = (props) => {
   }, [client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
-    if (!countEnvironmentsValid){
-      dispatch({ type: SET_ERROR, error: "At least one deployment environment is required" })
-    } else{
-        try {
-          const response = await client.mutate(
-            updateDataPipeline({
-              DataPipelineUri: pipeline.DataPipelineUri,
-              input: {
-                description: values.description,
-                label: values.label,
-                tags: values.tags
-              }
-            })
-          );
-          if (!response.errors) {
-            setStatus({ success: true });
-            setTriggerEnvSubmit(true);
-            setSubmitting(false);
-            enqueueSnackbar('Pipeline updated', {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'success'
-            });
-            navigate(
-              `/console/pipelines/${response.data.updateDataPipeline.DataPipelineUri}`
-            );
-          } else {
-            setTriggerEnvSubmit(false);
-            dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          }
-        } catch (err) {
-          setStatus({ success: false });
-          setTriggerEnvSubmit(false);
-          setErrors({ submit: err.message });
+    if (!countEnvironmentsValid) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'At least one deployment environment is required'
+      });
+    } else {
+      try {
+        const response = await client.mutate(
+          updateDataPipeline({
+            DataPipelineUri: pipeline.DataPipelineUri,
+            input: {
+              description: values.description,
+              label: values.label,
+              tags: values.tags
+            }
+          })
+        );
+        if (!response.errors) {
+          setStatus({ success: true });
+          setTriggerEnvSubmit(true);
           setSubmitting(false);
-          dispatch({ type: SET_ERROR, error: err.message });
+          enqueueSnackbar('Pipeline updated', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+          navigate(
+            `/console/pipelines/${response.data.updateDataPipeline.DataPipelineUri}`
+          );
+        } else {
+          setTriggerEnvSubmit(false);
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
         }
+      } catch (err) {
+        setStatus({ success: false });
+        setTriggerEnvSubmit(false);
+        setErrors({ submit: err.message });
+        setSubmitting(false);
+        dispatch({ type: SET_ERROR, error: err.message });
       }
     }
+  }
 
-  if ((loadingPipeline || loadingEnvs) || (!pipeline && pipeline.environment)) {
+  if (loadingPipeline || loadingEnvs || (!pipeline && pipeline.environment)) {
     return <CircularProgress />;
   }
 
@@ -373,7 +375,9 @@ const PipelineEditForm = (props) => {
                           triggerEnvSubmit={triggerEnvSubmit}
                           pipelineUri={pipeline.DataPipelineUri}
                           pipeline={pipeline}
-                          handleCountEnvironmentValid={handleCountEnvironmentValid}
+                          handleCountEnvironmentValid={
+                            handleCountEnvironmentValid
+                          }
                         />
                       </Box>
                       {errors.submit && (
@@ -397,7 +401,7 @@ const PipelineEditForm = (props) => {
                           Update Pipeline
                         </LoadingButton>
                       </Box>
-                  </Grid>
+                    </Grid>
                   </Grid>
                 </form>
               )}
