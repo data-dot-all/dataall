@@ -131,8 +131,6 @@ const EnvironmentCreateForm = (props) => {
     });
   };
   useEffect(() => {
-    console.log("ENABLE_PIVOT_ROLE_AUTO_CREATE")
-    console.log(process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE)
     if (client) {
       fetchTrustedAccount().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
