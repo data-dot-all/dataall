@@ -60,9 +60,7 @@ class LFShareManager:
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
         if self.target_environment.dashboardsEnabled:
-            group = Quicksight.create_quicksight_group(
-                self.target_environment.AwsAccountId, Quicksight.DEFAULT_GROUP_NAME
-            )
+            group = Quicksight.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
             if group and group.get('Group'):
                 group_arn = group.get('Group').get('Arn')
                 if group_arn:
