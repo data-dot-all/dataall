@@ -326,7 +326,7 @@ class Dataset(Stack):
         datalake_location = CustomResource(
             self,
             f'{env.resourcePrefix}DatalakeLocation',
-            service_token=datalake_location_service_token,
+            service_token=str(datalake_location_service_token),
             resource_type='Custom::DataLakeLocation',
             properties={
                 "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
@@ -357,7 +357,7 @@ class Dataset(Stack):
         glue_db = CustomResource(
             self,
             f'{env.resourcePrefix}DatasetDatabase',
-            service_token=glue_db_provider_service_token,
+            service_token=str(glue_db_provider_service_token),
             resource_type='Custom::GlueDatabase',
             properties={
                 'CatalogId': dataset.AwsAccountId,
