@@ -8,8 +8,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "node_modules/.bin/eslint --ext js src",
-    "lint-fix": "node_modules/.bin/eslint --fix --ext js src"
+    "lint": "npx eslint --ext js src",
+    "lint-fix": "npx eslint --fix --ext js src"
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
@@ -64,13 +64,24 @@
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
-    "prettier": "^2.6.1"
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "2.8.7"
   },
   "eslintConfig": {
+    "plugins": [
+      "prettier"
+    ],
     "extends": [
       "react-app",
-      "react-app/jest"
-    ]
+      "react-app/jest",
+      "plugin:prettier/recommended"
+    ],
+    "rules": {
+      "no-unused-vars": "error",
+      "no-const-assign": "error",
+      "eqeqeq": "error"
+    }
   },
   "browserslist": {
     "production": [
