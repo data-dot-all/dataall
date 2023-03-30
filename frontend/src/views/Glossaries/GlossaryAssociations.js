@@ -27,12 +27,10 @@ import listGlossaryAssociations from '../../api/Glossary/listGlossaryAssociation
 import approveTermAssociation from '../../api/Glossary/approveTermAssociation';
 import dismissTermAssociation from '../../api/Glossary/dismissTermAssociation';
 import Pager from '../../components/Pager';
-import useAuth from '../../hooks/useAuth';
 
 const GlossaryAssociations = ({ glossary }) => {
   const client = useClient();
   const dispatch = useDispatch();
-  const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);

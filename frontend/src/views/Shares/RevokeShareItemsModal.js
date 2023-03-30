@@ -1,14 +1,7 @@
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Card,
-  Dialog,
-  Divider,
-  IconButton,
-  Typography
-} from '@mui/material';
-import { Add, SyncAlt } from '@mui/icons-material';
+import { Box, Card, Dialog, Divider, Typography } from '@mui/material';
+import { SyncAlt } from '@mui/icons-material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SET_ERROR } from '../../store/errorReducer';
@@ -24,7 +17,6 @@ const RevokeShareItemsModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
   const [rows, setRows] = useState([]);
   const dispatch = useDispatch();
   const params = useParams();
@@ -38,7 +30,7 @@ const RevokeShareItemsModal = (props) => {
       getShareObject({
         shareUri: params.uri,
         filter: {
-          ...filter,
+          ...Defaults.DefaultFilter,
           pageSize: 1000,
           isShared: true,
           isRevokable: true
@@ -58,7 +50,7 @@ const RevokeShareItemsModal = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, filter]);
+  }, [client, dispatch, params.uri, Defaults.DefaultFilter]);
 
   const revoke = async () => {
     setLoading(true);

@@ -1,21 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import {
-  Autocomplete,
   Box,
-  Card,
   CardContent,
-  CardHeader,
   CircularProgress,
   Dialog,
-  Divider,
-  FormControlLabel,
-  FormGroup,
-  FormHelperText,
   MenuItem,
-  Paper,
-  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -34,10 +25,8 @@ const EnvironmentRoleAddForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [items, setItems] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
-  const [roleError, setRoleError] = useState(null);
 
   const fetchGroups = async (environmentUri) => {
     try {

@@ -21,7 +21,6 @@ import markNotificationAsRead from '../../api/Notification/markAsRead';
 import BellIcon from '../../icons/Bell';
 import useClient from '../../hooks/useClient';
 import * as Defaults from '../defaults';
-import { PagedResponseDefault } from '../defaults';
 
 const NotificationsPopover = () => {
   const anchorRef = useRef(null);
@@ -68,9 +67,7 @@ const NotificationsPopover = () => {
 
   const markAsRead = useCallback(
     async (notificationUri) => {
-      const response = await client.mutate(
-        markNotificationAsRead(notificationUri)
-      );
+      await client.mutate(markNotificationAsRead(notificationUri));
     },
     [client]
   );

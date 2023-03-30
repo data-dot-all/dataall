@@ -14,8 +14,7 @@ import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
 import useCardStyle from '../../hooks/useCardStyle';
 
-const ShareInboxListItem = (props) => {
-  const { share, reload } = props;
+const ShareInboxListItem = ({ share }) => {
   const classes = useCardStyle();
 
   return (

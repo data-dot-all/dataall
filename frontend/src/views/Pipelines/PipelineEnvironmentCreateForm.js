@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
@@ -34,7 +33,6 @@ const PipelineEnvironmentCreateForm = (props) => {
     handleCountEnvironmentValid
   } = props;
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map());
@@ -45,14 +43,14 @@ const PipelineEnvironmentCreateForm = (props) => {
     { value: 'prod', label: 'prod' },
     { value: 'other', label: 'other' }
   ];
-  const [environmentOps, setEnvironmentOps] = useState(
+
+  const environmentOps =
     environmentOptions && environmentOptions.length > 0
       ? environmentOptions
       : [
           { environmentUri: 'someUri', label: 'some' },
           { environmentUri: 'someUri', label: 'some2' }
-        ]
-  );
+        ];
 
   const fetchGroups = async (environment) => {
     try {

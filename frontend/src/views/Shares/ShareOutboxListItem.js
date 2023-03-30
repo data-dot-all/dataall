@@ -13,8 +13,7 @@ import PropTypes from 'prop-types';
 import ShareStatus from '../../components/ShareStatus';
 import TextAvatar from '../../components/TextAvatar';
 
-const ShareOutboxListItem = (props) => {
-  const { share, reload } = props;
+const ShareOutboxListItem = ({ share }) => {
   return (
     <Card
       key={share.shareUri}

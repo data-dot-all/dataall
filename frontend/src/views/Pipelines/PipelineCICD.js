@@ -9,7 +9,6 @@ import {
   IconButton,
   List,
   ListItem,
-  Chip,
   Typography
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
@@ -21,8 +20,6 @@ import useClient from '../../hooks/useClient';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import getDataPipelineCredsLinux from '../../api/DataPipeline/getDataPipelineCredsLinux';
-import ChipInput from '../../components/TagsInput';
-import Label from '../../components/Label';
 
 const PipelineCICD = (props) => {
   const { pipeline } = props;

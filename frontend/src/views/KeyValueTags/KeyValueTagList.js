@@ -18,7 +18,6 @@ import useClient from '../../hooks/useClient';
 import Scrollbar from '../../components/Scrollbar';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
-import { useSnackbar } from 'notistack';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 import listKeyValueTags from '../../api/KeyValueTags/listKeyValueTags';
 import PencilAlt from '../../icons/PencilAlt';

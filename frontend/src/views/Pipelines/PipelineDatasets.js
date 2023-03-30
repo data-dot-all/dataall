@@ -18,12 +18,10 @@ const PipelineDatasets = (props) => {
   const { pipeline } = props;
   const client = useClient();
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
   const [inputDataset, setInputDataset] = useState('');
   const [outputDataset, setOutputDataset] = useState('');
 
   const fetchDatasets = useCallback(async () => {
-    setLoading(true);
     if (pipeline.inputDatasetUri) {
       const response = await client.query(getDataset(pipeline.inputDatasetUri));
       if (!response.errors && response.data.getDataset !== null) {
@@ -48,7 +46,6 @@ const PipelineDatasets = (props) => {
         dispatch({ type: SET_ERROR, error });
       }
     }
-    setLoading(false);
   }, [client, dispatch]);
 
   useEffect(() => {

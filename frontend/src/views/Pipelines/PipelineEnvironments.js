@@ -1,37 +1,24 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Button,
   Card,
   CardContent,
   CardHeader,
   Divider,
   Grid,
-  IconButton,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableRow,
-  TextField
+  TableRow
 } from '@mui/material';
-import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { LoadingButton } from '@mui/lab';
 import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import * as Defaults from '../../components/defaults';
 
 const PipelineEnvironments = (props) => {
   const { pipeline } = props;
-  const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [environments, setEnvironments] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (client && pipeline) {

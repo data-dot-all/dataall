@@ -30,7 +30,6 @@ import {
   CopyAllOutlined,
   DeleteOutlined,
   RemoveCircleOutlineOutlined,
-  LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -74,7 +73,7 @@ function ShareViewHeader(props) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [removing, setRemoving] = useState(false);
+
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -82,6 +81,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request submitted', {
         anchorOrigin: {
@@ -96,13 +96,14 @@ function ShareViewHeader(props) {
     }
     setSubmitting(false);
   };
+
   const remove = async () => {
-    setRemoving(true);
     const response = await client.mutate(
       deleteShareObject({
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request deleted', {
         anchorOrigin: {
@@ -115,8 +116,8 @@ function ShareViewHeader(props) {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setRemoving(false);
   };
+
   const accept = async () => {
     setAccepting(true);
     const response = await client.mutate(
@@ -124,6 +125,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request approved', {
         anchorOrigin: {
@@ -139,6 +141,7 @@ function ShareViewHeader(props) {
     }
     setAccepting(false);
   };
+
   const reject = async () => {
     setRejecting(true);
     const response = await client.mutate(
@@ -146,6 +149,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
@@ -161,6 +165,7 @@ function ShareViewHeader(props) {
     }
     setRejecting(false);
   };
+
   return (
     <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
