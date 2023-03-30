@@ -7,6 +7,12 @@ from ....aws.handlers.parameter_store import ParameterStoreManager
 from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary, Vote
 from ....searchproxy import indexers
+from ....utils import Parameter
+
+param_store = Parameter()
+ENVNAME = os.getenv("envname", "local")
+DOMAIN_NAME = param_store.get_parameter(env=ENVNAME, path="frontend/custom_domain_name") if ENVNAME not in ["local", "dkrcompose"] else None
+DOMAIN_URL = f"https://{DOMAIN_NAME}" if DOMAIN_NAME else "http://localhost:8080"
 
 
 def get_quicksight_reader_url(context, source, dashboardUri: str = None):
@@ -33,6 +39,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
                 region=env.region,
                 UserName=context.username,
                 DashboardId=dash.DashboardId,
+                domain_name=DOMAIN_URL,
             )
         else:
             shared_groups = db.api.Dashboard.query_all_user_groups_shareddashboard(

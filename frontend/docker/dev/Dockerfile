@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:latest
+FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG NODE_VERSION=16
 ARG NGINX_VERSION=1.12
