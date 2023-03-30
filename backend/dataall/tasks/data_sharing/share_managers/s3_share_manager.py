@@ -12,6 +12,8 @@ from ....aws.handlers.iam import IAM
 from ....utils.alarm_service import AlarmService
 
 logger = logging.getLogger(__name__)
+ACCESS_POINT_CREATION_TIME = 30
+ACCESS_POINT_CREATION_RETRIES = 5
 
 
 class S3ShareManager:
@@ -196,7 +198,13 @@ class S3ShareManager:
             )
             access_point_arn = S3.create_bucket_access_point(self.source_account_id, self.source_environment.region, self.bucket_name, self.access_point_name)
             # Access point creation is slow
-            time.sleep(5)
+            retries = 1
+            while not S3.get_bucket_access_point_arn(self.source_account_id, self.source_environment.region, self.access_point_name) and retries < ACCESS_POINT_CREATION_RETRIES:
+                logger.info(
+                    'Waiting 30s for access point creation to complete..'
+                )
+                time.sleep(ACCESS_POINT_CREATION_TIME)
+                retries += 1
         existing_policy = S3.get_access_point_policy(self.source_account_id, self.source_environment.region, self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
