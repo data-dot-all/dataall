@@ -174,7 +174,7 @@ const PipelineList = () => {
             <Grid container spacing={2} xs={8}>
               {filterItems.map((item) => (
                 <Grid item md={4} xs={12}>
-                  {item.title != 'Tags' ? (
+                  {item.title !== 'Tags' ? (
                     <Autocomplete
                       id={item.title}
                       multiple

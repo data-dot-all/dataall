@@ -259,7 +259,7 @@ const PipelineView = () => {
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
                 targetType={
-                  pipeline.devStrategy == 'cdk-trunk'
+                  pipeline.devStrategy === 'cdk-trunk'
                     ? 'cdkpipeline'
                     : 'pipeline'
                 }

@@ -42,7 +42,7 @@ const RevokeShareItemsModal = (props) => {
         response.data.getShareObject.items.nodes.map((item) => ({
           id: item.shareItemUri,
           name: item.itemName,
-          type: item.itemType == 'StorageLocation' ? 'Folder' : 'Table',
+          type: item.itemType === 'StorageLocation' ? 'Folder' : 'Table',
           status: item.status
         }))
       );

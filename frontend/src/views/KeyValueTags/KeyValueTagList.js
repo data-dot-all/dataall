@@ -102,7 +102,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                           <TableRow>
                             <TableCell>Key</TableCell>
                             <TableCell>Value</TableCell>
-                            {targetType == 'environment' && (
+                            {targetType === 'environment' && (
                               <TableCell>Cascade enabled</TableCell>
                             )}
                           </TableRow>
@@ -112,7 +112,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
                             <TableRow>
                               <TableCell>{tag.key || '-'}</TableCell>
                               <TableCell>{tag.value || '-'}</TableCell>
-                              {targetType == 'environment' && (
+                              {targetType === 'environment' && (
                                 <TableCell>
                                   <Switch
                                     defaultChecked={tag.cascade}

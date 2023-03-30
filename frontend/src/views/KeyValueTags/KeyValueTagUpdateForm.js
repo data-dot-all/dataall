@@ -129,7 +129,7 @@ const KeyValueTagUpdateForm = (props) => {
                         <TableRow>
                           <TableCell>Key</TableCell>
                           <TableCell>Value</TableCell>
-                          {targetType == 'environment' && (
+                          {targetType === 'environment' && (
                             <TableCell>Cascade enabled</TableCell>
                           )}
                         </TableRow>
@@ -157,7 +157,7 @@ const KeyValueTagUpdateForm = (props) => {
                                 variant="outlined"
                               />
                             </TableCell>
-                            {targetType == 'environment' && (
+                            {targetType === 'environment' && (
                               <TableCell>
                                 <Switch
                                   color="primary"
