@@ -1,7 +1,7 @@
 {
     "modules": {
         "notebooks": {
-            "active": "true"
+            "active": true
         }
     }
 }
