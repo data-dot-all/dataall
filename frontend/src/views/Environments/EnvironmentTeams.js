@@ -292,7 +292,6 @@ const EnvironmentTeams = ({ environment }) => {
   }, [client, dispatch, environment, filterRoles]);
 
   const removeConsumptionRole = async (consumptionGroupUri) => {
-    console.log(consumptionGroupUri);
     try {
       const response = await client.mutate(
         removeConsumptionRoleFromEnvironment({

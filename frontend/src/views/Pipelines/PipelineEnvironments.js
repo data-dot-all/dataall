@@ -22,15 +22,12 @@ const PipelineEnvironments = (props) => {
 
   useEffect(() => {
     if (client && pipeline) {
-      console.log('useeffect');
-      console.log(pipeline);
       const environmentsSorted = pipeline.developmentEnvironments.nodes.sort(
         (a, b) => {
           return a.order - b.order;
         }
       );
       setEnvironments(environmentsSorted);
-      console.log(environments);
     }
   }, [client, pipeline]);
 

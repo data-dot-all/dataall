@@ -1,7 +1,6 @@
 import { gql } from 'apollo-boost';
 
 const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
-  console.log('rcv', input);
   return {
     variables: {
       datasetUri,

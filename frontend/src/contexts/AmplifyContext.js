@@ -114,7 +114,7 @@ export const AuthProvider = (props) => {
         });
       })
       .catch((e) => {
-        console.log('Failed to authenticate user', e);
+        console.error('Failed to authenticate user', e);
       });
   };
 

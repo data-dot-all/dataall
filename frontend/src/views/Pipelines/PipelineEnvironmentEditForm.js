@@ -59,8 +59,6 @@ const PipelineEnvironmentEditForm = (props) => {
 
   useEffect(() => {
     if (client && pipeline) {
-      console.log('useeffect');
-      console.log(pipeline);
       const environmentsSorted = pipeline.developmentEnvironments.nodes.sort(
         (a, b) => {
           return a.order - b.order;

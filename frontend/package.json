@@ -80,7 +80,8 @@
     "rules": {
       "no-unused-vars": "error",
       "no-const-assign": "error",
-      "eqeqeq": "error"
+      "eqeqeq": "error",
+      "no-console": "warn"
     }
   },
   "browserslist": {
