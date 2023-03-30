@@ -95,15 +95,6 @@ Enterprise option as show below:
 
 ![quicksight](pictures/environments/boot_qs_2.png#zoom#shadow)
 
-After you've successfully subscribed to QuickSight, we need to trust <span style="color:grey">*data.all*</span> domain on QuickSight
-to enable Dashboard Embedding on <span style="color:grey">*data.all*</span> UI. To do that go to:
-
-1. Manage QuickSight
-2. Domains and Embedding
-3. Put <span style="color:grey">*data.all*</span> domain and check include subdomains
-4. Save
-
-![quicksight_domain](pictures/environments/boot_qs_3.png#zoom#shadow)
 
 ### 5. (For ML Studio) Delete or adapt the default VPC
 If ML Studio is enabled, data.all checks if there is an existing SageMaker Studio domain. If there is an existing domain
