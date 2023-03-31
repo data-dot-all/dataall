@@ -658,6 +658,11 @@ def test_manage_access_point_and_policy_1(
     )
 
     mocker.patch(
+        "dataall.aws.handlers.s3.S3.get_bucket_access_point_arn",
+        return_value="new-access-point-arn"
+    )
+
+    mocker.patch(
         "dataall.aws.handlers.s3.S3.get_access_point_policy",
         return_value=None,
     )
