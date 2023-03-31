@@ -3,21 +3,21 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.cdkproxy.stacks import SagemakerNotebook
+from dataall.modules.notebooks.cdk.stacks import NotebookStack
 
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, notebook, env, org):
     mocker.patch(
-        'dataall.cdkproxy.stacks.notebook.SagemakerNotebook.get_engine',
-        return_value=db,
+        'dataall.modules.notebooks.cdk.stacks.NotebookStack.get_engine',
+        return_value=db
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.notebook.SagemakerNotebook.get_target',
+        'dataall.modules.notebooks.cdk.stacks.NotebookStack.get_target',
         return_value=notebook,
     )
     mocker.patch(
@@ -40,7 +40,7 @@ def patch_methods(mocker, db, notebook, env, org):
 @pytest.fixture(scope='function', autouse=True)
 def template(notebook):
     app = App()
-    SagemakerNotebook(app, 'SagemakerNotebook', target_uri=notebook.notebookUri)
+    NotebookStack(app, 'SagemakerNotebook', target_uri=notebook.notebookUri)
     return json.dumps(app.synth().get_stack_by_name('SagemakerNotebook').template)
 
 

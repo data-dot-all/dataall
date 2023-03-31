@@ -7,6 +7,10 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify, Response
 from munch import DefaultMunch
 import dataall
+from dataall.core.context import set_context, dispose_context, RequestContext
+from dataall.core.config import config
+
+config.set_property("cdk_proxy_url", "mock_url")
 
 
 class ClientWrapper:
@@ -58,6 +62,9 @@ def app(db, es):
 
         username = request.headers.get('Username', 'anonym')
         groups = json.loads(request.headers.get('Groups', '[]'))
+
+        set_context(RequestContext(db, username, groups, es))
+
         success, result = graphql_sync(
             schema,
             data,
@@ -67,11 +74,11 @@ def app(db, es):
                 'username': username,
                 'groups': groups,
                 'es': es,
-                'cdkproxyurl': 'cdkproxyurl',
             },
             debug=app.debug,
         )
 
+        dispose_context()
         status_code = 200 if success else 400
         return jsonify(result), status_code
 

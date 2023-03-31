@@ -69,9 +69,7 @@ def create_sagemaker_studio_user_profile(context: Context, source, input: dict =
             target_label=sm_user_profile.label,
         )
 
-    stack_helper.deploy_stack(
-        context=context, targetUri=sm_user_profile.sagemakerStudioUserProfileUri
-    )
+    stack_helper.deploy_stack(targetUri=sm_user_profile.sagemakerStudioUserProfileUri)
 
     return sm_user_profile
 
@@ -209,32 +207,13 @@ def delete_sagemaker_studio_user_profile(
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            context=context,
             target_uri=sagemakerStudioUserProfileUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
-            region=env.region,
-            target_type='notebook',
+            region=env.region
         )
 
     return True
-
-
-def resolve_environment(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        return session.query(models.Environment).get(source.environmentUri)
-
-
-def resolve_organization(context, source, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
-            source.environmentUri
-        )
-        return session.query(models.Organization).get(env.organizationUri)
 
 
 def resolve_stack(
@@ -243,7 +222,6 @@ def resolve_stack(
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.sagemakerStudioUserProfileUri,
         environmentUri=source.environmentUri,
     )

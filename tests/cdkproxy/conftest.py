@@ -160,25 +160,6 @@ def sgm_studio(db, env: models.Environment) -> models.SagemakerStudioUserProfile
 
 
 @pytest.fixture(scope='module', autouse=True)
-def notebook(db, env: models.Environment) -> models.SagemakerNotebook:
-    with db.scoped_session() as session:
-        notebook = models.SagemakerNotebook(
-            label='thistable',
-            NotebookInstanceStatus='RUNNING',
-            owner='me',
-            AWSAccountId=env.AwsAccountId,
-            region=env.region,
-            environmentUri=env.environmentUri,
-            RoleArn=env.EnvironmentDefaultIAMRoleArn,
-            SamlAdminGroupName='admins',
-            VolumeSizeInGB=32,
-            InstanceType='ml.t3.medium',
-        )
-        session.add(notebook)
-    yield notebook
-
-
-@pytest.fixture(scope='module', autouse=True)
 def pipeline1(db, env: models.Environment) -> models.DataPipeline:
     with db.scoped_session() as session:
         pipeline = models.DataPipeline(
@@ -233,6 +214,7 @@ def pip_envs(db, env: models.Environment, pipeline1: models.DataPipeline) -> mod
         session.add(pipeline_env1)
 
     yield api.Pipeline.query_pipeline_environments(session=session, uri=pipeline1.DataPipelineUri)
+
 
 @pytest.fixture(scope='module', autouse=True)
 def redshift_cluster(db, env: models.Environment) -> models.RedshiftCluster:

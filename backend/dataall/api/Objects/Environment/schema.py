@@ -42,6 +42,14 @@ EnvironmentGroupPermissionSearchResult = gql.ObjectType(
 )
 
 
+EnvironmentParameter = gql.ObjectType(
+    name='EnvironmentParameter',
+    fields=[
+        gql.Field(name='key', type=gql.String),
+        gql.Field(name='value', type=gql.String),
+    ]
+)
+
 Environment = gql.ObjectType(
     name='Environment',
     fields=[
@@ -76,7 +84,6 @@ Environment = gql.ObjectType(
         ),
         gql.Field('validated', type=gql.Boolean),
         gql.Field('dashboardsEnabled', type=gql.Boolean),
-        gql.Field('notebooksEnabled', type=gql.Boolean),
         gql.Field('mlStudiosEnabled', type=gql.Boolean),
         gql.Field('pipelinesEnabled', type=gql.Boolean),
         gql.Field('warehousesEnabled', type=gql.Boolean),
@@ -94,6 +101,11 @@ Environment = gql.ObjectType(
             name='networks',
             type=gql.ArrayType(gql.Ref('Vpc')),
             resolver=resolve_vpc_list,
+        ),
+        gql.Field(
+            name='parameters',
+            resolver=resolve_parameters,
+            type=gql.ArrayType(gql.Ref('EnvironmentParameter')),
         ),
     ],
 )

@@ -25,7 +25,6 @@ class Environment(Resource, Base):
     roleCreated = Column(Boolean, nullable=False, default=False)
 
     dashboardsEnabled = Column(Boolean, default=False)
-    notebooksEnabled = Column(Boolean, default=True)
     mlStudiosEnabled = Column(Boolean, default=True)
     pipelinesEnabled = Column(Boolean, default=True)
     warehousesEnabled = Column(Boolean, default=True)

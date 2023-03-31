@@ -266,6 +266,6 @@ class SagemakerStudioUserProfile(Stack):
             .to_string()
         )
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.SagemakerStudioUserProfile, target_type="mlstudio")
 
         CDKNagUtil.check_rules(self)

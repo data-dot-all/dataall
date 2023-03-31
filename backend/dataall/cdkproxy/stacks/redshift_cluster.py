@@ -184,6 +184,6 @@ class RedshiftStack(Stack):
             hosted_rotation=aws_secretsmanager.HostedRotation.redshift_single_user(),
         )
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.RedshiftCluster, target_type="redshift")
 
         CDKNagUtil.check_rules(self)

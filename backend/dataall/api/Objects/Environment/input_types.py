@@ -10,6 +10,14 @@ AwsEnvironmentInput = gql.InputType(
     ],
 )
 
+ModifyEnvironmentParameterInput = gql.InputType(
+    name='ModifyEnvironmentParameterInput',
+    arguments=[
+        gql.Argument('key', gql.String),
+        gql.Argument('value', gql.String)
+    ]
+)
+
 NewEnvironmentInput = gql.InputType(
     name='NewEnvironmentInput',
     arguments=[
@@ -21,7 +29,6 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('AwsAccountId', gql.NonNullableType(gql.String)),
         gql.Argument('region', gql.NonNullableType(gql.String)),
         gql.Argument('dashboardsEnabled', type=gql.Boolean),
-        gql.Argument('notebooksEnabled', type=gql.Boolean),
         gql.Argument('mlStudiosEnabled', type=gql.Boolean),
         gql.Argument('pipelinesEnabled', type=gql.Boolean),
         gql.Argument('warehousesEnabled', type=gql.Boolean),
@@ -30,6 +37,8 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('EnvironmentDefaultIAMRoleName', gql.String),
         gql.Argument('resourcePrefix', gql.String),
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
+
     ],
 )
 
@@ -44,11 +53,11 @@ ModifyEnvironmentInput = gql.InputType(
         gql.Argument('privateSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('publicSubnetIds', gql.ArrayType(gql.String)),
         gql.Argument('dashboardsEnabled', type=gql.Boolean),
-        gql.Argument('notebooksEnabled', type=gql.Boolean),
         gql.Argument('mlStudiosEnabled', type=gql.Boolean),
         gql.Argument('pipelinesEnabled', type=gql.Boolean),
         gql.Argument('warehousesEnabled', type=gql.Boolean),
         gql.Argument('resourcePrefix', gql.String),
+        gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput))
     ],
 )
 

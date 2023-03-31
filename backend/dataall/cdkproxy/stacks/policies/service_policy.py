@@ -3,8 +3,6 @@ from typing import List
 
 from aws_cdk import aws_iam
 
-from ....db import permissions
-
 logger = logging.getLogger()
 
 
@@ -37,17 +35,6 @@ class ServicePolicy(object):
         """
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
-        from .redshift import Redshift
-        from .databrew import Databrew
-        from .lakeformation import LakeFormation
-        from .sagemaker import Sagemaker
-        from ._lambda import Lambda
-        from .codestar import CodeStar
-        from .glue import Glue
-        from .stepfunctions import StepFunctions
-        from .quicksight import QuickSight
-        from .cloudformation import Cloudformation
-
         policies: [aws_iam.ManagedPolicy] = [
             # This policy covers the minumum actions required independent
             # of the service permissions given to the group.
@@ -107,27 +94,9 @@ class ServicePolicy(object):
 
         services = ServicePolicy.__subclasses__()
 
-        if permissions.CREATE_REDSHIFT_CLUSTER not in self.permissions:
-            services.remove(Redshift)
-        if permissions.CREATE_DATASET not in self.permissions:
-            services.remove(Databrew)
-            services.remove(LakeFormation)
-            services.remove(Glue)
-        if (
-            permissions.CREATE_NOTEBOOK not in self.permissions
-            and permissions.CREATE_SGMSTUDIO_NOTEBOOK not in self.permissions
-        ):
-            services.remove(Sagemaker)
-        if permissions.CREATE_PIPELINE not in self.permissions:
-            services.remove(Lambda)
-            services.remove(CodeStar)
-            services.remove(StepFunctions)
-        if permissions.CREATE_DASHBOARD not in self.permissions:
-            services.remove(QuickSight)
-
         statements = []
         for service in services:
-            statements.extend(service.get_statements(self))
+            statements.extend(service.get_statements(self, self.permissions))
 
         statements_chunks: list = [
             statements[i : i + 8] for i in range(0, len(statements), 8)
@@ -144,7 +113,7 @@ class ServicePolicy(object):
             )
         return policies
 
-    def get_statements(self, **kwargs) -> List[aws_iam.PolicyStatement]:
+    def get_statements(self, group_permissions, **kwargs) -> List[aws_iam.PolicyStatement]:
         """
         This method implements a policy based on a tag key and optionally a resource prefix
         :return: list

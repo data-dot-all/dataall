@@ -2,6 +2,8 @@ from ... import gql
 from .resolvers import *
 from ...constants import DashboardRole
 
+from dataall.api.Objects.Environment.resolvers import resolve_environment
+
 Dashboard = gql.ObjectType(
     name='Dashboard',
     fields=[
@@ -23,7 +25,7 @@ Dashboard = gql.ObjectType(
         gql.Field(
             'environment',
             type=gql.Ref('Environment'),
-            resolver=get_dashboard_environment,
+            resolver=resolve_environment,
         ),
         gql.Field(
             'userRoleForDashboard',

@@ -452,6 +452,7 @@ class PipelineStack(Stack):
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
+                        'mv config.json ./source_build/',
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
@@ -483,6 +484,7 @@ class PipelineStack(Stack):
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
+                        'mv config.json ./source_build/',
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],

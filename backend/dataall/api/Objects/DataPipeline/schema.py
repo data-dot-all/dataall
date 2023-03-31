@@ -1,6 +1,8 @@
 from ... import gql
 from .resolvers import *
 from ...constants import DataPipelineRole
+from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
 
 DataPipeline = gql.ObjectType(
     name='DataPipeline',
@@ -16,10 +18,10 @@ DataPipeline = gql.ObjectType(
         gql.Field('repo', type=gql.String),
         gql.Field('SamlGroupName', type=gql.String),
         gql.Field(
-            'organization', type=gql.Ref('Organization'), resolver=get_pipeline_org
+            'organization', type=gql.Ref('Organization'), resolver=resolve_organization_by_env
         ),
         gql.Field(
-            'environment', type=gql.Ref('Environment'), resolver=get_pipeline_env
+            'environment', type=gql.Ref('Environment'), resolver=resolve_environment
         ),
         gql.Field(
             'developmentEnvironments',

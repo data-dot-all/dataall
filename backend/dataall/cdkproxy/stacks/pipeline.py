@@ -370,7 +370,7 @@ class PipelineStack(Stack):
             value=codepipeline_pipeline.pipeline_name,
         )
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.DataPipeline, target_type="pipeline")
 
         CDKNagUtil.check_rules(self)
 

@@ -281,16 +281,6 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
         )
 
 
-def resolve_environment(context: Context, source: models.ShareObject, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        environment = db.api.Environment.get_environment_by_uri(
-            session, source.environmentUri
-        )
-        return environment
-
-
 def resolve_group(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None

@@ -5,7 +5,7 @@ import os
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from sqlalchemy import and_
+from sqlalchemy import and_, exc
 
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
@@ -96,7 +96,7 @@ def create_environment(context: Context, source, input=None):
             target_uri=env.environmentUri,
             target_label=env.label,
         )
-    stack_helper.deploy_stack(context, targetUri=env.environmentUri)
+    stack_helper.deploy_stack(targetUri=env.environmentUri)
     env.userRoleInEnvironment = EnvironmentPermission.Owner.value
     return env
 
@@ -131,9 +131,7 @@ def update_environment(
         if input.get('dashboardsEnabled') or (
             environment.resourcePrefix != previous_resource_prefix
         ):
-            stack_helper.deploy_stack(
-                context=context, targetUri=environment.environmentUri
-            )
+            stack_helper.deploy_stack(targetUri=environment.environmentUri)
     return environment
 
 
@@ -148,7 +146,7 @@ def invite_group(context: Context, source, input):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -185,7 +183,7 @@ def update_group_permissions(context, source, input):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -201,7 +199,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
             check_perm=True,
         )
 
-    stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+    stack_helper.deploy_stack(targetUri=environment.environmentUri)
 
     return environment
 
@@ -539,7 +537,6 @@ def generate_environment_access_token(
 
 def get_environment_stack(context: Context, source: models.Environment, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
     )
@@ -558,23 +555,27 @@ def delete_environment(
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
 
-        db.api.Environment.delete_environment(
-            session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data={'environment': environment},
-            check_perm=True,
-        )
+        try:
+            db.api.Environment.delete_environment(
+                session,
+                username=context.username,
+                groups=context.groups,
+                uri=environmentUri,
+                data={'environment': environment},
+                check_perm=True,
+            )
+        except exc.IntegrityError:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Delete Environment',
+                message='Delete all environment related objects before proceeding',
+            )
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            context=context,
             target_uri=environmentUri,
             accountid=environment.AwsAccountId,
             cdk_role_arn=environment.CDKRoleArn,
             region=environment.region,
-            target_type='environment',
         )
 
     return True
@@ -629,7 +630,7 @@ def enable_subscriptions(
         environment.subscriptionsConsumersTopicImported = False
         environment.subscriptionsEnabled = True
         session.commit()
-        stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -650,7 +651,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
         environment.subscriptionsProducersTopicImported = False
         environment.subscriptionsEnabled = False
         session.commit()
-        stack_helper.deploy_stack(context=context, targetUri=environment.environmentUri)
+        stack_helper.deploy_stack(targetUri=environment.environmentUri)
         return True
 
 
@@ -734,3 +735,19 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
                 message='Pivot role name could not be found on AWS Secretsmanager',
             )
         return pivot_role_name
+
+
+def resolve_environment(context, source, **kwargs):
+    """Resolves the environment for a environmental resource"""
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return session.query(models.Environment).get(source.environmentUri)
+
+
+def resolve_parameters(context, source: models.Environment, **kwargs):
+    """Resolves a parameters for the environment"""
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return Environment.get_environment_parameters(session, source.environmentUri)

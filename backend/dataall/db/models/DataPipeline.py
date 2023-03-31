@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 
@@ -7,7 +7,7 @@ from .. import Base, Resource, utils
 
 class DataPipeline(Resource, Base):
     __tablename__ = 'datapipeline'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     DataPipelineUri = Column(
         String, nullable=False, primary_key=True, default=utils.uuid('DataPipelineUri')
     )

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
 
 from .. import Base, Resource, utils
@@ -6,7 +6,7 @@ from .. import Base, Resource, utils
 
 class Dashboard(Resource, Base):
     __tablename__ = 'dashboard'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     organizationUri = Column(String, nullable=False)
     dashboardUri = Column(
         String, nullable=False, primary_key=True, default=utils.uuid('dashboard')

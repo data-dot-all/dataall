@@ -15,7 +15,6 @@ const getEnvironment = ({ environmentUri }) => ({
         label
         AwsAccountId
         dashboardsEnabled
-        notebooksEnabled
         mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
@@ -51,7 +50,6 @@ const getEnvironment = ({ environmentUri }) => ({
           resources
         }
         dashboardsEnabled
-        notebooksEnabled
         mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
@@ -59,6 +57,10 @@ const getEnvironment = ({ environmentUri }) => ({
           VpcId
           privateSubnetIds
           publicSubnetIds
+        }
+        parameters {
+          key
+          value
         }
       }
     }

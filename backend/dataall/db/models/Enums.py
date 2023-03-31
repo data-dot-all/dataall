@@ -73,13 +73,6 @@ class ScheduledQueryRole(Enum):
     NoPermission = '000'
 
 
-class SagemakerNotebookRole(Enum):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class SagemakerStudioRole(Enum):
     Creator = '950'
     Admin = '900'
