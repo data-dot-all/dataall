@@ -33,7 +33,6 @@ const listOrganizationEnvironments = ({ organizationUri, filter }) => ({
             environmentType
             AwsAccountId
             dashboardsEnabled
-            notebooksEnabled
             mlStudiosEnabled
             pipelinesEnabled
             warehousesEnabled
@@ -49,6 +48,10 @@ const listOrganizationEnvironments = ({ organizationUri, filter }) => ({
               link
               outputs
               resources
+            }
+            parameters {
+              key
+              value
             }
           }
         }

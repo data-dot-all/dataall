@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, String, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
@@ -7,7 +7,7 @@ from .. import Base, Resource, utils
 
 class Dataset(Resource, Base):
     __tablename__ = 'dataset'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     organizationUri = Column(String, nullable=False)
     datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
     region = Column(String, default='eu-west-1')

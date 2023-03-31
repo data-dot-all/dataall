@@ -48,7 +48,9 @@ const EnvironmentEditForm = (props) => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      setEnv(response.data.getEnvironment);
+      const environment = response.data.getEnvironment
+      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      setEnv(environment);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -72,11 +74,16 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             dashboardsEnabled: values.dashboardsEnabled,
-            notebooksEnabled: values.notebooksEnabled,
             mlStudiosEnabled: values.mlStudiosEnabled,
             pipelinesEnabled: values.pipelinesEnabled,
             warehousesEnabled: values.warehousesEnabled,
-            resourcePrefix: values.resourcePrefix
+            resourcePrefix: values.resourcePrefix,
+            parameters: [
+              {
+                key: "notebooksEnabled",
+                value: String(values.notebooksEnabled)
+              }
+            ]
           }
         })
       );
@@ -192,7 +199,7 @@ const EnvironmentEditForm = (props) => {
                 description: env.description,
                 tags: env.tags || [],
                 dashboardsEnabled: env.dashboardsEnabled,
-                notebooksEnabled: env.notebooksEnabled,
+                notebooksEnabled: env.parameters["notebooksEnabled"] === 'true',
                 mlStudiosEnabled: env.mlStudiosEnabled,
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,

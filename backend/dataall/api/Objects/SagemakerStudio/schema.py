@@ -2,6 +2,10 @@ from ... import gql
 from .resolvers import *
 from ....api.constants import SagemakerStudioRole
 
+
+from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
+from dataall.api.Objects.Environment.resolvers import resolve_environment
+
 SagemakerStudio = gql.ObjectType(
     name='SagemakerStudio',
     fields=[
@@ -31,7 +35,7 @@ SagemakerStudio = gql.ObjectType(
         gql.Field(
             name='organization',
             type=gql.Ref('Organization'),
-            resolver=resolve_organization,
+            resolver=resolve_organization_by_env,
         ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
     ],
@@ -98,7 +102,7 @@ SagemakerStudioUserProfile = gql.ObjectType(
         gql.Field(
             name='organization',
             type=gql.Ref('Organization'),
-            resolver=resolve_organization,
+            resolver=resolve_organization_by_env,
         ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
     ],

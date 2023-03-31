@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
 
 from .. import Base
@@ -21,7 +21,7 @@ class SagemakerStudio(Resource, Base):
 
 class SagemakerStudioUserProfile(Resource, Base):
     __tablename__ = 'sagemaker_studio_user_profile'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     sagemakerStudioUserProfileUri = Column(
         String, primary_key=True, default=utils.uuid('sagemakerstudiouserprofile')
     )

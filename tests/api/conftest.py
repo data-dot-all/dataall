@@ -297,7 +297,10 @@ def dataset(client, patch_es):
 def env(client):
     cache = {}
 
-    def factory(org, envname, owner, group, account, region, desc='test'):
+    def factory(org, envname, owner, group, account, region, desc='test', parameters=None):
+        if parameters == None:
+            parameters = {}
+
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
             return cache[key]
@@ -314,6 +317,10 @@ def env(client):
                     region
                     name
                     owner
+                    parameters {
+                        key
+                        value
+                    }
                 }
             }""",
             username=f'{owner}',
@@ -328,6 +335,7 @@ def env(client):
                 'SamlGroupName': f'{group}',
                 'dashboardsEnabled': True,
                 'vpcId': 'vpc-123456',
+                'parameters': [{'key': k, 'value': v} for k, v in parameters.items()]
             },
         )
         cache[key] = response.data.createEnvironment
@@ -669,42 +677,6 @@ def cluster(env_fixture, org_fixture, client, group):
     )
     print(res)
     yield res.data.createRedshiftCluster
-
-
-@pytest.fixture(scope='module')
-def sgm_notebook(client, tenant, group, env_fixture) -> dataall.db.models.SagemakerNotebook:
-    response = client.query(
-        """
-        mutation createSagemakerNotebook($input:NewSagemakerNotebookInput){
-            createSagemakerNotebook(input:$input){
-                notebookUri
-                label
-                description
-                tags
-                owner
-                userRoleForNotebook
-                SamlAdminGroupName
-                VpcId
-                SubnetId
-                VolumeSizeInGB
-                InstanceType
-            }
-        }
-        """,
-        input={
-            'label': 'my pipeline',
-            'SamlAdminGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env_fixture.environmentUri,
-            'VpcId': 'vpc-123567',
-            'SubnetId': 'subnet-123567',
-            'VolumeSizeInGB': 32,
-            'InstanceType': 'ml.m5.xlarge',
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createSagemakerNotebook
 
 
 @pytest.fixture(scope='module')

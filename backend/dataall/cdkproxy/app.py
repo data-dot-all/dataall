@@ -7,16 +7,19 @@ from aws_cdk import Environment, App
 from tabulate import tabulate
 
 from dataall.cdkproxy.stacks import instanciate_stack
+from dataall.modules.loader import load_modules, ImportMode
 
 print(sys.version)
 logger = logging.getLogger('cdkapp process')
 logger.setLevel('INFO')
 
+load_modules(modes=[ImportMode.CDK])
+
 
 class CdkRunner:
     @staticmethod
     def create():
-        logger.info('Creating Stack')
+        logger.info('Ï')
         app = App()
         # 1. Reading info from context
         # 1.1 Reading account from context

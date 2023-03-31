@@ -113,5 +113,5 @@ def update_stack(
             data={'targetType': targetType},
             check_perm=True,
         )
-    stack_helper.deploy_stack(context, stack.targetUri)
+    stack_helper.deploy_stack(stack.targetUri)
     return stack

@@ -1,3 +1,4 @@
+from typing import Dict
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -28,6 +29,7 @@ class ContainerStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+        self._envname = envname
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -62,11 +64,7 @@ class ContainerStack(pyNestedClass):
             image=ecs.ContainerImage.from_ecr_repository(
                 repository=ecr_repository, tag=cdkproxy_image_tag
             ),
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'DEBUG',
-            },
+            environment=self._create_env('DEBUG'),
             command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
@@ -99,11 +97,7 @@ class ContainerStack(pyNestedClass):
             command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
+            environment=self._create_env('INFO'),
             image_tag=cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='tables-syncer'
@@ -123,11 +117,7 @@ class ContainerStack(pyNestedClass):
             command=['python3.8', '-m', 'dataall.tasks.catalog_indexer'],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
+            environment=self._create_env('INFO'),
             image_tag=cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='catalog-indexer'
@@ -147,11 +137,7 @@ class ContainerStack(pyNestedClass):
             command=['python3.8', '-m', 'dataall.tasks.stacks_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
+            environment=self._create_env('INFO'),
             image_tag=cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='stacks-updater'
@@ -171,11 +157,7 @@ class ContainerStack(pyNestedClass):
             command=['python3.8', '-m', 'dataall.tasks.bucket_policy_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
+            environment=self._create_env('DEBUG'),
             image_tag=cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='policies-updater'
@@ -201,11 +183,7 @@ class ContainerStack(pyNestedClass):
             ],
             container_id=f'container',
             ecr_repository=ecr_repository,
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'INFO',
-            },
+            environment=self._create_env('INFO'),
             image_tag=cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='subscriptions'
@@ -236,11 +214,7 @@ class ContainerStack(pyNestedClass):
             image=ecs.ContainerImage.from_ecr_repository(
                 repository=ecr_repository, tag=cdkproxy_image_tag
             ),
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'DEBUG',
-            },
+            environment=self._create_env('DEBUG'),
             command=['python3.8', '-m', 'dataall.tasks.share_manager'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
@@ -512,3 +486,11 @@ class ContainerStack(pyNestedClass):
             # security_groups=[security_group],
         )
         return scheduled_task
+
+    def _create_env(self, log_lvl) -> Dict:
+        return {
+            'AWS_REGION': self.region,
+            'envname': self._envname,
+            'LOGLEVEL': log_lvl,
+            'config_location': '/config.json'
+        }

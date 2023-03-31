@@ -1,4 +1,5 @@
 from .resolvers import *
+from dataall.api.Objects.Environment.resolvers import resolve_environment
 
 ShareableObject = gql.Union(
     name='ShareableObject',

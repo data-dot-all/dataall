@@ -1,13 +1,16 @@
-from sqlalchemy import Column, String, Integer
-from sqlalchemy.orm import query_expression
+"""ORM models for sagemaker notebooks"""
 
-from .. import Base
-from .. import Resource, utils
+from sqlalchemy import Column, String, Integer, ForeignKey
+
+from dataall.db import Base
+from dataall.db import Resource, utils
 
 
 class SagemakerNotebook(Resource, Base):
+    """Describes ORM model for sagemaker notebooks"""
+
     __tablename__ = 'sagemaker_notebook'
-    environmentUri = Column(String, nullable=False)
+    environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
     notebookUri = Column(String, primary_key=True, default=utils.uuid('notebook'))
     NotebookInstanceName = Column(
         String, nullable=False, default=utils.slugifier('label')
@@ -21,4 +24,3 @@ class SagemakerNotebook(Resource, Base):
     SubnetId = Column(String, nullable=True)
     VolumeSizeInGB = Column(Integer, nullable=True)
     InstanceType = Column(String, nullable=True)
-    userRoleForNotebook = query_expression()

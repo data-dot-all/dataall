@@ -1,7 +1,9 @@
 import os
 import pytest
 import dataall
+from dataall.modules.loader import load_modules, ImportMode
 
+load_modules(modes=[ImportMode.TASKS, ImportMode.API, ImportMode.CDK])
 ENVNAME = os.environ.get('envname', 'pytest')
 
 

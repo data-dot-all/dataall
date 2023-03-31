@@ -589,7 +589,7 @@ class EnvironmentSetup(Stack):
                 parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 
-        TagsUtil.add_tags(self)
+        TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")
 
         CDKNagUtil.check_rules(self)
 

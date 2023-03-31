@@ -104,6 +104,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 'PYTHONPATH': python_path,
                 'CURRENT_AWS_ACCOUNT': this_aws_account,
                 'envname': os.environ.get('envname', 'local'),
+                'config_location': "/config.json"
             }
             if creds:
                 env.update(

@@ -3,7 +3,7 @@ from aws_cdk import aws_iam as iam
 
 
 class Cloudformation(ServicePolicy):
-    def get_statements(self):
+    def get_statements(self, group_permissions, **kwargs):
         statements = [
             iam.PolicyStatement(
                 actions=[

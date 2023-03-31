@@ -27,13 +27,13 @@ class TagsUtil:
         self.stack = stack
 
     @classmethod
-    def add_tags(cls, stack: Stack) -> [tuple]:
+    def add_tags(cls, stack: Stack, model, target_type) -> [tuple]:
         """
         A class method that adds tags to a Stack
         """
 
         # Get the list of tags to be added from the tag factory
-        stack_tags_to_add = cls.tag_factory(stack)
+        stack_tags_to_add = cls.tag_factory(stack, model, target_type)
 
         # Add the tags to the Stack
         for tag in stack_tags_to_add:
@@ -42,35 +42,22 @@ class TagsUtil:
         return stack_tags_to_add
 
     @classmethod
-    def tag_factory(cls, stack: Stack) -> typing.List[typing.Tuple]:
+    def tag_factory(cls, stack: Stack, model_name, target_type) -> typing.List[typing.Tuple]:
         """
         A class method that returns tags to be added to a Stack (based on Stack type)
         """
 
         _stack_tags = []
 
-        # Dictionary that resolves the Stack class name to the GraphQL model
-        stack_model = dict(
-            Dataset=models.Dataset,
-            EnvironmentSetup=models.Environment,
-            SagemakerStudioDomain=models.SagemakerStudioUserProfile,
-            SagemakerStudioUserProfile=models.SagemakerStudioUserProfile,
-            SagemakerNotebook=models.SagemakerNotebook,
-            PipelineStack=models.DataPipeline,
-            CDKPipelineStack=models.DataPipeline,
-            RedshiftStack=models.RedshiftCluster,
-        )
-
         engine = cls.get_engine()
 
         # Initialize references to stack's environment and organisation
         with engine.scoped_session() as session:
-            model_name = stack_model[stack.__class__.__name__]
             target_stack = cls.get_target(session, stack, model_name)
             environment = cls.get_environment(session, target_stack)
             organisation = cls.get_organization(session, environment)
             key_value_tags: [models.KeyValueTag] = cls.get_model_key_value_tags(
-                session, stack, model_name
+                session, stack, target_type
             )
             cascaded_tags: [models.KeyValueTag] = cls.get_environment_cascade_key_value_tags(
                 session, environment.environmentUri
@@ -145,13 +132,13 @@ class TagsUtil:
         return environment
 
     @classmethod
-    def get_model_key_value_tags(cls, session, stack, model_name):
+    def get_model_key_value_tags(cls, session, stack, target_type):
         return [
             (kv.key, kv.value)
             for kv in db.api.KeyValueTag.find_key_value_tags(
                 session,
                 stack.target_uri,
-                db.api.TargetType.get_target_type(model_name),
+                target_type,
             )
         ]
 

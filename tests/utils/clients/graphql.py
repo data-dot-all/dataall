@@ -7,6 +7,7 @@ from ariadne.asgi import GraphQL
 from flask import Flask, request, jsonify, Response
 from dotted.collection import DottedCollection
 import dataall
+from dataall.core.context import set_context, RequestContext, dispose_context
 
 
 class ClientWrapper:
@@ -59,6 +60,8 @@ def app(db):
 
         username = request.headers.get('Username', 'anonym')
         groups = json.loads(request.headers.get('Groups', '[]'))
+
+        set_context(RequestContext(db, username, groups))
         success, result = graphql_sync(
             schema,
             data,
@@ -71,6 +74,7 @@ def app(db):
             debug=app.debug,
         )
 
+        dispose_context()
         status_code = 200 if success else 400
         return jsonify(result), status_code
 

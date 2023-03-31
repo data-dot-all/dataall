@@ -22,6 +22,8 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
+from dataall.core.environment.models import EnvironmentParameter
+from ...core.environment.db.repositories import EnvironmentParameterRepository
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -56,14 +58,16 @@ class Environment:
             EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
             dashboardsEnabled=data.get('dashboardsEnabled', False),
-            notebooksEnabled=data.get('notebooksEnabled', True),
             mlStudiosEnabled=data.get('mlStudiosEnabled', True),
             pipelinesEnabled=data.get('pipelinesEnabled', True),
             warehousesEnabled=data.get('warehousesEnabled', True),
             resourcePrefix=data.get('resourcePrefix'),
         )
+
         session.add(env)
         session.commit()
+
+        Environment._update_env_parameters(session, env, data)
 
         env.EnvironmentDefaultBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -185,8 +189,6 @@ class Environment:
             environment.tags = data.get('tags')
         if 'dashboardsEnabled' in data.keys():
             environment.dashboardsEnabled = data.get('dashboardsEnabled')
-        if 'notebooksEnabled' in data.keys():
-            environment.notebooksEnabled = data.get('notebooksEnabled')
         if 'mlStudiosEnabled' in data.keys():
             environment.mlStudiosEnabled = data.get('mlStudiosEnabled')
         if 'pipelinesEnabled' in data.keys():
@@ -196,6 +198,8 @@ class Environment:
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
 
+        Environment._update_env_parameters(session, environment, data)
+
         ResourcePolicy.attach_resource_policy(
             session=session,
             resource_uri=environment.environmentUri,
@@ -204,6 +208,19 @@ class Environment:
             resource_type=models.Environment.__name__,
         )
         return environment
+
+    @staticmethod
+    def _update_env_parameters(session, env: models.Environment, data):
+        """Removes old parameters and creates new parameters associated with the environment"""
+        params = data.get("parameters")
+        if not params:
+            return
+
+        env_uri = env.environmentUri
+        new_params = [EnvironmentParameter(
+            env_uri, param.get("key"), param.get("value")
+        ) for param in params]
+        EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
@@ -275,9 +292,6 @@ class Environment:
 
         if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-
-        if permissions.CREATE_NOTEBOOK in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_NOTEBOOKS)
 
         if permissions.CREATE_SGMSTUDIO_NOTEBOOK in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_SGMSTUDIO_NOTEBOOKS)
@@ -1285,63 +1299,6 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    def list_environment_objects(session, environment_uri):
-        environment_objects = []
-        datasets = (
-            session.query(models.Dataset.label, models.Dataset.datasetUri)
-            .filter(models.Dataset.environmentUri == environment_uri)
-            .all()
-        )
-        notebooks = (
-            session.query(
-                models.SagemakerNotebook.label,
-                models.SagemakerNotebook.notebookUri,
-            )
-            .filter(models.SagemakerNotebook.environmentUri == environment_uri)
-            .all()
-        )
-        ml_studios = (
-            session.query(
-                models.SagemakerStudioUserProfile.label,
-                models.SagemakerStudioUserProfile.sagemakerStudioUserProfileUri,
-            )
-            .filter(models.SagemakerStudioUserProfile.environmentUri == environment_uri)
-            .all()
-        )
-        redshift_clusters = (
-            session.query(
-                models.RedshiftCluster.label, models.RedshiftCluster.clusterUri
-            )
-            .filter(models.RedshiftCluster.environmentUri == environment_uri)
-            .all()
-        )
-        pipelines = (
-            session.query(models.DataPipeline.label, models.DataPipeline.DataPipelineUri)
-            .filter(models.DataPipeline.environmentUri == environment_uri)
-            .all()
-        )
-        dashboards = (
-            session.query(models.Dashboard.label, models.Dashboard.dashboardUri)
-            .filter(models.Dashboard.environmentUri == environment_uri)
-            .all()
-        )
-        if datasets:
-            environment_objects.append({'type': 'Datasets', 'data': datasets})
-        if notebooks:
-            environment_objects.append({'type': 'Notebooks', 'data': notebooks})
-        if ml_studios:
-            environment_objects.append({'type': 'MLStudios', 'data': ml_studios})
-        if redshift_clusters:
-            environment_objects.append(
-                {'type': 'RedshiftClusters', 'data': redshift_clusters}
-            )
-        if pipelines:
-            environment_objects.append({'type': 'Pipelines', 'data': pipelines})
-        if dashboards:
-            environment_objects.append({'type': 'Dashboards', 'data': dashboards})
-        return environment_objects
-
-    @staticmethod
     def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
         if not data:
             raise exceptions.RequiredParameter('data')
@@ -1371,14 +1328,6 @@ class Environment:
         environment = data.get(
             'environment', Environment.get_environment_by_uri(session, uri)
         )
-
-        environment_objects = Environment.list_environment_objects(session, uri)
-
-        if environment_objects:
-            raise exceptions.EnvironmentResourcesFound(
-                action='Delete Environment',
-                message='Delete all environment related objects before proceeding',
-            )
 
         env_groups = (
             session.query(models.EnvironmentGroup)
@@ -1419,6 +1368,8 @@ class Environment:
                 .delete()
             )
             session.delete(share)
+
+        EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
         return session.delete(environment)
 
@@ -1465,3 +1416,7 @@ class Environment:
             resource_uri=uri,
             permission_name=permission_name,
         )
+
+    @staticmethod
+    def get_environment_parameters(session, env_uri):
+        return EnvironmentParameterRepository(session).get_params(env_uri)

@@ -52,7 +52,7 @@ def create_pipeline(context: Context, source, input=None):
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
             )
 
-    stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+    stack_helper.deploy_stack(pipeline.DataPipelineUri)
 
     return pipeline
 
@@ -80,7 +80,7 @@ def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict 
             check_perm=True,
         )
     if (pipeline.template == ""):
-        stack_helper.deploy_stack(context, pipeline.DataPipelineUri)
+        stack_helper.deploy_stack(pipeline.DataPipelineUri)
 
     return pipeline
 
@@ -109,14 +109,6 @@ def get_pipeline(context: Context, source, DataPipelineUri: str = None):
             data=None,
             check_perm=True,
         )
-
-
-def get_pipeline_env(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-    return env
 
 
 def resolve_user_role(context: Context, source: models.DataPipeline):
@@ -153,15 +145,6 @@ def list_pipeline_environments(context: Context, source: models.DataPipeline, fi
             data=filter,
             check_perm=None,
         )
-
-
-def get_pipeline_org(context: Context, source: models.DataPipeline, **kwargs):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        env = session.query(models.Environment).get(source.environmentUri)
-        org = session.query(models.Organization).get(env.organizationUri)
-    return org
 
 
 def get_clone_url_http(context: Context, source: models.DataPipeline, **kwargs):
@@ -249,7 +232,6 @@ def get_stack(context, source: models.DataPipeline, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        context=context,
         targetUri=source.DataPipelineUri,
         environmentUri=source.environmentUri,
     )
@@ -399,7 +381,6 @@ def delete_pipeline(
 
     if deleteFromAWS:
         stack_helper.delete_repository(
-            context=context,
             target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
@@ -408,21 +389,17 @@ def delete_pipeline(
         )
         if pipeline.devStrategy == "cdk-trunk":
             stack_helper.delete_stack(
-                context=context,
                 target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='cdkpipeline',
             )
         else:
             stack_helper.delete_stack(
-                context=context,
                 target_uri=DataPipelineUri,
                 accountid=env.AwsAccountId,
                 cdk_role_arn=env.CDKRoleArn,
                 region=env.region,
-                target_type='pipeline',
             )
 
     return True
