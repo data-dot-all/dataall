@@ -77,7 +77,11 @@ class PivotRole(NestedStack):
                     sid='Athena',
                     effect=iam.Effect.ALLOW,
                     resources=['*'],
-                    actions=['athena:GetQuery*', 'athena:StartQueryExecution', 'athena:ListWorkGroups'],
+                    actions=[
+                        'athena:GetQuery*',
+                        'athena:StartQueryExecution',
+                        'athena:ListWorkGroups'
+                    ],
                 ),
                 # Athena Workgroups permissions
                 iam.PolicyStatement(
@@ -121,7 +125,12 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='ManagedBuckets',
                     effect=iam.Effect.ALLOW,
-                    actions=['s3:List*', 's3:Delete*', 's3:Get*', 's3:Put*'],
+                    actions=[
+                        's3:List*',
+                        's3:Delete*',
+                        's3:Get*',
+                        's3:Put*'
+                    ],
                     resources=[f'arn:aws:s3:::{env_resource_prefix}*'],
                 ),
                 # S3 Imported Buckets
@@ -145,28 +154,43 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='AWSLoggingBuckets',
                     effect=iam.Effect.ALLOW,
-                    actions=['s3:PutBucketAcl', 's3:PutBucketNotification'],
+                    actions=[
+                        's3:PutBucketAcl',
+                        's3:PutBucketNotification'
+                    ],
                     resources=[f'arn:aws:s3:::{env_resource_prefix}-logging-*'],
                 ),
                 # Read Buckets
                 iam.PolicyStatement(
                     sid='ReadBuckets',
                     effect=iam.Effect.ALLOW,
-                    actions=['s3:ListAllMyBuckets', 's3:GetBucketLocation', 's3:PutBucketTagging'],
+                    actions=[
+                        's3:ListAllMyBuckets',
+                        's3:GetBucketLocation',
+                        's3:PutBucketTagging'
+                    ],
                     resources=['*'],
                 ),
                 # CloudWatch Metrics
                 iam.PolicyStatement(
                     sid='CWMetrics',
                     effect=iam.Effect.ALLOW,
-                    actions=['cloudwatch:PutMetricData', 'cloudwatch:GetMetricData', 'cloudwatch:GetMetricStatistics'],
+                    actions=[
+                        'cloudwatch:PutMetricData',
+                        'cloudwatch:GetMetricData',
+                        'cloudwatch:GetMetricStatistics'
+                    ],
                     resources=['*'],
                 ),
                 # Logs
                 iam.PolicyStatement(
                     sid='Logs',
                     effect=iam.Effect.ALLOW,
-                    actions=['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+                    actions=[
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents'
+                    ],
                     resources=[
                         f'arn:aws:logs:*:{self.account}:/aws-glue/*',
                         f'arn:aws:logs:*:{self.account}:log-group:/aws/lambda/*',
@@ -249,7 +273,12 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='KMSCreate',
                     effect=iam.Effect.ALLOW,
-                    actions=['kms:List*', 'kms:DescribeKey', 'kms:CreateAlias', 'kms:CreateKey'],
+                    actions=[
+                        'kms:List*',
+                        'kms:DescribeKey',
+                        'kms:CreateAlias',
+                        'kms:CreateKey'
+                    ],
                     resources=['*'],
                 ),
                 # AWS Organizations
@@ -263,7 +292,10 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='ResourceGroupTags',
                     effect=iam.Effect.ALLOW,
-                    actions=['tag:*', 'resource-groups:*'],
+                    actions=[
+                        'tag:*',
+                        'resource-groups:*'
+                    ],
                     resources=['*'],
                 ),
                 # SNS
@@ -292,7 +324,10 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='SQS',
                     effect=iam.Effect.ALLOW,
-                    actions=['sqs:ReceiveMessage', 'sqs:SendMessage'],
+                    actions=[
+                        'sqs:ReceiveMessage',
+                        'sqs:SendMessage'
+                    ],
                     resources=[f'arn:aws:sqs:*:{self.account}:{env_resource_prefix}*'],
                 ),
             ],
@@ -371,13 +406,20 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='EC2SG',
                     effect=iam.Effect.ALLOW,
-                    actions=['ec2:CreateSecurityGroup', 'ec2:CreateNetworkInterface', 'ec2:Describe*'],
+                    actions=[
+                        'ec2:CreateSecurityGroup',
+                        'ec2:CreateNetworkInterface',
+                        'ec2:Describe*'
+                    ],
                     resources=['*'],
                 ),
                 iam.PolicyStatement(
                     sid='TagsforENI',
                     effect=iam.Effect.ALLOW,
-                    actions=['ec2:CreateTags', 'ec2:DeleteTags'],
+                    actions=[
+                        'ec2:CreateTags',
+                        'ec2:DeleteTags'
+                    ],
                     resources=[f'arn:aws:ec2:*:{self.account}:network-interface/*'],
                 ),
                 iam.PolicyStatement(
@@ -451,7 +493,10 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='RamAssociateResource',
                     effect=iam.Effect.ALLOW,
-                    actions=['ram:AssociateResourceShare', 'ram:DisassociateResourceShare'],
+                    actions=[
+                        'ram:AssociateResourceShare',
+                        'ram:DisassociateResourceShare'
+                    ],
                     resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
                     conditions={'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
                 ),
@@ -473,9 +518,14 @@ class PivotRole(NestedStack):
                     resources=['*'],
                 ),
                 iam.PolicyStatement(
-                    sid='RamRead',
+                    sid='RamReadGlue',
                     effect=iam.Effect.ALLOW,
-                    actions=['glue:PutResourcePolicy', 'glue:DeleteResourcePolicy', 'ram:Get*', 'ram:List*'],
+                    actions=[
+                        'glue:PutResourcePolicy',
+                        'glue:DeleteResourcePolicy',
+                        'ram:Get*',
+                        'ram:List*'
+                    ],
                     resources=['*'],
                 ),
                 # Security Groups
@@ -489,7 +539,11 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='SGandRedshift',
                     effect=iam.Effect.ALLOW,
-                    actions=['ec2:DeleteTags', 'ec2:DeleteSecurityGroup', 'redshift:DeleteClusterSubnetGroup'],
+                    actions=[
+                        'ec2:DeleteTags',
+                        'ec2:DeleteSecurityGroup',
+                        'redshift:DeleteClusterSubnetGroup'
+                    ],
                     resources=['*'],
                     conditions={'ForAnyValue:StringEqualsIfExists': {'aws:ResourceTag/dataall': 'true'}},
                 ),
@@ -745,7 +799,10 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='SecretsManager',
                     effect=iam.Effect.ALLOW,
-                    actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
+                    actions=[
+                        'secretsmanager:DescribeSecret',
+                        'secretsmanager:GetSecretValue'
+                    ],
                     resources=[
                         f'arn:aws:secretsmanager:*:{self.account}:secret:{env_resource_prefix}*',
                         f'arn:aws:secretsmanager:*:{self.account}:secret:dataall*',
@@ -759,12 +816,20 @@ class PivotRole(NestedStack):
                 ),
                 # IAM
                 iam.PolicyStatement(
-                    sid='IAMListGet', effect=iam.Effect.ALLOW, actions=['iam:ListRoles', 'iam:Get*'], resources=['*']
+                    sid='IAMListGet',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'iam:ListRoles',
+                        'iam:Get*'
+                    ], resources=['*']
                 ),
                 iam.PolicyStatement(
                     sid='IAMRolePolicy',
                     effect=iam.Effect.ALLOW,
-                    actions=['iam:PutRolePolicy', 'iam:DeleteRolePolicy'],
+                    actions=[
+                        'iam:PutRolePolicy',
+                        'iam:DeleteRolePolicy'
+                    ],
                     resources=['*'],
                 ),
                 iam.PolicyStatement(
@@ -791,7 +856,11 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='StepFunctions',
                     effect=iam.Effect.ALLOW,
-                    actions=['states:DescribeStateMachine', 'states:ListExecutions', 'states:StartExecution'],
+                    actions=[
+                        'states:DescribeStateMachine',
+                        'states:ListExecutions',
+                        'states:StartExecution'
+                    ],
                     resources=[f'arn:aws:states:*:{self.account}:stateMachine:{env_resource_prefix}*'],
                 ),
                 # CodeCommit
