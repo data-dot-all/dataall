@@ -234,7 +234,9 @@ class Quicksight:
         return Quicksight.describe_user(AwsAccountId, UserName)
 
     @staticmethod
-    def get_reader_session(AwsAccountId, region, UserName, UserRole="READER", DashboardId=None, domain_name: str = None):
+    def get_reader_session(
+        AwsAccountId, region, UserName, UserRole='READER', DashboardId=None
+    ):
 
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
@@ -243,16 +245,12 @@ class Quicksight:
                 AwsAccountId=AwsAccountId, UserName=UserName, GroupName=DEFAULT_GROUP_NAME, UserRole=UserRole
             )
 
-        response = client.generate_embed_url_for_registered_user(
+        response = client.get_dashboard_embed_url(
             AwsAccountId=AwsAccountId,
+            DashboardId=DashboardId,
+            IdentityType='QUICKSIGHT',
             SessionLifetimeInMinutes=120,
-            UserArn=user.get("Arn"),
-            ExperienceConfiguration={
-                "Dashboard": {
-                    "InitialDashboardId": DashboardId,
-                },
-            },
-            AllowedDomains=[domain_name],
+            UserArn=user.get('Arn'),
         )
         return response.get('EmbedUrl')
 
