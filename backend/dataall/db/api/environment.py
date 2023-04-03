@@ -941,8 +941,8 @@ class Environment:
                 or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
             )
 
-        if data.get("uniqueDatasets", False):
-            q = q.distinct(models.ShareObject.datasetUri)
+        if data.get("uniqueShares", False):
+            q = q.distinct(models.ShareObject.shareUri)
 
         if data.get('term'):
             term = data.get('term')
