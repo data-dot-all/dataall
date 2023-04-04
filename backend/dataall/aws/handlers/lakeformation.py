@@ -13,7 +13,7 @@ class LakeFormation:
         pass
 
     @staticmethod
-    def describe_resource(resource_arn, accountid, region):
+    def describe_resource(resource_arn, role_arn, accountid, region):
         """
         Describes a LF data location
         """
@@ -23,8 +23,10 @@ class LakeFormation:
 
             response = lf_client.describe_resource(ResourceArn=resource_arn)
 
-            log.info(f'LF data location already registered: {response}')
-
+            log.info(f'LF data location already registered: {response}, checking if data.all registered it ...')
+            if response['RoleArn'] == role_arn:
+                log.info(f'LF data location already registered, with {role_arn}. Registration was part of the dataset stack')
+                return False
             return response['ResourceInfo']
 
         except ClientError as e:
