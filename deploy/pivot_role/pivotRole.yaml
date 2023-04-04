@@ -593,7 +593,7 @@ Resources:
               - "quicksight:DescribeDashboard"
               - "quicksight:DescribeUser"
               - "quicksight:SearchDashboards"
-              - "quicksight:GenerateEmbedUrlForRegisteredUser"
+              - "quicksight:GetDashboardEmbedUrl"
               - "quicksight:GenerateEmbedUrlForAnonymousUser"
               - "quicksight:UpdateUser"
               - "quicksight:ListUserGroups"
