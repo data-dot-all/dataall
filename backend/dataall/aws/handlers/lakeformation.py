@@ -24,7 +24,7 @@ class LakeFormation:
             response = lf_client.describe_resource(ResourceArn=resource_arn)
 
             log.info(f'LF data location already registered: {response}, checking if data.all registered it ...')
-            if response['RoleArn'] == role_arn:
+            if response['ResourceInfo']['RoleArn'] == role_arn:
                 log.info(f'LF data location already registered, with {role_arn}. Registration was part of the dataset stack')
                 return False
             return response['ResourceInfo']
