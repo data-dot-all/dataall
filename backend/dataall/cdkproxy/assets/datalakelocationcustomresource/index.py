@@ -35,19 +35,16 @@ def on_create(event):
 
 
 def _is_resource_registered(resource_arn: str):
-    response = lf_client.list_resources(
-        FilterConditionList=[{"Field": "RESOURCE_ARN", "ComparisonOperator": "EQ", "StringValueList": [resource_arn]}])
-    lf_resources = response["ResourceInfoList"]
-    while "NextToken" in response:
-        response = lf_client.list_resources(
-            FilterConditionList=[{"Field": "RESOURCE_ARN", "ComparisonOperator": "EQ", "StringValueList": [resource_arn]}],
-            NextToken=response["NextToken"]
-        )
-        log.info(f"Response from listing resources with ARN {resource_arn}: {response}")
-        lf_resources.extend(response["ResourceInfoList"])
-
-    log.info(f"Full Resource list filter with ARN {resource_arn}: {lf_resources}")
-    return len(lf_resources) > 0
+    try:
+        lf_client.describe_resource(ResourceArn=resource_arn)
+        log.info(f"LakeFormation Resource: {resource_arn} already registered")
+        return True
+    except ClientError as client_error:
+        if client_error.response["Error"]["Code"] == "EntityNotFoundException":
+            log.info(f"LakeFormation Resource: {resource_arn} not found")
+            return False
+        else:
+            raise client_error
 
 
 def register(props):
