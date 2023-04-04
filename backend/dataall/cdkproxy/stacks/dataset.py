@@ -417,6 +417,7 @@ class Dataset(Stack):
 
         existing_location = LakeFormation.describe_resource(
             resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            role_arn=f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
             accountid=env.AwsAccountId,
             region=env.region
         )
