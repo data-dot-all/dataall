@@ -19,6 +19,8 @@ from ..models.Enums import (
     ShareableType,
     EnvironmentType,
     EnvironmentPermission,
+    PrincipalType
+
 )
 from ..models.Permission import PermissionType
 from ..paginator import Page, paginate
@@ -871,6 +873,7 @@ class Environment:
                 models.Environment.name.label('environmentName'),
                 models.ShareObject.created.label('created'),
                 models.ShareObject.principalId.label('principalId'),
+                models.ShareObject.principalType.label('principalType'),
                 models.ShareObjectItem.itemType.label('itemType'),
                 models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 models.ShareObjectItem.GlueTableName.label('GlueTableName'),
@@ -941,8 +944,9 @@ class Environment:
                 or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
             )
 
-        if data.get("uniqueDatasets", False):
-            q = q.distinct(models.ShareObject.datasetUri)
+        if data.get("uniqueShares", False):
+            q = q.filter(models.ShareObject.principalType != PrincipalType.ConsumptionRole.value)
+            q = q.distinct(models.ShareObject.shareUri)
 
         if data.get('term'):
             term = data.get('term')
