@@ -497,7 +497,7 @@ const EnvironmentEditForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-{/*                            <Box sx={{ ml: 2 }}>
+                            {/*                            <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"

@@ -5,12 +5,8 @@ const listCognitoGroups = ({ filter }) => ({
     filter
   },
   query: gql`
-    query listCognitoGroups (
-      $filter: CognitoGroupFilter
-    ) {
-      listCognitoGroups (
-        filter: $filter
-      ){
+    query listCognitoGroups($filter: CognitoGroupFilter) {
+      listCognitoGroups(filter: $filter) {
         groupName
       }
     }

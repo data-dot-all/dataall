@@ -27,7 +27,6 @@ import {
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import { FaAws, FaNetworkWired, FaTrash } from 'react-icons/fa';
-import { GoDatabase } from 'react-icons/go';
 import useSettings from '../../hooks/useSettings';
 import getEnvironment from '../../api/Environment/getEnvironment';
 import useClient from '../../hooks/useClient';

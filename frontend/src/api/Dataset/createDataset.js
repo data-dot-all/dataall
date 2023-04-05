@@ -1,7 +1,6 @@
 import { gql } from 'apollo-boost';
 
 const createDataset = (input) => {
-  console.log('rcv', input);
   return {
     variables: {
       input

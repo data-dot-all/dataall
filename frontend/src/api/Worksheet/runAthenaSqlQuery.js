@@ -7,8 +7,16 @@ const runAthenaSqlQuery = ({ sqlQuery, environmentUri, worksheetUri }) => ({
     worksheetUri
   },
   query: gql`
-    query runAthenaSqlQuery($environmentUri: String!, $worksheetUri: String!, $sqlQuery: String!) {
-      runAthenaSqlQuery(environmentUri: $environmentUri, worksheetUri: $worksheetUri, sqlQuery: $sqlQuery) {
+    query runAthenaSqlQuery(
+      $environmentUri: String!
+      $worksheetUri: String!
+      $sqlQuery: String!
+    ) {
+      runAthenaSqlQuery(
+        environmentUri: $environmentUri
+        worksheetUri: $worksheetUri
+        sqlQuery: $sqlQuery
+      ) {
         rows {
           cells {
             columnName

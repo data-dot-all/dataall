@@ -151,7 +151,7 @@ const GlossaryManagement = (props) => {
     setFetchingItems(true);
     setData(glossary);
     const response = await client.query(
-      listGlossaryTree({ nodeUri: glossary.nodeUri, filter: {pageSize: 500} })
+      listGlossaryTree({ nodeUri: glossary.nodeUri, filter: { pageSize: 500 } })
     );
     if (!response.errors && response.data.getGlossary !== null) {
       setItems({ ...response.data.getGlossary.tree });

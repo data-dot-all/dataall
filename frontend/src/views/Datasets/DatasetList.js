@@ -94,7 +94,7 @@ const DatasetList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listDatasets({filter}));
+    const response = await client.query(listDatasets({ filter }));
     if (!response.errors) {
       setItems(response.data.listDatasets);
     } else {
@@ -110,7 +110,7 @@ const DatasetList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      setFilter({page: 1, term: event.target.value});
+      setFilter({ page: 1, term: event.target.value });
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );

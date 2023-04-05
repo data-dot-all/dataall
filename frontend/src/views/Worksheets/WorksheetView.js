@@ -43,8 +43,6 @@ import WorksheetEditFormModal from './WorksheetEditFormModal';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
 import * as Defaults from '../../components/defaults';
 
-
-
 const WorksheetView = () => {
   const navigate = useNavigate();
   const params = useParams();
@@ -135,24 +133,26 @@ const WorksheetView = () => {
       let sharedWithDatabases = [];
       let response = await client.query(
         listDatasetsOwnedByEnvGroup({
-          filter: { 
-            term: '', 
-            page: 1, 
+          filter: {
+            term: '',
+            page: 1,
             pageSize: 10000
           },
           environmentUri: environment.environmentUri,
           groupUri: team
-        }));
+        })
+      );
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
       if (response.data.listDatasetsOwnedByEnvGroup.nodes) {
-        ownedDatabases =
-          response.data.listDatasetsOwnedByEnvGroup.nodes?.map((d) => ({
+        ownedDatabases = response.data.listDatasetsOwnedByEnvGroup.nodes?.map(
+          (d) => ({
             ...d,
             value: d.datasetUri,
             label: d.GlueDatabaseName
-          }));
+          })
+        );
       }
       response = await client.query(
         searchEnvironmentDataItems({
@@ -175,7 +175,8 @@ const WorksheetView = () => {
             datasetUri: d.datasetUri,
             value: d.datasetUri,
             label: `${d.GlueDatabaseName}_shared_${d.shareUri}`,
-            GlueDatabaseName: `${d.GlueDatabaseName}_shared_${d.shareUri}`.substring(0,254),
+            GlueDatabaseName:
+              `${d.GlueDatabaseName}_shared_${d.shareUri}`.substring(0, 254),
             environmentUri: d.environmentUri
           }));
       }
@@ -187,15 +188,15 @@ const WorksheetView = () => {
   const fetchTables = useCallback(
     async (environment, dataset) => {
       setLoadingTables(true);
-      let response = ""
-      if (dataset.GlueDatabaseName.includes(dataset.datasetUri+"_shared_")){
+      let response = '';
+      if (dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared_')) {
         response = await client.query(
           getSharedDatasetTables({
             datasetUri: dataset.datasetUri,
             envUri: environment.environmentUri
           })
         );
-      } else{
+      } else {
         response = await client.query(
           listDatasetTables({
             datasetUri: dataset.datasetUri,
@@ -204,25 +205,24 @@ const WorksheetView = () => {
         );
       }
 
-      if (!response.errors && dataset.GlueDatabaseName.includes(dataset.datasetUri+"_shared_")) {
+      if (
+        !response.errors &&
+        dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared_')
+      ) {
         setTableOptions(
-          response.data.getSharedDatasetTables.map((t) => (
-            {
-              ...t,
-              value: t.tableUri,
-              label: t.GlueTableName
-            }
-          ))
+          response.data.getSharedDatasetTables.map((t) => ({
+            ...t,
+            value: t.tableUri,
+            label: t.GlueTableName
+          }))
         );
-      } else if(!response.errors){
+      } else if (!response.errors) {
         setTableOptions(
-          response.data.getDataset.tables.nodes.map((t) => (
-            {
-              ...t,
-              value: t.tableUri,
-              label: t.GlueTableName
-            }
-          ))
+          response.data.getDataset.tables.nodes.map((t) => ({
+            ...t,
+            value: t.tableUri,
+            label: t.GlueTableName
+          }))
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -285,9 +285,9 @@ const WorksheetView = () => {
       setRunningQuery(true);
       const response = await client.query(
         runAthenaSqlQuery({
-            sqlQuery: sqlBody,
-            environmentUri:currentEnv.environmentUri,
-            worksheetUri: worksheet.worksheetUri
+          sqlQuery: sqlBody,
+          environmentUri: currentEnv.environmentUri,
+          worksheetUri: worksheet.worksheetUri
         })
       );
       if (!response.errors) {
@@ -357,11 +357,9 @@ const WorksheetView = () => {
     setTableOptions([]);
     setCurrentTeam('');
     setCurrentEnv(event.target.value);
-    fetchGroups(
-        event.target.value.environmentUri
-      ).catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+    fetchGroups(event.target.value.environmentUri).catch((e) =>
+      dispatch({ type: SET_ERROR, error: e.message })
+    );
   }
 
   function handleTeamChange(event) {
@@ -372,7 +370,7 @@ const WorksheetView = () => {
     setTableOptions([]);
     setCurrentTeam(event.target.value);
     fetchDatabases(currentEnv, event.target.value).catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
+      dispatch({ type: SET_ERROR, error: e.message })
     );
   }
 
@@ -482,9 +480,7 @@ const WorksheetView = () => {
                     }}
                   >
                     {groupOptions.map((group) => (
-                      <MenuItem
-                        key={group.value} value={group.value}
-                      >
+                      <MenuItem key={group.value} value={group.value}>
                         {group.label}
                       </MenuItem>
                     ))}

@@ -6,9 +6,7 @@ const getPlatformAuthorSession = (awsAccount) => ({
   },
   query: gql`
     query getPlatformAuthorSession($awsAccount: String) {
-      getPlatformAuthorSession(
-         awsAccount: $awsAccount
-      )
+      getPlatformAuthorSession(awsAccount: $awsAccount)
     }
   `
 });
