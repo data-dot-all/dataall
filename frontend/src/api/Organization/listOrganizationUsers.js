@@ -1,7 +1,6 @@
 import { gql } from 'apollo-boost';
 
 const listOrganizationUsers = ({ filter, organizationUri }) => {
-  console.log('listOrganizationUsers');
   return {
     variables: {
       organizationUri,

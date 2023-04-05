@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
@@ -27,35 +26,57 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 
 const PipelineEnvironmentCreateForm = (props) => {
-  const { environmentOptions, triggerEnvSubmit, pipelineUri, handleCountEnvironmentValid } = props;
+  const {
+    environmentOptions,
+    triggerEnvSubmit,
+    pipelineUri,
+    handleCountEnvironmentValid
+  } = props;
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [kvEnvs, setKeyValueEnvs] = useState([]);
-  const [mapGroups, setMapGroups] = useState(new Map())
-  const stageOps =[{value:"dev", label:"dev"},{value:"test", label:"test"},{value:"val", label:"val"},{value:"prod", label:"prod"},{value:"other", label:"other"}];
-  const [environmentOps, setEnvironmentOps] = useState(
-    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
-  );
+  const [mapGroups, setMapGroups] = useState(new Map());
+  const stageOps = [
+    { value: 'dev', label: 'dev' },
+    { value: 'test', label: 'test' },
+    { value: 'val', label: 'val' },
+    { value: 'prod', label: 'prod' },
+    { value: 'other', label: 'other' }
+  ];
+
+  const environmentOps =
+    environmentOptions && environmentOptions.length > 0
+      ? environmentOptions
+      : [
+          { environmentUri: 'someUri', label: 'some' },
+          { environmentUri: 'someUri', label: 'some2' }
+        ];
 
   const fetchGroups = async (environment) => {
-  try {
-    const response = await client.query(
-      listEnvironmentGroups({
-        filter: Defaults.SelectListFilter,
-        environmentUri: environment.environmentUri
-      })
-    );
+    try {
+      const response = await client.query(
+        listEnvironmentGroups({
+          filter: Defaults.SelectListFilter,
+          environmentUri: environment.environmentUri
+        })
+      );
 
-    if (!response.errors) {
-      setMapGroups(new Map(mapGroups.set(environment.environmentUri, response.data.listEnvironmentGroups.nodes)) )//Array of groups (Objects)
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      if (!response.errors) {
+        setMapGroups(
+          new Map(
+            mapGroups.set(
+              environment.environmentUri,
+              response.data.listEnvironmentGroups.nodes
+            )
+          )
+        ); //Array of groups (Objects)
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
     }
-  } catch (e) {
-    dispatch({ type: SET_ERROR, error: e.message });
-  }
-};
+  };
 
   const handleAddEnvRow = () => {
     if (kvEnvs.length <= 40) {
@@ -80,10 +101,10 @@ const PipelineEnvironmentCreateForm = (props) => {
       const rows = [...prevstate];
       if (field === 'stage') {
         rows[idx].stage = value;
-      } else if (field === 'env'){
+      } else if (field === 'env') {
         rows[idx].environmentLabel = value.label;
         rows[idx].environmentUri = value.environmentUri;
-      } else{
+      } else {
         rows[idx].samlGroupName = value;
       }
       return rows;
@@ -104,12 +125,11 @@ const PipelineEnvironmentCreateForm = (props) => {
         createDataPipelineEnvironment({
           input: {
             stage: element.stage,
-            order: index+1,
+            order: index + 1,
             pipelineUri: pipelineUri,
             environmentLabel: element.environmentLabel,
             environmentUri: element.environmentUri,
             samlGroupName: element.samlGroupName
-
           }
         })
       );
@@ -124,19 +144,19 @@ const PipelineEnvironmentCreateForm = (props) => {
   }
 
   useEffect(() => {
-      if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
-        kvEnvs.forEach((element, index) => submit(element, index))
-      }
-      if (client && environmentOptions.length > 0) {
-        environmentOptions.forEach((element) => fetchGroups(element))
-      }
-    }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
+    if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
+      kvEnvs.forEach((element, index) => submit(element, index));
+    }
+    if (client && environmentOptions.length > 0) {
+      environmentOptions.forEach((element) => fetchGroups(element));
+    }
+  }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
 
   useEffect(() => {
-    if  (kvEnvs.length > 0){
-      handleCountEnvironmentValid(true)
-    }else{
-      handleCountEnvironmentValid(false)
+    if (kvEnvs.length > 0) {
+      handleCountEnvironmentValid(true);
+    } else {
+      handleCountEnvironmentValid(false);
     }
   }, [kvEnvs.length]);
 
@@ -152,10 +172,10 @@ const PipelineEnvironmentCreateForm = (props) => {
                 <Box>
                   <Table size="small">
                     <colgroup>
-                        <col width="5%" />
-                        <col width="15%" />
-                        <col width="40%" />
-                        <col width="40%" />
+                      <col width="5%" />
+                      <col width="15%" />
+                      <col width="40%" />
+                      <col width="40%" />
                     </colgroup>
                     {kvEnvs && kvEnvs.length > 0 && (
                       <TableHead>
@@ -175,7 +195,7 @@ const PipelineEnvironmentCreateForm = (props) => {
                               <TextField
                                 fullWidth
                                 name="idx"
-                                value={(idx+1).toString()}
+                                value={(idx + 1).toString()}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -226,14 +246,17 @@ const PipelineEnvironmentCreateForm = (props) => {
                                 select
                                 variant="outlined"
                               >
-                                {mapGroups.get(kvEnvs[idx].environmentUri) && (mapGroups.get(kvEnvs[idx].environmentUri).map((g) => (
-                                  <MenuItem
-                                    key={g.groupUri}
-                                    value={g.groupUri}
-                                  >
-                                    {g.groupUri}
-                                  </MenuItem>
-                                )))}
+                                {mapGroups.get(kvEnvs[idx].environmentUri) &&
+                                  mapGroups
+                                    .get(kvEnvs[idx].environmentUri)
+                                    .map((g) => (
+                                      <MenuItem
+                                        key={g.groupUri}
+                                        value={g.groupUri}
+                                      >
+                                        {g.groupUri}
+                                      </MenuItem>
+                                    ))}
                               </TextField>
                             </TableCell>
                             <td>

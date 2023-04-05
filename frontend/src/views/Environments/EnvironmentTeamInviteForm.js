@@ -42,9 +42,9 @@ const EnvironmentTeamInviteForm = (props) => {
   const [permissionsError, setPermissionsError] = useState(null);
 
   const filter = {
-    type: "environment",
+    type: 'environment',
     uri: environment.environmentUri
-  }
+  };
 
   const fetchGroups = useCallback(async () => {
     try {

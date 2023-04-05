@@ -7,10 +7,10 @@ const getSharedDatasetTables = ({ datasetUri, envUri }) => ({
   },
   query: gql`
     query GetSharedDatasetTables($datasetUri: String!, $envUri: String!) {
-        getSharedDatasetTables(datasetUri: $datasetUri, envUri: $envUri) {
-          tableUri
-          GlueTableName
-        }
+      getSharedDatasetTables(datasetUri: $datasetUri, envUri: $envUri) {
+        tableUri
+        GlueTableName
+      }
     }
   `
 });

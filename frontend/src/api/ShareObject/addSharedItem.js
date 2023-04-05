@@ -1,7 +1,6 @@
 import { gql } from 'apollo-boost';
 
 const addSharedItem = ({ shareUri, input }) => {
-  console.log('rcv', input);
   return {
     variables: {
       shareUri,

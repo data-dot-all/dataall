@@ -1,11 +1,11 @@
 import { gql } from 'apollo-boost';
 
-const createQuicksightDataSourceSet = ({vpcConnectionId}) => ({
+const createQuicksightDataSourceSet = ({ vpcConnectionId }) => ({
   variables: {
     vpcConnectionId
   },
   mutation: gql`
-    mutation createQuicksightDataSourceSet ($vpcConnectionId: String!) {
+    mutation createQuicksightDataSourceSet($vpcConnectionId: String!) {
       createQuicksightDataSourceSet(vpcConnectionId: $vpcConnectionId)
     }
   `

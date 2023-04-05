@@ -95,14 +95,14 @@ const RequestAccessModal = (props) => {
             term: '',
             groupUri: groupUri
           },
-          environmentUri,
+          environmentUri
         })
       );
       if (!response.errors) {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionRoleUri,
-            label: [g.consumptionRoleName,' [',g.IAMRoleArn,']'].join(''),
+            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join('')
           }))
         );
       } else {
@@ -126,8 +126,10 @@ const RequestAccessModal = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       let response;
-      let type = values.consumptionRole? 'ConsumptionRole' : 'Group';
-      let principal = values.consumptionRole? values.consumptionRole : values.groupUri;
+      let type = values.consumptionRole ? 'ConsumptionRole' : 'Group';
+      let principal = values.consumptionRole
+        ? values.consumptionRole
+        : values.groupUri;
       if (hit.resourceKind === 'dataset') {
         response = await client.mutate(
           createShareObject({
@@ -217,7 +219,9 @@ const RequestAccessModal = (props) => {
           Request Access
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          Data access is requested for the whole requester Team or for the selected Consumption role. The request will be submitted to the data owners, track its progress in the Shares menu on the left.
+          Data access is requested for the whole requester Team or for the
+          selected Consumption role. The request will be submitted to the data
+          owners, track its progress in the Shares menu on the left.
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -344,9 +348,13 @@ const RequestAccessModal = (props) => {
                                 onChange={(event) => {
                                   setFieldValue('consumptionRole', '');
                                   fetchRoles(
-                                    values.environment.environmentUri, event.target.value
+                                    values.environment.environmentUri,
+                                    event.target.value
                                   ).catch((e) =>
-                                    dispatch({ type: SET_ERROR, error: e.message })
+                                    dispatch({
+                                      type: SET_ERROR,
+                                      error: e.message
+                                    })
                                   );
                                   setFieldValue('groupUri', event.target.value);
                                 }}
@@ -387,24 +395,28 @@ const RequestAccessModal = (props) => {
                             {roleOptions.length > 0 ? (
                               <TextField
                                 error={Boolean(
-                                  touched.consumptionRole && errors.consumptionRole
+                                  touched.consumptionRole &&
+                                    errors.consumptionRole
                                 )}
-                                helperText={touched.consumptionRole && errors.consumptionRole}
+                                helperText={
+                                  touched.consumptionRole &&
+                                  errors.consumptionRole
+                                }
                                 fullWidth
                                 label="Consumption Role (optional)"
                                 name="consumptionRole"
                                 onChange={(event) => {
-                                  setFieldValue('consumptionRole', event.target.value);
+                                  setFieldValue(
+                                    'consumptionRole',
+                                    event.target.value
+                                  );
                                 }}
                                 select
                                 value={values.consumptionRole}
                                 variant="outlined"
                               >
                                 {roleOptions.map((role) => (
-                                  <MenuItem
-                                    key={role.value}
-                                    value={role.value}
-                                  >
+                                  <MenuItem key={role.value} value={role.value}>
                                     {role.label}
                                   </MenuItem>
                                 ))}
@@ -412,9 +424,13 @@ const RequestAccessModal = (props) => {
                             ) : (
                               <TextField
                                 error={Boolean(
-                                  touched.consumptionRole && errors.consumptionRole
+                                  touched.consumptionRole &&
+                                    errors.consumptionRole
                                 )}
-                                helperText={touched.consumptionRole && errors.consumptionRole}
+                                helperText={
+                                  touched.consumptionRole &&
+                                  errors.consumptionRole
+                                }
                                 fullWidth
                                 disabled
                                 label="Consumption Role (optional)"

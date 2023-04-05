@@ -145,10 +145,7 @@ const NotebookCreateForm = (props) => {
         <Container maxWidth={settings.compact ? 'xl' : false}>
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
-              <Typography
-                color="textPrimary"
-                variant="h5"
-              >
+              <Typography color="textPrimary" variant="h5">
                 Create a new ML Studio profile
               </Typography>
               <Breadcrumbs

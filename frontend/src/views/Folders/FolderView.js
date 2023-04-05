@@ -152,7 +152,7 @@ function FolderPageHeader(props) {
             >
               Delete
             </Button>
-        )}
+          )}
         </Box>
       </Grid>
       {openFeed && (

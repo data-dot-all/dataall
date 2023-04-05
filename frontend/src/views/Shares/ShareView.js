@@ -30,7 +30,6 @@ import {
   CopyAllOutlined,
   DeleteOutlined,
   RemoveCircleOutlineOutlined,
-  LockRounded,
   RefreshRounded
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -60,7 +59,6 @@ import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import submitApproval from '../../api/ShareObject/submitApproval';
 import removeSharedItem from '../../api/ShareObject/removeSharedItem';
 
-
 function ShareViewHeader(props) {
   const {
     share,
@@ -75,7 +73,7 @@ function ShareViewHeader(props) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [removing, setRemoving] = useState(false);
+
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -83,6 +81,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request submitted', {
         anchorOrigin: {
@@ -97,13 +96,14 @@ function ShareViewHeader(props) {
     }
     setSubmitting(false);
   };
+
   const remove = async () => {
-    setRemoving(true);
     const response = await client.mutate(
       deleteShareObject({
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request deleted', {
         anchorOrigin: {
@@ -116,8 +116,8 @@ function ShareViewHeader(props) {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-    setRemoving(false);
   };
+
   const accept = async () => {
     setAccepting(true);
     const response = await client.mutate(
@@ -125,6 +125,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request approved', {
         anchorOrigin: {
@@ -140,6 +141,7 @@ function ShareViewHeader(props) {
     }
     setAccepting(false);
   };
+
   const reject = async () => {
     setRejecting(true);
     const response = await client.mutate(
@@ -147,6 +149,7 @@ function ShareViewHeader(props) {
         shareUri: share.shareUri
       })
     );
+
     if (!response.errors) {
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
@@ -162,6 +165,7 @@ function ShareViewHeader(props) {
     }
     setRejecting(false);
   };
+
   return (
     <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
@@ -329,38 +333,34 @@ function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
-        {(isRemovingItem) ? (
+        {isRemovingItem ? (
           <CircularProgress size={15} />
         ) : (
-            <>
-            {
-              (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed') ? (
-                <Typography
-                  color="textSecondary"
-                  variant="subtitle2"
-                >
-                  Revoke access to this item before deleting
-                </Typography>
-              ) : (item.status === 'Share_Approved' || item.status === 'Revoke_Approved' || item.status === 'Revoke_In_Progress' || item.status === 'Share_In_Progress') ? (
-                  <Typography
-                    color="textSecondary"
-                    variant="subtitle2"
-                  >
-                    Wait until this item is processed
-                  </Typography>
-                ) : (
-                    <Button
-                      color="primary"
-                      startIcon={<DeleteOutlined fontSize="small" />}
-                      sx={{ m: 1 }}
-                      variant="outlined"
-                      onClick={removeItemFromShareObject}
-                    >
-                      Delete
-                    </Button>
-              )
-            }
-            </>
+          <>
+            {item.status === 'Share_Succeeded' ||
+            item.status === 'Revoke_Failed' ? (
+              <Typography color="textSecondary" variant="subtitle2">
+                Revoke access to this item before deleting
+              </Typography>
+            ) : item.status === 'Share_Approved' ||
+              item.status === 'Revoke_Approved' ||
+              item.status === 'Revoke_In_Progress' ||
+              item.status === 'Share_In_Progress' ? (
+              <Typography color="textSecondary" variant="subtitle2">
+                Wait until this item is processed
+              </Typography>
+            ) : (
+              <Button
+                color="primary"
+                startIcon={<DeleteOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={removeItemFromShareObject}
+              >
+                Delete
+              </Button>
+            )}
+          </>
         )}
       </TableCell>
     </TableRow>
@@ -391,10 +391,18 @@ const ShareView = () => {
   const [loadingShareItems, setLoadingShareItems] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isRevokeItemsModalOpen, setIsRevokeItemsModalOpen] = useState(false);
-  const handleAddItemModalOpen = () => {setIsAddItemModalOpen(true);};
-  const handleAddItemModalClose = () => {setIsAddItemModalOpen(false);};
-  const handleRevokeItemModalOpen = () => {setIsRevokeItemsModalOpen(true);};
-  const handleRevokeItemModalClose = () => {setIsRevokeItemsModalOpen(false);};
+  const handleAddItemModalOpen = () => {
+    setIsAddItemModalOpen(true);
+  };
+  const handleAddItemModalClose = () => {
+    setIsAddItemModalOpen(false);
+  };
+  const handleRevokeItemModalOpen = () => {
+    setIsRevokeItemsModalOpen(true);
+  };
+  const handleRevokeItemModalClose = () => {
+    setIsRevokeItemsModalOpen(false);
+  };
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
       await setFilter({ ...filter, isShared: true, page: value });
@@ -409,7 +417,7 @@ const ShareView = () => {
       variant: 'success'
     });
   };
-  
+
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -446,7 +454,7 @@ const ShareView = () => {
     },
     [client, dispatch, filter, fetchItem, params.uri]
   );
-    
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -695,10 +703,18 @@ const ShareView = () => {
                   <CardContent>
                     <Box>
                       <Box>
-                        <Typography display="inline" color="textSecondary" variant="subtitle2">
+                        <Typography
+                          display="inline"
+                          color="textSecondary"
+                          variant="subtitle2"
+                        >
                           S3 Access Point name (Folder sharing):
                         </Typography>
-                        <Typography display="inline" color="textPrimary" variant="subtitle2">
+                        <Typography
+                          display="inline"
+                          color="textPrimary"
+                          variant="subtitle2"
+                        >
                           {` ${share.consumptionData.s3AccessPointName || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
@@ -721,11 +737,21 @@ const ShareView = () => {
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 3 }}>
-                        <Typography display="inline" color="textSecondary" variant="subtitle2">
+                        <Typography
+                          display="inline"
+                          color="textSecondary"
+                          variant="subtitle2"
+                        >
                           Glue database name (Table sharing):
                         </Typography>
-                        <Typography display="inline" color="textPrimary" variant="subtitle2">
-                          {` ${share.consumptionData.sharedGlueDatabase || '-'}`}
+                        <Typography
+                          display="inline"
+                          color="textPrimary"
+                          variant="subtitle2"
+                        >
+                          {` ${
+                            share.consumptionData.sharedGlueDatabase || '-'
+                          }`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
@@ -771,7 +797,7 @@ const ShareView = () => {
                         onClick={handleRevokeItemModalOpen}
                         type="button"
                         variant="outlined"
-                        >
+                      >
                         Revoke Items
                       </LoadingButton>
                     </Box>

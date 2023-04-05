@@ -32,8 +32,7 @@ import ChipInput from '../../components/TagsInput';
 import createDataPipeline from '../../api/DataPipeline/createDataPipeline';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
-import PipelineEnvironmentCreateForm from "./PipelineEnvironmentCreateForm";
-
+import PipelineEnvironmentCreateForm from './PipelineEnvironmentCreateForm';
 
 const PipelineCrateForm = (props) => {
   const navigate = useNavigate();
@@ -44,15 +43,20 @@ const PipelineCrateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"},{value:"template", label:"GitHub Template"}];/*DBT Pipelines*/
+  const devOptions = [
+    { value: 'cdk-trunk', label: 'CDK Pipelines - Trunk-based' },
+    { value: 'trunk', label: 'CodePipeline - Trunk-based' },
+    { value: 'gitflow', label: 'CodePipeline - Gitflow' },
+    { value: 'template', label: 'GitHub Template' }
+  ]; /*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
 
-  const handleCountEnvironmentValid = state => {
+  const handleCountEnvironmentValid = (state) => {
     setCountEnvironmentsValid(state);
-      };
-  
+  };
+
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
@@ -102,55 +106,57 @@ const PipelineCrateForm = (props) => {
       );
     }
   }, [client, dispatch, fetchEnvironments]);
-  
-  async function submit(values, setStatus, setSubmitting, setErrors) {
-      if (!countEnvironmentsValid){
-        dispatch({ type: SET_ERROR, error: "At least one deployment environment is required" })
-      }else{
-         try {
-          const response = await client.mutate(
-            createDataPipeline({
-              input: {
-                label: values.label,
-                environmentUri: values.environment.environmentUri,
-                description: values.description,
-                SamlGroupName: values.SamlGroupName,
-                tags: values.tags,
-                devStrategy: values.devStrategy,
-                template: values.template
-              }
-            })
-          );
-          if (!response.errors) {
-            setStatus({ success: true });
-            setTriggerEnvSubmit(true);
-            setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
-            setSubmitting(false);
-            enqueueSnackbar('Pipeline creation started', {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'success'
-            });
-            navigate(
-              `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
-            );
-          } else {
-            setTriggerEnvSubmit(false);
-            dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          }
-        } catch (err) {
-          console.error(err);
-          setStatus({ success: false });
-          setTriggerEnvSubmit(false);
-          setErrors({ submit: err.message });
-          setSubmitting(false);
-          dispatch({ type: SET_ERROR, error: err.message });
-        }
-      }
-  }
 
+  async function submit(values, setStatus, setSubmitting, setErrors) {
+    if (!countEnvironmentsValid) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'At least one deployment environment is required'
+      });
+    } else {
+      try {
+        const response = await client.mutate(
+          createDataPipeline({
+            input: {
+              label: values.label,
+              environmentUri: values.environment.environmentUri,
+              description: values.description,
+              SamlGroupName: values.SamlGroupName,
+              tags: values.tags,
+              devStrategy: values.devStrategy,
+              template: values.template
+            }
+          })
+        );
+        if (!response.errors) {
+          setStatus({ success: true });
+          setTriggerEnvSubmit(true);
+          setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
+          setSubmitting(false);
+          enqueueSnackbar('Pipeline creation started', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+          navigate(
+            `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
+          );
+        } else {
+          setTriggerEnvSubmit(false);
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus({ success: false });
+        setTriggerEnvSubmit(false);
+        setErrors({ submit: err.message });
+        setSubmitting(false);
+        dispatch({ type: SET_ERROR, error: err.message });
+      }
+    }
+  }
 
   if (loading) {
     return <CircularProgress />;
@@ -226,19 +232,20 @@ const PipelineCrateForm = (props) => {
                 environment: '',
                 tags: [],
                 devStrategy: 'cdk-trunk',
-                template: '',
+                template: ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
                   .max(255)
                   .required('*Pipeline name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
-                  .max(255),
+                SamlGroupName: Yup.string().max(255),
                 environment: Yup.object(),
-                devStrategy: Yup.string().required('*A CICD strategy is required'),
+                devStrategy: Yup.string().required(
+                  '*A CICD strategy is required'
+                ),
                 tags: Yup.array().nullable(),
-                template: Yup.string().nullable(),
+                template: Yup.string().nullable()
               })}
               onSubmit={async (
                 values,
@@ -370,7 +377,10 @@ const PipelineCrateForm = (props) => {
                             label="Team"
                             name="SamlGroupName"
                             onChange={(event) => {
-                              setFieldValue('SamlGroupName', event.target.value);
+                              setFieldValue(
+                                'SamlGroupName',
+                                event.target.value
+                              );
                             }}
                             select
                             value={values.SamlGroupName}
@@ -435,9 +445,11 @@ const PipelineCrateForm = (props) => {
                           </TextField>
                         </CardContent>
                         <CardContent>
-                          {values.devStrategy === "template" && (
+                          {values.devStrategy === 'template' && (
                             <TextField
-                              error={Boolean(touched.template && errors.template)}
+                              error={Boolean(
+                                touched.template && errors.template
+                              )}
                               fullWidth
                               helperText={touched.template && errors.template}
                               label="GitHub Template Clone Path"
@@ -457,7 +469,9 @@ const PipelineCrateForm = (props) => {
                           environmentOptions={environmentOptions}
                           triggerEnvSubmit={triggerEnvSubmit}
                           pipelineUri={pipelineUri}
-                          handleCountEnvironmentValid={handleCountEnvironmentValid}
+                          handleCountEnvironmentValid={
+                            handleCountEnvironmentValid
+                          }
                         />
                       </Box>
                       {errors.submit && (
@@ -481,7 +495,7 @@ const PipelineCrateForm = (props) => {
                           Create Pipeline
                         </LoadingButton>
                       </Box>
-                  </Grid>
+                    </Grid>
                   </Grid>
                 </form>
               )}

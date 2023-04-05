@@ -611,7 +611,7 @@ const EnvironmentCreateForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-{/*                            <Box sx={{ ml: 2 }}>
+                            {/*                            <Box sx={{ ml: 2 }}>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
