@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const countUpVotes = (targetUri, targetType) => ({
+export const countUpVotes = (targetUri, targetType) => ({
   variables: {
     targetUri,
     targetType
@@ -11,5 +11,3 @@ const countUpVotes = (targetUri, targetType) => ({
     }
   `
 });
-
-export default countUpVotes;

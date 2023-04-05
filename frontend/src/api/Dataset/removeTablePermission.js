@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeTablePermissions = ({ tableUri, role, userName }) => ({
+export const removeTablePermissions = ({ tableUri, role, userName }) => ({
   variables: {
     tableUri,
     role,
@@ -12,5 +12,3 @@ const removeTablePermissions = ({ tableUri, role, userName }) => ({
     }
   `
 });
-
-export default removeTablePermissions;

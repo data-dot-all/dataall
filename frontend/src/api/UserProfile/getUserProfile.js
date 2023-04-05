@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getUserProfile = (username) => ({
+export const getUserProfile = (username) => ({
   variables: {
     username
   },
@@ -15,5 +15,3 @@ const getUserProfile = (username) => ({
     }
   `
 });
-
-export default getUserProfile;

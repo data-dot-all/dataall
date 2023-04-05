@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const startProfilingJob = (tableUri) => ({
+export const startProfilingJob = (tableUri) => ({
   variables: {
     tableUri
   },
@@ -12,5 +12,3 @@ const startProfilingJob = (tableUri) => ({
     }
   `
 });
-
-export default startProfilingJob;

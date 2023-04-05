@@ -1,31 +1,31 @@
-import { createRef, useCallback, useEffect, useState } from 'react';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import * as ReactIf from 'react-if';
+import { AddOutlined, ArrowRightAlt } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
-  Grid,
   Card,
   CardContent,
   CardHeader,
   Container,
   Divider,
+  Grid,
   TextField,
   Typography
 } from '@mui/material';
-import { AddOutlined, ArrowRightAlt } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import getMonitoringDashboardId from '../../api/Tenant/getMonitoringDashboardId';
-import getMonitoringVPCConnectionId from '../../api/Tenant/getMonitoringVPCConnectionId';
-import updateSSMParameter from '../../api/Tenant/updateSSMParameter';
-import getTrustAccount from '../../api/Environment/getTrustAccount';
-import createQuicksightDataSourceSet from '../../api/Tenant/createQuicksightDataSourceSet';
-import getPlatformAuthorSession from '../../api/Tenant/getPlatformAuthorSession';
-import getPlatformReaderSession from '../../api/Tenant/getPlatformReaderSession';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import useSettings from '../../hooks/useSettings';
+import { Formik } from 'formik';
+import { createRef, useCallback, useEffect, useState } from 'react';
+import * as ReactIf from 'react-if';
+import * as Yup from 'yup';
+import {
+  createQuicksightDataSourceSet,
+  getMonitoringDashboardId,
+  getMonitoringVPCConnectionId,
+  getPlatformAuthorSession,
+  getPlatformReaderSession,
+  getTrustAccount,
+  updateSSMParameter
+} from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

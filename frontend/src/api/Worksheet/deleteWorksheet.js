@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteWorksheet = (worksheetUri) => ({
+export const deleteWorksheet = (worksheetUri) => ({
   variables: {
     worksheetUri
   },
@@ -10,5 +10,3 @@ const deleteWorksheet = (worksheetUri) => ({
     }
   `
 });
-
-export default deleteWorksheet;

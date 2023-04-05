@@ -1,8 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -21,17 +17,18 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@mui/lab';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import useSettings from '../../hooks/useSettings';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import ChipInput from '../../components/TagsInput';
-import getEnvironment from '../../api/Environment/getEnvironment';
-import updateEnvironment from '../../api/Environment/updateEnvironment';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import * as Yup from 'yup';
+import { getEnvironment, updateEnvironment } from '../../api';
+import { ChipInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 const EnvironmentEditForm = (props) => {
   const dispatch = useDispatch();
@@ -48,8 +45,10 @@ const EnvironmentEditForm = (props) => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
     } else {
       const error = response.errors
@@ -80,7 +79,7 @@ const EnvironmentEditForm = (props) => {
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
-                key: "notebooksEnabled",
+                key: 'notebooksEnabled',
                 value: String(values.notebooksEnabled)
               }
             ]
@@ -199,7 +198,7 @@ const EnvironmentEditForm = (props) => {
                 description: env.description,
                 tags: env.tags || [],
                 dashboardsEnabled: env.dashboardsEnabled,
-                notebooksEnabled: env.parameters["notebooksEnabled"] === 'true',
+                notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.mlStudiosEnabled,
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,

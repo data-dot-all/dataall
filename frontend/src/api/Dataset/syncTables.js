@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const syncTables = (datasetUri) => ({
+export const syncTables = (datasetUri) => ({
   variables: {
     datasetUri
   },
@@ -28,5 +28,3 @@ const syncTables = (datasetUri) => ({
     }
   `
 });
-
-export default syncTables;

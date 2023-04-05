@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getSagemakerStudioUserProfilePresignedUrl = (
+export const getSagemakerStudioUserProfilePresignedUrl = (
   sagemakerStudioUserProfileUri
 ) => ({
   variables: {
@@ -16,5 +16,3 @@ const getSagemakerStudioUserProfilePresignedUrl = (
     }
   `
 });
-
-export default getSagemakerStudioUserProfilePresignedUrl;

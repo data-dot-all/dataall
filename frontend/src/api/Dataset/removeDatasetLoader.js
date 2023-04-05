@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeDatasetLoader = ({ loaderUri }) => ({
+export const removeDatasetLoader = ({ loaderUri }) => ({
   variables: { loaderUri },
   mutation: gql`
     mutation RemoveDatasetLoader($loaderUri: String) {
@@ -8,5 +8,3 @@ const removeDatasetLoader = ({ loaderUri }) => ({
     }
   `
 });
-
-export default removeDatasetLoader;

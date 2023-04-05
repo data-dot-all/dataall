@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteRedshiftCluster = (clusterUri, deleteFromAWS) => ({
+export const deleteRedshiftCluster = (clusterUri, deleteFromAWS) => ({
   variables: {
     clusterUri,
     deleteFromAWS
@@ -17,5 +17,3 @@ const deleteRedshiftCluster = (clusterUri, deleteFromAWS) => ({
     }
   `
 });
-
-export default deleteRedshiftCluster;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateDataPipeline = ({ DataPipelineUri, input }) => ({
+export const updateDataPipeline = ({ DataPipelineUri, input }) => ({
   variables: {
     DataPipelineUri,
     input
@@ -20,5 +20,3 @@ const updateDataPipeline = ({ DataPipelineUri, input }) => ({
     }
   `
 });
-
-export default updateDataPipeline;

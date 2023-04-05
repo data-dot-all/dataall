@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listWorksheets = ({ filter }) => ({
+export const listWorksheets = ({ filter }) => ({
   variables: {
     filter
   },
@@ -26,5 +26,3 @@ const listWorksheets = ({ filter }) => ({
     }
   `
 });
-
-export default listWorksheets;

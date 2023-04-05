@@ -1,6 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { ForumOutlined, Info, LocalOffer } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -14,25 +12,23 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import * as PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
-import { ForumOutlined, Info, LocalOffer } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import PipelineOverview from './PipelineOverview';
-import PencilAltIcon from '../../icons/PencilAlt';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import deleteDataPipeline from '../../api/DataPipeline/deleteDataPipeline';
-import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
-import StackStatus from '../Stack/StackStatus';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import { deleteDataPipeline, getDataPipeline } from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import FeedComments from '../Feed/FeedComments';
+import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import { StackStatus } from '../Stack';
+import Stack from '../Stack/Stack';
+import PipelineOverview from './PipelineOverview';
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);

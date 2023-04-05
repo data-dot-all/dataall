@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateCategory = ({ input, nodeUri }) => ({
+export const updateCategory = ({ input, nodeUri }) => ({
   variables: {
     input,
     nodeUri
@@ -18,5 +18,3 @@ const updateCategory = ({ input, nodeUri }) => ({
     }
   `
 });
-
-export default updateCategory;

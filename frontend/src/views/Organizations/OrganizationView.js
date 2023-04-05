@@ -1,6 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  ArchiveOutlined,
+  Info,
+  SupervisedUserCircleRounded,
+  Warning
+} from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -16,26 +19,19 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import {
-  ArchiveOutlined,
-  Info,
-  SupervisedUserCircleRounded,
-  Warning
-} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws } from 'react-icons/fa';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PencilAltIcon from '../../icons/PencilAlt';
-import useClient from '../../hooks/useClient';
-import getOrganization from '../../api/Organization/getOrganization';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { archiveOrganization, getOrganization } from '../../api';
+import { ArchiveObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import OrganizationEnvironments from './OrganizationEnvironments';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import archiveOrganization from '../../api/Organization/archiveOrganization';
-import ArchiveObjectWithFrictionModal from '../../components/ArchiveObjectWithFrictionModal';
-import OrganizationTeams from './OrganizationTeams';
 import OrganizationOverview from './OrganizationOverview';
+import OrganizationTeams from './OrganizationTeams';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

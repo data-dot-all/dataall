@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createOrganization = (input) => ({
+export const createOrganization = (input) => ({
   variables: {
     input
   },
@@ -14,5 +14,3 @@ const createOrganization = (input) => ({
     }
   `
 });
-
-export default createOrganization;

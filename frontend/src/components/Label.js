@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { styled } from '@mui/styles';
 
-const LabelRoot = styled('span')(({ theme, styleProps }) => {
+export const LabelRoot = styled('span')(({ theme, styleProps }) => {
   const backgroundColor = theme.palette[styleProps.color].main;
   const color = theme.palette[styleProps.color].contrastText;
 
@@ -29,7 +29,7 @@ const LabelRoot = styled('span')(({ theme, styleProps }) => {
   };
 });
 
-const Label = (props) => {
+export const Label = (props) => {
   const { color = 'primary', children, ...other } = props;
 
   const styleProps = { color };
@@ -51,5 +51,3 @@ Label.propTypes = {
     'success'
   ])
 };
-
-export default Label;

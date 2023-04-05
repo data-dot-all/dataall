@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { matchPath } from 'react-router-dom';
 import { List, ListSubheader } from '@mui/material';
-import NavItem from './NavItem';
+import { NavItem } from './NavItem';
 
 const renderNavItems = ({ depth = 0, items, pathname }) => (
   <List disablePadding>
@@ -77,7 +77,7 @@ const reduceChildRoutes = ({ acc, pathname, item, depth }) => {
   return acc;
 };
 
-const NavSection = (props) => {
+export const NavSection = (props) => {
   const { items, pathname, title, ...other } = props;
 
   return (
@@ -112,5 +112,3 @@ NavSection.propTypes = {
   pathname: PropTypes.string,
   title: PropTypes.string
 };
-
-export default NavSection;

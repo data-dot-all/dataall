@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteGlossary = (nodeUri) => ({
+export const deleteGlossary = (nodeUri) => ({
   variables: {
     nodeUri
   },
@@ -10,5 +10,3 @@ const deleteGlossary = (nodeUri) => ({
     }
   `
 });
-
-export default deleteGlossary;

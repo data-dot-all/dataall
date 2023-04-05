@@ -2,10 +2,9 @@ import React, { useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import { IconButton } from '@mui/material';
 import { CancelRounded } from '@mui/icons-material';
-import { useDispatch, useSelector } from '../store';
-import { HIDE_ERROR } from '../store/errorReducer';
+import { useDispatch, useSelector, HIDE_ERROR } from '../globalErrors';
 
-const ErrorNotification = () => {
+export const ErrorNotification = () => {
   const dispatch = useDispatch();
   const error = useSelector((state) => state.error.error);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -37,5 +36,3 @@ const ErrorNotification = () => {
 
   return <></>;
 };
-
-export default ErrorNotification;

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { styled, makeStyles } from '@mui/styles';
+import { makeStyles, styled } from '@mui/styles';
 import { Box } from '@mui/material';
-import DefaultNavbar from './DefaultNavbar';
-import DefaultSidebar from './DefaultSidebar';
-import ErrorNotification from '../ErrorNotification';
+import { DefaultNavbar } from './DefaultNavbar';
+import { DefaultSidebar } from './DefaultSidebar';
+import { ErrorNotification } from '../ErrorNotification';
 
-const DefaultLayoutRoot = styled(Box)(({ theme }) => ({
+export const DefaultLayoutRoot = styled(Box)(({ theme }) => ({
   ...(theme.palette.mode === 'light' && {
     backgroundColor: theme.palette.background.default,
     display: 'flex',
@@ -58,7 +58,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const DefaultLayout = () => {
+export const DefaultLayout = () => {
   const [openDrawer, setOpenDrawer] = useState(true);
   const classes = useStyles();
 
@@ -87,5 +87,3 @@ const DefaultLayout = () => {
     </DefaultLayoutRoot>
   );
 };
-
-export default DefaultLayout;

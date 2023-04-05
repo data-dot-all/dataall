@@ -1,18 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { makeStyles } from '@mui/styles';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import ArrowRight from '@mui/icons-material/ArrowRight';
 import { TreeItem, TreeView } from '@mui/lab';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
+import { searchGlossary } from '../../api';
+import { Defaults, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 import listToTree from '../../utils/listToTree';
-import searchGlossary from '../../api/Glossary/searchGlossary';
-import useClient from '../../hooks/useClient';
-import Scrollbar from '../../components/Scrollbar';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import * as Defaults from '../../components/defaults';
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {
@@ -61,6 +59,7 @@ const useTreeItemStyles = makeStyles((theme) => ({
     flexGrow: 1
   }
 }));
+
 function StyledTreeItem(props) {
   const classes = useTreeItemStyles();
   const {
@@ -118,7 +117,7 @@ const useStyles = makeStyles({
   }
 });
 
-const GlossarySearch = ({ matches, setQuery }) => {
+export const GlossarySearch = ({ matches, setQuery }) => {
   const client = useClient();
   const classes = useStyles();
   const dispatch = useDispatch();
@@ -170,7 +169,7 @@ const GlossarySearch = ({ matches, setQuery }) => {
   const fetchItems = useCallback(async () => {
     setFetchingItems(true);
     const response = await client.query(
-      searchGlossary(Defaults.SelectListFilter)
+      searchGlossary(Defaults.selectListFilter)
     );
     if (!response.errors) {
       setTree(
@@ -213,8 +212,8 @@ const GlossarySearch = ({ matches, setQuery }) => {
                   <TreeView
                     className={classes.root}
                     defaultExpanded={['3']}
-                    defaultCollapseIcon={<ArrowDropDownIcon />}
-                    defaultExpandIcon={<ArrowRightIcon />}
+                    defaultCollapseIcon={<ArrowDropDown />}
+                    defaultExpandIcon={<ArrowRight />}
                     defaultEndIcon={<div style={{ width: 24 }} />}
                   >
                     {tree.map((node) => (

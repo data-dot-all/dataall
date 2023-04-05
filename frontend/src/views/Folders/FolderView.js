@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { ForumOutlined, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -16,24 +15,24 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaExternalLinkAlt, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Warning } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectModal from '../../components/DeleteObjectModal';
-import deleteDatasetStorageLocation from '../../api/Dataset/removeDatasetStorageLocation';
-import getDatasetStorageLocation from '../../api/Dataset/getDatasetStorageLocation';
-import FolderOverview from './FolderOverview';
-import PencilAltIcon from '../../icons/PencilAlt';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import {
+  deleteDatasetStorageLocation,
+  getDatasetAssumeRoleUrl,
+  getDatasetStorageLocation
+} from '../../api';
+import { DeleteObjectModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import FeedComments from '../Feed/FeedComments';
-import getDatasetAdminConsoleUrl from '../../api/Dataset/getDatasetAdminConsoleUrl';
+import FolderOverview from './FolderOverview';
 
 const tabs = [{ label: 'Overview', value: 'overview' }];
 
@@ -47,7 +46,7 @@ function FolderPageHeader(props) {
   const goToS3Console = async () => {
     setIsLoadingUI(true);
     const response = await client.query(
-      getDatasetAdminConsoleUrl(folder.dataset.datasetUri)
+      getDatasetAssumeRoleUrl(folder.dataset.datasetUri)
     );
     if (!response.errors) {
       window.open(response.data.getDatasetAssumeRoleUrl, '_blank');

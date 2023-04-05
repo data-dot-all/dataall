@@ -17,11 +17,11 @@ import { FiCodesandbox, FiPackage } from 'react-icons/fi';
 import { SiJupyter } from 'react-icons/si';
 import { VscBook } from 'react-icons/vsc';
 import { ChevronLeft, ChevronRight, ShareOutlined } from '@mui/icons-material';
-import NavSection from '../NavSection';
-import Scrollbar from '../Scrollbar';
-import useSettings from '../../hooks/useSettings';
+import { NavSection } from '../NavSection';
+import { Scrollbar } from '../Scrollbar';
+import { useSettings } from '../../hooks';
 
-const DefaultSidebar = (props) => {
+export const DefaultSidebar = (props) => {
   const { openDrawer, onOpenDrawerChange } = props;
   const getSections = (isAdvancedMode) =>
     !isAdvancedMode
@@ -278,5 +278,3 @@ DefaultSidebar.propTypes = {
   openDrawer: PropTypes.bool,
   onOpenDrawerChange: PropTypes.func
 };
-
-export default DefaultSidebar;

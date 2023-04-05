@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const inviteUser = ({ organizationUri, userName, role }) => ({
+export const inviteUser = ({ organizationUri, userName, role }) => ({
   variables: {
     input: { organizationUri, userName, role: role || 'Member' }
   },
@@ -14,5 +14,3 @@ const inviteUser = ({ organizationUri, userName, role }) => ({
     }
   `
 });
-
-export default inviteUser;

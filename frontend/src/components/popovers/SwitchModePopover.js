@@ -1,12 +1,12 @@
 import { IconButton, Tooltip } from '@mui/material';
-import useSettings from '../../hooks/useSettings';
-import Refresh from '../../icons/Refresh';
+import { useSettings } from '../../hooks';
+import { RefreshIcon } from '../../icons';
 
 /**
  * @description Toggle "advanced" / "basic" mode.
  * @returns {JSX.Element}
  */
-const SwitchModePopover = () => {
+export const SwitchModePopover = () => {
   const { settings, saveSettings } = useSettings();
 
   /**
@@ -21,10 +21,8 @@ const SwitchModePopover = () => {
   return (
     <Tooltip title="Switch mode">
       <IconButton onClick={handleSwitch}>
-        <Refresh fontSize="small" />
+        <RefreshIcon fontSize="small" />
       </IconButton>
     </Tooltip>
   );
 };
-
-export default SwitchModePopover;

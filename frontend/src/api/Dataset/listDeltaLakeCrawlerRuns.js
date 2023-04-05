@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDeltaLakeCrawlerRuns = ({ datasetUri }) => ({
+export const listDeltaLakeCrawlerRuns = ({ datasetUri }) => ({
   variables: {
     datasetUri
   },
@@ -19,5 +19,3 @@ const listDeltaLakeCrawlerRuns = ({ datasetUri }) => ({
     }
   `
 });
-
-export default listDeltaLakeCrawlerRuns;

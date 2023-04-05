@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const approveTermAssociation = (linkUri) => ({
+export const approveTermAssociation = (linkUri) => ({
   variables: {
     linkUri
   },
@@ -10,5 +10,3 @@ const approveTermAssociation = (linkUri) => ({
     }
   `
 });
-
-export default approveTermAssociation;

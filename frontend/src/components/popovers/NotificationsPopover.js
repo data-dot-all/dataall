@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { DeleteOutlined } from '@mui/icons-material';
 import {
   Avatar,
   Badge,
   Box,
-  IconButton,
   Button,
+  IconButton,
   Link,
   List,
   ListItem,
@@ -14,15 +14,17 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { DeleteOutlined } from '@mui/icons-material';
-import countUnreadNotifications from '../../api/Notification/countUnreadNotifications';
-import listNotifications from '../../api/Notification/listNotifications';
-import markNotificationAsRead from '../../api/Notification/markAsRead';
-import BellIcon from '../../icons/Bell';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../defaults';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  countUnreadNotifications,
+  listNotifications,
+  markNotificationAsRead
+} from '../../api';
+import { useClient } from '../../hooks';
+import { BellIcon } from '../../icons';
+import { Defaults } from '../defaults';
 
-const NotificationsPopover = () => {
+export const NotificationsPopover = () => {
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
   const client = useClient();
@@ -53,7 +55,7 @@ const NotificationsPopover = () => {
       setLoading(true);
       let filter = Object.assign(
         {},
-        Defaults.SelectListFilter,
+        Defaults.selectListFilter,
         notificationFilter
       );
       const response = await client.query(listNotifications(filter));
@@ -182,5 +184,3 @@ const NotificationsPopover = () => {
     </>
   );
 };
-
-export default NotificationsPopover;

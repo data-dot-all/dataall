@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addDatasetStorageLocation = ({ datasetUri, input }) => ({
+export const addDatasetStorageLocation = ({ datasetUri, input }) => ({
   variables: { datasetUri, input },
   mutation: gql`
     mutation CreateDatasetStorageLocation(
@@ -14,5 +14,3 @@ const addDatasetStorageLocation = ({ datasetUri, input }) => ({
     }
   `
 });
-
-export default addDatasetStorageLocation;

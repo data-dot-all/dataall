@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeTenantAdministrator = (input) => ({
+export const updateTenantGroupPermissions = (input) => ({
   variables: {
     input
   },
@@ -12,5 +12,3 @@ const removeTenantAdministrator = (input) => ({
     }
   `
 });
-
-export default removeTenantAdministrator;

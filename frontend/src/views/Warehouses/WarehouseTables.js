@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import { DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -16,28 +16,26 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { DeleteOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import Scrollbar from '../../components/Scrollbar';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import SearchIcon from '../../icons/Search';
-import PlusIcon from '../../icons/Plus';
-import Pager from '../../components/Pager';
-import listClusterDatasetTables from '../../api/RedshiftCluster/listClusterDatasetTables';
+import {
+  disableRedshiftClusterDatasetCopy,
+  listClusterDatasetTables
+} from '../../api';
+import { Defaults, Pager, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PlusIcon, SearchIcon } from '../../icons';
 import WarehouseCopyTableModal from './WarehouseCopyTableModal';
-import disableRedshiftClusterDatasetCopy from '../../api/RedshiftCluster/disableClusterDatasetCopy';
 
 const WarehouseTables = ({ warehouse }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
   const [isCopyTablesOpen, setIsLoadDatasetsOpen] = useState(false);
@@ -169,7 +167,7 @@ const WarehouseTables = ({ warehouse }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDashboardShares = ({ dashboardUri, filter }) => ({
+export const listDashboardShares = ({ dashboardUri, filter }) => ({
   variables: {
     dashboardUri,
     filter
@@ -24,5 +24,3 @@ const listDashboardShares = ({ dashboardUri, filter }) => ({
     }
   `
 });
-
-export default listDashboardShares;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listAllEnvironmentGroups = ({ filter, environmentUri }) => ({
+export const listAllEnvironmentGroups = ({ filter, environmentUri }) => ({
   variables: {
     environmentUri,
     filter
@@ -36,5 +36,3 @@ const listAllEnvironmentGroups = ({ filter, environmentUri }) => ({
     }
   `
 });
-
-export default listAllEnvironmentGroups;

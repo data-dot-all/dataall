@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateGroupEnvironmentPermissions = (input) => ({
+export const updateGroupEnvironmentPermissions = (input) => ({
   variables: {
     input
   },
@@ -14,5 +14,3 @@ const updateGroupEnvironmentPermissions = (input) => ({
     }
   `
 });
-
-export default updateGroupEnvironmentPermissions;

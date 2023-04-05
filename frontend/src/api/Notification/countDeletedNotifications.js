@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const countDeletedNotifications = () => ({
+export const countDeletedNotifications = () => ({
   variables: {},
   query: gql`
     query countDeletedNotifications {
@@ -8,5 +8,3 @@ const countDeletedNotifications = () => ({
     }
   `
 });
-
-export default countDeletedNotifications;

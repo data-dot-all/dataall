@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const countUnreadNotifications = () => ({
+export const countUnreadNotifications = () => ({
   variables: {},
   query: gql`
     query countUnreadNotifications {
@@ -8,5 +8,3 @@ const countUnreadNotifications = () => ({
     }
   `
 });
-
-export default countUnreadNotifications;

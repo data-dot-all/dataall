@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const saveDatasetSummary = ({ datasetUri, content }) => ({
+export const saveDatasetSummary = ({ datasetUri, content }) => ({
   variables: {
     datasetUri,
     content
@@ -11,5 +11,3 @@ const saveDatasetSummary = ({ datasetUri, content }) => ({
     }
   `
 });
-
-export default saveDatasetSummary;

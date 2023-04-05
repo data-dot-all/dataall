@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listApiKeys = () => ({
+export const listApiKeys = () => ({
   query: gql`
     query ListApiKeys {
       listApiKeys {
@@ -13,5 +13,3 @@ const listApiKeys = () => ({
     }
   `
 });
-
-export default listApiKeys;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const copyTableToCluster = ({
+export const copyTableToCluster = ({
   clusterUri,
   datasetUri,
   tableUri,
@@ -26,5 +26,3 @@ const copyTableToCluster = ({
     }
   `
 });
-
-export default copyTableToCluster;

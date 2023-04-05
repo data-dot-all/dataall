@@ -1,7 +1,7 @@
 import { Box, Pagination } from '@mui/material';
 import * as PropTypes from 'prop-types';
 
-function Pager(props) {
+export function Pager(props) {
   const { items, mgTop, mgBottom, onChange } = props;
   return (
     <Box
@@ -30,5 +30,3 @@ Pager.propTypes = {
   mgBottom: PropTypes.number,
   onChange: PropTypes.func
 };
-
-export default Pager;

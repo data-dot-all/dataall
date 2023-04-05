@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const rejectDashboardShare = (shareUri) => ({
+export const rejectDashboardShare = (shareUri) => ({
   variables: {
     shareUri
   },
@@ -13,5 +13,3 @@ const rejectDashboardShare = (shareUri) => ({
     }
   `
 });
-
-export default rejectDashboardShare;

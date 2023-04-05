@@ -13,7 +13,7 @@ import {
 import React, { useState } from 'react';
 import { FaTrash } from 'react-icons/fa';
 
-const DeleteObjectWithFrictionModal = (props) => {
+export const DeleteObjectWithFrictionModal = (props) => {
   const {
     objectName,
     deleteMessage,
@@ -114,5 +114,3 @@ DeleteObjectWithFrictionModal.propTypes = {
   open: PropTypes.bool.isRequired,
   isAWSResource: PropTypes.bool
 };
-
-export default DeleteObjectWithFrictionModal;

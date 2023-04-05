@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -17,29 +16,29 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useNavigate } from 'react-router';
-import { CloudDownloadOutlined } from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import { GoDatabase } from 'react-icons/go';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import SearchIcon from '../../icons/Search';
-import Scrollbar from '../../components/Scrollbar';
-import StackStatus from '../../components/StackStatus';
-import ArrowRightIcon from '../../icons/ArrowRight';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import listEnvironmentClusters from '../../api/RedshiftCluster/listEnvironmentClusters';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Pager from '../../components/Pager';
-import PlusIcon from '../../icons/Plus';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { listEnvironmentClusters } from '../../api';
+import {
+  Defaults,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar,
+  StackStatus
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
 
 const EnvironmentWarehouses = ({ environment }) => {
   const client = useClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
@@ -124,7 +123,7 @@ const EnvironmentWarehouses = ({ environment }) => {
               }}
               onChange={handleInputChange}
               onKeyUp={handleInputKeyup}
-              placeholder="Search"
+              placeholder="SearchIcon"
               value={inputValue}
               variant="outlined"
             />

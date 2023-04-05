@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createSagemakerNotebook = (input) => ({
+export const createSagemakerNotebook = (input) => ({
   variables: {
     input
   },
@@ -17,5 +17,3 @@ const createSagemakerNotebook = (input) => ({
     }
   `
 });
-
-export default createSagemakerNotebook;

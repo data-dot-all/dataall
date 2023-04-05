@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const linkTerm = ({ nodeUri, targetUri, targetType }) => ({
+export const linkTerm = ({ nodeUri, targetUri, targetType }) => ({
   variables: {
     nodeUri,
     targetType,
@@ -23,5 +23,3 @@ const linkTerm = ({ nodeUri, targetUri, targetType }) => ({
     }
   `
 });
-
-export default linkTerm;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addSharedItem = ({ shareUri, input }) => {
+export const addSharedItem = ({ shareUri, input }) => {
   return {
     variables: {
       shareUri,
@@ -15,5 +15,3 @@ const addSharedItem = ({ shareUri, input }) => {
     `
   };
 };
-
-export default addSharedItem;

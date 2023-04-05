@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const shareWorksheet = ({ worksheetUri, input }) => ({
+export const shareWorksheet = ({ worksheetUri, input }) => ({
   variables: {
     worksheetUri,
     input
@@ -16,5 +16,3 @@ const shareWorksheet = ({ worksheetUri, input }) => ({
     }
   `
 });
-
-export default shareWorksheet;

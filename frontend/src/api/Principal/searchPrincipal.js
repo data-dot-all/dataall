@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchPrincipal = ({ filter }) => ({
+export const searchPrincipal = ({ filter }) => ({
   variables: {
     filter
   },
@@ -28,5 +28,3 @@ const searchPrincipal = ({ filter }) => ({
     }
   `
 });
-
-export default searchPrincipal;

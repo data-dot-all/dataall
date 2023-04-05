@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getPivotRoleName = (organizationUri) => ({
+export const getPivotRoleName = (organizationUri) => ({
   variables: {
     organizationUri
   },
@@ -10,5 +10,3 @@ const getPivotRoleName = (organizationUri) => ({
     }
   `
 });
-
-export default getPivotRoleName;

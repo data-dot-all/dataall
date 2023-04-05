@@ -8,16 +8,14 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import * as FaIcons from 'react-icons/fa';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { MdShowChart } from 'react-icons/md';
 import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import Label from '../../components/Label';
-import UpVotesReadOnly from '../../components/UpVotesReadOnly';
-import useCardStyle from '../../hooks/useCardStyle';
+import * as FaIcons from 'react-icons/fa';
+import { MdShowChart } from 'react-icons/md';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar, Label, UpVotesReadOnly } from '../../components';
+import { useCardStyle } from '../../hooks';
 
 const DashboardListItem = (props) => {
   const { dashboard } = props;

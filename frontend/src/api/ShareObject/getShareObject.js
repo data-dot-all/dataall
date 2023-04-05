@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getShareObject = ({ shareUri, filter }) => ({
+export const getShareObject = ({ shareUri, filter }) => ({
   variables: {
     shareUri,
     filter
@@ -58,5 +58,3 @@ const getShareObject = ({ shareUri, filter }) => ({
     }
   `
 });
-
-export default getShareObject;

@@ -12,12 +12,12 @@ import {
   Popover,
   Typography
 } from '@mui/material';
-import useAuth from '../../hooks/useAuth';
-import TextAvatar from '../TextAvatar';
-import useGroups from '../../hooks/useGroups';
-import Cog from '../../icons/Cog';
+import { useAuth } from '../../hooks';
+import { TextAvatar } from '../TextAvatar';
+import { useGroups } from '../../hooks';
+import { CogIcon } from '../../icons';
 
-const AccountPopover = () => {
+export const AccountPopover = () => {
   const anchorRef = useRef(null);
   const { user, logout } = useAuth();
   const groups = useGroups();
@@ -87,7 +87,7 @@ const AccountPopover = () => {
           {groups && groups.indexOf('DAAdministrators') !== -1 && (
             <MenuItem component={RouterLink} to="/console/administration">
               <ListItemIcon>
-                <Cog fontSize="small" />
+                <CogIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText
                 primary={
@@ -113,5 +113,3 @@ const AccountPopover = () => {
     </>
   );
 };
-
-export default AccountPopover;

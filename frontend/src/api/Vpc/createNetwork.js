@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createNetwork = (input) => ({
+export const createNetwork = (input) => ({
   variables: {
     input
   },
@@ -20,5 +20,3 @@ const createNetwork = (input) => ({
     }
   `
 });
-
-export default createNetwork;

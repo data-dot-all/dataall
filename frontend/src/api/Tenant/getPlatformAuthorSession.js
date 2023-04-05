@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getPlatformAuthorSession = (awsAccount) => ({
+export const getPlatformAuthorSession = (awsAccount) => ({
   variables: {
     awsAccount
   },
@@ -10,5 +10,3 @@ const getPlatformAuthorSession = (awsAccount) => ({
     }
   `
 });
-
-export default getPlatformAuthorSession;

@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import {
   Box,
   Card,
@@ -16,16 +16,14 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import Autocomplete from '@mui/lab/Autocomplete';
 import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import inviteGroupToOrganization from '../../api/Organization/inviteGroup';
-import listCognitoGroups from '../../api/Groups/listCognitoGroups';
+import { inviteGroupToOrganization, listCognitoGroups } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const OrganizationTeamInviteForm = (props) => {
   const { organization, onClose, open, reloadTeams, ...other } = props;

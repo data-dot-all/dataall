@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createRedshiftCluster = ({ environmentUri, input }) => ({
+export const createRedshiftCluster = ({ environmentUri, input }) => ({
   variables: {
     environmentUri,
     clusterInput: input
@@ -22,5 +22,3 @@ const createRedshiftCluster = ({ environmentUri, input }) => ({
     }
   `
 });
-
-export default createRedshiftCluster;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getNotebook = (notebookUri) => ({
+export const getSagemakerNotebook = (notebookUri) => ({
   variables: {
     notebookUri
   },
@@ -49,5 +49,3 @@ const getNotebook = (notebookUri) => ({
     }
   `
 });
-
-export default getNotebook;

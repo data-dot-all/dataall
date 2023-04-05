@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchDatasets = ({ filters, page, term }) => ({
+export const searchDatasets = ({ filters, page, term }) => ({
   variables: {
     filters,
     page: page || 1,
@@ -51,5 +51,3 @@ const searchDatasets = ({ filters, page, term }) => ({
     }
   `
 });
-
-export default searchDatasets;

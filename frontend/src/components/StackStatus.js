@@ -1,7 +1,7 @@
 import * as PropTypes from 'prop-types';
-import Label from './Label';
+import { Label } from './Label';
 
-const StackStatus = (props) => {
+export const StackStatus = (props) => {
   const { status } = props;
   const statusColor = (s) => {
     let color;
@@ -28,4 +28,3 @@ const StackStatus = (props) => {
 StackStatus.propTypes = {
   status: PropTypes.string.isRequired
 };
-export default StackStatus;

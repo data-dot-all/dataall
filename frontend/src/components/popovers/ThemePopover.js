@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
-import useSettings from '../../hooks/useSettings';
+import { useSettings } from '../../hooks';
 import { THEMES } from '../../constants';
-import MoonIcon from '../../icons/Moon';
-import SunIcon from '../../icons/Sun';
+import { MoonIcon, SunIcon } from '../../icons';
 
-const ThemePopover = () => {
+export const ThemePopover = () => {
   const { settings, saveSettings } = useSettings();
   const [selectedTheme, setSelectedTheme] = useState(settings.theme);
 
@@ -33,5 +32,3 @@ const ThemePopover = () => {
     </>
   );
 };
-
-export default ThemePopover;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeUserFromEnvironment = ({ environmentUri, userName }) => ({
+export const removeUserFromEnvironment = ({ environmentUri, userName }) => ({
   variables: { environmentUri, userName },
   mutation: gql`
     mutation RemoveUserFromEnvironment(
@@ -14,5 +14,3 @@ const removeUserFromEnvironment = ({ environmentUri, userName }) => ({
     }
   `
 });
-
-export default removeUserFromEnvironment;

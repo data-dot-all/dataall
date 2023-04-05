@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import { useState } from 'react';
 import {
   Box,
   Card,
@@ -11,14 +9,14 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { useSnackbar } from 'notistack';
 import axios from 'axios';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import startGlueCrawler from '../../api/Dataset/startGlueCrawler';
-import getDatasetPresignedUrl from '../../api/Dataset/getDatasetPresignedUrl';
-import FileDropzone from '../../components/FileDropzone';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import { useState } from 'react';
+import { getDatasetPresignedUrl, startGlueCrawler } from '../../api';
+import { FileDropzone } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const DatasetUpload = (props) => {
   const { dataset, isAdmin } = props;

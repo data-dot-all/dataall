@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteShareObject = ({ shareUri }) => ({
+export const deleteShareObject = ({ shareUri }) => ({
   variables: {
     shareUri
   },
@@ -10,5 +10,3 @@ const deleteShareObject = ({ shareUri }) => ({
     }
   `
 });
-
-export default deleteShareObject;

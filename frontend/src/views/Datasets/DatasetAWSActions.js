@@ -1,14 +1,12 @@
+import { CopyAll } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { useSnackbar } from 'notistack';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { LoadingButton } from '@mui/lab';
-import { CopyAll } from '@mui/icons-material';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getDatasetAdminConsoleUrl from '../../api/Dataset/getDatasetAdminConsoleUrl';
-import generateDatasetAccessToken from '../../api/Dataset/generateDatasetAccessToken';
+import { generateDatasetAccessToken, getDatasetAssumeRoleUrl } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 function DatasetAWSActions({ dataset, isAdmin }) {
   const client = useClient();
@@ -41,7 +39,7 @@ function DatasetAWSActions({ dataset, isAdmin }) {
   const goToS3Console = async () => {
     setIsLoadingUI(true);
     const response = await client.query(
-      getDatasetAdminConsoleUrl(dataset.datasetUri)
+      getDatasetAssumeRoleUrl(dataset.datasetUri)
     );
     if (!response.errors) {
       window.open(response.data.getDatasetAssumeRoleUrl, '_blank');

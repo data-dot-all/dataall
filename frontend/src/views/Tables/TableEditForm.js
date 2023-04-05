@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Box,
@@ -17,22 +15,19 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Formik } from 'formik';
 import CircularProgress from '@mui/material/CircularProgress';
-import { LoadingButton } from '@mui/lab';
-import * as PropTypes from 'prop-types';
+import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import useClient from '../../hooks/useClient';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getDatasetTable from '../../api/DatasetTable/getDatasetTable';
-import searchGlossary from '../../api/Glossary/searchGlossary';
-import ChipInput from '../../components/TagsInput';
-import updateDatasetTable from '../../api/DatasetTable/updateDatasetTable';
-import * as Defaults from '../../components/defaults';
+import * as PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { getDatasetTable, searchGlossary, updateDatasetTable } from '../../api';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 function TableEditHeader(props) {
   const { table } = props;
@@ -172,7 +167,7 @@ const TableEditForm = () => {
           );
         }
         setTableTerms(fetchedTerms);
-        response = client.query(searchGlossary(Defaults.SelectListFilter));
+        response = client.query(searchGlossary(Defaults.selectListFilter));
         response.then((result) => {
           if (
             result.data.searchGlossary &&

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updatePipelineStack = (DataPipelineUri) => ({
+export const updatePipelineStack = (DataPipelineUri) => ({
   variables: { DataPipelineUri },
   mutation: gql`
     mutation updatePipelineStack($DataPipelineUri: String!) {
@@ -8,5 +8,3 @@ const updatePipelineStack = (DataPipelineUri) => ({
     }
   `
 });
-
-export default updatePipelineStack;

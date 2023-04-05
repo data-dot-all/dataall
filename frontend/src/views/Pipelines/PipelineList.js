@@ -1,32 +1,26 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import {
+  Autocomplete,
   Box,
   Breadcrumbs,
   Button,
   Container,
-  Grid,
   Divider,
+  Grid,
   Link,
-  Typography,
-  Autocomplete,
-  TextField
+  TextField,
+  Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
-import PipelineListItem from './PipelineListItem';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import listDataPipelines from '../../api/DataPipeline/listDataPipelines';
-import ChipInput from '../../components/TagsInput';
+import { Link as RouterLink } from 'react-router-dom';
+import { listDataPipelines } from '../../api';
+import { ChipInput, Defaults, Pager, SearchInput } from '../../components';
 import { AwsRegions } from '../../constants';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PlusIcon } from '../../icons';
+import PipelineListItem from './PipelineListItem';
 
 function PipelinesPageHeader() {
   return (
@@ -79,8 +73,8 @@ function PipelinesPageHeader() {
 
 const PipelineList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);

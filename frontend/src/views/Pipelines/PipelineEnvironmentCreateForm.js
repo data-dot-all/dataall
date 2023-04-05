@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { DeleteOutlined } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -16,14 +16,15 @@ import {
   TableRow,
   TextField
 } from '@mui/material';
-import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import createDataPipelineEnvironment from '../../api/DataPipeline/createDataPipelineEnvironment';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import * as Defaults from '../../components/defaults';
+import React, { useEffect, useState } from 'react';
+import {
+  createDataPipelineEnvironment,
+  listEnvironmentGroups
+} from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const PipelineEnvironmentCreateForm = (props) => {
   const {
@@ -56,7 +57,7 @@ const PipelineEnvironmentCreateForm = (props) => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri: environment.environmentUri
         })
       );

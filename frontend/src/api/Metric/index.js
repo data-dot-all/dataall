@@ -1,3 +1,1 @@
-import getMetrics from './getMetrics';
-
-export { getMetrics };
+export * from './getMetrics';

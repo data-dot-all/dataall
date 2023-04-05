@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const postFeedMessage = ({ targetUri, targetType, input }) => ({
+export const postFeedMessage = ({ targetUri, targetType, input }) => ({
   variables: {
     targetUri,
     targetType,
@@ -25,5 +25,3 @@ const postFeedMessage = ({ targetUri, targetType, input }) => ({
     }
   `
 });
-
-export default postFeedMessage;

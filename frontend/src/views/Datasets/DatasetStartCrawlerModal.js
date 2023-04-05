@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { BugReportOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -10,13 +10,12 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { BugReportOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import startGlueCrawler from '../../api/Dataset/startGlueCrawler';
+import { startGlueCrawler } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const DatasetStartCrawlerModal = (props) => {
   const { dataset, onApply, onClose, open } = props;

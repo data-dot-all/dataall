@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listFeedMessages = ({ targetUri, targetType, filter }) => ({
+export const listFeedMessages = ({ targetUri, targetType, filter }) => ({
   variables: {
     targetUri,
     targetType,
@@ -51,5 +51,3 @@ const listFeedMessages = ({ targetUri, targetType, filter }) => ({
     }
   `
 });
-
-export default listFeedMessages;

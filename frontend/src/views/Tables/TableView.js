@@ -1,6 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { ForumOutlined, Warning } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -17,23 +15,21 @@ import {
   Typography
 } from '@mui/material';
 import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { ForumOutlined, Warning } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getDatasetTable from '../../api/DatasetTable/getDatasetTable';
-import deleteDatasetTable from '../../api/DatasetTable/deleteDatasetTable';
-import TablePreview from './TablePreview';
-import TableMetrics from './TableMetrics';
-import TableColumns from './TableColumns';
-import TableOverview from './TableOverview';
-import PencilAltIcon from '../../icons/PencilAlt';
-import DeleteObjectModal from '../../components/DeleteObjectModal';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import { deleteDatasetTable, getDatasetTable } from '../../api';
+import { DeleteObjectModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import FeedComments from '../Feed/FeedComments';
+import TableColumns from './TableColumns';
+import TableMetrics from './TableMetrics';
+import TableOverview from './TableOverview';
+import TablePreview from './TablePreview';
 
 const tabs = [
   { label: 'Preview', value: 'preview' },

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateKeyValueTags = (input) => ({
+export const updateKeyValueTags = (input) => ({
   variables: {
     input
   },
@@ -17,5 +17,3 @@ const updateKeyValueTags = (input) => ({
     }
   `
 });
-
-export default updateKeyValueTags;

@@ -1,4 +1,3 @@
-import * as ReactIf from 'react-if';
 import {
   Box,
   Card,
@@ -12,10 +11,11 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import { FaBars } from 'react-icons/fa';
-import React from 'react';
 import PropTypes from 'prop-types';
-import Scrollbar from '../../components/Scrollbar';
+import React from 'react';
+import { FaBars } from 'react-icons/fa';
+import * as ReactIf from 'react-if';
+import { Scrollbar } from '../../components';
 
 const WorksheetResult = ({ results, loading }) => {
   if (loading) {

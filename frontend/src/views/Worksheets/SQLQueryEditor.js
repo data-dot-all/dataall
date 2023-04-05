@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import useSettings from '../../hooks/useSettings';
+import { useSettings } from '../../hooks';
 import { THEMES } from '../../constants';
 
 const SQLQueryEditor = ({ sql, setSqlBody }) => {

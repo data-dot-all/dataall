@@ -1,6 +1,8 @@
 import { gql } from 'apollo-boost';
 
-const listEnvironmentGroupInvitationPermissions = ({ environmentUri }) => ({
+export const listEnvironmentGroupInvitationPermissions = ({
+  environmentUri
+}) => ({
   variables: {
     environmentUri
   },
@@ -16,5 +18,3 @@ const listEnvironmentGroupInvitationPermissions = ({ environmentUri }) => ({
     }
   `
 });
-
-export default listEnvironmentGroupInvitationPermissions;

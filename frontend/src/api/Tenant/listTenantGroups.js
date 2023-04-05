@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listTenantGroups = (filter) => ({
+export const listTenantGroups = (filter) => ({
   variables: {
     filter
   },
@@ -23,5 +23,3 @@ const listTenantGroups = (filter) => ({
     }
   `
 });
-
-export default listTenantGroups;

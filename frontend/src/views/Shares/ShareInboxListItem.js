@@ -8,11 +8,10 @@ import {
   Link,
   Typography
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import ShareStatus from '../../components/ShareStatus';
-import TextAvatar from '../../components/TextAvatar';
-import useCardStyle from '../../hooks/useCardStyle';
+import { Link as RouterLink } from 'react-router-dom';
+import { ShareStatus, TextAvatar } from '../../components';
+import { useCardStyle } from '../../hooks';
 
 const ShareInboxListItem = ({ share }) => {
   const classes = useCardStyle();

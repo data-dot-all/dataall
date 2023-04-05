@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createQuicksightDataSourceSet = ({ vpcConnectionId }) => ({
+export const createQuicksightDataSourceSet = ({ vpcConnectionId }) => ({
   variables: {
     vpcConnectionId
   },
@@ -10,5 +10,3 @@ const createQuicksightDataSourceSet = ({ vpcConnectionId }) => ({
     }
   `
 });
-
-export default createQuicksightDataSourceSet;

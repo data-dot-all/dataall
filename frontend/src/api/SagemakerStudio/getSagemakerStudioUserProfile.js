@@ -1,6 +1,8 @@
 import { gql } from 'apollo-boost';
 
-const getSagemakerStudioUserProfile = (sagemakerStudioUserProfileUri) => ({
+export const getSagemakerStudioUserProfile = (
+  sagemakerStudioUserProfileUri
+) => ({
   variables: {
     sagemakerStudioUserProfileUri
   },
@@ -57,5 +59,3 @@ const getSagemakerStudioUserProfile = (sagemakerStudioUserProfileUri) => ({
     }
   `
 });
-
-export default getSagemakerStudioUserProfile;

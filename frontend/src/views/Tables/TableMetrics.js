@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useTheme } from '@emotion/react';
+import { PlayArrowOutlined, RefreshRounded } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -16,21 +18,19 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { PlayArrowOutlined, RefreshRounded } from '@mui/icons-material';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import Chart from 'react-apexcharts';
 import { CgHashtag } from 'react-icons/cg';
 import { VscSymbolString } from 'react-icons/vsc';
-import Chart from 'react-apexcharts';
-import { useTheme } from '@emotion/react';
-import { LoadingButton } from '@mui/lab';
-import * as PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
-import getDatasetTableProfilingRun from '../../api/DatasetTable/getDatasetTableProfilingRun';
-import startDatasetProfilingRun from '../../api/DatasetTable/startProfilingRun';
-import listDatasetTableProfilingRuns from '../../api/DatasetTable/listDatasetTableProfilingRuns';
-import Label from '../../components/Label';
-import Scrollbar from '../../components/Scrollbar';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
+import {
+  getDatasetTableProfilingRun,
+  listDatasetTableProfilingRuns,
+  startDatasetProfilingRun
+} from '../../api';
+import { Label, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const TableMetrics = ({ table, isAdmin }) => {
   const client = useClient();

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchRedshiftClusters = (filter) => ({
+export const searchRedshiftClusters = (filter) => ({
   variables: {
     filter
   },
@@ -66,5 +66,3 @@ const searchRedshiftClusters = (filter) => ({
     }
   `
 });
-
-export default searchRedshiftClusters;

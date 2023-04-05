@@ -1,6 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Info } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -14,22 +12,20 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import * as PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
-import { Info } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import getGlossary from '../../api/Glossary/getGlossary';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import { deleteGlossary, getGlossary } from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useAuth, useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import GlossaryAssociations from './GlossaryAssociations';
 import GlossaryManagement from './GlossaryManagement';
-import useAuth from '../../hooks/useAuth';
-import deleteGlossary from '../../api/Glossary/deleteGlossary';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

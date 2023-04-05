@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateSavedQuery = ({ queryUri, input }) => ({
+export const updateSavedQuery = ({ queryUri, input }) => ({
   variables: {
     queryUri,
     input
@@ -22,5 +22,3 @@ const updateSavedQuery = ({ queryUri, input }) => ({
     }
   `
 });
-
-export default updateSavedQuery;

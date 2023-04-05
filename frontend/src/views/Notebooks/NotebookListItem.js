@@ -8,17 +8,15 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import * as FiIcons from 'react-icons/fi';
-import * as FaIcons from 'react-icons/fa';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { SiJupyter } from 'react-icons/si';
-import { Link as RouterLink } from 'react-router-dom';
 import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import StackStatus from '../../components/StackStatus';
-import Label from '../../components/Label';
-import useCardStyle from '../../hooks/useCardStyle';
+import * as FaIcons from 'react-icons/fa';
+import * as FiIcons from 'react-icons/fi';
+import { SiJupyter } from 'react-icons/si';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar, Label, StackStatus } from '../../components';
+import { useCardStyle } from '../../hooks';
 
 /**
  * @description NotebookListItem view.

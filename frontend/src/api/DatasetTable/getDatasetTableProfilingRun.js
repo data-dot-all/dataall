@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDatasetTableProfilingRun = (tableUri) => ({
+export const getDatasetTableProfilingRun = (tableUri) => ({
   variables: {
     tableUri
   },
@@ -23,5 +23,3 @@ const getDatasetTableProfilingRun = (tableUri) => ({
     }
   `
 });
-
-export default getDatasetTableProfilingRun;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateDatasetTable = ({ tableUri, input }) => ({
+export const updateDatasetTable = ({ tableUri, input }) => ({
   variables: {
     tableUri,
     input
@@ -16,5 +16,3 @@ const updateDatasetTable = ({ tableUri, input }) => ({
     }
   `
 });
-
-export default updateDatasetTable;

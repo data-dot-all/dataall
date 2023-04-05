@@ -1,1 +1,1 @@
-export { default as LoginAmplify } from './LoginAmplify';
+export * from './LoginAmplify';

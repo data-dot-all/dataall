@@ -23,14 +23,11 @@ import { Link as RouterLink } from 'react-router-dom';
 import { makeStyles, useTheme } from '@mui/styles';
 import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useSettings from '../../hooks/useSettings';
-import useToken from '../../hooks/useToken';
+import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from '../../icons';
+import { useSettings, useToken } from '../../hooks';
 import { THEMES } from '../../constants';
 import Hit from './Hit';
-import ChevronDown from '../../icons/ChevronDown';
-import GlossarySearchComponent from './GlossarySearchComponent';
+import { GlossarySearchComponent } from './GlossarySearchComponent';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
@@ -59,7 +56,7 @@ function CatalogFilter(props) {
     <>
       <Button
         color="inherit"
-        endIcon={<ChevronDown fontSize="small" />}
+        endIcon={<ChevronDownIcon fontSize="small" />}
         onClick={() => setOpenMenu(!openMenu)}
         ref={anchorRef}
         sx={{
@@ -118,7 +115,7 @@ function GlossaryFilter(props) {
     <>
       <Button
         color="inherit"
-        endIcon={<ChevronDown fontSize="small" />}
+        endIcon={<ChevronDownIcon fontSize="small" />}
         onClick={() => {
           setOpenMenu(!openMenu);
           setFilter(false);
@@ -343,7 +340,7 @@ const Catalog = () => {
                       'topics',
                       'tags'
                     ]}
-                    placeholder="Search"
+                    placeholder="SearchIcon"
                   />
                 </Box>
                 <Divider />

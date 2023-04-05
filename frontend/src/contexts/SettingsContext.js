@@ -1,5 +1,5 @@
-import { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { createContext, useEffect, useState } from 'react';
 import { THEMES } from '../constants';
 
 const initialSettings = {
@@ -41,7 +41,7 @@ export const storeSettings = (settings) => {
   window.localStorage.setItem('settings', JSON.stringify(settings));
 };
 
-const SettingsContext = createContext({
+export const SettingsContext = createContext({
   settings: initialSettings,
   saveSettings: () => {}
 });
@@ -80,5 +80,3 @@ SettingsProvider.propTypes = {
 };
 
 export const SettingsConsumer = SettingsContext.Consumer;
-
-export default SettingsContext;

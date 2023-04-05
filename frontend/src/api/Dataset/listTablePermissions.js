@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listTablePermissions = ({ tableUri }) => ({
+export const listTablePermissions = ({ tableUri }) => ({
   variables: {
     tableUri
   },
@@ -21,5 +21,3 @@ const listTablePermissions = ({ tableUri }) => ({
     }
   `
 });
-
-export default listTablePermissions;

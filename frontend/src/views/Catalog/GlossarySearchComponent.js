@@ -1,9 +1,9 @@
 import { ReactiveComponent } from '@appbaseio/reactivesearch';
 import { Box } from '@mui/material';
 import React from 'react';
-import GlossarySearch from './GlossarySearch';
+import { GlossarySearch } from './GlossarySearch';
 
-const GlossarySearchComponent = (innerClass) => (
+export const GlossarySearchComponent = (innerClass) => (
   <Box>
     <ReactiveComponent
       componentId="GlossaryPathSensor"
@@ -32,4 +32,3 @@ const GlossarySearchComponent = (innerClass) => (
     />
   </Box>
 );
-export default GlossarySearchComponent;

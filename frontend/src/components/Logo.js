@@ -1,6 +1,6 @@
 import { Box, CardMedia, Grid, Typography } from '@mui/material';
 
-const Logo = () => (
+export const Logo = () => (
   <>
     <Grid container>
       <Grid item>
@@ -23,4 +23,3 @@ const Logo = () => (
     </Grid>
   </>
 );
-export default Logo;

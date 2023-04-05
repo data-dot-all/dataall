@@ -1,4 +1,3 @@
-import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   CircularProgress,
@@ -7,19 +6,16 @@ import {
   Link,
   Typography
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useTheme } from '@mui/styles';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import * as Defaults from '../../components/defaults';
-import { listFeedMessages } from '../../api/Feed';
-import TextAvatar from '../../components/TextAvatar';
-import FeedCommentAdd from './FeedCommentAdd';
-import Label from '../../components/Label';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { listFeedMessages } from '../../api';
+import { Defaults, Label, Scrollbar, TextAvatar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 import { dayjs } from '../../utils/dayjs';
-import Scrollbar from '../../components/Scrollbar';
+import FeedCommentAdd from './FeedCommentAdd';
 
 const FeedComments = (props) => {
   const { targetUri, targetType, objectOwner, open, onClose } = props;
@@ -27,8 +23,8 @@ const FeedComments = (props) => {
   const client = useClient();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter] = useState(Defaults.SelectListFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter] = useState(Defaults.selectListFilter);
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(

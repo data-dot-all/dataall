@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getShareRequestsFromMe = ({ filter }) => ({
+export const getShareRequestsFromMe = ({ filter }) => ({
   variables: { filter },
   query: gql`
     query getShareRequestsFromMe($filter: ShareObjectFilter) {
@@ -48,5 +48,3 @@ const getShareRequestsFromMe = ({ filter }) => ({
     }
   `
 });
-
-export default getShareRequestsFromMe;

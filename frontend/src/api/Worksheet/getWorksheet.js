@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getWorksheet = (worksheetUri) => ({
+export const getWorksheet = (worksheetUri) => ({
   variables: {
     worksheetUri
   },
@@ -47,5 +47,3 @@ const getWorksheet = (worksheetUri) => ({
     }
   `
 });
-
-export default getWorksheet;

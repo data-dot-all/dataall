@@ -3,7 +3,7 @@ import { ThumbUp } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-const UpVotesReadOnly = (props) => {
+export const UpVotesReadOnly = (props) => {
   const { upvotes } = props;
   return (
     <Tooltip title="UpVotes">
@@ -26,5 +26,3 @@ const UpVotesReadOnly = (props) => {
 };
 
 UpVotesReadOnly.propTypes = { upvotes: PropTypes.number };
-
-export default UpVotesReadOnly;

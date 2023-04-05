@@ -1,7 +1,7 @@
 import * as PropTypes from 'prop-types';
-import Label from './Label';
+import { Label } from './Label';
 
-const ShareStatus = (props) => {
+export const ShareStatus = (props) => {
   const { status } = props;
   const setTagColor = () => {
     if (
@@ -32,4 +32,3 @@ const ShareStatus = (props) => {
 ShareStatus.propTypes = {
   status: PropTypes.string.isRequired
 };
-export default ShareStatus;

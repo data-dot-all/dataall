@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const archiveOrganization = (organizationUri) => ({
+export const archiveOrganization = (organizationUri) => ({
   variables: {
     organizationUri
   },
@@ -10,5 +10,3 @@ const archiveOrganization = (organizationUri) => ({
     }
   `
 });
-
-export default archiveOrganization;

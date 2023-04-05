@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getAuthorSession = (environmentUri, dashboardUri) => ({
+export const getAuthorSession = (environmentUri, dashboardUri) => ({
   variables: {
     environmentUri,
     dashboardUri
@@ -14,5 +14,3 @@ const getAuthorSession = (environmentUri, dashboardUri) => ({
     }
   `
 });
-
-export default getAuthorSession;

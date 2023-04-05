@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteAirflowProject = ({ projectUri }) => ({
+export const deleteAirflowProject = ({ projectUri }) => ({
   variables: { projectUri },
   mutation: gql`
     mutation deleteAirflowProject($projectUri: String) {
@@ -8,5 +8,3 @@ const deleteAirflowProject = ({ projectUri }) => ({
     }
   `
 });
-
-export default deleteAirflowProject;

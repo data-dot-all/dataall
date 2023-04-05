@@ -11,8 +11,8 @@ import {
   Typography
 } from '@mui/material';
 import { THEMES } from '../constants';
-import useSettings from '../hooks/useSettings';
-import Adjustments from '../icons/adjustments';
+import { useSettings } from '../hooks';
+import { AdjustmentsIcon } from '../icons';
 
 const getValues = (settings) => ({
   compact: settings.compact,
@@ -24,7 +24,7 @@ const getValues = (settings) => ({
   tabIcons: settings.tabIcons
 });
 
-const SettingsDrawer = () => {
+export const SettingsDrawer = () => {
   const { settings, saveSettings } = useSettings();
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState(getValues(settings));
@@ -57,7 +57,7 @@ const SettingsDrawer = () => {
     <>
       <Tooltip title="Settings">
         <IconButton color="inherit" onClick={handleOpen}>
-          <Adjustments fontSize="small" />
+          <AdjustmentsIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       <Drawer
@@ -206,5 +206,3 @@ const SettingsDrawer = () => {
     </>
   );
 };
-
-export default SettingsDrawer;

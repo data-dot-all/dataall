@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const startWorksheetQuery = ({ worksheetUri, input }) => ({
+export const startWorksheetQuery = ({ worksheetUri, input }) => ({
   variables: {
     worksheetUri,
     input
@@ -20,5 +20,3 @@ const startWorksheetQuery = ({ worksheetUri, input }) => ({
     }
   `
 });
-
-export default startWorksheetQuery;

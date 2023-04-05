@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createSagemakerStudioUserProfile = (input) => ({
+export const createSagemakerStudioUserProfile = (input) => ({
   variables: {
     input
   },
@@ -19,5 +19,3 @@ const createSagemakerStudioUserProfile = (input) => ({
     }
   `
 });
-
-export default createSagemakerStudioUserProfile;

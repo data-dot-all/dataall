@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { Add } from '@mui/icons-material';
 import {
   Box,
   Dialog,
@@ -13,25 +12,21 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Add } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import Scrollbar from '../../components/Scrollbar';
-import Pager from '../../components/Pager';
-import * as Defaults from '../../components/defaults';
-import { PagedResponseDefault } from '../../components/defaults';
-import getShareObject from '../../api/ShareObject/getShareObject';
-import addSharedItem from '../../api/ShareObject/addSharedItem';
+import { addSharedItem, getShareObject } from '../../api';
+import { Defaults, Pager, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const AddShareItemModal = (props) => {
   const client = useClient();
   const { share, onApply, onClose, open, reloadSharedItems, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
-  const [sharedItems, setSharedItems] = useState(PagedResponseDefault);
+  const [filter, setFilter] = useState(Defaults.filter);
+  const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
   const dispatch = useDispatch();
   const params = useParams();
   const [loading, setLoading] = useState(true);

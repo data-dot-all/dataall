@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import { useSnackbar } from 'notistack';
+import { CancelRounded } from '@mui/icons-material';
 import {
   Box,
   CircularProgress,
@@ -7,14 +6,14 @@ import {
   IconButton,
   Typography
 } from '@mui/material';
-import { CancelRounded } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import { SET_ERROR } from '../../store/errorReducer';
-import useClient from '../../hooks/useClient';
-import getStack from '../../api/Stack/getStack';
-import { useDispatch } from '../../store';
+import React, { useEffect } from 'react';
+import { getStack } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
-const StackStatus = ({ stack, setStack, environmentUri }) => {
+export const StackStatus = ({ stack, setStack, environmentUri }) => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const client = useClient();
   const dispatch = useDispatch();
@@ -140,4 +139,3 @@ StackStatus.propTypes = {
   setStack: PropTypes.func.isRequired,
   environmentUri: PropTypes.string.isRequired
 };
-export default StackStatus;

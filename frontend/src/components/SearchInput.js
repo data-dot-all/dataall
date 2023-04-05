@@ -1,8 +1,8 @@
 import { Box, Card, Input } from '@mui/material';
 import * as PropTypes from 'prop-types';
-import SearchIcon from '../icons/Search';
+import { SearchIcon } from '../icons';
 
-function SearchInput(props) {
+export function SearchInput(props) {
   const { onChange, onKeyUp, value } = props;
   return (
     <Card>
@@ -25,7 +25,7 @@ function SearchInput(props) {
             fullWidth
             onChange={onChange}
             onKeyUp={onKeyUp}
-            placeholder="Search"
+            placeholder="SearchIcon"
             value={value}
           />
         </Box>
@@ -39,5 +39,3 @@ SearchInput.propTypes = {
   onKeyUp: PropTypes.func,
   value: PropTypes.string
 };
-
-export default SearchInput;

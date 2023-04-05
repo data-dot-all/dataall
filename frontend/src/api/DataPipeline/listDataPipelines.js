@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchDataPipelines = (filter) => ({
+export const listDataPipelines = (filter) => ({
   variables: {
     filter
   },
@@ -50,5 +50,3 @@ const searchDataPipelines = (filter) => ({
     }
   `
 });
-
-export default searchDataPipelines;

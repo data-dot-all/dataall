@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const publishDatasetUpdate = ({ datasetUri, s3Prefix }) => ({
+export const publishDatasetUpdate = ({ datasetUri, s3Prefix }) => ({
   variables: {
     datasetUri,
     s3Prefix
@@ -11,5 +11,3 @@ const publishDatasetUpdate = ({ datasetUri, s3Prefix }) => ({
     }
   `
 });
-
-export default publishDatasetUpdate;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteApiKey = (ApiKeyId) => ({
+export const deleteApiKey = (ApiKeyId) => ({
   variables: {
     ApiKeyId
   },
@@ -10,5 +10,3 @@ const deleteApiKey = (ApiKeyId) => ({
     }
   `
 });
-
-export default deleteApiKey;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDatasetTables = ({ datasetUri, filter }) => ({
+export const listDatasetTables = ({ datasetUri, filter }) => ({
   variables: {
     datasetUri,
     filter
@@ -38,5 +38,3 @@ const listDatasetTables = ({ datasetUri, filter }) => ({
     }
   `
 });
-
-export default listDatasetTables;

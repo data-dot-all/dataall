@@ -1,17 +1,15 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
-import { Box, Card, Dialog, Divider, Typography } from '@mui/material';
 import { SyncAlt } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import { Box, Card, Dialog, Divider, Typography } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import getShareObject from '../../api/ShareObject/getShareObject';
-import revokeItemsShareObject from '../../api/ShareObject/revokeItemsShareObject';
-import { LoadingButton } from '@mui/lab';
-import { DataGrid } from '@mui/x-data-grid';
+import { getShareObject, revokeItemsShareObject } from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const RevokeShareItemsModal = (props) => {
   const client = useClient();
@@ -30,7 +28,7 @@ const RevokeShareItemsModal = (props) => {
       getShareObject({
         shareUri: params.uri,
         filter: {
-          ...Defaults.DefaultFilter,
+          ...Defaults.filter,
           pageSize: 1000,
           isShared: true,
           isRevokable: true
@@ -50,7 +48,7 @@ const RevokeShareItemsModal = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
-  }, [client, dispatch, params.uri, Defaults.DefaultFilter]);
+  }, [client, dispatch, params.uri, Defaults.filter]);
 
   const revoke = async () => {
     setLoading(true);

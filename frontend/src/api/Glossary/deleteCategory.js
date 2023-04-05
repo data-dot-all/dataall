@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteCategory = (nodeUri) => ({
+export const deleteCategory = (nodeUri) => ({
   variables: {
     nodeUri
   },
@@ -10,5 +10,3 @@ const deleteCategory = (nodeUri) => ({
     }
   `
 });
-
-export default deleteCategory;

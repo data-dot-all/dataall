@@ -1,6 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const enableRedshiftClusterDatasetCopy = ({ clusterUri, datasetUri }) => ({
+export const enableRedshiftClusterDatasetCopy = ({
+  clusterUri,
+  datasetUri
+}) => ({
   variables: { clusterUri, datasetUri },
   mutation: gql`
     mutation enableRedshiftClusterDatasetCopy(
@@ -14,5 +17,3 @@ const enableRedshiftClusterDatasetCopy = ({ clusterUri, datasetUri }) => ({
     }
   `
 });
-
-export default enableRedshiftClusterDatasetCopy;

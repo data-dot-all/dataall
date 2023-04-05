@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addTablePermissions = ({ tableUri, role, userName }) => ({
+export const addTablePermissions = ({ tableUri, role, userName }) => ({
   variables: {
     tableUri,
     role,
@@ -22,5 +22,3 @@ const addTablePermissions = ({ tableUri, role, userName }) => ({
     }
   `
 });
-
-export default addTablePermissions;

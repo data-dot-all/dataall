@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDataPipeline = ({ DataPipelineUri, deleteFromAWS }) => ({
+export const deleteDataPipeline = ({ DataPipelineUri, deleteFromAWS }) => ({
   variables: {
     DataPipelineUri,
     deleteFromAWS
@@ -17,5 +17,3 @@ const deleteDataPipeline = ({ DataPipelineUri, deleteFromAWS }) => ({
     }
   `
 });
-
-export default deleteDataPipeline;

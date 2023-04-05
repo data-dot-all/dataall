@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getAirflowClusterWebLoginToken = (clusterUri) => ({
+export const getAirflowClusterWebLoginToken = (clusterUri) => ({
   variables: {
     clusterUri
   },
@@ -10,5 +10,3 @@ const getAirflowClusterWebLoginToken = (clusterUri) => ({
     }
   `
 });
-
-export default getAirflowClusterWebLoginToken;

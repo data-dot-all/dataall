@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 import { ArchiveOutlined } from '@mui/icons-material';
 
-const ArchiveObjectWithFrictionModal = (props) => {
+export const ArchiveObjectWithFrictionModal = (props) => {
   const {
     objectName,
     archiveMessage,
@@ -79,5 +79,3 @@ ArchiveObjectWithFrictionModal.propTypes = {
   archiveFunction: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired
 };
-
-export default ArchiveObjectWithFrictionModal;

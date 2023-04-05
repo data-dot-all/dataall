@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateGlossary = ({ input, nodeUri }) => ({
+export const updateGlossary = ({ input, nodeUri }) => ({
   variables: {
     input,
     nodeUri
@@ -18,5 +18,3 @@ const updateGlossary = ({ input, nodeUri }) => ({
     }
   `
 });
-
-export default updateGlossary;

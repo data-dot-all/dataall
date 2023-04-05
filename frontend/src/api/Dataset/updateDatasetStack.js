@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateDatasetStack = (datasetUri) => ({
+export const updateDatasetStack = (datasetUri) => ({
   variables: { datasetUri },
   mutation: gql`
     mutation updateDatasetStack($datasetUri: String!) {
@@ -8,5 +8,3 @@ const updateDatasetStack = (datasetUri) => ({
     }
   `
 });
-
-export default updateDatasetStack;

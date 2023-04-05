@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDatasetQualityRules = ({ datasetUri, filter }) => ({
+export const listDatasetQualityRules = ({ datasetUri, filter }) => ({
   variables: {
     datasetUri,
     filter
@@ -28,5 +28,3 @@ const listDatasetQualityRules = ({ datasetUri, filter }) => ({
     }
   `
 });
-
-export default listDatasetQualityRules;

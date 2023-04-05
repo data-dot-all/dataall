@@ -178,7 +178,7 @@ const keyCodes = {
   RIGHT_ARROW: 39
 };
 
-class ChipInput extends React.Component {
+class RawChipInput extends React.Component {
   state = {
     chips: [],
     errorText: undefined,
@@ -690,7 +690,7 @@ class ChipInput extends React.Component {
   }
 }
 
-ChipInput.propTypes = {
+RawChipInput.propTypes = {
   /** Allows duplicate chips if set to true. */
   allowDuplicates: PropTypes.bool,
   /** If true, the placeholder will always be visible. */
@@ -758,7 +758,7 @@ ChipInput.propTypes = {
   variant: PropTypes.oneOf(['outlined', 'standard', 'filled'])
 };
 
-ChipInput.defaultProps = {
+RawChipInput.defaultProps = {
   allowDuplicates: false,
   blurBehavior: 'clear',
   clearInputValueOnChange: false,
@@ -769,7 +769,7 @@ ChipInput.defaultProps = {
   variant: 'standard'
 };
 
-export default withStyles(styles, { name: 'WAMuiChipInput' })(ChipInput);
+export const ChipInput = withStyles(styles, { name: 'WAMuiChipInput' })(RawChipInput);
 
 export const defaultChipRenderer = (
   {

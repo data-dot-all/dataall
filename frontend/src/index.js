@@ -1,18 +1,17 @@
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import StyledEngineProvider from '@mui/material/StyledEngineProvider';
 import 'nprogress/nprogress.css';
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter } from 'react-router-dom';
 import { Provider as ReduxProvider } from 'react-redux';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import StyledEngineProvider from '@mui/material/StyledEngineProvider';
-import App from './App';
-import { AuthProvider } from './contexts/AmplifyContext';
-import { SettingsProvider } from './contexts/SettingsContext';
-import reportWebVitals from './reportWebVitals';
+import { BrowserRouter } from 'react-router-dom';
+import { App } from './App';
+import { LocalAuthProvider, SettingsProvider } from './contexts';
+import { store } from './globalErrors';
+import { reportWebVitals } from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
-import store from './store';
 
 ReactDOM.render(
   <StrictMode>
@@ -22,9 +21,9 @@ ReactDOM.render(
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <SettingsProvider>
               <BrowserRouter>
-                <AuthProvider>
+                <LocalAuthProvider>
                   <App />
-                </AuthProvider>
+                </LocalAuthProvider>
               </BrowserRouter>
             </SettingsProvider>
           </LocalizationProvider>

@@ -9,7 +9,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const TextAvatar = (props) => {
+export const TextAvatar = (props) => {
   const { name } = props;
   const classes = useStyles();
   return (
@@ -24,5 +24,3 @@ const TextAvatar = (props) => {
 TextAvatar.propTypes = {
   name: PropTypes.string.isRequired
 };
-
-export default TextAvatar;

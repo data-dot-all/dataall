@@ -9,7 +9,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "npx eslint --ext js src",
-    "lint-fix": "npx eslint --fix --ext js src"
+    "lint:fix": "npx eslint --fix --ext js src"
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
@@ -18,7 +18,7 @@
     "@emotion/styled": "^11.8.1",
     "@monaco-editor/react": "^4.3.1",
     "@mui/icons-material": "^5.5.1",
-    "@mui/lab": "^5.0.0-alpha.74",
+    "@mui/lab": "5.0.0-alpha.74",
     "@mui/material": "^5.5.2",
     "@mui/styles": "^5.5.1",
     "@mui/x-data-grid": "^5.7.0",
@@ -65,12 +65,15 @@
   "devDependencies": {
     "env-cmd": "^10.1.0",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "2.8.7"
+    "prettier": "2.8.7",
+    "watch": "^1.0.2"
   },
   "eslintConfig": {
     "plugins": [
-      "prettier"
+      "prettier",
+      "import"
     ],
     "extends": [
       "react-app",
@@ -81,7 +84,12 @@
       "no-unused-vars": "error",
       "no-const-assign": "error",
       "eqeqeq": "error",
-      "no-console": "warn"
+      "no-console": "warn",
+      "jsx-quotes": [
+        "error",
+        "prefer-double"
+      ],
+      "import/no-default-export": "warn"
     }
   },
   "browserslist": {
@@ -95,5 +103,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "engines": {
+    "yarn": "^1.22.19"
   }
 }

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createScheduledQuery = (input) => ({
+export const createScheduledQuery = (input) => ({
   variables: {
     input
   },
@@ -17,5 +17,3 @@ const createScheduledQuery = (input) => ({
     }
   `
 });
-
-export default createScheduledQuery;

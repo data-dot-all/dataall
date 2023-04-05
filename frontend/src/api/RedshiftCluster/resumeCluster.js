@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const resumeRedshiftCluster = (clusterUri) => ({
+export const resumeRedshiftCluster = (clusterUri) => ({
   variables: {
     clusterUri
   },
@@ -10,5 +10,3 @@ const resumeRedshiftCluster = (clusterUri) => ({
     }
   `
 });
-
-export default resumeRedshiftCluster;

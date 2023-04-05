@@ -1,8 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import { useSnackbar } from 'notistack';
+import { CloudDownloadOutlined, CopyAllOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import {
   Box,
   Breadcrumbs,
@@ -24,27 +22,28 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@mui/lab';
-import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import { CloudDownloadOutlined, CopyAllOutlined } from '@mui/icons-material';
 import { useTheme } from '@mui/styles';
-import Autocomplete from '@mui/lab/Autocomplete';
-import useClient from '../../hooks/useClient';
-import useGroups from '../../hooks/useGroups';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import useSettings from '../../hooks/useSettings';
-import getOrganization from '../../api/Organization/getOrganization';
-import createEnvironment from '../../api/Environment/createEnvironment';
-import getTrustAccount from '../../api/Environment/getTrustAccount';
+import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import * as Yup from 'yup';
+import {
+  createEnvironment,
+  getOrganization,
+  getPivotRoleExternalId,
+  getPivotRoleName,
+  getPivotRolePresignedUrl,
+  getTrustAccount
+} from '../../api';
+import { ChipInput } from '../../components';
 import { AwsRegions } from '../../constants';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import ChipInput from '../../components/TagsInput';
-import getPivotRolePresignedUrl from '../../api/Environment/getPivotRolePresignedUrl';
-import getPivotRoleExternalId from '../../api/Environment/getPivotRoleExternalId';
-import getPivotRoleName from '../../api/Environment/getPivotRoleName';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useGroups, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -161,7 +160,7 @@ const EnvironmentCreateForm = (props) => {
           resourcePrefix: values.resourcePrefix,
           parameters: [
             {
-              key: "notebooksEnabled",
+              key: 'notebooksEnabled',
               value: String(values.notebooksEnabled)
             }
           ]

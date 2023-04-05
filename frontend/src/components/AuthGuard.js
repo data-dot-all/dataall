@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import useAuth from '../hooks/useAuth';
-import Login from '../views/authentication/Login';
+import { useAuth } from '../hooks';
+import { Login } from '../views/authentication/Login';
 
-const AuthGuard = (props) => {
+export const AuthGuard = (props) => {
   const { children } = props;
   const auth = useAuth();
   const location = useLocation();
@@ -29,5 +29,3 @@ const AuthGuard = (props) => {
 AuthGuard.propTypes = {
   children: PropTypes.node
 };
-
-export default AuthGuard;

@@ -1,6 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  ForumOutlined,
+  Info,
+  ShareOutlined,
+  ShowChart
+} from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -14,32 +17,27 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { FaTrash } from 'react-icons/fa';
 import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
-  ForumOutlined,
-  Info,
-  ShareOutlined,
-  ShowChart
-} from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import getDashboard from '../../api/Dashboard/getDashboard';
-import DashboardViewer from './DashboardViewer';
-import DashboardOverview from './DashboardOverview';
-import PencilAltIcon from '../../icons/PencilAlt';
-import deleteDashboard from '../../api/Dashboard/deleteDashboard';
-import DashboardShares from './DashboardShares';
+  countUpVotes,
+  deleteDashboard,
+  getDashboard,
+  getVote,
+  upVote
+} from '../../api';
+import { DeleteObjectWithFrictionModal, UpVoteButton } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import FeedComments from '../Feed/FeedComments';
-import getVote from '../../api/Vote/getVote';
-import countUpVotes from '../../api/Vote/countUpVotes';
-import upVote from '../../api/Vote/upVote';
-import UpVoteButton from '../../components/UpVoteButton';
+import DashboardOverview from './DashboardOverview';
+import DashboardShares from './DashboardShares';
+import DashboardViewer from './DashboardViewer';
 
 const DashboardView = () => {
   const dispatch = useDispatch();

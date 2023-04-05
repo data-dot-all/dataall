@@ -1,6 +1,10 @@
 import { gql } from 'apollo-boost';
 
-const runAthenaSqlQuery = ({ sqlQuery, environmentUri, worksheetUri }) => ({
+export const runAthenaSqlQuery = ({
+  sqlQuery,
+  environmentUri,
+  worksheetUri
+}) => ({
   variables: {
     sqlQuery,
     environmentUri,
@@ -32,5 +36,3 @@ const runAthenaSqlQuery = ({ sqlQuery, environmentUri, worksheetUri }) => ({
     }
   `
 });
-
-export default runAthenaSqlQuery;

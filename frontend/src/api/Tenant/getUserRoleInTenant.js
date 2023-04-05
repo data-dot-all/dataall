@@ -1,11 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const getUserRoleInTenant = () => ({
+export const getUserRoleInTenant = () => ({
   query: gql`
     query GetUserRoleInTenant {
       getUserRoleInTenant
     }
   `
 });
-
-export default getUserRoleInTenant;

@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import { RiInboxArchiveLine } from 'react-icons/ri';
 import { FiSend } from 'react-icons/fi';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import ShareInboxList from './ShareInboxList';
 import ShareOutboxList from './ShareOutboxList';
 

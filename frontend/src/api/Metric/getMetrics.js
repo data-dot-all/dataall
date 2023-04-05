@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getMetrics = (filter) => ({
+export const getMetrics = (filter) => ({
   variables: {
     filter
   },
@@ -22,5 +22,3 @@ const getMetrics = (filter) => ({
     }
   `
 });
-
-export default getMetrics;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDatasetStorageLocation = ({ locationUri }) => ({
+export const deleteDatasetStorageLocation = ({ locationUri }) => ({
   variables: { locationUri },
   mutation: gql`
     mutation DeleteDatasetStorageLocation($locationUri: String) {
@@ -8,5 +8,3 @@ const deleteDatasetStorageLocation = ({ locationUri }) => ({
     }
   `
 });
-
-export default deleteDatasetStorageLocation;

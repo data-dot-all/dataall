@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateSSMParameter = ({ name, value }) => ({
+export const updateSSMParameter = ({ name, value }) => ({
   variables: {
     name,
     value
@@ -11,5 +11,3 @@ const updateSSMParameter = ({ name, value }) => ({
     }
   `
 });
-
-export default updateSSMParameter;

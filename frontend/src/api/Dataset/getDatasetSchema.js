@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDatasetSchema = ({ datasetUri, filter }) => ({
+export const getDatasetSchema = ({ datasetUri, filter }) => ({
   variables: {
     datasetUri,
     filter
@@ -42,5 +42,3 @@ const getDatasetSchema = ({ datasetUri, filter }) => ({
     }
   `
 });
-
-export default getDatasetSchema;

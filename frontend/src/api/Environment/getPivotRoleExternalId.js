@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getPivotRoleExternalId = (organizationUri) => ({
+export const getPivotRoleExternalId = (organizationUri) => ({
   variables: {
     organizationUri
   },
@@ -10,5 +10,3 @@ const getPivotRoleExternalId = (organizationUri) => ({
     }
   `
 });
-
-export default getPivotRoleExternalId;

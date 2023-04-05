@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getEnvironmentAssumeRoleUrl = ({ environmentUri, groupUri }) => ({
+export const getEnvironmentAssumeRoleUrl = ({ environmentUri, groupUri }) => ({
   variables: {
     environmentUri,
     groupUri
@@ -17,5 +17,3 @@ const getEnvironmentAssumeRoleUrl = ({ environmentUri, groupUri }) => ({
     }
   `
 });
-
-export default getEnvironmentAssumeRoleUrl;

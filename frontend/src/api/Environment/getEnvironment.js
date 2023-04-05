@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getEnvironment = ({ environmentUri }) => ({
+export const getEnvironment = ({ environmentUri }) => ({
   variables: {
     environmentUri
   },
@@ -66,5 +66,3 @@ const getEnvironment = ({ environmentUri }) => ({
     }
   `
 });
-
-export default getEnvironment;

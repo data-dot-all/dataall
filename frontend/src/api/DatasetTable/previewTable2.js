@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const previewTable2 = (tableUri) => ({
+export const previewTable2 = (tableUri) => ({
   variables: {
     tableUri
   },
@@ -13,5 +13,3 @@ const previewTable2 = (tableUri) => ({
     }
   `
 });
-
-export default previewTable2;

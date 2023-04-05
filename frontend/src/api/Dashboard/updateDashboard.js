@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateDashboard = (input) => ({
+export const updateDashboard = (input) => ({
   variables: {
     input
   },
@@ -15,5 +15,3 @@ const updateDashboard = (input) => ({
     }
   `
 });
-
-export default updateDashboard;

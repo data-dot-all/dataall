@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateDataset = ({ datasetUri, input }) => {
+export const updateDataset = ({ datasetUri, input }) => {
   return {
     variables: {
       datasetUri,
@@ -18,5 +18,3 @@ const updateDataset = ({ datasetUri, input }) => {
     `
   };
 };
-
-export default updateDataset;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const rejectShareObject = ({ shareUri }) => ({
+export const rejectShareObject = ({ shareUri }) => ({
   variables: {
     shareUri
   },
@@ -13,5 +13,3 @@ const rejectShareObject = ({ shareUri }) => ({
     }
   `
 });
-
-export default rejectShareObject;

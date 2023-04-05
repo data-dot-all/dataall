@@ -8,10 +8,9 @@ import {
   Link,
   Typography
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import ShareStatus from '../../components/ShareStatus';
-import TextAvatar from '../../components/TextAvatar';
+import { Link as RouterLink } from 'react-router-dom';
+import { ShareStatus, TextAvatar } from '../../components';
 
 const ShareOutboxListItem = ({ share }) => {
   return (

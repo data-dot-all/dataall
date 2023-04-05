@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const useScrollReset = () => {
+export const useScrollReset = () => {
   const location = useLocation();
 
   useEffect(() => {
@@ -10,5 +10,3 @@ const useScrollReset = () => {
 
   return null;
 };
-
-export default useScrollReset;

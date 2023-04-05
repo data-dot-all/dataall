@@ -1,6 +1,4 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
-import * as BsIcons from 'react-icons/bs';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -16,18 +14,16 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { LoadingButton } from '@mui/lab';
 import { useTheme } from '@mui/styles';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import * as BsIcons from 'react-icons/bs';
 import { VscChecklist } from 'react-icons/vsc';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import SearchIcon from '../../icons/Search';
-import Scrollbar from '../../components/Scrollbar';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Pager from '../../components/Pager';
-import listTenantGroups from '../../api/Tenant/listTenantGroups';
+import { listTenantGroups } from '../../api';
+import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { SearchIcon } from '../../icons';
 import TeamPermissionsEditForm from './TeamPermissionsEditForm';
 
 function TeamRow({ team, fetchItems }) {
@@ -74,8 +70,8 @@ TeamRow.propTypes = {
 const AdministrationTeams = () => {
   const client = useClient();
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
 
@@ -161,7 +157,7 @@ const AdministrationTeams = () => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

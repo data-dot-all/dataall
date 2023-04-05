@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Auth } from 'aws-amplify';
-import { SET_ERROR } from '../store/errorReducer';
-import { useDispatch } from '../store';
-import useAuth from './useAuth';
+import { useDispatch, SET_ERROR } from '../globalErrors';
+import { useAuth } from '.';
 
-const useToken = () => {
+export const useToken = () => {
   const dispatch = useDispatch();
   const auth = useAuth();
   const [token, setToken] = useState(null);
@@ -36,5 +35,3 @@ const useToken = () => {
   });
   return token;
 };
-
-export default useToken;

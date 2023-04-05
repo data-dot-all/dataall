@@ -1,3 +1,5 @@
+import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -7,21 +9,16 @@ import {
   Link,
   Typography
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import { useState } from 'react';
-import ShareStatus from '../../components/ShareStatus';
-import TextAvatar from '../../components/TextAvatar';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import approveDashboardShare from '../../api/Dashboard/approveDashboardShare';
-import rejectDashboardShare from '../../api/Dashboard/rejectDashboardShare';
+import { Link as RouterLink } from 'react-router-dom';
+import { approveDashboardShare, rejectDashboardShare } from '../../api';
+import { ShareStatus, TextAvatar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
-const DashboardShareItem = (props) => {
+export const DashboardShareItem = (props) => {
   const { share, dashboard, reload } = props;
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -195,4 +192,3 @@ DashboardShareItem.propTypes = {
   dashboard: PropTypes.object.isRequired,
   reload: PropTypes.func.isRequired
 };
-export default DashboardShareItem;

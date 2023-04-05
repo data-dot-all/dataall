@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeGroupFromEnvironment = ({ environmentUri, groupUri }) => ({
+export const removeGroupFromEnvironment = ({ environmentUri, groupUri }) => ({
   variables: {
     environmentUri,
     groupUri
@@ -19,5 +19,3 @@ const removeGroupFromEnvironment = ({ environmentUri, groupUri }) => ({
     }
   `
 });
-
-export default removeGroupFromEnvironment;

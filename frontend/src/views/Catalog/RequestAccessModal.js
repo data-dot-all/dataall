@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import SendIcon from '@mui/icons-material/Send';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -11,19 +11,20 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import SendIcon from '@mui/icons-material/Send';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import createShareObject from '../../api/ShareObject/createShareObject';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import listEnvironmentConsumptionRoles from '../../api/Environment/listEnvironmentConsumptionRoles';
-import requestDashboardShare from '../../api/Dashboard/requestDashboardShare';
-import * as Defaults from '../../components/defaults';
+import * as Yup from 'yup';
+import {
+  createShareObject,
+  listEnvironmentConsumptionRoles,
+  listEnvironmentGroups,
+  listEnvironments,
+  requestDashboardShare
+} from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
@@ -39,7 +40,7 @@ const RequestAccessModal = (props) => {
   const fetchEnvironments = useCallback(async () => {
     const response = await client.query(
       listEnvironments({
-        filter: Defaults.SelectListFilter
+        filter: Defaults.selectListFilter
       })
     );
     if (!response.errors) {
@@ -63,7 +64,7 @@ const RequestAccessModal = (props) => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri
         })
       );

@@ -11,7 +11,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const IconAvatar = (props) => {
+export const IconAvatar = (props) => {
   const { icon } = props;
   const classes = useStyles();
   return <>{icon && <Avatar className={classes.primary}>{icon}</Avatar>}</>;
@@ -20,5 +20,3 @@ const IconAvatar = (props) => {
 IconAvatar.propTypes = {
   icon: PropTypes.object.isRequired
 };
-
-export default IconAvatar;

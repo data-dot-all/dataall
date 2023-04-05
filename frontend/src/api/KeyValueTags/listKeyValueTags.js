@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listKeyValueTags = (targetUri, targetType) => ({
+export const listKeyValueTags = (targetUri, targetType) => ({
   variables: {
     targetUri,
     targetType
@@ -18,5 +18,3 @@ const listKeyValueTags = (targetUri, targetType) => ({
     }
   `
 });
-
-export default listKeyValueTags;

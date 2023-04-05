@@ -1,4 +1,9 @@
-import PropTypes from 'prop-types';
+import {
+  CopyAllOutlined,
+  NotificationsActive,
+  NotificationsOff
+} from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -13,23 +18,16 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import { useTheme } from '@mui/styles';
+import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import {
-  CopyAllOutlined,
-  NotificationsActive,
-  NotificationsOff
-} from '@mui/icons-material';
-import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { useTheme } from '@mui/styles';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import enableDataSubscriptions from '../../api/Environment/enableDataSubscriptions';
-import disableDataSubscriptions from '../../api/Environment/disableDataSubscriptions';
-import { SET_ERROR } from '../../store/errorReducer';
+import { disableDataSubscriptions, enableDataSubscriptions } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const EnvironmentSubscriptions = ({ environment, fetchItem }) => {
   const dispatch = useDispatch();

@@ -1,11 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const test = () => ({
+export const test = () => ({
   query: gql`
     query Test {
       test
     }
   `
 });
-
-export default test;

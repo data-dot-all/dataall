@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { Box, Button, CardContent, Dialog, Typography } from '@mui/material';
 import { FaTrash } from 'react-icons/fa';
 
-const DeleteObjectModal = (props) => {
+export const DeleteObjectModal = (props) => {
   const {
     objectName,
     deleteMessage,
@@ -53,5 +53,3 @@ DeleteObjectModal.propTypes = {
   deleteFunction: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired
 };
-
-export default DeleteObjectModal;

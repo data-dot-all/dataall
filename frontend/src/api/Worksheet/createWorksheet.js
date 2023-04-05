@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createWorksheet = (input) => ({
+export const createWorksheet = (input) => ({
   variables: {
     input
   },
@@ -14,5 +14,3 @@ const createWorksheet = (input) => ({
     }
   `
 });
-
-export default createWorksheet;

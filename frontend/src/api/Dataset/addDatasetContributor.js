@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addDatasetContributor = ({ userName, datasetUri, role }) => ({
+export const addDatasetContributor = ({ userName, datasetUri, role }) => ({
   variables: { userName, datasetUri, role },
   mutation: gql`
     mutation AddDatasetContributor(
@@ -20,5 +20,3 @@ const addDatasetContributor = ({ userName, datasetUri, role }) => ({
     }
   `
 });
-
-export default addDatasetContributor;

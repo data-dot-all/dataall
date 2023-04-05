@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -9,16 +7,19 @@ import {
   FormHelperText,
   TextField
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import updateGlossary from '../../api/Glossary/updateGlossary';
-import updateCategory from '../../api/Glossary/updateCategory';
-import updateTerm from '../../api/Glossary/updateTerm';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import deleteCategory from '../../api/Glossary/deleteCategory';
-import deleteTerm from '../../api/Glossary/deleteTerm';
+import { useEffect, useState } from 'react';
+import * as Yup from 'yup';
+import {
+  deleteCategory,
+  deleteTerm,
+  updateCategory,
+  updateGlossary,
+  updateTerm
+} from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 
 const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
   const dispatch = useDispatch();

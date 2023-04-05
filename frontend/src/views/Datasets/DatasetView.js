@@ -1,6 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  ForumOutlined,
+  Info,
+  LocalOffer,
+  ShareOutlined,
+  Upload,
+  ViewArrayOutlined
+} from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -15,38 +20,31 @@ import {
   Typography
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
-  ForumOutlined,
-  Info,
-  LocalOffer,
-  ShareOutlined,
-  Upload,
-  ViewArrayOutlined
-} from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getDataset from '../../api/Dataset/getDataset';
-import DatasetOverview from './DatasetOverview';
-import PencilAltIcon from '../../icons/PencilAlt';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import UpVoteButton from '../../components/UpVoteButton';
-import deleteDataset from '../../api/Dataset/deleteDataset';
-import ShareInboxList from '../Shares/ShareInboxList';
-import DatasetUpload from './DatasetUpload';
+  countUpVotes,
+  deleteDataset,
+  getDataset,
+  getVote,
+  upVote
+} from '../../api';
+import { DeleteObjectWithFrictionModal, UpVoteButton } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import FeedComments from '../Feed/FeedComments';
-import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import getVote from '../../api/Vote/getVote';
-import upVote from '../../api/Vote/upVote';
-import countUpVotes from '../../api/Vote/countUpVotes';
-import DatasetData from './DatasetData';
+import ShareInboxList from '../Shares/ShareInboxList';
+import { StackStatus } from '../Stack';
+import Stack from '../Stack/Stack';
 import DatasetAWSActions from './DatasetAWSActions';
+import DatasetData from './DatasetData';
+import DatasetOverview from './DatasetOverview';
+import DatasetUpload from './DatasetUpload';
 
 const DatasetView = () => {
   const dispatch = useDispatch();

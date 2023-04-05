@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeUser = ({ input }) => ({
+export const removeUser = ({ input }) => ({
   variables: {
     input
   },
@@ -10,5 +10,3 @@ const removeUser = ({ input }) => ({
     }
   `
 });
-
-export default removeUser;

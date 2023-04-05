@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getOrganization = (organizationUri) => ({
+export const getOrganization = (organizationUri) => ({
   variables: { organizationUri },
   query: gql`
     query GetOrganization($organizationUri: String!) {
@@ -21,5 +21,3 @@ const getOrganization = (organizationUri) => ({
     }
   `
 });
-
-export default getOrganization;

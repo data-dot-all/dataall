@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeDatasetContributor = ({ userName, datasetUri }) => ({
+export const removeDatasetContributor = ({ userName, datasetUri }) => ({
   variables: { userName, datasetUri },
   mutation: gql`
     mutation RemoveDatasetContributor($datasetUri: String, $userName: String) {
@@ -12,5 +12,3 @@ const removeDatasetContributor = ({ userName, datasetUri }) => ({
     }
   `
 });
-
-export default removeDatasetContributor;

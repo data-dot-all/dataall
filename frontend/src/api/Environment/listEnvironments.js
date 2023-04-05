@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 
-const listEnvironments = ({ filter }) => ({
+export const listEnvironments = ({ filter }) => ({
   variables: {
     filter
   },
@@ -52,5 +52,3 @@ const listEnvironments = ({ filter }) => ({
     }
   `
 });
-
-export default listEnvironments;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getPlatformReaderSession = (dashboardId) => ({
+export const getPlatformReaderSession = (dashboardId) => ({
   variables: {
     dashboardId
   },
@@ -10,5 +10,3 @@ const getPlatformReaderSession = (dashboardId) => ({
     }
   `
 });
-
-export default getPlatformReaderSession;

@@ -1,6 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  BlockOutlined,
+  CheckCircleOutlined,
+  CopyAllOutlined,
+  DeleteOutlined,
+  RefreshRounded,
+  RemoveCircleOutlineOutlined
+} from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -24,40 +30,34 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import {
-  BlockOutlined,
-  CheckCircleOutlined,
-  CopyAllOutlined,
-  DeleteOutlined,
-  RemoveCircleOutlineOutlined,
-  RefreshRounded
-} from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { useTheme } from '@mui/styles';
-import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import ShareStatus from '../../components/ShareStatus';
-import TextAvatar from '../../components/TextAvatar';
-import Pager from '../../components/Pager';
-import Scrollbar from '../../components/Scrollbar';
-import * as Defaults from '../../components/defaults';
-import { PagedResponseDefault } from '../../components/defaults';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import {
+  approveShareObject,
+  deleteShareObject,
+  getShareObject,
+  rejectShareObject,
+  removeSharedItem,
+  submitApproval
+} from '../../api';
+import {
+  Defaults,
+  Pager,
+  Scrollbar,
+  ShareStatus,
+  TextAvatar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PlusIcon } from '../../icons';
 import AddShareItemModal from './AddShareItemModal';
 import RevokeShareItemsModal from './RevokeShareItemsModal';
-import getShareObject from '../../api/ShareObject/getShareObject';
-import approveShareObject from '../../api/ShareObject/approveShareObject';
-import rejectShareObject from '../../api/ShareObject/rejectShareObject';
-import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
-import submitApproval from '../../api/ShareObject/submitApproval';
-import removeSharedItem from '../../api/ShareObject/removeSharedItem';
 
 function ShareViewHeader(props) {
   const {
@@ -380,8 +380,8 @@ const ShareView = () => {
   const { settings } = useSettings();
   const { enqueueSnackbar } = useSnackbar();
   const [share, setShare] = useState(null);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
-  const [sharedItems, setSharedItems] = useState(PagedResponseDefault);
+  const [filter, setFilter] = useState(Defaults.filter);
+  const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const params = useParams();

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -10,19 +9,15 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { CloudDownloadOutlined } from '@mui/icons-material';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
+import { Link as RouterLink } from 'react-router-dom';
+import { listDatasets } from '../../api';
+import { Defaults, Pager, SearchInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PlusIcon } from '../../icons';
 import DatasetListItem from './DatasetListItem';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import listDatasets from '../../api/Dataset/listDatasets';
 
 function DatasetsPageHeader() {
   return (
@@ -85,7 +80,7 @@ function DatasetsPageHeader() {
 
 const DatasetList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
+  const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState({ term: '', page: 1, pageSize: 10 });
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');

@@ -11,16 +11,18 @@ import {
 import * as FiIcons from 'react-icons/fi';
 import * as FaIcons from 'react-icons/fa';
 import * as BsIcons from 'react-icons/bs';
+import { BsTable } from 'react-icons/bs';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router';
-import { BsTable } from 'react-icons/bs';
 import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import StackStatus from '../../components/StackStatus';
-import Label from '../../components/Label';
-import UpVotesReadOnly from '../../components/UpVotesReadOnly';
-import useCardStyle from '../../hooks/useCardStyle';
+import {
+  IconAvatar,
+  Label,
+  StackStatus,
+  UpVotesReadOnly
+} from '../../components';
+import { useCardStyle } from '../../hooks';
 
 const DatasetListItem = (props) => {
   const { dataset } = props;

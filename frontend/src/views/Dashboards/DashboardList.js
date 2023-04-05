@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { CloudDownloadOutlined } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -10,19 +9,16 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { CloudDownloadOutlined } from '@mui/icons-material';
 import { MdShowChart } from 'react-icons/md';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
+import { Link as RouterLink } from 'react-router-dom';
+import { searchDashboards } from '../../api';
+import { Defaults, Pager, SearchInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import DashboardListItem from './DashboardListItem';
-import searchDashboards from '../../api/Dashboard/searchDashboards';
 
 function DashboardPageHeader() {
   return (
@@ -85,8 +81,8 @@ function DashboardPageHeader() {
 
 const DashboardList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);

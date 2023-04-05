@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import { DeleteOutlined, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -18,30 +18,29 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { DeleteOutlined, Warning } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import { BsFolder } from 'react-icons/bs';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import Scrollbar from '../../components/Scrollbar';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import SearchIcon from '../../icons/Search';
-import PlusIcon from '../../icons/Plus';
-import DeleteObjectModal from '../../components/DeleteObjectModal';
-import removeDatasetFromCluster from '../../api/RedshiftCluster/removeDatasetFromCluster';
+import { listClusterDatasets, removeDatasetFromCluster } from '../../api';
+import {
+  Defaults,
+  DeleteObjectModal,
+  Pager,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PlusIcon, SearchIcon } from '../../icons';
 import WarehouseLoadDatasetModal from './WarehouseLoadDatasetModal';
-import Pager from '../../components/Pager';
-import listClusterDatasets from '../../api/RedshiftCluster/listClusterDatasets';
 import WarehouseTables from './WarehouseTables';
 
 const WarehouseDatasets = ({ warehouse }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
   const [isLoadDatasetsOpen, setIsLoadDatasetsOpen] = useState(false);
@@ -189,7 +188,7 @@ const WarehouseDatasets = ({ warehouse }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

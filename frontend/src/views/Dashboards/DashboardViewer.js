@@ -1,12 +1,11 @@
-import { createRef, useCallback, useEffect, useState } from 'react';
-import * as ReactIf from 'react-if';
 import { Box, Button, CircularProgress } from '@mui/material';
-import { FaExternalLinkAlt } from 'react-icons/fa';
 import PropTypes from 'prop-types';
-import getReaderSession from '../../api/Dashboard/getDashboardReaderSession';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
+import { createRef, useCallback, useEffect, useState } from 'react';
+import { FaExternalLinkAlt } from 'react-icons/fa';
+import * as ReactIf from 'react-if';
+import { getReaderSession } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

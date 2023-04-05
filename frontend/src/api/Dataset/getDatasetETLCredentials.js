@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDatasetETLCredentials = (datasetUri) => ({
+export const getDatasetETLCredentials = (datasetUri) => ({
   variables: {
     datasetUri
   },
@@ -10,5 +10,3 @@ const getDatasetETLCredentials = (datasetUri) => ({
     }
   `
 });
-
-export default getDatasetETLCredentials;

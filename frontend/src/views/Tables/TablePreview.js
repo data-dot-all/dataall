@@ -1,13 +1,12 @@
+import { Card, CircularProgress } from '@mui/material';
+import { styled } from '@mui/styles';
+import { DataGrid } from '@mui/x-data-grid';
+import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
-import { Card, CircularProgress } from '@mui/material';
-import * as PropTypes from 'prop-types';
-import { DataGrid } from '@mui/x-data-grid';
-import { styled } from '@mui/styles';
-import previewTable2 from '../../api/DatasetTable/previewTable2';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
+import { previewTable2 } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   '& .MuiDataGrid-columnsContainer': {

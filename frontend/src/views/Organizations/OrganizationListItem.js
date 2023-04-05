@@ -8,16 +8,15 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import * as BiIcon from 'react-icons/bi';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
+import React from 'react';
+import * as BiIcon from 'react-icons/bi';
 import * as FaIcons from 'react-icons/fa';
 import { FaUserPlus } from 'react-icons/fa';
-import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import Label from '../../components/Label';
-import useCardStyle from '../../hooks/useCardStyle';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar, Label } from '../../components';
+import { useCardStyle } from '../../hooks';
 
 const OrganizationListItem = (props) => {
   const { organization } = props;

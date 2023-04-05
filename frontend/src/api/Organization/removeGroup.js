@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeGroupFromOrganization = ({ organizationUri, groupUri }) => ({
+export const removeGroupFromOrganization = ({ organizationUri, groupUri }) => ({
   variables: {
     organizationUri,
     groupUri
@@ -19,5 +19,3 @@ const removeGroupFromOrganization = ({ organizationUri, groupUri }) => ({
     }
   `
 });
-
-export default removeGroupFromOrganization;

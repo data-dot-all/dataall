@@ -3,7 +3,7 @@ import { ThumbUpAlt, ThumbUpOffAlt } from '@mui/icons-material';
 import * as PropTypes from 'prop-types';
 import React from 'react';
 
-const UpVoteButton = (props) => {
+export const UpVoteButton = (props) => {
   const { upVoted, onClick, upVotes } = props;
   return (
     <Button
@@ -29,5 +29,3 @@ UpVoteButton.propTypes = {
   onClick: PropTypes.func,
   upVotes: PropTypes.any
 };
-
-export default UpVoteButton;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createGlossary = (input) => ({
+export const createGlossary = (input) => ({
   variables: {
     input
   },
@@ -17,5 +17,3 @@ const createGlossary = (input) => ({
     }
   `
 });
-
-export default createGlossary;

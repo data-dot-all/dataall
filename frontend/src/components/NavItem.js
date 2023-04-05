@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { NavLink as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Box, Button, Collapse, ListItem } from '@mui/material';
-import ChevronDownIcon from '../icons/ChevronDown';
-import ChevronRightIcon from '../icons/ChevronRight';
+import { ChevronDownIcon, ChevronRightIcon } from '../icons';
 
-const NavItem = (props) => {
+export const NavItem = (props) => {
   const {
     active,
     children,
@@ -122,5 +121,3 @@ NavItem.defaultProps = {
   active: false,
   open: false
 };
-
-export default NavItem;

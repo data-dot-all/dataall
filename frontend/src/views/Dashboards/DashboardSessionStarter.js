@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -18,23 +19,17 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { BsCloud } from 'react-icons/bs';
-import { ArrowLeft, ArrowRightAlt, ChevronRight } from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { LoadingButton } from '@mui/lab';
-import { Link as RouterLink } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
-import PagedResponseDefault from '../../components/defaults/PagedResponseDefault';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import getAuthorSession from '../../api/Dashboard/getDashboardAuthorSession';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Scrollbar from '../../components/Scrollbar';
-import Pager from '../../components/Pager';
-import useSettings from '../../hooks/useSettings';
-import SearchIcon from '../../icons/Search';
+import { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { BsCloud } from 'react-icons/bs';
+import { Link as RouterLink } from 'react-router-dom';
+import { getAuthorSession, listEnvironments } from '../../api';
+import { Defaults, Pager, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { SearchIcon } from '../../icons';
 
 function DashboardSessionStarterPageHeader() {
   return (
@@ -127,7 +122,7 @@ EnvironmentRow.propTypes = {
   client: PropTypes.object.isRequired
 };
 const DashboardSessionStarter = () => {
-  const [items, setItems] = useState(PagedResponseDefault);
+  const [items, setItems] = useState(Defaults.pagedResponse);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const client = useClient();
@@ -234,7 +229,7 @@ const DashboardSessionStarter = () => {
                       }}
                       onChange={handleInputChange}
                       onKeyUp={handleInputKeyup}
-                      placeholder="Search"
+                      placeholder="SearchIcon"
                       value={inputValue}
                       variant="outlined"
                     />

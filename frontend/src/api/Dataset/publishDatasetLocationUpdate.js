@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const publishDatasetStorageLocationUpdate = ({ locationUri }) => ({
+export const publishDatasetStorageLocationUpdate = ({ locationUri }) => ({
   variables: {
     locationUri
   },
@@ -10,5 +10,3 @@ const publishDatasetStorageLocationUpdate = ({ locationUri }) => ({
     }
   `
 });
-
-export default publishDatasetStorageLocationUpdate;

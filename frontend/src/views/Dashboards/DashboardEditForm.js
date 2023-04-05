@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Box,
@@ -17,23 +15,19 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Formik } from 'formik';
 import CircularProgress from '@mui/material/CircularProgress';
-import { LoadingButton } from '@mui/lab';
-import * as PropTypes from 'prop-types';
+import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
+import * as PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import useClient from '../../hooks/useClient';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import searchGlossary from '../../api/Glossary/searchGlossary';
-import ChipInput from '../../components/TagsInput';
-import getDashboard from '../../api/Dashboard/getDashboard';
-import updateDashboard from '../../api/Dashboard/updateDashboard';
-import * as Defaults from '../../components/defaults';
+import { getDashboard, searchGlossary, updateDashboard } from '../../api';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ArrowLeftIcon, ChevronRightIcon } from '../../icons';
 
 function DashboardEditHeader(props) {
   const { dashboard } = props;
@@ -125,7 +119,7 @@ const DashboardEditForm = () => {
         }));
       }
       setDashboardTerms(fetchedTerms);
-      response = client.query(searchGlossary(Defaults.SelectListFilter));
+      response = client.query(searchGlossary(Defaults.selectListFilter));
       response.then((result) => {
         if (
           result.data.searchGlossary &&

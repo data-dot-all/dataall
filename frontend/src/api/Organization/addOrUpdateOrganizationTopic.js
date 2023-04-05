@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createTopic = ({ input, organizationUri }) => ({
+export const createTopic = ({ input, organizationUri }) => ({
   variables: {
     organizationUri,
     input
@@ -20,5 +20,3 @@ const createTopic = ({ input, organizationUri }) => ({
     }
   `
 });
-
-export default createTopic;

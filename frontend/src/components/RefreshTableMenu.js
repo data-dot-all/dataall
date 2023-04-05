@@ -11,7 +11,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PropTypes from 'prop-types';
 
-const RefreshTableMenu = ({ refresh }) => {
+export const RefreshTableMenu = memo(({ refresh }) => {
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
 
@@ -62,9 +62,8 @@ const RefreshTableMenu = ({ refresh }) => {
       </Menu>
     </>
   );
-};
+});
+
 RefreshTableMenu.propTypes = {
   refresh: PropTypes.func
 };
-
-export default memo(RefreshTableMenu);

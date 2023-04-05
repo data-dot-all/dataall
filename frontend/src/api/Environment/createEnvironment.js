@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createEnvironment = (input) => ({
+export const createEnvironment = (input) => ({
   variables: {
     input
   },
@@ -25,5 +25,3 @@ const createEnvironment = (input) => ({
     }
   `
 });
-
-export default createEnvironment;

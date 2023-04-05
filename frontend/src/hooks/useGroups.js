@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Auth } from 'aws-amplify';
-import { SET_ERROR } from '../store/errorReducer';
-import { useDispatch } from '../store';
+import { useDispatch, SET_ERROR } from '../globalErrors';
 
-const useGroups = () => {
+export const useGroups = () => {
   const dispatch = useDispatch();
   const [groups, setGroups] = useState(null);
   const fetchGroups = async () => {
@@ -36,5 +35,3 @@ const useGroups = () => {
   });
   return groups;
 };
-
-export default useGroups;

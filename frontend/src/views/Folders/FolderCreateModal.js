@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Box,
@@ -13,16 +12,14 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import addDatasetStorageLocation from '../../api/Dataset/addDatasetStorageLocation';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import ChipInput from '../../components/TagsInput';
-import searchGlossary from '../../api/Glossary/searchGlossary';
-import * as Defaults from '../../components/defaults';
+import * as Yup from 'yup';
+import { addDatasetStorageLocation, searchGlossary } from '../../api';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const FolderCreateModal = (props) => {
   const { dataset, onApply, onClose, open, reloadFolders, ...other } = props;
@@ -33,7 +30,7 @@ const FolderCreateModal = (props) => {
 
   const fetchTerms = useCallback(async () => {
     const response = await client.query(
-      searchGlossary(Defaults.SelectListFilter)
+      searchGlossary(Defaults.selectListFilter)
     );
     if (!response.errors) {
       if (

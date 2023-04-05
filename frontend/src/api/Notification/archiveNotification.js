@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const archiveNotification = ({ notificationUri }) => ({
+export const archiveNotification = ({ notificationUri }) => ({
   variables: {
     notificationUri
   },
@@ -10,5 +10,3 @@ const archiveNotification = ({ notificationUri }) => ({
     }
   `
 });
-
-export default archiveNotification;

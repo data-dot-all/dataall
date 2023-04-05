@@ -25,7 +25,7 @@ const CircularProgressValue = styled('path')(({ theme }) => ({
   }
 }));
 
-const CircularProgress = (props) => {
+export const CircularProgress = (props) => {
   const { value, ...other } = props;
 
   return (
@@ -47,5 +47,3 @@ const CircularProgress = (props) => {
 CircularProgress.propTypes = {
   value: PropTypes.number.isRequired
 };
-
-export default CircularProgress;

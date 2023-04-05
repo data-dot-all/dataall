@@ -1,20 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import useSettings from '../../hooks/useSettings';
-import Pager from '../../components/Pager';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import getShareRequestsFromMe from '../../api/ShareObject/getShareRequestsFromMe';
+import { getShareRequestsFromMe } from '../../api';
+import { Defaults, Pager } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
 import ShareOutboxListItem from './ShareOutboxListItem';
 
 const ShareOutboxList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const client = useClient();

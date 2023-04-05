@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchDashboards = (filter) => ({
+export const searchDashboards = (filter) => ({
   variables: {
     filter
   },
@@ -40,5 +40,3 @@ const searchDashboards = (filter) => ({
     }
   `
 });
-
-export default searchDashboards;

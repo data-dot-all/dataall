@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeSavedQuery = (queryUri) => ({
+export const removeSavedQuery = (queryUri) => ({
   variables: {
     queryUri
   },
@@ -10,5 +10,3 @@ const removeSavedQuery = (queryUri) => ({
     }
   `
 });
-
-export default removeSavedQuery;

@@ -1,6 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const generateEnvironmentAccessToken = ({ environmentUri, groupUri }) => ({
+export const generateEnvironmentAccessToken = ({
+  environmentUri,
+  groupUri
+}) => ({
   variables: {
     environmentUri,
     groupUri
@@ -17,5 +20,3 @@ const generateEnvironmentAccessToken = ({ environmentUri, groupUri }) => ({
     }
   `
 });
-
-export default generateEnvironmentAccessToken;

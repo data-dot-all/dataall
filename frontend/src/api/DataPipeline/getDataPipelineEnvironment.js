@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDataPipelineEnvironment = (envPipelineUri) => ({
+export const getDataPipelineEnvironment = (envPipelineUri) => ({
   variables: {
     envPipelineUri
   },
@@ -20,5 +20,3 @@ const getDataPipelineEnvironment = (envPipelineUri) => ({
     }
   `
 });
-
-export default getDataPipelineEnvironment;

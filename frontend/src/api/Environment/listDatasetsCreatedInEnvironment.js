@@ -1,6 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const listDatasetsCreatedInEnvironment = ({ filter, environmentUri }) => ({
+export const listDatasetsCreatedInEnvironment = ({
+  filter,
+  environmentUri
+}) => ({
   variables: {
     environmentUri,
     filter
@@ -38,5 +41,3 @@ const listDatasetsCreatedInEnvironment = ({ filter, environmentUri }) => ({
     }
   `
 });
-
-export default listDatasetsCreatedInEnvironment;

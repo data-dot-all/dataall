@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getSagemakerNotebookPresignedUrl = (notebookUri) => ({
+export const getSagemakerNotebookPresignedUrl = (notebookUri) => ({
   variables: {
     notebookUri
   },
@@ -10,5 +10,3 @@ const getSagemakerNotebookPresignedUrl = (notebookUri) => ({
     }
   `
 });
-
-export default getSagemakerNotebookPresignedUrl;

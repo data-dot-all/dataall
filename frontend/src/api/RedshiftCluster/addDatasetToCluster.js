@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addDatasetToCluster = ({ clusterUri, datasetUri }) => ({
+export const addDatasetToCluster = ({ clusterUri, datasetUri }) => ({
   variables: { clusterUri, datasetUri },
   mutation: gql`
     mutation addDatasetToRedshiftCluster(
@@ -14,5 +14,3 @@ const addDatasetToCluster = ({ clusterUri, datasetUri }) => ({
     }
   `
 });
-
-export default addDatasetToCluster;

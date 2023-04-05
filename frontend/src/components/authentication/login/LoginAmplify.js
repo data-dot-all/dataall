@@ -1,7 +1,7 @@
 import { Button } from '@mui/material';
-import useAuth from '../../../hooks/useAuth';
+import { useAuth } from '../../../hooks';
 
-const LoginAmplify = () => {
+export const LoginAmplify = () => {
   const { login } = useAuth();
 
   return (
@@ -17,5 +17,3 @@ const LoginAmplify = () => {
     </Button>
   );
 };
-
-export default LoginAmplify;

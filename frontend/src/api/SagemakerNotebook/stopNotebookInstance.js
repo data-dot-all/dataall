@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const stopSagemakerNotebook = (notebookUri) => ({
+export const stopSagemakerNotebook = (notebookUri) => ({
   variables: {
     notebookUri
   },
@@ -10,5 +10,3 @@ const stopSagemakerNotebook = (notebookUri) => ({
     }
   `
 });
-
-export default stopSagemakerNotebook;

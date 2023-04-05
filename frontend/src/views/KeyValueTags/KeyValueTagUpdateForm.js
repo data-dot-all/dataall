@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSnackbar } from 'notistack';
+import { DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -9,21 +9,20 @@ import {
   Divider,
   Grid,
   IconButton,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
-  Switch
+  TextField
 } from '@mui/material';
-import { DeleteOutlined } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import { LoadingButton } from '@mui/lab';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import updateKeyValueTags from '../../api/KeyValueTags/updateKeyValueTags';
+import React, { useState } from 'react';
+import { updateKeyValueTags } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const KeyValueTagUpdateForm = (props) => {
   const { targetType, targetUri, tags, closeUpdate } = props;

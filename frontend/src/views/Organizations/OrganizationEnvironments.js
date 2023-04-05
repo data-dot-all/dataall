@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -15,38 +15,38 @@ import {
   TableRow,
   TextField
 } from '@mui/material';
-import PropTypes from 'prop-types';
 import CircularProgress from '@mui/material/CircularProgress';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FaAws } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { Link } from '@mui/icons-material';
-import { FaAws } from 'react-icons/fa';
-import Scrollbar from '../../components/Scrollbar';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ArrowRightIcon from '../../icons/ArrowRight';
-import StackStatus from '../../components/StackStatus';
-import SearchIcon from '../../icons/Search';
-import listOrganizationEnvrionments from '../../api/Environment/listOrganizationEnvironments';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Pager from '../../components/Pager';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
+import { listOrganizationEnvironments } from '../../api';
+import {
+  Defaults,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar,
+  StackStatus
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { ArrowRightIcon, SearchIcon } from '../../icons';
 
 const OrganizationEnvironments = (props) => {
   const { organization, ...other } = props;
   const client = useClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listOrganizationEnvrionments({
+      listOrganizationEnvironments({
         filter,
         organizationUri: organization.organizationUri
       })
@@ -121,7 +121,7 @@ const OrganizationEnvironments = (props) => {
               }}
               onChange={handleInputChange}
               onKeyUp={handleInputKeyup}
-              placeholder="Search environments"
+              placeholder="SearchIcon environments"
               value={inputValue}
               variant="outlined"
             />

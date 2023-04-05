@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import {
   Box,
   Card,
@@ -8,7 +7,8 @@ import {
   Divider,
   Typography
 } from '@mui/material';
-import Label from '../../components/Label';
+import PropTypes from 'prop-types';
+import { Label } from '../../components';
 
 const DatasetGovernance = (props) => {
   const { dataset } = props;

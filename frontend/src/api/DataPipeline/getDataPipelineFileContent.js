@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDataPipelineFileContent = (input) => ({
+export const getDataPipelineFileContent = (input) => ({
   variables: {
     input
   },
@@ -10,5 +10,3 @@ const getDataPipelineFileContent = (input) => ({
     }
   `
 });
-
-export default getDataPipelineFileContent;

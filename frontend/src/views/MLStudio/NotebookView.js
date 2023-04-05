@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Info } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -14,24 +13,25 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { SiJupyter } from 'react-icons/si';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@mui/lab';
-import { useSnackbar } from 'notistack';
-import { Info } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import {
+  deleteSagemakerStudioUserProfile,
+  getSagemakerStudioUserProfile,
+  getSagemakerStudioUserProfilePresignedUrl
+} from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { StackStatus } from '../Stack';
 import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import getSagemakerStudioUserProfile from '../../api/SagemakerStudio/getSagemakerStudioUserProfile';
-import deleteSagemakerStudioUserProfile from '../../api/SagemakerStudio/deleteSagemakerStudioUserProfile';
 import NotebookOverview from './NotebookOverview';
-import getSagemakerStudioUserProfilePresignedUrl from '../../api/SagemakerStudio/getSagemakerStudioUserProfilePresignedUrl';
-import StackStatus from '../Stack/StackStatus';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },

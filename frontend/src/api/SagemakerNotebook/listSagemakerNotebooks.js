@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listSagemakerNotebooks = (filter) => ({
+export const listSagemakerNotebooks = (filter) => ({
   variables: {
     filter
   },
@@ -44,5 +44,3 @@ const listSagemakerNotebooks = (filter) => ({
     }
   `
 });
-
-export default listSagemakerNotebooks;

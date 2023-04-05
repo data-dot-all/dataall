@@ -12,11 +12,10 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import DuplicateIcon from '../icons/Duplicate';
-import XIcon from '../icons/X';
-import bytesToSize from '../utils/bytesToSize';
+import { DuplicateIcon, XIcon } from '../icons';
+import { bytesToSize } from '../utils/bytesToSize';
 
-const FileDropzone = (props) => {
+export const FileDropzone = (props) => {
   const {
     accept,
     disabled,
@@ -196,5 +195,3 @@ FileDropzone.propTypes = {
 FileDropzone.defaultProps = {
   files: []
 };
-
-export default FileDropzone;

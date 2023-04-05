@@ -1,6 +1,10 @@
 import { gql } from 'apollo-boost';
 
-const listDatasetsOwnedByEnvGroup = ({ filter, environmentUri, groupUri }) => ({
+export const listDatasetsOwnedByEnvGroup = ({
+  filter,
+  environmentUri,
+  groupUri
+}) => ({
   variables: {
     environmentUri,
     groupUri,
@@ -41,5 +45,3 @@ const listDatasetsOwnedByEnvGroup = ({ filter, environmentUri, groupUri }) => ({
     }
   `
 });
-
-export default listDatasetsOwnedByEnvGroup;

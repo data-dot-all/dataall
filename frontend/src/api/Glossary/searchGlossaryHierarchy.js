@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchGlossaryHierarchy = ({ filter, targetUri }) => ({
+export const searchGlossaryHierarchy = ({ filter, targetUri }) => ({
   variables: {
     filter,
     targetUri
@@ -57,5 +57,3 @@ const searchGlossaryHierarchy = ({ filter, targetUri }) => ({
     }
   `
 });
-
-export default searchGlossaryHierarchy;

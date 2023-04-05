@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import { useCallback, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -9,10 +7,11 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
-import useClient from '../../hooks/useClient';
-import { useDispatch } from '../../store';
-import getDataset from '../../api/Dataset/getDataset';
-import { SET_ERROR } from '../../store/errorReducer';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
+import { getDataset } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const PipelineDatasets = (props) => {
   const { pipeline } = props;

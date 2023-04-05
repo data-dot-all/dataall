@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDatasetQualityRule = (ruleUri) => ({
+export const deleteDatasetQualityRule = (ruleUri) => ({
   variables: {
     ruleUri
   },
@@ -10,5 +10,3 @@ const deleteDatasetQualityRule = (ruleUri) => ({
     }
   `
 });
-
-export default deleteDatasetQualityRule;

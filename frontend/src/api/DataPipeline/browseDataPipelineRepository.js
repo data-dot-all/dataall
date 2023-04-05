@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const browseDataPipelineRepository = (input) => ({
+export const browseDataPipelineRepository = (input) => ({
   variables: {
     input
   },
@@ -10,5 +10,3 @@ const browseDataPipelineRepository = (input) => ({
     }
   `
 });
-
-export default browseDataPipelineRepository;

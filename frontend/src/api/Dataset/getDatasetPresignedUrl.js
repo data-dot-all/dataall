@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDatasetPresignedUrl = ({ datasetUri, input }) => ({
+export const getDatasetPresignedUrl = ({ datasetUri, input }) => ({
   variables: {
     datasetUri,
     input
@@ -14,5 +14,3 @@ const getDatasetPresignedUrl = ({ datasetUri, input }) => ({
     }
   `
 });
-
-export default getDatasetPresignedUrl;

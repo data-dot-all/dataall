@@ -1,10 +1,9 @@
 import { useContext } from 'react';
-import LocalContext from '../contexts/LocalContext';
-import AuthContext from '../contexts/AmplifyContext';
+import { CognitoAuthContext, LocalAuthContext } from '../contexts';
 
-const useAuth = () =>
+export const useAuth = () =>
   useContext(
-    !process.env.REACT_APP_COGNITO_USER_POOL_ID ? LocalContext : AuthContext
+    !process.env.REACT_APP_COGNITO_USER_POOL_ID
+      ? LocalAuthContext
+      : CognitoAuthContext
   );
-
-export default useAuth;

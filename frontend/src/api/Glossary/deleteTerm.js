@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteTerm = (nodeUri) => ({
+export const deleteTerm = (nodeUri) => ({
   variables: {
     nodeUri
   },
@@ -10,5 +10,3 @@ const deleteTerm = (nodeUri) => ({
     }
   `
 });
-
-export default deleteTerm;

@@ -1,6 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  Folder,
+  Info,
+  LocalOffer,
+  PauseOutlined,
+  PlayArrowOutlined
+} from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -14,33 +19,28 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import * as PropTypes from 'prop-types';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
-  Folder,
-  Info,
-  LocalOffer,
-  PauseOutlined,
-  PlayArrowOutlined
-} from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import WarehouseOverview from './WarehouseOverview';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import deleteRedshiftCluster from '../../api/RedshiftCluster/deleteCluster';
-import getCluster from '../../api/RedshiftCluster/getCluster';
-import pauseRedshiftCluster from '../../api/RedshiftCluster/pauseCluster';
-import resumeRedshiftCluster from '../../api/RedshiftCluster/resumeCluster';
-import WarehouseDatasets from './WarehouseDatasets';
-import StackStatus from '../Stack/StackStatus';
+  deleteRedshiftCluster,
+  getRedshiftCluster,
+  pauseRedshiftCluster,
+  resumeRedshiftCluster
+} from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import { StackStatus } from '../Stack';
+import Stack from '../Stack/Stack';
+import WarehouseDatasets from './WarehouseDatasets';
+import WarehouseOverview from './WarehouseOverview';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info /> },
@@ -175,7 +175,7 @@ const WarehouseView = () => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(getCluster(params.uri));
+    const response = await client.query(getRedshiftCluster(params.uri));
     if (!response.errors && response.data.getRedshiftCluster !== null) {
       setWarehouse(response.data.getRedshiftCluster);
       if (stack) {

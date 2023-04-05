@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listAirflowProjects = ({ clusterUri, filter }) => ({
+export const listAirflowProjects = ({ clusterUri, filter }) => ({
   variables: {
     clusterUri,
     filter
@@ -33,5 +33,3 @@ const listAirflowProjects = ({ clusterUri, filter }) => ({
     }
   `
 });
-
-export default listAirflowProjects;

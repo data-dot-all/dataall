@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listOrganizations = ({ filter }) => ({
+export const listOrganizations = ({ filter }) => ({
   variables: { filter },
   query: gql`
     query ListOrg($filter: OrganizationFilter) {
@@ -33,5 +33,3 @@ const listOrganizations = ({ filter }) => ({
     }
   `
 });
-
-export default listOrganizations;

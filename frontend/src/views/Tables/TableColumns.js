@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, Card, CircularProgress } from '@mui/material';
-import { useSnackbar } from 'notistack';
 import { SyncAlt } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+import { Box, Card, CircularProgress } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
-import updateColumnDescription from '../../api/DatasetTable/updateDatasetTableColumn';
-import syncDatasetTableColumns from '../../api/DatasetTable/syncDatasetTableColumns';
-import * as Defaults from '../../components/defaults';
+import React, { useEffect, useState } from 'react';
+import {
+  listDatasetTableColumns,
+  syncDatasetTableColumns,
+  updateColumnDescription
+} from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const TableColumns = (props) => {
   const { table, isAdmin } = props;
@@ -43,7 +44,7 @@ const TableColumns = (props) => {
     }
   };
 
-  const handleEditCellChangeCommitted = (e: GridCellEditCommitParams) => {
+  const handleEditCellChangeCommitted = (e) => {
     const data = e.value;
     if (e.field === 'description') {
       columns.map((c) => {
@@ -99,7 +100,7 @@ const TableColumns = (props) => {
       const response = await client.query(
         listDatasetTableColumns({
           tableUri: table.tableUri,
-          filter: Defaults.SelectListFilter
+          filter: Defaults.selectListFilter
         })
       );
       if (!response.errors) {

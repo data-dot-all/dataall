@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateOrganization = ({ organizationUri, input }) => ({
+export const updateOrganization = ({ organizationUri, input }) => ({
   variables: {
     organizationUri,
     input
@@ -18,5 +18,3 @@ const updateOrganization = ({ organizationUri, input }) => ({
     }
   `
 });
-
-export default updateOrganization;

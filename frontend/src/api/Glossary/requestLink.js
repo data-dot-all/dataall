@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const requestLink = ({ nodeUri, targetUri, targetType }) => ({
+export const requestLink = ({ nodeUri, targetUri, targetType }) => ({
   variables: {
     nodeUri,
     targetType,
@@ -23,5 +23,3 @@ const requestLink = ({ nodeUri, targetUri, targetType }) => ({
     }
   `
 });
-
-export default requestLink;

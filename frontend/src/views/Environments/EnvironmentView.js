@@ -1,6 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import {
+  FolderOpen,
+  Info,
+  LocalOffer,
+  NotificationsActive,
+  SupervisedUserCircleRounded,
+  Warning
+} from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -16,35 +21,26 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import {
-  FolderOpen,
-  Info,
-  LocalOffer,
-  NotificationsActive,
-  SupervisedUserCircleRounded,
-  Warning
-} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { useNavigate } from 'react-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FaAws, FaNetworkWired, FaTrash } from 'react-icons/fa';
-import useSettings from '../../hooks/useSettings';
-import getEnvironment from '../../api/Environment/getEnvironment';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import EnvironmentOverview from './EnvironmentOverview';
-import EnvironmentDatasets from './EnvironmentDatasets';
-import EnvironmentWarehouses from './EnvironmentWarehouses';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import { archiveEnvironment, getEnvironment } from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
+import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import EnvironmentNetworks from '../Networks/NetworkList';
+import { StackStatus } from '../Stack';
 import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import archiveEnvironment from '../../api/Environment/archiveEnvironment';
-import PencilAltIcon from '../../icons/PencilAlt';
+import EnvironmentDatasets from './EnvironmentDatasets';
+import EnvironmentOverview from './EnvironmentOverview';
 import EnvironmentSubscriptions from './EnvironmentSubscriptions';
 import EnvironmentTeams from './EnvironmentTeams';
-import EnvironmentNetworks from '../Networks/NetworkList';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import StackStatus from '../Stack/StackStatus';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import EnvironmentWarehouses from './EnvironmentWarehouses';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -121,11 +117,15 @@ const EnvironmentView = () => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
       setStack(environment.stack);
-      setIsAdmin(['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1
+      );
     } else {
       const error = response.errors
         ? response.errors[0].message

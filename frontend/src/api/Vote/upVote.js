@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const upVote = (input) => ({
+export const upVote = (input) => ({
   variables: {
     input
   },
@@ -15,5 +15,3 @@ const upVote = (input) => ({
     }
   `
 });
-
-export default upVote;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const findUser = ({ userName, page, pageSize }) => ({
+export const findUser = ({ userName, page, pageSize }) => ({
   variables: {
     userName,
     pageSize,
@@ -23,5 +23,3 @@ const findUser = ({ userName, page, pageSize }) => ({
     }
   `
 });
-
-export default findUser;

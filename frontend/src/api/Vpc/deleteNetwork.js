@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteNetwork = ({ vpcUri }) => ({
+export const deleteNetwork = ({ vpcUri }) => ({
   variables: {
     vpcUri
   },
@@ -10,5 +10,3 @@ const deleteNetwork = ({ vpcUri }) => ({
     }
   `
 });
-
-export default deleteNetwork;

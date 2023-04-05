@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchAirflowClusters = (filter) => ({
+export const searchAirflowClusters = (filter) => ({
   variables: {
     filter
   },
@@ -56,5 +56,3 @@ const searchAirflowClusters = (filter) => ({
     }
   `
 });
-
-export default searchAirflowClusters;

@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { CopyAll } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -11,15 +11,14 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import { CopyAll } from '@mui/icons-material';
 import { useTheme } from '@mui/styles';
 import { useSnackbar } from 'notistack';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getDataPipelineCredsLinux from '../../api/DataPipeline/getDataPipelineCredsLinux';
+import PropTypes from 'prop-types';
+import { useState } from 'react';
+import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
+import { getDataPipelineCredsLinux } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const PipelineCICD = (props) => {
   const { pipeline } = props;

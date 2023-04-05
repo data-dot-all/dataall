@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -11,15 +10,17 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import addConsumptionRoleToEnvironment from '../../api/Environment/addConsumptionRoleToEnvironment';
+import {
+  addConsumptionRoleToEnvironment,
+  listEnvironmentGroups
+} from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -33,7 +34,7 @@ const EnvironmentRoleAddForm = (props) => {
       setLoadingGroups(true);
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri
         })
       );

@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { DeleteOutlined, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -19,34 +19,35 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { DeleteOutlined, Warning } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
 import { BsFolder } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import Scrollbar from '../../components/Scrollbar';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import listDatasetStorageLocations from '../../api/Dataset/listDatasetStorageLocations';
+import {
+  deleteDatasetStorageLocation,
+  listDatasetStorageLocations
+} from '../../api';
+import {
+  Defaults,
+  DeleteObjectModal,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
 import FolderCreateModal from '../Folders/FolderCreateModal';
-import SearchIcon from '../../icons/Search';
-import PlusIcon from '../../icons/Plus';
-import DeleteObjectModal from '../../components/DeleteObjectModal';
-import removeDatasetStorageLocation from '../../api/Dataset/removeDatasetStorageLocation';
-import ArrowRightIcon from '../../icons/ArrowRight';
-import Pager from '../../components/Pager';
 
 const DatasetFolders = ({ dataset, isAdmin }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(null);
   const [isFolderCreateOpen, setIsFolderCreateOpen] = useState(false);
@@ -103,7 +104,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
 
   const deleteFolder = async () => {
     const response = await client.mutate(
-      removeDatasetStorageLocation({ locationUri: folderToDelete.locationUri })
+      deleteDatasetStorageLocation({ locationUri: folderToDelete.locationUri })
     );
     if (!response.errors) {
       handleDeleteObjectModalClose();
@@ -171,7 +172,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

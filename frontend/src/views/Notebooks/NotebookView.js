@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Info, LocalOffer, RefreshRounded } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -14,29 +13,30 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { BiStopCircle } from 'react-icons/bi';
 import { FaAws, FaTrash } from 'react-icons/fa';
-import { VscDebugStart } from 'react-icons/vsc';
 import { SiJupyter } from 'react-icons/si';
+import { VscDebugStart } from 'react-icons/vsc';
 import { useNavigate } from 'react-router';
-import { LoadingButton } from '@mui/lab';
-import { useSnackbar } from 'notistack';
-import { Info, LocalOffer, RefreshRounded } from '@mui/icons-material';
-import useSettings from '../../hooks/useSettings';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import Stack from '../Stack/Stack';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import deleteSagemakerNotebook from '../../api/SagemakerNotebook/deleteSagemakerNotebook';
-import getSagemakerNotebook from '../../api/SagemakerNotebook/getSagemakerNotebook';
-import NotebookOverview from './NotebookOverview';
-import getSagemakerNotebookPresignedUrl from '../../api/SagemakerNotebook/getSagemakerNotebookPresignedUrl';
-import stopSagemakerNotebook from '../../api/SagemakerNotebook/stopNotebookInstance';
-import startSagemakerNotebook from '../../api/SagemakerNotebook/startNotebookInstance';
-import StackStatus from '../Stack/StackStatus';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import {
+  deleteSagemakerNotebook,
+  getSagemakerNotebook,
+  getSagemakerNotebookPresignedUrl,
+  startSagemakerNotebook,
+  stopSagemakerNotebook
+} from '../../api';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
+import { StackStatus } from '../Stack';
+import Stack from '../Stack/Stack';
+import NotebookOverview from './NotebookOverview';
 
 /**
  * @description NotebookView component.

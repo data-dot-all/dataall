@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const DisableDataSubscriptions = ({ environmentUri }) => ({
+export const disableDataSubscriptions = ({ environmentUri }) => ({
   variables: {
     environmentUri
   },
@@ -10,5 +10,3 @@ const DisableDataSubscriptions = ({ environmentUri }) => ({
     }
   `
 });
-
-export default DisableDataSubscriptions;

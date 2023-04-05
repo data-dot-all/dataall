@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listUserActivities = ({ filter }) => ({
+export const listUserActivities = ({ filter }) => ({
   variables: {
     filter
   },
@@ -24,5 +24,3 @@ const listUserActivities = ({ filter }) => ({
     }
   `
 });
-
-export default listUserActivities;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const inviteGroupOnEnvironment = (input) => ({
+export const inviteGroupOnEnvironment = (input) => ({
   variables: {
     input
   },
@@ -12,5 +12,3 @@ const inviteGroupOnEnvironment = (input) => ({
     }
   `
 });
-
-export default inviteGroupOnEnvironment;

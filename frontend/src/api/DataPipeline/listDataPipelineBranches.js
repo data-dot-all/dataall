@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDataPipelineBranches = (DataPipelineUri) => ({
+export const listDataPipelineBranches = (DataPipelineUri) => ({
   variables: {
     DataPipelineUri
   },
@@ -10,5 +10,3 @@ const listDataPipelineBranches = (DataPipelineUri) => ({
     }
   `
 });
-
-export default listDataPipelineBranches;

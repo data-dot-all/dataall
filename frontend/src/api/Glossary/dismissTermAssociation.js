@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const dismissTermAssociation = (linkUri) => ({
+export const dismissTermAssociation = (linkUri) => ({
   variables: {
     linkUri
   },
@@ -10,5 +10,3 @@ const dismissTermAssociation = (linkUri) => ({
     }
   `
 });
-
-export default dismissTermAssociation;

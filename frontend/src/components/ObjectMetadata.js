@@ -10,12 +10,12 @@ import {
   Typography
 } from '@mui/material';
 import React from 'react';
-import TextAvatar from './TextAvatar';
-import StackStatus from './StackStatus';
-import Label from './Label';
+import { TextAvatar } from './TextAvatar';
+import { StackStatus } from '.';
+import { Label } from './Label';
 import { dayjs } from '../utils/dayjs';
 
-const ObjectMetadata = (props) => {
+export const ObjectMetadata = (props) => {
   const {
     owner,
     admins,
@@ -245,5 +245,3 @@ ObjectMetadata.propTypes = {
   objectType: PropTypes.string,
   quicksightEnabled: PropTypes.bool
 };
-
-export default ObjectMetadata;

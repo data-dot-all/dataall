@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const removeWorksheetShare = (worksheetShareUri) => ({
+export const removeWorksheetShare = (worksheetShareUri) => ({
   variables: {
     worksheetShareUri
   },
@@ -10,5 +10,3 @@ const removeWorksheetShare = (worksheetShareUri) => ({
     }
   `
 });
-
-export default removeWorksheetShare;

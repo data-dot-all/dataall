@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listDatasetTableColumns = ({ tableUri, filter }) => ({
+export const listDatasetTableColumns = ({ tableUri, filter }) => ({
   variables: {
     tableUri,
     filter
@@ -42,5 +42,3 @@ const listDatasetTableColumns = ({ tableUri, filter }) => ({
     }
   `
 });
-
-export default listDatasetTableColumns;

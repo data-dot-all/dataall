@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 
-const GuestGuard = ({ children }) => {
+export const GuestGuard = ({ children }) => {
   const { isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
@@ -15,5 +15,3 @@ const GuestGuard = ({ children }) => {
 GuestGuard.propTypes = {
   children: PropTypes.node
 };
-
-export default GuestGuard;

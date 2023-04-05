@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const revokeItemsShareObject = ({ input }) => ({
+export const revokeItemsShareObject = ({ input }) => ({
   variables: {
     input
   },
@@ -13,5 +13,3 @@ const revokeItemsShareObject = ({ input }) => ({
     }
   `
 });
-
-export default revokeItemsShareObject;

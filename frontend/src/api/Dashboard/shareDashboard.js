@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const shareDashboard = (dashboardUri, principalId) => ({
+export const shareDashboard = (dashboardUri, principalId) => ({
   variables: {
     dashboardUri,
     principalId
@@ -14,5 +14,3 @@ const shareDashboard = (dashboardUri, principalId) => ({
     }
   `
 });
-
-export default shareDashboard;

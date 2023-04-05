@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getDataPipelineCredsLinux = (DataPipelineUri) => ({
+export const getDataPipelineCredsLinux = (DataPipelineUri) => ({
   variables: {
     DataPipelineUri
   },
@@ -10,5 +10,3 @@ const getDataPipelineCredsLinux = (DataPipelineUri) => ({
     }
   `
 });
-
-export default getDataPipelineCredsLinux;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteSagemakerStudioUserProfile = (
+export const deleteSagemakerStudioUserProfile = (
   sagemakerStudioUserProfileUri,
   deleteFromAWS
 ) => ({
@@ -20,5 +20,3 @@ const deleteSagemakerStudioUserProfile = (
     }
   `
 });
-
-export default deleteSagemakerStudioUserProfile;

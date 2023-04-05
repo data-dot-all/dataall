@@ -1,7 +1,4 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -18,20 +15,22 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@mui/lab';
+import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import useSettings from '../../hooks/useSettings';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import ChipInput from '../../components/TagsInput';
-import createDataPipeline from '../../api/DataPipeline/createDataPipeline';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import * as Defaults from '../../components/defaults';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import * as Yup from 'yup';
+import {
+  createDataPipeline,
+  listEnvironmentGroups,
+  listEnvironments
+} from '../../api';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import PipelineEnvironmentCreateForm from './PipelineEnvironmentCreateForm';
 
 const PipelineCrateForm = (props) => {
@@ -60,7 +59,7 @@ const PipelineCrateForm = (props) => {
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.SelectListFilter })
+      listEnvironments({ filter: Defaults.selectListFilter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
@@ -80,7 +79,7 @@ const PipelineCrateForm = (props) => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri
         })
       );

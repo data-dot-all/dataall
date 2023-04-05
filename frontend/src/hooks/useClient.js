@@ -7,9 +7,8 @@ import {
 } from 'apollo-boost';
 import { onError } from '@apollo/client/link/error';
 import { from } from '@apollo/client';
-import useToken from './useToken';
-import { useDispatch } from '../store';
-import { SET_ERROR } from '../store/errorReducer';
+import { useToken } from './useToken';
+import { SET_ERROR, useDispatch } from '../globalErrors';
 
 const defaultOptions = {
   watchQuery: {
@@ -26,7 +25,7 @@ const defaultOptions = {
   }
 };
 
-const useClient = () => {
+export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
   const token = useToken();
@@ -78,5 +77,3 @@ const useClient = () => {
   }, [token, dispatch]);
   return client;
 };
-
-export default useClient;

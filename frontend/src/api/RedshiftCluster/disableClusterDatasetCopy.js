@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const disableRedshiftClusterDatasetCopy = ({
+export const disableRedshiftClusterDatasetCopy = ({
   clusterUri,
   datasetUri,
   tableUri
@@ -20,5 +20,3 @@ const disableRedshiftClusterDatasetCopy = ({
     }
   `
 });
-
-export default disableRedshiftClusterDatasetCopy;

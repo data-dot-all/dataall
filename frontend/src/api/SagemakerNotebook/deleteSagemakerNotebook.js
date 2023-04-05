@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteSagemakerNotebook = (notebookUri, deleteFromAWS) => ({
+export const deleteSagemakerNotebook = (notebookUri, deleteFromAWS) => ({
   variables: {
     notebookUri,
     deleteFromAWS
@@ -17,5 +17,3 @@ const deleteSagemakerNotebook = (notebookUri, deleteFromAWS) => ({
     }
   `
 });
-
-export default deleteSagemakerNotebook;

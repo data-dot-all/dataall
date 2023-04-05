@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -19,25 +19,23 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
-import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
+import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import SearchIcon from '../../icons/Search';
-import Scrollbar from '../../components/Scrollbar';
-import ArrowRightIcon from '../../icons/ArrowRight';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import syncTables from '../../api/Dataset/syncTables';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import listDatasetTables from '../../api/Dataset/listDatasetTables';
-import Pager from '../../components/Pager';
-import DeleteObjectModal from '../../components/DeleteObjectModal';
-import deleteDatasetTable from '../../api/DatasetTable/deleteDatasetTable';
+import { deleteDatasetTable, listDatasetTables, syncTables } from '../../api';
+import {
+  Defaults,
+  DeleteObjectModal,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { ArrowRightIcon, SearchIcon } from '../../icons';
 import DatasetStartCrawlerModal from './DatasetStartCrawlerModal';
 
 const DatasetTables = ({ dataset, isAdmin }) => {
@@ -45,8 +43,8 @@ const DatasetTables = ({ dataset, isAdmin }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [syncingTables, setSyncingTables] = useState(false);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
@@ -103,7 +101,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setSyncingTables(false);
-    setFilter(Defaults.DefaultFilter);
+    setFilter(Defaults.filter);
   };
 
   const deleteTable = async () => {
@@ -195,7 +193,7 @@ const DatasetTables = ({ dataset, isAdmin }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

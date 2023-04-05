@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const runSavedQuery = ({ savedQueryUri, sqlBody }) => ({
+export const runSavedQuery = ({ savedQueryUri, sqlBody }) => ({
   variables: {
     savedQueryUri,
     // environmentUri: environmentUri,
@@ -20,5 +20,3 @@ const runSavedQuery = ({ savedQueryUri, sqlBody }) => ({
     }
   `
 });
-
-export default runSavedQuery;

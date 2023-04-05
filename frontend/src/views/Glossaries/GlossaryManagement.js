@@ -1,21 +1,19 @@
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowRight from '@mui/icons-material/ArrowRight';
+import { LoadingButton, TreeItem, TreeView } from '@mui/lab';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { makeStyles } from '@mui/styles';
-import { LoadingButton, TreeItem, TreeView } from '@mui/lab';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import * as BsIcons from 'react-icons/bs';
-import Plus from '../../icons/Plus';
-import GlossaryNodeForm from './GlossaryNodeForm';
-import { useDispatch } from '../../store';
-import * as Defaults from '../../components/defaults';
-import listGlossaryTree from '../../api/Glossary/listGlossaryTree';
-import { SET_ERROR } from '../../store/errorReducer';
+import { getGlossaryTree } from '../../api';
+import { Defaults, ObjectBrief } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { PlusIcon } from '../../icons';
 import listToTree from '../../utils/listToTree';
-import ObjectBrief from '../../components/ObjectBrief';
 import GlossaryCreateCategoryForm from './GlossaryCreateCategoryForm';
 import GlossaryCreateTermForm from './GlossaryCreateTermForm';
+import GlossaryNodeForm from './GlossaryNodeForm';
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {
@@ -124,7 +122,7 @@ const GlossaryManagement = (props) => {
   const { glossary, isAdmin, client } = props;
   const dispatch = useDispatch();
   const [fetchingItems, setFetchingItems] = useState(true);
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
+  const [items, setItems] = useState(Defaults.pagedResponse);
   const [nodes, setNodes] = useState([]);
   const classes = useStyles();
   const [data, setData] = useState(glossary);
@@ -151,7 +149,7 @@ const GlossaryManagement = (props) => {
     setFetchingItems(true);
     setData(glossary);
     const response = await client.query(
-      listGlossaryTree({ nodeUri: glossary.nodeUri, filter: { pageSize: 500 } })
+      getGlossaryTree({ nodeUri: glossary.nodeUri, filter: { pageSize: 500 } })
     );
     if (!response.errors && response.data.getGlossary !== null) {
       setItems({ ...response.data.getGlossary.tree });
@@ -227,7 +225,7 @@ const GlossaryManagement = (props) => {
             className={classes.root}
             defaultExpanded={['3']}
             defaultCollapseIcon={<ArrowDropDownIcon />}
-            defaultExpandIcon={<ArrowRightIcon />}
+            defaultExpandIcon={<ArrowRight />}
             defaultEndIcon={<div style={{ width: 24 }} />}
           >
             {nodes.map((node) => (
@@ -342,7 +340,7 @@ const GlossaryManagement = (props) => {
               color="primary"
               disabled={data.__typename !== 'Glossary'}
               onClick={handleCategoryCreateModalOpen}
-              startIcon={<Plus fontSize="small" />}
+              startIcon={<PlusIcon fontSize="small" />}
               sx={{ m: 1 }}
               variant="outlined"
             >
@@ -352,7 +350,7 @@ const GlossaryManagement = (props) => {
               color="primary"
               disabled={data.__typename === 'Term'}
               onClick={handleTermCreateModalOpen}
-              startIcon={<Plus fontSize="small" />}
+              startIcon={<PlusIcon fontSize="small" />}
               sx={{ m: 1 }}
               variant="outlined"
             >

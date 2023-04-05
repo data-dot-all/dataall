@@ -3,10 +3,9 @@ import { AppBar, Box, IconButton, Toolbar } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Menu } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import AccountPopover from '../popovers/AccountPopover';
-import Logo from '../Logo';
-import NotificationsPopover from '../popovers/NotificationsPopover';
-import SettingsDrawer from '../SettingsDrawer';
+import { AccountPopover, NotificationsPopover } from '../popovers';
+import { Logo } from '../Logo';
+import { SettingsDrawer } from '../SettingsDrawer';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -15,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
+export const DefaultNavbar = ({ openDrawer, onOpenDrawerChange }) => {
   const classes = useStyles();
 
   return (
@@ -62,5 +61,3 @@ DefaultNavbar.propTypes = {
   openDrawer: PropTypes.bool,
   onOpenDrawerChange: PropTypes.func
 };
-
-export default DefaultNavbar;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listSagemakerStudioUserProfiles = (filter) => ({
+export const listSagemakerStudioUserProfiles = (filter) => ({
   variables: {
     filter
   },
@@ -46,5 +46,3 @@ const listSagemakerStudioUserProfiles = (filter) => ({
     }
   `
 });
-
-export default listSagemakerStudioUserProfiles;

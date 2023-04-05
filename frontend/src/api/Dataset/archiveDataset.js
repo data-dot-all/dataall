@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const archiveDataset = (datasetUri) => ({
+export const archiveDataset = (datasetUri) => ({
   variables: {
     datasetUri
   },
@@ -10,5 +10,3 @@ const archiveDataset = (datasetUri) => ({
     }
   `
 });
-
-export default archiveDataset;

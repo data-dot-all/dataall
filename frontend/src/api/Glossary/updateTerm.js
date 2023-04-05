@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateTerm = ({ input, nodeUri }) => ({
+export const updateTerm = ({ input, nodeUri }) => ({
   variables: {
     input,
     nodeUri
@@ -18,5 +18,3 @@ const updateTerm = ({ input, nodeUri }) => ({
     }
   `
 });
-
-export default updateTerm;

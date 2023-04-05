@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -15,20 +13,19 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { useSnackbar } from 'notistack';
 import CircularProgress from '@mui/material/CircularProgress';
-import { LoadingButton } from '@mui/lab';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import useClient from '../../hooks/useClient';
-import getOrganization from '../../api/Organization/getOrganization';
-import updateOrganization from '../../api/Organization/updateOrganization';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import ChipInput from '../../components/TagsInput';
+import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import * as Yup from 'yup';
+import { getOrganization, updateOrganization } from '../../api';
+import { ChipInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 const OrganizationEditForm = (props) => {
   const navigate = useNavigate();

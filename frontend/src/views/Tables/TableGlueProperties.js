@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import {
   Box,
   Card,
@@ -9,8 +8,9 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import React from 'react';
-import Scrollbar from '../../components/Scrollbar';
+import { Scrollbar } from '../../components';
 
 const TableGlueProperties = (props) => {
   const { glueProperties, ...other } = props;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const archiveEnvironment = ({ environmentUri, deleteFromAWS }) => ({
+export const archiveEnvironment = ({ environmentUri, deleteFromAWS }) => ({
   variables: {
     environmentUri,
     deleteFromAWS
@@ -17,5 +17,3 @@ const archiveEnvironment = ({ environmentUri, deleteFromAWS }) => ({
     }
   `
 });
-
-export default archiveEnvironment;

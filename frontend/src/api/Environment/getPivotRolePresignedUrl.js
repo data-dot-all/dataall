@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getPivotRolePresignedUrl = (organizationUri) => ({
+export const getPivotRolePresignedUrl = (organizationUri) => ({
   variables: {
     organizationUri
   },
@@ -10,5 +10,3 @@ const getPivotRolePresignedUrl = (organizationUri) => ({
     }
   `
 });
-
-export default getPivotRolePresignedUrl;

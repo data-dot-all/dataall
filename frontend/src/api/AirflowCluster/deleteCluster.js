@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteAirflowCluster = (clusterUri) => ({
+export const deleteAirflowCluster = (clusterUri) => ({
   variables: {
     clusterUri
   },
@@ -10,5 +10,3 @@ const deleteAirflowCluster = (clusterUri) => ({
     }
   `
 });
-
-export default deleteAirflowCluster;

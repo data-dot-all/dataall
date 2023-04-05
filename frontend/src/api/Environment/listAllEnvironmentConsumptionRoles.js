@@ -1,6 +1,9 @@
 import { gql } from 'apollo-boost';
 
-const listAllEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
+export const listAllEnvironmentConsumptionRoles = ({
+  filter,
+  environmentUri
+}) => ({
   variables: {
     environmentUri,
     filter
@@ -30,5 +33,3 @@ const listAllEnvironmentConsumptionRoles = ({ filter, environmentUri }) => ({
     }
   `
 });
-
-export default listAllEnvironmentConsumptionRoles;

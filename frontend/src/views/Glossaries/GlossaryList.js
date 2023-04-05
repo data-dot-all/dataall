@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Breadcrumbs,
@@ -10,18 +8,15 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import PlusIcon from '../../icons/Plus';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
+import { Link as RouterLink } from 'react-router-dom';
+import { listGlossaries } from '../../api';
+import { Defaults, Pager, SearchInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PlusIcon } from '../../icons';
 import GlossaryListItem from './GlossaryListItem';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import listGlossaries from '../../api/Glossary/listGlossaries';
 
 function GlossariesPageHeader() {
   return (
@@ -74,8 +69,8 @@ function GlossariesPageHeader() {
 
 const GlossaryList = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);

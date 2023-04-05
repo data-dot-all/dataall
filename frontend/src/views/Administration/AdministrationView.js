@@ -12,8 +12,8 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import useSettings from '../../hooks/useSettings';
-import ChevronRightIcon from '../../icons/ChevronRight';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import AdministrationTeams from './AdministrationTeams';
 import DashboardViewer from './AdministratorDashboardViewer';
 

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -14,36 +14,39 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { CgHashtag } from 'react-icons/cg';
 import { FaTrash } from 'react-icons/fa';
 import { VscSymbolString } from 'react-icons/vsc';
-import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import { useSnackbar } from 'notistack';
-import { useDispatch } from '../../store';
-import getWorksheet from '../../api/Worksheet/getWorksheet';
-import updateWorksheet from '../../api/Worksheet/updateWorksheet';
-import runAthenaSqlQuery from '../../api/Worksheet/runAthenaSqlQuery';
-import deleteWorksheet from '../../api/Worksheet/deleteWorksheet';
-import useClient from '../../hooks/useClient';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import { SET_ERROR } from '../../store/errorReducer';
-import listDatasetsOwnedByEnvGroup from '../../api/Environment/listDatasetsOwnedByEnvGroup';
-import listDatasetTables from '../../api/Dataset/listDatasetTables';
-import getSharedDatasetTables from '../../api/DatasetTable/getSharedDatasetTables';
-import listDatasetTableColumns from '../../api/DatasetTable/listDatasetTableColumns';
-import searchEnvironmentDataItems from '../../api/Environment/listDatasetsPublishedInEnvironment';
-import PencilAltIcon from '../../icons/PencilAlt';
-import Scrollbar from '../../components/Scrollbar';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  deleteWorksheet,
+  getSharedDatasetTables,
+  getWorksheet,
+  listDatasetTableColumns,
+  listDatasetTables,
+  listDatasetsOwnedByEnvGroup,
+  listEnvironmentGroups,
+  listEnvironments,
+  runAthenaSqlQuery,
+  searchEnvironmentDataItems,
+  updateWorksheet
+} from '../../api';
+import {
+  Defaults,
+  DeleteObjectWithFrictionModal,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PencilAltIcon } from '../../icons';
 import SQLQueryEditor from './SQLQueryEditor';
-import WorksheetResult from './WorksheetResult';
 import WorksheetEditFormModal from './WorksheetEditFormModal';
-import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import * as Defaults from '../../components/defaults';
+import WorksheetResult from './WorksheetResult';
 
-const WorksheetView = () => {
+export const WorksheetView = () => {
   const navigate = useNavigate();
   const params = useParams();
   const dispatch = useDispatch();
@@ -87,7 +90,7 @@ const WorksheetView = () => {
   const fetchEnvironments = useCallback(async () => {
     setLoadingEnvs(true);
     const response = await client.query(
-      listEnvironments({ filter: Defaults.DefaultFilter })
+      listEnvironments({ filter: Defaults.filter })
     );
     if (!response.errors) {
       setEnvironmentOptions(
@@ -107,7 +110,7 @@ const WorksheetView = () => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri
         })
       );
@@ -200,7 +203,7 @@ const WorksheetView = () => {
         response = await client.query(
           listDatasetTables({
             datasetUri: dataset.datasetUri,
-            filter: Defaults.SelectListFilter
+            filter: Defaults.selectListFilter
           })
         );
       }
@@ -237,7 +240,7 @@ const WorksheetView = () => {
       const response = await client.query(
         listDatasetTableColumns({
           tableUri: table.tableUri,
-          filter: Defaults.SelectListFilter
+          filter: Defaults.selectListFilter
         })
       );
       if (!response.errors) {
@@ -692,5 +695,3 @@ const WorksheetView = () => {
     </>
   );
 };
-
-export default WorksheetView;

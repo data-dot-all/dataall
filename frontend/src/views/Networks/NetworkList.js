@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -17,23 +17,22 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { FaNetworkWired } from 'react-icons/fa';
-import { LoadingButton } from '@mui/lab';
-import { DeleteOutlined } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import SearchIcon from '../../icons/Search';
-import Scrollbar from '../../components/Scrollbar';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Pager from '../../components/Pager';
-import Label from '../../components/Label';
-import listEnvironmentNetworks from '../../api/Environment/listEnvironmentNetworks';
-import PlusIcon from '../../icons/Plus';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FaNetworkWired } from 'react-icons/fa';
+import { deleteNetwork, listEnvironmentNetworks } from '../../api';
+import {
+  Defaults,
+  Label,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PlusIcon, SearchIcon } from '../../icons';
 import NetworkCreateModal from './NetworkCreateModal';
-import deleteNetwork from '../../api/Vpc/deleteNetwork';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {
   return (
@@ -103,8 +102,8 @@ const EnvironmentNetworks = ({ environment }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [isNetworkCreateOpen, setIsNetworkCreateOpen] = useState(false);
@@ -221,7 +220,7 @@ const EnvironmentNetworks = ({ environment }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

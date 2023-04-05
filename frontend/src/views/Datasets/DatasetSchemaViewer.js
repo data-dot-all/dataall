@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import { TableChartOutlined } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -16,15 +14,14 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { TableChartOutlined } from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { PagedResponseDefault } from '../../components/defaults';
-import getDatasetSchema from '../../api/Dataset/getDatasetSchema';
-import useClient from '../../hooks/useClient';
-import Pager from '../../components/Pager';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import * as Defaults from '../../components/defaults';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { getDatasetSchema } from '../../api';
+import { Defaults, Pager } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const DatasetSchemaItem = (props) => {
   const { table } = props;
@@ -121,8 +118,8 @@ const DatasetSchemaViewer = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const [loading, setLoading] = useState(true);
-  const [tables, setTables] = useState(PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.SelectListFilter);
+  const [tables, setTables] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.selectListFilter);
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listAssetLinkedTerms = ({ uri, filter }) => ({
+export const listAssetLinkedTerms = ({ uri, filter }) => ({
   variables: {
     filter,
     uri
@@ -39,5 +39,3 @@ const listAssetLinkedTerms = ({ uri, filter }) => ({
     }
   `
 });
-
-export default listAssetLinkedTerms;

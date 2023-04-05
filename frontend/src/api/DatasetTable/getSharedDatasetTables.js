@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getSharedDatasetTables = ({ datasetUri, envUri }) => ({
+export const getSharedDatasetTables = ({ datasetUri, envUri }) => ({
   variables: {
     datasetUri,
     envUri
@@ -14,5 +14,3 @@ const getSharedDatasetTables = ({ datasetUri, envUri }) => ({
     }
   `
 });
-
-export default getSharedDatasetTables;

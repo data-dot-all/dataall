@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
-import Logo from './Logo';
+import { Logo } from './Logo';
 
-const SlashScreen = () => (
+export const SplashScreen = () => (
   <Box
     sx={{
       alignItems: 'center',
@@ -21,5 +21,3 @@ const SlashScreen = () => (
     <Logo />
   </Box>
 );
-
-export default SlashScreen;

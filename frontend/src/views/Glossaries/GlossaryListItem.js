@@ -8,14 +8,14 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { BsBookmark, BsTag } from 'react-icons/bs';
 import React from 'react';
+import { BsBookmark, BsTag } from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
-import IconAvatar from '../../components/IconAvatar';
-import useCardStyle from '../../hooks/useCardStyle';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar } from '../../components';
+import { useCardStyle } from '../../hooks';
 
 const GlossaryListItem = (props) => {
   const { glossary } = props;

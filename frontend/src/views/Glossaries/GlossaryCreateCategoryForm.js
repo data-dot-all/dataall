@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -10,12 +8,13 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import addCategory from '../../api/Glossary/addCategory';
+import { useEffect, useState } from 'react';
+import * as Yup from 'yup';
+import { createCategory } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 
 const GlossaryCreateCategoryForm = ({
   client,
@@ -36,7 +35,7 @@ const GlossaryCreateCategoryForm = ({
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        addCategory({
+        createCategory({
           parentUri: data.nodeUri,
           input: {
             label: values.label,

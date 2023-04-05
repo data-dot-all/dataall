@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateEnvironmentStack = ({ environmentUri }) => ({
+export const updateEnvironmentStack = ({ environmentUri }) => ({
   variables: { environmentUri },
   mutation: gql`
     mutation updateEnvironmentStack($environmentUri: String!) {
@@ -8,5 +8,3 @@ const updateEnvironmentStack = ({ environmentUri }) => ({
     }
   `
 });
-
-export default updateEnvironmentStack;

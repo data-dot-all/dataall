@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import NProgress from 'nprogress';
 import { Box } from '@mui/material';
 
-const LoadingScreen = () => {
+export const LoadingScreen = () => {
   useEffect(() => {
     NProgress.start();
 
@@ -20,5 +20,3 @@ const LoadingScreen = () => {
     />
   );
 };
-
-export default LoadingScreen;

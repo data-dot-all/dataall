@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -7,20 +5,21 @@ import {
   CardHeader,
   CircularProgress,
   Divider,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableRow,
-  Switch
+  TableRow
 } from '@mui/material';
-import useClient from '../../hooks/useClient';
-import Scrollbar from '../../components/Scrollbar';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { listKeyValueTags } from '../../api';
+import { Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PencilAltIcon } from '../../icons';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
-import listKeyValueTags from '../../api/KeyValueTags/listKeyValueTags';
-import PencilAlt from '../../icons/PencilAlt';
 
 const KeyValueTagList = ({ targetUri, targetType }) => {
   const client = useClient();
@@ -83,7 +82,7 @@ const KeyValueTagList = ({ targetUri, targetType }) => {
               <Box display="flex" justifyContent="flex-end" sx={{ p: 1 }}>
                 <Button
                   color="primary"
-                  startIcon={<PencilAlt fontSize="small" />}
+                  startIcon={<PencilAltIcon fontSize="small" />}
                   sx={{ m: 1 }}
                   variant="outlined"
                   onClick={openUpdate}

@@ -1,12 +1,11 @@
-import { useState } from 'react';
-import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { postFeedMessage } from '../../api/Feed';
-import { useDispatch } from '../../store';
+import { useState } from 'react';
+import { postFeedMessage } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const FeedCommentAdd = (props) => {
   const dispatch = useDispatch();

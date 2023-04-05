@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listTenantPermissions = (filter) => ({
+export const listTenantPermissions = (filter) => ({
   variables: {
     filter
   },
@@ -13,5 +13,3 @@ const listTenantPermissions = (filter) => ({
     }
   `
 });
-
-export default listTenantPermissions;

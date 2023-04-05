@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getVote = (targetUri, targetType) => ({
+export const getVote = (targetUri, targetType) => ({
   variables: {
     targetUri,
     targetType
@@ -13,5 +13,3 @@ const getVote = (targetUri, targetType) => ({
     }
   `
 });
-
-export default getVote;

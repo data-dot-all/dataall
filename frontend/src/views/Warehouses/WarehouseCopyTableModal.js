@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { CopyAll } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -9,25 +9,22 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
 import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { CopyAll } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import { PagedResponseDefault } from '../../components/defaults';
-import listAvailableDatasetTables from '../../api/RedshiftCluster/listAvailableDatasetTables';
-import copyTableToCluster from '../../api/RedshiftCluster/copyTableToCluster';
-import * as Defaults from '../../components/defaults';
+import { copyTableToCluster, listAvailableDatasetTables } from '../../api';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const WarehouseCopyTableModal = (props) => {
   const client = useClient();
   const { warehouse, onApply, onClose, open, reload, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
-  const [filter] = useState(Defaults.SelectListFilter);
-  const [items, setItems] = useState(PagedResponseDefault);
+  const [filter] = useState(Defaults.selectListFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
   const [itemOptions, setItemOptions] = useState([]);
   const [selectedTable, setSelectedTable] = useState('');
   const dispatch = useDispatch();

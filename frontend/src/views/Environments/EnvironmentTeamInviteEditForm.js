@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -16,13 +15,15 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import listEnvironmentGroupInvitationPermissions from '../../api/Environment/listEnvironmentPermissions';
-import updateGroupEnvironmentPermissions from '../../api/Environment/updateGroupEnvironmentPermissions';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  listEnvironmentGroupInvitationPermissions,
+  updateGroupEnvironmentPermissions
+} from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;

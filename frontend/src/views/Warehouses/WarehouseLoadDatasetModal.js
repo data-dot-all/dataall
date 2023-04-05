@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
 import {
   Box,
   Dialog,
@@ -12,24 +10,21 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import Scrollbar from '../../components/Scrollbar';
-import Pager from '../../components/Pager';
-import * as Defaults from '../../components/defaults';
-import { PagedResponseDefault } from '../../components/defaults';
-import listAvailableDatasets from '../../api/RedshiftCluster/listAvailableDatasets';
-import addDatasetToCluster from '../../api/RedshiftCluster/addDatasetToCluster';
-import PlusIcon from '../../icons/Plus';
+import { addDatasetToCluster, listAvailableDatasets } from '../../api';
+import { Defaults, Pager, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { PlusIcon } from '../../icons';
 
 const WarehouseLoadDatasetModal = (props) => {
   const client = useClient();
   const { warehouse, onApply, onClose, open, reload, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
-  const [items, setItems] = useState(PagedResponseDefault);
+  const [filter, setFilter] = useState(Defaults.filter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
 

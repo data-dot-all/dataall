@@ -1,14 +1,13 @@
-import { Helmet } from 'react-helmet-async';
 import { Box, Card, CardContent, Container, Typography } from '@mui/material';
-import { LoginAmplify } from '../../components/authentication/login';
-import Logo from '../../components/Logo';
-import useAuth from '../../hooks/useAuth';
+import { Helmet } from 'react-helmet-async';
+import { LoginAmplify, Logo } from '../../components';
+import { useAuth } from '../../hooks';
 
 const platformIcons = {
   Amplify: '/static/icons/amplify.svg'
 };
 
-const Login = () => {
+export const Login = () => {
   const { platform } = useAuth();
 
   return (

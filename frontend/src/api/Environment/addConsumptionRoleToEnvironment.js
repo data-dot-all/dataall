@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const addConsumptionRoleToEnvironment = (input) => ({
+export const addConsumptionRoleToEnvironment = (input) => ({
   variables: {
     input
   },
@@ -18,5 +18,3 @@ const addConsumptionRoleToEnvironment = (input) => ({
     }
   `
 });
-
-export default addConsumptionRoleToEnvironment;

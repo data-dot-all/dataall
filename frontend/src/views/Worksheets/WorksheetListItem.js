@@ -8,17 +8,16 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import * as FaIcons from 'react-icons/fa';
-import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
-import { AiOutlineExperiment } from 'react-icons/ai';
 import React from 'react';
-import IconAvatar from '../../components/IconAvatar';
-import Label from '../../components/Label';
-import useCardStyle from '../../hooks/useCardStyle';
+import { AiOutlineExperiment } from 'react-icons/ai';
+import * as FaIcons from 'react-icons/fa';
+import { useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar, Label } from '../../components';
+import { useCardStyle } from '../../hooks';
 
-const WorksheetListItem = (props) => {
+export const WorksheetListItem = (props) => {
   const { worksheet } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -197,4 +196,3 @@ const WorksheetListItem = (props) => {
 WorksheetListItem.propTypes = {
   worksheet: PropTypes.object.isRequired
 };
-export default WorksheetListItem;

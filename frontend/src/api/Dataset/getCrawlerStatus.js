@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getCrawlerStatus = ({ datasetUri, name }) => ({
+export const getCrawlerStatus = ({ datasetUri, name }) => ({
   variables: {
     datasetUri,
     input: name
@@ -14,5 +14,3 @@ const getCrawlerStatus = ({ datasetUri, name }) => ({
             }
         }`
 });
-
-export default getCrawlerStatus;

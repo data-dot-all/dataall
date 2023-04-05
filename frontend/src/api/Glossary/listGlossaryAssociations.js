@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const listGlossaryAssociations = ({ nodeUri, filter }) => ({
+export const listGlossaryAssociations = ({ nodeUri, filter }) => ({
   variables: {
     nodeUri,
     filter
@@ -64,5 +64,3 @@ const listGlossaryAssociations = ({ nodeUri, filter }) => ({
     }
   `
 });
-
-export default listGlossaryAssociations;

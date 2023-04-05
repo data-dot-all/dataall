@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const startGlueCrawler = ({ datasetUri, input }) => ({
+export const startGlueCrawler = ({ datasetUri, input }) => ({
   variables: {
     datasetUri,
     input
@@ -16,5 +16,3 @@ const startGlueCrawler = ({ datasetUri, input }) => ({
     }
   `
 });
-
-export default startGlueCrawler;

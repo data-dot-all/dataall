@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -16,20 +15,18 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
-import { LoadingButton } from '@mui/lab';
-import * as Yup from 'yup';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import ChipInput from '../../components/TagsInput';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import addDatasetStorageLocation from '../../api/Dataset/addDatasetStorageLocation';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import useSettings from '../../hooks/useSettings';
-import getDataset from '../../api/Dataset/getDataset';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import * as Yup from 'yup';
+import { addDatasetStorageLocation, getDataset } from '../../api';
+import { ChipInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 function FolderCreateHeader(props) {
   const { dataset } = props;

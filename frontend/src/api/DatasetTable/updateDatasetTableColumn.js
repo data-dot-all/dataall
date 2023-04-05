@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateColumnDescription = ({ columnUri, input }) => ({
+export const updateColumnDescription = ({ columnUri, input }) => ({
   variables: {
     columnUri,
     input
@@ -17,5 +17,3 @@ const updateColumnDescription = ({ columnUri, input }) => ({
     }
   `
 });
-
-export default updateColumnDescription;

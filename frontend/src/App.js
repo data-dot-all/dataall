@@ -1,19 +1,18 @@
-import { useRoutes } from 'react-router-dom';
-import { SnackbarProvider } from 'notistack';
 import { ThemeProvider } from '@mui/material';
-import GlobalStyles from './components/GlobalStyles';
-import SplashScreen from './components/SplashScreen';
-import useAuth from './hooks/useAuth';
-import useScrollReset from './hooks/useScrollReset';
-import useSettings from './hooks/useSettings';
+import { SnackbarProvider } from 'notistack';
+import { useRoutes } from 'react-router-dom';
+import { GlobalStyles, SplashScreen } from './components';
+import { useAuth, useScrollReset, useSettings } from './hooks';
 import routes from './routes';
 import { createMaterialTheme } from './theme';
 
-const App = () => {
+export const App = () => {
   const content = useRoutes(routes);
   const { settings } = useSettings();
   const auth = useAuth();
   useScrollReset();
+
+  console.log('hello');
 
   const theme = createMaterialTheme({
     direction: settings.direction,
@@ -31,5 +30,3 @@ const App = () => {
     </ThemeProvider>
   );
 };
-
-export default App;

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateWorksheetShare = ({ worksheetShareUri, canEdit }) => ({
+export const updateWorksheetShare = ({ worksheetShareUri, canEdit }) => ({
   variables: {
     worksheetShareUri,
     canEdit
@@ -20,5 +20,3 @@ const updateWorksheetShare = ({ worksheetShareUri, canEdit }) => ({
     }
   `
 });
-
-export default updateWorksheetShare;

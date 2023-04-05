@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const generateDatasetAccessToken = (datasetUri) => ({
+export const generateDatasetAccessToken = (datasetUri) => ({
   variables: {
     datasetUri
   },
@@ -10,5 +10,3 @@ const generateDatasetAccessToken = (datasetUri) => ({
     }
   `
 });
-
-export default generateDatasetAccessToken;

@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import {
   Card,
   CardContent,
@@ -8,8 +7,9 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import React from 'react';
-import Label from '../../components/Label';
+import { Label } from '../../components';
 
 const EnvironmentFeatures = (props) => {
   const { environment, ...other } = props;
@@ -51,8 +51,16 @@ const EnvironmentFeatures = (props) => {
               Notebooks
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.parameters["notebooksEnabled"] === 'true' ? 'success' : 'error'}>
-                {environment.parameters["notebooksEnabled"] === 'true' ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['notebooksEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['notebooksEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
@@ -16,13 +15,12 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import listTenantPermissions from '../../api/Tenant/listTenantPermissions';
-import updateTenantGroupPermissions from '../../api/Tenant/updateTenantGroupPermissions';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { listTenantPermissions, updateTenantGroupPermissions } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const TeamPermissionsEditForm = (props) => {
   const { team, onClose, open, reloadTeams, ...other } = props;

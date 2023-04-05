@@ -13,7 +13,7 @@ import {
   TableRow
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
+import { useClient } from '../../hooks';
 
 const PipelineEnvironments = (props) => {
   const { pipeline } = props;

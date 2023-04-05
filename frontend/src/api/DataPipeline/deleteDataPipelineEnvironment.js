@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDataPipelineEnvironment = ({ envPipelineUri }) => ({
+export const deleteDataPipelineEnvironment = ({ envPipelineUri }) => ({
   variables: {
     envPipelineUri
   },
@@ -10,5 +10,3 @@ const deleteDataPipelineEnvironment = ({ envPipelineUri }) => ({
     }
   `
 });
-
-export default deleteDataPipelineEnvironment;

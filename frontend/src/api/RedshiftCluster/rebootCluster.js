@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const rebootRedshiftCluster = (clusterUri) => ({
+export const rebootRedshiftCluster = (clusterUri) => ({
   variables: {
     clusterUri
   },
@@ -10,5 +10,3 @@ const rebootRedshiftCluster = (clusterUri) => ({
     }
   `
 });
-
-export default rebootRedshiftCluster;

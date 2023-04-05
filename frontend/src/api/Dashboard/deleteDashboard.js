@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDashboard = (dashboardUri) => ({
+export const deleteDashboard = (dashboardUri) => ({
   variables: {
     dashboardUri
   },
@@ -10,5 +10,3 @@ const deleteDashboard = (dashboardUri) => ({
     }
   `
 });
-
-export default deleteDashboard;

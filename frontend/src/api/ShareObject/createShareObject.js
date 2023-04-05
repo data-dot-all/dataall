@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
+export const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
   return {
     variables: {
       datasetUri,
@@ -28,5 +28,3 @@ const createShareObject = ({ datasetUri, itemUri, itemType, input }) => {
     `
   };
 };
-
-export default createShareObject;

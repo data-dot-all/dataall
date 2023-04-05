@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getNetwork = (vpcUri) => ({
+export const getNetwork = (vpcUri) => ({
   variables: {
     vpcUri
   },
@@ -20,5 +20,3 @@ const getNetwork = (vpcUri) => ({
     }
   `
 });
-
-export default getNetwork;

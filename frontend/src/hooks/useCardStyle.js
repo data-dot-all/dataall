@@ -1,6 +1,6 @@
 import { makeStyles } from '@mui/styles';
 
-const useCardStyle = makeStyles((theme) => ({
+export const useCardStyle = makeStyles((theme) => ({
   card: {
     boxShadow: '0 8px 40px -12px rgba(0,0,0,0.3)',
     '&:hover': {
@@ -9,4 +9,3 @@ const useCardStyle = makeStyles((theme) => ({
     }
   }
 }));
-export default useCardStyle;

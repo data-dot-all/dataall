@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteDatasetTable = ({ tableUri }) => ({
+export const deleteDatasetTable = ({ tableUri }) => ({
   variables: {
     tableUri
   },
@@ -10,5 +10,3 @@ const deleteDatasetTable = ({ tableUri }) => ({
     }
   `
 });
-
-export default deleteDatasetTable;

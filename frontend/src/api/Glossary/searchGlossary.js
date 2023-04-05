@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const searchGlossary = (filter) => ({
+export const searchGlossary = (filter) => ({
   variables: {
     filter
   },
@@ -45,5 +45,3 @@ const searchGlossary = (filter) => ({
     }
   `
 });
-
-export default searchGlossary;

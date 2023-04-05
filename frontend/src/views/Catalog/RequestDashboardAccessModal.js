@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import SendIcon from '@mui/icons-material/Send';
+import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Box,
@@ -10,15 +10,13 @@ import {
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
 import React from 'react';
-import SendIcon from '@mui/icons-material/Send';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import requestDashboardShare from '../../api/Dashboard/requestDashboardShare';
-import useGroups from '../../hooks/useGroups';
+import * as Yup from 'yup';
+import { requestDashboardShare } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useGroups } from '../../hooks';
 
 const RequestDashboardAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;

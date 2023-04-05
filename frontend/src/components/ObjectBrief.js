@@ -8,9 +8,9 @@ import {
   Typography,
   Divider
 } from '@mui/material';
-import Label from './Label';
+import { Label } from './Label';
 
-const ObjectBrief = (props) => {
+export const ObjectBrief = (props) => {
   const {
     uri,
     description,
@@ -135,5 +135,3 @@ ObjectBrief.propTypes = {
   title: PropTypes.string,
   confidentiality: PropTypes.string
 };
-
-export default ObjectBrief;

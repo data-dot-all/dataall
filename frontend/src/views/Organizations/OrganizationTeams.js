@@ -1,6 +1,5 @@
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
-import * as BsIcons from 'react-icons/bs';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -18,25 +17,26 @@ import {
   TextField
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
 import { useTheme } from '@mui/styles';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import * as BsIcons from 'react-icons/bs';
 import { HiUserRemove } from 'react-icons/hi';
 import { VscChecklist } from 'react-icons/vsc';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import SearchIcon from '../../icons/Search';
-import Scrollbar from '../../components/Scrollbar';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import Pager from '../../components/Pager';
-import Label from '../../components/Label';
-import OrganizationTeamInviteForm from './OrganizationTeamInviteForm';
-import removeGroupFromOrganization from '../../api/Organization/removeGroup';
-import listOrganizationGroups from '../../api/Organization/listOrganizationGroups';
+import { listOrganizationGroups, removeGroupFromOrganization } from '../../api';
+import {
+  Defaults,
+  Label,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
+import { SearchIcon } from '../../icons';
 import OrganizationTeamInviteEditForm from './OrganizationTeamInviteEditForm';
+import OrganizationTeamInviteForm from './OrganizationTeamInviteForm';
 
 function TeamRow({ team, organization, fetchItems }) {
   const client = useClient();
@@ -145,8 +145,8 @@ TeamRow.propTypes = {
 const OrganizationTeams = ({ organization }) => {
   const client = useClient();
   const dispatch = useDispatch();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
@@ -246,7 +246,7 @@ const OrganizationTeams = ({ organization }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="Search"
+                placeholder="SearchIcon"
                 value={inputValue}
                 variant="outlined"
               />

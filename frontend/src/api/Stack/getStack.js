@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getStack = (environmentUri, stackUri) => ({
+export const getStack = (environmentUri, stackUri) => ({
   variables: {
     environmentUri,
     stackUri
@@ -24,5 +24,3 @@ const getStack = (environmentUri, stackUri) => ({
     }
   `
 });
-
-export default getStack;

@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -9,10 +7,11 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
-import useClient from '../../hooks/useClient';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import getRedshiftClusterDatabaseCredentials from '../../api/RedshiftCluster/getClusterDatabaseCredentials';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
+import { getRedshiftClusterDatabaseCredentials } from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const WarehouseCredentials = (props) => {
   const { warehouse } = props;

@@ -1,7 +1,6 @@
-import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
-import ObjectBrief from '../../components/ObjectBrief';
-import ObjectMetadata from '../../components/ObjectMetadata';
+import PropTypes from 'prop-types';
+import { ObjectBrief, ObjectMetadata } from '../../components';
 import EnvironmentConsoleAccess from './EnvironmentConsoleAccess';
 import EnvironmentFeatures from './EnvironmentFeatures';
 

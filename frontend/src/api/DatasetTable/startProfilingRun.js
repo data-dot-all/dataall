@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const startDatasetProfilingRun = ({ input }) => ({
+export const startDatasetProfilingRun = ({ input }) => ({
   variables: {
     input
   },
@@ -12,5 +12,3 @@ const startDatasetProfilingRun = ({ input }) => ({
     }
   `
 });
-
-export default startDatasetProfilingRun;

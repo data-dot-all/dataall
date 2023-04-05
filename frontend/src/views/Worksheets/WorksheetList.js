@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Breadcrumbs,
@@ -9,20 +8,16 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@mui/lab';
 import PropTypes from 'prop-types';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import useSettings from '../../hooks/useSettings';
-import SearchInput from '../../components/SearchInput';
-import Pager from '../../components/Pager';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import WorksheetListItem from './WorksheetListItem';
-import * as WorksheetApi from '../../api/Worksheet';
-import PlusIcon from '../../icons/Plus';
+import { useCallback, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { listWorksheets } from '../../api';
+import { Defaults, Pager, SearchInput } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon, PlusIcon } from '../../icons';
+import { WorksheetListItem } from './WorksheetListItem';
 
 function WorksheetsPageHeader({ navigate }) {
   const startWorksheetSession = () => {
@@ -81,8 +76,8 @@ WorksheetsPageHeader.propTypes = {
 const WorksheetList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
@@ -90,9 +85,7 @@ const WorksheetList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      WorksheetApi.listWorksheets({ filter })
-    );
+    const response = await client.query(listWorksheets({ filter }));
     if (!response.errors) {
       setItems(response.data.listWorksheets);
     } else {

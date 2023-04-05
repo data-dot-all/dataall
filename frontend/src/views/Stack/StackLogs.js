@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import Editor from '@monaco-editor/react';
+import { RefreshRounded } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -8,14 +8,12 @@ import {
   Grid,
   Typography
 } from '@mui/material';
-import Editor from '@monaco-editor/react';
-import { RefreshRounded } from '@mui/icons-material';
-import useClient from '../../hooks/useClient';
-import { useDispatch } from '../../store';
-import { SET_ERROR } from '../../store/errorReducer';
-import getStackLogs from '../../api/Stack/getStackLogs';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { getStackLogs } from '../../api';
 import { THEMES } from '../../constants';
-import useSettings from '../../hooks/useSettings';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
 
 const StackLogs = (props) => {
   const { environmentUri, stack, onClose, open } = props;

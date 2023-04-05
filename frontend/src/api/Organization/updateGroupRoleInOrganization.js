@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateGroupRoleInOrganization = ({ groupUri, role }) => ({
+export const updateGroupRoleInOrganization = ({ groupUri, role }) => ({
   variables: {
     input: { role: role || 'Member' },
     groupUri
@@ -17,5 +17,3 @@ const updateGroupRoleInOrganization = ({ groupUri, role }) => ({
     }
   `
 });
-
-export default updateGroupRoleInOrganization;

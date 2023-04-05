@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const markNotificationAsRead = (notificationUri) => ({
+export const markNotificationAsRead = (notificationUri) => ({
   variables: {
     notificationUri
   },
@@ -10,5 +10,3 @@ const markNotificationAsRead = (notificationUri) => ({
     }
   `
 });
-
-export default markNotificationAsRead;

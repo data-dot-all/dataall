@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const getClusterConsoleAccess = (clusterUri) => ({
+export const getRedshiftClusterConsoleAccess = (clusterUri) => ({
   variables: {
     clusterUri
   },
@@ -10,5 +10,3 @@ const getClusterConsoleAccess = (clusterUri) => ({
     }
   `
 });
-
-export default getClusterConsoleAccess;

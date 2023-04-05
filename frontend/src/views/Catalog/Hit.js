@@ -1,7 +1,4 @@
-import { Link as RouterLink } from 'react-router-dom';
-import * as BsIcons from 'react-icons/bs';
-import * as FiIcons from 'react-icons/fi';
-import * as ReactIf from 'react-if';
+import { LockOpen, ThumbUp } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -15,15 +12,18 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import * as FaIcons from 'react-icons/fa';
-import { LockOpen, ThumbUp } from '@mui/icons-material';
 import React, { useState } from 'react';
+import * as BsIcons from 'react-icons/bs';
+import * as FaIcons from 'react-icons/fa';
+import * as FiIcons from 'react-icons/fi';
 import { MdShowChart } from 'react-icons/md';
-import IconAvatar from '../../components/IconAvatar';
-import RequestAccessModal from './RequestAccessModal';
+import * as ReactIf from 'react-if';
+import { Link as RouterLink } from 'react-router-dom';
+import { IconAvatar } from '../../components';
+import { useCardStyle } from '../../hooks';
 import { dayjs } from '../../utils/dayjs';
+import RequestAccessModal from './RequestAccessModal';
 import RequestDashboardAccessModal from './RequestDashboardAccessModal';
-import useCardStyle from '../../hooks/useCardStyle';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>

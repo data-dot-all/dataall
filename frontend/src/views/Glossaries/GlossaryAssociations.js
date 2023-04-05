@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -14,26 +14,24 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
-import { BlockOutlined, CheckCircleOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import useClient from '../../hooks/useClient';
-import * as Defaults from '../../components/defaults';
-import Scrollbar from '../../components/Scrollbar';
-import RefreshTableMenu from '../../components/RefreshTableMenu';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import listGlossaryAssociations from '../../api/Glossary/listGlossaryAssociations';
-import approveTermAssociation from '../../api/Glossary/approveTermAssociation';
-import dismissTermAssociation from '../../api/Glossary/dismissTermAssociation';
-import Pager from '../../components/Pager';
+import {
+  approveTermAssociation,
+  dismissTermAssociation,
+  listGlossaryAssociations
+} from '../../api';
+import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const GlossaryAssociations = ({ glossary }) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState(Defaults.PagedResponseDefault);
-  const [filter, setFilter] = useState(Defaults.DefaultFilter);
+  const [items, setItems] = useState(Defaults.pagedResponse);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [approving, setApproving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);

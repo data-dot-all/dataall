@@ -1,8 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Box,
@@ -21,20 +17,22 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { LoadingButton } from '@mui/lab';
-import useClient from '../../hooks/useClient';
-import ChevronRightIcon from '../../icons/ChevronRight';
-import ArrowLeftIcon from '../../icons/ArrowLeft';
-import useSettings from '../../hooks/useSettings';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import listEnvironments from '../../api/Environment/listEnvironments';
-import ChipInput from '../../components/TagsInput';
-import TopicsData from '../../components/topics/TopicsData';
-import importDataset from '../../api/Dataset/importDataset';
-import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
-import * as Defaults from '../../components/defaults';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import * as Yup from 'yup';
+import {
+  importDataset,
+  listEnvironmentGroups,
+  listEnvironments
+} from '../../api';
+import { ChipInput, Defaults, Topics } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 
 const DatasetImportForm = (props) => {
   const dispatch = useDispatch();
@@ -51,11 +49,13 @@ const DatasetImportForm = (props) => {
     'Secret'
   ]);
 
+  const topicsData = Topics.map((t) => ({ label: t, value: t }));
+
   const fetchEnvironments = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
       listEnvironments({
-        filter: Defaults.SelectListFilter
+        filter: Defaults.selectListFilter
       })
     );
     if (!response.errors) {
@@ -75,7 +75,7 @@ const DatasetImportForm = (props) => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
+          filter: Defaults.selectListFilter,
           environmentUri
         })
       );
@@ -333,7 +333,7 @@ const DatasetImportForm = (props) => {
                           <Autocomplete
                             multiple
                             id="tags-filled"
-                            options={TopicsData}
+                            options={topicsData}
                             getOptionLabel={(opt) => opt.label}
                             onChange={(event, value) => {
                               setFieldValue('topics', value);

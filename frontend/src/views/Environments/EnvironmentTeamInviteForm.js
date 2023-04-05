@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useSnackbar } from 'notistack';
+import { GroupAddOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import {
   Box,
   Card,
@@ -17,17 +17,18 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import Autocomplete from '@mui/lab/Autocomplete';
 import { Formik } from 'formik';
+import { useSnackbar } from 'notistack';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { LoadingButton } from '@mui/lab';
-import { GroupAddOutlined } from '@mui/icons-material';
-import { SET_ERROR } from '../../store/errorReducer';
-import { useDispatch } from '../../store';
-import useClient from '../../hooks/useClient';
-import listEnvironmentGroupInvitationPermissions from '../../api/Environment/listEnvironmentPermissions';
-import inviteGroupOnEnvironment from '../../api/Environment/inviteGroup';
-import listCognitoGroups from '../../api/Groups/listCognitoGroups';
+import {
+  inviteGroupOnEnvironment,
+  listCognitoGroups,
+  listEnvironmentGroupInvitationPermissions
+} from '../../api';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 
 const EnvironmentTeamInviteForm = (props) => {
   const { environment, onClose, open, reloadTeams, ...other } = props;

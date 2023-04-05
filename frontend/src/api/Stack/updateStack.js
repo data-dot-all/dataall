@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const updateStack = (targetUri, targetType) => ({
+export const updateStack = (targetUri, targetType) => ({
   variables: {
     targetUri,
     targetType
@@ -15,5 +15,3 @@ const updateStack = (targetUri, targetType) => ({
     }
   `
 });
-
-export default updateStack;

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import { Article, RefreshRounded, SystemUpdate } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -15,17 +15,14 @@ import {
   TableRow,
   Typography
 } from '@mui/material';
-import { Article, RefreshRounded, SystemUpdate } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
-import useClient from '../../hooks/useClient';
-import { useDispatch } from '../../store';
-import getStack from '../../api/Stack/getStack';
-import { SET_ERROR } from '../../store/errorReducer';
-import StackStatus from '../../components/StackStatus';
-import Scrollbar from '../../components/Scrollbar';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { getStack, updateStack } from '../../api';
+import { Scrollbar, StackStatus } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useClient } from '../../hooks';
 import StackLogs from './StackLogs';
-import updateStack from '../../api/Stack/updateStack';
 
 const Stack = (props) => {
   const { environmentUri, stackUri, targetUri, targetType } = props;
