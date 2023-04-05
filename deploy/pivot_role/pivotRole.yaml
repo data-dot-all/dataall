@@ -133,9 +133,9 @@ Resources:
               - 'logs:CreateLogStream'
               - 'logs:PutLogEvents'
             Resource:
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/aws-glue/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/aws-lambda/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws-glue/*"'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/{env_resource_prefix}*'
           - Sid: Logging
             Action:
               - 'logs:PutLogEvents'
@@ -318,10 +318,7 @@ Resources:
             Effect: Allow
             Action:
               - 'ec2:DeleteNetworkInterface'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'True'
+            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
           - Sid: SageMakerNotebookActions
             Effect: Allow
             Action:
@@ -347,7 +344,8 @@ Resources:
              - 'sagemaker:ListApps'
              - 'sagemaker:DeleteApp'
             Resource: '*'
-          - Effect: Allow
+          - Sid: RamTag
+            Effect: Allow
             Action:
               - 'ram:TagResource'
             Resource: '*'
@@ -355,7 +353,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamCreateResource
+            Effect: Allow
             Action:
               - 'ram:CreateResourceShare'
             Resource: '*'
@@ -365,7 +364,8 @@ Resources:
                   - 'glue:Table'
                   - 'glue:Database'
                   - 'glue:Catalog'
-          - Effect: Allow
+          - Sid: RamUpdateResource
+            Effect: Allow
             Action:
               - 'ram:UpdateResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
@@ -375,7 +375,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamAssociateResource
+            Effect: Allow
             Action:
               - 'ram:AssociateResourceShare'
               - 'ram:DisassociateResourceShare'
@@ -384,7 +385,8 @@ Resources:
               'ForAllValues:StringLike':
                 'ram:ResourceShareName':
                   - LakeFormation*
-          - Effect: Allow
+          - Sid: RamDeleteResource
+            Effect: Allow
             Action:
               - 'ram:DeleteResourceShare'
             Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
@@ -399,10 +401,11 @@ Resources:
               - "ec2:DescribeAvailabilityZones"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
-          - Sid: RamRead
+          - Sid: RamReadGlue
             Effect: Allow
             Action:
               - 'glue:PutResourcePolicy'
+              - 'glue:DeleteResourcePolicy'
               - 'ram:Get*'
               - 'ram:List*'
             Resource: '*'
@@ -502,6 +505,10 @@ Resources:
           - Sid: LakeFormation
             Effect: Allow
             Action:
+              - "lakeformation:RegisterResource"
+              - "lakeformation:DeregisterResource"
+              - "lakeformation:UpdateResource"
+              - "lakeformation:DescribeResource"
               - "lakeformation:AddLFTagsToResource"
               - "lakeformation:RemoveLFTagsFromResource"
               - "lakeformation:GetResourceLFTags"
@@ -535,7 +542,6 @@ Resources:
               - 'lakeformation:GetTableObjects'
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
-              - 'lakeformation:DescribeResource'
             Resource: '*'
           - Sid: Compute
             Effect: Allow
@@ -610,6 +616,7 @@ Resources:
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
             - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:*"
           - Sid: QuickSightSession
             Effect: Allow
             Action:
@@ -651,7 +658,6 @@ Resources:
             Action:
               - 'iam:Get*'
               - 'iam:ListRoles'
-              - 'iam:Get*'
             Effect: Allow
             Resource: '*'
           - Sid: IAMRolePolicy

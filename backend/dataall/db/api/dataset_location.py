@@ -3,8 +3,8 @@ from typing import List
 
 from sqlalchemy import and_, or_
 
-from . import has_tenant_perm, has_resource_perm, Glossary, ShareItemSM
-from .. import models, paginate, permissions, exceptions
+from . import has_tenant_perm, has_resource_perm, Glossary
+from .. import models, api, paginate, permissions, exceptions
 from .dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ class DatasetStorageLocation:
         location = DatasetStorageLocation.get_location_by_uri(
             session, data['locationUri']
         )
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(

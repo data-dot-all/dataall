@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.sql import and_
 
 from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment, ShareItemSM
+from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from ..models import Dataset
 from ...utils import json_utils
 
@@ -148,7 +148,7 @@ class DatasetTable:
         check_perm: bool = False,
     ):
         table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
             .filter(
@@ -181,7 +181,7 @@ class DatasetTable:
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         env_tables_shared = (
             session.query(models.DatasetTable)  # all tables
             .join(

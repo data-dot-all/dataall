@@ -14,6 +14,7 @@ from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
+from ....aws.handlers.quicksight import Quicksight
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
@@ -22,8 +23,20 @@ from ....searchproxy import indexers
 log = logging.getLogger(__name__)
 
 
+def check_dataset_account(environment):
+    if environment.dashboardsEnabled:
+        quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
+        if quicksight_subscription:
+            group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
+            return True if group else False
+    return True
+
+
 def create_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = Dataset.create_dataset(
             session=session,
             username=context.username,
@@ -56,6 +69,9 @@ def import_dataset(context: Context, source, input=None):
         raise exceptions.RequiredParameter('group')
 
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = Dataset.create_dataset(
             session=session,
             username=context.username,
@@ -212,6 +228,9 @@ def get_dataset_stewards_group(context, source: models.Dataset, **kwargs):
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
+        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        check_dataset_account(environment=environment)
         updated_dataset = Dataset.update_dataset(
             session=session,
             username=context.username,

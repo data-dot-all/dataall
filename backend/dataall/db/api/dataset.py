@@ -11,11 +11,10 @@ from . import (
     ResourcePolicy,
     KeyValueTag,
     Vote,
-    Stack,
-    ShareItemSM,
+    Stack
 )
 from . import Organization
-from .. import models, exceptions, permissions, paginate
+from .. import models, api, exceptions, permissions, paginate
 from ..models.Enums import Language, ConfidentialityClassification
 from ...utils.naming_convention import (
     NamingConventionService,
@@ -217,7 +216,7 @@ class Dataset:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(models.Dataset)
             .outerjoin(
