@@ -44,6 +44,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        enable_pivot_role_auto_create=False,
         enable_opensearch_serverless=False,
         **kwargs,
     ):
@@ -65,6 +66,8 @@ class BackendStack(Stack):
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
 
+        self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
+
         ParamStoreStack(
             self,
             f'ParamStore',
@@ -74,6 +77,7 @@ class BackendStack(Stack):
             enable_cw_canaries=enable_cw_canaries,
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
+            enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             **kwargs,
         )
 
@@ -83,6 +87,7 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             enable_cw_canaries=enable_cw_canaries,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -132,6 +137,7 @@ class BackendStack(Stack):
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -145,6 +151,8 @@ class BackendStack(Stack):
             ecr_repository=repo,
             image_tag=image_tag,
             prod_sizing=prod_sizing,
+            pivot_role_name=self.pivot_role_name,
+            tooling_account_id=tooling_account_id,
             **kwargs,
         )
 
@@ -305,9 +313,7 @@ class BackendStack(Stack):
                 cw_alarm_action=self.monitoring_stack.cw_alarm_action,
                 cognito_identity_pool_id=cognito_stack.identity_pool.ref,
                 cognito_identity_pool_role_arn=cognito_stack.identity_pool_role.role_arn,
-                custom_domain_name=custom_domain.get('hosted_zone_name')
-                if custom_domain
-                else None,
+                custom_domain_name=custom_domain.get('hosted_zone_name') if custom_domain else None,
             )
 
         if enable_cw_canaries:

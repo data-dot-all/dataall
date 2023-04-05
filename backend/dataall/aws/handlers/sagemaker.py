@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class Sagemaker:
     @staticmethod
     def client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
+        session = SessionHelper.remote_session(accountid=AwsAccountId)
         return session.client('sagemaker', region_name=region)
 
     @staticmethod
@@ -73,7 +73,7 @@ class Sagemaker:
     @staticmethod
     def get_security_groups(AwsAccountId, region):
         try:
-            session = SessionHelper.remote_session(AwsAccountId)
+            session = SessionHelper.remote_session(accountid=AwsAccountId)
             client = session.client('ec2', region_name=region)
             response = client.describe_security_groups()
             sgnames = [SG['GroupName'] for SG in response['SecurityGroups']]

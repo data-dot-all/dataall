@@ -15,11 +15,16 @@ def patch_check_env(module_mocker):
         'dataall.api.Objects.Environment.resolvers.check_environment',
         return_value='CDKROLENAME',
     )
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
-def patch_check_env(module_mocker):
-    module_mocker.patch('dataall.utils.Parameter.get_parameter', return_value='unknownvalue')
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -605,12 +610,18 @@ def org_fixture(org, user, group, tenant):
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(env_fixture, org_fixture, dataset, group) -> dataall.db.models.Dataset:
+def dataset_fixture(env_fixture, org_fixture, dataset, group, module_mocker) -> dataall.db.models.Dataset:
+    module_mocker.patch(
+        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+    )
     yield dataset(
         org=org_fixture,
         env=env_fixture,

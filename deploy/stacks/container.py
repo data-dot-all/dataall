@@ -25,6 +25,8 @@ class ContainerStack(pyNestedClass):
         ecr_repository=None,
         image_tag=None,
         prod_sizing=False,
+        pivot_role_name=None,
+        tooling_account_id=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -44,7 +46,8 @@ class ContainerStack(pyNestedClass):
             container_insights=True,
         )
 
-        self.task_role = self.create_task_role(envname, resource_prefix)
+        self.task_role = self.create_task_role(envname, resource_prefix, pivot_role_name)
+        self.cicd_stacks_updater_role = self.create_cicd_stacks_updater_role(envname, resource_prefix, tooling_account_id)
 
         cdkproxy_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -94,7 +97,7 @@ class ContainerStack(pyNestedClass):
             envname, resource_prefix, vpc, vpc_endpoints_sg
         )
 
-        sync_tables_task = self.set_scheduled_task(
+        sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
             container_id=f'container',
@@ -118,7 +121,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
 
-        catalog_indexer_task = self.set_scheduled_task(
+        catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.tasks.catalog_indexer'],
             container_id=f'container',
@@ -142,7 +145,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_security_groups.extend(catalog_indexer_task.task.security_groups)
 
-        stacks_updater = self.set_scheduled_task(
+        stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.tasks.stacks_updater'],
             container_id=f'container',
@@ -166,7 +169,14 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_security_groups.extend(stacks_updater.task.security_groups)
 
-        update_bucket_policies_task = self.set_scheduled_task(
+        ssm.StringParameter(
+            self,
+            f'StacksUpdaterTaskDefParam{envname}',
+            parameter_name=f'/dataall/{envname}/ecs/task_def_arn/stacks_updater',
+            string_value=stacks_updater_task_def.task_definition_arn,
+        )
+
+        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.tasks.bucket_policy_updater'],
             container_id=f'container',
@@ -192,7 +202,7 @@ class ContainerStack(pyNestedClass):
             update_bucket_policies_task.task.security_groups
         )
 
-        subscriptions_task = self.set_scheduled_task(
+        subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=[
                 'python3.8',
@@ -286,9 +296,7 @@ class ContainerStack(pyNestedClass):
             self,
             f'SecurityGroup{envname}',
             parameter_name=f'/dataall/{envname}/ecs/security_groups',
-            string_value=','.join(
-                [s.security_group_id for s in sync_tables_task.task.security_groups]
-            ),
+            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
         )
 
         self.ecs_cluster = cluster
@@ -301,7 +309,44 @@ class ContainerStack(pyNestedClass):
             subscriptions_task.task_definition,
         ]
 
-    def create_task_role(self, envname, resource_prefix):
+    def create_cicd_stacks_updater_role(self, envname, resource_prefix, tooling_account_id):
+        cicd_stacks_updater_role = iam.Role(
+            self,
+            id=f"StackUpdaterCBRole{envname}",
+            role_name=f"{resource_prefix}-{envname}-cb-stackupdater-role",
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal("codebuild.amazonaws.com"),
+                iam.AccountPrincipal(tooling_account_id),
+            ),
+        )
+        cicd_stacks_updater_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "secretsmanager:GetSecretValue",
+                    "kms:Decrypt",
+                    "secretsmanager:DescribeSecret",
+                    "kms:Encrypt",
+                    "kms:GenerateDataKey",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "iam:PassRole",
+                    "ecs:RunTask"
+                ],
+                resources=[
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*",
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*",
+                    f"arn:aws:kms:{self.region}:{self.account}:key/*",
+                    f"arn:aws:ssm:*:{self.account}:parameter/*dataall*",
+                    f"arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*",
+                    f"arn:aws:ecs:*:{self.account}:task-definition/{resource_prefix}-{envname}-*",
+                    f"arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role",
+                ],
+            )
+        )
+        return cicd_stacks_updater_role
+
+    def create_task_role(self, envname, resource_prefix, pivot_role_name):
         role_inline_policy = iam.Policy(
             self,
             f'ECSRolePolicy{envname}',
@@ -343,7 +388,7 @@ class ContainerStack(pyNestedClass):
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f"arn:aws:iam::*:role/{self.node.try_get_context('pivot_role_name') or 'dataallPivotRole'}",
+                        f'arn:aws:iam::*:role/{pivot_role_name}',
                         f'arn:aws:iam::*:role/cdk*',
                         'arn:aws:iam::*:role/ddk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
@@ -387,9 +432,7 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSTaskRole{envname}',
             role_name=f'{resource_prefix}-{envname}-ecs-tasks-role',
-            inline_policies={
-                f'ECSRoleInlinePolicy{envname}': role_inline_policy.document
-            },
+            inline_policies={f'ECSRoleInlinePolicy{envname}': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         )
         task_role.grant_pass_role(task_role)
@@ -511,7 +554,7 @@ class ContainerStack(pyNestedClass):
             rule_name=scheduled_task_id
             # security_groups=[security_group],
         )
-        return scheduled_task
+        return scheduled_task, task
 
     @property
     def ecs_task_role(self) -> iam.Role:

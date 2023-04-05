@@ -4,7 +4,6 @@ from sqlalchemy import and_, or_, literal
 
 from .. import models, api, exceptions, paginate, permissions
 from . import has_resource_perm, ResourcePolicy, DatasetTable, Environment, Dataset
-from ..models.Enums import ShareItemStatus
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

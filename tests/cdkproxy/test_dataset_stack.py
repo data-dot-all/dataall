@@ -49,7 +49,6 @@ def test_resources_created(template):
     assert 'AWS::S3::Bucket' in template
     assert 'AWS::KMS::Key' in template
     assert 'AWS::IAM::Role' in template
-    assert 'AWS::Lambda::Function' in template
     assert 'AWS::IAM::Policy' in template
     assert 'AWS::S3::BucketPolicy' in template
     assert 'AWS::Glue::Job' in template
