@@ -99,7 +99,7 @@ class SessionHelper:
         """
         return SessionHelper.get_secret(
             secret_name=f'dataall-externalId-{os.getenv("envname", "local")}'
-        )
+        ) or 'localNoExternalId'
 
     @classmethod
     def get_delegation_role_name(cls):
