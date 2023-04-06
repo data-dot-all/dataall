@@ -69,9 +69,8 @@ is read from AWS Secrets Manager, for a local deployment we will need to create 
 
 ### Create a `dkrcompose` externalId secret in the credentials account
 
-This option is especially suitable for those using an AWS account that already has data.all deployed. The only
-necessary step is to create a secret in AWS Secrets Manager called `dataall-externalId-dkrcompose` with the 
-value of the secret `dataall-externalId-<envname>`.
+Go to AWS Secrets Manager in the account that you used in step 3 and create a secret called 
+`dataall-externalId-dkrcompose`. You can give it any value.
 
 ![dockercompose](../img/docker_compose_secrets.png#zoom#shadow)
 
