@@ -64,7 +64,7 @@ you used in step 3.
 
 2) IAM Pivot Role trusting the data.all central account with an external ID. Whenever we perform an AWS SDK call to the environment account you will be assuming the Pivot Role in that account.
 To be able to assume it, you need to provide an external ID with the call. In a real deployment, the external ID
-is read from AWS Secrets Manager, for a local deployment we have 2 options to recreate this setup. After that you can go 
+is read from AWS Secrets Manager, for a local deployment we will need to create this secret for development purposes.
 
 
 ### Create a `dkrcompose` externalId secret in the credentials account
