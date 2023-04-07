@@ -1,1 +1,1 @@
-"""Currently omics don't have tasks, but this module needed for correct loading"""
+"""Currently Omics don't have tasks, but this module needed for correct loading"""

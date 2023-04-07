@@ -1,24 +1,46 @@
-"""The module defines GraphQL mutations for Omics Projects"""
+"""The module defines GraphQL mutations for Omics Pipelines"""
+
+#
+# (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+# This AWS Content is provided subject to the terms of the AWS Customer
+# Agreement available at http://aws.amazon.com/agreement or other
+# written agreement between Customer and Amazon Web Services, Inc.
+#
+
 from dataall.api import gql
-from dataall.modules.omics.api.resolvers import (
-    create_omics_project,
-    delete_omics_project
+from .resolvers import *
+
+createOmicsPipeline = gql.MutationField(
+    name="createOmicsPipeline",
+    type=gql.Ref("OmicsPipeline"),
+    args=[gql.Argument(name="input", type=gql.NonNullableType(gql.Ref("NewOmicsPipelineInput")))],
+    resolver=create_omics_pipeline,
 )
 
-createOmicsProject = gql.MutationField(
-    name="createOmicsProject",
-    args=[gql.Argument(name="input", type=gql.Ref("NewOmicsProjectInput"))],
-    type=gql.Ref("OmicsProject"),
-    resolver=create_omics_project,
-)
-
-
-deleteOmicsProject = gql.MutationField(
-    name="deleteOmicsProject",
+updateOmicsPipeline = gql.MutationField(
+    name="updateOmicsPipeline",
+    type=gql.Ref("OmicsPipeline"),
     args=[
-        gql.Argument(name="projectUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="input", type=gql.Ref("UpdateOmicsPipelineInput")),
+    ],
+    resolver=update_omics_pipeline,
+)
+
+deleteOmicsPipeline = gql.MutationField(
+    name="deleteOmicsPipeline",
+    type=gql.Boolean,
+    args=[
+        gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
         gql.Argument(name="deleteFromAWS", type=gql.Boolean),
     ],
-    type=gql.String,
-    resolver=delete_omics_project,
+    resolver=delete_omics_pipeline,
+)
+
+
+updateOmicsPipelineStack = gql.MutationField(
+    name="updateOmicsPipelineStack",
+    args=[gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String))],
+    resolver=update_omics_pipeline_stack,
+    type=gql.Boolean,
 )

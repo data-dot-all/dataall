@@ -1,6 +1,6 @@
 """
 Add module's permissions to the global permissions.
-Contains permissions for omics projects
+Contains permissions for Omics projects
 """
 
 from dataall.db.permissions import (
@@ -35,15 +35,15 @@ ENVIRONMENT_INVITATION_REQUEST.append(LIST_ENVIRONMENT_OMICS_PROJECTS)
 ENVIRONMENT_INVITATION_REQUEST.append(CREATE_OMICS_PROJECT)
 
 TENANT_ALL.append(MANAGE_OMICS_PROJECTS)
-TENANT_ALL_WITH_DESC[MANAGE_OMICS_PROJECTS] = "Manage omics projects"
+TENANT_ALL_WITH_DESC[MANAGE_OMICS_PROJECTS] = "Manage Omics projects"
 
 
 RESOURCES_ALL.append(CREATE_OMICS_PROJECT)
 RESOURCES_ALL.extend(OMICS_PROJECT_ALL)
 RESOURCES_ALL.append(LIST_ENVIRONMENT_OMICS_PROJECTS)
 
-RESOURCES_ALL_WITH_DESC[CREATE_OMICS_PROJECT] = "Create omics projects on this environment"
-RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_OMICS_PROJECTS] = "List omics projects on this environment"
-RESOURCES_ALL_WITH_DESC[GET_OMICS_PROJECT] = "General permission to list omics projects"
-RESOURCES_ALL_WITH_DESC[DELETE_OMICS_PROJECT] = "Permission to delete omics projects"
-RESOURCES_ALL_WITH_DESC[UPDATE_OMICS_PROJECT] = "Permission to edit omics projects"
+RESOURCES_ALL_WITH_DESC[CREATE_OMICS_PROJECT] = "Create Omics projects on this environment"
+RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_OMICS_PROJECTS] = "List Omics projects on this environment"
+RESOURCES_ALL_WITH_DESC[GET_OMICS_PROJECT] = "General permission to list Omics projects"
+RESOURCES_ALL_WITH_DESC[DELETE_OMICS_PROJECT] = "Permission to delete Omics projects"
+RESOURCES_ALL_WITH_DESC[UPDATE_OMICS_PROJECT] = "Permission to edit Omics projects"

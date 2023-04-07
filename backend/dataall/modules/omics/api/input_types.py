@@ -1,34 +1,50 @@
-"""The module defines GraphQL input types for Omics Projects"""
+"""The module defines GraphQL input types for Omics Pipelines"""
+
+#
+# (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+# This AWS Content is provided subject to the terms of the AWS Customer
+# Agreement available at http://aws.amazon.com/agreement or other
+# written agreement between Customer and Amazon Web Services, Inc.
+#
+
 from dataall.api import gql
 
-NewOmicsProjectInput = gql.InputType(
-    name="NewOmicsProjectInput",
+NewOmicsPipelineInput = gql.InputType(
+    name="NewOmicsPipelineInput",
     arguments=[
-        gql.Argument("label", gql.NonNullableType(gql.String)),
-        gql.Argument("description", gql.String),
-        gql.Argument("environmentUri", gql.NonNullableType(gql.String)),
-        gql.Argument("SamlAdminGroupName", gql.NonNullableType(gql.String)),
-        gql.Argument("tags", gql.ArrayType(gql.String)),
-        gql.Argument("topics", gql.String),
-        gql.Argument("VpcId", gql.String),
-        gql.Argument("SubnetId", gql.String),
+        gql.Field("environmentUri", type=gql.NonNullableType(gql.String)),
+        gql.Field("label", type=gql.NonNullableType(gql.String)),
+        gql.Field("description", type=gql.String),
+        gql.Field("tags", type=gql.ArrayType(gql.String)),
+        gql.Field("created", type=gql.String),
+        gql.Field("updated", type=gql.String),
+        gql.Field("owner", type=gql.String),
+        gql.Field("SamlGroupName", type=gql.NonNullableType(gql.String)),
+        gql.Field("S3InputBucket", type=gql.NonNullableType(gql.String)),
+        gql.Field("S3InputPrefix", type=gql.NonNullableType(gql.String)),
+        gql.Field("S3OutputBucket", type=gql.NonNullableType(gql.String)),
+        gql.Field("S3OutputPrefix", type=gql.NonNullableType(gql.String)),
     ],
 )
 
-ModifyOmicsProjectInput = gql.InputType(
-    name="ModifyOmicsProjectInput",
+UpdateOmicsPipelineInput = gql.InputType(
+    name="UpdateOmicsPipelineInput",
     arguments=[
-        gql.Argument("label", gql.String),
-        gql.Argument("tags", gql.ArrayType(gql.String)),
-        gql.Argument("description", gql.String),
+        gql.Argument(name="label", type=gql.String),
+        gql.Argument(name="description", type=gql.String),
+        gql.Argument(name="tags", type=gql.ArrayType(gql.String)),
+        gql.Argument(name="S3InputBucket", type=gql.String),
+        gql.Argument(name="S3InputPrefix", type=gql.String),
+        gql.Argument(name="S3OutputBucket", type=gql.String),
+        gql.Argument(name="S3OutputPrefix", type=gql.String),
     ],
 )
 
-OmicsProjectFilter = gql.InputType(
-    name="OmicsProjectFilter",
+OmicsPipelineFilter = gql.InputType(
+    name="OmicsPipelineFilter",
     arguments=[
-        gql.Argument("term", gql.String),
-        gql.Argument("page", gql.Integer),
-        gql.Argument("pageSize", gql.Integer)
+        gql.Argument(name="term", type=gql.String),
+        gql.Argument(name="page", type=gql.Integer),
+        gql.Argument(name="pageSize", type=gql.Integer),
     ],
 )

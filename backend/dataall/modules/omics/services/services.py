@@ -1,6 +1,6 @@
 """
-A service layer for omics projects
-Central part for working with omics projects
+A service layer for Omics projects
+Central part for working with Omics projects
 """
 import contextlib
 import dataclasses
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class OmicsProjectCreationRequest:
-    """A request dataclass for omics project creation. Adds default values for missed parameters"""
+    """A request dataclass for Omics project creation. Adds default values for missed parameters"""
     label: str
     SamlAdminGroupName: str
     environment: Dict = field(default_factory=dict)
@@ -52,7 +52,7 @@ class OmicsProjectCreationRequest:
 
 class OmicsProjectService:
     """
-    Encapsulate the logic of interactions with omics projects.
+    Encapsulate the logic of interactions with Omics projects.
     """
 
     _OMICS_PROJECT_RESOURCE_TYPE = "omics_project"
@@ -130,7 +130,7 @@ class OmicsProjectService:
 
     @staticmethod
     def list_user_omics_projects(filter) -> dict:
-        """List existed user omics projects. Filters only required omics_projects by the filter param"""
+        """List existed user Omics projects. Filters only required omics_projects by the filter param"""
         with _session() as session:
             return OmicsProjectRepository(session).paginated_user_omics_projects(
                 username=context().username,
@@ -141,14 +141,14 @@ class OmicsProjectService:
     @staticmethod
     @has_resource_permission(permissions.GET_OMICS_PROJECT)
     def get_omics_project(*, uri) -> OmicsProject:
-        """Gets a omics project by uri"""
+        """Gets a Omics project by uri"""
         with _session() as session:
             return OmicsProjectService._get_omics_project(session, uri)
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_OMICS_PROJECT)
     def delete_omics_project(*, uri: str, delete_from_aws: bool):
-        """Deletes omics project from the database and if delete_from_aws is True from AWS as well"""
+        """Deletes Omics project from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             omics_project = OmicsProjectService._get_omics_project(session, uri)
             KeyValueTag.delete_key_value_tags(session, omics_project.projectUri, 'omics_project')
