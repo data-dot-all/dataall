@@ -1,5 +1,5 @@
 """"
-Creates a CloudFormation stack for Omics projects using cdk
+Creates a CloudFormation stack for Omics projects using CDK
 """
 import logging
 import os
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class OmicsProjectStack(Stack):
     """
     Creation of an Omics project stack.
-    Having imported the omics module, the class registers itself using @stack
+    Having imported the Omics module, the class registers itself using @stack
     Then it will be reachable by HTTP request / using SQS from GraphQL lambda
     """
 

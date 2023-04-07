@@ -1,4 +1,5 @@
-"""The package defines the schema for Omics"""
-from dataall.modules.omics.api import input_types, mutations, queries, types, resolvers
+"""The package defines the schema for Omics Pipelines"""
 
-__all__ = ["types", "input_types", "queries", "mutations", "resolvers"]
+from dataall.modules.omics.api import input_types, mutations, queries, schema, resolvers
+
+__all__ = ["schema", "input_types", "queries", "mutations", "resolvers"]

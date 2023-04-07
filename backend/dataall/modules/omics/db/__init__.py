@@ -1,1 +1,1 @@
-"""Contains a code to that interacts with the database"""
+from ..db import api

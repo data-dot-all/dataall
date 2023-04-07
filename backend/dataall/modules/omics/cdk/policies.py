@@ -6,7 +6,7 @@ from dataall.modules.common.omics.cdk.statements import create_omics_statements
 
 class OmicsPolicy(ServicePolicy):
     """
-    Creates an omics policy for accessing and interacting with omics projects
+    Creates an Omics policy for accessing and interacting with Omics Projects
     """
 
     def get_statements(self, group_permissions, **kwargs):
