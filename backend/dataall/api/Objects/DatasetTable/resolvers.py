@@ -13,14 +13,14 @@ from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary
 from ....searchproxy import indexers
 from ....utils import json_utils
-from dataall.modules.datasets.services.dataset_table import DatasetTable
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
 
 
 def create_table(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        table = DatasetTable.create_dataset_table(
+        table = DatasetTableService.create_dataset_table(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -38,7 +38,7 @@ def list_dataset_tables(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return DatasetTable.list_dataset_tables(
+        return DatasetTableService.list_dataset_tables(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -50,8 +50,8 @@ def list_dataset_tables(context, source, filter: dict = None):
 
 def get_table(context, source: models.Dataset, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table = DatasetTable.get_dataset_table_by_uri(session, tableUri)
-        return DatasetTable.get_dataset_table(
+        table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
+        return DatasetTableService.get_dataset_table(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -65,14 +65,14 @@ def get_table(context, source: models.Dataset, tableUri: str = None):
 
 def update_table(context, source, tableUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        table = DatasetTable.get_dataset_table_by_uri(session, tableUri)
+        table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
 
         dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
 
         input['table'] = table
         input['tableUri'] = table.tableUri
 
-        DatasetTable.update_dataset_table(
+        DatasetTableService.update_dataset_table(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -86,8 +86,8 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
 
 def delete_table(context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table = DatasetTable.get_dataset_table_by_uri(session, tableUri)
-        DatasetTable.delete_dataset_table(
+        table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
+        DatasetTableService.delete_dataset_table(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -103,7 +103,7 @@ def delete_table(context, source, tableUri: str = None):
 
 def preview(context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
+        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
         dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
@@ -158,7 +158,7 @@ def get_glue_table_properties(context: Context, source: models.DatasetTable, **k
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
+        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, source.tableUri
         )
         return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
@@ -187,7 +187,7 @@ def resolve_glossary_terms(context: Context, source: models.DatasetTable, **kwar
 
 def publish_table_update(context: Context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
+        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
         ResourcePolicy.check_user_resource_permission(
@@ -236,7 +236,7 @@ def resolve_redshift_copy_location(
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str, filter: dict = None):
     with context.engine.scoped_session() as session:
-        return DatasetTable.get_dataset_tables_shared_with_env(
+        return DatasetTableService.get_dataset_tables_shared_with_env(
             session,
             envUri,
             datasetUri

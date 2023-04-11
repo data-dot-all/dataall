@@ -5,7 +5,7 @@ from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import paginate, permissions, models
 from dataall.db.api import ResourcePolicy
-from dataall.modules.datasets.services.dataset_table import DatasetTable
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 
 def list_table_columns(
@@ -20,7 +20,7 @@ def list_table_columns(
         filter = {}
     with context.engine.scoped_session() as session:
         if not source:
-            source = DatasetTable.get_dataset_table_by_uri(session, tableUri)
+            source = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         q = (
             session.query(models.DatasetTableColumn)
             .filter(
@@ -45,7 +45,7 @@ def list_table_columns(
 
 def sync_table_columns(context: Context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
+        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
         ResourcePolicy.check_user_resource_permission(
@@ -80,7 +80,7 @@ def update_table_column(
         ).get(columnUri)
         if not column:
             raise db.exceptions.ObjectNotFound('Column', columnUri)
-        table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
+        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, column.tableUri
         )
         ResourcePolicy.check_user_resource_permission(

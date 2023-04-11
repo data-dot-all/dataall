@@ -10,7 +10,7 @@ from dataall.utils import json_utils
 logger = logging.getLogger(__name__)
 
 
-class DatasetTable:
+class DatasetTableService:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET_TABLE)
@@ -107,7 +107,7 @@ class DatasetTable:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.DatasetTable:
-        return DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        return DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
@@ -122,7 +122,7 @@ class DatasetTable:
     ):
         table = data.get(
             'table',
-            DatasetTable.get_dataset_table_by_uri(session, data['tableUri']),
+            DatasetTableService.get_dataset_table_by_uri(session, data['tableUri']),
         )
 
         for k in [attr for attr in data.keys() if attr != 'term']:
@@ -146,7 +146,7 @@ class DatasetTable:
         data: dict = None,
         check_perm: bool = False,
     ):
-        table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        table = DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
@@ -210,7 +210,7 @@ class DatasetTable:
     ):
         return [
             {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
-            for t in DatasetTable.query_dataset_tables_shared_with_env(
+            for t in DatasetTableService.query_dataset_tables_shared_with_env(
                 session, environment_uri, dataset_uri
             )
         ]
@@ -235,7 +235,7 @@ class DatasetTable:
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
-            DatasetTable.update_existing_tables_status(existing_tables, glue_tables)
+            DatasetTableService.update_existing_tables_status(existing_tables, glue_tables)
             logger.info(
                 f'existing_tables={glue_tables}'
             )
@@ -284,7 +284,7 @@ class DatasetTable:
                         table.get('Parameters', {})
                     )
 
-                DatasetTable.sync_table_columns(session, updated_table, table)
+                DatasetTableService.sync_table_columns(session, updated_table, table)
 
         return True
 
@@ -300,7 +300,7 @@ class DatasetTable:
     @staticmethod
     def sync_table_columns(session, dataset_table, glue_table):
 
-        DatasetTable.delete_all_table_columns(session, dataset_table)
+        DatasetTableService.delete_all_table_columns(session, dataset_table)
 
         columns = [
             {**item, **{'columnType': 'column'}}

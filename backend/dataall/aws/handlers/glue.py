@@ -6,7 +6,7 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
-from dataall.modules.datasets.services.dataset_table import DatasetTable
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger('aws:glue')
 
@@ -85,7 +85,7 @@ class Glue:
             tables = Glue.list_glue_database_tables(
                 accountid, dataset.GlueDatabaseName, region
             )
-            DatasetTable.sync(session, dataset.datasetUri, glue_tables=tables)
+            DatasetTableService.sync(session, dataset.datasetUri, glue_tables=tables)
             return tables
 
     @staticmethod
@@ -643,7 +643,7 @@ class Glue:
                     f'//{dataset_table.name} due to: '
                     f'{e}'
                 )
-            DatasetTable.sync_table_columns(
+            DatasetTableService.sync_table_columns(
                 session, dataset_table, glue_table['Table']
             )
         return True

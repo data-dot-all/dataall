@@ -3,7 +3,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.services.dataset_table import DatasetTable
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -290,7 +290,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             },
         ]
 
-        assert DatasetTable.sync(session, dataset1.datasetUri, glue_tables)
+        assert DatasetTableService.sync(session, dataset1.datasetUri, glue_tables)
         new_table: dataall.db.models.DatasetTable = (
             session.query(dataall.db.models.DatasetTable)
             .filter(dataall.db.models.DatasetTable.name == 'new_table')
