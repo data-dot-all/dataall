@@ -2,7 +2,7 @@
 import importlib
 import logging
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from typing import List
 
 from dataall.core.config import config
@@ -19,9 +19,9 @@ class ImportMode(Enum):
     of functionality to be loaded, there should be different loading modes
     """
 
-    API = "api"
-    CDK = "cdk"
-    TASKS = "tasks"
+    API = auto()
+    CDK = auto()
+    HANDLERS = auto()
 
 
 class ModuleInterface(ABC):
