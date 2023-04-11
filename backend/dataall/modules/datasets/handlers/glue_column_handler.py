@@ -6,12 +6,41 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
 
 
 class DatasetColumnGlueHandler:
     """A handler for dataset table columns"""
+
+    @staticmethod
+    @Worker.handler('glue.table.columns')
+    def get_table_columns(engine, task: models.Task):
+        with engine.scoped_session() as session:
+            dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(
+                task.targetUri
+            )
+            aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
+            glue_client = aws.client('glue', region_name=dataset_table.region)
+            glue_table = {}
+            try:
+                glue_table = glue_client.get_table(
+                    CatalogId=dataset_table.AWSAccountId,
+                    DatabaseName=dataset_table.GlueDatabaseName,
+                    Name=dataset_table.name,
+                )
+            except glue_client.exceptions.ClientError as e:
+                log.error(
+                    f'Failed to get table aws://{dataset_table.AWSAccountId}'
+                    f'//{dataset_table.GlueDatabaseName}'
+                    f'//{dataset_table.name} due to: '
+                    f'{e}'
+                )
+            DatasetTableService.sync_table_columns(
+                session, dataset_table, glue_table['Table']
+            )
+        return True
 
     @staticmethod
     @Worker.handler('glue.table.update_column')
