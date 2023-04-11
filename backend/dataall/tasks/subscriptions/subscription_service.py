@@ -14,6 +14,7 @@ from ...db import get_engine
 from ...db import models
 from ...tasks.subscriptions import poll_queues
 from ...utils import json_utils
+from dataall.modules.datasets.services.dataset_table import DatasetTable
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -64,7 +65,7 @@ class SubscriptionService:
     @staticmethod
     def publish_table_update_message(engine, message):
         with engine.scoped_session() as session:
-            table: models.DatasetTable = db.api.DatasetTable.get_table_by_s3_prefix(
+            table: models.DatasetTable = DatasetTable.get_table_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
@@ -135,7 +136,7 @@ class SubscriptionService:
     @staticmethod
     def store_dataquality_results(session, message):
 
-        table: models.DatasetTable = db.api.DatasetTable.get_table_by_s3_prefix(
+        table: models.DatasetTable = DatasetTable.get_table_by_s3_prefix(
             session,
             message.get('prefix'),
             message.get('accountid'),

@@ -9,6 +9,7 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
+from dataall.modules.datasets.services.dataset_table import DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -446,7 +447,7 @@ class Redshift:
                 session, task.payload['datasetUri']
             )
 
-            table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+            table: models.DatasetTable = DatasetTable.get_dataset_table_by_uri(
                 session, task.payload['tableUri']
             )
 

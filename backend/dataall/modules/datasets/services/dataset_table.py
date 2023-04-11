@@ -1,12 +1,11 @@
 import logging
-from typing import List
 
 from sqlalchemy.sql import and_
 
-from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
-from ..models import Dataset
-from ...utils import json_utils
+from dataall.db import models, api, permissions, exceptions, paginate
+from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
+from dataall.db.models import Dataset
+from dataall.utils import json_utils
 
 logger = logging.getLogger(__name__)
 

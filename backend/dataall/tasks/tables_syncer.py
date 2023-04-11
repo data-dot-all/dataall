@@ -13,6 +13,7 @@ from ..searchproxy.connect import (
     connect,
 )
 from ..utils.alarm_service import AlarmService
+from dataall.modules.datasets.services.dataset_table import DatasetTable
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -63,7 +64,7 @@ def sync_tables(engine, es=None):
                         f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'
                     )
 
-                    db.api.DatasetTable.sync(
+                    DatasetTable.sync(
                         session, dataset.datasetUri, glue_tables=tables
                     )
 
