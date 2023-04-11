@@ -6,14 +6,14 @@ import sys
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
-from ... import db
-from ...aws.handlers.service_handlers import Worker
-from ...aws.handlers.sts import SessionHelper
-from ...aws.handlers.sqs import SqsQueue
-from ...db import get_engine
-from ...db import models
-from ...tasks.subscriptions import poll_queues
-from ...utils import json_utils
+from dataall import db
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.sqs import SqsQueue
+from dataall.db import get_engine
+from dataall.db import models
+from dataall.tasks.subscriptions import poll_queues
+from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 root = logging.getLogger()

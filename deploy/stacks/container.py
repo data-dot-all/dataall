@@ -179,7 +179,7 @@ class ContainerStack(pyNestedClass):
             command=[
                 'python3.8',
                 '-m',
-                'dataall.tasks.subscriptions.subscription_service',
+                'dataall.modules.datasets.tasks.subscription_service',
             ],
             container_id=f'container',
             ecr_repository=ecr_repository,
