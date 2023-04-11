@@ -1,8 +1,8 @@
 from sqlalchemy import or_
 
-from ....api.context import Context
-from ....db import paginate, models
-from dataall.core.feed.services.feed_registry import FeedRegistry
+from dataall.api.context import Context
+from dataall.db import paginate, models
+from dataall.core.utils.model_registry import FeedRegistry
 
 
 class Feed:

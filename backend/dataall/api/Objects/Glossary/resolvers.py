@@ -4,6 +4,7 @@ from sqlalchemy import and_, or_, asc
 
 from .... import db
 from ....api.context import Context
+from ....core.utils.model_registry import GlossaryRegistry
 from ....db import paginate, exceptions, models
 from ....searchproxy import upsert_dataset
 from ....searchproxy import upsert_table
@@ -11,7 +12,6 @@ from ....searchproxy.indexers import upsert_folder, upsert_dashboard
 from ....api.constants import (
     GlossaryRole
 )
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
@@ -323,29 +323,12 @@ def get_link(context: Context, source, linkUri: str = None):
 
 
 def target_union_resolver(obj, *_):
-    if isinstance(obj, DatasetTableColumn):
-        return 'DatasetTableColumn'
-    elif isinstance(obj, models.DatasetTable):
-        return 'DatasetTable'
-    elif isinstance(obj, models.Dataset):
-        return 'Dataset'
-    elif isinstance(obj, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
-    elif isinstance(obj, models.Dashboard):
-        return 'Dashboard'
-    else:
-        return None
+    return GlossaryRegistry.find_by_model(obj)
 
 
 def resolve_link_target(context, source, **kwargs):
     with context.engine.scoped_session() as session:
-        model = {
-            'Dataset': models.Dataset,
-            'DatasetTable': models.DatasetTable,
-            'Column': DatasetTableColumn,
-            'DatasetStorageLocation': models.DatasetStorageLocation,
-            'Dashboard': models.Dashboard,
-        }[source.targetType]
+        model = GlossaryRegistry.find(source.targetUri)
         target = session.query(model).get(source.targetUri)
     return target
 
