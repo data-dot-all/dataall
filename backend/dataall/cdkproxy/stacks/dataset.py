@@ -375,6 +375,8 @@ class Dataset(Stack):
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
 
+        # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
+
         crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
