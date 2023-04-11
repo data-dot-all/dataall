@@ -1,5 +1,5 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.datasets.api.DatasetTableColumn.resolvers import list_table_columns
 
 listDatasetTableColumns = gql.QueryField(
     name='listDatasetTableColumns',

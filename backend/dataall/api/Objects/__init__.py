@@ -18,7 +18,6 @@ from . import (
     Environment,
     Activity,
     DatasetTable,
-    DatasetTableColumn,
     Dataset,
     Group,
     Principal,

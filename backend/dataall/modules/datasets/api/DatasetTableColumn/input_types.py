@@ -1,4 +1,4 @@
-from ... import gql
+from dataall.api import gql
 
 DatasetTableColumnFilter = gql.InputType(
     name='DatasetTableColumnFilter',

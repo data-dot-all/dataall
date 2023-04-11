@@ -1,10 +1,10 @@
 from sqlalchemy import or_
 
-from .... import db
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....db import paginate, permissions, models
-from ....db.api import ResourcePolicy
+from dataall import db
+from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.db import paginate, permissions, models
+from dataall.db.api import ResourcePolicy
 
 
 def list_table_columns(

@@ -1,5 +1,5 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.datasets.api.DatasetTableColumn.resolvers import resolve_terms
 
 
 DatasetTableColumn = gql.ObjectType(
