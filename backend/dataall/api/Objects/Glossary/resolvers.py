@@ -11,6 +11,7 @@ from ....searchproxy.indexers import upsert_folder, upsert_dashboard
 from ....api.constants import (
     GlossaryRole
 )
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
@@ -322,7 +323,7 @@ def get_link(context: Context, source, linkUri: str = None):
 
 
 def target_union_resolver(obj, *_):
-    if isinstance(obj, models.DatasetTableColumn):
+    if isinstance(obj, DatasetTableColumn):
         return 'DatasetTableColumn'
     elif isinstance(obj, models.DatasetTable):
         return 'DatasetTable'
@@ -341,7 +342,7 @@ def resolve_link_target(context, source, **kwargs):
         model = {
             'Dataset': models.Dataset,
             'DatasetTable': models.DatasetTable,
-            'Column': models.DatasetTableColumn,
+            'Column': DatasetTableColumn,
             'DatasetStorageLocation': models.DatasetStorageLocation,
             'Dashboard': models.Dashboard,
         }[source.targetType]

@@ -9,6 +9,7 @@ from .permission_checker import (
     has_tenant_perm,
 )
 from ..models.Glossary import GlossaryNodeStatus
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ class Glossary:
         elif targetType == 'Folder':
             target = session.query(models.DatasetStorageLocation).get(targetUri)
         elif targetType == 'Column':
-            target = session.query(models.DatasetTableColumn).get(targetUri)
+            target = session.query(DatasetTableColumn).get(targetUri)
         elif targetType == 'Dashboard':
             target = session.query(models.Dashboard).get(targetUri)
         else:
@@ -361,11 +362,11 @@ class Glossary:
             models.DatasetTable.description.label('description'),
         )
         columns = session.query(
-            models.DatasetTableColumn.columnUri.label('targetUri'),
+            DatasetTableColumn.columnUri.label('targetUri'),
             literal('column').label('targetType'),
-            models.DatasetTableColumn.label.label('label'),
-            models.DatasetTableColumn.name.label('name'),
-            models.DatasetTableColumn.description.label('description'),
+            DatasetTableColumn.label.label('label'),
+            DatasetTableColumn.name.label('name'),
+            DatasetTableColumn.description.label('description'),
         )
         folders = session.query(
             models.DatasetStorageLocation.locationUri.label('targetUri'),

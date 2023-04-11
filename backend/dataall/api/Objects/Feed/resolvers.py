@@ -2,6 +2,7 @@ from sqlalchemy import or_
 
 from ....api.context import Context
 from ....db import paginate, models
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 class Feed:
@@ -19,7 +20,7 @@ class Feed:
 
 
 def resolve_feed_target_type(obj, *_):
-    if isinstance(obj, models.DatasetTableColumn):
+    if isinstance(obj, DatasetTableColumn):
         return 'DatasetTableColumn'
     elif isinstance(obj, models.Worksheet):
         return 'Worksheet'
@@ -44,7 +45,7 @@ def resolve_target(context: Context, source: Feed, **kwargs):
         model = {
             'Dataset': models.Dataset,
             'DatasetTable': models.DatasetTable,
-            'DatasetTableColumn': models.DatasetTableColumn,
+            'DatasetTableColumn': DatasetTableColumn,
             'DatasetStorageLocation': models.DatasetStorageLocation,
             'Dashboard': models.Dashboard,
             'DataPipeline': models.DataPipeline,

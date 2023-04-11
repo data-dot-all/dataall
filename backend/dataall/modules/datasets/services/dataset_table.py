@@ -6,6 +6,7 @@ from dataall.db import models, api, permissions, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from dataall.db.models import Dataset
 from dataall.utils import json_utils
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +316,7 @@ class DatasetTableService:
         logger.debug(f'Found partitions {partitions} for table {dataset_table}')
 
         for col in columns + partitions:
-            table_col = models.DatasetTableColumn(
+            table_col = DatasetTableColumn(
                 name=col['Name'],
                 description=col.get('Comment', 'No description provided'),
                 label=col['Name'],
@@ -333,11 +334,11 @@ class DatasetTableService:
 
     @staticmethod
     def delete_all_table_columns(session, dataset_table):
-        session.query(models.DatasetTableColumn).filter(
+        session.query(DatasetTableColumn).filter(
             and_(
-                models.DatasetTableColumn.GlueDatabaseName
+                DatasetTableColumn.GlueDatabaseName
                 == dataset_table.GlueDatabaseName,
-                models.DatasetTableColumn.GlueTableName == dataset_table.GlueTableName,
+                DatasetTableColumn.GlueTableName == dataset_table.GlueTableName,
             )
         ).delete()
         session.commit()

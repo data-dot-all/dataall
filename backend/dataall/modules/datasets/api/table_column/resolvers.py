@@ -6,6 +6,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import paginate, permissions, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 def list_table_columns(
@@ -22,21 +23,21 @@ def list_table_columns(
         if not source:
             source = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         q = (
-            session.query(models.DatasetTableColumn)
+            session.query(DatasetTableColumn)
             .filter(
-                models.DatasetTableColumn.tableUri == tableUri,
-                models.DatasetTableColumn.deleted.is_(None),
+                DatasetTableColumn.tableUri == tableUri,
+                DatasetTableColumn.deleted.is_(None),
             )
-            .order_by(models.DatasetTableColumn.columnType.asc())
+            .order_by(DatasetTableColumn.columnType.asc())
         )
         term = filter.get('term')
         if term:
             q = q.filter(
                 or_(
-                    models.DatasetTableColumn.label.ilike('%' + term + '%'),
-                    models.DatasetTableColumn.description.ilike('%' + term + '%'),
+                    DatasetTableColumn.label.ilike('%' + term + '%'),
+                    DatasetTableColumn.description.ilike('%' + term + '%'),
                 )
-            ).order_by(models.DatasetTableColumn.columnType.asc())
+            ).order_by(DatasetTableColumn.columnType.asc())
 
     return paginate(
         q, page=filter.get('page', 1), page_size=filter.get('pageSize', 65)
@@ -61,7 +62,7 @@ def sync_table_columns(context: Context, source, tableUri: str = None):
     return list_table_columns(context, source=table, tableUri=tableUri)
 
 
-def resolve_terms(context, source: models.DatasetTableColumn, **kwargs):
+def resolve_terms(context, source: DatasetTableColumn, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -75,8 +76,8 @@ def update_table_column(
     context: Context, source, columnUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        column: models.DatasetTableColumn = session.query(
-            models.DatasetTableColumn
+        column: DatasetTableColumn = session.query(
+            DatasetTableColumn
         ).get(columnUri)
         if not column:
             raise db.exceptions.ObjectNotFound('Column', columnUri)

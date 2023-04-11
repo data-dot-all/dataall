@@ -1,5 +1,6 @@
 from typing import List
 from dataall.db import models
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 import pytest
 
 
@@ -48,11 +49,11 @@ def _table(db, _dataset) -> models.DatasetTable:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def _columns(db, _dataset, _table) -> List[models.DatasetTableColumn]:
+def _columns(db, _dataset, _table) -> List[DatasetTableColumn]:
     with db.scoped_session() as session:
         cols = []
         for i in range(0, 10):
-            c = models.DatasetTableColumn(
+            c = DatasetTableColumn(
                 datasetUri=_dataset.datasetUri,
                 tableUri=_table.tableUri,
                 label=f'c{i+1}',

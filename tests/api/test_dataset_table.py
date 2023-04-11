@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -112,7 +113,7 @@ def test_add_columns(table, dataset1, db):
             .filter(dataall.db.models.DatasetTable.name == 'table1')
             .first()
         )
-        table_col = dataall.db.models.DatasetTableColumn(
+        table_col = DatasetTableColumn(
             name='col1',
             description='None',
             label='col1',
@@ -186,8 +187,8 @@ def test_update_dataset_table_column(client, table, dataset1, db):
             .first()
         )
         column = (
-            session.query(dataall.db.models.DatasetTableColumn)
-            .filter(dataall.db.models.DatasetTableColumn.tableUri == table.tableUri)
+            session.query(DatasetTableColumn)
+            .filter(DatasetTableColumn.tableUri == table.tableUri)
             .first()
         )
         response = client.query(
@@ -208,7 +209,7 @@ def test_update_dataset_table_column(client, table, dataset1, db):
             response.data.updateDatasetTableColumn.description == 'My new description'
         )
 
-        column = session.query(dataall.db.models.DatasetTableColumn).get(
+        column = session.query(DatasetTableColumn).get(
             column.columnUri
         )
         assert column.description == 'My new description'
@@ -235,8 +236,8 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             .first()
         )
         column = (
-            session.query(dataall.db.models.DatasetTableColumn)
-            .filter(dataall.db.models.DatasetTableColumn.tableUri == table.tableUri)
+            session.query(DatasetTableColumn)
+            .filter(DatasetTableColumn.tableUri == table.tableUri)
             .first()
         )
         glue_tables = [
@@ -298,10 +299,10 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         )
         assert new_table
         assert new_table.GlueTableName == 'new_table'
-        columns: [dataall.db.models.DatasetTableColumn] = (
-            session.query(dataall.db.models.DatasetTableColumn)
-            .filter(dataall.db.models.DatasetTableColumn.tableUri == new_table.tableUri)
-            .order_by(dataall.db.models.DatasetTableColumn.columnType.asc())
+        columns: [DatasetTableColumn] = (
+            session.query(DatasetTableColumn)
+            .filter(DatasetTableColumn.tableUri == new_table.tableUri)
+            .order_by(DatasetTableColumn.columnType.asc())
             .all()
         )
         assert len(columns) == 2
@@ -315,10 +316,10 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         )
         assert existing_table
         assert existing_table.GlueTableName == 'table1'
-        columns: [dataall.db.models.DatasetTableColumn] = (
-            session.query(dataall.db.models.DatasetTableColumn)
-            .filter(dataall.db.models.DatasetTableColumn.tableUri == new_table.tableUri)
-            .order_by(dataall.db.models.DatasetTableColumn.columnType.asc())
+        columns: [DatasetTableColumn] = (
+            session.query(DatasetTableColumn)
+            .filter(DatasetTableColumn.tableUri == new_table.tableUri)
+            .order_by(DatasetTableColumn.columnType.asc())
             .all()
         )
         assert len(columns) == 2

@@ -7,6 +7,7 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 log = logging.getLogger('aws:glue')
 
@@ -525,8 +526,8 @@ class Glue:
     @Worker.handler('glue.table.update_column')
     def update_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            column: models.DatasetTableColumn = session.query(
-                models.DatasetTableColumn
+            column: DatasetTableColumn = session.query(
+                DatasetTableColumn
             ).get(task.targetUri)
             table: models.DatasetTable = session.query(models.DatasetTable).get(
                 column.tableUri
