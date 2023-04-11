@@ -1,4 +1,4 @@
-from dataall.modules.datasets.api.DatasetTableColumn import (
+from dataall.modules.datasets.api.table_column import (
     input_types,
     mutations,
     queries,

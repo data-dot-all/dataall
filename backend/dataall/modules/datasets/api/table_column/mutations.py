@@ -1,5 +1,5 @@
 from dataall.api import gql
-from dataall.modules.datasets.api.DatasetTableColumn.resolvers import (
+from dataall.modules.datasets.api.table_column.resolvers import (
     sync_table_columns,
     update_table_column
 )
