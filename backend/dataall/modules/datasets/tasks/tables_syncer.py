@@ -3,16 +3,14 @@ import os
 import sys
 from operator import and_
 
-from .. import db
-from ..aws.handlers.glue import Glue
-from ..aws.handlers.sts import SessionHelper
-from ..db import get_engine
-from ..db import models
-from ..searchproxy import indexers
-from ..searchproxy.connect import (
-    connect,
-)
-from ..utils.alarm_service import AlarmService
+from dataall import db
+from dataall.aws.handlers.glue import Glue
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import get_engine
+from dataall.db import models
+from dataall.searchproxy import indexers
+from dataall.searchproxy.connect import connect
+from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 root = logging.getLogger()

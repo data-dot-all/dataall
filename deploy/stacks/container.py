@@ -94,7 +94,7 @@ class ContainerStack(pyNestedClass):
 
         sync_tables_task = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),

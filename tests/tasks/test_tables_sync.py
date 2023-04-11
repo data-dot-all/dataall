@@ -147,14 +147,14 @@ def _test_tables_sync(db, org, env, sync_dataset, table, mocker):
         ],
     )
     mocker.patch(
-        'dataall.tasks.tables_syncer.is_assumable_pivot_role', return_value=True
+        'dataall.modules.datasets.tables_syncer.is_assumable_pivot_role', return_value=True
     )
     mocker.patch(
         'dataall.aws.handlers.glue.Glue.grant_principals_all_table_permissions',
         return_value=True,
     )
 
-    processed_tables = dataall.tasks.tables_syncer.sync_tables(engine=db)
+    processed_tables = dataall.modules.datasets.tasks.tables_syncer.sync_tables(engine=db)
     assert len(processed_tables) == 2
     with db.scoped_session() as session:
         saved_table: dataall.db.models.DatasetTable = (
