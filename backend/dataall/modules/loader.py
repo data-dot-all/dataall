@@ -57,7 +57,7 @@ def load_modules(modes: List[ImportMode]) -> None:
             log.info(f"Module {name} is not active. Skipping...")
             continue
 
-        if active.lower() == "true" and not _import_module(name):
+        if not _import_module(name):
             raise ValueError(f"Couldn't find module {name} under modules directory")
 
         log.info(f"Module {name} is loaded")
