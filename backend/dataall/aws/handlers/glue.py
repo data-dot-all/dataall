@@ -74,21 +74,6 @@ class Glue:
             return False
 
     @staticmethod
-    @Worker.handler(path='glue.dataset.database.tables')
-    def list_tables(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            accountid = dataset.AwsAccountId
-            region = dataset.region
-            tables = Glue.list_glue_database_tables(
-                accountid, dataset.GlueDatabaseName, region
-            )
-            DatasetTableService.sync(session, dataset.datasetUri, glue_tables=tables)
-            return tables
-
-    @staticmethod
     def list_glue_database_tables(accountid, database, region):
         aws_session = SessionHelper.remote_session(accountid=accountid)
         glue = aws_session.client('glue', region_name=region)
