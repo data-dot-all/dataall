@@ -20,7 +20,7 @@ class DatasetApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.datasets.api
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
-        GlossaryRegistry.register(GlossaryDefinition("DatasetTableColumn", DatasetTableColumn))
+        GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         log.info("API of datasets has been imported")
 
 

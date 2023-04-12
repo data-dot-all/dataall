@@ -12,18 +12,19 @@ class FeedDefinition:
 
 class FeedRegistry:
     """Registers models for different target types"""
+    _DEFINITIONS: Dict[str, FeedDefinition] = {}
 
-    def __init__(self):
-        self._definitions: Dict[str, FeedDefinition] = {}
+    @classmethod
+    def register(cls, model: FeedDefinition):
+        cls._DEFINITIONS[model.target_type] = model
 
-    def register(self, model: FeedDefinition):
-        self._definitions[model.target_type] = model
+    @classmethod
+    def find(cls, target_type: str):
+        return cls._DEFINITIONS[target_type]
 
-    def find(self, target_type: str):
-        return self._definitions[target_type]
-
-    def find_by_model(self, obj: Resource):
-        for target_type, definition in self._definitions.items():
+    @classmethod
+    def find_by_model(cls, obj: Resource):
+        for target_type, definition in cls._DEFINITIONS.items():
             if isinstance(obj, definition.model):
                 return target_type
         return None
