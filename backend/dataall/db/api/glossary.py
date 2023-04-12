@@ -4,12 +4,12 @@ from datetime import datetime
 from sqlalchemy import asc, or_, and_, literal, case
 from sqlalchemy.orm import with_expression, aliased
 
-from .. import models, exceptions, permissions, paginate
+from .. import models, exceptions, permissions, paginate, Resource
 from .permission_checker import (
     has_tenant_perm,
 )
 from ..models.Glossary import GlossaryNodeStatus
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.core.glossary.services.registry import GlossaryRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -124,24 +124,16 @@ class Glossary:
                 'associations are allowed for Glossary terms only',
             )
 
-        targetUri: str = data['targetUri']
-        targetType: str = data['targetType']
+        target_uri: str = data['targetUri']
+        target_type: str = data['targetType']
 
-        if targetType == 'Dataset':
-            target = session.query(models.Dataset).get(targetUri)
-        elif targetType == 'DatasetTable':
-            target = session.query(models.DatasetTable).get(targetUri)
-        elif targetType == 'Folder':
-            target = session.query(models.DatasetStorageLocation).get(targetUri)
-        elif targetType == 'Column':
-            target = session.query(DatasetTableColumn).get(targetUri)
-        elif targetType == 'Dashboard':
-            target = session.query(models.Dashboard).get(targetUri)
-        else:
+        target_model: Resource = GlossaryRegistry.find_model(target_type)
+        if not target_model:
             raise exceptions.InvalidInput(
                 'NodeType', 'term.nodeType', 'association target type is invalid'
             )
 
+        target = session.query(target_model).get(target_uri)
         if not target:
             raise exceptions.ObjectNotFound('Association target', uri)
 
@@ -150,8 +142,8 @@ class Glossary:
             approvedByOwner=data.get('approvedByOwner', True),
             approvedBySteward=data.get('approvedBySteward', True),
             nodeUri=uri,
-            targetUri=targetUri,
-            targetType=targetType,
+            targetUri=target_uri,
+            targetType=target_type,
         )
         session.add(link)
         return link

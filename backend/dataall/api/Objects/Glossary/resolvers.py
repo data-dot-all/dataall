@@ -4,7 +4,6 @@ from sqlalchemy import and_, or_, asc
 
 from .... import db
 from ....api.context import Context
-from ....core.utils.model_registry import GlossaryRegistry
 from ....db import paginate, exceptions, models
 from ....searchproxy import upsert_dataset
 from ....searchproxy import upsert_table
@@ -12,6 +11,8 @@ from ....searchproxy.indexers import upsert_folder, upsert_dashboard
 from ....api.constants import (
     GlossaryRole
 )
+
+from dataall.core.glossary.services.registry import GlossaryRegistry
 
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
@@ -323,12 +324,12 @@ def get_link(context: Context, source, linkUri: str = None):
 
 
 def target_union_resolver(obj, *_):
-    return GlossaryRegistry.find_by_model(obj)
+    return GlossaryRegistry.find_object_type(obj)
 
 
 def resolve_link_target(context, source, **kwargs):
     with context.engine.scoped_session() as session:
-        model = GlossaryRegistry.find(source.targetUri)
+        model = GlossaryRegistry.find_model(source.targetUri)
         target = session.query(model).get(source.targetUri)
     return target
 

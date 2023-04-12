@@ -2,7 +2,8 @@
 import logging
 from typing import List
 
-from dataall.core.utils.model_registry import ModelDefinition, FeedRegistry, GlossaryRegistry
+from dataall.core.feed.services.registry import FeedRegistry, FeedDefinition
+from dataall.core.glossary.services.registry import GlossaryRegistry, GlossaryDefinition
 from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 from dataall.modules.loader import ModuleInterface, ImportMode
 
@@ -18,8 +19,8 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets.api
-        FeedRegistry.register(ModelDefinition("DatasetTableColumn", DatasetTableColumn))
-        GlossaryRegistry.register(ModelDefinition("DatasetTableColumn", DatasetTableColumn))
+        FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
+        GlossaryRegistry.register(GlossaryDefinition("DatasetTableColumn", DatasetTableColumn))
         log.info("API of datasets has been imported")
 
 

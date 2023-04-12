@@ -2,7 +2,7 @@ from sqlalchemy import or_
 
 from dataall.api.context import Context
 from dataall.db import paginate, models
-from dataall.core.utils.model_registry import FeedRegistry
+from dataall.core.feed.services.registry import FeedRegistry
 
 
 class Feed:
