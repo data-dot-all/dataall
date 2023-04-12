@@ -1,14 +1,22 @@
 from dataclasses import dataclass
-from typing import Type, Dict, Optional
+from typing import Type, Dict, Optional, Protocol, Union
 
 from dataall.db import Resource, models
+
+
+class Identifiable(Protocol):
+    def uri(self):
+        ...
 
 
 @dataclass
 class GlossaryDefinition:
     target_type: str
     object_type: str
-    model: Type[Resource]
+    model: Union[Type[Resource], Identifiable]  # should be an intersection, but python typing doesn't have one yet
+
+    def target_uri(self):
+        return self.model.uri()
 
 
 class GlossaryRegistry:
@@ -29,6 +37,10 @@ class GlossaryRegistry:
             if isinstance(model, definition.model):
                 return definition.object_type
         return None
+
+    @classmethod
+    def definitions(cls):
+        return cls._DEFINITIONS.values()
 
 
 GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))

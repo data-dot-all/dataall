@@ -10,6 +10,7 @@ from .permission_checker import (
 )
 from ..models.Glossary import GlossaryNodeStatus
 from dataall.core.glossary.services.registry import GlossaryRegistry
+from ..paginator import Page
 
 logger = logging.getLogger(__name__)
 
@@ -339,46 +340,26 @@ class Glossary:
     ):
         source = data['source']
         filter = data['filter']
-        datasets = session.query(
-            models.Dataset.datasetUri.label('targetUri'),
-            literal('dataset').label('targetType'),
-            models.Dataset.label.label('label'),
-            models.Dataset.name.label('name'),
-            models.Dataset.description.label('description'),
-        )
-        tables = session.query(
-            models.DatasetTable.tableUri.label('targetUri'),
-            literal('table').label('targetType'),
-            models.DatasetTable.label.label('label'),
-            models.DatasetTable.name.label('name'),
-            models.DatasetTable.description.label('description'),
-        )
-        columns = session.query(
-            DatasetTableColumn.columnUri.label('targetUri'),
-            literal('column').label('targetType'),
-            DatasetTableColumn.label.label('label'),
-            DatasetTableColumn.name.label('name'),
-            DatasetTableColumn.description.label('description'),
-        )
-        folders = session.query(
-            models.DatasetStorageLocation.locationUri.label('targetUri'),
-            literal('folder').label('targetType'),
-            models.DatasetStorageLocation.label.label('label'),
-            models.DatasetStorageLocation.name.label('name'),
-            models.DatasetStorageLocation.description.label('description'),
-        )
 
-        dashboards = session.query(
-            models.Dashboard.dashboardUri.label('targetUri'),
-            literal('dashboard').label('targetType'),
-            models.Dashboard.label.label('label'),
-            models.Dashboard.name.label('name'),
-            models.Dashboard.description.label('description'),
-        )
+        query = None
+        for definition in GlossaryRegistry.definitions():
+            model = definition.model
+            subquery = session.query(
+                definition.target_uri().label('targetUri'),
+                literal(definition.target_type.lower()).label('targetType'),
+                model.label.label('label'),
+                model.name.label('name'),
+                model.description.label('description'),
+            )
+            if query:
+                query.union(subquery)
+            else:
+                query = subquery
 
-        linked_objects = datasets.union(tables, columns, folders, dashboards).subquery(
-            'linked_objects'
-        )
+        if query is None:
+            return Page([], 1, 1, 0)  # empty page. All modules are turned off
+
+        linked_objects = query.subquery('linked_objects')
 
         path = models.GlossaryNode.path
         q = (

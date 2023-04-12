@@ -18,3 +18,6 @@ class DatasetTableColumn(Resource, Base):
     columnType = Column(
         String, default='column'
     )  # can be either "column" or "partition"
+
+    def uri(self):
+        return self.columnUri

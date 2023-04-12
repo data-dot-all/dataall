@@ -59,3 +59,7 @@ class Dataset(Resource, Base):
     importedKmsKey = Column(Boolean, default=False)
     importedAdminRole = Column(Boolean, default=False)
     imported = Column(Boolean, default=False)
+
+    def uri(self):
+        return self.datasetUri
+
