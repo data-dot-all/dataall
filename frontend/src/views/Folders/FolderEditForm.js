@@ -23,16 +23,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import {
   getDatasetStorageLocation,
   searchGlossary,
-  updateDatasetStorageLocation
-} from '../../api';
-import { ChipInput, Defaults } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+  updateDatasetStorageLocation,
+  useClient
+} from '../../services';
 
 function FolderEditHeader(props) {
   const { folder } = props;

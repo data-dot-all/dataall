@@ -14,10 +14,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { copyTableToCluster, listAvailableDatasetTables } from '../../api';
 import { Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  copyTableToCluster,
+  listAvailableDatasetTables,
+  useClient
+} from '../../services';
 
 const WarehouseCopyTableModal = (props) => {
   const client = useClient();

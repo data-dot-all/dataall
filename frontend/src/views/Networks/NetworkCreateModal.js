@@ -15,10 +15,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { createNetwork, listEnvironmentGroups } from '../../api';
 import { ChipInput, Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  createNetwork,
+  listEnvironmentGroups,
+  useClient
+} from '../../services';
 
 const NetworkCreateModal = (props) => {
   const { environment, onApply, onClose, open, reloadNetworks, ...other } =

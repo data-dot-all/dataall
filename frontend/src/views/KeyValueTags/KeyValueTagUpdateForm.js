@@ -20,9 +20,8 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { updateKeyValueTags } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { updateKeyValueTags, useClient } from '../../services';
 
 const KeyValueTagUpdateForm = (props) => {
   const { targetType, targetUri, tags, closeUpdate } = props;

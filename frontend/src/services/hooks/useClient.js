@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { from } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
 import {
   ApolloClient,
   ApolloLink,
   HttpLink,
   InMemoryCache
 } from 'apollo-boost';
-import { onError } from '@apollo/client/link/error';
-import { from } from '@apollo/client';
-import { useToken } from './useToken';
-import { SET_ERROR, useDispatch } from '../globalErrors';
+import { useEffect, useState } from 'react';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useToken } from '../../hooks/useToken';
 
 const defaultOptions = {
   watchQuery: {

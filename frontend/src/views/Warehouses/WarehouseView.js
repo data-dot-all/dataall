@@ -26,16 +26,17 @@ import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import {
   deleteRedshiftCluster,
   getRedshiftCluster,
   pauseRedshiftCluster,
-  resumeRedshiftCluster
-} from '../../api';
-import { DeleteObjectWithFrictionModal } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
+  resumeRedshiftCluster,
+  useClient
+} from '../../services';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import { StackStatus } from '../Stack';
 import Stack from '../Stack/Stack';

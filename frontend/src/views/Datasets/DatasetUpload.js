@@ -13,10 +13,13 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { getDatasetPresignedUrl, startGlueCrawler } from '../../api';
 import { FileDropzone } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  getDatasetPresignedUrl,
+  startGlueCrawler,
+  useClient
+} from '../../services';
 
 const DatasetUpload = (props) => {
   const { dataset, isAdmin } = props;

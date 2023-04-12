@@ -10,10 +10,9 @@ import { useTheme } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { listFeedMessages } from '../../api';
 import { Defaults, Label, Scrollbar, TextAvatar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { listFeedMessages, useClient } from '../../services';
 import { dayjs } from '../../utils/dayjs';
 import FeedCommentAdd from './FeedCommentAdd';
 

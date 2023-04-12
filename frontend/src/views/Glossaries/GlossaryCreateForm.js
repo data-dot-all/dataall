@@ -20,11 +20,11 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { createGlossary } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useGroups, useSettings } from '../../hooks';
+import { useGroups, useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
 import { ArrowLeftIcon } from '../../icons/';
+import { createGlossary, useClient } from '../../services';
 
 const GlossaryCreateForm = (props) => {
   const navigate = useNavigate();

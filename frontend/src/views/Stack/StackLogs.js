@@ -10,10 +10,10 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { getStackLogs } from '../../api';
 import { THEMES } from '../../constants';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
+import { getStackLogs, useClient } from '../../services';
 
 const StackLogs = (props) => {
   const { environmentUri, stack, onClose, open } = props;

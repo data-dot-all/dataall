@@ -3,9 +3,8 @@ import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { postFeedMessage } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { postFeedMessage, useClient } from '../../services';
 
 const FeedCommentAdd = (props) => {
   const dispatch = useDispatch();

@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -13,7 +12,8 @@ import {
   TableRow
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useClient } from '../../hooks';
+import React, { useEffect, useState } from 'react';
+import { useClient } from '../../services';
 
 const PipelineEnvironments = (props) => {
   const { pipeline } = props;

@@ -21,9 +21,12 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { inviteGroupToOrganization, listCognitoGroups } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  inviteGroupToOrganization,
+  listCognitoGroups,
+  useClient
+} from '../../services';
 
 const OrganizationTeamInviteForm = (props) => {
   const { organization, onClose, open, reloadTeams, ...other } = props;

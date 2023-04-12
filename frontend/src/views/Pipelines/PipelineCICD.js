@@ -16,9 +16,8 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
-import { getDataPipelineCredsLinux } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getDataPipelineCredsLinux, useClient } from '../../services';
 
 const PipelineCICD = (props) => {
   const { pipeline } = props;

@@ -23,17 +23,18 @@ import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import { DeleteObjectWithFrictionModal, UpVoteButton } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import {
   countUpVotes,
   deleteDashboard,
   getDashboard,
   getVote,
-  upVote
-} from '../../api';
-import { DeleteObjectWithFrictionModal, UpVoteButton } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
+  upVote,
+  useClient
+} from '../../services';
 import FeedComments from '../Feed/FeedComments';
 import DashboardOverview from './DashboardOverview';
 import DashboardShares from './DashboardShares';

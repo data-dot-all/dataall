@@ -18,13 +18,13 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import {
-  createDataPipelineEnvironment,
-  listEnvironmentGroups
-} from '../../api';
 import { Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  createDataPipelineEnvironment,
+  listEnvironmentGroups,
+  useClient
+} from '../../services';
 
 const PipelineEnvironmentCreateForm = (props) => {
   const {

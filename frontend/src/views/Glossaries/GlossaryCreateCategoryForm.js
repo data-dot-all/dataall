@@ -13,8 +13,8 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { createCategory } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { createCategory } from '../../services';
 
 const GlossaryCreateCategoryForm = ({
   client,

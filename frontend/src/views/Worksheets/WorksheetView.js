@@ -22,6 +22,13 @@ import { FaTrash } from 'react-icons/fa';
 import { VscSymbolString } from 'react-icons/vsc';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  Defaults,
+  DeleteObjectWithFrictionModal,
+  Scrollbar
+} from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { PencilAltIcon } from '../../icons';
+import {
   deleteWorksheet,
   getSharedDatasetTables,
   getWorksheet,
@@ -32,16 +39,9 @@ import {
   listEnvironments,
   runAthenaSqlQuery,
   searchEnvironmentDataItems,
-  updateWorksheet
-} from '../../api';
-import {
-  Defaults,
-  DeleteObjectWithFrictionModal,
-  Scrollbar
-} from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
-import { PencilAltIcon } from '../../icons';
+  updateWorksheet,
+  useClient
+} from '../../services';
 import SQLQueryEditor from './SQLQueryEditor';
 import WorksheetEditFormModal from './WorksheetEditFormModal';
 import WorksheetResult from './WorksheetResult';

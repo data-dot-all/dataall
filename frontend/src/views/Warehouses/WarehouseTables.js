@@ -20,14 +20,14 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
-import {
-  disableRedshiftClusterDatasetCopy,
-  listClusterDatasetTables
-} from '../../api';
 import { Defaults, Pager, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { PlusIcon, SearchIcon } from '../../icons';
+import {
+  disableRedshiftClusterDatasetCopy,
+  listClusterDatasetTables,
+  useClient
+} from '../../services';
 import WarehouseCopyTableModal from './WarehouseCopyTableModal';
 
 const WarehouseTables = ({ warehouse }) => {

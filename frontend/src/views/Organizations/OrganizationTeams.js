@@ -24,7 +24,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import { HiUserRemove } from 'react-icons/hi';
 import { VscChecklist } from 'react-icons/vsc';
-import { listOrganizationGroups, removeGroupFromOrganization } from '../../api';
 import {
   Defaults,
   Label,
@@ -33,8 +32,12 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { SearchIcon } from '../../icons';
+import {
+  listOrganizationGroups,
+  removeGroupFromOrganization,
+  useClient
+} from '../../services';
 import OrganizationTeamInviteEditForm from './OrganizationTeamInviteEditForm';
 import OrganizationTeamInviteForm from './OrganizationTeamInviteForm';
 

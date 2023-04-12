@@ -12,11 +12,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { listDatasets } from '../../api';
 import { Defaults, Pager, SearchInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon } from '../../icons';
+import { listDatasets, useClient } from '../../services';
 import DatasetListItem from './DatasetListItem';
 
 function DatasetsPageHeader() {

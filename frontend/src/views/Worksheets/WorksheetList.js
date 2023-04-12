@@ -12,11 +12,11 @@ import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { listWorksheets } from '../../api';
 import { Defaults, Pager, SearchInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon } from '../../icons';
+import { listWorksheets, useClient } from '../../services';
 import { WorksheetListItem } from './WorksheetListItem';
 
 function WorksheetsPageHeader({ navigate }) {

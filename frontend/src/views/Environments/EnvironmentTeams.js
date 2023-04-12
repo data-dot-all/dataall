@@ -31,14 +31,6 @@ import * as FaIcons from 'react-icons/fa';
 import { HiUserRemove } from 'react-icons/hi';
 import { VscChecklist } from 'react-icons/vsc';
 import {
-  generateEnvironmentAccessToken,
-  getEnvironmentAssumeRoleUrl,
-  listAllEnvironmentConsumptionRoles,
-  listAllEnvironmentGroups,
-  removeConsumptionRoleFromEnvironment,
-  removeGroupFromEnvironment
-} from '../../api';
-import {
   Defaults,
   Label,
   Pager,
@@ -46,8 +38,16 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { SearchIcon } from '../../icons';
+import {
+  generateEnvironmentAccessToken,
+  getEnvironmentAssumeRoleUrl,
+  listAllEnvironmentConsumptionRoles,
+  listAllEnvironmentGroups,
+  removeConsumptionRoleFromEnvironment,
+  removeGroupFromEnvironment,
+  useClient
+} from '../../services';
 import EnvironmentRoleAddForm from './EnvironmentRoleAddForm';
 import EnvironmentTeamInviteEditForm from './EnvironmentTeamInviteEditForm';
 import EnvironmentTeamInviteForm from './EnvironmentTeamInviteForm';

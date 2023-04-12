@@ -17,7 +17,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaNetworkWired } from 'react-icons/fa';
-import { listEnvironmentNetworks } from '../../api';
 import {
   Defaults,
   Label,
@@ -26,8 +25,8 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { SearchIcon } from '../../icons';
+import { listEnvironmentNetworks, useClient } from '../../services';
 
 function VpcRow({ vpc }) {
   return (

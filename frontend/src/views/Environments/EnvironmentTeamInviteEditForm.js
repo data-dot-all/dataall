@@ -18,12 +18,12 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   listEnvironmentGroupInvitationPermissions,
-  updateGroupEnvironmentPermissions
-} from '../../api';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  updateGroupEnvironmentPermissions,
+  useClient
+} from '../../services';
 
 const EnvironmentTeamInviteEditForm = (props) => {
   const { environment, team, onClose, open, reloadTeams, ...other } = props;

@@ -17,14 +17,14 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   approveTermAssociation,
   dismissTermAssociation,
-  listGlossaryAssociations
-} from '../../api';
-import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  listGlossaryAssociations,
+  useClient
+} from '../../services';
 
 const GlossaryAssociations = ({ glossary }) => {
   const client = useClient();

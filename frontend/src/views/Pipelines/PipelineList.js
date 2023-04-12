@@ -14,12 +14,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { listDataPipelines } from '../../api';
 import { ChipInput, Defaults, Pager, SearchInput } from '../../components';
 import { AwsRegions } from '../../constants';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon } from '../../icons';
+import { listDataPipelines, useClient } from '../../services';
 import PipelineListItem from './PipelineListItem';
 
 function PipelinesPageHeader() {

@@ -6,10 +6,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getShareObject, revokeItemsShareObject } from '../../api';
 import { Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  getShareObject,
+  revokeItemsShareObject,
+  useClient
+} from '../../services';
 
 const RevokeShareItemsModal = (props) => {
   const client = useClient();

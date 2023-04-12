@@ -21,7 +21,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { GoDatabase } from 'react-icons/go';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { listEnvironmentClusters } from '../../api';
 import {
   Defaults,
   Pager,
@@ -30,8 +29,8 @@ import {
   StackStatus
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
+import { listEnvironmentClusters, useClient } from '../../services';
 
 const EnvironmentWarehouses = ({ environment }) => {
   const client = useClient();

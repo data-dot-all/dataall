@@ -10,9 +10,8 @@ import {
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { getRedshiftClusterConsoleAccess } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getRedshiftClusterConsoleAccess, useClient } from '../../services';
 
 const WarehouseConnection = (props) => {
   const { warehouse } = props;

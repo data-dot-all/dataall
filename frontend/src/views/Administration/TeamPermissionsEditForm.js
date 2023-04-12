@@ -18,9 +18,12 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { listTenantPermissions, updateTenantGroupPermissions } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  listTenantPermissions,
+  updateTenantGroupPermissions,
+  useClient
+} from '../../services';
 
 const TeamPermissionsEditForm = (props) => {
   const { team, onClose, open, reloadTeams, ...other } = props;

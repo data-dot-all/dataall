@@ -26,10 +26,6 @@ import { BsFolder } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  deleteDatasetStorageLocation,
-  listDatasetStorageLocations
-} from '../../api';
-import {
   Defaults,
   DeleteObjectModal,
   Pager,
@@ -37,8 +33,12 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
+import {
+  deleteDatasetStorageLocation,
+  listDatasetStorageLocations,
+  useClient
+} from '../../services';
 import FolderCreateModal from '../Folders/FolderCreateModal';
 
 const DatasetFolders = ({ dataset, isAdmin }) => {

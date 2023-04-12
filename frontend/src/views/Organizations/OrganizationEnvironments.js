@@ -21,7 +21,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FaAws } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { listOrganizationEnvironments } from '../../api';
 import {
   Defaults,
   Pager,
@@ -30,8 +29,8 @@ import {
   StackStatus
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { ArrowRightIcon, SearchIcon } from '../../icons';
+import { listOrganizationEnvironments, useClient } from '../../services';
 
 const OrganizationEnvironments = (props) => {
   const { organization, ...other } = props;

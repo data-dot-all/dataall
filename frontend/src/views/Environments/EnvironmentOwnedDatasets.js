@@ -16,7 +16,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { listDatasetsCreatedInEnvironment } from '../../api';
 import {
   Defaults,
   Pager,
@@ -25,8 +24,8 @@ import {
   StackStatus
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { ArrowRightIcon, SearchIcon } from '../../icons';
+import { listDatasetsCreatedInEnvironment, useClient } from '../../services';
 
 const EnvironmentOwnedDatasets = ({ environment }) => {
   const client = useClient();

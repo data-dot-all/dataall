@@ -19,11 +19,11 @@ import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { deleteGlossary, getGlossary } from '../../api';
 import { DeleteObjectWithFrictionModal } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useAuth, useClient, useSettings } from '../../hooks';
+import { useAuth, useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
+import { deleteGlossary, getGlossary, useClient } from '../../services';
 import GlossaryAssociations from './GlossaryAssociations';
 import GlossaryManagement from './GlossaryManagement';
 

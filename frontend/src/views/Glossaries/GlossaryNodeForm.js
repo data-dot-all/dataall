@@ -12,14 +12,14 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   deleteCategory,
   deleteTerm,
   updateCategory,
   updateGlossary,
   updateTerm
-} from '../../api';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
+} from '../../services';
 
 const GlossaryNodeForm = ({ client, data, refresh, isAdmin }) => {
   const dispatch = useDispatch();

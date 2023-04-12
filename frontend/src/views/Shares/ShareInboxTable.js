@@ -16,11 +16,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { getShareRequestsToMe } from '../../api';
 import { Defaults, RefreshTableMenu, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ArrowRightIcon } from '../../icons';
+import { getShareRequestsToMe, useClient } from '../../services';
 
 const ShareInboxTable = () => {
   const dispatch = useDispatch();

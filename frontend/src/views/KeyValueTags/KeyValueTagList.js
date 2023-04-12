@@ -14,11 +14,10 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { listKeyValueTags } from '../../api';
 import { Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { PencilAltIcon } from '../../icons';
+import { listKeyValueTags, useClient } from '../../services';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 
 const KeyValueTagList = ({ targetUri, targetType }) => {

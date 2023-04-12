@@ -18,15 +18,15 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   createDataPipelineEnvironment,
   deleteDataPipelineEnvironment,
   listEnvironmentGroups,
-  updateDataPipelineEnvironment
-} from '../../api';
-import { Defaults } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  updateDataPipelineEnvironment,
+  useClient
+} from '../../services';
 
 const PipelineEnvironmentEditForm = (props) => {
   const {

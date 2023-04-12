@@ -21,16 +21,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ChipInput, Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import {
   createRedshiftCluster,
   listEnvironmentGroups,
-  listEnvironments
-} from '../../api';
-import { ChipInput, Defaults } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+  listEnvironments,
+  useClient
+} from '../../services';
 
 const WarehouseCreateForm = (props) => {
   const navigate = useNavigate();

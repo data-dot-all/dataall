@@ -3,10 +3,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { getShareRequestsToMe, listDatasetShareObjects } from '../../api';
 import { Defaults, Pager } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
+import {
+  getShareRequestsToMe,
+  listDatasetShareObjects,
+  useClient
+} from '../../services';
 import ShareInboxListItem from './ShareInboxListItem';
 
 const ShareInboxList = (props) => {

@@ -22,12 +22,17 @@ import * as PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { getDatasetTable, searchGlossary, updateDatasetTable } from '../../api';
 import { ChipInput, Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
 import { ArrowLeftIcon } from '../../icons/';
+import {
+  getDatasetTable,
+  searchGlossary,
+  updateDatasetTable,
+  useClient
+} from '../../services';
 
 function TableEditHeader(props) {
   const { table } = props;

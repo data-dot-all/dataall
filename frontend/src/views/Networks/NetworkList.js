@@ -21,7 +21,6 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaNetworkWired } from 'react-icons/fa';
-import { deleteNetwork, listEnvironmentNetworks } from '../../api';
 import {
   Defaults,
   Label,
@@ -30,8 +29,12 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { PlusIcon, SearchIcon } from '../../icons';
+import {
+  deleteNetwork,
+  listEnvironmentNetworks,
+  useClient
+} from '../../services';
 import NetworkCreateModal from './NetworkCreateModal';
 
 function VpcRow({ vpc, deleteVpcNetwork }) {

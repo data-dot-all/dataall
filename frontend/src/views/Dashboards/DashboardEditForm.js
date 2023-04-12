@@ -23,11 +23,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { getDashboard, searchGlossary, updateDashboard } from '../../api';
 import { ChipInput, Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ArrowLeftIcon, ChevronRightIcon } from '../../icons';
+import {
+  getDashboard,
+  searchGlossary,
+  updateDashboard,
+  useClient
+} from '../../services';
 
 function DashboardEditHeader(props) {
   const { dashboard } = props;

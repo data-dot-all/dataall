@@ -15,6 +15,8 @@ import { Formik } from 'formik';
 import { createRef, useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import * as Yup from 'yup';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
 import {
   createQuicksightDataSourceSet,
   getMonitoringDashboardId,
@@ -22,10 +24,9 @@ import {
   getPlatformAuthorSession,
   getPlatformReaderSession,
   getTrustAccount,
-  updateSSMParameter
-} from '../../api';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+  updateSSMParameter,
+  useClient
+} from '../../services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

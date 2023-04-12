@@ -4,9 +4,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
-import { previewTable2 } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { previewTable2, useClient } from '../../services';
 
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   '& .MuiDataGrid-columnsContainer': {

@@ -20,12 +20,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { getSagemakerStudioUserProfile, updateUserProfile } from '../../api';
 import { ChipInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
 import { ArrowLeftIcon } from '../../icons/';
+import {
+  getSagemakerStudioUserProfile,
+  updateUserProfile,
+  useClient
+} from '../../services';
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();

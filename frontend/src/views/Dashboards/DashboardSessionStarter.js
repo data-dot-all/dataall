@@ -25,11 +25,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { BsCloud } from 'react-icons/bs';
 import { Link as RouterLink } from 'react-router-dom';
-import { getAuthorSession, listEnvironments } from '../../api';
 import { Defaults, Pager, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { SearchIcon } from '../../icons';
+import { getAuthorSession, listEnvironments, useClient } from '../../services';
 
 function DashboardSessionStarterPageHeader() {
   return (

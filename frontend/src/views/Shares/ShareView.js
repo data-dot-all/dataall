@@ -39,14 +39,6 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
-  approveShareObject,
-  deleteShareObject,
-  getShareObject,
-  rejectShareObject,
-  removeSharedItem,
-  submitApproval
-} from '../../api';
-import {
   Defaults,
   Pager,
   Scrollbar,
@@ -54,8 +46,17 @@ import {
   TextAvatar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon } from '../../icons';
+import {
+  approveShareObject,
+  deleteShareObject,
+  getShareObject,
+  rejectShareObject,
+  removeSharedItem,
+  submitApproval,
+  useClient
+} from '../../services';
 import AddShareItemModal from './AddShareItemModal';
 import RevokeShareItemsModal from './RevokeShareItemsModal';
 

@@ -6,10 +6,9 @@ import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
-import { searchGlossary } from '../../api';
 import { Defaults, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { searchGlossary, useClient } from '../../services';
 import listToTree from '../../utils/listToTree';
 
 const useTreeItemStyles = makeStyles((theme) => ({

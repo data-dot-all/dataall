@@ -5,14 +5,14 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   listDatasetTableColumns,
   syncDatasetTableColumns,
-  updateColumnDescription
-} from '../../api';
-import { Defaults } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  updateColumnDescription,
+  useClient
+} from '../../services';
 
 const TableColumns = (props) => {
   const { table, isAdmin } = props;

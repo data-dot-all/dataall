@@ -23,16 +23,17 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ChipInput, Defaults, Topics } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import {
   importDataset,
   listEnvironmentGroups,
-  listEnvironments
-} from '../../api';
-import { ChipInput, Defaults, Topics } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+  listEnvironments,
+  useClient
+} from '../../services';
 
 const DatasetImportForm = (props) => {
   const dispatch = useDispatch();

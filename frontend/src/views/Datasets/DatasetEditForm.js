@@ -23,17 +23,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ChipInput, Defaults, Topics } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import {
   getDataset,
   listEnvironmentGroups,
   searchGlossary,
-  updateDataset
-} from '../../api';
-import { ChipInput, Defaults, Topics } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+  updateDataset,
+  useClient
+} from '../../services';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();

@@ -22,17 +22,18 @@ import { SiJupyter } from 'react-icons/si';
 import { VscDebugStart } from 'react-icons/vsc';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import { DeleteObjectWithFrictionModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
 import {
   deleteSagemakerNotebook,
   getSagemakerNotebook,
   getSagemakerNotebookPresignedUrl,
   startSagemakerNotebook,
-  stopSagemakerNotebook
-} from '../../api';
-import { DeleteObjectWithFrictionModal } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
+  stopSagemakerNotebook,
+  useClient
+} from '../../services';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import { StackStatus } from '../Stack';
 import Stack from '../Stack/Stack';

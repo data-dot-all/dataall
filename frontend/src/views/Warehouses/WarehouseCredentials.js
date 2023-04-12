@@ -9,9 +9,11 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { getRedshiftClusterDatabaseCredentials } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  getRedshiftClusterDatabaseCredentials,
+  useClient
+} from '../../services';
 
 const WarehouseCredentials = (props) => {
   const { warehouse } = props;

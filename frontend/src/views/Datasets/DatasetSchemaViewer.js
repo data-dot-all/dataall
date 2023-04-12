@@ -18,10 +18,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { getDatasetSchema } from '../../api';
 import { Defaults, Pager } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getDatasetSchema, useClient } from '../../services';
 
 const DatasetSchemaItem = (props) => {
   const { table } = props;

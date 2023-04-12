@@ -18,10 +18,9 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { getStack, updateStack } from '../../api';
 import { Scrollbar, StackStatus } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getStack, updateStack, useClient } from '../../services';
 import StackLogs from './StackLogs';
 
 const Stack = (props) => {

@@ -22,15 +22,16 @@ import { Helmet } from 'react-helmet-async';
 import { FaExternalLinkAlt, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import { DeleteObjectModal } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useSettings } from '../../hooks';
+import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import {
   deleteDatasetStorageLocation,
   getDatasetAssumeRoleUrl,
-  getDatasetStorageLocation
-} from '../../api';
-import { DeleteObjectModal } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
+  getDatasetStorageLocation,
+  useClient
+} from '../../services';
 import FeedComments from '../Feed/FeedComments';
 import FolderOverview from './FolderOverview';
 

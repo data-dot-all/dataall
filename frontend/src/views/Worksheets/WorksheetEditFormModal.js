@@ -13,10 +13,9 @@ import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { updateWorksheet } from '../../api';
 import { ChipInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { updateWorksheet, useClient } from '../../services';
 
 const WorksheetEditFormModal = (props) => {
   const { worksheet, onApply, onClose, open, reload, ...other } = props;

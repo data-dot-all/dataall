@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 import { createRef, useCallback, useEffect, useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import * as ReactIf from 'react-if';
-import { getReaderSession } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getReaderSession, useClient } from '../../services';
 
 const QuickSightEmbedding = require('amazon-quicksight-embedding-sdk');
 

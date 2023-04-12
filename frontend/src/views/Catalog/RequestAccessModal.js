@@ -15,16 +15,16 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
+import { Defaults } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   createShareObject,
   listEnvironmentConsumptionRoles,
   listEnvironmentGroups,
   listEnvironments,
-  requestDashboardShare
-} from '../../api';
-import { Defaults } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  requestDashboardShare,
+  useClient
+} from '../../services';
 
 const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;

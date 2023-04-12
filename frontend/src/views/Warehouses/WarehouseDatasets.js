@@ -22,7 +22,6 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { BsFolder } from 'react-icons/bs';
-import { listClusterDatasets, removeDatasetFromCluster } from '../../api';
 import {
   Defaults,
   DeleteObjectModal,
@@ -30,8 +29,12 @@ import {
   Scrollbar
 } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { PlusIcon, SearchIcon } from '../../icons';
+import {
+  listClusterDatasets,
+  removeDatasetFromCluster,
+  useClient
+} from '../../services';
 import WarehouseLoadDatasetModal from './WarehouseLoadDatasetModal';
 import WarehouseTables from './WarehouseTables';
 

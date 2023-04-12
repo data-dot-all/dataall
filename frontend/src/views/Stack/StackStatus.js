@@ -9,9 +9,8 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
-import { getStack } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getStack, useClient } from '../../services';
 
 export const StackStatus = ({ stack, setStack, environmentUri }) => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();

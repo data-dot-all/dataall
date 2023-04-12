@@ -19,11 +19,10 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import { VscChecklist } from 'react-icons/vsc';
-import { listTenantGroups } from '../../api';
 import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { SearchIcon } from '../../icons';
+import { listTenantGroups, useClient } from '../../services';
 import TeamPermissionsEditForm from './TeamPermissionsEditForm';
 
 function TeamRow({ team, fetchItems }) {

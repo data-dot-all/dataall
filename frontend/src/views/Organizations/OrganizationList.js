@@ -14,11 +14,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { listOrganizations } from '../../api';
 import { Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon, SearchIcon } from '../../icons';
+import { listOrganizations, useClient } from '../../services';
 import OrganizationListItem from './OrganizationListItem';
 
 const OrganizationList = () => {

@@ -16,10 +16,9 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { addSharedItem, getShareObject } from '../../api';
 import { Defaults, Pager, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { addSharedItem, getShareObject, useClient } from '../../services';
 
 const AddShareItemModal = (props) => {
   const client = useClient();

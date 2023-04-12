@@ -30,20 +30,21 @@ import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ChipInput } from '../../components';
+import { AwsRegions } from '../../constants';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
+import { useGroups, useSettings } from '../../hooks';
+import { ChevronRightIcon } from '../../icons';
+import { ArrowLeftIcon } from '../../icons/';
 import {
   createEnvironment,
   getOrganization,
   getPivotRoleExternalId,
   getPivotRoleName,
   getPivotRolePresignedUrl,
-  getTrustAccount
-} from '../../api';
-import { ChipInput } from '../../components';
-import { AwsRegions } from '../../constants';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useGroups, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+  getTrustAccount,
+  useClient
+} from '../../services';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();

@@ -21,12 +21,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { addDatasetStorageLocation, getDataset } from '../../api';
 import { ChipInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
 import { ArrowLeftIcon } from '../../icons/';
+import {
+  addDatasetStorageLocation,
+  getDataset,
+  useClient
+} from '../../services';
 
 function FolderCreateHeader(props) {
   const { dataset } = props;

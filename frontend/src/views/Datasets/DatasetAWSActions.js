@@ -4,9 +4,12 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { generateDatasetAccessToken, getDatasetAssumeRoleUrl } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  generateDatasetAccessToken,
+  getDatasetAssumeRoleUrl,
+  useClient
+} from '../../services';
 
 function DatasetAWSActions({ dataset, isAdmin }) {
   const client = useClient();

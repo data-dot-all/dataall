@@ -23,14 +23,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import { CgHashtag } from 'react-icons/cg';
 import { VscSymbolString } from 'react-icons/vsc';
+import { Label, Scrollbar } from '../../components';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   getDatasetTableProfilingRun,
   listDatasetTableProfilingRuns,
-  startDatasetProfilingRun
-} from '../../api';
-import { Label, Scrollbar } from '../../components';
-import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+  startDatasetProfilingRun,
+  useClient
+} from '../../services';
 
 const TableMetrics = ({ table, isAdmin }) => {
   const client = useClient();

@@ -19,12 +19,12 @@ import { useSnackbar } from 'notistack';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { createOrganization } from '../../api';
 import { ChipInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useGroups, useSettings } from '../../hooks';
+import { useGroups, useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
 import { ArrowLeftIcon } from '../../icons/';
+import { createOrganization, useClient } from '../../services';
 
 const OrganizationCreateForm = (props) => {
   const navigate = useNavigate();

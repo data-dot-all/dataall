@@ -9,9 +9,8 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { getDataset } from '../../api';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import { getDataset, useClient } from '../../services';
 
 const PipelineDatasets = (props) => {
   const { pipeline } = props;

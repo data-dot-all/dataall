@@ -16,10 +16,13 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { addDatasetStorageLocation, searchGlossary } from '../../api';
 import { ChipInput, Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
+import {
+  addDatasetStorageLocation,
+  searchGlossary,
+  useClient
+} from '../../services';
 
 const FolderCreateModal = (props) => {
   const { dataset, onApply, onClose, open, reloadFolders, ...other } = props;

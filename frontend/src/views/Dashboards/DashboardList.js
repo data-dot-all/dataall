@@ -13,11 +13,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { MdShowChart } from 'react-icons/md';
 import { Link as RouterLink } from 'react-router-dom';
-import { searchDashboards } from '../../api';
 import { Defaults, Pager, SearchInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon } from '../../icons';
+import { searchDashboards, useClient } from '../../services';
 import DashboardListItem from './DashboardListItem';
 
 function DashboardPageHeader() {

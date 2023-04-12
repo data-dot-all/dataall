@@ -11,11 +11,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { listSagemakerStudioUserProfiles } from '../../api';
 import { Defaults, Pager, SearchInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient, useSettings } from '../../hooks';
+import { useSettings } from '../../hooks';
 import { ChevronRightIcon, PlusIcon } from '../../icons';
+import { listSagemakerStudioUserProfiles, useClient } from '../../services';
 import NotebookListItem from './NotebookListItem';
 
 function NotebookPageHeader() {

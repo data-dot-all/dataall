@@ -13,11 +13,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { addDatasetToCluster, listAvailableDatasets } from '../../api';
 import { Defaults, Pager, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useClient } from '../../hooks';
 import { PlusIcon } from '../../icons';
+import {
+  addDatasetToCluster,
+  listAvailableDatasets,
+  useClient
+} from '../../services';
 
 const WarehouseLoadDatasetModal = (props) => {
   const client = useClient();
