@@ -8,4 +8,3 @@ from dataall.modules.datasets.handlers import (
 )
 
 __all__ = ["glue_column_handler", "glue_table_handler"]
-

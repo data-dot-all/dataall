@@ -67,16 +67,15 @@ class DatasetColumnGlueHandler:
                 updated_table = {
                     k: v
                     for k, v in original_table['Table'].items()
-                    if k
-                       not in [
-                           'CatalogId',
-                           'VersionId',
-                           'DatabaseName',
-                           'CreateTime',
-                           'UpdateTime',
-                           'CreatedBy',
-                           'IsRegisteredWithLakeFormation',
-                       ]
+                    if k not in [
+                        'CatalogId',
+                        'VersionId',
+                        'DatabaseName',
+                        'CreateTime',
+                        'UpdateTime',
+                        'CreatedBy',
+                        'IsRegisteredWithLakeFormation',
+                    ]
                 }
                 all_columns = updated_table.get('StorageDescriptor', {}).get(
                     'Columns', []

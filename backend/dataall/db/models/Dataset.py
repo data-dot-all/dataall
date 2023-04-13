@@ -62,4 +62,3 @@ class Dataset(Resource, Base):
 
     def uri(self):
         return self.datasetUri
-
