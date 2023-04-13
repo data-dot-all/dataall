@@ -9,7 +9,6 @@ from ...utils.naming_convention import (
     NamingConventionPattern,
 )
 from ...utils.slugify import slugify
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -495,7 +494,11 @@ class RedshiftCluster:
         session, username, groups, uri, data=None, check_perm=True
     ) -> models.RedshiftClusterDatasetTable:
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
-        table = DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
+
+        # TODO should be migrated in the redshift module
+        table = dataall.modules.datasets.services.dataset_table.DatasetTableService.get_dataset_table_by_uri(
+            session, data['tableUri']
+        )
         table = models.RedshiftClusterDatasetTable(
             clusterUri=uri,
             datasetUri=data['datasetUri'],
