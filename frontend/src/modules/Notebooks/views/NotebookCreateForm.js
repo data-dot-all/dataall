@@ -28,14 +28,14 @@ import {
   ChipInput,
   Defaults,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
   createSagemakerNotebook,
   listEnvironmentGroups,
   listEnvironments,
   useClient
-} from '../../../../services';
+} from '../../../services';
 
 const NotebookCreateForm = (props) => {
   const navigate = useNavigate();

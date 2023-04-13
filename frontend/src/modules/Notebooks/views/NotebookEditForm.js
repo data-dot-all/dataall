@@ -25,13 +25,13 @@ import {
   ChevronRightIcon,
   ChipInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
   getSagemakerStudioUserProfile,
   updateUserProfile,
   useClient
-} from '../../../../services';
+} from '../../../services';
 
 const PipelineEditForm = (props) => {
   const dispatch = useDispatch();

@@ -26,8 +26,8 @@ import {
   ChevronRightIcon,
   DeleteObjectWithFrictionModal,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
   deleteSagemakerNotebook,
   getSagemakerNotebook,
@@ -35,10 +35,10 @@ import {
   startSagemakerNotebook,
   stopSagemakerNotebook,
   useClient
-} from '../../../../services';
-import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
-import { StackStatus } from '../Stack';
-import Stack from '../Stack/Stack';
+} from '../../../services';
+import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
+import { StackStatus } from '../../Misc/views/Stack';
+import Stack from '../../Misc/views/Stack/Stack';
 import NotebookOverview from './NotebookOverview';
 
 /**
