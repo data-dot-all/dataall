@@ -1,11 +1,11 @@
 
-from dataall.core.feed.services.registry import FeedRegistry
+from dataall.api.Objects.Feed.registry import FeedRegistry
 from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 
 def test_dataset_registered():
-    model = FeedRegistry.find("DatasetTableColumn")
+    model = FeedRegistry.find_model("DatasetTableColumn")
     assert model == DatasetTableColumn
 
     model = DatasetTableColumn()
-    assert "DatasetTableColumn" == FeedRegistry.find_by_model(model)
+    assert "DatasetTableColumn" == FeedRegistry.find_target(model)

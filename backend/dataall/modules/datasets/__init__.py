@@ -2,7 +2,7 @@
 import logging
 from typing import List
 
-from dataall.core.feed.services.registry import FeedRegistry, FeedDefinition
+from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.core.glossary.services.registry import GlossaryRegistry, GlossaryDefinition
 from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 from dataall.modules.loader import ModuleInterface, ImportMode

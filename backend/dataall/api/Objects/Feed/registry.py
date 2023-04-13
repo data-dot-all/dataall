@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Type, Dict
 
+from dataall.api import gql
+from dataall.api.gql.graphql_union_type import UnionTypeRegistry
 from dataall.db import Resource, models
 
 
@@ -10,7 +12,7 @@ class FeedDefinition:
     model: Type[Resource]
 
 
-class FeedRegistry:
+class FeedRegistry(UnionTypeRegistry):
     """Registers models for different target types"""
     _DEFINITIONS: Dict[str, FeedDefinition] = {}
 
@@ -19,15 +21,19 @@ class FeedRegistry:
         cls._DEFINITIONS[definition.target_type] = definition
 
     @classmethod
-    def find(cls, target_type: str):
-        return cls._DEFINITIONS[target_type]
+    def find_model(cls, target_type: str):
+        return cls._DEFINITIONS[target_type].model
 
     @classmethod
-    def find_by_model(cls, obj: Resource):
+    def find_target(cls, obj: Resource):
         for target_type, definition in cls._DEFINITIONS.items():
             if isinstance(obj, definition.model):
                 return target_type
         return None
+
+    @classmethod
+    def types(cls):
+        return [gql.Ref(target_type) for target_type in cls._DEFINITIONS.keys()]
 
 
 FeedRegistry.register(FeedDefinition("Worksheet", models.Worksheet))

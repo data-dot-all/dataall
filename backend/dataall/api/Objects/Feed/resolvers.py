@@ -2,7 +2,7 @@ from sqlalchemy import or_
 
 from dataall.api.context import Context
 from dataall.db import paginate, models
-from dataall.core.feed.services.registry import FeedRegistry
+from dataall.api.Objects.Feed.registry import FeedRegistry
 
 
 class Feed:
@@ -20,14 +20,14 @@ class Feed:
 
 
 def resolve_feed_target_type(obj, *_):
-    return FeedRegistry.find_by_model(obj)
+    return FeedRegistry.find_target(obj)
 
 
 def resolve_target(context: Context, source: Feed, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        model = FeedRegistry.find(source.targetType)
+        model = FeedRegistry.find_model(source.targetType)
         target = session.query(model).get(source.targetUri)
     return target
 
