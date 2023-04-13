@@ -7,8 +7,8 @@ import {
   InMemoryCache
 } from 'apollo-boost';
 import { useEffect, useState } from 'react';
+import { useToken } from '../../authentication';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useToken } from '../../hooks/useToken';
 
 const defaultOptions = {
   watchQuery: {

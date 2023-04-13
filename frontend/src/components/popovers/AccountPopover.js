@@ -1,6 +1,3 @@
-import { useRef, useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
@@ -12,10 +9,13 @@ import {
   Popover,
   Typography
 } from '@mui/material';
-import { useAuth } from '../../hooks';
-import { TextAvatar } from '../TextAvatar';
-import { useGroups } from '../../hooks';
+import { useSnackbar } from 'notistack';
+import { useRef, useState } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../authentication';
 import { CogIcon } from '../../icons';
+import { useGroups } from '../../services';
+import { TextAvatar } from '../TextAvatar';
 
 export const AccountPopover = () => {
   const anchorRef = useRef(null);

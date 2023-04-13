@@ -26,8 +26,7 @@ import * as Yup from 'yup';
 import { ChipInput, Defaults, Topics } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+import { ChevronRightIcon, ArrowLeftIcon } from '../../icons';
 import {
   createDataset,
   listEnvironmentGroups,

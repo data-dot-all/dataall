@@ -1,8 +1,9 @@
 import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { useRoutes } from 'react-router-dom';
+import { useAuth } from './authentication';
 import { GlobalStyles, SplashScreen } from './components';
-import { useAuth, useScrollReset, useSettings } from './hooks';
+import { useScrollReset, useSettings } from './hooks';
 import routes from './routes';
 import { createMaterialTheme } from './theme';
 

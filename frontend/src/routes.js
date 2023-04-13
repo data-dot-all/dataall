@@ -1,10 +1,6 @@
 import { lazy, Suspense } from 'react';
-import {
-  AuthGuard,
-  DefaultLayout,
-  GuestGuard,
-  LoadingScreen
-} from './components';
+import { AuthGuard, GuestGuard } from './authentication';
+import { DefaultLayout, LoadingScreen } from './components';
 
 const Loadable = (Component) => (props) =>
   (

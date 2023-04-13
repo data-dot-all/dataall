@@ -33,9 +33,8 @@ import * as Yup from 'yup';
 import { ChipInput } from '../../components';
 import { AwsRegions } from '../../constants';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useGroups, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+import { useSettings } from '../../hooks';
+import { ArrowLeftIcon, ChevronRightIcon } from '../../icons';
 import {
   createEnvironment,
   getOrganization,
@@ -43,7 +42,8 @@ import {
   getPivotRoleName,
   getPivotRolePresignedUrl,
   getTrustAccount,
-  useClient
+  useClient,
+  useGroups
 } from '../../services';
 
 const EnvironmentCreateForm = (props) => {

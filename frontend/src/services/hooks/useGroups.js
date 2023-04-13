@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Auth } from 'aws-amplify';
-import { useDispatch, SET_ERROR } from '../globalErrors';
+import { useEffect, useState } from 'react';
+import { SET_ERROR, useDispatch } from '../../globalErrors';
 
 export const useGroups = () => {
   const dispatch = useDispatch();
@@ -33,5 +33,6 @@ export const useGroups = () => {
       );
     }
   });
+
   return groups;
 };

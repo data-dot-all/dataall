@@ -25,8 +25,7 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { ChipInput, Defaults } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
+import { ChevronRightIcon, ArrowLeftIcon } from '../../icons';
 import {
   getDatasetTable,
   searchGlossary,

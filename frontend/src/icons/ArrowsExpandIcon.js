@@ -1,6 +1,6 @@
 import createSvgIcon from '@mui/material/utils/createSvgIcon';
 
-const ArrowsExpandIcon = createSvgIcon(
+export const ArrowsExpandIcon = createSvgIcon(
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -16,5 +16,3 @@ const ArrowsExpandIcon = createSvgIcon(
   </svg>,
   'ArrowsExpandIcon'
 );
-
-export default ArrowsExpandIcon;

@@ -23,10 +23,9 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { ChipInput } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useGroups, useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
-import { ArrowLeftIcon } from '../../icons/';
-import { getRedshiftCluster, useClient } from '../../services';
+import { useSettings } from '../../hooks';
+import { ArrowLeftIcon, ChevronRightIcon } from '../../icons';
+import { getRedshiftCluster, useClient, useGroups } from '../../services';
 
 const WarehouseEditForm = (props) => {
   const dispatch = useDispatch();

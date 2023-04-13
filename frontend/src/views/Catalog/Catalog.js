@@ -1,4 +1,3 @@
-import React, { useEffect, useRef, useState } from 'react';
 import {
   DataSearch,
   MultiList,
@@ -6,7 +5,6 @@ import {
   ReactiveList,
   SelectedFilters
 } from '@appbaseio/reactivesearch';
-import CircularProgress from '@mui/material/CircularProgress';
 import {
   Box,
   Breadcrumbs,
@@ -19,15 +17,18 @@ import {
   Popover,
   Typography
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import CircularProgress from '@mui/material/CircularProgress';
 import { makeStyles, useTheme } from '@mui/styles';
-import { Helmet } from 'react-helmet-async';
 import * as PropTypes from 'prop-types';
-import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from '../../icons';
-import { useSettings, useToken } from '../../hooks';
+import React, { useEffect, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link as RouterLink } from 'react-router-dom';
+import { useToken } from '../../authentication';
 import { THEMES } from '../../constants';
-import Hit from './Hit';
+import { useSettings } from '../../hooks';
+import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from '../../icons';
 import { GlossarySearchComponent } from './GlossarySearchComponent';
+import Hit from './Hit';
 
 const useStyles = makeStyles((theme) => ({
   mainSearch: {
