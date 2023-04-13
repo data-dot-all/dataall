@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Login } from '../../views/authentication/Login';
+import { Login } from '../../modules/Misc/views/authentication/Login';
 import { useAuth } from '../hooks';
 
 export const AuthGuard = (props) => {
