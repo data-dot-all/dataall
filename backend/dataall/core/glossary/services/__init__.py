@@ -1,1 +1,0 @@
-"""Service layer of glossaries"""

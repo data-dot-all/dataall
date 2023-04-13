@@ -5,12 +5,11 @@ from sqlalchemy import asc, or_, and_, literal, case
 from sqlalchemy.orm import with_expression, aliased
 
 from .. import models, exceptions, permissions, paginate, Resource
-from .permission_checker import (
-    has_tenant_perm,
-)
+from .permission_checker import has_tenant_perm
 from ..models.Glossary import GlossaryNodeStatus
-from dataall.core.glossary.services.registry import GlossaryRegistry
 from ..paginator import Page
+from dataall.core.permission_checker import has_tenant_permission
+from dataall.core.context import get_context
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +112,8 @@ class Glossary:
         return node
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def link_term(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def link_term(session, uri, target_model: Resource, data):
         term: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not term:
             raise exceptions.ObjectNotFound('Node', uri)
@@ -128,18 +127,12 @@ class Glossary:
         target_uri: str = data['targetUri']
         target_type: str = data['targetType']
 
-        target_model: Resource = GlossaryRegistry.find_model(target_type)
-        if not target_model:
-            raise exceptions.InvalidInput(
-                'NodeType', 'term.nodeType', 'association target type is invalid'
-            )
-
         target = session.query(target_model).get(target_uri)
         if not target:
             raise exceptions.ObjectNotFound('Association target', uri)
 
         link = models.TermLink(
-            owner=username,
+            owner=get_context().username,
             approvedByOwner=data.get('approvedByOwner', True),
             approvedBySteward=data.get('approvedBySteward', True),
             nodeUri=uri,
@@ -335,14 +328,12 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def list_term_associations(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_term_associations(session, target_model_definitions, data=None):
         source = data['source']
         filter = data['filter']
 
         query = None
-        for definition in GlossaryRegistry.definitions():
+        for definition in target_model_definitions:
             model = definition.model
             subquery = session.query(
                 definition.target_uri().label('targetUri'),

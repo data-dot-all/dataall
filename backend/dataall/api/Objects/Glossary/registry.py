@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Type, Dict, Optional, Protocol, Union
 
+from dataall.api import gql
+from dataall.api.gql.graphql_union_type import UnionTypeRegistry
 from dataall.db import Resource, models
 
 
@@ -11,6 +13,7 @@ class Identifiable(Protocol):
 
 @dataclass
 class GlossaryDefinition:
+    """Glossary's definition used for registration references of other modules"""
     target_type: str
     object_type: str
     model: Union[Type[Resource], Identifiable]  # should be an intersection, but python typing doesn't have one yet
@@ -19,7 +22,8 @@ class GlossaryDefinition:
         return self.model.uri()
 
 
-class GlossaryRegistry:
+class GlossaryRegistry(UnionTypeRegistry):
+    """Registry of glossary definition and API to retrieve data"""
     _DEFINITIONS: Dict[str, GlossaryDefinition] = {}
 
     @classmethod
@@ -41,6 +45,10 @@ class GlossaryRegistry:
     @classmethod
     def definitions(cls):
         return cls._DEFINITIONS.values()
+
+    @classmethod
+    def types(cls):
+        return [gql.Ref(definition.object_type) for definition in cls._DEFINITIONS.values()]
 
 
 GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))

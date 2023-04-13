@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from dataall.db import models
 from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
@@ -197,7 +198,6 @@ def test_list_glossaries(client):
         }
         """
     )
-    print(response)
     assert response.data.listGlossaries.count == 1
     assert response.data.listGlossaries.nodes[0].stats.categories == 2
 
@@ -246,7 +246,6 @@ def test_hierarchical_search(client):
         }
         """
     )
-    print(response)
     assert response.data.searchGlossary.count == 4
 
 
@@ -263,7 +262,6 @@ def test_get_glossary(client, g1):
         """,
         nodeUri=g1.nodeUri,
     )
-    print(r)
     assert r.data.getGlossary.nodeUri == g1.nodeUri
     assert r.data.getGlossary.label == g1.label
     assert r.data.getGlossary.readme == g1.readme
@@ -301,7 +299,6 @@ def test_get_term(client, t1):
         """,
         nodeUri=t1.nodeUri,
     )
-    print(r)
     assert r.data.getTerm.nodeUri == t1.nodeUri
     assert r.data.getTerm.label == t1.label
     assert r.data.getTerm.readme == t1.readme
@@ -552,7 +549,7 @@ def test_link_term(client, t1, _columns, group):
     print(r)
 
 
-def test_get_term_associations(t1, client):
+def test_get_term_associations(t1, db, client):
     r = client.query(
         """
         query GetTerm($nodeUri:String!){
@@ -579,10 +576,13 @@ def test_get_term_associations(t1, client):
         nodeUri=t1.nodeUri,
         username='alice',
     )
-    print(r)
+    assert r.data.getTerm.nodeUri == t1.nodeUri
+    assert r.data.getTerm.label == t1.label
+    assert r.data.getTerm.readme == t1.readme
 
 
-def test_delete_category(client, c1, group):
+def test_delete_category(client, db, c1, group):
+    now = datetime.now()
     r = client.query(
         """
         mutation DeleteCategory(
@@ -597,7 +597,9 @@ def test_delete_category(client, c1, group):
         username='alice',
         groups=[group.name],
     )
-    print(r)
+    with db.scoped_session() as session:
+        node = session.query(models.GlossaryNode).get(c1.nodeUri)
+        assert node.deleted >= now
 
 
 def test_list_glossaries_after_delete(client):
@@ -634,7 +636,6 @@ def test_list_glossaries_after_delete(client):
         }
         """
     )
-    print(response)
     assert response.data.listGlossaries.count == 1
     assert response.data.listGlossaries.nodes[0].stats.categories == 0
 
@@ -683,5 +684,4 @@ def test_hierarchical_search_after_delete(client):
         }
         """
     )
-    print(response)
     assert response.data.searchGlossary.count == 1
