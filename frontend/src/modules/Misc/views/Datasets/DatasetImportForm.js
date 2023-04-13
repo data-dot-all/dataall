@@ -23,12 +23,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { Topics } from '../../../../constants';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
   Defaults,
-  Topics,
   useSettings
 } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';

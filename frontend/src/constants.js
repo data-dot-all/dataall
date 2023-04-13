@@ -30,3 +30,18 @@ export const AwsRegions = [
   { label: 'AWS GovCloud (US-East)', value: 'us-gov-east-1' },
   { label: 'AWS GovCloud (US)', value: 'us-gov-west-1' }
 ];
+
+export const Topics = [
+  'Finances',
+  'HumanResources',
+  'Products',
+  'Services',
+  'Operations',
+  'Research',
+  'Sales',
+  'Orders',
+  'Sites',
+  'Energy',
+  'Customers',
+  'Misc'
+];

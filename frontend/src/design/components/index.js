@@ -28,4 +28,3 @@ export * from './UpVotesReadOnly';
 export * from './defaults';
 export * from './layout';
 export * from './popovers';
-export * from './topics';
