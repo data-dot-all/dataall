@@ -15,8 +15,8 @@ class FeedRegistry:
     _DEFINITIONS: Dict[str, FeedDefinition] = {}
 
     @classmethod
-    def register(cls, model: FeedDefinition):
-        cls._DEFINITIONS[model.target_type] = model
+    def register(cls, definition: FeedDefinition):
+        cls._DEFINITIONS[definition.target_type] = definition
 
     @classmethod
     def find(cls, target_type: str):
