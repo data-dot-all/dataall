@@ -20,9 +20,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { ArrowLeftIcon, ChevronRightIcon, useSettings } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ArrowLeftIcon, ChevronRightIcon } from '../../icons';
 import { createGlossary, useClient, useGroups } from '../../services';
 
 const GlossaryCreateForm = (props) => {

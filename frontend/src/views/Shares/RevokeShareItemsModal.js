@@ -6,7 +6,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Defaults } from '../../components';
+import { Defaults } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   getShareObject,

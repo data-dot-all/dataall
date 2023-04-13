@@ -15,7 +15,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { FaBars } from 'react-icons/fa';
 import * as ReactIf from 'react-if';
-import { Scrollbar } from '../../components';
+import { Scrollbar } from '../../design';
 
 const WorksheetResult = ({ results, loading }) => {
   if (loading) {

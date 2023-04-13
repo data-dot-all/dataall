@@ -27,10 +27,13 @@ import { Helmet } from 'react-helmet-async';
 import { FaAws, FaNetworkWired, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { DeleteObjectWithFrictionModal } from '../../components';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  PencilAltIcon,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import { archiveEnvironment, getEnvironment, useClient } from '../../services';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import EnvironmentNetworks from '../Networks/NetworkList';

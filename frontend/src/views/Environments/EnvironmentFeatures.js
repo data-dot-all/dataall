@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Label } from '../../components';
+import { Label } from '../../design';
 
 const EnvironmentFeatures = (props) => {
   const { environment, ...other } = props;

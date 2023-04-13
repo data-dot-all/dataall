@@ -22,14 +22,15 @@ import { FaAws } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  ArrowRightIcon,
   Defaults,
   Pager,
   RefreshTableMenu,
   Scrollbar,
+  SearchIcon,
   StackStatus
-} from '../../components';
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { ArrowRightIcon, SearchIcon } from '../../icons';
 import { listOrganizationEnvironments, useClient } from '../../services';
 
 const OrganizationEnvironments = (props) => {

@@ -14,8 +14,7 @@ import { BsBookmark, BsTag } from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar } from '../../components';
-import { useCardStyle } from '../../hooks';
+import { IconAvatar, useCardStyle } from '../../design';
 
 const GlossaryListItem = (props) => {
   const { glossary } = props;

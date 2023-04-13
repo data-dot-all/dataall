@@ -1,8 +1,8 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
+import { THEMES } from '../../constants';
 import { baseThemeOptions } from './BaseThemeOptions';
 import { darkThemeOptions } from './DarkThemeOptions';
 import { lightThemeOptions } from './LightThemeOptions';
-import { THEMES } from '../constants';
 
 export const createMaterialTheme = (config) => {
   let theme = createTheme(

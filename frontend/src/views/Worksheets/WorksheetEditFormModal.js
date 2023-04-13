@@ -13,7 +13,7 @@ import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { ChipInput } from '../../components';
+import { ChipInput } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { updateWorksheet, useClient } from '../../services';
 

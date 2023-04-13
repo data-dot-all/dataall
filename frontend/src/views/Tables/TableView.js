@@ -20,10 +20,13 @@ import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { DeleteObjectModal } from '../../components';
+import {
+  ChevronRightIcon,
+  DeleteObjectModal,
+  PencilAltIcon,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import { deleteDatasetTable, getDatasetTable, useClient } from '../../services';
 import FeedComments from '../Feed/FeedComments';
 import TableColumns from './TableColumns';

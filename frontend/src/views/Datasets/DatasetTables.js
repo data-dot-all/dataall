@@ -26,14 +26,15 @@ import { BsTable } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  ArrowRightIcon,
   Defaults,
   DeleteObjectModal,
   Pager,
   RefreshTableMenu,
-  Scrollbar
-} from '../../components';
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { ArrowRightIcon, SearchIcon } from '../../icons';
 import {
   deleteDatasetTable,
   listDatasetTables,

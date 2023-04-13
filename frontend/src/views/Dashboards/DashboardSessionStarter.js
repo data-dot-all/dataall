@@ -25,10 +25,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { BsCloud } from 'react-icons/bs';
 import { Link as RouterLink } from 'react-router-dom';
-import { Defaults, Pager, Scrollbar } from '../../components';
+import {
+  Defaults,
+  Pager,
+  Scrollbar,
+  SearchIcon,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { SearchIcon } from '../../icons';
 import { getAuthorSession, listEnvironments, useClient } from '../../services';
 
 function DashboardSessionStarterPageHeader() {

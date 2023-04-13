@@ -3,9 +3,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Defaults, Pager } from '../../components';
+import { Defaults, Pager, useSettings } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
 import {
   getShareRequestsToMe,
   listDatasetShareObjects,

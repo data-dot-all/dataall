@@ -18,7 +18,7 @@ import {
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Scrollbar, StackStatus } from '../../components';
+import { Scrollbar, StackStatus } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { getStack, updateStack, useClient } from '../../services';
 import StackLogs from './StackLogs';

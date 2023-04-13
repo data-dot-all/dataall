@@ -14,9 +14,8 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Scrollbar } from '../../components';
+import { PencilAltIcon, Scrollbar } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PencilAltIcon } from '../../icons';
 import { listKeyValueTags, useClient } from '../../services';
 import KeyValueTagUpdateForm from './KeyValueTagUpdateForm';
 

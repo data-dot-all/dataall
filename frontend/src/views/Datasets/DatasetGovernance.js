@@ -8,7 +8,7 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { Label } from '../../components';
+import { Label } from '../../design';
 
 const DatasetGovernance = (props) => {
   const { dataset } = props;

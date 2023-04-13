@@ -22,14 +22,16 @@ import { GoDatabase } from 'react-icons/go';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  ArrowRightIcon,
   Defaults,
   Pager,
+  PlusIcon,
   RefreshTableMenu,
   Scrollbar,
+  SearchIcon,
   StackStatus
-} from '../../components';
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
 import { listEnvironmentClusters, useClient } from '../../services';
 
 const EnvironmentWarehouses = ({ environment }) => {

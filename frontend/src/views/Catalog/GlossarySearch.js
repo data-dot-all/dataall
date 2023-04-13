@@ -6,7 +6,7 @@ import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
-import { Defaults, Scrollbar } from '../../components';
+import { Defaults, Scrollbar } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { searchGlossary, useClient } from '../../services';
 import { listToTree } from '../../utils';

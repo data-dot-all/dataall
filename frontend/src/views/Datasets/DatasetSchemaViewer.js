@@ -18,7 +18,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Defaults, Pager } from '../../components';
+import { Defaults, Pager } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { getDatasetSchema, useClient } from '../../services';
 

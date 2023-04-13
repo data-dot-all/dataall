@@ -13,10 +13,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { MdShowChart } from 'react-icons/md';
 import { Link as RouterLink } from 'react-router-dom';
-import { Defaults, Pager, SearchInput } from '../../components';
+import {
+  ChevronRightIcon,
+  Defaults,
+  Pager,
+  SearchInput,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
 import { searchDashboards, useClient } from '../../services';
 import DashboardListItem from './DashboardListItem';
 

@@ -29,10 +29,10 @@ import {
   Label,
   Pager,
   RefreshTableMenu,
-  Scrollbar
-} from '../../components';
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { SearchIcon } from '../../icons';
 import {
   listOrganizationGroups,
   removeGroupFromOrganization,

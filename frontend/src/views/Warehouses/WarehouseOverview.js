@@ -1,6 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../components';
+import { ObjectBrief, ObjectMetadata } from '../../design';
 import WarehouseConnection from './WarehouseConnection';
 import WarehouseCredentials from './WarehouseCredentials';
 

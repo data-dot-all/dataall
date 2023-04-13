@@ -24,10 +24,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
+  PencilAltIcon,
   Scrollbar
-} from '../../components';
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PencilAltIcon } from '../../icons';
 import {
   deleteWorksheet,
   getSharedDatasetTables,

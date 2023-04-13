@@ -15,8 +15,7 @@ import * as FaIcons from 'react-icons/fa';
 import { FaUserPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, Label } from '../../components';
-import { useCardStyle } from '../../hooks';
+import { IconAvatar, Label, useCardStyle } from '../../design';
 
 const OrganizationListItem = (props) => {
   const { organization } = props;

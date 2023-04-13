@@ -25,8 +25,12 @@ import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { useToken } from '../../authentication';
 import { THEMES } from '../../constants';
-import { useSettings } from '../../hooks';
-import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from '../../icons';
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  useSettings
+} from '../../design';
 import { GlossarySearchComponent } from './GlossarySearchComponent';
 import Hit from './Hit';
 

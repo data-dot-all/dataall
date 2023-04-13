@@ -13,9 +13,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { Defaults, Pager, Scrollbar } from '../../components';
+import { Defaults, Pager, PlusIcon, Scrollbar } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PlusIcon } from '../../icons';
 import {
   addDatasetToCluster,
   listAvailableDatasets,

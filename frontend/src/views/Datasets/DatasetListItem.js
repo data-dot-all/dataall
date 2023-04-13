@@ -8,21 +8,21 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import * as FiIcons from 'react-icons/fi';
-import * as FaIcons from 'react-icons/fa';
+import PropTypes from 'prop-types';
+import React from 'react';
 import * as BsIcons from 'react-icons/bs';
 import { BsTable } from 'react-icons/bs';
-import { Link as RouterLink } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import * as FaIcons from 'react-icons/fa';
+import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
-import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   IconAvatar,
   Label,
   StackStatus,
-  UpVotesReadOnly
-} from '../../components';
-import { useCardStyle } from '../../hooks';
+  UpVotesReadOnly,
+  useCardStyle
+} from '../../design';
 
 const DatasetListItem = (props) => {
   const { dataset } = props;

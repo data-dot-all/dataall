@@ -24,10 +24,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FaAws } from 'react-icons/fa';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { ArchiveObjectWithFrictionModal } from '../../components';
+import {
+  ArchiveObjectWithFrictionModal,
+  ChevronRightIcon,
+  PencilAltIcon,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import {
   archiveOrganization,
   getOrganization,

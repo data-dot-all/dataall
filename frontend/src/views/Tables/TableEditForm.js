@@ -22,10 +22,14 @@ import * as PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { ChipInput, Defaults } from '../../components';
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  ChipInput,
+  Defaults,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, ArrowLeftIcon } from '../../icons';
 import {
   getDatasetTable,
   searchGlossary,

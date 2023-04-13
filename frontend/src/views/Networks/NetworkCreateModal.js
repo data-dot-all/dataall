@@ -15,7 +15,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import { ChipInput, Defaults } from '../../components';
+import { ChipInput, Defaults } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   createNetwork,

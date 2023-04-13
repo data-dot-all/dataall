@@ -15,13 +15,13 @@ import {
   Typography
 } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BellIcon } from '../../icons';
 import {
   countUnreadNotifications,
   listNotifications,
   markNotificationAsRead,
   useClient
-} from '../../services';
+} from '../../../services';
+import { BellIcon } from '../../icons';
 import { Defaults } from '../defaults';
 
 export const NotificationsPopover = () => {

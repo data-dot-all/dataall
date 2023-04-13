@@ -16,7 +16,7 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Defaults, Pager, Scrollbar } from '../../components';
+import { Defaults, Pager, Scrollbar } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { addSharedItem, getShareObject, useClient } from '../../services';
 

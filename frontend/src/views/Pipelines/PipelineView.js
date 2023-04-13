@@ -19,10 +19,13 @@ import { Helmet } from 'react-helmet-async';
 import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { DeleteObjectWithFrictionModal } from '../../components';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  PencilAltIcon,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, PencilAltIcon } from '../../icons';
 import { deleteDataPipeline, getDataPipeline, useClient } from '../../services';
 import FeedComments from '../Feed/FeedComments';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';

@@ -14,8 +14,7 @@ import * as FaIcons from 'react-icons/fa';
 import { MdShowChart } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, Label, UpVotesReadOnly } from '../../components';
-import { useCardStyle } from '../../hooks';
+import { IconAvatar, Label, UpVotesReadOnly, useCardStyle } from '../../design';
 
 const DashboardListItem = (props) => {
   const { dashboard } = props;

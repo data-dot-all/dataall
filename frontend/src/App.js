@@ -2,10 +2,14 @@ import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { useRoutes } from 'react-router-dom';
 import { useAuth } from './authentication';
-import { GlobalStyles, SplashScreen } from './components';
-import { useScrollReset, useSettings } from './hooks';
+import {
+  GlobalStyles,
+  SplashScreen,
+  createMaterialTheme,
+  useScrollReset,
+  useSettings
+} from './design';
 import routes from './routes';
-import { createMaterialTheme } from './theme';
 
 export const App = () => {
   const content = useRoutes(routes);

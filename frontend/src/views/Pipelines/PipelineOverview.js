@@ -1,6 +1,6 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../components';
+import { ObjectBrief, ObjectMetadata } from '../../design';
 import PipelineCICD from './PipelineCICD';
 import PipelineEnvironments from './PipelineEnvironments';
 

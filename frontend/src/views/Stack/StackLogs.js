@@ -11,8 +11,8 @@ import {
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { THEMES } from '../../constants';
+import { useSettings } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
 import { getStackLogs, useClient } from '../../services';
 
 const StackLogs = (props) => {

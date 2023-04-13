@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { Defaults } from '../../components';
+import { Defaults } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   createDataPipelineEnvironment,

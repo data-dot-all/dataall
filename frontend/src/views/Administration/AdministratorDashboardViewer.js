@@ -15,8 +15,8 @@ import { Formik } from 'formik';
 import { createRef, useCallback, useEffect, useState } from 'react';
 import * as ReactIf from 'react-if';
 import * as Yup from 'yup';
+import { useSettings } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
 import {
   createQuicksightDataSourceSet,
   getMonitoringDashboardId,

@@ -26,10 +26,11 @@ import {
   Defaults,
   DeleteObjectModal,
   Pager,
-  Scrollbar
-} from '../../components';
+  PlusIcon,
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PlusIcon, SearchIcon } from '../../icons';
 import {
   listClusterDatasets,
   removeDatasetFromCluster,

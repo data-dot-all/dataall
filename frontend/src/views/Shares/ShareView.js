@@ -39,15 +39,16 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
+  ChevronRightIcon,
   Defaults,
   Pager,
+  PlusIcon,
   Scrollbar,
   ShareStatus,
-  TextAvatar
-} from '../../components';
+  TextAvatar,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, PlusIcon } from '../../icons';
 import {
   approveShareObject,
   deleteShareObject,

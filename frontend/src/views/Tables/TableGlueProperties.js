@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Scrollbar } from '../../components';
+import { Scrollbar } from '../../design';
 
 const TableGlueProperties = (props) => {
   const { glueProperties, ...other } = props;

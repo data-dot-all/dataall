@@ -12,8 +12,8 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
+import { bytesToSize } from '../../utils';
 import { DuplicateIcon, XIcon } from '../icons';
-import { bytesToSize } from '../utils';
 
 export const FileDropzone = (props) => {
   const {

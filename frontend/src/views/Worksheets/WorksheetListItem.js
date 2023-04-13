@@ -14,8 +14,7 @@ import { AiOutlineExperiment } from 'react-icons/ai';
 import * as FaIcons from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, Label } from '../../components';
-import { useCardStyle } from '../../hooks';
+import { IconAvatar, Label, useCardStyle } from '../../design';
 
 export const WorksheetListItem = (props) => {
   const { worksheet } = props;

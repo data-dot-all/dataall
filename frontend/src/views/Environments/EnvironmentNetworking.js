@@ -22,10 +22,10 @@ import {
   Label,
   Pager,
   RefreshTableMenu,
-  Scrollbar
-} from '../../components';
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { SearchIcon } from '../../icons';
 import { listEnvironmentNetworks, useClient } from '../../services';
 
 function VpcRow({ vpc }) {

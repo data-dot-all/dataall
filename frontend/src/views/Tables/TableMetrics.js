@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import { CgHashtag } from 'react-icons/cg';
 import { VscSymbolString } from 'react-icons/vsc';
-import { Label, Scrollbar } from '../../components';
+import { Label, Scrollbar } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   getDatasetTableProfilingRun,

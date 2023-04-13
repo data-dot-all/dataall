@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import {
   Box,
   Breadcrumbs,
@@ -12,10 +9,12 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { RiInboxArchiveLine } from 'react-icons/ri';
+import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FiSend } from 'react-icons/fi';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
+import { RiInboxArchiveLine } from 'react-icons/ri';
+import { Link as RouterLink } from 'react-router-dom';
+import { ChevronRightIcon, useSettings } from '../../design';
 import ShareInboxList from './ShareInboxList';
 import ShareOutboxList from './ShareOutboxList';
 

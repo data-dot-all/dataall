@@ -20,10 +20,12 @@ import { FaAws, FaTrash } from 'react-icons/fa';
 import { SiJupyter } from 'react-icons/si';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { DeleteObjectWithFrictionModal } from '../../components';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon } from '../../icons';
 import {
   deleteSagemakerStudioUserProfile,
   getSagemakerStudioUserProfile,

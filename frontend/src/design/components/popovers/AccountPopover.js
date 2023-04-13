@@ -12,9 +12,9 @@ import {
 import { useSnackbar } from 'notistack';
 import { useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../authentication';
+import { useAuth } from '../../../authentication';
+import { useGroups } from '../../../services';
 import { CogIcon } from '../../icons';
-import { useGroups } from '../../services';
 import { TextAvatar } from '../TextAvatar';
 
 export const AccountPopover = () => {

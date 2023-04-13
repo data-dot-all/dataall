@@ -20,9 +20,8 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
-import { Defaults, Pager, Scrollbar } from '../../components';
+import { Defaults, Pager, PlusIcon, Scrollbar, SearchIcon } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PlusIcon, SearchIcon } from '../../icons';
 import {
   disableRedshiftClusterDatasetCopy,
   listClusterDatasetTables,

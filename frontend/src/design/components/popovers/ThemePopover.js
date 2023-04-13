@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { THEMES } from '../../../constants';
 import { useSettings } from '../../hooks';
-import { THEMES } from '../../constants';
 import { MoonIcon, SunIcon } from '../../icons';
 
 export const ThemePopover = () => {

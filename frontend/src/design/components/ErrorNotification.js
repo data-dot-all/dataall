@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { useSnackbar } from 'notistack';
-import { IconButton } from '@mui/material';
 import { CancelRounded } from '@mui/icons-material';
-import { useDispatch, useSelector, HIDE_ERROR } from '../globalErrors';
+import { IconButton } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import React, { useEffect } from 'react';
+import { HIDE_ERROR, useDispatch, useSelector } from '../../globalErrors';
 
 export const ErrorNotification = () => {
   const dispatch = useDispatch();

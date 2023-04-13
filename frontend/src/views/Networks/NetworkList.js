@@ -25,11 +25,12 @@ import {
   Defaults,
   Label,
   Pager,
+  PlusIcon,
   RefreshTableMenu,
-  Scrollbar
-} from '../../components';
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { PlusIcon, SearchIcon } from '../../icons';
 import {
   deleteNetwork,
   listEnvironmentNetworks,

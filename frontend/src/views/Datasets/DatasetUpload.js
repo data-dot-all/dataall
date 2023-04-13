@@ -13,7 +13,7 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { FileDropzone } from '../../components';
+import { FileDropzone } from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import {
   getDatasetPresignedUrl,

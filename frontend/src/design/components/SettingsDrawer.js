@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,7 +9,8 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import { THEMES } from '../constants';
+import { useEffect, useState } from 'react';
+import { THEMES } from '../../constants';
 import { useSettings } from '../hooks';
 import { AdjustmentsIcon } from '../icons';
 

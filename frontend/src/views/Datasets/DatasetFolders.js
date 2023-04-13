@@ -26,14 +26,16 @@ import { BsFolder } from 'react-icons/bs';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  ArrowRightIcon,
   Defaults,
   DeleteObjectModal,
   Pager,
+  PlusIcon,
   RefreshTableMenu,
-  Scrollbar
-} from '../../components';
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { ArrowRightIcon, PlusIcon, SearchIcon } from '../../icons';
 import {
   deleteDatasetStorageLocation,
   listDatasetStorageLocations,

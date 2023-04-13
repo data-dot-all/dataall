@@ -21,10 +21,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { ChipInput, Defaults } from '../../components';
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  ChipInput,
+  Defaults,
+  useSettings
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { useSettings } from '../../hooks';
-import { ChevronRightIcon, ArrowLeftIcon } from '../../icons';
 import {
   createSagemakerStudioUserProfile,
   listEnvironmentGroups,

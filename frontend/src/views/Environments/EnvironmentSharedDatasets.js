@@ -16,9 +16,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Defaults, Pager, RefreshTableMenu, Scrollbar } from '../../components';
+import {
+  ArrowRightIcon,
+  Defaults,
+  Pager,
+  RefreshTableMenu,
+  Scrollbar,
+  SearchIcon
+} from '../../design';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
-import { ArrowRightIcon, SearchIcon } from '../../icons';
 import { searchEnvironmentDataItems, useClient } from '../../services';
 
 const EnvironmentOwnedDatasets = ({ environment }) => {
