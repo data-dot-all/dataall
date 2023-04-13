@@ -32,6 +32,7 @@ import { useClient } from '../../../services';
 import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
 import { StackStatus } from '../../Misc/views/Stack';
 import Stack from '../../Misc/views/Stack/Stack';
+import { NotebookOverview } from '../components';
 import {
   deleteSagemakerNotebook,
   getSagemakerNotebook,
@@ -39,7 +40,6 @@ import {
   startSagemakerNotebook,
   stopSagemakerNotebook
 } from '../services';
-import NotebookOverview from './NotebookOverview';
 
 /**
  * @description NotebookView component.

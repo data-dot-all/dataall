@@ -22,7 +22,7 @@ import { IconAvatar, Label, StackStatus, useCardStyle } from '../../../design';
  * @param {Object} props
  * @return {JSX.Element}
  */
-const NotebookListItem = (props) => {
+export const NotebookListItem = (props) => {
   const { notebook } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -235,5 +235,3 @@ const NotebookListItem = (props) => {
 NotebookListItem.propTypes = {
   notebook: PropTypes.object.isRequired
 };
-
-export default NotebookListItem;
