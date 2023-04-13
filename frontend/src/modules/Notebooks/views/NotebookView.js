@@ -28,17 +28,17 @@ import {
   useSettings
 } from '../../../design';
 import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useClient } from '../../../services';
+import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
+import { StackStatus } from '../../Misc/views/Stack';
+import Stack from '../../Misc/views/Stack/Stack';
 import {
   deleteSagemakerNotebook,
   getSagemakerNotebook,
   getSagemakerNotebookPresignedUrl,
   startSagemakerNotebook,
-  stopSagemakerNotebook,
-  useClient
-} from '../../../services';
-import KeyValueTagList from '../../Misc/views/KeyValueTags/KeyValueTagList';
-import { StackStatus } from '../../Misc/views/Stack';
-import Stack from '../../Misc/views/Stack/Stack';
+  stopSagemakerNotebook
+} from '../services';
 import NotebookOverview from './NotebookOverview';
 
 /**

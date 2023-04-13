@@ -31,11 +31,11 @@ import {
 } from '../../../design';
 import { SET_ERROR, useDispatch } from '../../../globalErrors';
 import {
-  createSagemakerNotebook,
   listEnvironmentGroups,
   listEnvironments,
   useClient
 } from '../../../services';
+import { createSagemakerNotebook } from '../services';
 
 const NotebookCreateForm = (props) => {
   const navigate = useNavigate();
