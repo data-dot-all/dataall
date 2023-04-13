@@ -1,4 +1,4 @@
-const listToTree = (data, options) => {
+export const listToTree = (data, options) => {
   options = options || {};
   const ID_KEY = options.idKey || 'id';
   const PARENT_KEY = options.parentKey || 'parent';
@@ -30,4 +30,3 @@ const listToTree = (data, options) => {
 
   return tree;
 };
-export default listToTree;

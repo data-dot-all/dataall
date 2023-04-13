@@ -9,7 +9,7 @@ import * as BsIcons from 'react-icons/bs';
 import { Defaults, Scrollbar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { searchGlossary, useClient } from '../../services';
-import listToTree from '../../utils/listToTree';
+import { listToTree } from '../../utils';
 
 const useTreeItemStyles = makeStyles((theme) => ({
   root: {

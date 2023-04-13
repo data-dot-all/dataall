@@ -21,7 +21,7 @@ import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar } from '../../components';
 import { useCardStyle } from '../../hooks';
-import { dayjs } from '../../utils/dayjs';
+import { dayjs } from '../../utils';
 import RequestAccessModal from './RequestAccessModal';
 import RequestDashboardAccessModal from './RequestDashboardAccessModal';
 

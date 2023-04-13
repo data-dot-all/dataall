@@ -10,7 +10,7 @@ import { Defaults, ObjectBrief } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { PlusIcon } from '../../icons';
 import { getGlossaryTree } from '../../services';
-import listToTree from '../../utils/listToTree';
+import { listToTree } from '../../utils';
 import GlossaryCreateCategoryForm from './GlossaryCreateCategoryForm';
 import GlossaryCreateTermForm from './GlossaryCreateTermForm';
 import GlossaryNodeForm from './GlossaryNodeForm';

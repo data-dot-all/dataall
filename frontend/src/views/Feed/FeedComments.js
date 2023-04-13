@@ -13,7 +13,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Defaults, Label, Scrollbar, TextAvatar } from '../../components';
 import { SET_ERROR, useDispatch } from '../../globalErrors';
 import { listFeedMessages, useClient } from '../../services';
-import { dayjs } from '../../utils/dayjs';
+import { dayjs } from '../../utils';
 import FeedCommentAdd from './FeedCommentAdd';
 
 const FeedComments = (props) => {

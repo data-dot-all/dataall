@@ -1,5 +1,3 @@
-import { Link as RouterLink } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import {
   Card,
   CardContent,
@@ -9,11 +7,13 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import React from 'react';
-import { TextAvatar } from './TextAvatar';
+import { Link as RouterLink } from 'react-router-dom';
 import { StackStatus } from '.';
+import { dayjs } from '../utils';
 import { Label } from './Label';
-import { dayjs } from '../utils/dayjs';
+import { TextAvatar } from './TextAvatar';
 
 export const ObjectMetadata = (props) => {
   const {
