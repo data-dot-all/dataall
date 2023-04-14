@@ -192,7 +192,7 @@ const WarehouseDatasets = ({ warehouse }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="SearchIcon"
+                placeholder="Search"
                 value={inputValue}
                 variant="outlined"
               />

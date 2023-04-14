@@ -154,7 +154,7 @@ const OrganizationList = () => {
                     fullWidth
                     onChange={handleInputChange}
                     onKeyUp={handleInputKeyup}
-                    placeholder="SearchIcon"
+                    placeholder="Search"
                     value={inputValue}
                   />
                 </Box>

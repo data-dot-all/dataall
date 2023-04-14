@@ -410,7 +410,7 @@ const EnvironmentTeams = ({ environment }) => {
                   }}
                   onChange={handleInputChange}
                   onKeyUp={handleInputKeyup}
-                  placeholder="SearchIcon"
+                  placeholder="Search"
                   value={inputValue}
                   variant="outlined"
                 />
@@ -520,7 +520,7 @@ const EnvironmentTeams = ({ environment }) => {
                   }}
                   onChange={handleInputChangeRoles}
                   onKeyUp={handleInputKeyupRoles}
-                  placeholder="SearchIcon"
+                  placeholder="Search"
                   value={inputValueRoles}
                   variant="outlined"
                 />

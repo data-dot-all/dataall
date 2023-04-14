@@ -174,7 +174,7 @@ const DatasetFolders = ({ dataset, isAdmin }) => {
                 }}
                 onChange={handleInputChange}
                 onKeyUp={handleInputKeyup}
-                placeholder="SearchIcon"
+                placeholder="Search"
                 value={inputValue}
                 variant="outlined"
               />

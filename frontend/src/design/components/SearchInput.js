@@ -25,7 +25,7 @@ export function SearchInput(props) {
             fullWidth
             onChange={onChange}
             onKeyUp={onKeyUp}
-            placeholder="SearchIcon"
+            placeholder="Search"
             value={value}
           />
         </Box>

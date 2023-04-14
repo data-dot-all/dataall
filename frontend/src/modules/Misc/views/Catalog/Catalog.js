@@ -345,7 +345,7 @@ const Catalog = () => {
                       'topics',
                       'tags'
                     ]}
-                    placeholder="SearchIcon"
+                    placeholder="Search"
                   />
                 </Box>
                 <Divider />
