@@ -7,11 +7,12 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import api, permissions, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
 
 
-def resolve_dataset(context, source: models.DatasetProfilingRun):
+def resolve_dataset(context, source: DatasetProfilingRun):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -49,7 +50,7 @@ def start_profiling_run(context: Context, source, input: dict = None):
     return run
 
 
-def get_profiling_run_status(context: Context, source: models.DatasetProfilingRun):
+def get_profiling_run_status(context: Context, source: DatasetProfilingRun):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -61,7 +62,7 @@ def get_profiling_run_status(context: Context, source: models.DatasetProfilingRu
     return source.status
 
 
-def get_profiling_results(context: Context, source: models.DatasetProfilingRun):
+def get_profiling_results(context: Context, source: DatasetProfilingRun):
     if not source or source.results == {}:
         return None
     else:
@@ -90,7 +91,7 @@ def get_profiling_run(context: Context, source, profilingRunUri=None):
 
 def get_last_table_profiling_run(context: Context, source, tableUri=None):
     with context.engine.scoped_session() as session:
-        run: models.DatasetProfilingRun = (
+        run: DatasetProfilingRun = (
             api.DatasetProfilingRun.get_table_last_profiling_run(
                 session=session, tableUri=tableUri
             )

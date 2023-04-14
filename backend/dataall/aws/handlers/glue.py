@@ -6,6 +6,7 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
+from dataall.modules.datasets.db.models import DatasetProfilingRun
 
 log = logging.getLogger('aws:glue')
 
@@ -526,7 +527,7 @@ class Glue:
     @Worker.handler('glue.job.start_profiling_run')
     def start_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
-            profiling: models.DatasetProfilingRun = (
+            profiling: DatasetProfilingRun = (
                 db.api.DatasetProfilingRun.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )
@@ -572,7 +573,7 @@ class Glue:
     @Worker.handler('glue.job.profiling_run_status')
     def get_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
-            profiling: models.DatasetProfilingRun = (
+            profiling: DatasetProfilingRun = (
                 db.api.DatasetProfilingRun.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )

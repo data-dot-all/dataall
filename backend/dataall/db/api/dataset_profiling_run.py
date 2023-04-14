@@ -2,6 +2,7 @@ from sqlalchemy import and_
 
 from .. import paginate, models
 from ..exceptions import ObjectNotFound
+from dataall.modules.datasets.db.models import DatasetProfilingRun as DatasetProfilingRunModel
 
 
 class DatasetProfilingRun:
@@ -30,7 +31,7 @@ class DatasetProfilingRun:
         if not environment:
             raise ObjectNotFound('Environment', dataset.environmentUri)
 
-        run = models.DatasetProfilingRun(
+        run = DatasetProfilingRunModel(
             datasetUri=dataset.datasetUri,
             status='RUNNING',
             AwsAccountId=environment.AwsAccountId,
@@ -72,14 +73,14 @@ class DatasetProfilingRun:
         session, profilingRunUri=None, GlueJobRunId=None, GlueTableName=None
     ):
         if profilingRunUri:
-            run: models.DatasetProfilingRun = session.query(
-                models.DatasetProfilingRun
+            run: DatasetProfilingRunModel = session.query(
+                DatasetProfilingRunModel
             ).get(profilingRunUri)
         else:
-            run: models.DatasetProfilingRun = (
-                session.query(models.DatasetProfilingRun)
-                .filter(models.DatasetProfilingRun.GlueJobRunId == GlueJobRunId)
-                .filter(models.DatasetProfilingRun.GlueTableName == GlueTableName)
+            run: DatasetProfilingRunModel = (
+                session.query(DatasetProfilingRunModel)
+                .filter(DatasetProfilingRunModel.GlueJobRunId == GlueJobRunId)
+                .filter(DatasetProfilingRunModel.GlueTableName == GlueTableName)
                 .first()
             )
         return run
@@ -89,9 +90,9 @@ class DatasetProfilingRun:
         if not filter:
             filter = {}
         q = (
-            session.query(models.DatasetProfilingRun)
-            .filter(models.DatasetProfilingRun.datasetUri == datasetUri)
-            .order_by(models.DatasetProfilingRun.created.desc())
+            session.query(DatasetProfilingRunModel)
+            .filter(DatasetProfilingRunModel.datasetUri == datasetUri)
+            .order_by(DatasetProfilingRunModel.created.desc())
         )
         return paginate(
             q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
@@ -102,19 +103,19 @@ class DatasetProfilingRun:
         if not filter:
             filter = {}
         q = (
-            session.query(models.DatasetProfilingRun)
+            session.query(DatasetProfilingRunModel)
             .join(
                 models.DatasetTable,
-                models.DatasetTable.datasetUri == models.DatasetProfilingRun.datasetUri,
+                models.DatasetTable.datasetUri == DatasetProfilingRunModel.datasetUri,
             )
             .filter(
                 and_(
                     models.DatasetTable.tableUri == tableUri,
                     models.DatasetTable.GlueTableName
-                    == models.DatasetProfilingRun.GlueTableName,
+                    == DatasetProfilingRunModel.GlueTableName,
                 )
             )
-            .order_by(models.DatasetProfilingRun.created.desc())
+            .order_by(DatasetProfilingRunModel.created.desc())
         )
         return paginate(
             q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
@@ -123,34 +124,34 @@ class DatasetProfilingRun:
     @staticmethod
     def get_table_last_profiling_run(session, tableUri):
         return (
-            session.query(models.DatasetProfilingRun)
+            session.query(DatasetProfilingRunModel)
             .join(
                 models.DatasetTable,
-                models.DatasetTable.datasetUri == models.DatasetProfilingRun.datasetUri,
+                models.DatasetTable.datasetUri == DatasetProfilingRunModel.datasetUri,
             )
             .filter(models.DatasetTable.tableUri == tableUri)
             .filter(
                 models.DatasetTable.GlueTableName
-                == models.DatasetProfilingRun.GlueTableName
+                == DatasetProfilingRunModel.GlueTableName
             )
-            .order_by(models.DatasetProfilingRun.created.desc())
+            .order_by(DatasetProfilingRunModel.created.desc())
             .first()
         )
 
     @staticmethod
     def get_table_last_profiling_run_with_results(session, tableUri):
         return (
-            session.query(models.DatasetProfilingRun)
+            session.query(DatasetProfilingRunModel)
             .join(
                 models.DatasetTable,
-                models.DatasetTable.datasetUri == models.DatasetProfilingRun.datasetUri,
+                models.DatasetTable.datasetUri == DatasetProfilingRunModel.datasetUri,
             )
             .filter(models.DatasetTable.tableUri == tableUri)
             .filter(
                 models.DatasetTable.GlueTableName
-                == models.DatasetProfilingRun.GlueTableName
+                == DatasetProfilingRunModel.GlueTableName
             )
-            .filter(models.DatasetProfilingRun.results.isnot(None))
-            .order_by(models.DatasetProfilingRun.created.desc())
+            .filter(DatasetProfilingRunModel.results.isnot(None))
+            .order_by(DatasetProfilingRunModel.created.desc())
             .first()
         )
