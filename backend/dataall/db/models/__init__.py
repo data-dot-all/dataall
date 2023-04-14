@@ -8,7 +8,6 @@ from .Dataset import Dataset
 from .DatasetQualityRule import DatasetQualityRule
 from .DatasetStorageLocation import DatasetStorageLocation
 from .DatasetTable import DatasetTable
-from .DatasetTableProfilingJob import DatasetTableProfilingJob
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup
 from .FeedMessage import FeedMessage
