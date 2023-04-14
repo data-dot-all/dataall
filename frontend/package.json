@@ -85,7 +85,15 @@
       "no-unused-vars": "error",
       "no-const-assign": "error",
       "eqeqeq": "error",
-      "no-console": "warn",
+      "no-console": [
+        "error",
+        {
+          "allow": [
+            "error",
+            "info"
+          ]
+        }
+      ],
       "jsx-quotes": [
         "error",
         "prefer-double"

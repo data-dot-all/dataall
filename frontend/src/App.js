@@ -17,8 +17,6 @@ export const App = () => {
   const auth = useAuth();
   useScrollReset();
 
-  console.log('hello');
-
   const theme = createMaterialTheme({
     direction: settings.direction,
     responsiveFontSizes: settings.responsiveFontSizes,
