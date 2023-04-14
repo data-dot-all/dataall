@@ -1,11 +1,11 @@
 import json
 import logging
 
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....db import api, permissions, models
-from ....db.api import ResourcePolicy
+from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import api, permissions, models
+from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)

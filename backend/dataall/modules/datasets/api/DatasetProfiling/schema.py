@@ -1,4 +1,4 @@
-from ... import gql
+from dataall.api import gql
 from .resolvers import (
     resolve_dataset,
     get_profiling_run_status,

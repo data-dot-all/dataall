@@ -29,7 +29,6 @@ from . import (
     Test,
     SagemakerStudio,
     RedshiftCluster,
-    DatasetProfiling,
     Glossary,
     AthenaQueryResult,
     Worksheet,
