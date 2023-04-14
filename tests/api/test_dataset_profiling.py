@@ -129,7 +129,7 @@ def test_get_table_profiling_run(
     client, dataset1, env1, module_mocker, table, db, group
 ):
     module_mocker.patch(
-        'dataall.api.Objects.DatasetProfiling.resolvers.get_profiling_results_from_s3',
+        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
         return_value='{"results": "yes"}',
     )
     runs = list_profiling_runs(client, dataset1, group)
@@ -169,7 +169,7 @@ def test_list_table_profiling_runs(
     client, dataset1, env1, module_mocker, table, db, group
 ):
     module_mocker.patch(
-        'dataall.api.Objects.DatasetProfiling.resolvers.get_profiling_results_from_s3',
+        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
         return_value='{"results": "yes"}',
     )
     module_mocker.patch('requests.post', return_value=True)
