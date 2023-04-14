@@ -7,6 +7,7 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 
 log = logging.getLogger('aws:glue')
 
@@ -528,7 +529,7 @@ class Glue:
     def start_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
             profiling: DatasetProfilingRun = (
-                db.api.DatasetProfilingRun.get_profiling_run(
+                DatasetProfilingService.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )
             )
@@ -547,7 +548,7 @@ class Glue:
                     ),
                 }
             )
-            db.api.DatasetProfilingRun.update_run(
+            DatasetProfilingService.update_run(
                 session,
                 profilingRunUri=profiling.profilingRunUri,
                 GlueJobRunId=run['JobRunId'],
@@ -574,7 +575,7 @@ class Glue:
     def get_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
             profiling: DatasetProfilingRun = (
-                db.api.DatasetProfilingRun.get_profiling_run(
+                DatasetProfilingService.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )
             )

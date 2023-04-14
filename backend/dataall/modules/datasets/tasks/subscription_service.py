@@ -12,6 +12,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
@@ -143,7 +144,7 @@ class SubscriptionService:
             message.get('region'),
         )
 
-        run = db.api.DatasetProfilingRun.start_profiling(
+        run = DatasetProfilingService.start_profiling(
             session=session,
             datasetUri=table.datasetUri,
             GlueTableName=table.GlueTableName,

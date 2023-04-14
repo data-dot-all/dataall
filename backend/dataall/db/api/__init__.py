@@ -13,7 +13,6 @@ from .vote import Vote
 from .share_object import ShareObject, ShareObjectSM, ShareItemSM
 from .dataset import Dataset
 from .dataset_location import DatasetStorageLocation
-from .dataset_profiling_run import DatasetProfilingRun
 from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc

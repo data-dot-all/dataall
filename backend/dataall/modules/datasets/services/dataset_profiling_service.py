@@ -1,11 +1,11 @@
 from sqlalchemy import and_
 
-from .. import paginate, models
-from ..exceptions import ObjectNotFound
+from dataall.db import paginate, models
+from dataall.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.db.models import DatasetProfilingRun as DatasetProfilingRunModel
 
 
-class DatasetProfilingRun:
+class DatasetProfilingService:
     def __init__(self):
         pass
 
@@ -56,7 +56,7 @@ class DatasetProfilingRun:
         GlueJobRunState=None,
         results=None,
     ):
-        run = DatasetProfilingRun.get_profiling_run(
+        run = DatasetProfilingService.get_profiling_run(
             session, profilingRunUri=profilingRunUri, GlueJobRunId=GlueJobRunId
         )
         if GlueJobRunId:
