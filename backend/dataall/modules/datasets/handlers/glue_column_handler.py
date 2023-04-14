@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
