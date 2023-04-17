@@ -1,5 +1,5 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowRight from '@mui/icons-material/ArrowRight';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import { LoadingButton, TreeItem, TreeView } from '@mui/lab';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
@@ -224,7 +224,7 @@ const GlossaryManagement = (props) => {
             className={classes.root}
             defaultExpanded={['3']}
             defaultCollapseIcon={<ArrowDropDownIcon />}
-            defaultExpandIcon={<ArrowRight />}
+            defaultExpandIcon={<ArrowRightIcon />}
             defaultEndIcon={<div style={{ width: 24 }} />}
           >
             {nodes.map((node) => (
