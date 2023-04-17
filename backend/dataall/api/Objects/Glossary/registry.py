@@ -1,9 +1,12 @@
-from dataclasses import dataclass
-from typing import Type, Dict, Optional, Protocol, Union
+from dataclasses import dataclass, field
+from typing import Type, Dict, Optional, Protocol, Union, Callable, Any
+
+from opensearchpy import OpenSearch
 
 from dataall.api import gql
 from dataall.api.gql.graphql_union_type import UnionTypeRegistry
 from dataall.db import Resource, models
+from dataall.searchproxy.indexers import upsert_dashboard, upsert_table, upsert_dataset
 
 
 class Identifiable(Protocol):
@@ -17,13 +20,14 @@ class GlossaryDefinition:
     target_type: str
     object_type: str
     model: Union[Type[Resource], Identifiable]  # should be an intersection, but python typing doesn't have one yet
+    reindexer: Callable[[Any, OpenSearch, str], None] = None # a callback to reindex glossaries in open search
 
     def target_uri(self):
         return self.model.uri()
 
 
 class GlossaryRegistry(UnionTypeRegistry):
-    """Registry of glossary definition and API to retrieve data"""
+    """Registry of glossary definition and API to retrieve and reindex data"""
     _DEFINITIONS: Dict[str, GlossaryDefinition] = {}
 
     @classmethod
@@ -50,8 +54,29 @@ class GlossaryRegistry(UnionTypeRegistry):
     def types(cls):
         return [gql.Ref(definition.object_type) for definition in cls._DEFINITIONS.values()]
 
+    @classmethod
+    def reindex(cls, session, es: OpenSearch, target_type: str, target_uri: str):
+        definition = cls._DEFINITIONS[target_type]
+        if definition.reindexer:
+            definition.reindexer(session, es, target_uri)
 
-GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))
-GlossaryRegistry.register(GlossaryDefinition("Dashboard", "Dashboard", models.Dashboard))
-GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))
-GlossaryRegistry.register(GlossaryDefinition("Dataset", "Dataset", models.Dataset))
+
+GlossaryRegistry.register(GlossaryDefinition(
+    target_type="Dashboard",
+    object_type="Dashboard",
+    model=models.Dashboard,
+    reindexer=upsert_dashboard
+))
+
+GlossaryRegistry.register(GlossaryDefinition(
+    target_type="DatasetTable",
+    object_type="DatasetTable",
+    model=models.DatasetTable,
+    reindexer=upsert_table
+))
+GlossaryRegistry.register(GlossaryDefinition(
+    target_type="Dataset",
+    object_type="Dataset",
+    model=models.Dataset,
+    reindexer=upsert_dataset
+))

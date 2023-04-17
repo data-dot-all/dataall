@@ -6,6 +6,7 @@ from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
 from dataall.modules.loader import ModuleInterface, ImportMode
+from dataall.searchproxy.indexers import upsert_folder
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +25,12 @@ class DatasetApiModuleInterface(ModuleInterface):
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
 
         GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
-        GlossaryRegistry.register(GlossaryDefinition("Folder", "DatasetStorageLocation", DatasetStorageLocation))
+        GlossaryRegistry.register(GlossaryDefinition(
+            target_type="Folder",
+            object_type="DatasetStorageLocation",
+            model=DatasetStorageLocation,
+            reindexer=upsert_folder
+        ))
 
         log.info("API of datasets has been imported")
 
