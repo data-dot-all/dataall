@@ -1,50 +1,15 @@
 import logging
 
-from ... import db
-from ...db import models
-from .service_handlers import Worker
 from .sts import SessionHelper
-from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
 
 log = logging.getLogger(__name__)
 
 
 class S3:
     @staticmethod
-    @Worker.handler(path='s3.prefix.create')
-    def create_dataset_location(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            location = DatasetStorageLocationService.get_location_by_uri(
-                session, task.targetUri
-            )
-            S3.create_bucket_prefix(location)
-            return location
-
-    @staticmethod
     def client(account_id: str, region: str, client_type: str):
         session = SessionHelper.remote_session(accountid=account_id)
         return session.client(client_type, region_name=region)
-
-    @staticmethod
-    def create_bucket_prefix(location):
-        try:
-            accountid = location.AWSAccountId
-            region = location.region
-            s3cli = S3.client(account_id=accountid, region=region, client_type='s3')
-            response = s3cli.put_object(
-                Bucket=location.S3BucketName, Body='', Key=location.S3Prefix + '/'
-            )
-            log.info(
-                'Creating S3 Prefix `{}`({}) on AWS #{}'.format(
-                    location.S3BucketName, accountid, response
-                )
-            )
-            location.locationCreated = True
-        except Exception as e:
-            log.error(
-                f'Dataset storage location creation failed on S3 for dataset location {location.locationUri} : {e}'
-            )
-            raise e
 
     @staticmethod
     def create_bucket_policy(account_id: str, region: str, bucket_name: str, policy: str):
