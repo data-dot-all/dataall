@@ -1,5 +1,6 @@
 import { useContext } from 'react';
-import { CognitoAuthContext, LocalAuthContext } from '../contexts';
+import { CognitoAuthContext } from '../contexts/CognitoAuthContext';
+import { LocalAuthContext } from '../contexts/LocalAuthContext';
 
 export const useAuth = () =>
   useContext(
