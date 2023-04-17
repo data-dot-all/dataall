@@ -1,5 +1,5 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
-import { THEMES } from '../../constants';
+import { THEMES } from '../constants';
 import { baseThemeOptions } from './BaseThemeOptions';
 import { darkThemeOptions } from './DarkThemeOptions';
 import { lightThemeOptions } from './LightThemeOptions';

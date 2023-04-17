@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { createContext, useEffect, useState } from 'react';
-import { THEMES } from '../../constants';
+import { THEMES } from '../constants';
 
 const initialSettings = {
   compact: true,
@@ -11,34 +11,28 @@ const initialSettings = {
   tabIcons: false
 };
 
+const SETTINGS_KEY = 'settings';
+
 export const restoreSettings = () => {
-  let settings = null;
-
   try {
-    const storedData = window.localStorage.getItem('settings');
-
-    if (storedData) {
-      settings = JSON.parse(storedData);
-    } else {
-      settings = {
-        compact: true,
-        responsiveFontSizes: true,
-        roundedCorners: true,
-        isAdvancedMode: true,
-        tabIcons: false,
-        theme: window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? THEMES.DARK
-          : THEMES.LIGHT
-      };
+    const storedSettings = window.localStorage.getItem(SETTINGS_KEY);
+    if (storedSettings != null) {
+      return JSON.parse(storedSettings);
     }
+
+    const theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? THEMES.DARK
+      : THEMES.LIGHT;
+
+    return { ...initialSettings, theme: theme };
   } catch (err) {
     console.error(err);
+    return null;
   }
-  return settings;
 };
 
 export const storeSettings = (settings) => {
-  window.localStorage.setItem('settings', JSON.stringify(settings));
+  window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 export const SettingsContext = createContext({

@@ -24,11 +24,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import { useToken } from '../../../../authentication';
-import { THEMES } from '../../../../constants';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusIcon,
+  THEMES,
   useSettings
 } from '../../../../design';
 import { GlossarySearchComponent } from './GlossarySearchComponent';

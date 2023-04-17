@@ -30,7 +30,6 @@ import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { AwsRegions } from '../../../../constants';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -48,6 +47,7 @@ import {
   useClient,
   useGroups
 } from '../../../../services';
+import { AwsRegions } from '../../../../utils';
 
 const EnvironmentCreateForm = (props) => {
   const dispatch = useDispatch();
@@ -194,6 +194,11 @@ const EnvironmentCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: err.message });
     }
   }
+
+  const regions = AwsRegions.map((region) => ({
+    label: region.name,
+    value: region.code
+  }));
 
   if (loading) {
     return <CircularProgress />;
@@ -385,7 +390,7 @@ const EnvironmentCreateForm = (props) => {
                     'region',
                     'Region is not supported',
                     (region) =>
-                      AwsRegions.filter((option) =>
+                      regions.filter((option) =>
                         [option.label, option.value].includes(region)
                       ).length >= 1
                   ),
@@ -674,9 +679,9 @@ const EnvironmentCreateForm = (props) => {
                             <Autocomplete
                               id="region"
                               freeSolo
-                              options={AwsRegions.map((option) => option.label)}
+                              options={regions.map((option) => option.label)}
                               onChange={(event, value) => {
-                                const selectedRegion = AwsRegions.filter(
+                                const selectedRegion = regions.filter(
                                   (option) => option.label === value
                                 );
                                 setFieldValue(

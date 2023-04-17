@@ -1,8 +1,7 @@
 import Editor from '@monaco-editor/react';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
-import { THEMES } from '../../../../constants';
-import { useSettings } from '../../../../design';
+import { THEMES, useSettings } from '../../../../design';
 
 const SQLQueryEditor = ({ sql, setSqlBody }) => {
   const { settings } = useSettings();

@@ -23,7 +23,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Topics } from '../../../../constants';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -39,6 +38,7 @@ import {
   updateDataset,
   useClient
 } from '../../../../services';
+import { Topics } from '../../../constants';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();

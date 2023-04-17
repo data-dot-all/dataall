@@ -1,6 +1,6 @@
 import { IconButton, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { THEMES } from '../../../constants';
+import { THEMES } from '../../constants';
 import { useSettings } from '../../hooks';
 import { MoonIcon, SunIcon } from '../../icons';
 

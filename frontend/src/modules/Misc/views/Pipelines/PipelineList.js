@@ -14,7 +14,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
-import { AwsRegions } from '../../../../constants';
 import {
   ChevronRightIcon,
   ChipInput,
@@ -26,6 +25,7 @@ import {
 } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
 import { listDataPipelines, useClient } from '../../../../services';
+import { AwsRegions } from '../../../../utils';
 import PipelineListItem from './PipelineListItem';
 
 function PipelinesPageHeader() {
@@ -91,10 +91,16 @@ const PipelineList = () => {
     { value: 'gitflow', label: 'CodePipeline - Gitflow' },
     { value: 'template', label: 'GitHub Template' }
   ]; /*DBT Pipelines*/
+
+  const regions = AwsRegions.map((region) => ({
+    label: region.name,
+    value: region.code
+  }));
+
   const [filterItems] = useState([
     { title: 'DevStrategy', options: devOptions },
     { title: 'Tags' },
-    { title: 'Region', options: AwsRegions }
+    { title: 'Region', options: regions }
   ]);
 
   const fetchItems = useCallback(async () => {

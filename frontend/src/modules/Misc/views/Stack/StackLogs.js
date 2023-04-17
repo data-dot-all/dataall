@@ -10,8 +10,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { THEMES } from '../../../../constants';
-import { useSettings } from '../../../../design';
+import { THEMES, useSettings } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
 import { getStackLogs, useClient } from '../../../../services';
 
