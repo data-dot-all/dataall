@@ -19,22 +19,22 @@ from aws_cdk import (
 from aws_cdk.aws_glue import CfnCrawler
 from sqlalchemy import and_, or_
 
-from .manager import stack
-from ... import db
-from ...aws.handlers.quicksight import Quicksight
-from ...aws.handlers.lakeformation import LakeFormation
-from ...aws.handlers.sts import SessionHelper
-from ...db import models
-from ...db.api import Environment
-from ...utils.cdk_nag_utils import CDKNagUtil
-from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.cdkproxy.stacks.manager import stack
+from dataall import db
+from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.lakeformation import LakeFormation
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import models
+from dataall.db.api import Environment
+from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.utils.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
 
 @stack(stack='dataset')
-class Dataset(Stack):
+class DatasetStack(Stack):
     module_name = __file__
 
     def get_engine(self) -> db.Engine:

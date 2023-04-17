@@ -39,3 +39,15 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.datasets.handlers
         log.info("Dataset handlers have been imported")
+
+
+class DatasetCdkModuleInterface(ModuleInterface):
+    """Loads dataset cdk stacks """
+
+    @classmethod
+    def is_supported(cls, modes: List[ImportMode]):
+        return ImportMode.CDK in modes
+
+    def __init__(self):
+        import dataall.modules.datasets.cdk
+        log.info("Dataset stacks have been imported")
