@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.orm import query_expression
 from dataall.db import Base, Resource, utils
 
 
@@ -36,3 +37,22 @@ class DatasetProfilingRun(Resource, Base):
     AwsAccountId = Column(String)
     results = Column(JSON, default={})
     status = Column(String, default='Created')
+
+
+class DatasetStorageLocation(Resource, Base):
+    __tablename__ = 'dataset_storage_location'
+    datasetUri = Column(String, nullable=False)
+    locationUri = Column(String, primary_key=True, default=utils.uuid('location'))
+    AWSAccountId = Column(String, nullable=False)
+    S3BucketName = Column(String, nullable=False)
+    S3Prefix = Column(String, nullable=False)
+    S3AccessPoint = Column(String, nullable=True)
+    region = Column(String, default='eu-west-1')
+    locationCreated = Column(Boolean, default=False)
+    userRoleForStorageLocation = query_expression()
+    projectPermission = query_expression()
+    environmentEndPoint = query_expression()
+
+    def uri(self):
+        return self.locationUri
+

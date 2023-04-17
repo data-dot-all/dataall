@@ -1,6 +1,7 @@
 from .client import *
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -521,12 +522,12 @@ def share_item(db):
 def location(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> models.DatasetStorageLocation:
+    def factory(dataset: models.Dataset, name, username) -> DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
         with db.scoped_session() as session:
-            ds_location = models.DatasetStorageLocation(
+            ds_location = DatasetStorageLocation(
                 name=name,
                 label=name,
                 owner=username,

@@ -10,6 +10,7 @@ from dataall.db.api import (
     Environment,
 )
 from dataall.searchproxy import indexers
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 def create_storage_location(
@@ -92,7 +93,7 @@ def remove_storage_location(context, source, locationUri: str = None):
     return True
 
 
-def resolve_dataset(context, source: models.DatasetStorageLocation, **kwargs):
+def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -129,7 +130,7 @@ def publish_location_update(context: Context, source, locationUri: str = None):
 
 
 def resolve_glossary_terms(
-    context: Context, source: models.DatasetStorageLocation, **kwargs
+    context: Context, source: DatasetStorageLocation, **kwargs
 ):
     if not source:
         return None

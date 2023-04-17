@@ -6,6 +6,7 @@ from sqlalchemy.orm import with_expression
 from .upsert import upsert
 from .. import db
 from ..db import models
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 log = logging.getLogger(__name__)
 
@@ -184,14 +185,14 @@ def upsert_table(session, es, tableUri: str):
 def upsert_folder(session, es, locationUri: str):
     folder = (
         session.query(
-            models.DatasetStorageLocation.datasetUri.label('datasetUri'),
-            models.DatasetStorageLocation.locationUri.label('uri'),
-            models.DatasetStorageLocation.name.label('name'),
-            models.DatasetStorageLocation.owner.label('owner'),
-            models.DatasetStorageLocation.label.label('label'),
-            models.DatasetStorageLocation.description.label('description'),
-            models.DatasetStorageLocation.tags.label('tags'),
-            models.DatasetStorageLocation.region.label('region'),
+            DatasetStorageLocation.datasetUri.label('datasetUri'),
+            DatasetStorageLocation.locationUri.label('uri'),
+            DatasetStorageLocation.name.label('name'),
+            DatasetStorageLocation.owner.label('owner'),
+            DatasetStorageLocation.label.label('label'),
+            DatasetStorageLocation.description.label('description'),
+            DatasetStorageLocation.tags.label('tags'),
+            DatasetStorageLocation.region.label('region'),
             models.Organization.organizationUri.label('orgUri'),
             models.Organization.name.label('orgName'),
             models.Environment.environmentUri.label('envUri'),
@@ -200,13 +201,13 @@ def upsert_folder(session, es, locationUri: str):
             models.Dataset.S3BucketName.label('source'),
             models.Dataset.topics.label('topics'),
             models.Dataset.confidentiality.label('classification'),
-            models.DatasetStorageLocation.created,
-            models.DatasetStorageLocation.updated,
-            models.DatasetStorageLocation.deleted,
+            DatasetStorageLocation.created,
+            DatasetStorageLocation.updated,
+            DatasetStorageLocation.deleted,
         )
         .join(
             models.Dataset,
-            models.Dataset.datasetUri == models.DatasetStorageLocation.datasetUri,
+            models.Dataset.datasetUri == DatasetStorageLocation.datasetUri,
         )
         .join(
             models.Organization,
@@ -216,7 +217,7 @@ def upsert_folder(session, es, locationUri: str):
             models.Environment,
             models.Dataset.environmentUri == models.Environment.environmentUri,
         )
-        .filter(models.DatasetStorageLocation.locationUri == locationUri)
+        .filter(DatasetStorageLocation.locationUri == locationUri)
         .first()
     )
     if folder:
@@ -349,8 +350,8 @@ def remove_deleted_tables(session, es, datasetUri: str):
 
 def upsert_dataset_folders(session, es, datasetUri: str):
     folders = (
-        session.query(models.DatasetStorageLocation)
-        .filter(models.DatasetStorageLocation.datasetUri == datasetUri)
+        session.query(DatasetStorageLocation)
+        .filter(DatasetStorageLocation.datasetUri == datasetUri)
         .all()
     )
     for folder in folders:

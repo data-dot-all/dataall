@@ -6,6 +6,7 @@ from sqlalchemy import and_, or_
 from . import has_tenant_perm, has_resource_perm, Glossary
 from .. import models, api, paginate, permissions, exceptions
 from .dataset import Dataset
+from dataall.modules.datasets.db.models import DatasetStorageLocation as DatasetStorageLocationModel
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +22,14 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DatasetStorageLocation:
+    ) -> DatasetStorageLocationModel:
         dataset = Dataset.get_dataset_by_uri(session, uri)
         exists = (
-            session.query(models.DatasetStorageLocation)
+            session.query(DatasetStorageLocationModel)
             .filter(
                 and_(
-                    models.DatasetStorageLocation.datasetUri == dataset.datasetUri,
-                    models.DatasetStorageLocation.S3Prefix == data['prefix'],
+                    DatasetStorageLocationModel.datasetUri == dataset.datasetUri,
+                    DatasetStorageLocationModel.S3Prefix == data['prefix'],
                 )
             )
             .count()
@@ -40,7 +41,7 @@ class DatasetStorageLocation:
                 message=f'Folder: {data["prefix"]} already exist on dataset {uri}',
             )
 
-        location = models.DatasetStorageLocation(
+        location = DatasetStorageLocationModel(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
             description=data.get('description', 'No description provided'),
@@ -77,14 +78,14 @@ class DatasetStorageLocation:
         check_perm: bool = False,
     ) -> dict:
         query = (
-            session.query(models.DatasetStorageLocation)
-            .filter(models.DatasetStorageLocation.datasetUri == uri)
-            .order_by(models.DatasetStorageLocation.created.desc())
+            session.query(DatasetStorageLocationModel)
+            .filter(DatasetStorageLocationModel.datasetUri == uri)
+            .order_by(DatasetStorageLocationModel.created.desc())
         )
         if data.get('term'):
             term = data.get('term')
             query = query.filter(
-                models.DatasetStorageLocation.label.ilike('%' + term + '%')
+                DatasetStorageLocationModel.label.ilike('%' + term + '%')
             )
         return paginate(
             query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
@@ -100,7 +101,7 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DatasetStorageLocation:
+    ) -> DatasetStorageLocationModel:
         return DatasetStorageLocation.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
@@ -113,7 +114,7 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DatasetStorageLocation:
+    ) -> DatasetStorageLocationModel:
 
         location = data.get(
             'location',
@@ -176,9 +177,9 @@ class DatasetStorageLocation:
         return True
 
     @staticmethod
-    def get_location_by_uri(session, location_uri) -> models.DatasetStorageLocation:
+    def get_location_by_uri(session, location_uri) -> DatasetStorageLocationModel:
         location: DatasetStorageLocation = session.query(
-            models.DatasetStorageLocation
+            DatasetStorageLocationModel
         ).get(location_uri)
         if not location:
             raise exceptions.ObjectNotFound('Folder', location_uri)
@@ -186,13 +187,13 @@ class DatasetStorageLocation:
 
     @staticmethod
     def get_location_by_s3_prefix(session, s3_prefix, accountid, region):
-        location: models.DatasetStorageLocation = (
-            session.query(models.DatasetStorageLocation)
+        location: DatasetStorageLocationModel = (
+            session.query(DatasetStorageLocationModel)
             .filter(
                 and_(
-                    models.DatasetStorageLocation.S3Prefix.startswith(s3_prefix),
-                    models.DatasetStorageLocation.AWSAccountId == accountid,
-                    models.DatasetStorageLocation.region == region,
+                    DatasetStorageLocationModel.S3Prefix.startswith(s3_prefix),
+                    DatasetStorageLocationModel.AWSAccountId == accountid,
+                    DatasetStorageLocationModel.region == region,
                 )
             )
             .first()

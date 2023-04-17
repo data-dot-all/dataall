@@ -4,7 +4,7 @@ from typing import List
 
 from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
-from dataall.modules.datasets.db.models import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
 from dataall.modules.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
@@ -19,8 +19,13 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets.api
+
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
+        FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
+
         GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
+        GlossaryRegistry.register(GlossaryDefinition("Folder", "DatasetStorageLocation", DatasetStorageLocation))
+
         log.info("API of datasets has been imported")
 
 

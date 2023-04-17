@@ -52,7 +52,6 @@ class GlossaryRegistry(UnionTypeRegistry):
 
 
 GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))
-GlossaryRegistry.register(GlossaryDefinition("Folder", "DatasetStorageLocation", models.DatasetStorageLocation))
 GlossaryRegistry.register(GlossaryDefinition("Dashboard", "Dashboard", models.Dashboard))
 GlossaryRegistry.register(GlossaryDefinition("DatasetTable", "DatasetTable", models.DatasetTable))
 GlossaryRegistry.register(GlossaryDefinition("Dataset", "Dataset", models.Dataset))

@@ -20,6 +20,7 @@ from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -266,17 +267,17 @@ class Dataset:
     def paginated_dataset_locations(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
-        query = session.query(models.DatasetStorageLocation).filter(
-            models.DatasetStorageLocation.datasetUri == uri
+        query = session.query(DatasetStorageLocation).filter(
+            DatasetStorageLocation.datasetUri == uri
         )
         if data and data.get('term'):
             query = query.filter(
                 or_(
                     *[
-                        models.DatasetStorageLocation.name.ilike(
+                        DatasetStorageLocation.name.ilike(
                             '%' + data.get('term') + '%'
                         ),
-                        models.DatasetStorageLocation.S3Prefix.ilike(
+                        DatasetStorageLocation.S3Prefix.ilike(
                             '%' + data.get('term') + '%'
                         ),
                     ]
@@ -489,8 +490,8 @@ class Dataset:
     def get_dataset_folders(session, dataset_uri):
         """return the dataset folders"""
         return (
-            session.query(models.DatasetStorageLocation)
-            .filter(models.DatasetStorageLocation.datasetUri == dataset_uri)
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
             .all()
         )
 
@@ -634,10 +635,10 @@ class Dataset:
     @staticmethod
     def _delete_dataset_locations(session, dataset_uri) -> bool:
         locations = (
-            session.query(models.DatasetStorageLocation)
+            session.query(DatasetStorageLocation)
             .filter(
                 and_(
-                    models.DatasetStorageLocation.datasetUri == dataset_uri,
+                    DatasetStorageLocation.datasetUri == dataset_uri,
                 )
             )
             .all()
@@ -675,7 +676,7 @@ class Dataset:
     @staticmethod
     def count_dataset_locations(session, dataset_uri):
         return (
-            session.query(models.DatasetStorageLocation)
-            .filter(models.DatasetStorageLocation.datasetUri == dataset_uri)
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
             .count()
         )

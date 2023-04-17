@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
 from ..db import models
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ Alarm Details:
 
     def trigger_folder_sharing_failure_alarm(
         self,
-        folder: models.DatasetStorageLocation,
+        folder: DatasetStorageLocation,
         share: models.ShareObject,
         target_environment: models.Environment,
     ):
@@ -101,7 +102,7 @@ Alarm Details:
 
     def trigger_revoke_folder_sharing_failure_alarm(
         self,
-        folder: models.DatasetStorageLocation,
+        folder: DatasetStorageLocation,
         share: models.ShareObject,
         target_environment: models.Environment,
     ):

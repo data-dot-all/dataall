@@ -28,6 +28,7 @@ from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -110,14 +111,14 @@ class Dataset(Stack):
             logger.info(f'found {len(tables)} shared tables')
         return tables
 
-    def get_shared_folders(self) -> typing.List[models.DatasetStorageLocation]:
+    def get_shared_folders(self) -> typing.List[DatasetStorageLocation]:
         engine = self.get_engine()
         with engine.scoped_session() as session:
             locations = (
                 session.query(
-                    models.DatasetStorageLocation.locationUri.label('locationUri'),
-                    models.DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    models.DatasetStorageLocation.S3Prefix.label('S3Prefix'),
+                    DatasetStorageLocation.locationUri.label('locationUri'),
+                    DatasetStorageLocation.S3BucketName.label('S3BucketName'),
+                    DatasetStorageLocation.S3Prefix.label('S3Prefix'),
                     models.Environment.AwsAccountId.label('AwsAccountId'),
                     models.Environment.region.label('region'),
                 )
@@ -125,7 +126,7 @@ class Dataset(Stack):
                     models.ShareObjectItem,
                     and_(
                         models.ShareObjectItem.itemUri
-                        == models.DatasetStorageLocation.locationUri
+                        == DatasetStorageLocation.locationUri
                     ),
                 )
                 .join(
@@ -139,8 +140,8 @@ class Dataset(Stack):
                 )
                 .filter(
                     and_(
-                        models.DatasetStorageLocation.datasetUri == self.target_uri,
-                        models.DatasetStorageLocation.deleted.is_(None),
+                        DatasetStorageLocation.datasetUri == self.target_uri,
+                        DatasetStorageLocation.deleted.is_(None),
                         models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )

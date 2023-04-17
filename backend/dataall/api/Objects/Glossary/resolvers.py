@@ -13,6 +13,8 @@ from ....api.constants import (
     GlossaryRole
 )
 
+from dataall.modules.datasets.db.models import DatasetStorageLocation
+
 
 def resolve_glossary_node(obj: models.GlossaryNode, *_):
     if obj.nodeType == 'G':
@@ -465,7 +467,7 @@ def reindex(context, linkUri):
         upsert_dataset(session=session, es=context.es, datasetUri=link.targetUri)
     elif isinstance(target, models.DatasetTable):
         upsert_table(session=session, es=context.es, tableUri=link.targetUri)
-    elif isinstance(target, models.DatasetStorageLocation):
+    elif isinstance(target, DatasetStorageLocation):
         upsert_folder(session=session, es=context.es, locationUri=link.targetUri)
     elif isinstance(target, models.Dashboard):
         upsert_dashboard(session=session, es=context.es, dashboardUri=link.targetUri)

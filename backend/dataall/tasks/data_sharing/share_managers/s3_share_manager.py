@@ -10,6 +10,7 @@ from ....aws.handlers.kms import KMS
 from ....aws.handlers.iam import IAM
 
 from ....utils.alarm_service import AlarmService
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -22,7 +23,7 @@ class S3ShareManager:
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        target_folder: models.DatasetStorageLocation,
+        target_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,

@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 from dataall.searchproxy import indexers
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -89,7 +90,7 @@ def table(org, env, db, dataset):
 @pytest.fixture(scope='module', autouse=True)
 def folder(org, env, db, dataset):
     with db.scoped_session() as session:
-        location = dataall.db.models.DatasetStorageLocation(
+        location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',

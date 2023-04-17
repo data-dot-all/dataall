@@ -29,6 +29,8 @@ from ...utils.naming_convention import (
     NamingConventionPattern,
 )
 
+from dataall.modules.datasets.db.models import DatasetStorageLocation
+
 log = logging.getLogger(__name__)
 
 
@@ -905,7 +907,7 @@ class Environment:
                         (
                             models.ShareObjectItem.itemType
                             == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
+                            func.concat(DatasetStorageLocation.name),
                         ),
                     ],
                     else_='XXX XXXX',
@@ -933,9 +935,9 @@ class Environment:
                 models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
             )
             .outerjoin(
-                models.DatasetStorageLocation,
+                DatasetStorageLocation,
                 models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
+                == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
@@ -1001,7 +1003,7 @@ class Environment:
                         (
                             models.ShareObjectItem.itemType
                             == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
+                            func.concat(DatasetStorageLocation.name),
                         ),
                     ],
                     else_='XXX XXXX',
@@ -1029,9 +1031,9 @@ class Environment:
                 models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
             )
             .outerjoin(
-                models.DatasetStorageLocation,
+                DatasetStorageLocation,
                 models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
+                == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
@@ -1122,7 +1124,7 @@ class Environment:
                         (
                             models.ShareObjectItem.itemType
                             == ShareableType.StorageLocation.value,
-                            func.concat(models.DatasetStorageLocation.name),
+                            func.concat(DatasetStorageLocation.name),
                         ),
                     ],
                     else_='XXX XXXX',
@@ -1150,9 +1152,9 @@ class Environment:
                 models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
             )
             .outerjoin(
-                models.DatasetStorageLocation,
+                DatasetStorageLocation,
                 models.ShareObjectItem.itemUri
-                == models.DatasetStorageLocation.locationUri,
+                == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
