@@ -1,15 +1,15 @@
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.s3 import S3
-from ....db import permissions, models
-from ....db.api import (
+from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.s3 import S3
+from dataall.db import permissions, models
+from dataall.db.api import (
     ResourcePolicy,
     Glossary,
     DatasetStorageLocation,
     Dataset,
     Environment,
 )
-from ....searchproxy import indexers
+from dataall.searchproxy import indexers
 
 
 def create_storage_location(

@@ -1,5 +1,5 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.datasets.api.DatasetStorageLocation.resolvers import get_storage_location
 
 getDatasetStorageLocation = gql.QueryField(
     name='getDatasetStorageLocation',
