@@ -121,7 +121,7 @@ const OrganizationEnvironments = (props) => {
               }}
               onChange={handleInputChange}
               onKeyUp={handleInputKeyup}
-              placeholder="SearchIcon environments"
+              placeholder="Search environments"
               value={inputValue}
               variant="outlined"
             />
