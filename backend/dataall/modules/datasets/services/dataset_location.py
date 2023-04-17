@@ -3,15 +3,15 @@ from typing import List
 
 from sqlalchemy import and_, or_
 
-from . import has_tenant_perm, has_resource_perm, Glossary
-from .. import models, api, paginate, permissions, exceptions
-from .dataset import Dataset
-from dataall.modules.datasets.db.models import DatasetStorageLocation as DatasetStorageLocationModel
+from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
+from dataall.db import models, api, paginate, permissions, exceptions
+from dataall.db.api.dataset import Dataset
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
 
-class DatasetStorageLocation:
+class DatasetStorageLocationService:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET_FOLDER)
@@ -22,14 +22,14 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> DatasetStorageLocationModel:
+    ) -> DatasetStorageLocation:
         dataset = Dataset.get_dataset_by_uri(session, uri)
         exists = (
-            session.query(DatasetStorageLocationModel)
+            session.query(DatasetStorageLocation)
             .filter(
                 and_(
-                    DatasetStorageLocationModel.datasetUri == dataset.datasetUri,
-                    DatasetStorageLocationModel.S3Prefix == data['prefix'],
+                    DatasetStorageLocation.datasetUri == dataset.datasetUri,
+                    DatasetStorageLocation.S3Prefix == data['prefix'],
                 )
             )
             .count()
@@ -41,7 +41,7 @@ class DatasetStorageLocation:
                 message=f'Folder: {data["prefix"]} already exist on dataset {uri}',
             )
 
-        location = DatasetStorageLocationModel(
+        location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
             description=data.get('description', 'No description provided'),
@@ -78,14 +78,14 @@ class DatasetStorageLocation:
         check_perm: bool = False,
     ) -> dict:
         query = (
-            session.query(DatasetStorageLocationModel)
-            .filter(DatasetStorageLocationModel.datasetUri == uri)
-            .order_by(DatasetStorageLocationModel.created.desc())
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == uri)
+            .order_by(DatasetStorageLocation.created.desc())
         )
         if data.get('term'):
             term = data.get('term')
             query = query.filter(
-                DatasetStorageLocationModel.label.ilike('%' + term + '%')
+                DatasetStorageLocation.label.ilike('%' + term + '%')
             )
         return paginate(
             query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
@@ -101,8 +101,8 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> DatasetStorageLocationModel:
-        return DatasetStorageLocation.get_location_by_uri(session, data['locationUri'])
+    ) -> DatasetStorageLocation:
+        return DatasetStorageLocationService.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
@@ -114,11 +114,11 @@ class DatasetStorageLocation:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> DatasetStorageLocationModel:
+    ) -> DatasetStorageLocation:
 
         location = data.get(
             'location',
-            DatasetStorageLocation.get_location_by_uri(session, data['locationUri']),
+            DatasetStorageLocationService.get_location_by_uri(session, data['locationUri']),
         )
 
         for k in data.keys():
@@ -145,7 +145,7 @@ class DatasetStorageLocation:
         data: dict = None,
         check_perm: bool = False,
     ):
-        location = DatasetStorageLocation.get_location_by_uri(
+        location = DatasetStorageLocationService.get_location_by_uri(
             session, data['locationUri']
         )
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
@@ -177,9 +177,9 @@ class DatasetStorageLocation:
         return True
 
     @staticmethod
-    def get_location_by_uri(session, location_uri) -> DatasetStorageLocationModel:
+    def get_location_by_uri(session, location_uri) -> DatasetStorageLocation:
         location: DatasetStorageLocation = session.query(
-            DatasetStorageLocationModel
+            DatasetStorageLocation
         ).get(location_uri)
         if not location:
             raise exceptions.ObjectNotFound('Folder', location_uri)
@@ -187,13 +187,13 @@ class DatasetStorageLocation:
 
     @staticmethod
     def get_location_by_s3_prefix(session, s3_prefix, accountid, region):
-        location: DatasetStorageLocationModel = (
-            session.query(DatasetStorageLocationModel)
+        location: DatasetStorageLocation = (
+            session.query(DatasetStorageLocation)
             .filter(
                 and_(
-                    DatasetStorageLocationModel.S3Prefix.startswith(s3_prefix),
-                    DatasetStorageLocationModel.AWSAccountId == accountid,
-                    DatasetStorageLocationModel.region == region,
+                    DatasetStorageLocation.S3Prefix.startswith(s3_prefix),
+                    DatasetStorageLocation.AWSAccountId == accountid,
+                    DatasetStorageLocation.region == region,
                 )
             )
             .first()
