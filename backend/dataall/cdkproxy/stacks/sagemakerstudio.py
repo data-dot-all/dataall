@@ -1,7 +1,5 @@
 import logging
 import os
-import pathlib
-from constructs import Construct
 from aws_cdk import (
     cloudformation_include as cfn_inc,
     Stack
