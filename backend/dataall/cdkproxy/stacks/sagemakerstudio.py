@@ -42,7 +42,7 @@ class SageMakerDomain(NestedStack):
             )
             dataall_created_domain = ParameterStoreManager.client(
                 AwsAccountId=environment.AwsAccountId, region=environment.region, role=cdk_look_up_role_arn
-            ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domainId')
+            ).get_parameter(Name=f'/dataall/{environment.environmentUri}/sagemaker/sagemakerstudio/domain_id')
             return False
         except ClientError as e:
             logger.info(f'check sagemaker studio domain created outside of data.all. Parameter data.all not found: {e}')
@@ -62,7 +62,7 @@ class SageMakerDomain(NestedStack):
                 self,
                 'RoleForSagemakerStudioUsers',
                 assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                role_name='RoleForSagemakerStudioUsers',
+                role_name='RoleSagemakerStudioUsers',
                 managed_policies=[
                     iam.ManagedPolicy.from_managed_policy_arn(
                         self,
@@ -117,7 +117,7 @@ class SageMakerDomain(NestedStack):
                 self,
                 'SagemakerStudioDomainId',
                 string_value=sagemaker_domain.attr_domain_id,
-                parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domainId',
+                parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 
 
