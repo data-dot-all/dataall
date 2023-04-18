@@ -555,33 +555,24 @@ class EnvironmentSetup(Stack):
             )
 
         # Create or import SageMaker Studio domain if ML Studio enabled
-        if self._environment.mlStudiosEnabled:
+        self.existing_sagemaker_domain = SageMakerDomain(
+            stack=self,
+            id='SageMakerDomain',
+            environment=self._environment
+        ).check_existing_sagemaker_studio_domain()
+        if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
             # Create dependency group - Sagemaker depends on group IAM roles
             sagemaker_dependency_group = DependencyGroup()
             sagemaker_dependency_group.add(default_role)
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
-            vpc_id = None
-            subnet_ids = []
-            try:
-                logger.info("looking for default VPC")
-                default_vpc = ec2.Vpc.from_lookup(self, 'VPCStudio', is_default=True)
-                vpc_id = default_vpc.vpc_id
-                subnet_ids = [private_subnet.subnet_id for private_subnet in default_vpc.private_subnets]
-                subnet_ids += [public_subnet.subnet_id for public_subnet in default_vpc.public_subnets]
-                subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in default_vpc.isolated_subnets]
-            except Exception as e:
-                logger.error(
-                    f"Default VPC not found, Exception: {e}. If you don't own a default VPC, modify the networking configuration, or disable ML Studio upon environment creation."
-                )
 
-            sagemaker_domain_stack = SageMakerDomain(self, 'SageMakerDomain',
-                                                     environment=self._environment,
-                                                     sagemaker_principals=[default_role] + group_roles,
-                                                     vpc_id=vpc_id,
-                                                     subnet_ids=subnet_ids
-                                                     )
-            sagemaker_domain_stack.node.add_dependency(sagemaker_dependency_group)
+            sagemaker_domain = SageMakerDomain(
+                stack=self,
+                id='SageMakerDomain',
+                environment=self._environment
+            ).create_sagemaker_domain_resources(dependency_group=sagemaker_dependency_group)
+
 
         # print the IAM role arn for this service account
         CfnOutput(
