@@ -1,0 +1,22 @@
+import { gql } from 'apollo-boost';
+
+export const startWorksheetQuery = ({ worksheetUri, input }) => ({
+  variables: {
+    worksheetUri,
+    input
+  },
+  mutation: gql`
+    mutation StartWorksheetQuery(
+      $worksheetUri: String!
+      $input: WorksheetQueryInput!
+    ) {
+      startWorksheetQuery(worksheetUri: $worksheetUri, input: $input) {
+        AthenaQueryId
+        Error
+        Status
+        DataScannedInBytes
+        ElapsedTimeInMs
+      }
+    }
+  `
+});
