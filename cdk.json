@@ -4,6 +4,83 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": false,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "eu-west-1",
+    "tooling_vpc_id": "vpc-0b4ad03ec106fb236",
+    "git_branch": "main",
+    "git_release": false,
+    "quality_gate": true,
+    "resource_prefix": "dataall",
+    "EcrConfiguration": {
+      "repository_name": "dataall-central-repository",
+      "account": "802388215838",
+      "region": "eu-west-1",
+      "S3_bucket_name": "dataall-central-artifactory-802388215838-eu-west-1"
+    },
+    "DeploymentEnvironments": [
+      {
+        "envname": "dev",
+        "account": "202313345403",
+        "region": "eu-west-1",
+        "with_approval": true,
+        "vpc_id": "vpc-0ad793eb8372929c7",
+        "custom_domain": {
+          "hosted_zone_name": "dev.datahub.dpp.yara.com",
+          "hosted_zone_id": "Z09287271L83H6P8JPTJH"
+        },
+        "APIWAF": {
+          "Arn": "arn:aws:wafv2:eu-west-1:202313345403:regional/webacl/FMManagedWebACLV2-CommonWAFRules-1629077066154/d5c9561e-de1f-455d-8322-5cfcd6c4e55e",
+          "logical_id": "d5c9561e-de1f-455d-8322-5cfcd6c4e55e",
+          "config_auto_association": true
+        },
+        "CloudfrontWAF": {
+          "Arn": "arn:aws:wafv2:us-east-1:202313345403:global/webacl/FMManagedWebACLV2-CommonCFWAFRules-1629078216466/ed332eff-0bf9-435a-b710-d7291a54329c",
+          "logical_id": "ed332eff-0bf9-435a-b710-d7291a54329c",
+          "config_auto_association": true
+        }
+      },
+      {
+        "envname": "test",
+        "account": "321146817355",
+        "region": "eu-west-1",
+        "with_approval": true,
+        "vpc_id": "vpc-0fad0946d1d46adac",
+        "custom_domain": {
+          "hosted_zone_name": "test.datahub.dpp.yara.com",
+          "hosted_zone_id": "Z01396412H7FKNNLNHF64"
+        },
+        "APIWAF": {
+          "Arn": "arn:aws:wafv2:eu-west-1:321146817355:regional/webacl/FMManagedWebACLV2-CommonWAFRules-1629076762409/a876030e-bae4-46f6-aa0e-3f32d2874750",
+          "logical_id": "a876030e-bae4-46f6-aa0e-3f32d2874750",
+          "config_auto_association": true
+        },
+        "CloudfrontWAF": {
+          "Arn": "arn:aws:wafv2:us-east-1:321146817355:global/webacl/FMManagedWebACLV2-CommonCFWAFRules-1629079059555/8251a72f-fe5f-45bf-bf2e-a89901f77da7",
+          "logical_id": "8251a72f-fe5f-45bf-bf2e-a89901f77da7",
+          "config_auto_association": true
+        }
+      },
+      {
+        "envname": "prod",
+        "account": "670794024192",
+        "region": "eu-west-1",
+        "with_approval": true,
+        "vpc_id": "vpc-0f5197ae0f160f16f",
+        "custom_domain": {
+          "hosted_zone_name": "datahub.dpp.yara.com",
+          "hosted_zone_id": "Z01399171ZEKQ7EWZCT8H"
+        },
+        "APIWAF": {
+          "Arn": "arn:aws:wafv2:eu-west-1:670794024192:regional/webacl/FMManagedWebACLV2-CommonWAFRules-1629076825343/3d1de636-00de-42e8-936b-c931d1c0f4c6",
+          "logical_id": "3d1de636-00de-42e8-936b-c931d1c0f4c6",
+          "config_auto_association": true
+        },
+        "CloudfrontWAF": {
+          "Arn": "arn:aws:wafv2:us-east-1:670794024192:global/webacl/FMManagedWebACLV2-CommonCFWAFRules-1629078160113/65d47af3-87e5-4c4f-b11e-09438069e92b",
+          "logical_id": "65d47af3-87e5-4c4f-b11e-09438069e92b",
+          "config_auto_association": true
+        }
+      }
+    ]
   }
 }
