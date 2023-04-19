@@ -240,7 +240,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
                 or dataset.SamlAdminGroupName in context.groups
             )
         ):
-            return ShareObjectPermission.ApproversAndRequesters.value
+            return ShareObjectPermission.Approvers.value
         else:
             return ShareObjectPermission.NoPermission.value
 
