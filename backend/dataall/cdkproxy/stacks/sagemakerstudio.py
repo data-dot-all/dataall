@@ -58,56 +58,67 @@ class SageMakerDomain:
 
     def create_sagemaker_domain_resources(self, sagemaker_principals):
         logger.info('Creating SageMaker base resources..')
-        # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
-        log_group = logs.LogGroup(
-            self.stack,
-            f'SageMakerStudio{self.environment.name}',
-            log_group_name=f'/{self.environment.resourcePrefix}/{self.environment.name}/vpc/sagemakerstudio',
-            retention=logs.RetentionDays.ONE_MONTH,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-        vpc_flow_role = iam.Role(
-            self.stack, 'FlowLog',
-            assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
-        )
-        vpc = ec2.Vpc(
-            self.stack,
-            "SageMakerVPC",
-            max_azs=3,
-            cidr="10.10.0.0/16",
-            subnet_configuration=[
-                ec2.SubnetConfiguration(
-                    subnet_type=ec2.SubnetType.PUBLIC,
-                    name="Public",
-                    cidr_mask=24
-                ),
-                ec2.SubnetConfiguration(
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT,
-                    name="Private",
-                    cidr_mask=24
-                ),
-            ],
-            enable_dns_hostnames=True,
-            enable_dns_support=True,
-        )
-        ec2.FlowLog(
-            self.stack, "StudioVPCFlowLog",
-            resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
-            destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
-        )
+        try:
+            # Use default VPC - initial configuration (to be migrated)
+            vpc = ec2.Vpc.from_lookup(self.stack, 'VPCStudio', is_default=True)
+            subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
+            subnet_ids += [public_subnet.subnet_id for public_subnet in vpc.public_subnets]
+            subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in vpc.isolated_subnets]
+            security_groups = []
+            logger.info("Using default VPC for Sagemaker Studio domain")
+        except Exception as e:
+            logger.info(
+                f"Default VPC not found, Exception: {e}. Creating a VPC for SageMaker resources...")
+            # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
+            log_group = logs.LogGroup(
+                self.stack,
+                f'SageMakerStudio{self.environment.name}',
+                log_group_name=f'/{self.environment.resourcePrefix}/{self.environment.name}/vpc/sagemakerstudio',
+                retention=logs.RetentionDays.ONE_MONTH,
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+            vpc_flow_role = iam.Role(
+                self.stack, 'FlowLog',
+                assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
+            )
+            vpc = ec2.Vpc(
+                self.stack,
+                "SageMakerVPC",
+                max_azs=3,
+                cidr="10.10.0.0/16",
+                subnet_configuration=[
+                    ec2.SubnetConfiguration(
+                        subnet_type=ec2.SubnetType.PUBLIC,
+                        name="Public",
+                        cidr_mask=24
+                    ),
+                    ec2.SubnetConfiguration(
+                        subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT,
+                        name="Private",
+                        cidr_mask=24
+                    ),
+                ],
+                enable_dns_hostnames=True,
+                enable_dns_support=True,
+            )
+            ec2.FlowLog(
+                self.stack, "StudioVPCFlowLog",
+                resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
+                destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
+            )
+            # setup security group to be used for sagemaker studio domain
+            sagemaker_sg = ec2.SecurityGroup(
+                self.stack,
+                "SecurityGroup",
+                vpc=vpc,
+                description="Security Group for SageMaker Studio",
+            )
+
+            sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
+            security_groups = [sagemaker_sg.security_group_id]
+            subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
 
         vpc_id = vpc.vpc_id
-        subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
-
-        # setup security group to be used for sagemaker studio domain
-        sagemaker_sg = ec2.SecurityGroup(
-            self.stack,
-            "SecurityGroup",
-            vpc=vpc,
-            description="Security Group for SageMaker Studio",
-        )
-
-        sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
 
         sagemaker_domain_role = iam.Role(
             self.stack,
@@ -151,7 +162,7 @@ class SageMakerDomain:
             auth_mode='IAM',
             default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
                 execution_role=sagemaker_domain_role.role_arn,
-                security_groups=[sagemaker_sg.security_group_id],
+                security_groups=security_groups,
                 sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
                     notebook_output_option='Allowed',
                     s3_kms_key_id=sagemaker_domain_key.key_id,

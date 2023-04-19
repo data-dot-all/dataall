@@ -555,11 +555,12 @@ class EnvironmentSetup(Stack):
             )
 
         # Create or import SageMaker Studio domain if ML Studio enabled
-        self.existing_sagemaker_domain = SageMakerDomain(
+        domain = SageMakerDomain(
             stack=self,
             id='SageMakerDomain',
             environment=self._environment
-        ).check_existing_sagemaker_studio_domain()
+        )
+        self.existing_sagemaker_domain = domain.check_existing_sagemaker_studio_domain()
         if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
             # Create dependency group - Sagemaker depends on group IAM roles
             sagemaker_dependency_group = DependencyGroup()
@@ -567,11 +568,7 @@ class EnvironmentSetup(Stack):
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
 
-            sagemaker_domain = SageMakerDomain(
-                stack=self,
-                id='SageMakerDomain',
-                environment=self._environment
-            ).create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
+            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
 
             sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
