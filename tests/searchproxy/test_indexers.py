@@ -5,6 +5,11 @@ import pytest
 import dataall
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.searchproxy.indexers import (
+    DatasetIndexer,
+    DatasetTableIndexer,
+    DatasetLocationIndexer,
+)
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -124,8 +129,8 @@ def test_es_request():
 def test_upsert_dataset(db, dataset, env, mocker):
     mocker.patch('dataall.searchproxy.upsert', return_value={})
     with db.scoped_session() as session:
-        dataset_indexed = indexers.upsert_dataset(
-            session, es={}, datasetUri=dataset.datasetUri
+        dataset_indexed = DatasetIndexer.upsert(
+            session, dataset_uri=dataset.datasetUri
         )
         assert dataset_indexed.datasetUri == dataset.datasetUri
 
@@ -133,15 +138,15 @@ def test_upsert_dataset(db, dataset, env, mocker):
 def test_upsert_table(db, dataset, env, mocker, table):
     mocker.patch('dataall.searchproxy.upsert', return_value={})
     with db.scoped_session() as session:
-        table_indexed = indexers.upsert_table(session, es={}, tableUri=table.tableUri)
+        table_indexed = DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
         assert table_indexed.uri == table.tableUri
 
 
 def test_upsert_folder(db, dataset, env, mocker, folder):
     mocker.patch('dataall.searchproxy.upsert', return_value={})
     with db.scoped_session() as session:
-        folder_indexed = indexers.upsert_folder(
-            session, es={}, locationUri=folder.locationUri
+        folder_indexed = DatasetLocationIndexer.upsert(
+            session=session, folder_uri=folder.locationUri
         )
         assert folder_indexed.uri == folder.locationUri
 

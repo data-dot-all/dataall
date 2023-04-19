@@ -13,11 +13,11 @@ from ....api.context import Context
 from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.sns import Sns
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
-from ....searchproxy import indexers
+from dataall.searchproxy import indexers
+from dataall.searchproxy.indexers import DatasetIndexer
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ def create_dataset(context: Context, source, input=None):
         )
         Dataset.create_dataset_stack(session, dataset)
 
-        indexers.upsert_dataset(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetIndexer.upsert(
+            session=session, dataset_uri=dataset.datasetUri
         )
 
     stack_helper.deploy_dataset_stack(dataset)
@@ -72,8 +72,8 @@ def import_dataset(context: Context, source, input=None):
 
         Dataset.create_dataset_stack(session, dataset)
 
-        indexers.upsert_dataset(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetIndexer.upsert(
+            session=session, dataset_uri=dataset.datasetUri
         )
 
     stack_helper.deploy_dataset_stack(dataset)
@@ -220,7 +220,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
             data=input,
             check_perm=True,
         )
-        indexers.upsert_dataset(session, context.es, datasetUri)
+        DatasetIndexer.upsert(session, dataset_uri=datasetUri)
 
     stack_helper.deploy_dataset_stack(updated_dataset)
 

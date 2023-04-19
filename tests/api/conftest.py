@@ -1,3 +1,4 @@
+import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 from dataall.api import constants
@@ -29,10 +30,10 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.search', return_value={})
     module_mocker.patch('dataall.searchproxy.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset_tables', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_table', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_folder', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dashboard', return_value={})
+    module_mocker.patch('dataall.searchproxy.indexers.DatasetIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.searchproxy.indexers.DatasetTableIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.searchproxy.indexers.DatasetLocationIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
 
 

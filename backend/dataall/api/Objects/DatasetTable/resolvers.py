@@ -13,6 +13,7 @@ from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary
 from ....searchproxy import indexers
 from ....utils import json_utils
+from dataall.searchproxy.indexers import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ def create_table(context, source, datasetUri: str = None, input: dict = None):
             data=input,
             check_perm=True,
         )
-        indexers.upsert_table(session, context.es, table.tableUri)
+        DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
 
 
@@ -80,7 +81,7 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
             data=input,
             check_perm=True,
         )
-        indexers.upsert_table(session, context.es, table.tableUri)
+        DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
 
 

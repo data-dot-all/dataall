@@ -12,6 +12,7 @@ from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocat
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
+from dataall.searchproxy.indexers import DatasetLocationIndexer
 
 
 def create_storage_location(
@@ -29,9 +30,7 @@ def create_storage_location(
 
         S3DatasetLocationHandler.create_bucket_prefix(location)
 
-        indexers.upsert_folder(
-            session=session, es=context.es, locationUri=location.locationUri
-        )
+        DatasetLocationIndexer.upsert(session=session, folder_uri=location.locationUri)
     return location
 
 
@@ -74,7 +73,7 @@ def update_storage_location(
             data=input,
             check_perm=True,
         )
-        indexers.upsert_folder(session, context.es, location.locationUri)
+        DatasetLocationIndexer.upsert(session, folder_uri=location.locationUri)
 
         return location
 

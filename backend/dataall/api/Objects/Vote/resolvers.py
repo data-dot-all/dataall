@@ -1,7 +1,6 @@
 from .... import db
 from ....api.context import Context
-from ....searchproxy.indexers import upsert_dashboard
-from ....searchproxy.indexers import upsert_dataset
+from dataall.searchproxy.indexers import DatasetIndexer, DashboardIndexer
 
 
 def count_upvotes(
@@ -34,9 +33,9 @@ def upvote(context: Context, source, input=None):
 
 def reindex(session, es, vote):
     if vote.targetType == 'dataset':
-        upsert_dataset(session=session, es=es, datasetUri=vote.targetUri)
+        DatasetIndexer.upsert(session=session, dataset_uri=vote.targetUri)
     elif vote.targetType == 'dashboard':
-        upsert_dashboard(session=session, es=es, dashboardUri=vote.targetUri)
+        DashboardIndexer.upsert(session=session, dashboard_uri=vote.targetUri)
 
 
 def get_vote(context: Context, source, targetUri: str = None, targetType: str = None):

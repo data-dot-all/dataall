@@ -6,7 +6,8 @@ from opensearchpy import OpenSearch
 from dataall.api import gql
 from dataall.api.gql.graphql_union_type import UnionTypeRegistry
 from dataall.db import Resource, models
-from dataall.searchproxy.indexers import upsert_dashboard, upsert_table, upsert_dataset
+from dataall.searchproxy.indexers import DashboardIndexer, DatasetTableIndexer, DatasetIndexer
+from dataall.searchproxy.upsert import BaseIndexer
 
 
 class Identifiable(Protocol):
@@ -20,7 +21,7 @@ class GlossaryDefinition:
     target_type: str
     object_type: str
     model: Union[Type[Resource], Identifiable]  # should be an intersection, but python typing doesn't have one yet
-    reindexer: Callable[[Any, OpenSearch, str], None] = None # a callback to reindex glossaries in open search
+    reindexer: Type[BaseIndexer] = None  # a callback to reindex glossaries in open search
 
     def target_uri(self):
         return self.model.uri()
@@ -58,25 +59,25 @@ class GlossaryRegistry(UnionTypeRegistry):
     def reindex(cls, session, es: OpenSearch, target_type: str, target_uri: str):
         definition = cls._DEFINITIONS[target_type]
         if definition.reindexer:
-            definition.reindexer(session, es, target_uri)
+            definition.reindexer.upsert(session, target_uri)
 
 
 GlossaryRegistry.register(GlossaryDefinition(
     target_type="Dashboard",
     object_type="Dashboard",
     model=models.Dashboard,
-    reindexer=upsert_dashboard
+    reindexer=DashboardIndexer
 ))
 
 GlossaryRegistry.register(GlossaryDefinition(
     target_type="DatasetTable",
     object_type="DatasetTable",
     model=models.DatasetTable,
-    reindexer=upsert_table
+    reindexer=DatasetTableIndexer
 ))
 GlossaryRegistry.register(GlossaryDefinition(
     target_type="Dataset",
     object_type="Dataset",
     model=models.Dataset,
-    reindexer=upsert_dataset
+    reindexer=DatasetIndexer
 ))
