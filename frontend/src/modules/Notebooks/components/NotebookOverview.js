@@ -1,14 +1,14 @@
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from '../../../../design';
-import NotebookInstanceProperties from './NotebookInstanceProperties';
+import { ObjectBrief, ObjectMetadata } from '../../../design';
+import { NotebookInstanceProperties } from './NotebookInstanceProperties';
 
 /**
  * @description NotebookOverview view.
  * @param {NotebookOverview.propTypes} props
  * @return {JSX.Element}
  */
-const NotebookOverview = (props) => {
+export const NotebookOverview = (props) => {
   const { notebook, ...other } = props;
 
   return (
@@ -47,5 +47,3 @@ const NotebookOverview = (props) => {
 NotebookOverview.propTypes = {
   notebook: PropTypes.object.isRequired
 };
-
-export default NotebookOverview;

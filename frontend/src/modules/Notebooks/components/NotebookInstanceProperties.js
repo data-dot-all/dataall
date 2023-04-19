@@ -1,5 +1,3 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import {
   Card,
   CardContent,
@@ -7,8 +5,10 @@ import {
   Divider,
   Typography
 } from '@mui/material';
+import PropTypes from 'prop-types';
+import React from 'react';
 
-const NotebookInstanceProperties = ({ notebook }) => (
+export const NotebookInstanceProperties = ({ notebook }) => (
   <Card>
     <CardHeader title="Instance Properties" />
     <Divider />
@@ -57,5 +57,3 @@ const NotebookInstanceProperties = ({ notebook }) => (
 NotebookInstanceProperties.propTypes = {
   notebook: PropTypes.object.isRequired
 };
-
-export default NotebookInstanceProperties;

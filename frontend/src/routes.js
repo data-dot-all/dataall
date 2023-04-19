@@ -80,13 +80,13 @@ const FolderEditForm = Loadable(
 );
 
 const NotebookList = Loadable(
-  lazy(() => import('./modules/Misc/views/Notebooks/NotebookList'))
+  lazy(() => import('./modules/Notebooks/views/NotebookList'))
 );
 const NotebookView = Loadable(
-  lazy(() => import('./modules/Misc/views/Notebooks/NotebookView'))
+  lazy(() => import('./modules/Notebooks/views/NotebookView'))
 );
 const NotebookCreateForm = Loadable(
-  lazy(() => import('./modules/Misc/views/Notebooks/NotebookCreateForm'))
+  lazy(() => import('./modules/Notebooks/views/NotebookCreateForm'))
 );
 
 const MLStudioList = Loadable(

@@ -15,19 +15,14 @@ import * as FiIcons from 'react-icons/fi';
 import { SiJupyter } from 'react-icons/si';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  IconAvatar,
-  Label,
-  StackStatus,
-  useCardStyle
-} from '../../../../design';
+import { IconAvatar, Label, StackStatus, useCardStyle } from '../../../design';
 
 /**
  * @description NotebookListItem view.
  * @param {Object} props
  * @return {JSX.Element}
  */
-const NotebookListItem = (props) => {
+export const NotebookListItem = (props) => {
   const { notebook } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -240,5 +235,3 @@ const NotebookListItem = (props) => {
 NotebookListItem.propTypes = {
   notebook: PropTypes.object.isRequired
 };
-
-export default NotebookListItem;

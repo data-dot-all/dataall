@@ -18,10 +18,11 @@ import {
   PlusIcon,
   SearchInput,
   useSettings
-} from '../../../../design';
-import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import { listSagemakerNotebooks, useClient } from '../../../../services';
-import NotebookListItem from './NotebookListItem';
+} from '../../../design';
+import { SET_ERROR, useDispatch } from '../../../globalErrors';
+import { useClient } from '../../../services';
+import { NotebookListItem } from '../components';
+import { listSagemakerNotebooks } from '../services';
 
 function NotebookPageHeader() {
   return (

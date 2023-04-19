@@ -17,7 +17,6 @@ export * from './Notification';
 export * from './Organization';
 export * from './Principal';
 export * from './RedshiftCluster';
-export * from './SagemakerNotebook';
 export * from './SagemakerStudio';
 export * from './SavedQuery';
 export * from './Search';
