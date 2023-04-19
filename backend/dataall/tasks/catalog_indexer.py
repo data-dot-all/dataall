@@ -5,7 +5,7 @@ import sys
 from .. import db
 from ..db import get_engine, exceptions
 from ..db import models
-from dataall.searchproxy.indexers import upsert_dataset_tables, upsert_dataset_folders, DashboardIndexer
+from dataall.searchproxy.indexers import upsert_dataset_tables, DashboardIndexer, DatasetLocationIndexer
 from ..searchproxy.connect import (
     connect,
 )
@@ -34,9 +34,7 @@ def index_objects(engine, es):
             dataset: models.Dataset
             for dataset in all_datasets:
                 tables = upsert_dataset_tables(session, es, dataset.datasetUri)
-                folders = upsert_dataset_folders(
-                    session, es, dataset.datasetUri
-                )
+                folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
                 indexed_objects_counter = (
                     indexed_objects_counter + len(tables) + len(folders) + 1
                 )

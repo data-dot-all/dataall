@@ -233,6 +233,17 @@ class DatasetLocationIndexer(BaseIndexer):
             DatasetIndexer.upsert(session=session, dataset_uri=folder.datasetUri)
         return folder
 
+    @classmethod
+    def upsert_all(cls, session, dataset_uri: str):
+        folders = (
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
+            .all()
+        )
+        for folder in folders:
+            DatasetLocationIndexer.upsert(session=session, folder_uri=folder.locationUri)
+        return folders
+
 
 class DashboardIndexer(BaseIndexer):
     @classmethod
@@ -327,17 +338,6 @@ def remove_deleted_tables(session, es, datasetUri: str):
     for table in tables:
         delete_doc(es, doc_id=table.tableUri)
     return tables
-
-
-def upsert_dataset_folders(session, es, datasetUri: str):
-    folders = (
-        session.query(DatasetStorageLocation)
-        .filter(DatasetStorageLocation.datasetUri == datasetUri)
-        .all()
-    )
-    for folder in folders:
-        DatasetLocationIndexer.upsert(session=session, folder_uri=folder.locationUri)
-    return folders
 
 
 def delete_doc(es, doc_id, index='dataall-index'):
