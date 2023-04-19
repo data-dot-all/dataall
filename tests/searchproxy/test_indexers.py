@@ -3,12 +3,12 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 from dataall.searchproxy.indexers import (
     DatasetIndexer,
     DatasetTableIndexer,
-    DatasetLocationIndexer,
 )
 
 

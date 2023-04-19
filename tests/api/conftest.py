@@ -32,7 +32,10 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset_tables', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.DatasetIndexer.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.DatasetTableIndexer.upsert', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.DatasetLocationIndexer.upsert', return_value={})
+    module_mocker.patch(
+        'dataall.modules.datasets.indexers.location_indexer.DatasetLocationIndexer.upsert',
+        return_value={}
+    )
     module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
 

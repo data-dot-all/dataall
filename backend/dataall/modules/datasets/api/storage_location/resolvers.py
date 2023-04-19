@@ -1,6 +1,5 @@
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.s3 import S3
 from dataall.db import permissions, models
 from dataall.db.api import (
     ResourcePolicy,
@@ -9,10 +8,10 @@ from dataall.db.api import (
     Environment,
 )
 from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocationHandler
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
-from dataall.searchproxy.indexers import DatasetLocationIndexer
 
 
 def create_storage_location(

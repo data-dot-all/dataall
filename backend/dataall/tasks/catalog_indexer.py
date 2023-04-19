@@ -2,10 +2,11 @@ import logging
 import os
 import sys
 
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from .. import db
 from ..db import get_engine, exceptions
 from ..db import models
-from dataall.searchproxy.indexers import upsert_dataset_tables, DashboardIndexer, DatasetLocationIndexer
+from dataall.searchproxy.indexers import upsert_dataset_tables, DashboardIndexer
 from ..searchproxy.connect import (
     connect,
 )

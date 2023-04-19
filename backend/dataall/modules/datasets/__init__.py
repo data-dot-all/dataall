@@ -5,8 +5,8 @@ from typing import List
 from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.loader import ModuleInterface, ImportMode
-from dataall.searchproxy.indexers import DatasetLocationIndexer
 
 log = logging.getLogger(__name__)
 
