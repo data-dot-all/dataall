@@ -19,8 +19,9 @@ RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
 
 RUN . ~/.nvm/nvm.sh && npm install -g npm yarn
 
+WORKDIR /app
 COPY ./frontend/package.json ./frontend/yarn.lock ./
-COPY ./config.json ./
+COPY ./config.json /
 
 RUN . ~/.nvm/nvm.sh && yarn install
 
