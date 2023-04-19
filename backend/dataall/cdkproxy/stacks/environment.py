@@ -571,7 +571,9 @@ class EnvironmentSetup(Stack):
                 stack=self,
                 id='SageMakerDomain',
                 environment=self._environment
-            ).create_sagemaker_domain_resources(dependency_group=sagemaker_dependency_group)
+            ).create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
+
+            sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
 
         # print the IAM role arn for this service account

@@ -1,18 +1,14 @@
 import logging
 import os
-import pathlib
-from constructs import Construct
 from aws_cdk import (
     cloudformation_include as cfn_inc,
     aws_ec2 as ec2,
     aws_iam as iam,
     aws_kms as kms,
-    aws_lambda as _lambda,
+    aws_logs as logs,
     aws_sagemaker as sagemaker,
     aws_ssm as ssm,
-    CustomResource,
-    Duration,
-    NestedStack,
+    RemovalPolicy,
     Stack
 )
 from botocore.exceptions import ClientError
@@ -60,11 +56,22 @@ class SageMakerDomain:
             )
             return existing_domain.get('DomainId', False)
 
-    def create_sagemaker_domain_resources(self, dependency_group):
-
+    def create_sagemaker_domain_resources(self, sagemaker_principals):
+        logger.info('Creating SageMaker base resources..')
         # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
+        log_group = logs.LogGroup(
+            self.stack,
+            f'SageMakerStudio{self.environment.name}',
+            log_group_name=f'/{self.environment.resourcePrefix}/{self.environment.name}/vpc/sagemakerstudio',
+            retention=logs.RetentionDays.ONE_MONTH,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        vpc_flow_role = iam.Role(
+            self.stack, 'FlowLog',
+            assumed_by=iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
+        )
         vpc = ec2.Vpc(
-            self,
+            self.stack,
             "SageMakerVPC",
             max_azs=3,
             cidr="10.10.0.0/16",
@@ -83,30 +90,44 @@ class SageMakerDomain:
             enable_dns_hostnames=True,
             enable_dns_support=True,
         )
+        ec2.FlowLog(
+            self.stack, "StudioVPCFlowLog",
+            resource_type=ec2.FlowLogResourceType.from_vpc(vpc),
+            destination=ec2.FlowLogDestination.to_cloud_watch_logs(log_group, vpc_flow_role)
+        )
 
         vpc_id = vpc.vpc_id
         subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
-        security_groups = vpc.vpc_default_security_group
+
+        # setup security group to be used for sagemaker studio domain
+        sagemaker_sg = ec2.SecurityGroup(
+            self.stack,
+            "SecurityGroup",
+            vpc=vpc,
+            description="Security Group for SageMaker Studio",
+        )
+
+        sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
 
         sagemaker_domain_role = iam.Role(
-            self,
+            self.stack,
             'RoleForSagemakerStudioUsers',
             assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
             role_name='RoleSagemakerStudioUsers',
             managed_policies=[
                 iam.ManagedPolicy.from_managed_policy_arn(
-                    self,
+                    self.stack,
                     id='SagemakerFullAccess',
                     managed_policy_arn='arn:aws:iam::aws:policy/AmazonSageMakerFullAccess',
                 ),
                 iam.ManagedPolicy.from_managed_policy_arn(
-                    self, id='S3FullAccess', managed_policy_arn='arn:aws:iam::aws:policy/AmazonS3FullAccess'
+                    self.stack, id='S3FullAccess', managed_policy_arn='arn:aws:iam::aws:policy/AmazonS3FullAccess'
                 ),
             ],
         )
 
         sagemaker_domain_key = kms.Key(
-            self,
+            self.stack,
             'SagemakerDomainKmsKey',
             alias='SagemakerStudioDomain',
             enable_key_rotation=True,
@@ -122,16 +143,15 @@ class SageMakerDomain:
                 ],
             ),
         )
-        sagemaker_domain_key.node.add_dependency(dependency_group)
 
         sagemaker_domain = sagemaker.CfnDomain(
-            self,
+            self.stack,
             'SagemakerStudioDomain',
             domain_name=f'SagemakerStudioDomain-{self.environment.region}-{self.environment.AwsAccountId}',
             auth_mode='IAM',
             default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
                 execution_role=sagemaker_domain_role.role_arn,
-                security_groups=security_groups,
+                security_groups=[sagemaker_sg.security_group_id],
                 sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
                     notebook_output_option='Allowed',
                     s3_kms_key_id=sagemaker_domain_key.key_id,
@@ -145,11 +165,12 @@ class SageMakerDomain:
         )
 
         ssm.StringParameter(
-            self,
+            self.stack,
             'SagemakerStudioDomainId',
             string_value=sagemaker_domain.attr_domain_id,
             parameter_name=f'/dataall/{self.environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
         )
+        return sagemaker_domain
 
 
 @stack(stack='sagemakerstudiouserprofile')
