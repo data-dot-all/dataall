@@ -575,7 +575,6 @@ class EnvironmentSetup(Stack):
 
             sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
-
         # print the IAM role arn for this service account
         CfnOutput(
             self,
