@@ -44,6 +44,7 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
+        api_waf=None
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -132,6 +133,7 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             vpc,
             user_pool,
+            api_waf,
         )
 
         self.create_sns_topic(
@@ -267,6 +269,7 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix,
         vpc,
         user_pool,
+        api_waf,
     ):
 
         api_deploy_options = apigw.StageOptions(
@@ -291,19 +294,25 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             user_pool,
         )
+        if api_waf:
+            acl = {
+                "Arn": api_waf.get("Arn"),
+                "logical_id": api_waf.get("logical_id")
+            }
+        else:
 
         # Create IP set if IP filtering enabled in CDK.json
-        ip_set_regional=None
-        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
-            ip_set_regional = wafv2.CfnIPSet(
-                self,
-                "DataallRegionalIPSet",
-                name=f"{resource_prefix}-{envname}-ipset-regional",
-                description=f"IP addresses allowed for Dataall {envname}",
-                addresses=custom_waf_rules.get("allowed_ip_list"),
-                ip_address_version="IPV4",
-                scope="REGIONAL"
-            )
+            ip_set_regional=None
+            if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+                ip_set_regional = wafv2.CfnIPSet(
+                    self,
+                    "DataallRegionalIPSet",
+                    name=f"{resource_prefix}-{envname}-ipset-regional",
+                    description=f"IP addresses allowed for Dataall {envname}",
+                    addresses=custom_waf_rules.get("allowed_ip_list"),
+                    ip_address_version="IPV4",
+                    scope="REGIONAL"
+                )
 
         acl = wafv2.CfnWebACL(
             self,

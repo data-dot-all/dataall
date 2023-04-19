@@ -43,6 +43,7 @@ class BackendStack(Stack):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
+        api_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -126,6 +127,7 @@ class BackendStack(Stack):
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool,
+            api_waf=api_waf
             **kwargs,
         )
 

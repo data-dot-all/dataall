@@ -54,7 +54,8 @@ except (ssmc.exceptions.ParameterNotFound, botocore.exceptions.ClientError) as e
     logger.info("Loaded context from cdk.json file in repository")
 
 cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION')
-
+# Central ECR repository - DPP Changes
+central_ecr = app.node.try_get_context('EcrConfiguration')
 target_envs = app.node.try_get_context('DeploymentEnvironments') or [
     {'envname': 'dev', 'account': account_id, 'region': 'eu-west-1'}
 ]
