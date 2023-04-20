@@ -31,6 +31,7 @@ class CloudfrontDistro(pyNestedClass):
         custom_domain=None,
         custom_waf_rules=None,
         tooling_account_id=None,
+        cloudfront_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -97,126 +98,139 @@ class CloudfrontDistro(pyNestedClass):
                     )
                 )
                 priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesAdminProtectionRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesAdminProtectionRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesAmazonIpReputationList',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesAmazonIpReputationList'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesCommonRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesCommonRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesCommonRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesKnownBadInputsRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesLinuxRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesLinuxRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesLinuxRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
-        priority += 1
-        waf_rules.append(
-            wafv2.CfnWebACL.RuleProperty(
-                name='AWS-AWSManagedRulesSQLiRuleSet',
-                statement=wafv2.CfnWebACL.StatementProperty(
-                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                        vendor_name='AWS', name='AWSManagedRulesSQLiRuleSet'
-                    )
-                ),
-                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                    sampled_requests_enabled=True,
-                    cloud_watch_metrics_enabled=True,
-                    metric_name='AWS-AWSManagedRulesSQLiRuleSet',
-                ),
-                priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
-            )
-        )
+        # Dpp changes, cloudfront waf
+        if cloudfront_waf:
+            acl = {
+                "Arn": cloudfront_waf.get("Arn"),
+                "logical_id": cloudfront_waf.get("logical_id")
+            }
+        else:
 
-        acl = wafv2.CfnWebACL(
-            self,
-            'ACL-Cloudfront',
-            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
-            scope='CLOUDFRONT',
-            visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
-                cloud_watch_metrics_enabled=True,
-                metric_name='waf-cloudfront',
-                sampled_requests_enabled=True,
-            ),
-            rules=waf_rules,
-        )
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesAdminProtectionRuleSet',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesAdminProtectionRuleSet'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesAdminProtectionRuleSet',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+            priority += 1
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesAmazonIpReputationList',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesAmazonIpReputationList'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesAmazonIpReputationList',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+            priority += 1
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesCommonRuleSet',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesCommonRuleSet'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesCommonRuleSet',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+            priority += 1
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesKnownBadInputsRuleSet'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesKnownBadInputsRuleSet',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+            priority += 1
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesLinuxRuleSet',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesLinuxRuleSet'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesLinuxRuleSet',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+            priority += 1
+            waf_rules.append(
+                wafv2.CfnWebACL.RuleProperty(
+                    name='AWS-AWSManagedRulesSQLiRuleSet',
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name='AWS', name='AWSManagedRulesSQLiRuleSet'
+                        )
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        sampled_requests_enabled=True,
+                        cloud_watch_metrics_enabled=True,
+                        metric_name='AWS-AWSManagedRulesSQLiRuleSet',
+                    ),
+                    priority=priority,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                )
+            )
+
+            acl = wafv2.CfnWebACL(
+                self,
+                'ACL-Cloudfront',
+                default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+                scope='CLOUDFRONT',
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='waf-cloudfront',
+                    sampled_requests_enabled=True,
+                ),
+                rules=waf_rules,
+            )
+        # Dpp changes, cloudfront waf
+        if cloudfront_waf and cloudfront_waf.get('config_auto_association'):
+            web_acl_id = None
+        else:
+            web_acl_id = acl.get('Arn')
 
         logging_bucket = s3.Bucket(
             self,
@@ -316,7 +330,7 @@ class CloudfrontDistro(pyNestedClass):
                     response_page_path='/index.html',
                 ),
             ],
-            web_acl_id=acl.get_att('Arn').to_string(),
+            web_acl_id=web_acl_id,
             logging_config=cloudfront.LoggingConfiguration(
                 bucket=logging_bucket, prefix='cloudfront-logs/frontend'
             ),
@@ -374,6 +388,7 @@ class CloudfrontDistro(pyNestedClass):
             resource_prefix,
             userguide_alias_configuration,
             logging_bucket,
+            web_acl_id,
         )
         if frontend_alternate_domain:
             frontend_record = route53.ARecord(
@@ -514,6 +529,7 @@ class CloudfrontDistro(pyNestedClass):
 
         return http_header_func, http_header_func_version
 
+#Dpp changes, add web_acl_id
     def build_static_site(
         self,
         construct_id,
@@ -523,6 +539,7 @@ class CloudfrontDistro(pyNestedClass):
         resource_prefix,
         alias_configuration,
         logging_bucket,
+        web_acl_id,
     ):
 
         parse = auth_at_edge.devdoc_app.get_att('Outputs.ParseAuthHandler').to_string()
@@ -665,7 +682,7 @@ class CloudfrontDistro(pyNestedClass):
                     response_page_path='/index.html',
                 ),
             ],
-            web_acl_id=acl.get_att('Arn').to_string(),
+            web_acl_id=web_acl_id,
             logging_config=cloudfront.LoggingConfiguration(
                 bucket=logging_bucket, prefix=f'cloudfront-logs/{construct_id}'
             ),

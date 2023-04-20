@@ -300,19 +300,36 @@ class LambdaApiStack(pyNestedClass):
                 "logical_id": api_waf.get("logical_id")
             }
         else:
+            acl = wafv2.CfnWebACL(
+                self,
+                'ACL-ApiGW',
+                default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+                scope='REGIONAL',
+                visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                    cloud_watch_metrics_enabled=True,
+                    metric_name='waf-apigw',
+                    sampled_requests_enabled=True,
+                ),
+                rules=self.get_waf_rules(envname),
+            )
+            acl = {
+                "Arn": acl.get_att('Arn').to_string(),
+                "logical_id": acl.logical_id
+            }
+
 
         # Create IP set if IP filtering enabled in CDK.json
-            ip_set_regional=None
-            if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
-                ip_set_regional = wafv2.CfnIPSet(
-                    self,
-                    "DataallRegionalIPSet",
-                    name=f"{resource_prefix}-{envname}-ipset-regional",
-                    description=f"IP addresses allowed for Dataall {envname}",
-                    addresses=custom_waf_rules.get("allowed_ip_list"),
-                    ip_address_version="IPV4",
-                    scope="REGIONAL"
-                )
+        ip_set_regional=None
+        if custom_waf_rules and custom_waf_rules.get("allowed_ip_list"):
+            ip_set_regional = wafv2.CfnIPSet(
+                self,
+                "DataallRegionalIPSet",
+                name=f"{resource_prefix}-{envname}-ipset-regional",
+                description=f"IP addresses allowed for Dataall {envname}",
+                addresses=custom_waf_rules.get("allowed_ip_list"),
+                ip_address_version="IPV4",
+                scope="REGIONAL"
+            )
 
         acl = wafv2.CfnWebACL(
             self,
@@ -327,20 +344,29 @@ class LambdaApiStack(pyNestedClass):
             rules=self.get_waf_rules(envname,custom_waf_rules,ip_set_regional),
         )
 
-        wafv2.CfnWebACLAssociation(
-            self,
-            'WafApiGW',
-            resource_arn=f'arn:aws:apigateway:{self.region}::'
-            f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
-            web_acl_arn=acl.get_att('Arn').to_string(),
-        )
+        if api_waf and not api_waf.get('config_auto_association'):
 
-        CfnOutput(
-            self,
-            f'WebAclId{envname}',
-            export_name=f'{resource_prefix}-{envname}-api-webacl',
-            value=Fn.select(0, Fn.split('|', Fn.ref(acl.logical_id))),
-        )
+            wafv2.CfnWebACLAssociation(
+                self,
+                'WafApiGW',
+                resource_arn=f'arn:aws:apigateway:{self.region}::'
+                f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
+                web_acl_arn=acl.get_att('Arn').to_string(),
+            )
+        if api_waf:
+            CfnOutput(
+                self,
+                f'WebAclId{envname}',
+                export_name=f'{resource_prefix}-{envname}-api-webacl',
+                value=api_waf.get("logical_id"),
+            )
+        else:
+            CfnOutput(
+                self,
+                f'WebAclId{envname}',
+                export_name=f'{resource_prefix}-{envname}-api-webacl',
+                value=Fn.select(0, Fn.split('|', Fn.ref(acl.logical_id))),
+            )
         CfnOutput(self, f'Url{envname}', value=graphql_api.url)
 
         return graphql_api, acl
