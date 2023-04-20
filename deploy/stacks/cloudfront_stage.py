@@ -6,6 +6,7 @@ from .cloudfront_stack import CloudfrontStack
 
 
 class CloudfrontStage(Stage):
+    # Dpp changes - added cloudfront_waf to stack
     def __init__(
         self,
         scope,

@@ -294,6 +294,7 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             user_pool,
         )
+        # Dpp changes
         if api_waf:
             acl = {
                 "Arn": api_waf.get("Arn"),
@@ -343,7 +344,7 @@ class LambdaApiStack(pyNestedClass):
             ),
             rules=self.get_waf_rules(envname,custom_waf_rules,ip_set_regional),
         )
-
+        # Dpp changes
         if api_waf and not api_waf.get('config_auto_association'):
 
             wafv2.CfnWebACLAssociation(
@@ -353,6 +354,7 @@ class LambdaApiStack(pyNestedClass):
                 f'/restapis/{graphql_api.rest_api_id}/stages/{graphql_api.deployment_stage.stage_name}',
                 web_acl_arn=acl.get_att('Arn').to_string(),
             )
+        # Dpp changes
         if api_waf:
             CfnOutput(
                 self,

@@ -6,6 +6,7 @@ from .auth_at_edge import AuthAtEdge
 
 
 class CloudfrontStack(Stack):
+    # Dpp changes - added cloudfront_waf to stack
     def __init__(
         self,
         scope,
