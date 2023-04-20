@@ -4,9 +4,9 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
-from dataall.searchproxy.indexers import DatasetTableIndexer
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
@@ -152,7 +152,7 @@ def test_upsert_folder(db, dataset, env, mocker, folder):
 def test_upsert_tables(db, dataset, env, mocker, folder):
     mocker.patch('dataall.searchproxy.upsert', return_value={})
     with db.scoped_session() as session:
-        tables = indexers.upsert_dataset_tables(
-            session, es={}, datasetUri=dataset.datasetUri
+        tables = DatasetTableIndexer.upsert_all(
+            session, dataset_uri=dataset.datasetUri
         )
         assert len(tables) == 1

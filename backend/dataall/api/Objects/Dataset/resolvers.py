@@ -19,6 +19,7 @@ from ....db.api.organization import Organization
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 
 log = logging.getLogger(__name__)
 
@@ -324,8 +325,8 @@ def sync_tables(context: Context, source, datasetUri: str = None):
         session.add(task)
     Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
     with context.engine.scoped_session() as session:
-        indexers.upsert_dataset_tables(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetTableIndexer.upsert_all(
+            session=session, dataset_uri=dataset.datasetUri
         )
         indexers.remove_deleted_tables(
             session=session, es=context.es, datasetUri=dataset.datasetUri

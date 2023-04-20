@@ -83,7 +83,8 @@ def table(org, env, db, sync_dataset):
 
 def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
-        'dataall.searchproxy.indexers.upsert_dataset_tables', return_value=[table]
+        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
+        return_value=[table]
     )
     mocker.patch(
         'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset

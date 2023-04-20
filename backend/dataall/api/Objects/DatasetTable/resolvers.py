@@ -13,7 +13,7 @@ from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary
 from ....searchproxy import indexers
 from ....utils import json_utils
-from dataall.searchproxy.indexers import DatasetTableIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)

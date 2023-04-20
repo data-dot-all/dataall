@@ -3,10 +3,11 @@ import os
 import sys
 
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from .. import db
 from ..db import get_engine, exceptions
 from ..db import models
-from dataall.searchproxy.indexers import upsert_dataset_tables, DashboardIndexer
+from dataall.searchproxy.indexers import DashboardIndexer
 from ..searchproxy.connect import (
     connect,
 )
@@ -34,7 +35,7 @@ def index_objects(engine, es):
             log.info(f'Found {len(all_datasets)} datasets')
             dataset: models.Dataset
             for dataset in all_datasets:
-                tables = upsert_dataset_tables(session, es, dataset.datasetUri)
+                tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
                 folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
                 indexed_objects_counter = (
                     indexed_objects_counter + len(tables) + len(folders) + 1
