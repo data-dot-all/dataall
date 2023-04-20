@@ -16,7 +16,7 @@ from . import (
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
 from ..models.Enums import Language, ConfidentialityClassification
-from ...modules.datasets.services.dataset_location import DatasetStorageLocationService
+from ...modules.datasets.services.dataset_location import DatasetLocationService
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -516,7 +516,7 @@ class Dataset:
         Dataset._delete_dataset_shares_with_no_shared_items(session, uri)
         Dataset._delete_dataset_term_links(session, uri)
         Dataset._delete_dataset_tables(session, dataset.datasetUri)
-        DatasetStorageLocationService.delete_dataset_locations(session, dataset.datasetUri)
+        DatasetLocationService.delete_dataset_locations(session, dataset.datasetUri)
         KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
         Vote.delete_votes(session, dataset.datasetUri, 'dataset')
         session.delete(dataset)

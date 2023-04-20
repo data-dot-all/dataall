@@ -3,7 +3,7 @@ import logging
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
-from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
+from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class S3DatasetLocationHandler:
     @Worker.handler(path='s3.prefix.create')
     def create_dataset_location(engine, task: models.Task):
         with engine.scoped_session() as session:
-            location = DatasetStorageLocationService.get_location_by_uri(
+            location = DatasetLocationService.get_location_by_uri(
                 session, task.targetUri
             )
             S3DatasetLocationHandler.create_bucket_prefix(location)

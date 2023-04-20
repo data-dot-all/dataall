@@ -16,7 +16,7 @@ from dataall.modules.datasets.services.dataset_profiling_service import DatasetP
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
+from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 root = logging.getLogger()
@@ -106,7 +106,7 @@ class SubscriptionService:
     @staticmethod
     def publish_location_update_message(session, message):
         location: DatasetStorageLocation = (
-            DatasetStorageLocationService.get_location_by_s3_prefix(
+            DatasetLocationService.get_location_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
