@@ -398,7 +398,7 @@ class S3ShareManager:
                 json.dumps(policy)
             )
 
-    def handle_share_failure(self, error: Exception) -> bool:
+    def handle_share_failure(self, error: Exception) -> None:
         """
         Handles share failure by raising an alarm to alarmsTopic
         Returns
@@ -411,12 +411,8 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_folder_sharing_failure_alarm(
-            self.target_folder, self.share, self.target_environment
-        )
-        return True
 
-    def handle_revoke_failure(self, error: Exception) -> bool:
+    def handle_revoke_failure(self, error: Exception) -> None:
         """
         Handles share failure by raising an alarm to alarmsTopic
         Returns
@@ -429,7 +425,3 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_revoke_folder_sharing_failure_alarm(
-            self.target_folder, self.share, self.target_environment
-        )
-        return True

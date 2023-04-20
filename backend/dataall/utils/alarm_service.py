@@ -11,7 +11,6 @@ from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
 from ..db import models
-from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -72,60 +71,6 @@ Alarm Details:
     - Glue Database:              {table.GlueDatabaseName}shared
 """
         return self.publish_message_to_alarms_topic(subject, message)
-
-    def trigger_folder_sharing_failure_alarm(
-        self,
-        folder: DatasetStorageLocation,
-        share: models.ShareObject,
-        target_environment: models.Environment,
-    ):
-        logger.info('Triggering share failure alarm...')
-        subject = (
-            f'ALARM: DATAALL Folder {folder.S3Prefix} Sharing Failure Notification'
-        )
-        message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
-Alarm Details:
-    - State Change:               	OK -> ALARM
-    - Reason for State Change:      S3 Folder sharing failure
-    - Timestamp:                              {datetime.now()}
-    Share Source
-    - Dataset URI:                   {share.datasetUri}
-    - AWS Account:                   {folder.AWSAccountId}
-    - Region:                            {folder.region}
-    - S3 Bucket:                     {folder.S3BucketName}
-    - S3 Folder:                     {folder.S3Prefix}
-    Share Target
-    - AWS Account:                {target_environment.AwsAccountId}
-    - Region:                            {target_environment.region}
-"""
-
-    def trigger_revoke_folder_sharing_failure_alarm(
-        self,
-        folder: DatasetStorageLocation,
-        share: models.ShareObject,
-        target_environment: models.Environment,
-    ):
-        logger.info('Triggering share failure alarm...')
-        subject = (
-            f'ALARM: DATAALL Folder {folder.S3Prefix} Sharing Revoke Failure Notification'
-        )
-        message = f"""
-You are receiving this email because your DATAALL {self.envname} environment in the {self.region} region has entered the ALARM state, because it failed to share the folder {folder.S3Prefix} with S3 Access Point.
-Alarm Details:
-    - State Change:               	OK -> ALARM
-    - Reason for State Change:      S3 Folder sharing Revoke failure
-    - Timestamp:                              {datetime.now()}
-    Share Source
-    - Dataset URI:                   {share.datasetUri}
-    - AWS Account:                   {folder.AWSAccountId}
-    - Region:                            {folder.region}
-    - S3 Bucket:                     {folder.S3BucketName}
-    - S3 Folder:                     {folder.S3Prefix}
-    Share Target
-    - AWS Account:                {target_environment.AwsAccountId}
-    - Region:                            {target_environment.region}
-"""
 
     def trigger_revoke_table_sharing_failure_alarm(
         self,
