@@ -224,7 +224,7 @@ class DatasetTableService:
         return table
 
     @staticmethod
-    def sync(session, datasetUri, glue_tables=None):
+    def sync_existing_tables(session, datasetUri, glue_tables=None):
 
         dataset: Dataset = session.query(Dataset).get(datasetUri)
         if dataset:
