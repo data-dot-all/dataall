@@ -18,9 +18,8 @@ from ...db import models
 from ...db.api import Environment
 from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sts import SessionHelper
-from ...aws.handlers.sagemaker_studio import (
-    SagemakerStudio,
-)
+from ...aws.handlers.sagemaker_studio import SagemakerStudio
+from ...aws.handlers.ec2 import EC2
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
 
@@ -58,17 +57,22 @@ class SageMakerDomain:
 
     def create_sagemaker_domain_resources(self, sagemaker_principals):
         logger.info('Creating SageMaker base resources..')
-        try:
+        cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
+            accountid=self.environment.AwsAccountId, region=self.environment.region
+        )
+        existing_default_vpc = EC2.check_default_vpc_exists(
+            AwsAccountId=self.environment.AwsAccountId, region=self.environment.region, role=cdk_look_up_role_arn
+        )
+        if existing_default_vpc:
+            logger.info("Using default VPC for Sagemaker Studio domain")
             # Use default VPC - initial configuration (to be migrated)
             vpc = ec2.Vpc.from_lookup(self.stack, 'VPCStudio', is_default=True)
             subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
             subnet_ids += [public_subnet.subnet_id for public_subnet in vpc.public_subnets]
             subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in vpc.isolated_subnets]
             security_groups = []
-            logger.info("Using default VPC for Sagemaker Studio domain")
-        except Exception as e:
-            logger.info(
-                f"Default VPC not found, Exception: {e}. Creating a VPC for SageMaker resources...")
+        else:
+            logger.info("Default VPC not found, Exception. Creating a VPC for SageMaker resources...")
             # Create VPC with 3 Public Subnets and 3 Private subnets wit NAT Gateways
             log_group = logs.LogGroup(
                 self.stack,
