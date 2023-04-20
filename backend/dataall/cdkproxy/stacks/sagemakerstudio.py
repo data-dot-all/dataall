@@ -58,6 +58,41 @@ class SageMakerDomain:
 
     def create_sagemaker_domain_resources(self, sagemaker_principals):
         logger.info('Creating SageMaker base resources..')
+        sagemaker_domain_role = iam.Role(
+            self.stack,
+            'RoleForSagemakerStudioUsers',
+            assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
+            role_name='RoleSagemakerStudioUsers',
+            managed_policies=[
+                iam.ManagedPolicy.from_managed_policy_arn(
+                    self.stack,
+                    id='SagemakerFullAccess',
+                    managed_policy_arn='arn:aws:iam::aws:policy/AmazonSageMakerFullAccess',
+                ),
+                iam.ManagedPolicy.from_managed_policy_arn(
+                    self.stack, id='S3FullAccess', managed_policy_arn='arn:aws:iam::aws:policy/AmazonS3FullAccess'
+                ),
+            ],
+        )
+
+        sagemaker_domain_key = kms.Key(
+            self.stack,
+            'SagemakerDomainKmsKey',
+            alias='SagemakerStudioDomain',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                assign_sids=True,
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[iam.AccountPrincipal(account_id=self.environment.AwsAccountId), sagemaker_domain_role] + sagemaker_principals,
+                        actions=['kms:*'],
+                    )
+                ],
+            ),
+        )
+
         try:
             # Use default VPC - initial configuration (to be migrated)
             vpc = ec2.Vpc.from_lookup(self.stack, 'VPCStudio', is_default=True)
@@ -65,7 +100,29 @@ class SageMakerDomain:
             subnet_ids += [public_subnet.subnet_id for public_subnet in vpc.public_subnets]
             subnet_ids += [isolated_subnet.subnet_id for isolated_subnet in vpc.isolated_subnets]
             security_groups = []
+            vpc_id = vpc.vpc_id
+
+            sagemaker_domain = sagemaker.CfnDomain(
+                self.stack,
+                'SagemakerStudioDomain',
+                domain_name=f'SagemakerStudioDomain-{self.environment.region}-{self.environment.AwsAccountId}',
+                auth_mode='IAM',
+                default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
+                    execution_role=sagemaker_domain_role.role_arn,
+                    security_groups=security_groups,
+                    sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
+                        notebook_output_option='Allowed',
+                        s3_kms_key_id=sagemaker_domain_key.key_id,
+                        s3_output_path=f's3://sagemaker-{self.environment.region}-{self.environment.AwsAccountId}',
+                    ),
+                ),
+                vpc_id=vpc_id,
+                subnet_ids=subnet_ids,
+                app_network_access_type='VpcOnly',
+                kms_key_id=sagemaker_domain_key.key_id,
+            )
             logger.info("Using default VPC for Sagemaker Studio domain")
+
         except Exception as e:
             logger.info(
                 f"Default VPC not found, Exception: {e}. Creating a VPC for SageMaker resources...")
@@ -117,63 +174,27 @@ class SageMakerDomain:
             sagemaker_sg.add_ingress_rule(sagemaker_sg, ec2.Port.all_traffic())
             security_groups = [sagemaker_sg.security_group_id]
             subnet_ids = [private_subnet.subnet_id for private_subnet in vpc.private_subnets]
+            vpc_id = vpc.vpc_id
 
-        vpc_id = vpc.vpc_id
-
-        sagemaker_domain_role = iam.Role(
-            self.stack,
-            'RoleForSagemakerStudioUsers',
-            assumed_by=iam.ServicePrincipal('sagemaker.amazonaws.com'),
-            role_name='RoleSagemakerStudioUsers',
-            managed_policies=[
-                iam.ManagedPolicy.from_managed_policy_arn(
-                    self.stack,
-                    id='SagemakerFullAccess',
-                    managed_policy_arn='arn:aws:iam::aws:policy/AmazonSageMakerFullAccess',
+            sagemaker_domain = sagemaker.CfnDomain(
+                self.stack,
+                'SagemakerStudioDomain',
+                domain_name=f'SagemakerStudioDomain-{self.environment.region}-{self.environment.AwsAccountId}',
+                auth_mode='IAM',
+                default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
+                    execution_role=sagemaker_domain_role.role_arn,
+                    security_groups=security_groups,
+                    sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
+                        notebook_output_option='Allowed',
+                        s3_kms_key_id=sagemaker_domain_key.key_id,
+                        s3_output_path=f's3://sagemaker-{self.environment.region}-{self.environment.AwsAccountId}',
+                    ),
                 ),
-                iam.ManagedPolicy.from_managed_policy_arn(
-                    self.stack, id='S3FullAccess', managed_policy_arn='arn:aws:iam::aws:policy/AmazonS3FullAccess'
-                ),
-            ],
-        )
-
-        sagemaker_domain_key = kms.Key(
-            self.stack,
-            'SagemakerDomainKmsKey',
-            alias='SagemakerStudioDomain',
-            enable_key_rotation=True,
-            policy=iam.PolicyDocument(
-                assign_sids=True,
-                statements=[
-                    iam.PolicyStatement(
-                        resources=['*'],
-                        effect=iam.Effect.ALLOW,
-                        principals=[iam.AccountPrincipal(account_id=self.environment.AwsAccountId), sagemaker_domain_role] + sagemaker_principals,
-                        actions=['kms:*'],
-                    )
-                ],
-            ),
-        )
-
-        sagemaker_domain = sagemaker.CfnDomain(
-            self.stack,
-            'SagemakerStudioDomain',
-            domain_name=f'SagemakerStudioDomain-{self.environment.region}-{self.environment.AwsAccountId}',
-            auth_mode='IAM',
-            default_user_settings=sagemaker.CfnDomain.UserSettingsProperty(
-                execution_role=sagemaker_domain_role.role_arn,
-                security_groups=security_groups,
-                sharing_settings=sagemaker.CfnDomain.SharingSettingsProperty(
-                    notebook_output_option='Allowed',
-                    s3_kms_key_id=sagemaker_domain_key.key_id,
-                    s3_output_path=f's3://sagemaker-{self.environment.region}-{self.environment.AwsAccountId}',
-                ),
-            ),
-            vpc_id=vpc_id,
-            subnet_ids=subnet_ids,
-            app_network_access_type='VpcOnly',
-            kms_key_id=sagemaker_domain_key.key_id,
-        )
+                vpc_id=vpc_id,
+                subnet_ids=subnet_ids,
+                app_network_access_type='VpcOnly',
+                kms_key_id=sagemaker_domain_key.key_id,
+            )
 
         ssm.StringParameter(
             self.stack,
