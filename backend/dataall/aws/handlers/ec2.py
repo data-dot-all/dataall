@@ -13,11 +13,11 @@ class EC2:
         return session.client('ec2', region_name=region)
 
     @staticmethod
-    def check_default_vpc_exists(account_id: str, region:str, role=None):
+    def check_default_vpc_exists(AwsAccountId: str, region: str, role=None):
         log.info("Check that default VPC exists..")
-        client = EC2.client(account_id=account_id, region=region, role=role)
+        client = EC2.client(account_id=AwsAccountId, region=region, role=role)
         response = client.describe_vpcs(
-            Filters=[{'Name':'isDefault','Values': ['true']}]
+            Filters=[{'Name': 'isDefault', 'Values': ['true']}]
         )
         vpcs = response['Vpcs']
         log.info(f"Default VPCs response: {vpcs}")
