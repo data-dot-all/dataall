@@ -16,11 +16,11 @@ from . import (
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
 from ..models.Enums import Language, ConfidentialityClassification
+from ...modules.datasets.services.dataset_location import DatasetStorageLocationService
 from ...utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -264,30 +264,6 @@ class Dataset:
         ).to_dict()
 
     @staticmethod
-    def paginated_dataset_locations(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        query = session.query(DatasetStorageLocation).filter(
-            DatasetStorageLocation.datasetUri == uri
-        )
-        if data and data.get('term'):
-            query = query.filter(
-                or_(
-                    *[
-                        DatasetStorageLocation.name.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
-                        DatasetStorageLocation.S3Prefix.ilike(
-                            '%' + data.get('term') + '%'
-                        ),
-                    ]
-                )
-            )
-        return paginate(
-            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
-        ).to_dict()
-
-    @staticmethod
     def paginated_dataset_tables(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
@@ -487,15 +463,6 @@ class Dataset:
         )
 
     @staticmethod
-    def get_dataset_folders(session, dataset_uri):
-        """return the dataset folders"""
-        return (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
-            .all()
-        )
-
-    @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
         return session.query(models.ShareObject).filter(
             and_(
@@ -549,7 +516,7 @@ class Dataset:
         Dataset._delete_dataset_shares_with_no_shared_items(session, uri)
         Dataset._delete_dataset_term_links(session, uri)
         Dataset._delete_dataset_tables(session, dataset.datasetUri)
-        Dataset._delete_dataset_locations(session, dataset.datasetUri)
+        DatasetStorageLocationService.delete_dataset_locations(session, dataset.datasetUri)
         KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
         Vote.delete_votes(session, dataset.datasetUri, 'dataset')
         session.delete(dataset)
@@ -633,21 +600,6 @@ class Dataset:
         return tables
 
     @staticmethod
-    def _delete_dataset_locations(session, dataset_uri) -> bool:
-        locations = (
-            session.query(DatasetStorageLocation)
-            .filter(
-                and_(
-                    DatasetStorageLocation.datasetUri == dataset_uri,
-                )
-            )
-            .all()
-        )
-        for location in locations:
-            session.delete(location)
-        return True
-
-    @staticmethod
     def list_all_datasets(session) -> [models.Dataset]:
         return session.query(models.Dataset).all()
 
@@ -670,13 +622,5 @@ class Dataset:
         return (
             session.query(models.DatasetTable)
             .filter(models.DatasetTable.datasetUri == dataset_uri)
-            .count()
-        )
-
-    @staticmethod
-    def count_dataset_locations(session, dataset_uri):
-        return (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
             .count()
         )

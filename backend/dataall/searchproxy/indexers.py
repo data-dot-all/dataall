@@ -5,6 +5,7 @@ from sqlalchemy import and_
 from .. import db
 from ..db import models
 from dataall.searchproxy.upsert import BaseIndexer
+from dataall.modules.datasets.services.dataset_location import DatasetStorageLocationService
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class DatasetIndexer(BaseIndexer):
             .first()
         )
         count_tables = db.api.Dataset.count_dataset_tables(session, dataset_uri)
-        count_folders = db.api.Dataset.count_dataset_locations(session, dataset_uri)
+        count_folders = DatasetStorageLocationService.count_dataset_locations(session, dataset_uri)
         count_upvotes = db.api.Vote.count_upvotes(
             session, None, None, dataset_uri, {'targetType': 'dataset'}
         )

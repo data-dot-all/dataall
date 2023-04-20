@@ -18,6 +18,7 @@ from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
 from dataall.searchproxy import indexers
 from dataall.searchproxy.indexers import DatasetIndexer
+from ....modules.datasets.services.dataset_location import DatasetStorageLocationService
 
 log = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ def list_locations(context, source: models.Dataset, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return Dataset.paginated_dataset_locations(
+        return DatasetStorageLocationService.paginated_dataset_locations(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -232,7 +233,7 @@ def get_dataset_statistics(context: Context, source: models.Dataset, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         count_tables = db.api.Dataset.count_dataset_tables(session, source.datasetUri)
-        count_locations = db.api.Dataset.count_dataset_locations(
+        count_locations = DatasetStorageLocationService.count_dataset_locations(
             session, source.datasetUri
         )
         count_upvotes = db.api.Vote.count_upvotes(
@@ -557,7 +558,7 @@ def delete_dataset(
         for uri in tables:
             indexers.delete_doc(es=context.es, doc_id=uri)
 
-        folders = [f.locationUri for f in Dataset.get_dataset_folders(session, datasetUri)]
+        folders = [f.locationUri for f in DatasetStorageLocationService.get_dataset_folders(session, datasetUri)]
         for uri in folders:
             indexers.delete_doc(es=context.es, doc_id=uri)
 

@@ -203,3 +203,60 @@ class DatasetStorageLocationService:
         else:
             logging.info(f'Found location {location.locationUri}|{location.S3Prefix}')
             return location
+
+    @staticmethod
+    def count_dataset_locations(session, dataset_uri):
+        return (
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
+            .count()
+        )
+
+    @staticmethod
+    def delete_dataset_locations(session, dataset_uri) -> bool:
+        locations = (
+            session.query(DatasetStorageLocation)
+            .filter(
+                and_(
+                    DatasetStorageLocation.datasetUri == dataset_uri,
+                )
+            )
+            .all()
+        )
+        for location in locations:
+            session.delete(location)
+        return True
+
+    @staticmethod
+    def get_dataset_folders(session, dataset_uri):
+        """return the dataset folders"""
+        return (
+            session.query(DatasetStorageLocation)
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
+            .all()
+        )
+
+    @staticmethod
+    def paginated_dataset_locations(
+            session, username, groups, uri, data=None, check_perm=None
+    ) -> dict:
+        query = session.query(DatasetStorageLocation).filter(
+            DatasetStorageLocation.datasetUri == uri
+        )
+        if data and data.get('term'):
+            query = query.filter(
+                or_(
+                    *[
+                        DatasetStorageLocation.name.ilike(
+                            '%' + data.get('term') + '%'
+                        ),
+                        DatasetStorageLocation.S3Prefix.ilike(
+                            '%' + data.get('term') + '%'
+                        ),
+                    ]
+                )
+            )
+        return paginate(
+            query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
+        ).to_dict()
+
