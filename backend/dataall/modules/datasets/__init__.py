@@ -2,12 +2,11 @@
 import logging
 from typing import List
 
-from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
-from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
@@ -21,6 +20,9 @@ class DatasetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
+        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
+        from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
+
         import dataall.modules.datasets.api
 
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
@@ -39,6 +41,13 @@ class DatasetApiModuleInterface(ModuleInterface):
             object_type="Dataset",
             model=models.Dataset,
             reindexer=DatasetIndexer
+        ))
+
+        GlossaryRegistry.register(GlossaryDefinition(
+            target_type="DatasetTable",
+            object_type="DatasetTable",
+            model=models.DatasetTable,
+            reindexer=DatasetTableIndexer
         ))
 
         log.info("API of datasets has been imported")
