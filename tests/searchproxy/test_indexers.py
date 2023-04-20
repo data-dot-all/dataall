@@ -6,10 +6,8 @@ import dataall
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
-from dataall.searchproxy.indexers import (
-    DatasetIndexer,
-    DatasetTableIndexer,
-)
+from dataall.searchproxy.indexers import DatasetTableIndexer
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
 @pytest.fixture(scope='module', autouse=True)

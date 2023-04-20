@@ -17,8 +17,8 @@ from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
 from dataall.searchproxy import indexers
-from dataall.searchproxy.indexers import DatasetIndexer
-from ....modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 log = logging.getLogger(__name__)
 

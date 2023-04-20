@@ -1,6 +1,7 @@
 from .... import db
 from ....api.context import Context
-from dataall.searchproxy.indexers import DatasetIndexer, DashboardIndexer
+from dataall.searchproxy.indexers import DashboardIndexer
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
 def count_upvotes(

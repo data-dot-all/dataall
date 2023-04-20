@@ -4,7 +4,9 @@ from typing import List
 
 from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
+from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.loader import ModuleInterface, ImportMode
 
@@ -30,6 +32,13 @@ class DatasetApiModuleInterface(ModuleInterface):
             object_type="DatasetStorageLocation",
             model=DatasetStorageLocation,
             reindexer=DatasetLocationIndexer
+        ))
+
+        GlossaryRegistry.register(GlossaryDefinition(
+            target_type="Dataset",
+            object_type="Dataset",
+            model=models.Dataset,
+            reindexer=DatasetIndexer
         ))
 
         log.info("API of datasets has been imported")

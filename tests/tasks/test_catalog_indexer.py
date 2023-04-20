@@ -86,7 +86,7 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
         'dataall.searchproxy.indexers.upsert_dataset_tables', return_value=[table]
     )
     mocker.patch(
-        'dataall.searchproxy.indexers.DatasetIndexer.upsert', return_value=sync_dataset
+        'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
     indexed_objects_counter = dataall.tasks.catalog_indexer.index_objects(
         engine=db, es=True

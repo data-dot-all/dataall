@@ -2,7 +2,7 @@
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 from dataall.db import models
-from dataall.searchproxy.indexers import DatasetIndexer
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.searchproxy.upsert import BaseIndexer
 
 
