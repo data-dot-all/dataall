@@ -16,6 +16,7 @@ from . import (
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
 from ..models.Enums import Language, ConfidentialityClassification
+from ...modules.datasets.db.dataset_repository import DatasetRepository
 from ...modules.datasets.services.dataset_location import DatasetLocationService
 from ...utils.naming_convention import (
     NamingConventionService,
@@ -210,10 +211,7 @@ class Dataset:
 
     @staticmethod
     def get_dataset_by_uri(session, dataset_uri) -> models.Dataset:
-        dataset: Dataset = session.query(models.Dataset).get(dataset_uri)
-        if not dataset:
-            raise exceptions.ObjectNotFound('Dataset', dataset_uri)
-        return dataset
+        return DatasetRepository.get_dataset_by_uri(session, dataset_uri)
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:

@@ -5,7 +5,7 @@ from sqlalchemy import and_, or_
 
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
 from dataall.db import models, api, paginate, permissions, exceptions
-from dataall.db.api.dataset import Dataset
+from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class DatasetLocationService:
         data: dict = None,
         check_perm: bool = False,
     ) -> DatasetStorageLocation:
-        dataset = Dataset.get_dataset_by_uri(session, uri)
+        dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         exists = (
             session.query(DatasetStorageLocation)
             .filter(
