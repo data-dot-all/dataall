@@ -367,7 +367,7 @@ class Dataset(Stack):
         glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
             'GlueDbCRArnParameter',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn'',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
         )
 
         glue_db_handler = _lambda.Function.from_function_attributes(
@@ -400,7 +400,6 @@ class Dataset(Stack):
                 'DatabaseAdministrators': dataset_admins,
             },
         )
-
 
         # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(

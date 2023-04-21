@@ -325,13 +325,10 @@ class EnvironmentSetup(Stack):
             string_value=lf_default_settings_custom_resource.function_name,
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/name',
         )
-
-        # Glue database custom resource
-        # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
+        # Glue database custom resource - Old, to be deleted in future release
         entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
+            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource_nodelete').resolve()
         )
-
         gluedb_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedbcr-{self._environment.environmentUri}')
         gluedb_custom_resource = _lambda.Function(
             self,
@@ -357,30 +354,73 @@ class EnvironmentSetup(Stack):
             tracing=_lambda.Tracing.ACTIVE,
             runtime=_lambda.Runtime.PYTHON_3_9,
         )
-
-        glue_db_provider = cr.Provider(
-            self,
-            f'{self._environment.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=gluedb_custom_resource
-        )
-
         ssm.StringParameter(
             self,
             'GlueCustomResourceFunctionArn',
             string_value=gluedb_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/arn',
         )
 
         ssm.StringParameter(
             self,
             'GlueCustomResourceFunctionName',
             string_value=gluedb_custom_resource.function_name,
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
+        )
+        # Glue database custom resource - New
+        # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
+        entry_point = str(
+            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
+        )
+
+        gluedb_lf_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}')
+        gluedb_lf_custom_resource = _lambda.Function(
+            self,
+            'GlueDatabaseLFCustomResourceHandler',
+            function_name=f'{self._environment.resourcePrefix}-gluedb-lf-handler-{self._environment.environmentUri}',
+            role=self.pivot_role,
+            handler='index.on_event',
+            code=_lambda.Code.from_asset(entry_point),
+            memory_size=1664,
+            description='This Lambda function is a cloudformation custom resource provider for Glue database '
+            'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
+            timeout=Duration.seconds(5 * 60),
+            environment={
+                'envname': self._environment.name,
+                'LOG_LEVEL': 'DEBUG',
+                'AWS_ACCOUNT': self._environment.AwsAccountId,
+                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
+                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
+            },
+            dead_letter_queue_enabled=True,
+            dead_letter_queue=gluedb_lf_cr_dlq,
+            on_failure=lambda_destination.SqsDestination(gluedb_lf_cr_dlq),
+            tracing=_lambda.Tracing.ACTIVE,
+            runtime=_lambda.Runtime.PYTHON_3_9,
+        )
+
+        glue_db_provider = cr.Provider(
+            self,
+            f'{self._environment.resourcePrefix}GlueDbCustomResourceProvider',
+            on_event_handler=gluedb_lf_custom_resource
+        )
+        ssm.StringParameter(
+            self,
+            'GlueLFCustomResourceFunctionArn',
+            string_value=gluedb_lf_custom_resource.function_arn,
+            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn',
+        )
+
+        ssm.StringParameter(
+            self,
+            'GlueLFCustomResourceFunctionName',
+            string_value=gluedb_lf_custom_resource.function_name,
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/lambda/name',
         )
 
         ssm.StringParameter(
             self,
-            'GlueCustomResourceProviderServiceToken',
+            'GlueLFCustomResourceProviderServiceToken',
             string_value=glue_db_provider.service_token,
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
