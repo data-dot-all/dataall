@@ -17,10 +17,12 @@ from aws_cdk import (
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
-from sqlalchemy import and_, or_
+from botocore.exceptions import ClientError
 
 from .manager import stack
 from ... import db
+from ...aws.handlers.lakeformation import LakeFormation
+from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.quicksight import Quicksight
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
@@ -29,7 +31,6 @@ from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
-
 
 @stack(stack='dataset')
 class Dataset(Stack):
@@ -314,26 +315,44 @@ class Dataset(Stack):
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
+        registered_location = LakeFormation.check_existing_lf_registered_location(
+            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            accountid=env.AwsAccountId,
+            region=env.region
+        )
+
+        if not registered_location:
+            storage_location = CfnResource(
+                self,
+                'DatasetStorageLocation',
+                type='AWS::LakeFormation::Resource',
+                properties={
+                    'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+                    'UseServiceLinkedRole': False,
+                },
+            )
+
         # Using a custom resource instead of Cfn resource just because it causes Cfn issues when handling upgrades of pivotRole
         # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
 
-        datalake_location_service_token = ssm.StringParameter.from_string_parameter_name(
-            self,
-            'DataLocationHandlerProviderServiceToken',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
-        )
-
-        datalake_location = CustomResource(
-            self,
-            f'{env.resourcePrefix}DatalakeLocationCustomResource',
-            service_token=datalake_location_service_token.string_value,
-            resource_type='Custom::DataLakeLocation',
-            properties={
-                "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
-                "UseServiceLinkedRole": False,
-                "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}"
-            },
-        )
+        # datalake_location_service_token = ssm.StringParameter.from_string_parameter_name(
+        #     self,
+        #     'DataLocationHandlerProviderServiceToken',
+        #     string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
+        # )
+        #
+        # datalake_location = CustomResource(
+        #     self,
+        #     f'{env.resourcePrefix}DatalakeLocationCustomResource',
+        #     service_token=datalake_location_service_token.string_value,
+        #     resource_type='Custom::DataLakeLocation',
+        #     properties={
+        #         "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
+        #         "UseServiceLinkedRole": False,
+        #         "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}"
+        #     },
+        # )
 
         # Define dataset admin groups (those with data access grant)
 
