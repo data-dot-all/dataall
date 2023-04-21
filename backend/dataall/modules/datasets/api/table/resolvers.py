@@ -4,15 +4,15 @@ import logging
 from botocore.exceptions import ClientError
 from pyathena import connect
 
-from .... import db
-from ..Dataset.resolvers import get_dataset
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....db import permissions, models
-from ....db.api import ResourcePolicy, Glossary
-from ....searchproxy import indexers
-from ....utils import json_utils
+from dataall import db
+from dataall.api.Objects.Dataset.resolvers import get_dataset
+from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import permissions, models
+from dataall.db.api import ResourcePolicy, Glossary
+from dataall.searchproxy import indexers
+from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
