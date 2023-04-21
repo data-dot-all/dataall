@@ -97,3 +97,19 @@ class DatasetTableIndexer(BaseIndexer):
         for table in tables:
             DatasetTableIndexer.upsert(session=session, table_uri=table.tableUri)
         return tables
+
+    @classmethod
+    def remove_all_deleted(cls, session, dataset_uri: str):
+        tables = (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
+        )
+        for table in tables:
+            cls.delete_doc(doc_id=table.tableUri)
+        return tables

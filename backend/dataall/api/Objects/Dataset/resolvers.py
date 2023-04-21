@@ -328,9 +328,7 @@ def sync_tables(context: Context, source, datasetUri: str = None):
         DatasetTableIndexer.upsert_all(
             session=session, dataset_uri=dataset.datasetUri
         )
-        indexers.remove_deleted_tables(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
-        )
+        DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
         return Dataset.paginated_dataset_tables(
             session=session,
             username=context.username,
@@ -557,13 +555,13 @@ def delete_dataset(
 
         tables = [t.tableUri for t in Dataset.get_dataset_tables(session, datasetUri)]
         for uri in tables:
-            indexers.delete_doc(es=context.es, doc_id=uri)
+            DatasetIndexer.delete_doc(doc_id=uri)
 
         folders = [f.locationUri for f in DatasetLocationService.get_dataset_folders(session, datasetUri)]
         for uri in folders:
-            indexers.delete_doc(es=context.es, doc_id=uri)
+            DatasetIndexer.delete_doc(doc_id=uri)
 
-        indexers.delete_doc(es=context.es, doc_id=datasetUri)
+        DatasetIndexer.delete_doc(doc_id=datasetUri)
 
         Dataset.delete_dataset(
             session=session,

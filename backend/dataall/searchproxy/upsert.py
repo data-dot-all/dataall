@@ -31,6 +31,12 @@ class BaseIndexer(ABC):
         raise NotImplementedError("Method upsert is not implemented")
 
     @classmethod
+    def delete_doc(cls, doc_id):
+        es = cls.es()
+        es.delete(index=cls._INDEX, id=doc_id, ignore=[400, 404])
+        return True
+
+    @classmethod
     def _index(cls, doc_id, doc):
         es = cls.es()
         doc['_indexed'] = datetime.now()

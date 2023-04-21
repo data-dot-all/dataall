@@ -1,11 +1,8 @@
 import logging
 
-from sqlalchemy import and_
-
 from .. import db
 from ..db import models
 from dataall.searchproxy.upsert import BaseIndexer
-from dataall.modules.datasets.db.models import DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -71,24 +68,3 @@ class DashboardIndexer(BaseIndexer):
                 },
             )
         return dashboard
-
-
-def remove_deleted_tables(session, es, datasetUri: str):
-    tables = (
-        session.query(DatasetTable)
-        .filter(
-            and_(
-                DatasetTable.datasetUri == datasetUri,
-                DatasetTable.LastGlueTableStatus == 'Deleted',
-            )
-        )
-        .all()
-    )
-    for table in tables:
-        delete_doc(es, doc_id=table.tableUri)
-    return tables
-
-
-def delete_doc(es, doc_id, index='dataall-index'):
-    es.delete(index=index, id=doc_id, ignore=[400, 404])
-    return True

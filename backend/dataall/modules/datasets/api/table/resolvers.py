@@ -99,7 +99,7 @@ def delete_table(context, source, tableUri: str = None):
             },
             check_perm=True,
         )
-    indexers.delete_doc(es=context.es, doc_id=tableUri)
+    DatasetTableIndexer.delete_doc(doc_id=tableUri)
     return True
 
 
