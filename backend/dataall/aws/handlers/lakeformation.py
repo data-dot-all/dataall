@@ -15,7 +15,8 @@ class LakeFormation:
     @staticmethod
     def check_existing_lf_registered_location(resource_arn, accountid, region):
         """
-        Describes a LF data location
+        Checks if there is a non-dataall-created registered location for the Dataset
+        Returns False is already existing location else return the resource info
         """
         try:
             session = SessionHelper.remote_session(accountid)
@@ -30,9 +31,7 @@ class LakeFormation:
             return response['ResourceInfo']
 
         except ClientError as e:
-            log.info(
-                f'LF data location for resource {resource_arn} not found due to {e}'
-            )
+            log.info(f'LF data location for resource {resource_arn} not found due to {e}')
             return False
 
     @staticmethod

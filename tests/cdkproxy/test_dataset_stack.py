@@ -17,7 +17,7 @@ def patch_methods(mocker, db, dataset, env, org):
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.aws.handlers.lakeformation.LakeFormation.describe_resource',
+        'dataall.aws.handlers.lakeformation.LakeFormation.check_existing_lf_registered_location',
         return_value=False,
     )
     mocker.patch(

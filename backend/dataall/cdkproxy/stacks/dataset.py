@@ -17,12 +17,10 @@ from aws_cdk import (
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
-from botocore.exceptions import ClientError
 
 from .manager import stack
 from ... import db
 from ...aws.handlers.lakeformation import LakeFormation
-from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.quicksight import Quicksight
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
@@ -31,6 +29,7 @@ from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
+
 
 @stack(stack='dataset')
 class Dataset(Stack):
@@ -355,7 +354,6 @@ class Dataset(Stack):
         # )
 
         # Define dataset admin groups (those with data access grant)
-
         dataset_admins = [
             dataset_admin_role.role_arn,
             f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
