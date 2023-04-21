@@ -28,11 +28,11 @@ def upvote(context: Context, source, input=None):
             data=input,
             check_perm=True,
         )
-        reindex(session, context.es, vote)
+        reindex(session, vote)
         return vote
 
 
-def reindex(session, es, vote):
+def reindex(session, vote):
     if vote.targetType == 'dataset':
         DatasetIndexer.upsert(session=session, dataset_uri=vote.targetUri)
     elif vote.targetType == 'dashboard':

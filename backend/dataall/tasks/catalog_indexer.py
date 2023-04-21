@@ -5,13 +5,9 @@ import sys
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from .. import db
-from ..db import get_engine, exceptions
-from ..db import models
+from dataall.db import get_engine, models
 from dataall.searchproxy.indexers import DashboardIndexer
-from ..searchproxy.connect import (
-    connect,
-)
-from ..utils.alarm_service import AlarmService
+from dataall.utils.alarm_service import AlarmService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -20,12 +16,8 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-def index_objects(engine, es):
+def index_objects(engine):
     try:
-        if not es:
-            raise exceptions.AWSResourceNotFound(
-                action='CATALOG_INDEXER_TASK', message='ES configuration not found'
-            )
         indexed_objects_counter = 0
         with engine.scoped_session() as session:
 
@@ -58,5 +50,4 @@ def index_objects(engine, es):
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    ES = connect(envname=ENVNAME)
-    index_objects(engine=ENGINE, es=ES)
+    index_objects(engine=ENGINE)
