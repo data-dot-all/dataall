@@ -363,8 +363,46 @@ class Dataset(Stack):
             dataset_admins.append(quicksight_default_group_arn)
 
         # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
-        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
+        # Old provider, to be deleted in future release
+        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
+            self,
+            'GlueDbCRArnParameter',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/gluehandler/lambda/arn'',
+        )
 
+        glue_db_handler = _lambda.Function.from_function_attributes(
+            self,
+            'CustomGlueDatabaseHandler',
+            function_arn=glue_db_handler_arn.string_value,
+            same_environment=True,
+        )
+
+        GlueDatabase = cr.Provider(
+            self,
+            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
+            on_event_handler=glue_db_handler,
+        )
+        old_glue_db = CustomResource(
+            self,
+            f'{env.resourcePrefix}DatasetDatabase',
+            service_token=GlueDatabase.service_token,
+            resource_type='Custom::GlueDatabase',
+            properties={
+                'CatalogId': dataset.AwsAccountId,
+                'DatabaseInput': {
+                    'Description': 'dataall database {} '.format(
+                        dataset.GlueDatabaseName
+                    ),
+                    'LocationUri': f's3://{dataset.S3BucketName}/',
+                    'Name': f'{dataset.GlueDatabaseName}',
+                    'CreateTableDefaultPermissions': [],
+                },
+                'DatabaseAdministrators': dataset_admins,
+            },
+        )
+
+
+        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
             'GlueDBHandlerProviderServiceToken',
@@ -373,7 +411,7 @@ class Dataset(Stack):
 
         glue_db = CustomResource(
             self,
-            f'{env.resourcePrefix}DatasetDatabase',
+            f'{env.resourcePrefix}DatabaseCustomResource',
             service_token=glue_db_provider_service_token.string_value,
             resource_type='Custom::GlueDatabase',
             properties={
