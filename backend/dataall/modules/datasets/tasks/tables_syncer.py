@@ -8,6 +8,7 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.searchproxy import indexers
 from dataall.searchproxy.connect import connect
@@ -68,8 +69,8 @@ def sync_tables(engine, es=None):
                     )
 
                     tables = (
-                        session.query(models.DatasetTable)
-                        .filter(models.DatasetTable.datasetUri == dataset.datasetUri)
+                        session.query(DatasetTable)
+                        .filter(DatasetTable.datasetUri == dataset.datasetUri)
                         .all()
                     )
 

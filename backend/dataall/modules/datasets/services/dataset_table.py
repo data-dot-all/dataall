@@ -6,7 +6,7 @@ from dataall.db import models, api, permissions, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from dataall.db.models import Dataset
 from dataall.utils import json_utils
-from dataall.modules.datasets.db.models import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +22,14 @@ class DatasetTableService:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DatasetTable:
+    ) -> DatasetTable:
         dataset = api.Dataset.get_dataset_by_uri(session, uri)
         exists = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .filter(
                 and_(
-                    models.DatasetTable.datasetUri == uri,
-                    models.DatasetTable.GlueTableName == data['name'],
+                    DatasetTable.datasetUri == uri,
+                    DatasetTable.GlueTableName == data['name'],
                 )
             )
             .count()
@@ -41,7 +41,7 @@ class DatasetTableService:
                 message=f'table: {data["name"]} already exist on dataset {uri}',
             )
 
-        table = models.DatasetTable(
+        table = DatasetTable(
             datasetUri=uri,
             label=data['name'],
             name=data['name'],
@@ -72,7 +72,7 @@ class DatasetTableService:
                 group=group,
                 permissions=permissions.DATASET_TABLE_READ,
                 resource_uri=table.tableUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
         return table
 
@@ -87,13 +87,13 @@ class DatasetTableService:
         check_perm: bool = False,
     ) -> dict:
         query = (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == uri)
-            .order_by(models.DatasetTable.created.desc())
+            session.query(DatasetTable)
+            .filter(DatasetTable.datasetUri == uri)
+            .order_by(DatasetTable.created.desc())
         )
         if data.get('term'):
             term = data.get('term')
-            query = query.filter(models.DatasetTable.label.ilike('%' + term + '%'))
+            query = query.filter(DatasetTable.label.ilike('%' + term + '%'))
         return paginate(
             query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
         ).to_dict()
@@ -107,7 +107,7 @@ class DatasetTableService:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DatasetTable:
+    ) -> DatasetTable:
         return DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
 
     @staticmethod
@@ -183,10 +183,10 @@ class DatasetTableService:
         """
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         env_tables_shared = (
-            session.query(models.DatasetTable)  # all tables
+            session.query(DatasetTable)  # all tables
             .join(
                 models.ShareObjectItem,  # found in ShareObjectItem
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .join(
                 models.ShareObject,  # jump to share object
@@ -218,7 +218,7 @@ class DatasetTableService:
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):
-        table: models.DatasetTable = session.query(models.DatasetTable).get(table_uri)
+        table: DatasetTable = session.query(DatasetTable).get(table_uri)
         if not table:
             raise exceptions.ObjectNotFound('DatasetTable', table_uri)
         return table
@@ -229,8 +229,8 @@ class DatasetTableService:
         dataset: Dataset = session.query(Dataset).get(datasetUri)
         if dataset:
             existing_tables = (
-                session.query(models.DatasetTable)
-                .filter(models.DatasetTable.datasetUri == datasetUri)
+                session.query(DatasetTable)
+                .filter(DatasetTable.datasetUri == datasetUri)
                 .all()
             )
             existing_table_names = [e.GlueTableName for e in existing_tables]
@@ -245,7 +245,7 @@ class DatasetTableService:
                     logger.info(
                         f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}'
                     )
-                    updated_table = models.DatasetTable(
+                    updated_table = DatasetTable(
                         datasetUri=dataset.datasetUri,
                         label=table['Name'],
                         name=table['Name'],
@@ -272,13 +272,13 @@ class DatasetTableService:
                             group=group,
                             permissions=permissions.DATASET_TABLE_READ,
                             resource_uri=updated_table.tableUri,
-                            resource_type=models.DatasetTable.__name__,
+                            resource_type=DatasetTable.__name__,
                         )
                 else:
                     logger.info(
                         f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'
                     )
-                    updated_table: models.DatasetTable = (
+                    updated_table: DatasetTable = (
                         existing_dataset_tables_map.get(table['Name'])
                     )
                     updated_table.GlueTableProperties = json_utils.to_json(
@@ -345,13 +345,13 @@ class DatasetTableService:
 
     @staticmethod
     def get_table_by_s3_prefix(session, s3_prefix, accountid, region):
-        table: models.DatasetTable = (
-            session.query(models.DatasetTable)
+        table: DatasetTable = (
+            session.query(DatasetTable)
             .filter(
                 and_(
-                    models.DatasetTable.S3Prefix.startswith(s3_prefix),
-                    models.DatasetTable.AWSAccountId == accountid,
-                    models.DatasetTable.region == region,
+                    DatasetTable.S3Prefix.startswith(s3_prefix),
+                    DatasetTable.AWSAccountId == accountid,
+                    DatasetTable.region == region,
                 )
             )
             .first()

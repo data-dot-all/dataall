@@ -1,7 +1,8 @@
 import logging
 
 from ..share_managers import LFShareManager
-from ....db import models, api
+from dataall.db import models, api
+from dataall.modules.datasets.db.models import DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -12,8 +13,8 @@ class ProcessLFSameAccountShare(LFShareManager):
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        shared_tables: [models.DatasetTable],
-        revoked_tables: [models.DatasetTable],
+        shared_tables: [DatasetTable],
+        revoked_tables: [DatasetTable],
         source_environment: models.Environment,
         target_environment: models.Environment,
         env_group: models.EnvironmentGroup,

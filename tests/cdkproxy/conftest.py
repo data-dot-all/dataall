@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.db import models, api
+from dataall.modules.datasets.db.models import DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -121,9 +122,9 @@ def dataset(db, env: models.Environment) -> models.Dataset:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table(db, dataset: models.Dataset) -> models.DatasetTable:
+def table(db, dataset: models.Dataset) -> DatasetTable:
     with db.scoped_session() as session:
-        table = models.DatasetTable(
+        table = DatasetTable(
             label='thistable',
             owner='me',
             datasetUri=dataset.datasetUri,

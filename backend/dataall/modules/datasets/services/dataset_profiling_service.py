@@ -2,7 +2,7 @@ from sqlalchemy import and_
 
 from dataall.db import paginate, models
 from dataall.db.exceptions import ObjectNotFound
-from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable
 
 
 class DatasetProfilingService:
@@ -18,7 +18,7 @@ class DatasetProfilingService:
             raise ObjectNotFound('Dataset', datasetUri)
 
         if tableUri and not GlueTableName:
-            table: models.DatasetTable = session.query(models.DatasetTable).get(
+            table: DatasetTable = session.query(DatasetTable).get(
                 tableUri
             )
             if not table:
@@ -105,13 +105,13 @@ class DatasetProfilingService:
         q = (
             session.query(DatasetProfilingRun)
             .join(
-                models.DatasetTable,
-                models.DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
+                DatasetTable,
+                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
             )
             .filter(
                 and_(
-                    models.DatasetTable.tableUri == tableUri,
-                    models.DatasetTable.GlueTableName
+                    DatasetTable.tableUri == tableUri,
+                    DatasetTable.GlueTableName
                     == DatasetProfilingRun.GlueTableName,
                 )
             )
@@ -126,12 +126,12 @@ class DatasetProfilingService:
         return (
             session.query(DatasetProfilingRun)
             .join(
-                models.DatasetTable,
-                models.DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
+                DatasetTable,
+                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
             )
-            .filter(models.DatasetTable.tableUri == tableUri)
+            .filter(DatasetTable.tableUri == tableUri)
             .filter(
-                models.DatasetTable.GlueTableName
+                DatasetTable.GlueTableName
                 == DatasetProfilingRun.GlueTableName
             )
             .order_by(DatasetProfilingRun.created.desc())
@@ -143,12 +143,12 @@ class DatasetProfilingService:
         return (
             session.query(DatasetProfilingRun)
             .join(
-                models.DatasetTable,
-                models.DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
+                DatasetTable,
+                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
             )
-            .filter(models.DatasetTable.tableUri == tableUri)
+            .filter(DatasetTable.tableUri == tableUri)
             .filter(
-                models.DatasetTable.GlueTableName
+                DatasetTable.GlueTableName
                 == DatasetProfilingRun.GlueTableName
             )
             .filter(DatasetProfilingRun.results.isnot(None))

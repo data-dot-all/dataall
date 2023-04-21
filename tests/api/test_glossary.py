@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 import pytest
 
 
@@ -32,9 +32,9 @@ def _dataset(db, _env, _org, group, user, dataset) -> models.Dataset:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def _table(db, _dataset) -> models.DatasetTable:
+def _table(db, _dataset) -> DatasetTable:
     with db.scoped_session() as session:
-        t = models.DatasetTable(
+        t = DatasetTable(
             datasetUri=_dataset.datasetUri,
             label='table',
             AWSAccountId=_dataset.AwsAccountId,

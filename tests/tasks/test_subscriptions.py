@@ -2,6 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.datasets.db.models import DatasetTable
 
 
 @pytest.fixture(scope='module')
@@ -93,7 +94,7 @@ def share(
 ):
     with db.scoped_session() as session:
 
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             label='foo',
             name='foo',
             owner='alice',

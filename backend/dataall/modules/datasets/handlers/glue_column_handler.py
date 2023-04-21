@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.modules.datasets.db.models import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class DatasetColumnGlueHandler:
     @Worker.handler('glue.table.columns')
     def get_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(
+            dataset_table: DatasetTable = session.query(DatasetTable).get(
                 task.targetUri
             )
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
@@ -46,12 +46,8 @@ class DatasetColumnGlueHandler:
     @Worker.handler('glue.table.update_column')
     def update_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            column: DatasetTableColumn = session.query(
-                DatasetTableColumn
-            ).get(task.targetUri)
-            table: models.DatasetTable = session.query(models.DatasetTable).get(
-                column.tableUri
-            )
+            column: DatasetTableColumn = session.query(DatasetTableColumn).get(task.targetUri)
+            table: DatasetTable = session.query(DatasetTable).get(column.tableUri)
             try:
                 aws_session = SessionHelper.remote_session(table.AWSAccountId)
 

@@ -2,7 +2,7 @@ import pytest
 
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 
 @pytest.fixture(scope="module")
@@ -148,10 +148,10 @@ def location(db):
 
 @pytest.fixture(scope='module')
 def table(db):
-    def factory(dataset: models.Dataset, label: str) -> models.DatasetTable:
+    def factory(dataset: models.Dataset, label: str) -> DatasetTable:
 
         with db.scoped_session() as session:
-            table = models.DatasetTable(
+            table = DatasetTable(
                 name=label,
                 label=label,
                 owner=dataset.owner,
@@ -218,7 +218,7 @@ def share_item_folder(db):
 def share_item_table(db):
     def factory(
         share: models.ShareObject,
-        table: models.DatasetTable,
+        table: DatasetTable,
         status: str,
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:

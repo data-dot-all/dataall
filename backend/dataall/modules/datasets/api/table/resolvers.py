@@ -11,6 +11,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary
+from dataall.modules.datasets.db.models import DatasetTable
 from dataall.searchproxy import indexers
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -104,7 +105,7 @@ def delete_table(context, source, tableUri: str = None):
 
 def preview(context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
+        table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
         dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
@@ -155,17 +156,17 @@ def preview(context, source, tableUri: str = None):
     return {'rows': rows, 'fields': fields}
 
 
-def get_glue_table_properties(context: Context, source: models.DatasetTable, **kwargs):
+def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
+        table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, source.tableUri
         )
         return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
 
-def resolve_dataset(context, source: models.DatasetTable, **kwargs):
+def resolve_dataset(context, source: DatasetTable, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -177,7 +178,7 @@ def resolve_dataset(context, source: models.DatasetTable, **kwargs):
     return dataset_with_role
 
 
-def resolve_glossary_terms(context: Context, source: models.DatasetTable, **kwargs):
+def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -188,7 +189,7 @@ def resolve_glossary_terms(context: Context, source: models.DatasetTable, **kwar
 
 def publish_table_update(context: Context, source, tableUri: str = None):
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
+        table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
         ResourcePolicy.check_user_resource_permission(
@@ -217,7 +218,7 @@ def publish_table_update(context: Context, source, tableUri: str = None):
     return True
 
 
-def resolve_redshift_copy_schema(context, source: models.DatasetTable, clusterUri: str):
+def resolve_redshift_copy_schema(context, source: DatasetTable, clusterUri: str):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -227,7 +228,7 @@ def resolve_redshift_copy_schema(context, source: models.DatasetTable, clusterUr
 
 
 def resolve_redshift_copy_location(
-    context, source: models.DatasetTable, clusterUri: str
+    context, source: DatasetTable, clusterUri: str
 ):
     with context.engine.scoped_session() as session:
         return db.api.RedshiftCluster.get_cluster_dataset_table(
