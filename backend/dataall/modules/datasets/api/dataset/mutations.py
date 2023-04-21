@@ -1,10 +1,20 @@
-from ... import gql
-from .input_types import (
+from dataall.api import gql
+from dataall.modules.datasets.api.dataset.input_types import (
     ModifyDatasetInput,
     NewDatasetInput,
     ImportDatasetInput,
 )
-from .resolvers import *
+from dataall.modules.datasets.api.dataset.resolvers import (
+    create_dataset,
+    update_dataset,
+    sync_tables,
+    generate_dataset_access_token,
+    save_dataset_summary,
+    delete_dataset,
+    import_dataset,
+    publish_dataset_update,
+    start_crawler
+)
 
 createDataset = gql.MutationField(
     name='createDataset',

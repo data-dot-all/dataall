@@ -17,7 +17,6 @@ from . import (
     DataPipeline,
     Environment,
     Activity,
-    Dataset,
     Group,
     Principal,
     Dashboard,

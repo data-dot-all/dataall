@@ -3,7 +3,8 @@ from dataall.modules.datasets.api import (
     table_column,
     profiling,
     storage_location,
-    table
+    table,
+    dataset
 )
 
-__all__ = ["table_column", "profiling", "storage_location", "table"]
+__all__ = ["table_column", "profiling", "storage_location", "table", "dataset"]

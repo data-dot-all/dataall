@@ -5,14 +5,13 @@ from botocore.exceptions import ClientError
 from pyathena import connect
 
 from dataall import db
-from dataall.api.Objects.Dataset.resolvers import get_dataset
+from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary
 from dataall.modules.datasets.db.models import DatasetTable
-from dataall.searchproxy import indexers
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService

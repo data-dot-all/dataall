@@ -4,19 +4,18 @@ import logging
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from ..Stack import stack_helper
-from .... import db
-from ....api.constants import (
+from dataall.api.Objects.Stack import stack_helper
+from dataall import db
+from dataall.api.constants import (
     DatasetRole,
 )
-from ....api.context import Context
-from ....aws.handlers.glue import Glue
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....db import paginate, exceptions, permissions, models
-from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
-from ....db.api.organization import Organization
-from dataall.searchproxy import indexers
+from dataall.api.context import Context
+from dataall.aws.handlers.glue import Glue
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import paginate, exceptions, permissions, models
+from dataall.db.api import Dataset, Environment, ShareObject, ResourcePolicy
+from dataall.db.api.organization import Organization
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer

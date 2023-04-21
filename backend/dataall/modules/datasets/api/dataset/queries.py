@@ -1,7 +1,15 @@
-from ... import gql
-from .input_types import DatasetFilter
-from .resolvers import *
-from .schema import DatasetSearchResult
+from dataall.api import gql
+from dataall.modules.datasets.api.dataset.input_types import DatasetFilter
+from dataall.modules.datasets.api.dataset.resolvers import (
+    get_dataset,
+    list_datasets,
+    get_dataset_assume_role_url,
+    get_dataset_etl_credentials,
+    get_dataset_summary,
+    get_file_upload_presigned_url,
+    list_dataset_share_objects
+)
+from dataall.modules.datasets.api.dataset.schema import DatasetSearchResult
 
 getDataset = gql.QueryField(
     name='getDataset',
