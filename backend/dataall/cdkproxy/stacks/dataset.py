@@ -356,7 +356,7 @@ class Dataset(Stack):
 
         glue_db = CustomResource(
             self,
-            f'{env.resourcePrefix}DatabaseCustomResource',
+            f'{env.resourcePrefix}DatasetDatabase',
             service_token=glue_db_provider_service_token.string_value,
             resource_type='Custom::GlueDatabase',
             properties={
@@ -372,8 +372,6 @@ class Dataset(Stack):
                 'DatabaseAdministrators': dataset_admins
             },
         )
-
-        # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
 
