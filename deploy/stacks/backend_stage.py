@@ -28,7 +28,7 @@ class BackendStage(Stage):
         enable_cw_canaries=False,
         enable_cw_rum=False,
         shared_dashboard_sessions='anonymous',
-        api_waf=None
+        api_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)

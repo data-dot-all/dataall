@@ -44,7 +44,7 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
-        api_waf=None
+        api_waf=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
