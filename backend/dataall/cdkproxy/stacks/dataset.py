@@ -162,14 +162,6 @@ class Dataset(Stack):
                 bucket_key_enabled=True,
             )
 
-            # dataset_bucket.add_to_resource_policy(
-            #     permission=iam.PolicyStatement(
-            #         actions=['s3:*'],
-            #         resources=[dataset_bucket.bucket_arn],
-            #         principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
-            #     )
-            # )
-
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
                 noncurrent_version_transitions=[
@@ -332,27 +324,6 @@ class Dataset(Stack):
                 },
             )
 
-        # Using a custom resource instead of Cfn resource just because it causes Cfn issues when handling upgrades of pivotRole
-        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
-
-        # datalake_location_service_token = ssm.StringParameter.from_string_parameter_name(
-        #     self,
-        #     'DataLocationHandlerProviderServiceToken',
-        #     string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
-        # )
-        #
-        # datalake_location = CustomResource(
-        #     self,
-        #     f'{env.resourcePrefix}DatalakeLocationCustomResource',
-        #     service_token=datalake_location_service_token.string_value,
-        #     resource_type='Custom::DataLakeLocation',
-        #     properties={
-        #         "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
-        #         "UseServiceLinkedRole": False,
-        #         "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}"
-        #     },
-        # )
-
         # Define dataset admin groups (those with data access grant)
         dataset_admins = [
             dataset_admin_role.role_arn,
@@ -428,7 +399,6 @@ class Dataset(Stack):
         )
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
-
         crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
