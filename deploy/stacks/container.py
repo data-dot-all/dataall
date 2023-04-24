@@ -92,9 +92,10 @@ class ContainerStack(pyNestedClass):
             envname, resource_prefix, vpc, vpc_endpoints_sg
         )
 
+        # TODO introduce the ability to change the deployment depending on config.json file
         sync_tables_task = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
@@ -174,12 +175,13 @@ class ContainerStack(pyNestedClass):
             update_bucket_policies_task.task.security_groups
         )
 
+        # TODO introduce the ability to change the deployment depending on config.json file
         subscriptions_task = self.set_scheduled_task(
             cluster=cluster,
             command=[
                 'python3.8',
                 '-m',
-                'dataall.tasks.subscriptions.subscription_service',
+                'dataall.modules.datasets.tasks.subscription_service',
             ],
             container_id=f'container',
             ecr_repository=ecr_repository,

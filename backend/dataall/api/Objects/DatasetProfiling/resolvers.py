@@ -6,6 +6,7 @@ from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....db import api, permissions, models
 from ....db.api import ResourcePolicy
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
 
         if run:
             if not run.results:
-                table = api.DatasetTable.get_dataset_table_by_uri(session, tableUri)
+                table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
                 dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
                 environment = api.Environment.get_environment_by_uri(
                     session, dataset.environmentUri

@@ -2,7 +2,7 @@
 import importlib
 import logging
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from typing import List
 
 from dataall.core.config import config
@@ -19,9 +19,9 @@ class ImportMode(Enum):
     of functionality to be loaded, there should be different loading modes
     """
 
-    API = "api"
-    CDK = "cdk"
-    TASKS = "tasks"
+    API = auto()
+    CDK = auto()
+    HANDLERS = auto()
 
 
 class ModuleInterface(ABC):
@@ -48,16 +48,16 @@ def load_modules(modes: List[ImportMode]) -> None:
 
     log.info("Found %d modules that have been found in the config", len(modules))
     for name, props in modules.items():
-        active = props["active"]
-
         if "active" not in props:
             raise ValueError(f"Status is not defined for {name} module")
+
+        active = props["active"]
 
         if not active:
             log.info(f"Module {name} is not active. Skipping...")
             continue
 
-        if active.lower() == "true" and not _import_module(name):
+        if not _import_module(name):
             raise ValueError(f"Couldn't find module {name} under modules directory")
 
         log.info(f"Module {name} is loaded")

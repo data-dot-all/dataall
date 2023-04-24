@@ -1,4 +1,4 @@
-from ..DatasetTableColumn.resolvers import list_table_columns
+from dataall.modules.datasets.api.table_column.resolvers import list_table_columns
 from ... import gql
 from .resolvers import *
 from ...constants import GraphQLEnumMapper

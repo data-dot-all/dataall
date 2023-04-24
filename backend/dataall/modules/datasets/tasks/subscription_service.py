@@ -6,14 +6,15 @@ import sys
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
-from ... import db
-from ...aws.handlers.service_handlers import Worker
-from ...aws.handlers.sts import SessionHelper
-from ...aws.handlers.sqs import SqsQueue
-from ...db import get_engine
-from ...db import models
-from ...tasks.subscriptions import poll_queues
-from ...utils import json_utils
+from dataall import db
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.sqs import SqsQueue
+from dataall.db import get_engine
+from dataall.db import models
+from dataall.tasks.subscriptions import poll_queues
+from dataall.utils import json_utils
+from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -64,7 +65,7 @@ class SubscriptionService:
     @staticmethod
     def publish_table_update_message(engine, message):
         with engine.scoped_session() as session:
-            table: models.DatasetTable = db.api.DatasetTable.get_table_by_s3_prefix(
+            table: models.DatasetTable = DatasetTableService.get_table_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
@@ -135,7 +136,7 @@ class SubscriptionService:
     @staticmethod
     def store_dataquality_results(session, message):
 
-        table: models.DatasetTable = db.api.DatasetTable.get_table_by_s3_prefix(
+        table: models.DatasetTable = DatasetTableService.get_table_by_s3_prefix(
             session,
             message.get('prefix'),
             message.get('accountid'),

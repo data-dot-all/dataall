@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import and_, or_, asc
 
+from dataall.api.Objects.Glossary.registry import GlossaryRegistry
 from .... import db
 from ....api.context import Context
 from ....db import paginate, exceptions, models
@@ -271,8 +272,6 @@ def request_link(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.link_term(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=nodeUri,
             data={
                 'targetUri': targetUri,
@@ -280,7 +279,7 @@ def request_link(
                 'approvedByOwner': True,
                 'approvedBySteward': False,
             },
-            check_perm=True,
+            target_model=_target_model(targetType),
         )
 
 
@@ -294,8 +293,6 @@ def link_term(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.link_term(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=nodeUri,
             data={
                 'targetUri': targetUri,
@@ -303,7 +300,7 @@ def link_term(
                 'approvedByOwner': True,
                 'approvedBySteward': True,
             },
-            check_perm=True,
+            target_model=_target_model(targetType),
         )
 
 
@@ -322,29 +319,12 @@ def get_link(context: Context, source, linkUri: str = None):
 
 
 def target_union_resolver(obj, *_):
-    if isinstance(obj, models.DatasetTableColumn):
-        return 'DatasetTableColumn'
-    elif isinstance(obj, models.DatasetTable):
-        return 'DatasetTable'
-    elif isinstance(obj, models.Dataset):
-        return 'Dataset'
-    elif isinstance(obj, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
-    elif isinstance(obj, models.Dashboard):
-        return 'Dashboard'
-    else:
-        return None
+    return GlossaryRegistry.find_object_type(obj)
 
 
 def resolve_link_target(context, source, **kwargs):
     with context.engine.scoped_session() as session:
-        model = {
-            'Dataset': models.Dataset,
-            'DatasetTable': models.DatasetTable,
-            'Column': models.DatasetTableColumn,
-            'DatasetStorageLocation': models.DatasetStorageLocation,
-            'Dashboard': models.Dashboard,
-        }[source.targetType]
+        model = GlossaryRegistry.find_model(source.targetType)
         target = session.query(model).get(source.targetUri)
     return target
 
@@ -357,11 +337,8 @@ def resolve_term_associations(
     with context.engine.scoped_session() as session:
         return db.api.Glossary.list_term_associations(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data={'source': source, 'filter': filter},
-            check_perm=True,
+            target_model_definitions=GlossaryRegistry.definitions()
         )
 
 
@@ -492,3 +469,12 @@ def reindex(context, linkUri):
         upsert_folder(session=session, es=context.es, locationUri=link.targetUri)
     elif isinstance(target, models.Dashboard):
         upsert_dashboard(session=session, es=context.es, dashboardUri=link.targetUri)
+
+
+def _target_model(target_type: str):
+    target_model = GlossaryRegistry.find_model(target_type)
+    if not target_model:
+        raise exceptions.InvalidInput(
+            'NodeType', 'term.nodeType', 'association target type is invalid'
+        )
+    return target_model

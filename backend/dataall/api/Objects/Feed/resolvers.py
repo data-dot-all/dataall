@@ -1,7 +1,8 @@
 from sqlalchemy import or_
 
-from ....api.context import Context
-from ....db import paginate, models
+from dataall.api.context import Context
+from dataall.db import paginate, models
+from dataall.api.Objects.Feed.registry import FeedRegistry
 
 
 class Feed:
@@ -19,37 +20,14 @@ class Feed:
 
 
 def resolve_feed_target_type(obj, *_):
-    if isinstance(obj, models.DatasetTableColumn):
-        return 'DatasetTableColumn'
-    elif isinstance(obj, models.Worksheet):
-        return 'Worksheet'
-    elif isinstance(obj, models.DataPipeline):
-        return 'DataPipeline'
-    elif isinstance(obj, models.DatasetTable):
-        return 'DatasetTable'
-    elif isinstance(obj, models.Dataset):
-        return 'Dataset'
-    elif isinstance(obj, models.DatasetStorageLocation):
-        return 'DatasetStorageLocation'
-    elif isinstance(obj, models.Dashboard):
-        return 'Dashboard'
-    else:
-        return None
+    return FeedRegistry.find_target(obj)
 
 
 def resolve_target(context: Context, source: Feed, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        model = {
-            'Dataset': models.Dataset,
-            'DatasetTable': models.DatasetTable,
-            'DatasetTableColumn': models.DatasetTableColumn,
-            'DatasetStorageLocation': models.DatasetStorageLocation,
-            'Dashboard': models.Dashboard,
-            'DataPipeline': models.DataPipeline,
-            'Worksheet': models.Worksheet,
-        }[source.targetType]
+        model = FeedRegistry.find_model(source.targetType)
         target = session.query(model).get(source.targetUri)
     return target
 

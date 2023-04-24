@@ -17,3 +17,6 @@ class DatasetStorageLocation(Resource, Base):
     userRoleForStorageLocation = query_expression()
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
+
+    def uri(self):
+        return self.locationUri
