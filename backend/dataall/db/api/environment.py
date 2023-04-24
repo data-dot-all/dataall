@@ -23,7 +23,7 @@ from ..models.Enums import (
 
 )
 from ..models.Permission import PermissionType
-from ..paginator import Page, paginate
+from ..paginator import paginate
 from dataall.core.environment.models import EnvironmentParameter
 from ...core.environment.db.repositories import EnvironmentParameterRepository
 from ...utils.naming_convention import (

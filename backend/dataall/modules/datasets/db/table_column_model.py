@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String
 
-from .. import Base
-from .. import Resource, utils
+from dataall.db import Base
+from dataall.db import Resource, utils
 
 
 class DatasetTableColumn(Resource, Base):
@@ -18,3 +18,6 @@ class DatasetTableColumn(Resource, Base):
     columnType = Column(
         String, default='column'
     )  # can be either "column" or "partition"
+
+    def uri(self):
+        return self.columnUri

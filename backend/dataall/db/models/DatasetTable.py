@@ -27,3 +27,6 @@ class DatasetTable(Resource, Base):
     stage = Column(String, default='RAW')
     topics = Column(postgresql.ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
+
+    def uri(self):
+        return self.tableUri

@@ -1,17 +1,17 @@
 import logging
-from typing import List
 
 from sqlalchemy.sql import and_
 
-from .. import models, api, permissions, exceptions, paginate
-from . import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
-from ..models import Dataset
-from ...utils import json_utils
+from dataall.db import models, api, permissions, exceptions, paginate
+from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
+from dataall.db.models import Dataset
+from dataall.utils import json_utils
+from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
 
 logger = logging.getLogger(__name__)
 
 
-class DatasetTable:
+class DatasetTableService:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET_TABLE)
@@ -108,7 +108,7 @@ class DatasetTable:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.DatasetTable:
-        return DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        return DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
@@ -123,7 +123,7 @@ class DatasetTable:
     ):
         table = data.get(
             'table',
-            DatasetTable.get_dataset_table_by_uri(session, data['tableUri']),
+            DatasetTableService.get_dataset_table_by_uri(session, data['tableUri']),
         )
 
         for k in [attr for attr in data.keys() if attr != 'term']:
@@ -147,7 +147,7 @@ class DatasetTable:
         data: dict = None,
         check_perm: bool = False,
     ):
-        table = DatasetTable.get_dataset_table_by_uri(session, data['tableUri'])
+        table = DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         share_item = (
             session.query(models.ShareObjectItem)
@@ -211,7 +211,7 @@ class DatasetTable:
     ):
         return [
             {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
-            for t in DatasetTable.query_dataset_tables_shared_with_env(
+            for t in DatasetTableService.query_dataset_tables_shared_with_env(
                 session, environment_uri, dataset_uri
             )
         ]
@@ -224,7 +224,7 @@ class DatasetTable:
         return table
 
     @staticmethod
-    def sync(session, datasetUri, glue_tables=None):
+    def sync_existing_tables(session, datasetUri, glue_tables=None):
 
         dataset: Dataset = session.query(Dataset).get(datasetUri)
         if dataset:
@@ -236,7 +236,7 @@ class DatasetTable:
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
-            DatasetTable.update_existing_tables_status(existing_tables, glue_tables)
+            DatasetTableService.update_existing_tables_status(existing_tables, glue_tables)
             logger.info(
                 f'existing_tables={glue_tables}'
             )
@@ -285,7 +285,7 @@ class DatasetTable:
                         table.get('Parameters', {})
                     )
 
-                DatasetTable.sync_table_columns(session, updated_table, table)
+                DatasetTableService.sync_table_columns(session, updated_table, table)
 
         return True
 
@@ -301,7 +301,7 @@ class DatasetTable:
     @staticmethod
     def sync_table_columns(session, dataset_table, glue_table):
 
-        DatasetTable.delete_all_table_columns(session, dataset_table)
+        DatasetTableService.delete_all_table_columns(session, dataset_table)
 
         columns = [
             {**item, **{'columnType': 'column'}}
@@ -316,7 +316,7 @@ class DatasetTable:
         logger.debug(f'Found partitions {partitions} for table {dataset_table}')
 
         for col in columns + partitions:
-            table_col = models.DatasetTableColumn(
+            table_col = DatasetTableColumn(
                 name=col['Name'],
                 description=col.get('Comment', 'No description provided'),
                 label=col['Name'],
@@ -334,11 +334,11 @@ class DatasetTable:
 
     @staticmethod
     def delete_all_table_columns(session, dataset_table):
-        session.query(models.DatasetTableColumn).filter(
+        session.query(DatasetTableColumn).filter(
             and_(
-                models.DatasetTableColumn.GlueDatabaseName
+                DatasetTableColumn.GlueDatabaseName
                 == dataset_table.GlueDatabaseName,
-                models.DatasetTableColumn.GlueTableName == dataset_table.GlueTableName,
+                DatasetTableColumn.GlueTableName == dataset_table.GlueTableName,
             )
         ).delete()
         session.commit()

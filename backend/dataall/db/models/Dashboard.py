@@ -18,3 +18,6 @@ class Dashboard(Resource, Base):
     SamlGroupName = Column(String, nullable=False)
 
     userRoleForDashboard = query_expression()
+
+    def uri(self):
+        return self.dashboardUri

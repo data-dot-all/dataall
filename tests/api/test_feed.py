@@ -103,4 +103,5 @@ def test_get_target(client, worksheet):
         targetType='Worksheet',
         username='me',
     )
-    print(response)
+    assert response.data.getFeed.target.worksheetUri == worksheet.worksheetUri
+
