@@ -222,13 +222,15 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
-        if dataset and dataset.stewards in context.groups:
-            return ShareObjectPermission.Approvers.value
-        if (
-            source.owner == context.username
-            or source.principalId in context.groups
+        if dataset and (
+            dataset.stewards in context.groups
             or dataset.owner == context.username
             or dataset.SamlAdminGroupName in context.groups
+        ):
+            return ShareObjectPermission.Approvers.value
+        if dataset and (
+            source.owner == context.username
+            or source.principalId in context.groups
         ):
             return ShareObjectPermission.Requesters.value
         else:
