@@ -3,7 +3,6 @@ import os
 import requests
 
 from .... import db
-from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.ecs import Ecs
 from ....db import models
@@ -11,7 +10,6 @@ from ....utils import Parameter
 
 from dataall.core.config import config
 from dataall.core.context import get_context
-from dataall.modules.datasets.db.models import Dataset
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
@@ -83,15 +81,6 @@ def deploy_stack(targetUri):
                 Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
         return stack
-
-
-def deploy_dataset_stack(dataset: Dataset):
-    """
-    Each dataset stack deployment triggers environment stack update
-    to rebuild teams IAM roles data access policies
-    """
-    deploy_stack(dataset.datasetUri)
-    deploy_stack(dataset.environmentUri)
 
 
 def delete_stack(

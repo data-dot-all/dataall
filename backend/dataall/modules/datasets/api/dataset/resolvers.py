@@ -41,7 +41,7 @@ def create_dataset(context: Context, source, input=None):
             session=session, dataset_uri=dataset.datasetUri
         )
 
-    stack_helper.deploy_dataset_stack(dataset)
+    _deploy_dataset_stack(dataset)
 
     dataset.userRoleForDataset = DatasetRole.Creator.value
 
@@ -79,7 +79,7 @@ def import_dataset(context: Context, source, input=None):
             session=session, dataset_uri=dataset.datasetUri
         )
 
-    stack_helper.deploy_dataset_stack(dataset)
+    _deploy_dataset_stack(dataset)
 
     dataset.userRoleForDataset = DatasetRole.Creator.value
 
@@ -225,7 +225,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
         )
         DatasetIndexer.upsert(session, dataset_uri=datasetUri)
 
-    stack_helper.deploy_dataset_stack(updated_dataset)
+    _deploy_dataset_stack(updated_dataset)
 
     return updated_dataset
 
@@ -639,3 +639,12 @@ def resolve_redshift_copy_enabled(context, source: Dataset, clusterUri: str):
         return db.api.RedshiftCluster.get_cluster_dataset(
             session, clusterUri, source.datasetUri
         ).datasetCopyEnabled
+
+
+def _deploy_dataset_stack(dataset: Dataset):
+    """
+    Each dataset stack deployment triggers environment stack update
+    to rebuild teams IAM roles data access policies
+    """
+    stack_helper.deploy_stack(dataset.datasetUri)
+    stack_helper.deploy_stack(dataset.environmentUri)
