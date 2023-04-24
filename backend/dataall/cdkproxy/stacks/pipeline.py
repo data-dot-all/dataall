@@ -23,7 +23,6 @@ from ...db import models
 from ...db.api import Environment, Pipeline
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
 
@@ -80,14 +79,6 @@ class PipelineStack(Stack):
                 session, pipeline.SamlGroupName, pipeline.environmentUri
             )
         return env
-
-    def get_dataset(self, dataset_uri) -> models.Dataset:
-        engine = self.get_engine()
-        with engine.scoped_session() as session:
-            ds = DatasetService.get_dataset_by_uri(
-                session, dataset_uri
-            )
-        return ds
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         kwargs.setdefault("tags", {}).update({"utility": "dataall-data-pipeline"})
