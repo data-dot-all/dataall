@@ -2,6 +2,7 @@ import pytest
 
 import dataall
 from dataall.db import permissions
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -599,7 +600,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset = session.query(dataall.db.models.Dataset).get(dataset.datasetUri)
+        dataset = session.query(Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()
 

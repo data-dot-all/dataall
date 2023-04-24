@@ -11,7 +11,7 @@ from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
 from ....db import api, exceptions, models
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.utils.alarm_service import AlarmService
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
@@ -74,7 +74,7 @@ class LFShareManager:
         Unique per share Uri.
         Parameters
         ----------
-        dataset : models.Dataset
+        dataset : Dataset
         share : models.ShareObject
 
         Returns
@@ -155,7 +155,7 @@ class LFShareManager:
     def create_shared_database(
         cls,
         target_environment: models.Environment,
-        dataset: models.Dataset,
+        dataset: Dataset,
         shared_db_name: str,
         principals: [str],
     ) -> dict:

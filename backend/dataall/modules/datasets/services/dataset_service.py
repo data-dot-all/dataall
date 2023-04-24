@@ -17,7 +17,7 @@ from dataall.db.api import Organization
 from dataall.db import models, api, exceptions, permissions, paginate
 from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.utils.naming_convention import (
     NamingConventionService,
@@ -38,7 +38,7 @@ class DatasetService:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.Dataset:
+    ) -> Dataset:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
         if not data:
@@ -67,7 +67,7 @@ class DatasetService:
             session, environment.organizationUri
         )
 
-        dataset = models.Dataset(
+        dataset = Dataset(
             label=data.get('label'),
             owner=username,
             description=data.get('description', 'No description provided'),
@@ -113,7 +113,7 @@ class DatasetService:
             group=data['SamlAdminGroupName'],
             permissions=permissions.DATASET_ALL,
             resource_uri=dataset.datasetUri,
-            resource_type=models.Dataset.__name__,
+            resource_type=Dataset.__name__,
         )
         if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
             ResourcePolicy.attach_resource_policy(
@@ -121,7 +121,7 @@ class DatasetService:
                 group=dataset.stewards,
                 permissions=permissions.DATASET_READ,
                 resource_uri=dataset.datasetUri,
-                resource_type=models.Dataset.__name__,
+                resource_type=Dataset.__name__,
             )
         if environment.SamlGroupName != dataset.SamlAdminGroupName:
             ResourcePolicy.attach_resource_policy(
@@ -129,12 +129,12 @@ class DatasetService:
                 group=environment.SamlGroupName,
                 permissions=permissions.DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=models.Dataset.__name__,
+                resource_type=Dataset.__name__,
             )
         return dataset
 
     @staticmethod
-    def _set_dataset_aws_resources(dataset: models.Dataset, data, environment):
+    def _set_dataset_aws_resources(dataset: Dataset, data, environment):
 
         bucket_name = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -183,7 +183,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def create_dataset_stack(session, dataset: models.Dataset) -> models.Stack:
+    def create_dataset_stack(session, dataset: Dataset) -> models.Stack:
         return Stack.create_stack(
             session=session,
             environment_uri=dataset.environmentUri,
@@ -207,21 +207,21 @@ class DatasetService:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.Dataset:
+    ) -> Dataset:
         return DatasetService.get_dataset_by_uri(session, uri)
 
     @staticmethod
-    def get_dataset_by_uri(session, dataset_uri) -> models.Dataset:
+    def get_dataset_by_uri(session, dataset_uri) -> Dataset:
         return DatasetRepository.get_dataset_by_uri(session, dataset_uri)
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
         query = (
-            session.query(models.Dataset)
+            session.query(Dataset)
             .outerjoin(
                 models.ShareObject,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
+                models.ShareObject.datasetUri == Dataset.datasetUri,
             )
             .outerjoin(
                 models.ShareObjectItem,
@@ -229,9 +229,9 @@ class DatasetService:
             )
             .filter(
                 or_(
-                    models.Dataset.owner == username,
-                    models.Dataset.SamlAdminGroupName.in_(groups),
-                    models.Dataset.stewards.in_(groups),
+                    Dataset.owner == username,
+                    Dataset.SamlAdminGroupName.in_(groups),
+                    Dataset.stewards.in_(groups),
                     and_(
                         models.ShareObject.principalId.in_(groups),
                         models.ShareObjectItem.status.in_(share_item_shared_states),
@@ -246,8 +246,8 @@ class DatasetService:
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.Dataset.description.ilike(filter.get('term') + '%%'),
-                    models.Dataset.label.ilike(filter.get('term') + '%%'),
+                    Dataset.description.ilike(filter.get('term') + '%%'),
+                    Dataset.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -296,8 +296,8 @@ class DatasetService:
     @has_resource_perm(permissions.UPDATE_DATASET)
     def update_dataset(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Dataset:
-        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, uri)
+    ) -> Dataset:
+        dataset: Dataset = DatasetService.get_dataset_by_uri(session, uri)
         if data and isinstance(data, dict):
             for k in data.keys():
                 if k != 'stewards':
@@ -317,7 +317,7 @@ class DatasetService:
                 group=dataset.SamlAdminGroupName,
                 permissions=permissions.DATASET_ALL,
                 resource_uri=dataset.datasetUri,
-                resource_type=models.Dataset.__name__,
+                resource_type=Dataset.__name__,
             )
             DatasetService.update_dataset_glossary_terms(session, username, uri, data)
             activity = models.Activity(
@@ -364,7 +364,7 @@ class DatasetService:
             group=new_stewards,
             permissions=permissions.DATASET_READ,
             resource_uri=dataset.datasetUri,
-            resource_type=models.Dataset.__name__,
+            resource_type=Dataset.__name__,
         )
 
         dataset_tables = [t.tableUri for t in DatasetService.get_dataset_tables(session, dataset.datasetUri)]
@@ -599,20 +599,20 @@ class DatasetService:
         return tables
 
     @staticmethod
-    def list_all_datasets(session) -> [models.Dataset]:
-        return session.query(models.Dataset).all()
+    def list_all_datasets(session) -> [Dataset]:
+        return session.query(Dataset).all()
 
     @staticmethod
-    def list_all_active_datasets(session) -> [models.Dataset]:
+    def list_all_active_datasets(session) -> [Dataset]:
         return (
-            session.query(models.Dataset).filter(models.Dataset.deleted.is_(None)).all()
+            session.query(Dataset).filter(Dataset.deleted.is_(None)).all()
         )
 
     @staticmethod
-    def get_dataset_by_bucket_name(session, bucket) -> [models.Dataset]:
+    def get_dataset_by_bucket_name(session, bucket) -> [Dataset]:
         return (
-            session.query(models.Dataset)
-            .filter(models.Dataset.S3BucketName == bucket)
+            session.query(Dataset)
+            .filter(Dataset.S3BucketName == bucket)
             .first()
         )
 

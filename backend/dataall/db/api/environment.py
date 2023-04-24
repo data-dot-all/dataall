@@ -22,8 +22,9 @@ from ..models.Enums import (
 from ..models.Permission import PermissionType
 from ..paginator import paginate
 from dataall.core.environment.models import EnvironmentParameter
-from ...core.environment.db.repositories import EnvironmentParameterRepository
-from ...utils.naming_convention import (
+from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.modules.datasets.db.models import Dataset
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
@@ -356,8 +357,8 @@ class Environment:
         group_env_objects_count = (
             session.query(models.Environment)
             .outerjoin(
-                models.Dataset,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
+                Dataset,
+                Dataset.environmentUri == models.Environment.environmentUri,
             )
             .outerjoin(
                 models.SagemakerStudioUserProfile,
@@ -387,7 +388,7 @@ class Environment:
                     models.Environment.environmentUri == environment.environmentUri,
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
-                        models.Dataset.SamlAdminGroupName == group,
+                        Dataset.SamlAdminGroupName == group,
                         models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
                         models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
@@ -804,41 +805,41 @@ class Environment:
 
     @staticmethod
     def query_environment_datasets(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
+        query = session.query(Dataset).filter(
             and_(
-                models.Dataset.environmentUri == uri,
-                models.Dataset.deleted.is_(None),
+                Dataset.environmentUri == uri,
+                Dataset.deleted.is_(None),
             )
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
+                    Dataset.label.ilike('%' + term + '%'),
+                    Dataset.description.ilike('%' + term + '%'),
+                    Dataset.tags.contains(f'{{{term}}}'),
+                    Dataset.region.ilike('%' + term + '%'),
                 )
             )
         return query
 
     @staticmethod
     def query_environment_group_datasets(session, username, groups, envUri, groupUri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
+        query = session.query(Dataset).filter(
             and_(
-                models.Dataset.environmentUri == envUri,
-                models.Dataset.SamlAdminGroupName == groupUri,
-                models.Dataset.deleted.is_(None),
+                Dataset.environmentUri == envUri,
+                Dataset.SamlAdminGroupName == groupUri,
+                Dataset.deleted.is_(None),
             )
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
+                    Dataset.label.ilike('%' + term + '%'),
+                    Dataset.description.ilike('%' + term + '%'),
+                    Dataset.tags.contains(f'{{{term}}}'),
+                    Dataset.region.ilike('%' + term + '%'),
                 )
             )
         return query
@@ -1026,11 +1027,11 @@ class Environment:
             raise exceptions.RequiredParameter('groupUri')
 
         return (
-            session.query(models.Dataset)
+            session.query(Dataset)
             .filter(
                 and_(
-                    models.Dataset.environmentUri == uri,
-                    models.Dataset.SamlAdminGroupName == data['groupUri'],
+                    Dataset.environmentUri == uri,
+                    Dataset.SamlAdminGroupName == data['groupUri'],
                 )
             )
             .all()

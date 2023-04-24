@@ -6,7 +6,7 @@ import dataall
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.searchproxy import indexers
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
@@ -49,7 +49,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',

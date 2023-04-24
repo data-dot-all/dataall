@@ -10,7 +10,7 @@ from . import (
 from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
@@ -346,7 +346,7 @@ class ShareObject:
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
 
-        dataset: models.Dataset = data.get(
+        dataset: Dataset = data.get(
             'dataset', DatasetService.get_dataset_by_uri(session, datasetUri)
         )
         environment: models.Environment = data.get(
@@ -753,7 +753,7 @@ class ShareObject:
         itemUri = data.get('itemUri')
         item = None
         share: models.ShareObject = session.query(models.ShareObject).get(uri)
-        dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
+        dataset: Dataset = session.query(Dataset).get(share.datasetUri)
         target_environment: models.Environment = session.query(models.Environment).get(
             share.environmentUri
         )
@@ -1023,16 +1023,16 @@ class ShareObject:
         query = (
             session.query(models.ShareObject)
             .join(
-                models.Dataset,
-                models.Dataset.datasetUri == models.ShareObject.datasetUri,
+                Dataset,
+                Dataset.datasetUri == models.ShareObject.datasetUri,
             )
             .filter(
                 or_(
-                    models.Dataset.businessOwnerEmail == username,
-                    models.Dataset.businessOwnerDelegationEmails.contains(
+                    Dataset.businessOwnerEmail == username,
+                    Dataset.businessOwnerDelegationEmails.contains(
                         f'{{{username}}}'
                     ),
-                    models.Dataset.stewards.in_(groups),
+                    Dataset.stewards.in_(groups),
                 )
             )
         )
@@ -1184,7 +1184,7 @@ class ShareObject:
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
-        dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
+        dataset: Dataset = session.query(Dataset).get(share.datasetUri)
         if not dataset:
             raise exceptions.ObjectNotFound('Dataset', share.datasetUri)
 

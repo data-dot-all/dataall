@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.db import models
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module')
@@ -22,7 +23,7 @@ def env1(
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset1(db, env1, org1, group, user, dataset) -> models.Dataset:
+def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
     with db.scoped_session() as session:
         yield dataset(
             org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name

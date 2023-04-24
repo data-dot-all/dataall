@@ -11,6 +11,7 @@ from ....utils import Parameter
 
 from dataall.core.config import config
 from dataall.core.context import get_context
+from dataall.modules.datasets.db.models import Dataset
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
@@ -84,7 +85,7 @@ def deploy_stack(targetUri):
         return stack
 
 
-def deploy_dataset_stack(dataset: models.Dataset):
+def deploy_dataset_stack(dataset: Dataset):
     """
     Each dataset stack deployment triggers environment stack update
     to rebuild teams IAM roles data access policies

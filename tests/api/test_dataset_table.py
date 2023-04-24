@@ -4,7 +4,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -24,7 +24,7 @@ def env1(env, org1, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> dataall.db.models.Dataset:
+def dataset1(env1, org1, dataset, group) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
     )

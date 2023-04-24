@@ -2,7 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module')
@@ -65,7 +65,7 @@ def otherenv(org, db):
 @pytest.fixture(scope='module')
 def dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -88,7 +88,7 @@ def dataset(org, env, db):
 
 @pytest.fixture(scope='module')
 def share(
-    dataset: dataall.db.models.Dataset,
+    dataset: Dataset,
     db: dataall.db.Engine,
     otherenv: dataall.db.models.Environment,
 ):

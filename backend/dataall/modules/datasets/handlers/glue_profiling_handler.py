@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.db.models import DatasetProfilingRun, Dataset
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 
 log = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class DatasetProfilingGlueHandler:
                     session, profilingRunUri=task.targetUri
                 )
             )
-            dataset: models.Dataset = session.query(models.Dataset).get(
+            dataset: Dataset = session.query(Dataset).get(
                 profiling.datasetUri
             )
             glue_run = DatasetProfilingGlueHandler.get_job_run(
@@ -46,7 +46,7 @@ class DatasetProfilingGlueHandler:
                     session, profilingRunUri=task.targetUri
                 )
             )
-            dataset: models.Dataset = session.query(models.Dataset).get(
+            dataset: Dataset = session.query(Dataset).get(
                 profiling.datasetUri
             )
             run = DatasetProfilingGlueHandler.run_job(

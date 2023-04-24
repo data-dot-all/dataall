@@ -40,6 +40,7 @@ from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +131,7 @@ class EnvironmentSetup(Stack):
     @staticmethod
     def get_environment_group_datasets(
         engine, environment: models.Environment, group: str
-    ) -> [models.Dataset]:
+    ) -> [Dataset]:
         with engine.scoped_session() as session:
             return db.api.Environment.list_group_datasets(
                 session,
@@ -144,12 +145,12 @@ class EnvironmentSetup(Stack):
     @staticmethod
     def get_all_environment_datasets(
         engine, environment: models.Environment
-    ) -> [models.Dataset]:
+    ) -> [Dataset]:
         with engine.scoped_session() as session:
             return (
-                session.query(models.Dataset)
+                session.query(Dataset)
                 .filter(
-                    models.Dataset.environmentUri == environment.environmentUri,
+                    Dataset.environmentUri == environment.environmentUri,
                 )
                 .all()
             )

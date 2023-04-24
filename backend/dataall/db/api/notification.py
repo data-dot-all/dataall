@@ -4,6 +4,7 @@ from sqlalchemy import func, and_
 
 from .. import models
 from ...db import paginate
+from dataall.modules.datasets.db.models import Dataset
 
 
 class Notification:
@@ -12,7 +13,7 @@ class Notification:
 
     @staticmethod
     def notify_share_object_submission(
-        session, username: str, dataset: models.Dataset, share: models.ShareObject
+        session, username: str, dataset: Dataset, share: models.ShareObject
     ):
         notifications = []
         # stewards = Notification.get_dataset_stewards(session, dataset)
@@ -38,7 +39,7 @@ class Notification:
 
     @staticmethod
     def notify_share_object_approval(
-        session, username: str, dataset: models.Dataset, share: models.ShareObject
+        session, username: str, dataset: Dataset, share: models.ShareObject
     ):
         notifications = []
         targeted_users = Notification.get_share_object_targeted_users(
@@ -59,7 +60,7 @@ class Notification:
 
     @staticmethod
     def notify_share_object_rejection(
-        session, username: str, dataset: models.Dataset, share: models.ShareObject
+        session, username: str, dataset: Dataset, share: models.ShareObject
     ):
         notifications = []
         targeted_users = Notification.get_share_object_targeted_users(
@@ -80,7 +81,7 @@ class Notification:
 
     @staticmethod
     def notify_new_data_available_from_owners(
-        session, dataset: models.Dataset, share: models.ShareObject, s3_prefix
+        session, dataset: Dataset, share: models.ShareObject, s3_prefix
     ):
         notifications = []
         targeted_users = Notification.get_share_object_targeted_users(

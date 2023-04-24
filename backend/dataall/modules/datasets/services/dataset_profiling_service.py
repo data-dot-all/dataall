@@ -2,7 +2,7 @@ from sqlalchemy import and_
 
 from dataall.db import paginate, models
 from dataall.db.exceptions import ObjectNotFound
-from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable, Dataset
 
 
 class DatasetProfilingService:
@@ -13,7 +13,7 @@ class DatasetProfilingService:
     def start_profiling(
         session, datasetUri, tableUri=None, GlueTableName=None, GlueJobRunId=None
     ):
-        dataset: models.Dataset = session.query(models.Dataset).get(datasetUri)
+        dataset: Dataset = session.query(Dataset).get(datasetUri)
         if not dataset:
             raise ObjectNotFound('Dataset', datasetUri)
 

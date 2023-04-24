@@ -28,7 +28,7 @@ from dataall.db import models
 from dataall.db.api import Environment
 from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -56,18 +56,18 @@ class DatasetStack(Stack):
             )
         return env
 
-    def get_target_with_uri(self, target_uri) -> models.Dataset:
+    def get_target_with_uri(self, target_uri) -> Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(models.Dataset).get(target_uri)
+            dataset = session.query(Dataset).get(target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_target(self) -> models.Dataset:
+    def get_target(self) -> Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(models.Dataset).get(self.target_uri)
+            dataset = session.query(Dataset).get(self.target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
@@ -539,6 +539,6 @@ class DatasetStack(Stack):
 
         Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(stack=self, model=models.Dataset, target_type="dataset")
+        TagsUtil.add_tags(stack=self, model=Dataset, target_type="dataset")
 
         CDKNagUtil.check_rules(self)

@@ -10,7 +10,7 @@ from sqlalchemy import and_
 from ..aws.handlers.sts import SessionHelper
 from ..db import get_engine
 from ..db import models
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -28,11 +28,11 @@ class BucketPoliciesUpdater:
     def sync_imported_datasets_bucket_policies(self):
         with self.engine.scoped_session() as session:
             imported_datasets = (
-                session.query(models.Dataset)
+                session.query(Dataset)
                 .filter(
                     and_(
-                        models.Dataset.imported == True,
-                        models.Dataset.deleted.is_(None),
+                        Dataset.imported == True,
+                        Dataset.deleted.is_(None),
                     )
                 )
                 .all()

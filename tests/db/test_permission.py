@@ -4,6 +4,7 @@ import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
+from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
@@ -116,7 +117,7 @@ def env(org, db, group):
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -145,7 +146,7 @@ def test_attach_resource_policy(db, user, group, group_user, dataset, permission
             group=group.name,
             permissions=dataall.db.permissions.DATASET_WRITE,
             resource_uri=dataset.datasetUri,
-            resource_type=dataall.db.models.Dataset.__name__,
+            resource_type=Dataset.__name__,
         )
         assert dataall.db.api.ResourcePolicy.check_user_resource_permission(
             session=session,

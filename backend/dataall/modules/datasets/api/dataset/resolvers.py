@@ -16,6 +16,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import paginate, exceptions, permissions, models
 from dataall.db.api import Environment, ShareObject, ResourcePolicy
 from dataall.db.api.organization import Organization
+from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
@@ -98,7 +99,7 @@ def get_dataset(context, source, datasetUri=None):
         return dataset
 
 
-def resolve_user_role(context: Context, source: models.Dataset, **kwargs):
+def resolve_user_role(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     if source.owner == context.username:
@@ -156,7 +157,7 @@ def list_datasets(context: Context, source, filter: dict = None):
         )
 
 
-def list_locations(context, source: models.Dataset, filter: dict = None):
+def list_locations(context, source: Dataset, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -171,7 +172,7 @@ def list_locations(context, source: models.Dataset, filter: dict = None):
         )
 
 
-def list_tables(context, source: models.Dataset, filter: dict = None):
+def list_tables(context, source: Dataset, filter: dict = None):
     if not source:
         return None
     if not filter:
@@ -186,27 +187,27 @@ def list_tables(context, source: models.Dataset, filter: dict = None):
         )
 
 
-def get_dataset_organization(context, source: models.Dataset, **kwargs):
+def get_dataset_organization(context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         return Organization.get_organization_by_uri(session, source.organizationUri)
 
 
-def get_dataset_environment(context, source: models.Dataset, **kwargs):
+def get_dataset_environment(context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
         return Environment.get_environment_by_uri(session, source.environmentUri)
 
 
-def get_dataset_owners_group(context, source: models.Dataset, **kwargs):
+def get_dataset_owners_group(context, source: Dataset, **kwargs):
     if not source:
         return None
     return source.SamlAdminGroupName
 
 
-def get_dataset_stewards_group(context, source: models.Dataset, **kwargs):
+def get_dataset_stewards_group(context, source: Dataset, **kwargs):
     if not source:
         return None
     return source.stewards
@@ -229,7 +230,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     return updated_dataset
 
 
-def get_dataset_statistics(context: Context, source: models.Dataset, **kwargs):
+def get_dataset_statistics(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -489,7 +490,7 @@ def save_dataset_summary(
     return True
 
 
-def get_dataset_stack(context: Context, source: models.Dataset, **kwargs):
+def get_dataset_stack(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
@@ -532,7 +533,7 @@ def delete_dataset(
             resource_uri=datasetUri,
             permission_name=permissions.DELETE_DATASET,
         )
-        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
+        dataset: Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         env: models.Environment = Environment.get_environment_by_uri(
             session, dataset.environmentUri
         )
@@ -583,7 +584,7 @@ def delete_dataset(
     return True
 
 
-def get_dataset_glossary_terms(context: Context, source: models.Dataset, **kwargs):
+def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -631,7 +632,7 @@ def publish_dataset_update(
     return True
 
 
-def resolve_redshift_copy_enabled(context, source: models.Dataset, clusterUri: str):
+def resolve_redshift_copy_enabled(context, source: Dataset, clusterUri: str):
     if not source:
         return None
     with context.engine.scoped_session() as session:

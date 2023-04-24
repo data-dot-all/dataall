@@ -17,7 +17,7 @@ from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -81,7 +81,7 @@ class SubscriptionService:
                     f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}'
                 )
 
-                dataset: models.Dataset = session.query(models.Dataset).get(
+                dataset: Dataset = session.query(Dataset).get(
                     table.datasetUri
                 )
                 log.info(
@@ -119,7 +119,7 @@ class SubscriptionService:
         else:
             log.info(f'Found location {location.locationUri}|{location.S3Prefix}')
 
-            dataset: models.Dataset = session.query(models.Dataset).get(
+            dataset: Dataset = session.query(Dataset).get(
                 location.datasetUri
             )
             log.info(
@@ -288,7 +288,7 @@ class SubscriptionService:
     def redshift_copy(
         engine,
         message,
-        dataset: models.Dataset,
+        dataset: Dataset,
         environment: models.Environment,
         table: DatasetTable,
     ):

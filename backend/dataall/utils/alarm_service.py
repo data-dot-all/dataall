@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
 from ..db import models
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ Alarm Details:
 """
         return self.publish_message_to_alarms_topic(subject, message)
 
-    def trigger_dataset_sync_failure_alarm(self, dataset: models.Dataset, error: str):
+    def trigger_dataset_sync_failure_alarm(self, dataset: Dataset, error: str):
         logger.info(f'Triggering dataset {dataset.name} tables sync failure alarm...')
         subject = (
             f'ALARM: DATAALL Dataset {dataset.name} Tables Sync Failure Notification'

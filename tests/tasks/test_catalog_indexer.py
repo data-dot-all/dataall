@@ -42,7 +42,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def sync_dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',

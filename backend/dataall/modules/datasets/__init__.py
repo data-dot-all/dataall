@@ -2,8 +2,7 @@
 import logging
 from typing import List
 
-from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -40,7 +39,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         GlossaryRegistry.register(GlossaryDefinition(
             target_type="Dataset",
             object_type="Dataset",
-            model=models.Dataset,
+            model=Dataset,
             reindexer=DatasetIndexer
         ))
 

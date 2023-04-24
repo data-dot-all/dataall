@@ -4,6 +4,7 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from ....db import models
+from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger()
 
@@ -21,7 +22,7 @@ class DataPolicy:
         resource_prefix,
         environment: models.Environment,
         team: models.EnvironmentGroup,
-        datasets: [models.Dataset],
+        datasets: [Dataset],
     ):
         self.stack = stack
         self.id = id
@@ -147,7 +148,7 @@ class DataPolicy:
             f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/*',
         ]
         if self.datasets:
-            dataset: models.Dataset
+            dataset: Dataset
             for dataset in self.datasets:
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}/*')
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')

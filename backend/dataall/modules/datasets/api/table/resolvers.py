@@ -11,7 +11,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -50,7 +50,7 @@ def list_dataset_tables(context, source, filter: dict = None):
         )
 
 
-def get_table(context, source: models.Dataset, tableUri: str = None):
+def get_table(context, source: Dataset, tableUri: str = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         return DatasetTableService.get_dataset_table(

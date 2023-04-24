@@ -10,7 +10,7 @@ from ....aws.handlers.kms import KMS
 from ....aws.handlers.iam import IAM
 
 from ....utils.alarm_service import AlarmService
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -21,7 +21,7 @@ class S3ShareManager:
     def __init__(
         self,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
         target_folder: DatasetStorageLocation,
         source_environment: models.Environment,
@@ -325,7 +325,7 @@ class S3ShareManager:
     @staticmethod
     def delete_access_point(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
     ):
         access_point_name = S3ShareManager.build_access_point_name(share)
         logger.info(
@@ -342,7 +342,7 @@ class S3ShareManager:
     @staticmethod
     def delete_target_role_access_policy(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
             target_environment: models.Environment,
     ):
         logger.info(
@@ -377,7 +377,7 @@ class S3ShareManager:
     @staticmethod
     def delete_dataset_bucket_key_policy(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
             target_environment: models.Environment,
     ):
         logger.info(

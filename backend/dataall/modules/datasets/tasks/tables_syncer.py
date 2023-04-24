@@ -8,7 +8,7 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils.alarm_service import AlarmService
@@ -24,11 +24,11 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [models.Dataset] = DatasetService.list_all_active_datasets(
+        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
             session
         )
         log.info(f'Found {len(all_datasets)} datasets for tables sync')
-        dataset: models.Dataset
+        dataset: Dataset
         for dataset in all_datasets:
             log.info(
                 f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables'

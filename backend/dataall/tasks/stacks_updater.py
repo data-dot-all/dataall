@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from .. import db
 from ..db import models
@@ -19,7 +20,7 @@ log = logging.getLogger(__name__)
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
 
-        all_datasets: [models.Dataset] = DatasetService.list_all_active_datasets(
+        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
             session
         )
         all_environments: [
@@ -31,7 +32,7 @@ def update_stacks(engine, envname):
             update_stack(session, envname, environment.environmentUri)
 
         log.info(f'Found {len(all_datasets)} datasets')
-        dataset: models.Dataset
+        dataset: Dataset
         for dataset in all_datasets:
             update_stack(session, envname, dataset.datasetUri)
 

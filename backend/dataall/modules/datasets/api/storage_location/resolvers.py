@@ -8,7 +8,7 @@ from dataall.db.api import (
 )
 from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocationHandler
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
@@ -95,7 +95,7 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        d = session.query(models.Dataset).get(source.datasetUri)
+        d = session.query(Dataset).get(source.datasetUri)
     return d
 
 
