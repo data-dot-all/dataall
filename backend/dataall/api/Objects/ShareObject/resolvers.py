@@ -8,6 +8,7 @@ from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....db import models
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def create_share_object(
 ):
 
     with context.engine.scoped_session() as session:
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         environment: models.Environment = db.api.Environment.get_environment_by_uri(
             session, input['environmentUri']
         )
@@ -222,7 +223,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
+        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
         if dataset and dataset.stewards in context.groups:
             return ShareObjectPermission.Approvers.value
         if (
@@ -250,7 +251,7 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
+        ds: models.Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
             return {
@@ -292,7 +293,7 @@ def resolve_consumption_data(context: Context, source: models.ShareObject, **kwa
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, source.datasetUri)
+        ds: models.Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             S3AccessPointName = utils.slugify(
                 source.datasetUri + '-' + source.principalId,

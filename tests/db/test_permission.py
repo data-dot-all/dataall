@@ -4,6 +4,7 @@ import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module')
@@ -257,7 +258,7 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
         )
-        dataset = dataall.db.api.Dataset.create_dataset(
+        dataset = DatasetService.create_dataset(
             session=session,
             username=user.userName,
             groups=[group.name],

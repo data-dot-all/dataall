@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -490,7 +491,7 @@ def test_get_dataset_by_prefix(db, env1, org1):
         )
         session.add(dataset)
         session.commit()
-        dataset_found: dataall.db.models.Dataset = dataall.db.api.Dataset.get_dataset_by_bucket_name(
+        dataset_found: dataall.db.models.Dataset = DatasetService.get_dataset_by_bucket_name(
             session,
             bucket='s3a://insite-data-lake-raw-alpha-eu-west-1/booker/volume_constraints/insite_version=1/volume_constraints.delta'.split(
                 '//'

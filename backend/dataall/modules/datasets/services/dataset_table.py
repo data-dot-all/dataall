@@ -5,6 +5,7 @@ from sqlalchemy.sql import and_
 from dataall.db import models, api, permissions, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from dataall.db.models import Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 
@@ -23,7 +24,7 @@ class DatasetTableService:
         data: dict = None,
         check_perm: bool = False,
     ) -> DatasetTable:
-        dataset = api.Dataset.get_dataset_by_uri(session, uri)
+        dataset = DatasetService.get_dataset_by_uri(session, uri)
         exists = (
             session.query(DatasetTable)
             .filter(

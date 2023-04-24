@@ -12,6 +12,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary
 from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
@@ -68,7 +69,7 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
 
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
 
         input['table'] = table
         input['tableUri'] = table.tableUri
@@ -107,7 +108,7 @@ def preview(context, source, tableUri: str = None):
         table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
         if (
             dataset.confidentiality
             != models.ConfidentialityClassification.Unclassified.value
@@ -198,7 +199,7 @@ def publish_table_update(context: Context, source, tableUri: str = None):
             resource_uri=table.datasetUri,
             permission_name=permissions.UPDATE_DATASET_TABLE,
         )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
             raise Exception(

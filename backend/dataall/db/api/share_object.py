@@ -11,6 +11,7 @@ from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
 
@@ -346,7 +347,7 @@ class ShareObject:
         itemType = data.get('itemType')
 
         dataset: models.Dataset = data.get(
-            'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
+            'dataset', DatasetService.get_dataset_by_uri(session, datasetUri)
         )
         environment: models.Environment = data.get(
             'environment',
@@ -539,7 +540,7 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         valid_states = [ShareItemStatus.PendingApproval.value]
@@ -577,7 +578,7 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
@@ -623,7 +624,7 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
@@ -656,7 +657,7 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         revoked_items_states = ShareObject.get_share_items_states(session, uri, data.get("revokedItemUris"))
         revoked_items = [ShareObject.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
 

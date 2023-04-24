@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from . import (
+from dataall.db.api import (
     Environment,
     has_tenant_perm,
     has_resource_perm,
@@ -13,9 +13,9 @@ from . import (
     Vote,
     Stack,
 )
-from . import Organization
-from .. import models, api, exceptions, permissions, paginate
-from ..models.Enums import Language, ConfidentialityClassification
+from dataall.db.api import Organization
+from dataall.db import models, api, exceptions, permissions, paginate
+from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
@@ -27,7 +27,7 @@ from dataall.utils.naming_convention import (
 logger = logging.getLogger(__name__)
 
 
-class Dataset:
+class DatasetService:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET)
@@ -96,7 +96,7 @@ class Dataset:
         session.add(dataset)
         session.commit()
 
-        Dataset._set_dataset_aws_resources(dataset, data, environment)
+        DatasetService._set_dataset_aws_resources(dataset, data, environment)
 
         activity = models.Activity(
             action='dataset:create',
@@ -208,7 +208,7 @@ class Dataset:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.Dataset:
-        return Dataset.get_dataset_by_uri(session, uri)
+        return DatasetService.get_dataset_by_uri(session, uri)
 
     @staticmethod
     def get_dataset_by_uri(session, dataset_uri) -> models.Dataset:
@@ -257,7 +257,7 @@ class Dataset:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Dataset.query_user_datasets(session, username, groups, data),
+            query=DatasetService.query_user_datasets(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -297,19 +297,19 @@ class Dataset:
     def update_dataset(
         session, username, groups, uri, data=None, check_perm=None
     ) -> models.Dataset:
-        dataset: models.Dataset = Dataset.get_dataset_by_uri(session, uri)
+        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, uri)
         if data and isinstance(data, dict):
             for k in data.keys():
                 if k != 'stewards':
                     setattr(dataset, k, data.get(k))
             if data.get('stewards') and data.get('stewards') != dataset.stewards:
                 if data.get('stewards') != dataset.SamlAdminGroupName:
-                    Dataset.transfer_stewardship_to_new_stewards(
+                    DatasetService.transfer_stewardship_to_new_stewards(
                         session, dataset, data['stewards']
                     )
                     dataset.stewards = data['stewards']
                 else:
-                    Dataset.transfer_stewardship_to_owners(session, dataset)
+                    DatasetService.transfer_stewardship_to_owners(session, dataset)
                     dataset.stewards = dataset.SamlAdminGroupName
 
             ResourcePolicy.attach_resource_policy(
@@ -319,7 +319,7 @@ class Dataset:
                 resource_uri=dataset.datasetUri,
                 resource_type=models.Dataset.__name__,
             )
-            Dataset.update_dataset_glossary_terms(session, username, uri, data)
+            DatasetService.update_dataset_glossary_terms(session, username, uri, data)
             activity = models.Activity(
                 action='dataset:update',
                 label='dataset:update',
@@ -367,7 +367,7 @@ class Dataset:
             resource_type=models.Dataset.__name__,
         )
 
-        dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
+        dataset_tables = [t.tableUri for t in DatasetService.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
             if dataset.stewards != env.SamlGroupName:
                 ResourcePolicy.delete_resource_policy(
@@ -440,7 +440,7 @@ class Dataset:
         """
         helper method to update the dataset bucket status
         """
-        dataset = Dataset.get_dataset_by_uri(session, dataset_uri)
+        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri)
         dataset.bucketCreated = True
         return dataset
 
@@ -449,7 +449,7 @@ class Dataset:
         """
         helper method to update the dataset db status
         """
-        dataset = Dataset.get_dataset_by_uri(session, dataset_uri)
+        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri)
         dataset.glueDatabaseCreated = True
 
     @staticmethod
@@ -474,7 +474,7 @@ class Dataset:
     def paginated_dataset_shares(
         session, username, groups, uri, data=None, check_perm=None
     ) -> [models.ShareObject]:
-        query = Dataset.query_dataset_shares(session, uri)
+        query = DatasetService.query_dataset_shares(session, uri)
         return paginate(
             query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
         ).to_dict()
@@ -482,7 +482,7 @@ class Dataset:
     @staticmethod
     def list_dataset_shares(session, dataset_uri) -> [models.ShareObject]:
         """return the dataset shares"""
-        query = Dataset.query_dataset_shares(session, dataset_uri)
+        query = DatasetService.query_dataset_shares(session, dataset_uri)
         return query.all()
 
     @staticmethod
@@ -511,10 +511,10 @@ class Dataset:
     def delete_dataset(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
-        dataset = Dataset.get_dataset_by_uri(session, uri)
-        Dataset._delete_dataset_shares_with_no_shared_items(session, uri)
-        Dataset._delete_dataset_term_links(session, uri)
-        Dataset._delete_dataset_tables(session, dataset.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, uri)
+        DatasetService._delete_dataset_shares_with_no_shared_items(session, uri)
+        DatasetService._delete_dataset_term_links(session, uri)
+        DatasetService._delete_dataset_tables(session, dataset.datasetUri)
         DatasetLocationService.delete_dataset_locations(session, dataset.datasetUri)
         KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
         Vote.delete_votes(session, dataset.datasetUri, 'dataset')
@@ -555,7 +555,7 @@ class Dataset:
 
     @staticmethod
     def _delete_dataset_term_links(session, uri):
-        tables = [t.tableUri for t in Dataset.get_dataset_tables(session, uri)]
+        tables = [t.tableUri for t in DatasetService.get_dataset_tables(session, uri)]
         for tableUri in tables:
             term_links = (
                 session.query(models.TermLink)

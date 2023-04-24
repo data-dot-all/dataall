@@ -10,6 +10,7 @@ from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
@@ -23,7 +24,7 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
+        all_datasets: [models.Dataset] = DatasetService.list_all_active_datasets(
             session
         )
         log.info(f'Found {len(all_datasets)} datasets for tables sync')

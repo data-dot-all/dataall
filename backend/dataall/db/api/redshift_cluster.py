@@ -3,13 +3,14 @@ import logging
 from sqlalchemy import and_, or_, literal
 
 from .. import models, api, exceptions, paginate, permissions
-from . import has_resource_perm, ResourcePolicy, Environment, Dataset
+from . import has_resource_perm, ResourcePolicy, Environment
 from dataall.modules.datasets.db.models import DatasetTable
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -394,7 +395,7 @@ class RedshiftCluster:
                 message=f'Cluster {cluster.name} is not on available state ({cluster.status})',
             )
 
-        dataset = Dataset.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
+        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
 
         exists = session.query(models.RedshiftClusterDataset).get(
             (uri, data['datasetUri'])

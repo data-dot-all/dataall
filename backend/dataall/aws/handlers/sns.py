@@ -7,6 +7,7 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class Sns:
     @Worker.handler(path='sns.dataset.publish_update')
     def publish_update(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset = db.api.Dataset.get_dataset_by_uri(session, task.targetUri)
+            dataset = DatasetService.get_dataset_by_uri(session, task.targetUri)
             environment = db.api.Environment.get_environment_by_uri(
                 session, dataset.environmentUri
             )

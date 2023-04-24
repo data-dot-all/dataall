@@ -7,6 +7,7 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger('aws:glue')
 
@@ -374,7 +375,7 @@ class Glue:
     @Worker.handler(path='glue.dataset.crawler.create')
     def create_crawler(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+            dataset: models.Dataset = DatasetService.get_dataset_by_uri(
                 session, task.targetUri
             )
             location = task.payload.get('location')
@@ -434,7 +435,7 @@ class Glue:
     @Worker.handler(path='glue.crawler.start')
     def start_crawler(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+            dataset: models.Dataset = DatasetService.get_dataset_by_uri(
                 session, task.targetUri
             )
             location = task.payload.get('location')

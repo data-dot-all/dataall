@@ -10,7 +10,8 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     list_dataset_share_objects,
     get_dataset_glossary_terms,
-    resolve_redshift_copy_enabled
+    resolve_redshift_copy_enabled,
+    get_dataset_stack
 )
 from dataall.api.constants import DatasetRole, EnvironmentPermission
 

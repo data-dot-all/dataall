@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from .. import db
 from ..db import models
 from ..aws.handlers.ecs import Ecs
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
 
-        all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
+        all_datasets: [models.Dataset] = DatasetService.list_all_active_datasets(
             session
         )
         all_environments: [

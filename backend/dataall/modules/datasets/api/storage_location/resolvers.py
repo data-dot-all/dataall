@@ -4,14 +4,13 @@ from dataall.db import permissions, models
 from dataall.db.api import (
     ResourcePolicy,
     Glossary,
-    Dataset,
     Environment,
 )
 from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocationHandler
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
 def create_storage_location(
@@ -110,7 +109,7 @@ def publish_location_update(context: Context, source, locationUri: str = None):
             resource_uri=location.datasetUri,
             permission_name=permissions.UPDATE_DATASET_FOLDER,
         )
-        dataset = Dataset.get_dataset_by_uri(session, location.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, location.datasetUri)
         env = Environment.get_environment_by_uri(session, dataset.environmentUri)
         if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
             raise Exception(

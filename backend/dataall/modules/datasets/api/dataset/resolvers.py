@@ -14,9 +14,10 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import paginate, exceptions, permissions, models
-from dataall.db.api import Dataset, Environment, ShareObject, ResourcePolicy
+from dataall.db.api import Environment, ShareObject, ResourcePolicy
 from dataall.db.api.organization import Organization
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 
@@ -25,7 +26,7 @@ log = logging.getLogger(__name__)
 
 def create_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
-        dataset = Dataset.create_dataset(
+        dataset = DatasetService.create_dataset(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -33,7 +34,7 @@ def create_dataset(context: Context, source, input=None):
             data=input,
             check_perm=True,
         )
-        Dataset.create_dataset_stack(session, dataset)
+        DatasetService.create_dataset_stack(session, dataset)
 
         DatasetIndexer.upsert(
             session=session, dataset_uri=dataset.datasetUri
@@ -57,7 +58,7 @@ def import_dataset(context: Context, source, input=None):
         raise exceptions.RequiredParameter('group')
 
     with context.engine.scoped_session() as session:
-        dataset = Dataset.create_dataset(
+        dataset = DatasetService.create_dataset(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -71,7 +72,7 @@ def import_dataset(context: Context, source, input=None):
         dataset.importedKmsKey = True if input.get('KmsKeyId') else False
         dataset.importedAdminRole = True if input.get('adminRoleName') else False
 
-        Dataset.create_dataset_stack(session, dataset)
+        DatasetService.create_dataset_stack(session, dataset)
 
         DatasetIndexer.upsert(
             session=session, dataset_uri=dataset.datasetUri
@@ -86,7 +87,7 @@ def import_dataset(context: Context, source, input=None):
 
 def get_dataset(context, source, datasetUri=None):
     with context.engine.scoped_session() as session:
-        dataset = Dataset.get_dataset(
+        dataset = DatasetService.get_dataset(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -124,7 +125,7 @@ def get_file_upload_presigned_url(
     context, source, datasetUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
     s3_client = SessionHelper.remote_session(dataset.AwsAccountId).client(
         's3',
@@ -150,7 +151,7 @@ def list_datasets(context: Context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return Dataset.paginated_user_datasets(
+        return DatasetService.paginated_user_datasets(
             session, context.username, context.groups, uri=None, data=filter
         )
 
@@ -176,7 +177,7 @@ def list_tables(context, source: models.Dataset, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return Dataset.paginated_dataset_tables(
+        return DatasetService.paginated_dataset_tables(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -213,7 +214,7 @@ def get_dataset_stewards_group(context, source: models.Dataset, **kwargs):
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        updated_dataset = Dataset.update_dataset(
+        updated_dataset = DatasetService.update_dataset(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -232,7 +233,7 @@ def get_dataset_statistics(context: Context, source: models.Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        count_tables = db.api.Dataset.count_dataset_tables(session, source.datasetUri)
+        count_tables = DatasetService.count_dataset_tables(session, source.datasetUri)
         count_locations = DatasetLocationService.count_dataset_locations(
             session, source.datasetUri
         )
@@ -272,7 +273,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
             resource_uri=datasetUri,
             permission_name=permissions.CREDENTIALS_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         if dataset.SamlAdminGroupName not in context.groups:
             share = ShareObject.get_share_by_dataset_attributes(
                 session=session,
@@ -315,7 +316,7 @@ def sync_tables(context: Context, source, datasetUri: str = None):
             resource_uri=datasetUri,
             permission_name=permissions.SYNC_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
         task = models.Task(
             action='glue.dataset.database.tables',
@@ -328,7 +329,7 @@ def sync_tables(context: Context, source, datasetUri: str = None):
             session=session, dataset_uri=dataset.datasetUri
         )
         DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
-        return Dataset.paginated_dataset_tables(
+        return DatasetService.paginated_dataset_tables(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -348,7 +349,7 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
             permission_name=permissions.CRAWL_DATASET,
         )
 
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
         location = (
             f's3://{dataset.S3BucketName}/{input.get("prefix")}'
@@ -393,7 +394,7 @@ def list_dataset_share_objects(context, source, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return Dataset.paginated_dataset_shares(
+        return DatasetService.paginated_dataset_shares(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -412,7 +413,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
             resource_uri=datasetUri,
             permission_name=permissions.CREDENTIALS_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
     pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
     aws_session = SessionHelper.get_session(
@@ -430,7 +431,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
 
 def get_dataset_summary(context, source, datasetUri: str = None):
     with context.engine.scoped_session() as session:
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         environment = Environment.get_environment_by_uri(
             session, dataset.environmentUri
         )
@@ -468,7 +469,7 @@ def save_dataset_summary(
             resource_uri=datasetUri,
             permission_name=permissions.SUMMARY_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         environment = Environment.get_environment_by_uri(
             session, dataset.environmentUri
         )
@@ -506,7 +507,7 @@ def get_crawler(context, source, datasetUri: str = None, name: str = None):
             resource_uri=datasetUri,
             permission_name=permissions.CRAWL_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
     aws_session = SessionHelper.remote_session(dataset.AwsAccountId)
     client = aws_session.client('glue', region_name=dataset.region)
@@ -531,18 +532,18 @@ def delete_dataset(
             resource_uri=datasetUri,
             permission_name=permissions.DELETE_DATASET,
         )
-        dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(session, datasetUri)
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
+        dataset: models.Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
+        env: models.Environment = Environment.get_environment_by_uri(
             session, dataset.environmentUri
         )
-        shares = db.api.Dataset.list_dataset_shares_with_existing_shared_items(session, datasetUri)
+        shares = DatasetService.list_dataset_shares_with_existing_shared_items(session, datasetUri)
         if shares:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.DELETE_DATASET,
                 message=f'Dataset {dataset.name} is shared with other teams. '
                 'Revoke all dataset shares before deletion.',
             )
-        redshift_datasets = db.api.Dataset.list_dataset_redshift_clusters(
+        redshift_datasets = DatasetService.list_dataset_redshift_clusters(
             session, datasetUri
         )
         if redshift_datasets:
@@ -552,7 +553,7 @@ def delete_dataset(
                 'Remove clusters associations first.',
             )
 
-        tables = [t.tableUri for t in Dataset.get_dataset_tables(session, datasetUri)]
+        tables = [t.tableUri for t in DatasetService.get_dataset_tables(session, datasetUri)]
         for uri in tables:
             DatasetIndexer.delete_doc(doc_id=uri)
 
@@ -562,7 +563,7 @@ def delete_dataset(
 
         DatasetIndexer.delete_doc(doc_id=datasetUri)
 
-        Dataset.delete_dataset(
+        DatasetService.delete_dataset(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -608,7 +609,7 @@ def publish_dataset_update(
             resource_uri=datasetUri,
             permission_name=permissions.SUBSCRIPTIONS_DATASET,
         )
-        dataset = Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
             raise Exception(
