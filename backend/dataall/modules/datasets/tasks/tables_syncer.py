@@ -62,7 +62,7 @@ def sync_tables(engine, es=None):
                         f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'
                     )
 
-                    DatasetTableService.sync(
+                    DatasetTableService.sync_existing_tables(
                         session, dataset.datasetUri, glue_tables=tables
                     )
 
