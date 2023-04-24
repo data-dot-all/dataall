@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from .sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
-
+PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
 
 class LakeFormation:
     def __init__(self):
@@ -25,7 +25,7 @@ class LakeFormation:
             registered_role_name = response['ResourceInfo']['RoleArn'].lstrip(f"arn:aws:iam::{accountid}:role/")
             pivot_role_name = SessionHelper.get_delegation_role_name()
             log.info(f'LF data location already registered: {response}, registered with role {registered_role_name}')
-            if registered_role_name[:11] == pivot_role_name[:11]:
+            if registered_role_name[:14] == PIVOT_ROLE_NAME_PREFIX:
                 log.info('The existing data location was created as part of the dataset stack. There was no pre-existing data location.')
                 return False
             return response['ResourceInfo']
