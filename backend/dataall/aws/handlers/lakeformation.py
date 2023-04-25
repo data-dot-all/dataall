@@ -8,6 +8,7 @@ from .sts import SessionHelper
 log = logging.getLogger('aws:lakeformation')
 PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
 
+
 class LakeFormation:
     def __init__(self):
         pass
