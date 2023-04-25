@@ -180,10 +180,12 @@ There are 2 scenarios where we might want to provide our own VPCs:
 1) Organization guidelines. In your organization there are certain policies and mechanisms to create VPCs.
 2) Frontend needs to be hosted in data.all VPC facing architecture
 
-When providing the VPC, make sure that your VPC resembles the above image. In addition:
-1. Make sure it is deployed in at least 2 Availability Zones (AZ)
-2. Make sure at least 1 public subnet. Data.all needs to download packages, hence needs public access
-3. Make sure that the VPC created does not have an S3 VPC endpoint
+When providing the VPC, your VPC should resemble the image above.
+
+1. Make sure that it is deployed in at least 2 Availability Zones (AZ)
+2. Make sure that it has at least 1 public subnet. Data.all needs to download packages, hence needs public access.
+3. Make sure that the private subnets route to a NAT Gateway
+4. Make sure that the VPC created does not have an S3 VPC endpoint
 
 Here is a screenshot of the creation of the VPC: 
 ![Screenshot](img/vpc_setup.png#zoom#shadow)
