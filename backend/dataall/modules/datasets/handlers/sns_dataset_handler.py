@@ -3,16 +3,16 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from .sts import SessionHelper
-from ... import db
-from ...db import models
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall import db
+from dataall.db import models
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
 
 
-class Sns:
+class SnsDatasetHandler:
     def __init__(self):
         pass
 
