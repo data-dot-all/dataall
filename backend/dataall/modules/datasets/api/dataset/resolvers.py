@@ -643,3 +643,36 @@ def _deploy_dataset_stack(dataset: Dataset):
     """
     stack_helper.deploy_stack(dataset.datasetUri)
     stack_helper.deploy_stack(dataset.environmentUri)
+
+
+def list_datasets_created_in_environment(
+    context: Context, source, environmentUri: str = None, filter: dict = None
+):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return DatasetService.paginated_environment_datasets(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environmentUri,
+            data=filter,
+            check_perm=True,
+        )
+
+
+def list_datasets_owned_by_env_group(
+    context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
+):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return DatasetService.paginated_environment_group_datasets(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            envUri=environmentUri,
+            groupUri=groupUri,
+            data=filter,
+            check_perm=True,
+        )

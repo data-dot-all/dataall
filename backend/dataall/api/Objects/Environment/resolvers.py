@@ -370,23 +370,6 @@ def list_environment_group_permissions(
             check_perm=True,
         )
 
-
-def list_datasets_created_in_environment(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_environment_datasets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def list_shared_with_environment_data_items(
     context: Context, source, environmentUri: str = None, filter: dict = None
 ):
