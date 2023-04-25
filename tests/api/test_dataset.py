@@ -180,7 +180,7 @@ def test_update_dataset(dataset1, client, patch_es, group, group2):
 
 def test_start_crawler(org1, env1, dataset1, client, group, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.glue.Glue.get_glue_crawler',
+        'dataall.modules.datasets.aws.glue_dataset_client.DatasetCrawler.get_crawler',
         return_value={'crawler_name': dataset1.GlueCrawlerName},
     )
     mutation = """

@@ -17,6 +17,7 @@ from dataall.db import paginate, exceptions, permissions, models
 from dataall.db.api import Environment, ShareObject, ResourcePolicy
 from dataall.db.api.organization import Organization
 from dataall.modules.datasets import Dataset
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
@@ -358,13 +359,7 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
             else f's3://{dataset.S3BucketName}'
         )
 
-        crawler = Glue.get_glue_crawler(
-            {
-                'crawler_name': dataset.GlueCrawlerName,
-                'region': dataset.region,
-                'accountid': dataset.AwsAccountId,
-            }
-        )
+        crawler = DatasetCrawler(dataset).get_crawler()
         if not crawler:
             raise exceptions.AWSResourceNotFound(
                 action=permissions.CRAWL_DATASET,
