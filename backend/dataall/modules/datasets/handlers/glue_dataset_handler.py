@@ -12,23 +12,6 @@ log = logging.getLogger(__name__)
 
 
 class GlueDatasetHandler:
-    @staticmethod
-    @Worker.handler(path='glue.dataset.crawler.create')
-    def create_crawler(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            dataset: Dataset = DatasetService.get_dataset_by_uri(
-                session, task.targetUri
-            )
-            location = task.payload.get('location')
-            GlueDatasetHandler.create_glue_crawler(
-                **{
-                    'crawler_name': f'{dataset.GlueDatabaseName}-{location}'[:52],
-                    'region': dataset.region,
-                    'accountid': dataset.AwsAccountId,
-                    'database': dataset.GlueDatabaseName,
-                    'location': location or f's3://{dataset.S3BucketName}',
-                }
-            )
 
     @staticmethod
     @Worker.handler(path='glue.crawler.start')
@@ -47,35 +30,6 @@ class GlueDatasetHandler:
                     'location': location,
                 }
             )
-
-    @staticmethod
-    def create_glue_crawler(**data):
-        try:
-            accountid = data['accountid']
-            database = data.get('database')
-            session = SessionHelper.remote_session(accountid=accountid)
-            glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
-            crawler_name = data.get('crawler_name')
-            targets = {'S3Targets': [{'Path': data.get('location')}]}
-            crawler = GlueDatasetHandler._get_crawler(glue, crawler_name)
-            if crawler:
-                GlueDatasetHandler._update_existing_crawler(
-                    glue, accountid, crawler_name, targets, database
-                )
-            else:
-                crawler = glue.create_crawler(
-                    Name=crawler_name,
-                    Role=SessionHelper.get_delegation_role_arn(accountid=accountid),
-                    DatabaseName=database,
-                    Targets=targets,
-                    Tags=data.get('tags', {'Application': 'dataall'}),
-                )
-
-            glue.start_crawler(Name=crawler_name)
-            log.info('Crawler %s started ', crawler_name)
-            return crawler
-        except ClientError as e:
-            log.error('Failed to create Crawler due to %s', e)
 
     @staticmethod
     def start_glue_crawler(data):
