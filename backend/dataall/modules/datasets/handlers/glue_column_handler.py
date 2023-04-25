@@ -18,7 +18,7 @@ class DatasetColumnGlueHandler:
     @Worker.handler('glue.table.columns')
     def get_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset_table: models.DatasetTable = session.query(models.DatasetTable).get(
+            dataset_table: DatasetTable = session.query(DatasetTable).get(
                 task.targetUri
             )
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
@@ -34,11 +34,11 @@ class DatasetColumnGlueHandler:
     def update_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
             column: DatasetTableColumn = session.query(DatasetTableColumn).get(task.targetUri)
-            table: DatasetTable = session.query(models.DatasetTable).get(column.tableUri)
+            table: DatasetTable = session.query(DatasetTable).get(column.tableUri)
 
             aws_session = SessionHelper.remote_session(table.AWSAccountId)
 
-            LakeFormationTableClient(aws_session, table).grant_pivot_role_all_table_permissions()
+            LakeFormationTableClient(table, aws_session).grant_pivot_role_all_table_permissions()
             glue_client = GlueTableClient(aws_session, table)
             original_table = glue_client.get_table()
             updated_table = {

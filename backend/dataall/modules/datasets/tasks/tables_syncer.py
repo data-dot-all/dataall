@@ -8,6 +8,7 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_service import DatasetService
@@ -76,8 +77,7 @@ def sync_tables(engine):
                     log.info('Updating tables permissions on Lake Formation...')
 
                     for table in tables:
-                        Glue.grant_principals_all_table_permissions(
-                            table,
+                        LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
                                 SessionHelper.get_delegation_role_arn(env.AwsAccountId),
                                 env.EnvironmentDefaultIAMRoleArn,
