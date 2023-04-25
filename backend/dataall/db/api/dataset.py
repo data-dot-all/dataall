@@ -11,7 +11,7 @@ from . import (
     ResourcePolicy,
     KeyValueTag,
     Vote,
-    Stack,
+    Stack
 )
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate

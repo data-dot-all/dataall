@@ -60,11 +60,12 @@ class LFShareManager:
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
         if self.target_environment.dashboardsEnabled:
-            q_group = Quicksight.get_quicksight_group_arn(
-                self.target_environment.AwsAccountId
-            )
-            if q_group:
-                principals.append(q_group)
+            group = Quicksight.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
+            if group and group.get('Group'):
+                group_arn = group.get('Group').get('Arn')
+                if group_arn:
+                    principals.append(group_arn)
+
         return principals
 
     def build_shared_db_name(self) -> str:
