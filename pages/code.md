@@ -46,7 +46,8 @@ In the pipeline stack `PipelineStack` we deploy the following, which deploy the 
     - `DBMigrationStack`: tool to migrate between Aurora versions of the database
     - `LambdaApiStack` : Lambda Function stack
     - `MonitoringStack` : CloudWatch alarms and monitoring resources
-    - `OpenSearchStack`: OpenSearch cluster - data.all central catalog
+    - `OpenSearchStack`: OpenSearch cluster - data.all central catalog (default)
+    - `OpenSearchServerlessStack`: OpenSearch Serverless collection - data.all central catalog (if enabled)
     - `ParamStoreStack` : AWS SSM parameters
     - `S3ResourcesStack` : S3 resources
     - `SecretsManagerStack` : AWS SSM Secrets
