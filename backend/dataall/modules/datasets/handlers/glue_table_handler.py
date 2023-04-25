@@ -26,5 +26,5 @@ class DatasetColumnGlueHandler:
             tables = Glue.list_glue_database_tables(
                 account_id, dataset.GlueDatabaseName, region
             )
-            DatasetTableService.sync(session, dataset.datasetUri, glue_tables=tables)
+            DatasetTableService.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
             return tables

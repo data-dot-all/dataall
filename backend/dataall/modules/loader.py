@@ -48,10 +48,10 @@ def load_modules(modes: List[ImportMode]) -> None:
 
     log.info("Found %d modules that have been found in the config", len(modules))
     for name, props in modules.items():
-        active = props["active"]
-
         if "active" not in props:
             raise ValueError(f"Status is not defined for {name} module")
+
+        active = props["active"]
 
         if not active:
             log.info(f"Module {name} is not active. Skipping...")
