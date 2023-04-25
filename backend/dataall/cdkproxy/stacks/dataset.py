@@ -17,10 +17,10 @@ from aws_cdk import (
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
-from sqlalchemy import and_, or_
 
 from .manager import stack
 from ... import db
+from ...aws.handlers.lakeformation import LakeFormation
 from ...aws.handlers.quicksight import Quicksight
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
@@ -161,14 +161,6 @@ class Dataset(Stack):
                 versioned=True,
                 bucket_key_enabled=True,
             )
-
-            # dataset_bucket.add_to_resource_policy(
-            #     permission=iam.PolicyStatement(
-            #         actions=['s3:*'],
-            #         resources=[dataset_bucket.bucket_arn],
-            #         principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
-            #     )
-            # )
 
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -314,29 +306,25 @@ class Dataset(Stack):
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
-        # Using a custom resource instead of Cfn resource just because it causes Cfn issues when handling upgrades of pivotRole
-        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
-
-        datalake_location_service_token = ssm.StringParameter.from_string_parameter_name(
-            self,
-            'DataLocationHandlerProviderServiceToken',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
+        registered_location = LakeFormation.check_existing_lf_registered_location(
+            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            accountid=env.AwsAccountId,
+            region=env.region
         )
 
-        datalake_location = CustomResource(
-            self,
-            f'{env.resourcePrefix}DatalakeLocationCustomResource',
-            service_token=datalake_location_service_token.string_value,
-            resource_type='Custom::DataLakeLocation',
-            properties={
-                "ResourceArn": f"arn:aws:s3:::{dataset.S3BucketName}",
-                "UseServiceLinkedRole": False,
-                "RoleArn": f"arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}"
-            },
-        )
+        if not registered_location:
+            storage_location = CfnResource(
+                self,
+                'DatasetStorageLocation',
+                type='AWS::LakeFormation::Resource',
+                properties={
+                    'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+                    'UseServiceLinkedRole': False,
+                },
+            )
 
         # Define dataset admin groups (those with data access grant)
-
         dataset_admins = [
             dataset_admin_role.role_arn,
             f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
@@ -346,8 +334,45 @@ class Dataset(Stack):
             dataset_admins.append(quicksight_default_group_arn)
 
         # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
-        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
+        # Old provider, to be deleted in future release
+        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
+            self,
+            'GlueDbCRArnParameter',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
+        )
 
+        glue_db_handler = _lambda.Function.from_function_attributes(
+            self,
+            'CustomGlueDatabaseHandler',
+            function_arn=glue_db_handler_arn.string_value,
+            same_environment=True,
+        )
+
+        GlueDatabase = cr.Provider(
+            self,
+            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
+            on_event_handler=glue_db_handler,
+        )
+        old_glue_db = CustomResource(
+            self,
+            f'{env.resourcePrefix}DatasetDatabase',
+            service_token=GlueDatabase.service_token,
+            resource_type='Custom::GlueDatabase',
+            properties={
+                'CatalogId': dataset.AwsAccountId,
+                'DatabaseInput': {
+                    'Description': 'dataall database {} '.format(
+                        dataset.GlueDatabaseName
+                    ),
+                    'LocationUri': f's3://{dataset.S3BucketName}/',
+                    'Name': f'{dataset.GlueDatabaseName}',
+                    'CreateTableDefaultPermissions': [],
+                },
+                'DatabaseAdministrators': dataset_admins,
+            },
+        )
+
+        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
             'GlueDBHandlerProviderServiceToken',
@@ -374,7 +399,6 @@ class Dataset(Stack):
         )
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
-
         crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
