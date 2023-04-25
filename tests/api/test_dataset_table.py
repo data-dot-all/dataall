@@ -291,7 +291,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             },
         ]
 
-        assert DatasetTableService.sync(session, dataset1.datasetUri, glue_tables)
+        assert DatasetTableService.sync_existing_tables(session, dataset1.datasetUri, glue_tables)
         new_table: DatasetTable = (
             session.query(DatasetTable)
             .filter(DatasetTable.name == 'new_table')
