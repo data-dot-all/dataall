@@ -278,10 +278,16 @@ through security groups inbound rules.
 data.all uses Amazon OpenSearch to index datasets information
 for optimal search experience on the catalog. 
 
+By default, Amazon OpenSearch Service cluster is created, however users have the ability to use Amazon OpenSearch
+Serverless collection instead by enabling a corresponding feature flag in `cdk.json`.
+
 - Amazon OpenSearch cluster is running inside a VPC and private
 subnets.
+- If using Amazon OpenSearch Serverless collection, it is only accessible through OpenSearch
+Serverless–managed VPC endpoints.
 - It is accessible only by data.all resources like Lambda
-functions and ECS tasks thanks to enforced security groups inbound rules.
+functions and ECS tasks thanks to enforced security groups inbound rules in case of OpenSearch cluster, or access
+policies in case of Amazon OpenSearch Serverless.
 - It is encrypted at rest with AWS KMS customer managed key (CMK).
 
 ### AWS Lambda OpenSearch Handler
