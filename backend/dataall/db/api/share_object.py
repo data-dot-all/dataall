@@ -12,6 +12,7 @@ from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from ...modules.datasets.services.share_notification_service import ShareNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -562,7 +563,7 @@ class ShareObject:
 
         Share_SM.update_state(session, share, new_share_state)
 
-        api.Notification.notify_share_object_submission(
+        ShareNotificationService.notify_share_object_submission(
             session, username, dataset, share
         )
         return share
@@ -609,7 +610,7 @@ class ShareObject:
                 resource_type=DatasetTable.__name__,
             )
 
-        api.Notification.notify_share_object_approval(session, username, dataset, share)
+        ShareNotificationService.notify_share_object_approval(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -642,7 +643,7 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_rejection(session, username, dataset, share)
+        ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -684,7 +685,7 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_rejection(session, username, dataset, share)
+        ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod

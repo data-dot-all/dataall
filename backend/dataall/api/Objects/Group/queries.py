@@ -8,8 +8,6 @@ getGroup = gql.QueryField(
     resolver=get_group,
 )
 
-
-
 listDataItemsSharedWithEnvGroup = gql.QueryField(
     name='listDataItemsSharedWithEnvGroup',
     args=[
