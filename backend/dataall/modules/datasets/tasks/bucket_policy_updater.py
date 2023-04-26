@@ -7,9 +7,9 @@ import typing
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
-from ..aws.handlers.sts import SessionHelper
-from ..db import get_engine
-from ..db import models
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import get_engine
+from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
