@@ -3,10 +3,12 @@ import logging
 from typing import List
 
 from dataall.api.Objects.Vote.resolvers import add_vote_type
+from dataall.db.api import TargetType
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.services.permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
@@ -52,6 +54,8 @@ class DatasetApiModuleInterface(ModuleInterface):
         ))
 
         add_vote_type("dataset", DatasetIndexer)
+
+        TargetType("dataset", GET_DATASET, UPDATE_DATASET)
 
         log.info("API of datasets has been imported")
 

@@ -6,7 +6,7 @@ from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ
 
 
 @pytest.fixture(scope='module')
@@ -14,7 +14,7 @@ def permissions(db):
     with db.scoped_session() as session:
         permissions = []
         for p in (
-            dataall.db.permissions.DATASET_READ
+            DATASET_READ
             + dataall.db.permissions.DATASET_WRITE
             + dataall.db.permissions.DATASET_TABLE_READ
             + dataall.db.permissions.ORGANIZATION_ALL
@@ -153,7 +153,7 @@ def test_attach_resource_policy(db, user, group, group_user, dataset, permission
             session=session,
             username=user.userName,
             groups=[group.name],
-            permission_name=dataall.db.permissions.UPDATE_DATASET,
+            permission_name=UPDATE_DATASET,
             resource_uri=dataset.datasetUri,
         )
 

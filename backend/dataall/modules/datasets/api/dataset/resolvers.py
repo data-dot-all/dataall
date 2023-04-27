@@ -22,6 +22,7 @@ from dataall.modules.datasets.services.dataset_location import DatasetLocationSe
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.services.permissions import CREDENTIALS_DATASET
 
 log = logging.getLogger(__name__)
 
@@ -256,7 +257,7 @@ def get_dataset_etl_credentials(context: Context, source, datasetUri: str = None
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.CREDENTIALS_DATASET,
+            permission_name=CREDENTIALS_DATASET,
         )
         task = models.Task(targetUri=datasetUri, action='iam.dataset.user.credentials')
         session.add(task)
@@ -273,7 +274,7 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.CREDENTIALS_DATASET,
+            permission_name=CREDENTIALS_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         if dataset.SamlAdminGroupName not in context.groups:
@@ -407,7 +408,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.CREDENTIALS_DATASET,
+            permission_name=CREDENTIALS_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 

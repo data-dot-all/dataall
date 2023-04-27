@@ -3,10 +3,10 @@ import logging
 from sqlalchemy import and_, or_
 
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
-from dataall.db import models, api, paginate, permissions, exceptions
+from dataall.db import models, api, paginate, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class DatasetLocationService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
+    @has_resource_perm(LIST_DATASET_FOLDERS)
     def list_dataset_locations(
         session,
         username: str,
@@ -93,7 +93,7 @@ class DatasetLocationService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
+    @has_resource_perm(LIST_DATASET_FOLDERS)
     def get_dataset_location(
         session,
         username: str,
