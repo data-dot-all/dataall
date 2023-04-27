@@ -1,9 +1,9 @@
 from dataall.db import permissions
-from .service_policy import ServicePolicy
+from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
 
 
-class Glue(ServicePolicy):
+class GluePolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
         if permissions.CREATE_DATASET not in group_permissions:
             return []
