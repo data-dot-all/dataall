@@ -1,7 +1,8 @@
 """Contains the code related to datasets"""
 import logging
-from typing import List
+from typing import List, Type
 
+from dataall.modules.dataset_sharing import SharingApiModuleInterface
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -18,6 +19,10 @@ class DatasetApiModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes):
         return ImportMode.API in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [SharingApiModuleInterface]
 
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
