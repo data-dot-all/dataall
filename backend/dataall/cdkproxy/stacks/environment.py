@@ -40,7 +40,6 @@ from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...utils.cdk_nag_utils import CDKNagUtil
 from ...utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -128,33 +127,6 @@ class EnvironmentSetup(Stack):
                 group_uri=environment.SamlGroupName,
             )
 
-    @staticmethod
-    def get_environment_group_datasets(
-        engine, environment: models.Environment, group: str
-    ) -> [Dataset]:
-        with engine.scoped_session() as session:
-            return db.api.Environment.list_group_datasets(
-                session,
-                username='cdk',
-                groups=[],
-                uri=environment.environmentUri,
-                data={'groupUri': group},
-                check_perm=False,
-            )
-
-    @staticmethod
-    def get_all_environment_datasets(
-        engine, environment: models.Environment
-    ) -> [Dataset]:
-        with engine.scoped_session() as session:
-            return (
-                session.query(Dataset)
-                .filter(
-                    Dataset.environmentUri == environment.environmentUri,
-                )
-                .all()
-            )
-
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
                          id,
@@ -177,10 +149,6 @@ class EnvironmentSetup(Stack):
         self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(self.engine, environment=self._environment)
 
         self.environment_admins_group: models.EnvironmentGroup = self.get_environment_admins_group(self.engine, self._environment)
-
-        self.all_environment_datasets = self.get_all_environment_datasets(
-            self.engine, self._environment
-        )
 
         roles_sagemaker_dependency_group = DependencyGroup()
 
@@ -630,7 +598,6 @@ class EnvironmentSetup(Stack):
                 region=self._environment.region,
                 environment=self._environment,
                 team=self.environment_admins_group,
-                datasets=self.all_environment_datasets,
             ).generate_admins_data_access_policy()
 
             default_role = iam.Role(
@@ -688,21 +655,19 @@ class EnvironmentSetup(Stack):
             permissions=group_permissions,
         ).generate_policies()
 
-        data_policy = DataPolicy(
-            stack=self,
-            tag_key='Team',
-            tag_value=group.groupUri,
-            resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            account=self._environment.AwsAccountId,
-            region=self._environment.region,
-            environment=self._environment,
-            team=group,
-            datasets=self.get_environment_group_datasets(
-                self.engine, self._environment, group.groupUri
-            ),
-        ).generate_data_access_policy()
+        with self.engine.scoped_session() as session:
+            data_policy = DataPolicy(
+                stack=self,
+                tag_key='Team',
+                tag_value=group.groupUri,
+                resource_prefix=self._environment.resourcePrefix,
+                name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                account=self._environment.AwsAccountId,
+                region=self._environment.region,
+                environment=self._environment,
+                team=group,
+            ).generate_data_access_policy(session=session)
 
         group_role = iam.Role(
             self,

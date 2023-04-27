@@ -947,24 +947,6 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
-
-        return (
-            session.query(Dataset)
-            .filter(
-                and_(
-                    Dataset.environmentUri == uri,
-                    Dataset.SamlAdminGroupName == data['groupUri'],
-                )
-            )
-            .all()
-        )
-
-    @staticmethod
     @has_resource_perm(permissions.GET_ENVIRONMENT)
     def get_stack(
         session, username, groups, uri, data=None, check_perm=None

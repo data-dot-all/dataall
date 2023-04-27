@@ -4,7 +4,6 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from ....db import models
-from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger()
 
@@ -22,7 +21,6 @@ class DataPolicy:
         resource_prefix,
         environment: models.Environment,
         team: models.EnvironmentGroup,
-        datasets: [Dataset],
     ):
         self.stack = stack
         self.id = id
@@ -34,7 +32,6 @@ class DataPolicy:
         self.resource_prefix = resource_prefix
         self.environment = environment
         self.team = team
-        self.datasets = datasets
 
     def generate_admins_data_access_policy(self) -> iam.Policy:
         """
@@ -87,11 +84,14 @@ class DataPolicy:
 
         return policy
 
-    def generate_data_access_policy(self) -> iam.Policy:
+    def generate_data_access_policy(self, session) -> iam.Policy:
         """
         Creates aws_iam.Policy based on team datasets
         """
-        statements: List[iam.PolicyStatement] = self.get_statements()
+        statements: List[iam.PolicyStatement] = self.get_statements(session)
+
+        for extension in DataPolicy.__subclasses__():
+            statements.extend(extension.get_statements(self, session=session))
 
         policy: iam.Policy = iam.Policy(
             self.stack,
@@ -103,7 +103,7 @@ class DataPolicy:
 
         return policy
 
-    def get_statements(self):
+    def get_statements(self, session):
         statements = [
             iam.PolicyStatement(
                 actions=[
@@ -147,11 +147,6 @@ class DataPolicy:
             f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}',
             f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/*',
         ]
-        if self.datasets:
-            dataset: Dataset
-            for dataset in self.datasets:
-                allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}/*')
-                allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
         statements.extend(
             [
                 iam.PolicyStatement(

@@ -692,3 +692,23 @@ class DatasetService:
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
+    @staticmethod
+    def list_group_datasets(session, environment_id, group_uri):
+        return (
+            session.query(Dataset)
+            .filter(
+                and_(
+                    Dataset.environmentUri == environment_id,
+                    Dataset.SamlAdminGroupName == group_uri,
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
+    def list_env_datasets(session, environment_uri):
+        return (
+            session.query(Dataset)
+            .filter(Dataset.environmentUri == environment_uri)
+            .all()
+        )
