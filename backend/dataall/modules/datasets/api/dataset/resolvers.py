@@ -22,7 +22,8 @@ from dataall.modules.datasets.services.dataset_location import DatasetLocationSe
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.permissions import CREDENTIALS_DATASET
+from dataall.modules.datasets.services.permissions import CREDENTIALS_DATASET, SYNC_DATASET, SUMMARY_DATASET, \
+    CRAWL_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET
 
 log = logging.getLogger(__name__)
 
@@ -317,7 +318,7 @@ def sync_tables(context: Context, source, datasetUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.SYNC_DATASET,
+            permission_name=SYNC_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
@@ -349,7 +350,7 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.CRAWL_DATASET,
+            permission_name=CRAWL_DATASET,
         )
 
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
@@ -363,7 +364,7 @@ def start_crawler(context: Context, source, datasetUri: str, input: dict = None)
         crawler = DatasetCrawler(dataset).get_crawler()
         if not crawler:
             raise exceptions.AWSResourceNotFound(
-                action=permissions.CRAWL_DATASET,
+                action=CRAWL_DATASET,
                 message=f'Crawler {dataset.GlueCrawlerName} can not be found',
             )
 
@@ -464,7 +465,7 @@ def save_dataset_summary(
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.SUMMARY_DATASET,
+            permission_name=SUMMARY_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         environment = Environment.get_environment_by_uri(
@@ -502,7 +503,7 @@ def get_crawler(context, source, datasetUri: str = None, name: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.CRAWL_DATASET,
+            permission_name=CRAWL_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
 
@@ -527,7 +528,7 @@ def delete_dataset(
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.DELETE_DATASET,
+            permission_name=DELETE_DATASET,
         )
         dataset: Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         env: models.Environment = Environment.get_environment_by_uri(
@@ -536,7 +537,7 @@ def delete_dataset(
         shares = DatasetService.list_dataset_shares_with_existing_shared_items(session, datasetUri)
         if shares:
             raise exceptions.UnauthorizedOperation(
-                action=permissions.DELETE_DATASET,
+                action=DELETE_DATASET,
                 message=f'Dataset {dataset.name} is shared with other teams. '
                 'Revoke all dataset shares before deletion.',
             )
@@ -545,7 +546,7 @@ def delete_dataset(
         )
         if redshift_datasets:
             raise exceptions.UnauthorizedOperation(
-                action=permissions.DELETE_DATASET,
+                action=DELETE_DATASET,
                 message='Dataset is used by Redshift clusters. '
                 'Remove clusters associations first.',
             )
@@ -604,7 +605,7 @@ def publish_dataset_update(
             username=context.username,
             groups=context.groups,
             resource_uri=datasetUri,
-            permission_name=permissions.SUBSCRIPTIONS_DATASET,
+            permission_name=SUBSCRIPTIONS_DATASET,
         )
         dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)

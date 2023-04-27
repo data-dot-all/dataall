@@ -3,10 +3,11 @@ from sqlalchemy import or_
 from dataall import db
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import paginate, permissions, models
+from dataall.db import paginate, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
 
 
 def list_table_columns(
@@ -54,7 +55,7 @@ def sync_table_columns(context: Context, source, tableUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=table.datasetUri,
-            permission_name=permissions.UPDATE_DATASET_TABLE,
+            permission_name=UPDATE_DATASET_TABLE,
         )
         task = models.Task(action='glue.table.columns', targetUri=table.tableUri)
         session.add(task)
@@ -89,7 +90,7 @@ def update_table_column(
             username=context.username,
             groups=context.groups,
             resource_uri=table.datasetUri,
-            permission_name=permissions.UPDATE_DATASET_TABLE,
+            permission_name=UPDATE_DATASET_TABLE,
         )
         column.description = input.get('description', 'No description provided')
         session.add(column)

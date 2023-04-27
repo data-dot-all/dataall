@@ -1,6 +1,6 @@
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import permissions, models
+from dataall.db import models
 from dataall.db.api import (
     ResourcePolicy,
     Glossary,
@@ -11,6 +11,7 @@ from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIn
 from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.permissions import UPDATE_DATASET_FOLDER
 
 
 def create_storage_location(
@@ -107,7 +108,7 @@ def publish_location_update(context: Context, source, locationUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=location.datasetUri,
-            permission_name=permissions.UPDATE_DATASET_FOLDER,
+            permission_name=UPDATE_DATASET_FOLDER,
         )
         dataset = DatasetService.get_dataset_by_uri(session, location.datasetUri)
         env = Environment.get_environment_by_uri(session, dataset.environmentUri)

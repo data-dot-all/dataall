@@ -6,7 +6,8 @@ from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
 from dataall.db import models, api, paginate, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, CREATE_DATASET_FOLDER, \
+    DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 class DatasetLocationService:
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.CREATE_DATASET_FOLDER)
+    @has_resource_perm(CREATE_DATASET_FOLDER)
     def create_dataset_location(
         session,
         username: str,
@@ -106,7 +107,7 @@ class DatasetLocationService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.UPDATE_DATASET_FOLDER)
+    @has_resource_perm(UPDATE_DATASET_FOLDER)
     def update_dataset_location(
         session,
         username: str,
@@ -136,7 +137,7 @@ class DatasetLocationService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.DELETE_DATASET_FOLDER)
+    @has_resource_perm(DELETE_DATASET_FOLDER)
     def delete_dataset_location(
         session,
         username: str,
@@ -161,7 +162,7 @@ class DatasetLocationService:
         )
         if share_item:
             raise exceptions.ResourceShared(
-                action=permissions.DELETE_DATASET_FOLDER,
+                action=DELETE_DATASET_FOLDER,
                 message='Revoke all folder shares before deletion',
             )
         session.query(models.ShareObjectItem).filter(

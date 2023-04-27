@@ -14,12 +14,12 @@ from dataall.db.api import (
     Stack,
 )
 from dataall.db.api import Organization
-from dataall.db import models, api, exceptions, permissions, paginate
+from dataall.db import models, api, exceptions, paginate
 from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -112,7 +112,7 @@ class DatasetService:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=data['SamlAdminGroupName'],
-            permissions=permissions.DATASET_ALL,
+            permissions=DATASET_ALL,
             resource_uri=dataset.datasetUri,
             resource_type=Dataset.__name__,
         )
@@ -128,7 +128,7 @@ class DatasetService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=environment.SamlGroupName,
-                permissions=permissions.DATASET_ALL,
+                permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
                 resource_type=Dataset.__name__,
             )
@@ -316,7 +316,7 @@ class DatasetService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=permissions.DATASET_ALL,
+                permissions=DATASET_ALL,
                 resource_uri=dataset.datasetUri,
                 resource_type=Dataset.__name__,
             )

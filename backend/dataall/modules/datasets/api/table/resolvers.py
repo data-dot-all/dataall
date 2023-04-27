@@ -9,10 +9,11 @@ from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import permissions, models
+from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
@@ -197,7 +198,7 @@ def publish_table_update(context: Context, source, tableUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=table.datasetUri,
-            permission_name=permissions.UPDATE_DATASET_TABLE,
+            permission_name=UPDATE_DATASET_TABLE,
         )
         dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)

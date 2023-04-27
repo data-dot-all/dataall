@@ -2,9 +2,10 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from dataall.db import models, api, permissions, exceptions, paginate
+from dataall.db import models, api, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
+    UPDATE_DATASET_TABLE
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class DatasetTableService:
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.CREATE_DATASET_TABLE)
+    @has_resource_perm(CREATE_DATASET_TABLE)
     def create_dataset_table(
         session,
         username: str,
@@ -71,7 +72,7 @@ class DatasetTableService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=group,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=table.tableUri,
                 resource_type=DatasetTable.__name__,
             )
@@ -113,7 +114,7 @@ class DatasetTableService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.UPDATE_DATASET_TABLE)
+    @has_resource_perm(UPDATE_DATASET_TABLE)
     def update_dataset_table(
         session,
         username: str,
@@ -139,7 +140,7 @@ class DatasetTableService:
 
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.DELETE_DATASET_TABLE)
+    @has_resource_perm(DELETE_DATASET_TABLE)
     def delete_dataset_table(
         session,
         username: str,
@@ -162,7 +163,7 @@ class DatasetTableService:
         )
         if share_item:
             raise exceptions.ResourceShared(
-                action=permissions.DELETE_DATASET_TABLE,
+                action=DELETE_DATASET_TABLE,
                 message='Revoke all table shares before deletion',
             )
         session.query(models.ShareObjectItem).filter(

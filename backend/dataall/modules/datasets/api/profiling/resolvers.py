@@ -4,12 +4,13 @@ import logging
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import api, permissions, models
+from dataall.db import api, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.services.permissions import PROFILE_DATASET_TABLE
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def start_profiling_run(context: Context, source, input: dict = None):
             username=context.username,
             groups=context.groups,
             resource_uri=input['datasetUri'],
-            permission_name=permissions.PROFILE_DATASET_TABLE,
+            permission_name=PROFILE_DATASET_TABLE,
         )
         dataset = DatasetService.get_dataset_by_uri(session, input['datasetUri'])
 
