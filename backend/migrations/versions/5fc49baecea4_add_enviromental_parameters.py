@@ -10,11 +10,13 @@ from typing import List
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
-from dataall.db import Resource
+from dataall.db import Resource, models
+from dataall.db.api import ResourcePolicy
 from dataall.db.api.permission import Permission
-from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType
+from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType, EnvironmentGroup
 from dataall.db.permissions import MANAGE_SGMSTUDIO_NOTEBOOKS
-from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS
+from dataall.modules.datasets.services.permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"
@@ -109,6 +111,8 @@ def upgrade():
             ))
         session.commit()
 
+        migrate_groups_permissions(session)
+
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
 
@@ -151,3 +155,36 @@ def create_foreign_key_to_env(op, table: str):
         table, "environment",
         ["environmentUri"], ["environmentUri"],
     )
+
+
+def find_all_groups(session):
+    return session.query(EnvironmentGroup).all()
+
+
+def migrate_groups_permissions(session):
+    """
+    Adds new permission if the old exist. needed to get rid of old hacks in the code
+    """
+    permissions = [(CREATE_DATASET, LIST_ENVIRONMENT_DATASETS),
+                   (CREATE_NOTEBOOK, LIST_ENVIRONMENT_NOTEBOOKS)]
+
+    groups = find_all_groups(session)
+    for group in groups:
+        new_perms = []
+        for existed, to_add in permissions:
+            if not ResourcePolicy.has_group_resource_permission(
+                session,
+                group_uri=group,
+                permission_name=existed,
+                resource_uri=group.environmentUri,
+            ):
+                new_perms.append(to_add)
+
+        if new_perms:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=group.groupUri,
+                permissions=new_perms,
+                resource_uri=group.environmentUri,
+                resource_type=models.Environment.__name__
+            )
