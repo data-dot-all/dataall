@@ -19,7 +19,8 @@ from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
+    DATASET_TABLE_READ
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -379,7 +380,7 @@ class DatasetService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=new_stewards,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=tableUri,
                 resource_type=DatasetTable.__name__,
             )

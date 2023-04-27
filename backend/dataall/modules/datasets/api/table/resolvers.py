@@ -13,7 +13,7 @@ from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
+from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE, PREVIEW_DATASET_TABLE
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
@@ -119,7 +119,7 @@ def preview(context, source, tableUri: str = None):
                 username=context.username,
                 groups=context.groups,
                 resource_uri=table.tableUri,
-                permission_name=permissions.PREVIEW_DATASET_TABLE,
+                permission_name=PREVIEW_DATASET_TABLE,
             )
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         env_workgroup = {}

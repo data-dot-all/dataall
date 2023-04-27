@@ -12,6 +12,7 @@ from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from ...modules.datasets.services.permissions import DATASET_TABLE_READ
 from ...modules.datasets.services.share_notification_service import ShareNotificationService
 
 logger = logging.getLogger(__name__)
@@ -605,7 +606,7 @@ class ShareObject:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=table.itemUri,
                 resource_type=DatasetTable.__name__,
             )

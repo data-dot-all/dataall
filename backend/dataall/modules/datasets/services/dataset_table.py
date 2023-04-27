@@ -5,7 +5,7 @@ from sqlalchemy.sql import and_
 from dataall.db import models, api, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
-    UPDATE_DATASET_TABLE
+    UPDATE_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
@@ -272,7 +272,7 @@ class DatasetTableService:
                         ResourcePolicy.attach_resource_policy(
                             session=session,
                             group=group,
-                            permissions=permissions.DATASET_TABLE_READ,
+                            permissions=DATASET_TABLE_READ,
                             resource_uri=updated_table.tableUri,
                             resource_type=DatasetTable.__name__,
                         )
