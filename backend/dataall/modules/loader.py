@@ -1,9 +1,10 @@
 """Load modules that are specified in the configuration file"""
 import importlib
 import logging
+import sys
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import List, Type
+from typing import List, Type, Set
 
 from dataall.core.config import config
 
@@ -94,14 +95,8 @@ def load_modules(modes: List[ImportMode]) -> None:
         if module.is_supported(modes):
             module()
 
-    modules = ModuleInterface.__subclasses__()  # reload modules. Can load a new modules
-    for module in modules:
-        if module.name() in inactive:
-            log.info(f"There is a module that depends on {module.name()}. " +
-                     "The module has been loaded despite it's inactive.")
-        elif module.name() not in in_config:
-            log.info(f"There is a module that depends on {module.name()}. " +
-                     "The module has been loaded despite it's not specified in the configuration file.")
+    _check_loading_correct()
+    _describe_loading(in_config, inactive)
 
     log.info("All modules have been imported")
 
@@ -112,3 +107,42 @@ def _import_module(name):
         return True
     except ModuleNotFoundError:
         return False
+
+
+def _check_loading_correct(in_config: Set[str]):
+    """
+    To avoid unintentional loading (without ModuleInterface) we can check all loaded modules.
+    Unintentional/incorrect loading might happen if module A has a direct reference to module B without declaring it
+    in ModuleInterface. Doing so, this might lead to a problem when a module interface require to load something during
+    initialization. But since ModuleInterface is not initializing properly (using depends_on)
+    some functionality may work wrongly.
+    """
+
+    expected_load = set(in_config)
+    for module in ModuleInterface.__subclasses__():
+        for dependency in module.depends_on():
+            expected_load.add(dependency.name())
+
+    for module in ModuleInterface.__subclasses__():
+        if module.name() not in expected_load:
+            raise ImportError(f"ModuleInterface has not been initialized for module {module.name()}")
+
+    for module in sys.modules.keys():
+        if module.startswith(_MODULE_PREFIX):
+            name = module.lstrip(_MODULE_PREFIX).split(".")[0]
+            if name not in expected_load:
+                raise ImportError(f"The package {module} has been imported, but it doesn't contain ModuleInterface")
+
+
+def _describe_loading(in_config: Set[str], inactive: Set[str]):
+    modules = ModuleInterface.__subclasses__()
+    for module in modules:
+        name = module.name()
+        log.debug(f"The {name} module was loaded")
+        if name in inactive:
+            log.info(f"There is a module that depends on {module.name()}. " +
+                     "The module has been loaded despite it's inactive.")
+        elif name not in in_config:
+            log.info(f"There is a module that depends on {module.name()}. " +
+                     "The module has been loaded despite it's not specified in the configuration file.")
+
