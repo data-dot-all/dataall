@@ -4,17 +4,17 @@ from sqlalchemy.sql import and_
 
 from dataall.db import models, api, permissions, exceptions, paginate
 from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
-from dataall.db.models import Dataset
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetTableService:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET_TABLE)
     def create_dataset_table(
         session,
@@ -78,7 +78,7 @@ class DatasetTableService:
         return table
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     def list_dataset_tables(
         session,
         username: str,
@@ -100,7 +100,7 @@ class DatasetTableService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     def get_dataset_table(
         session,
         username: str,
@@ -112,7 +112,7 @@ class DatasetTableService:
         return DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.UPDATE_DATASET_TABLE)
     def update_dataset_table(
         session,
@@ -138,7 +138,7 @@ class DatasetTableService:
         return table
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.DELETE_DATASET_TABLE)
     def delete_dataset_table(
         session,

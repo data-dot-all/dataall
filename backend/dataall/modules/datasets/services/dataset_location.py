@@ -6,13 +6,14 @@ from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
 from dataall.db import models, api, paginate, permissions, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetLocationService:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET_FOLDER)
     def create_dataset_location(
         session,
@@ -66,7 +67,7 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
     def list_dataset_locations(
         session,
@@ -91,7 +92,7 @@ class DatasetLocationService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
     def get_dataset_location(
         session,
@@ -104,7 +105,7 @@ class DatasetLocationService:
         return DatasetLocationService.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.UPDATE_DATASET_FOLDER)
     def update_dataset_location(
         session,
@@ -134,7 +135,7 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.DELETE_DATASET_FOLDER)
     def delete_dataset_location(
         session,

@@ -6,6 +6,7 @@ from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
 
 
 @pytest.fixture(scope='module')
@@ -165,7 +166,7 @@ def test_attach_tenant_policy(
         dataall.db.api.TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=[dataall.db.permissions.MANAGE_DATASETS],
+            permissions=[MANAGE_DATASETS],
             tenant_name='dataall',
         )
 
@@ -173,7 +174,7 @@ def test_attach_tenant_policy(
             session=session,
             username=user.userName,
             groups=[group.name],
-            permission_name=dataall.db.permissions.MANAGE_DATASETS,
+            permission_name=MANAGE_DATASETS,
             tenant_name='dataall',
         )
 

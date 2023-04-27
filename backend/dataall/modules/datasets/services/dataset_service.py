@@ -19,6 +19,7 @@ from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 class DatasetService:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.CREATE_DATASET)
     def create_dataset(
         session,
@@ -199,7 +200,7 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     def get_dataset(
         session,
         username: str,
@@ -292,7 +293,7 @@ class DatasetService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
+    @has_tenant_perm(MANAGE_DATASETS)
     @has_resource_perm(permissions.UPDATE_DATASET)
     def update_dataset(
         session, username, groups, uri, data=None, check_perm=None
