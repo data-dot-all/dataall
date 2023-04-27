@@ -11,8 +11,8 @@ log = logging.getLogger(__name__)
 class NotebookApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for notebook GraphQl lambda"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.API in modes
 
     def __init__(self):
@@ -27,8 +27,8 @@ class NotebookApiModuleInterface(ModuleInterface):
 class NotebookCdkModuleInterface(ModuleInterface):
     """Implements ModuleInterface for notebook ecs tasks"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.CDK in modes
 
     def __init__(self):

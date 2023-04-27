@@ -3,7 +3,7 @@ import importlib
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import List
+from typing import List, Type
 
 from dataall.core.config import config
 
@@ -29,10 +29,32 @@ class ModuleInterface(ABC):
     An interface of the module. The implementation should be part of __init__.py of the module
     Contains an API that will be called from core part
     """
-    @classmethod
+    @staticmethod
     @abstractmethod
-    def is_supported(cls, modes: List[ImportMode]):
-        pass
+    def is_supported(modes: List[ImportMode]) -> bool:
+        """
+        Return True if the module interface supports any of the ImportMode and should be loaded
+        """
+        raise NotImplementedError("is_supported is not implemented")
+
+    @staticmethod
+    @abstractmethod
+    def name() -> str:
+        """
+        Returns name of the module. Should be the same if it's specified in the config file
+        """
+        raise NotImplementedError("name is not implemented")
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        """
+        It describes on what modules this ModuleInterface depends on.
+        It will be used to eventually load these module dependencies. Even if a dependency module is not active
+        in the config file.
+
+        The default value is no dependencies
+        """
+        return []
 
 
 def load_modules(modes: List[ImportMode]) -> None:
@@ -47,7 +69,11 @@ def load_modules(modes: List[ImportMode]) -> None:
         return
 
     log.info("Found %d modules that have been found in the config", len(modules))
+
+    inactive = set()
+    in_config = set()
     for name, props in modules.items():
+        in_config.add(name)
         if "active" not in props:
             raise ValueError(f"Status is not defined for {name} module")
 
@@ -55,6 +81,7 @@ def load_modules(modes: List[ImportMode]) -> None:
 
         if not active:
             log.info(f"Module {name} is not active. Skipping...")
+            inactive.add(name)
             continue
 
         if not _import_module(name):
@@ -62,9 +89,19 @@ def load_modules(modes: List[ImportMode]) -> None:
 
         log.info(f"Module {name} is loaded")
 
-    for module in ModuleInterface.__subclasses__():
+    modules = ModuleInterface.__subclasses__()
+    for module in modules:
         if module.is_supported(modes):
             module()
+
+    modules = ModuleInterface.__subclasses__()  # reload modules. Can load a new modules
+    for module in modules:
+        if module.name() in inactive:
+            log.info(f"There is a module that depends on {module.name()}. " +
+                     "The module has been loaded despite it's inactive.")
+        elif module.name() not in in_config:
+            log.info(f"There is a module that depends on {module.name()}. " +
+                     "The module has been loaded despite it's not specified in the configuration file.")
 
     log.info("All modules have been imported")
 

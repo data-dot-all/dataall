@@ -2,8 +2,6 @@
 import logging
 from typing import List
 
-from dataall.api.Objects.Vote.resolvers import add_vote_type
-from dataall.db.api import TargetType
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -17,11 +15,14 @@ log = logging.getLogger(__name__)
 class DatasetApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for dataset GraphQl lambda"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.API in modes
 
     def __init__(self):
+        # these imports are placed inside the method because they are only related to GraphQL api.
+        from dataall.db.api import TargetType
+        from dataall.api.Objects.Vote.resolvers import add_vote_type
         from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 
@@ -63,8 +64,8 @@ class DatasetApiModuleInterface(ModuleInterface):
 class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     """Implements ModuleInterface for dataset async lambda"""
 
-    @classmethod
-    def is_supported(cls, modes: List[ImportMode]):
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
         return ImportMode.HANDLERS in modes
 
     def __init__(self):
@@ -75,8 +76,8 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks """
 
-    @classmethod
-    def is_supported(cls, modes: List[ImportMode]):
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
         return ImportMode.CDK in modes
 
     def __init__(self):
