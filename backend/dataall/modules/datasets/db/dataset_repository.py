@@ -1,5 +1,7 @@
+from operator import and_
+
 from dataall.db import exceptions
-from dataall.db.models import Dataset
+from dataall.modules.datasets.db.models import Dataset
 
 
 class DatasetRepository:
@@ -11,3 +13,16 @@ class DatasetRepository:
         if not dataset:
             raise exceptions.ObjectNotFound('Dataset', dataset_uri)
         return dataset
+
+    @staticmethod
+    def count_group_datasets(session, environment_uri, group_uri) -> int:
+        return (
+            session.query(Dataset)
+            .filter(
+                and_(
+                    Dataset.environmentUri == environment_uri,
+                    Dataset.SamlAdminGroupName == group_uri
+                ))
+            .count()
+        )
+

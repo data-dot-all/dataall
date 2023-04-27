@@ -23,11 +23,11 @@ from ..models.Permission import PermissionType
 from ..paginator import paginate
 from dataall.core.environment.models import EnvironmentParameter
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
-from dataall.modules.datasets.db.models import Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.core.group.services.group_resource_manager import GroupResourceManager
 
 log = logging.getLogger(__name__)
 
@@ -353,10 +353,6 @@ class Environment:
         group_env_objects_count = (
             session.query(models.Environment)
             .outerjoin(
-                Dataset,
-                Dataset.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
                 models.SagemakerStudioUserProfile,
                 models.SagemakerStudioUserProfile.environmentUri
                 == models.Environment.environmentUri,
@@ -384,7 +380,6 @@ class Environment:
                     models.Environment.environmentUri == environment.environmentUri,
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
-                        Dataset.SamlAdminGroupName == group,
                         models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
                         models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
@@ -392,6 +387,12 @@ class Environment:
                 )
             )
             .count()
+        )
+
+        group_env_objects_count += GroupResourceManager.count_group_resources(
+            session=session,
+            environment_uri=environment.environmentUri,
+            group_uri=group
         )
 
         if group_env_objects_count > 0:
