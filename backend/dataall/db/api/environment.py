@@ -286,10 +286,6 @@ class Environment:
 
     @staticmethod
     def validate_permissions(session, uri, g_permissions, group):
-
-        if permissions.CREATE_DATASET in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_DATASETS)
-
         if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
 

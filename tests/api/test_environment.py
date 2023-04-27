@@ -3,6 +3,7 @@ import pytest
 import dataall
 from dataall.db import permissions
 from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.permissions import CREATE_DATASET
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -436,7 +437,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
-    assert permissions.CREATE_DATASET in env_permissions
+    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -474,7 +475,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
         environmentUri=env1.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
-    assert permissions.CREATE_DATASET in env_permissions
+    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """

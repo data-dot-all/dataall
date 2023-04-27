@@ -14,13 +14,13 @@ from dataall.db.api import (
     Stack,
 )
 from dataall.db.api import Organization
-from dataall.db import models, api, exceptions, paginate
+from dataall.db import models, api, exceptions, paginate, permissions
 from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
-    DATASET_TABLE_READ
+    DATASET_TABLE_READ, LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class DatasetService:
     @staticmethod
     @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(permissions.CREATE_DATASET)
+    @has_resource_perm(CREATE_DATASET)
     def create_dataset(
         session,
         username: str,
@@ -60,7 +60,7 @@ class DatasetService:
             groups=groups,
             uri=uri,
             group=data['SamlAdminGroupName'],
-            permission_name=permissions.CREATE_DATASET,
+            permission_name=CREATE_DATASET,
         )
 
         environment = Environment.get_environment_by_uri(session, uri)
@@ -668,7 +668,7 @@ class DatasetService:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
+    @has_resource_perm(LIST_ENVIRONMENT_DATASETS)
     def paginated_environment_datasets(
             session, username, groups, uri, data=None, check_perm=None
     ) -> dict:

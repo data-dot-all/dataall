@@ -1,12 +1,12 @@
 from aws_cdk import aws_iam as iam
 
-from dataall.db import permissions
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.modules.datasets.services.permissions import CREATE_DATASET
 
 
 class LakeFormationPolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
-        if permissions.CREATE_DATASET not in group_permissions:
+        if CREATE_DATASET not in group_permissions:
             return []
 
         return [
