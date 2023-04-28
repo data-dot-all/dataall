@@ -704,11 +704,3 @@ class DatasetService:
             )
             .all()
         )
-
-    @staticmethod
-    def list_env_datasets(session, environment_uri):
-        return (
-            session.query(Dataset)
-            .filter(Dataset.environmentUri == environment_uri)
-            .all()
-        )
