@@ -153,8 +153,9 @@ def _initialize_modules(modes: List[ImportMode]):
                 queue.append(dependant)
 
     if initialized < len(degrees):
-        # We shouldn't reach this point since it should already be covered by python. But just in case
-        raise ImportError("Not all modules have been initialized. Most likely circular dependency")
+        # Happens if the ModuleInterface for dependency doesn't support import mode
+        # The case when there is circular imports should already be covered by python loader
+        raise ImportError("Not all modules have been initialized. Check if your import modes are correct")
 
 
 def _initialize_module(module):
