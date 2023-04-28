@@ -4,10 +4,9 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import (
     Environment,
-    has_tenant_perm,
-    has_resource_perm,
     ResourcePolicy,
     KeyValueTag,
     Vote,
@@ -31,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 class DatasetService:
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(CREATE_DATASET)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
     def create_dataset(
         session,
         username: str,
@@ -201,7 +200,7 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
+    @has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(
         session,
         username: str,
@@ -294,8 +293,8 @@ class DatasetService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(UPDATE_DATASET)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET)
     def update_dataset(
         session, username, groups, uri, data=None, check_perm=None
     ) -> Dataset:
@@ -668,7 +667,7 @@ class DatasetService:
         return query
 
     @staticmethod
-    @has_resource_perm(LIST_ENVIRONMENT_DATASETS)
+    @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
     def paginated_environment_datasets(
             session, username, groups, uri, data=None, check_perm=None
     ) -> dict:

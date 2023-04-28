@@ -2,7 +2,8 @@ import logging
 
 from sqlalchemy import and_, or_
 
-from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.db.api import Glossary
 from dataall.db import models, api, paginate, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
@@ -14,15 +15,13 @@ logger = logging.getLogger(__name__)
 
 class DatasetLocationService:
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(CREATE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET_FOLDER)
     def create_dataset_location(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
+        data: dict = None
     ) -> DatasetStorageLocation:
         dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         exists = (
@@ -68,8 +67,8 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(LIST_DATASET_FOLDERS)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(
         session,
         username: str,
@@ -93,8 +92,8 @@ class DatasetLocationService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(LIST_DATASET_FOLDERS)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(LIST_DATASET_FOLDERS)
     def get_dataset_location(
         session,
         username: str,
@@ -106,8 +105,8 @@ class DatasetLocationService:
         return DatasetLocationService.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(UPDATE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET_FOLDER)
     def update_dataset_location(
         session,
         username: str,
@@ -136,8 +135,8 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(DELETE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(DELETE_DATASET_FOLDER)
     def delete_dataset_location(
         session,
         username: str,

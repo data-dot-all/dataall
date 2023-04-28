@@ -21,10 +21,8 @@ def create_storage_location(
         location = DatasetLocationService.create_dataset_location(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=datasetUri,
             data=input,
-            check_perm=True,
         )
 
         S3DatasetLocationHandler.create_bucket_prefix(location)
