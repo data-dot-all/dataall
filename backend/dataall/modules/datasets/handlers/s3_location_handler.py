@@ -3,7 +3,7 @@ import logging
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 
 log = logging.getLogger(__name__)
 

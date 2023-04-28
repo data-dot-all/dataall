@@ -7,7 +7,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import api, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.db.models import DatasetProfilingRun
 from dataall.modules.datasets.services.permissions import PROFILE_DATASET_TABLE

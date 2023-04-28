@@ -9,7 +9,7 @@ from dataall.db.api import (
 from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocationHandler
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import UPDATE_DATASET_FOLDER
 

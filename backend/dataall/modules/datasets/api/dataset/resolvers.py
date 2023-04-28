@@ -18,7 +18,7 @@ from dataall.db.api import Environment, ShareObject, ResourcePolicy
 from dataall.db.api.organization import Organization
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer

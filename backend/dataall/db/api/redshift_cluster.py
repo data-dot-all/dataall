@@ -497,7 +497,7 @@ class RedshiftCluster:
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
         # TODO this dirty hack should be removed in the redshift module or after pipeline migration (circular import)
-        from dataall.modules.datasets.services.dataset_table import DatasetTableService
+        from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
         table = DatasetTableService.get_dataset_table_by_uri(
             session, data['tableUri']
         )
