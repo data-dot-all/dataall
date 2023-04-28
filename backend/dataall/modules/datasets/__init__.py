@@ -2,8 +2,6 @@
 import logging
 from typing import List
 
-from dataall.api.Objects.Vote.resolvers import add_vote_type
-from dataall.db.api import TargetType
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
@@ -22,6 +20,8 @@ class DatasetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
+        from dataall.api.Objects.Vote.resolvers import add_vote_type
+        from dataall.db.api import TargetType
         from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 
