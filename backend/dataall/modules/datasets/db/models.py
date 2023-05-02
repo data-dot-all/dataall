@@ -81,5 +81,3 @@ class DatasetTable(Resource, Base):
 
     def uri(self):
         return self.tableUri
-
-
