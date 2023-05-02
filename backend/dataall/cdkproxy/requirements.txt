@@ -13,7 +13,7 @@ requests==2.27.1
 tabulate==0.8.9
 uvicorn==0.15.0
 jinja2==3.0.3
-werkzeug==2.2.3
+werkzeug==2.3.3
 constructs>=10.0.0,<11.0.0
 git-remote-codecommit==1.16
 aws-ddk==0.5.1
