@@ -55,4 +55,3 @@ class DatasetStorageLocation(Resource, Base):
 
     def uri(self):
         return self.locationUri
-
