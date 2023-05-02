@@ -5,11 +5,9 @@ from .Dashboard import Dashboard
 from .DashboardShare import DashboardShare
 from .DashboardShare import DashboardShareStatus
 from .Dataset import Dataset
-from .DatasetProfilingRun import DatasetProfilingRun
 from .DatasetQualityRule import DatasetQualityRule
 from .DatasetStorageLocation import DatasetStorageLocation
 from .DatasetTable import DatasetTable
-from .DatasetTableProfilingJob import DatasetTableProfilingJob
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup
 from .FeedMessage import FeedMessage

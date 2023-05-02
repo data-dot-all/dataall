@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from dataall.db import models
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn
 import pytest
 
 

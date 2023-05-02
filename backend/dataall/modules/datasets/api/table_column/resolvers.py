@@ -6,7 +6,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import paginate, permissions, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn
 
 
 def list_table_columns(

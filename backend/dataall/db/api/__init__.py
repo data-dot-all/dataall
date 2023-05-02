@@ -12,7 +12,6 @@ from .glossary import Glossary
 from .vote import Vote
 from .dataset import Dataset
 from .dataset_location import DatasetStorageLocation
-from .dataset_profiling_run import DatasetProfilingRun
 from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
