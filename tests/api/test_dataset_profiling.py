@@ -2,6 +2,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import DatasetProfilingRun
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -39,7 +40,7 @@ def test_add_tables(table, dataset1, db):
 def update_runs(db, runs):
     with db.scoped_session() as session:
         for run in runs:
-            run = session.query(dataall.db.models.DatasetProfilingRun).get(
+            run = session.query(DatasetProfilingRun).get(
                 run['profilingRunUri']
             )
             run.status = 'SUCCEEDED'
@@ -70,7 +71,7 @@ def test_start_profiling(org1, env1, dataset1, client, module_mocker, db, user, 
     profiling = response.data.startDatasetProfilingRun
     assert profiling.profilingRunUri
     with db.scoped_session() as session:
-        profiling = session.query(dataall.db.models.DatasetProfilingRun).get(
+        profiling = session.query(DatasetProfilingRun).get(
             profiling.profilingRunUri
         )
         profiling.GlueJobRunId = 'jr_111111111111'
@@ -129,7 +130,7 @@ def test_get_table_profiling_run(
     client, dataset1, env1, module_mocker, table, db, group
 ):
     module_mocker.patch(
-        'dataall.api.Objects.DatasetProfiling.resolvers.get_profiling_results_from_s3',
+        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
         return_value='{"results": "yes"}',
     )
     runs = list_profiling_runs(client, dataset1, group)
@@ -169,7 +170,7 @@ def test_list_table_profiling_runs(
     client, dataset1, env1, module_mocker, table, db, group
 ):
     module_mocker.patch(
-        'dataall.api.Objects.DatasetProfiling.resolvers.get_profiling_results_from_s3',
+        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
         return_value='{"results": "yes"}',
     )
     module_mocker.patch('requests.post', return_value=True)

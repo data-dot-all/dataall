@@ -1,5 +1,10 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.datasets.api.profiling.resolvers import (
+    get_profiling_run,
+    list_profiling_runs,
+    list_table_profiling_runs,
+    get_last_table_profiling_run
+)
 
 
 getDatasetProfilingRun = gql.QueryField(

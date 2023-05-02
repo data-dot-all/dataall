@@ -4,7 +4,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn
 
 
 @pytest.fixture(scope='module', autouse=True)

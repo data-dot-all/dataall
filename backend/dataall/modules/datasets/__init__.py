@@ -4,7 +4,7 @@ from typing import List
 
 from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
-from dataall.modules.datasets.db.table_column_model import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn
 from dataall.modules.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
