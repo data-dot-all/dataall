@@ -7,7 +7,7 @@ cdk-nag==2.7.2
 constructs==10.0.73
 starlette==0.25.0
 fastapi == 0.92.0
-Flask==2.0.3
+Flask==2.3.2
 PyYAML==6.0
 requests==2.27.1
 tabulate==0.8.9
