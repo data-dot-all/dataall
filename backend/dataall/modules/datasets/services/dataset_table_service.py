@@ -2,8 +2,10 @@ import logging
 
 from sqlalchemy.sql import and_
 
+from dataall.core.context import get_context
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import models, api, exceptions, paginate
-from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary, ResourcePolicy, Environment
+from dataall.db.api import Glossary, ResourcePolicy, Environment
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
     UPDATE_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
@@ -15,15 +17,12 @@ logger = logging.getLogger(__name__)
 
 class DatasetTableService:
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(CREATE_DATASET_TABLE)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET_TABLE)
     def create_dataset_table(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> DatasetTable:
         dataset = DatasetService.get_dataset_by_uri(session, uri)
         exists = (
@@ -61,7 +60,7 @@ class DatasetTableService:
         session.add(table)
         if data.get('terms') is not None:
             Glossary.set_glossary_terms_links(
-                session, username, table.tableUri, 'DatasetTable', data.get('terms', [])
+                session, get_context().username, table.tableUri, 'DatasetTable', data.get('terms', [])
             )
         session.commit()
 
@@ -79,14 +78,11 @@ class DatasetTableService:
         return table
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
+    @has_tenant_permission(MANAGE_DATASETS)
     def list_dataset_tables(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> dict:
         query = (
             session.query(DatasetTable)
@@ -101,27 +97,21 @@ class DatasetTableService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
+    @has_tenant_permission(MANAGE_DATASETS)
     def get_dataset_table(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> DatasetTable:
         return DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(UPDATE_DATASET_TABLE)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET_TABLE)
     def update_dataset_table(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ):
         table = data.get(
             'table',
@@ -133,21 +123,18 @@ class DatasetTableService:
 
         if data.get('terms') is not None:
             Glossary.set_glossary_terms_links(
-                session, username, table.tableUri, 'DatasetTable', data.get('terms', [])
+                session, get_context().username, table.tableUri, 'DatasetTable', data.get('terms', [])
             )
 
         return table
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(DELETE_DATASET_TABLE)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(DELETE_DATASET_TABLE)
     def delete_dataset_table(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ):
         table = DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
         share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()

@@ -5,7 +5,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
 from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 

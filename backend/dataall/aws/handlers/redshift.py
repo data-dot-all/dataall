@@ -10,7 +10,7 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 # TODO should be migrated in the redshift module
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 

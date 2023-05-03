@@ -18,7 +18,7 @@ from dataall.db.api import Environment, ShareObject, ResourcePolicy
 from dataall.db.api.organization import Organization
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -91,12 +91,7 @@ def import_dataset(context: Context, source, input=None):
 
 def get_dataset(context, source, datasetUri=None):
     with context.engine.scoped_session() as session:
-        dataset = DatasetService.get_dataset(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=datasetUri,
-        )
+        dataset = DatasetService.get_dataset(session, uri=datasetUri)
         if dataset.SamlAdminGroupName in context.groups:
             dataset.userRoleForDataset = DatasetRole.Admin.value
         return dataset
@@ -220,11 +215,8 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         updated_dataset = DatasetService.update_dataset(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=datasetUri,
             data=input,
-            check_perm=True,
         )
         DatasetIndexer.upsert(session, dataset_uri=datasetUri)
 
@@ -655,11 +647,8 @@ def list_datasets_created_in_environment(
     with context.engine.scoped_session() as session:
         return DatasetService.paginated_environment_datasets(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -671,10 +660,7 @@ def list_datasets_owned_by_env_group(
     with context.engine.scoped_session() as session:
         return DatasetService.paginated_environment_group_datasets(
             session=session,
-            username=context.username,
-            groups=context.groups,
             envUri=environmentUri,
             groupUri=groupUri,
             data=filter,
-            check_perm=True,
         )

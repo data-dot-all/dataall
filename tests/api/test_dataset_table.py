@@ -3,7 +3,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 

@@ -5,7 +5,7 @@ from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import paginate, models
 from dataall.db.api import ResourcePolicy
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
 

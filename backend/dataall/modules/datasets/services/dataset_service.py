@@ -4,10 +4,10 @@ from datetime import datetime
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
+from dataall.core.context import get_context
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import (
     Environment,
-    has_tenant_perm,
-    has_resource_perm,
     ResourcePolicy,
     KeyValueTag,
     Vote,
@@ -18,7 +18,7 @@ from dataall.db import models, api, exceptions, paginate, permissions
 from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
     DATASET_TABLE_READ, LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.utils.naming_convention import (
@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 class DatasetService:
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(CREATE_DATASET)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
     def create_dataset(
         session,
         username: str,
@@ -201,15 +201,8 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    def get_dataset(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> Dataset:
+    @has_tenant_permission(MANAGE_DATASETS)
+    def get_dataset(session, uri: str) -> Dataset:
         return DatasetService.get_dataset_by_uri(session, uri)
 
     @staticmethod
@@ -294,11 +287,10 @@ class DatasetService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(UPDATE_DATASET)
-    def update_dataset(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> Dataset:
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET)
+    def update_dataset(session, uri, data=None) -> Dataset:
+        username = get_context().username
         dataset: Dataset = DatasetService.get_dataset_by_uri(session, uri)
         if data and isinstance(data, dict):
             for k in data.keys():
@@ -627,7 +619,7 @@ class DatasetService:
         )
 
     @staticmethod
-    def query_environment_group_datasets(session, username, groups, envUri, groupUri, filter) -> Query:
+    def query_environment_group_datasets(session, envUri, groupUri, filter) -> Query:
         query = session.query(Dataset).filter(
             and_(
                 Dataset.environmentUri == envUri,
@@ -648,7 +640,7 @@ class DatasetService:
         return query
 
     @staticmethod
-    def query_environment_datasets(session, username, groups, uri, filter) -> Query:
+    def query_environment_datasets(session, uri, filter) -> Query:
         query = session.query(Dataset).filter(
             and_(
                 Dataset.environmentUri == uri,
@@ -668,13 +660,13 @@ class DatasetService:
         return query
 
     @staticmethod
-    @has_resource_perm(LIST_ENVIRONMENT_DATASETS)
+    @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
     def paginated_environment_datasets(
-            session, username, groups, uri, data=None, check_perm=None
+            session, uri, data=None,
     ) -> dict:
         return paginate(
             query=DatasetService.query_environment_datasets(
-                session, username, groups, uri, data
+                session, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
@@ -682,11 +674,11 @@ class DatasetService:
 
     @staticmethod
     def paginated_environment_group_datasets(
-            session, username, groups, envUri, groupUri, data=None, check_perm=None
+            session, envUri, groupUri, data=None
     ) -> dict:
         return paginate(
             query=DatasetService.query_environment_group_datasets(
-                session, username, groups, envUri, groupUri, data
+                session, envUri, groupUri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
@@ -702,13 +694,5 @@ class DatasetService:
                     Dataset.SamlAdminGroupName == group_uri,
                 )
             )
-            .all()
-        )
-
-    @staticmethod
-    def list_env_datasets(session, environment_uri):
-        return (
-            session.query(Dataset)
-            .filter(Dataset.environmentUri == environment_uri)
             .all()
         )

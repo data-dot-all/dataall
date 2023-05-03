@@ -16,7 +16,7 @@ from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE, PREVIEW_DATASET_TABLE
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -25,11 +25,8 @@ def create_table(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.create_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=datasetUri,
             data=input,
-            check_perm=True,
         )
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
@@ -43,11 +40,8 @@ def list_dataset_tables(context, source, filter: dict = None):
     with context.engine.scoped_session() as session:
         return DatasetTableService.list_dataset_tables(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.datasetUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -56,13 +50,10 @@ def get_table(context, source: Dataset, tableUri: str = None):
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         return DatasetTableService.get_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=table.datasetUri,
             data={
                 'tableUri': tableUri,
             },
-            check_perm=True,
         )
 
 
@@ -77,11 +68,8 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
 
         DatasetTableService.update_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=dataset.datasetUri,
             data=input,
-            check_perm=True,
         )
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
@@ -92,13 +80,10 @@ def delete_table(context, source, tableUri: str = None):
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         DatasetTableService.delete_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=table.datasetUri,
             data={
                 'tableUri': tableUri,
             },
-            check_perm=True,
         )
     DatasetTableIndexer.delete_doc(doc_id=tableUri)
     return True

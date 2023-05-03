@@ -16,8 +16,8 @@ from dataall.modules.datasets.services.dataset_profiling_service import DatasetP
 from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
