@@ -11,8 +11,8 @@ from dataall.db import models
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 root = logging.getLogger()
@@ -94,7 +94,7 @@ def sync_tables(engine):
                     f'{dataset.AwsAccountId}/{dataset.GlueDatabaseName} '
                     f'due to: {e}'
                 )
-                AlarmService().trigger_dataset_sync_failure_alarm(dataset, str(e))
+                DatasetAlarmService().trigger_dataset_sync_failure_alarm(dataset, str(e))
         return processed_tables
 
 

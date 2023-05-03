@@ -14,7 +14,7 @@ class DatasetDataPolicy(DataPolicy):
             environment_id=self.environment.environmentUri,
             group_uri=self.team.groupUri,
         )
-        return self._generate_dataset_statements(datasets)
+        return DatasetDataPolicy._generate_dataset_statements(datasets)
 
     @staticmethod
     def _generate_dataset_statements(datasets: List[Dataset]):

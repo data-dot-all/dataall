@@ -10,9 +10,10 @@ from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
-from ....db import api, exceptions, models
+from ....db import exceptions, models
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.utils.alarm_service import AlarmService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +527,7 @@ class LFShareManager:
             f'due to: {error}'
         )
 
-        AlarmService().trigger_table_sharing_failure_alarm(
+        DatasetAlarmService().trigger_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True
@@ -549,7 +550,7 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_revoke_table_sharing_failure_alarm(
+        DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True

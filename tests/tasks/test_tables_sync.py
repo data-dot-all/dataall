@@ -1,7 +1,11 @@
+from unittest.mock import MagicMock
+
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -156,12 +160,12 @@ def test_tables_sync(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.datasets.tasks.tables_syncer.is_assumable_pivot_role', return_value=True
     )
-    mocker.patch(
-        'dataall.aws.handlers.glue.Glue.grant_principals_all_table_permissions',
-        return_value=True,
-    )
 
-    processed_tables = dataall.modules.datasets.tasks.tables_syncer.sync_tables(engine=db)
+    mock_client = MagicMock()
+    mocker.patch("dataall.modules.datasets.tasks.tables_syncer.LakeFormationTableClient", mock_client)
+    mock_client.grant_principals_all_table_permissions = True
+
+    processed_tables = sync_tables(engine=db)
     assert len(processed_tables) == 2
     with db.scoped_session() as session:
         saved_table: DatasetTable = (
