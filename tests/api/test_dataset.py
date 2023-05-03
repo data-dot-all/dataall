@@ -16,11 +16,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
@@ -108,7 +104,7 @@ def test_list_datasets(client, dataset1, group):
     assert response.data.listDatasets.nodes[0].datasetUri == dataset1.datasetUri
 
 
-def test_update_dataset(dataset1, client, patch_es, group, group2):
+def test_update_dataset(dataset1, client, group, group2):
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){

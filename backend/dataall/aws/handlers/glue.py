@@ -379,7 +379,6 @@ class Glue:
             glue_client = aws.client('glue', region_name=Data_pipeline.region)
             try:
                 response = glue_client.get_job_runs(JobName=Data_pipeline.name)
-                print(response)
             except ClientError as e:
                 log.warning(f'Could not retrieve pipeline runs , {str(e)}')
                 return []

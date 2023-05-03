@@ -59,7 +59,6 @@ class WorkerHandler:
                     )
                     return tasks_responses
                 except Exception as e:
-                    print('==================>', e)
                     log.exception('Error in process')
                     log.error(f'Task processing failed {e} : {taskid}')
         else:

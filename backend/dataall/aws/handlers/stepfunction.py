@@ -18,7 +18,7 @@ def run_pipeline(state_machine_name, env: models.Environment, stage='Test'):
         )
 
     response = client.start_execution(stateMachineArn=arn)
-    print(response)
+
     return response['executionArn']
 
 
