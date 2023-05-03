@@ -141,8 +141,6 @@ class EnvironmentSetup(Stack):
             self.engine, self._environment
         )
 
-        self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
-
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
