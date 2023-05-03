@@ -110,8 +110,7 @@ def get_vote_query(client, target_uri, target_type, group):
     return response
 
 
-def test_upvote(patch_es, client, dataset1, module_mocker, dashboard):
-    module_mocker.patch('dataall.api.Objects.Vote.resolvers.reindex', return_value={})
+def test_upvote(patch_es, client, dataset1, dashboard):
     response = upvote_mutation(
         client, dataset1.datasetUri, 'dataset', True, dataset1.SamlAdminGroupName
     )

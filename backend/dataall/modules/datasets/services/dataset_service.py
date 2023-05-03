@@ -12,6 +12,8 @@ from dataall.db.api import (
     KeyValueTag,
     Vote,
     Stack,
+    has_tenant_perm,
+    has_resource_perm,
 )
 from dataall.db.api import Organization
 from dataall.db import models, api, exceptions, paginate, permissions
@@ -31,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 class DatasetService:
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET)
+    @has_tenant_perm(MANAGE_DATASETS)
+    @has_resource_perm(CREATE_DATASET)
     def create_dataset(
         session,
         username: str,

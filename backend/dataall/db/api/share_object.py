@@ -13,7 +13,6 @@ from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectAction
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from ...modules.datasets.services.permissions import DATASET_TABLE_READ
-from ...modules.datasets.services.share_notification_service import ShareNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -564,6 +563,8 @@ class ShareObject:
 
         Share_SM.update_state(session, share, new_share_state)
 
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
         ShareNotificationService.notify_share_object_submission(
             session, username, dataset, share
         )
@@ -611,6 +612,8 @@ class ShareObject:
                 resource_type=DatasetTable.__name__,
             )
 
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
         ShareNotificationService.notify_share_object_approval(session, username, dataset, share)
         return share
 
@@ -644,6 +647,9 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
+
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
         ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 
@@ -686,6 +692,9 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
+
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
         ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 

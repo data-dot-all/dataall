@@ -11,6 +11,7 @@ from typing import Callable
 from dataall.db import models
 from dataall.api import constants
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 from dataall.tasks.data_sharing.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
 from dataall.tasks.data_sharing.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
@@ -644,6 +645,7 @@ def test_revoke_external_account_access_on_source_account(
     # Then
     lf_mock.assert_called_once()
 
+
 def test_handle_share_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
@@ -655,7 +657,7 @@ def test_handle_share_failure(
 ):
 
     # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_table_sharing_failure_alarm")
+    alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_table_sharing_failure_alarm")
     error = Exception
 
     # When
@@ -673,6 +675,7 @@ def test_handle_share_failure(
     # Then
     alarm_service_mock.assert_called_once()
 
+
 def test_handle_revoke_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
@@ -683,7 +686,7 @@ def test_handle_revoke_failure(
         mocker,
 ):
     # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_revoke_table_sharing_failure_alarm")
+    alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_revoke_table_sharing_failure_alarm")
     error = Exception
 
     # When

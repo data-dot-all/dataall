@@ -1,8 +1,10 @@
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
 import dataall
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
@@ -180,8 +182,7 @@ def test_update_dataset(dataset1, client, patch_es, group, group2):
 
 def test_start_crawler(org1, env1, dataset1, client, group, module_mocker):
     module_mocker.patch(
-        'dataall.modules.datasets.aws.glue_dataset_client.DatasetCrawler.get_crawler',
-        return_value={'crawler_name': dataset1.GlueCrawlerName},
+        'dataall.modules.datasets.api.dataset.resolvers.DatasetCrawler', MagicMock()
     )
     mutation = """
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
