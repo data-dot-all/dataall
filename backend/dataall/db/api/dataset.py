@@ -16,9 +16,10 @@ from . import (
 from . import Organization
 from .. import models, api, exceptions, permissions, paginate
 from ..models.Enums import Language, ConfidentialityClassification
-from ...modules.datasets.db.dataset_repository import DatasetRepository
-from ...modules.datasets.services.dataset_location import DatasetLocationService
-from ...utils.naming_convention import (
+from dataall.modules.datasets.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
@@ -266,21 +267,21 @@ class Dataset:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         query = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .filter(
                 and_(
-                    models.DatasetTable.datasetUri == uri,
-                    models.DatasetTable.LastGlueTableStatus != 'Deleted',
+                    DatasetTable.datasetUri == uri,
+                    DatasetTable.LastGlueTableStatus != 'Deleted',
                 )
             )
-            .order_by(models.DatasetTable.created.desc())
+            .order_by(DatasetTable.created.desc())
         )
         if data and data.get('term'):
             query = query.filter(
                 or_(
                     *[
-                        models.DatasetTable.name.ilike('%' + data.get('term') + '%'),
-                        models.DatasetTable.GlueTableName.ilike(
+                        DatasetTable.name.ilike('%' + data.get('term') + '%'),
+                        DatasetTable.GlueTableName.ilike(
                             '%' + data.get('term') + '%'
                         ),
                     ]
@@ -379,7 +380,7 @@ class Dataset:
                 group=new_stewards,
                 permissions=permissions.DATASET_TABLE_READ,
                 resource_uri=tableUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
 
         dataset_shares = (
@@ -455,8 +456,8 @@ class Dataset:
     def get_dataset_tables(session, dataset_uri):
         """return the dataset tables"""
         return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
+            session.query(DatasetTable)
+            .filter(DatasetTable.datasetUri == dataset_uri)
             .all()
         )
 
@@ -585,10 +586,10 @@ class Dataset:
     @staticmethod
     def _delete_dataset_tables(session, dataset_uri) -> bool:
         tables = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .filter(
                 and_(
-                    models.DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.datasetUri == dataset_uri,
                 )
             )
             .all()
@@ -618,7 +619,7 @@ class Dataset:
     @staticmethod
     def count_dataset_tables(session, dataset_uri):
         return (
-            session.query(models.DatasetTable)
-            .filter(models.DatasetTable.datasetUri == dataset_uri)
+            session.query(DatasetTable)
+            .filter(DatasetTable.datasetUri == dataset_uri)
             .count()
         )

@@ -2,6 +2,7 @@
 from operator import and_
 
 from dataall.db import models
+from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.searchproxy.base_indexer import BaseIndexer
 
@@ -12,14 +13,14 @@ class DatasetTableIndexer(BaseIndexer):
     def upsert(cls, session, table_uri: str):
         table = (
             session.query(
-                models.DatasetTable.datasetUri.label('datasetUri'),
-                models.DatasetTable.tableUri.label('uri'),
-                models.DatasetTable.name.label('name'),
-                models.DatasetTable.owner.label('owner'),
-                models.DatasetTable.label.label('label'),
-                models.DatasetTable.description.label('description'),
+                DatasetTable.datasetUri.label('datasetUri'),
+                DatasetTable.tableUri.label('uri'),
+                DatasetTable.name.label('name'),
+                DatasetTable.owner.label('owner'),
+                DatasetTable.label.label('label'),
+                DatasetTable.description.label('description'),
                 models.Dataset.confidentiality.label('classification'),
-                models.DatasetTable.tags.label('tags'),
+                DatasetTable.tags.label('tags'),
                 models.Dataset.topics.label('topics'),
                 models.Dataset.region.label('region'),
                 models.Organization.organizationUri.label('orgUri'),
@@ -29,13 +30,13 @@ class DatasetTableIndexer(BaseIndexer):
                 models.Dataset.SamlAdminGroupName.label('admins'),
                 models.Dataset.GlueDatabaseName.label('database'),
                 models.Dataset.S3BucketName.label('source'),
-                models.DatasetTable.created,
-                models.DatasetTable.updated,
-                models.DatasetTable.deleted,
+                DatasetTable.created,
+                DatasetTable.updated,
+                DatasetTable.deleted,
             )
             .join(
                 models.Dataset,
-                models.Dataset.datasetUri == models.DatasetTable.datasetUri,
+                models.Dataset.datasetUri == DatasetTable.datasetUri,
             )
             .join(
                 models.Organization,
@@ -45,7 +46,7 @@ class DatasetTableIndexer(BaseIndexer):
                 models.Environment,
                 models.Dataset.environmentUri == models.Environment.environmentUri,
             )
-            .filter(models.DatasetTable.tableUri == table_uri)
+            .filter(DatasetTable.tableUri == table_uri)
             .first()
         )
 
@@ -84,15 +85,31 @@ class DatasetTableIndexer(BaseIndexer):
     @classmethod
     def upsert_all(cls, session, dataset_uri: str):
         tables = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .filter(
                 and_(
-                    models.DatasetTable.datasetUri == dataset_uri,
-                    models.DatasetTable.LastGlueTableStatus != 'Deleted',
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus != 'Deleted',
                 )
             )
             .all()
         )
         for table in tables:
             DatasetTableIndexer.upsert(session=session, table_uri=table.tableUri)
+        return tables
+
+    @classmethod
+    def remove_all_deleted(cls, session, dataset_uri: str):
+        tables = (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
+        )
+        for table in tables:
+            cls.delete_doc(doc_id=table.tableUri)
         return tables

@@ -8,7 +8,7 @@ from dataall.api.constants import ShareableType
 from dataall.db import models, permissions
 from dataall.db.api import has_resource_perm, ShareItemSM
 from dataall.db.paginator import paginate
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 
 class DatasetShareService:
@@ -41,9 +41,9 @@ class DatasetShareService:
                             models.ShareObjectItem.itemType
                             == ShareableType.Table.value,
                             func.concat(
-                                models.DatasetTable.GlueDatabaseName,
+                                DatasetTable.GlueDatabaseName,
                                 '.',
-                                models.DatasetTable.GlueTableName,
+                                DatasetTable.GlueTableName,
                             ),
                         ),
                         (
@@ -73,8 +73,8 @@ class DatasetShareService:
                 == models.Environment.organizationUri,
             )
             .outerjoin(
-                models.DatasetTable,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+                DatasetTable,
+                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .outerjoin(
                 DatasetStorageLocation,
@@ -137,9 +137,9 @@ class DatasetShareService:
                             models.ShareObjectItem.itemType
                             == ShareableType.Table.value,
                             func.concat(
-                                models.DatasetTable.GlueDatabaseName,
+                                DatasetTable.GlueDatabaseName,
                                 '.',
-                                models.DatasetTable.GlueTableName,
+                                DatasetTable.GlueTableName,
                             ),
                         ),
                         (
@@ -169,8 +169,8 @@ class DatasetShareService:
                 == models.Environment.organizationUri,
             )
             .outerjoin(
-                models.DatasetTable,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+                DatasetTable,
+                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .outerjoin(
                 DatasetStorageLocation,

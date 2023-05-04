@@ -1,5 +1,5 @@
-from sqlalchemy import Boolean, Column, String
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import Boolean, Column, String, Text
+from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.db import Base, Resource, utils
 
@@ -55,3 +55,29 @@ class DatasetStorageLocation(Resource, Base):
 
     def uri(self):
         return self.locationUri
+
+
+class DatasetTable(Resource, Base):
+    __tablename__ = 'dataset_table'
+    datasetUri = Column(String, nullable=False)
+    tableUri = Column(String, primary_key=True, default=utils.uuid('table'))
+    AWSAccountId = Column(String, nullable=False)
+    S3BucketName = Column(String, nullable=False)
+    S3Prefix = Column(String, nullable=False)
+    GlueDatabaseName = Column(String, nullable=False)
+    GlueTableName = Column(String, nullable=False)
+    GlueTableConfig = Column(Text)
+    GlueTableProperties = Column(JSON, default={})
+    LastGlueTableStatus = Column(String, default='InSync')
+    region = Column(String, default='eu-west-1')
+    # LastGeneratedPreviewDate= Column(DateTime, default=None)
+    confidentiality = Column(String, nullable=True)
+    userRoleForTable = query_expression()
+    projectPermission = query_expression()
+    redshiftClusterPermission = query_expression()
+    stage = Column(String, default='RAW')
+    topics = Column(ARRAY(String), nullable=True)
+    confidentiality = Column(String, nullable=False, default='C1')
+
+    def uri(self):
+        return self.tableUri

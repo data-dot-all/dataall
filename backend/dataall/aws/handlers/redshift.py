@@ -11,6 +11,7 @@ from ... import db
 from ...db import models
 # TODO should be migrated in the redshift module
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.models import DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -448,7 +449,7 @@ class Redshift:
                 session, task.payload['datasetUri']
             )
 
-            table: models.DatasetTable = DatasetTableService.get_dataset_table_by_uri(
+            table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
                 session, task.payload['tableUri']
             )
 

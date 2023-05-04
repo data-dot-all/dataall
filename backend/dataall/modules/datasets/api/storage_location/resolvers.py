@@ -88,7 +88,7 @@ def remove_storage_location(context, source, locationUri: str = None):
             data={'locationUri': location.locationUri},
             check_perm=True,
         )
-        indexers.delete_doc(es=context.es, doc_id=location.locationUri)
+        DatasetLocationIndexer.delete_doc(doc_id=location.locationUri)
     return True
 
 

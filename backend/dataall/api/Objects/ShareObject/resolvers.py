@@ -7,7 +7,7 @@ from ....api.constants import *
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....db import models
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 log = logging.getLogger(__name__)
 
@@ -265,7 +265,7 @@ def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
 
 
 def union_resolver(object, *_):
-    if isinstance(object, models.DatasetTable):
+    if isinstance(object, DatasetTable):
         return 'DatasetTable'
     elif isinstance(object, DatasetStorageLocation):
         return 'DatasetStorageLocation'

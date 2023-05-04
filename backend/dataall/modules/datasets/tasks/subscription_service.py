@@ -17,7 +17,7 @@ from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -68,7 +68,7 @@ class SubscriptionService:
     @staticmethod
     def publish_table_update_message(engine, message):
         with engine.scoped_session() as session:
-            table: models.DatasetTable = DatasetTableService.get_table_by_s3_prefix(
+            table: DatasetTable = DatasetTableService.get_table_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
@@ -139,7 +139,7 @@ class SubscriptionService:
     @staticmethod
     def store_dataquality_results(session, message):
 
-        table: models.DatasetTable = DatasetTableService.get_table_by_s3_prefix(
+        table: DatasetTable = DatasetTableService.get_table_by_s3_prefix(
             session,
             message.get('prefix'),
             message.get('accountid'),
@@ -207,7 +207,7 @@ class SubscriptionService:
 
     @staticmethod
     def publish_sns_message(
-        engine, message, dataset, share_items, prefix, table: models.DatasetTable = None
+        engine, message, dataset, share_items, prefix, table: DatasetTable = None
     ):
         with engine.scoped_session() as session:
             for item in share_items:
@@ -290,7 +290,7 @@ class SubscriptionService:
         message,
         dataset: models.Dataset,
         environment: models.Environment,
-        table: models.DatasetTable,
+        table: DatasetTable,
     ):
         log.info(
             f'Redshift copy starting '

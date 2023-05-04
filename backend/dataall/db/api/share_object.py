@@ -10,7 +10,7 @@ from . import (
 from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 logger = logging.getLogger(__name__)
 
@@ -422,7 +422,7 @@ class ShareObject:
                 if itemType == ShareableType.StorageLocation.value:
                     item = session.query(DatasetStorageLocation).get(itemUri)
                 if itemType == ShareableType.Table.value:
-                    item = session.query(models.DatasetTable).get(itemUri)
+                    item = session.query(DatasetTable).get(itemUri)
 
             share_item = (
                 session.query(models.ShareObjectItem)
@@ -605,7 +605,7 @@ class ShareObject:
                 group=share.principalId,
                 permissions=permissions.DATASET_TABLE_READ,
                 resource_uri=table.itemUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
 
         api.Notification.notify_share_object_approval(session, username, dataset, share)
@@ -717,7 +717,7 @@ class ShareObject:
             ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
         )
         if share_item.itemType == ShareableType.Table.value:
-            return session.query(models.DatasetTable).get(share_item.itemUri)
+            return session.query(DatasetTable).get(share_item.itemUri)
         if share_item.itemType == ShareableType.StorageLocation:
             return session.Query(DatasetStorageLocation).get(share_item.itemUri)
 
@@ -762,7 +762,7 @@ class ShareObject:
         Share_SM.update_state(session, share, new_share_state)
 
         if itemType == ShareableType.Table.value:
-            item: models.DatasetTable = session.query(models.DatasetTable).get(itemUri)
+            item: DatasetTable = session.query(DatasetTable).get(itemUri)
             if item and item.region != target_environment.region:
                 raise exceptions.UnauthorizedOperation(
                     action=permissions.ADD_ITEM,
@@ -944,10 +944,10 @@ class ShareObject:
         # marking the table as part of the shareObject
         tables = (
             session.query(
-                models.DatasetTable.tableUri.label('itemUri'),
+                DatasetTable.tableUri.label('itemUri'),
                 func.coalesce('DatasetTable').label('itemType'),
-                models.DatasetTable.GlueTableName.label('itemName'),
-                models.DatasetTable.description.label('description'),
+                DatasetTable.GlueTableName.label('itemName'),
+                DatasetTable.description.label('description'),
                 models.ShareObjectItem.shareItemUri.label('shareItemUri'),
                 models.ShareObjectItem.status.label('status'),
                 case(
@@ -959,10 +959,10 @@ class ShareObject:
                 models.ShareObjectItem,
                 and_(
                     models.ShareObjectItem.shareUri == share.shareUri,
-                    models.DatasetTable.tableUri == models.ShareObjectItem.itemUri,
+                    DatasetTable.tableUri == models.ShareObjectItem.itemUri,
                 ),
             )
-            .filter(models.DatasetTable.datasetUri == datasetUri)
+            .filter(DatasetTable.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
@@ -1145,7 +1145,7 @@ class ShareObject:
     def find_share_item_by_table(
         session,
         share: models.ShareObject,
-        table: models.DatasetTable,
+        table: DatasetTable,
     ) -> models.ShareObjectItem:
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
@@ -1247,10 +1247,10 @@ class ShareObject:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
         tables = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .join(
                 models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .join(
                 models.ShareObject,

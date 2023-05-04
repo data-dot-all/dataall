@@ -4,11 +4,12 @@ from sqlalchemy import and_, or_, literal
 
 from .. import models, api, exceptions, paginate, permissions
 from . import has_resource_perm, ResourcePolicy, Environment, Dataset
-from ...utils.naming_convention import (
+from dataall.modules.datasets.db.models import DatasetTable
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from ...utils.slugify import slugify
+from dataall.utils.slugify import slugify
 
 log = logging.getLogger(__name__)
 
@@ -334,13 +335,13 @@ class RedshiftCluster:
         )
         created = (
             session.query(
-                models.DatasetTable.datasetUri.label('datasetUri'),
-                models.DatasetTable.tableUri.label('tableUri'),
+                DatasetTable.datasetUri.label('datasetUri'),
+                DatasetTable.tableUri.label('tableUri'),
                 models.RedshiftCluster.clusterUri.label('clusterUri'),
             )
             .join(
                 models.Dataset,
-                models.DatasetTable.datasetUri == models.Dataset.datasetUri,
+                DatasetTable.datasetUri == models.Dataset.datasetUri,
             )
             .filter(
                 and_(
@@ -354,8 +355,8 @@ class RedshiftCluster:
                 )
             )
             .group_by(
-                models.DatasetTable.datasetUri,
-                models.DatasetTable.tableUri,
+                DatasetTable.datasetUri,
+                DatasetTable.tableUri,
                 models.RedshiftCluster.clusterUri,
             )
         )
@@ -363,10 +364,10 @@ class RedshiftCluster:
             'all_group_tables_sub_query'
         )
         query = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .join(
                 all_group_tables_sub_query,
-                all_group_tables_sub_query.c.tableUri == models.DatasetTable.tableUri,
+                all_group_tables_sub_query.c.tableUri == DatasetTable.tableUri,
             )
             .filter(
                 models.RedshiftCluster.clusterUri == cluster.clusterUri,
@@ -541,18 +542,18 @@ class RedshiftCluster:
         session, username, groups, uri, data=None, check_perm=True
     ) -> [models.RedshiftClusterDatasetTable]:
         q = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .join(
                 models.RedshiftClusterDatasetTable,
                 models.RedshiftClusterDatasetTable.tableUri
-                == models.DatasetTable.tableUri,
+                == DatasetTable.tableUri,
             )
             .filter(models.RedshiftClusterDatasetTable.clusterUri == uri)
         )
         if data.get('term'):
             term = data.get('term')
             q = q.filter(
-                models.DatasetTable.label.ilike('%' + term + '%'),
+                DatasetTable.label.ilike('%' + term + '%'),
             )
         return paginate(
             q, page=data.get('page', 1), page_size=data.get('pageSize', 20)

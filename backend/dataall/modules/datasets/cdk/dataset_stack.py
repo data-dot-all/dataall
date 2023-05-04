@@ -28,7 +28,7 @@ from dataall.db import models
 from dataall.db.api import Environment
 from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 logger = logging.getLogger(__name__)
 
@@ -77,17 +77,17 @@ class DatasetStack(Stack):
         with engine.scoped_session() as session:
             tables = (
                 session.query(
-                    models.DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
-                    models.DatasetTable.GlueTableName.label('GlueTableName'),
-                    models.DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
-                    models.DatasetTable.region.label('SourceRegion'),
+                    DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
+                    DatasetTable.GlueTableName.label('GlueTableName'),
+                    DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
+                    DatasetTable.region.label('SourceRegion'),
                     models.Environment.AwsAccountId.label('TargetAwsAccountId'),
                     models.Environment.region.label('TargetRegion'),
                 )
                 .join(
                     models.ShareObjectItem,
                     and_(
-                        models.ShareObjectItem.itemUri == models.DatasetTable.tableUri
+                        models.ShareObjectItem.itemUri == DatasetTable.tableUri
                     ),
                 )
                 .join(
@@ -101,8 +101,8 @@ class DatasetStack(Stack):
                 )
                 .filter(
                     and_(
-                        models.DatasetTable.datasetUri == self.target_uri,
-                        models.DatasetTable.deleted.is_(None),
+                        DatasetTable.datasetUri == self.target_uri,
+                        DatasetTable.deleted.is_(None),
                         models.ShareObjectItem.status.in_(self.shared_states)
                     )
                 )

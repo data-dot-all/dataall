@@ -1,7 +1,13 @@
 from dataall.modules.datasets.api.table_column.resolvers import list_table_columns
-from ... import gql
-from .resolvers import *
-from ...constants import GraphQLEnumMapper
+from dataall.api import gql
+from dataall.modules.datasets.api.table.resolvers import (
+    resolve_dataset,
+    get_glue_table_properties,
+    resolve_redshift_copy_location,
+    resolve_glossary_terms,
+    resolve_redshift_copy_schema
+)
+from dataall.api.constants import GraphQLEnumMapper
 
 TablePermission = gql.ObjectType(
     name='TablePermission',

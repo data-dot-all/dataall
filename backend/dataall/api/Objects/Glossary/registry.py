@@ -1,7 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Type, Dict, Optional, Protocol, Union, Callable, Any
-
-from opensearchpy import OpenSearch
+from dataclasses import dataclass
+from typing import Type, Dict, Optional, Protocol, Union
 
 from dataall.api import gql
 from dataall.api.gql.graphql_union_type import UnionTypeRegistry
@@ -56,7 +54,7 @@ class GlossaryRegistry(UnionTypeRegistry):
         return [gql.Ref(definition.object_type) for definition in cls._DEFINITIONS.values()]
 
     @classmethod
-    def reindex(cls, session, es: OpenSearch, target_type: str, target_uri: str):
+    def reindex(cls, session, target_type: str, target_uri: str):
         definition = cls._DEFINITIONS[target_type]
         if definition.reindexer:
             definition.reindexer.upsert(session, target_uri)

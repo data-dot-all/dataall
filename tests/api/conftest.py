@@ -2,7 +2,7 @@ import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -40,7 +40,7 @@ def patch_es(module_mocker):
         return_value={}
     )
     module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
+    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -506,7 +506,7 @@ def share(db):
 def share_item(db):
     def factory(
             share: models.ShareObject,
-            table: models.DatasetTable,
+            table: DatasetTable,
             status: str
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:
@@ -554,12 +554,12 @@ def location(db):
 def table(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> models.DatasetTable:
+    def factory(dataset: models.Dataset, name, username) -> DatasetTable:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
         with db.scoped_session() as session:
-            table = models.DatasetTable(
+            table = DatasetTable(
                 name=name,
                 label=name,
                 owner=username,

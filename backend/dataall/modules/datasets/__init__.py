@@ -3,7 +3,7 @@ import logging
 from typing import List
 
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -27,6 +27,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
+        FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
 
         GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         GlossaryRegistry.register(GlossaryDefinition(
@@ -46,7 +47,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         GlossaryRegistry.register(GlossaryDefinition(
             target_type="DatasetTable",
             object_type="DatasetTable",
-            model=models.DatasetTable,
+            model=DatasetTable,
             reindexer=DatasetTableIndexer
         ))
 

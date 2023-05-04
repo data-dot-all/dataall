@@ -1,5 +1,6 @@
 import pytest
 import dataall
+from dataall.modules.datasets.db.models import DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -65,7 +66,7 @@ def sync_dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, sync_dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=sync_dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
