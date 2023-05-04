@@ -40,7 +40,7 @@ def patch_es(module_mocker):
         return_value={}
     )
     module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
-    module_mocker.patch('dataall.searchproxy.upsert.BaseIndexer.delete_doc', return_value={})
+    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
