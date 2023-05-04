@@ -6,9 +6,6 @@ from dataall.api.Objects.Glossary.registry import GlossaryRegistry
 from .... import db
 from ....api.context import Context
 from ....db import paginate, exceptions, models
-from ....searchproxy import upsert_dataset
-from ....searchproxy import upsert_table
-from ....searchproxy.indexers import upsert_folder, upsert_dashboard
 from ....api.constants import (
     GlossaryRole
 )
@@ -460,15 +457,8 @@ def reindex(context, linkUri):
         link: models.TermLink = session.query(models.TermLink).get(linkUri)
         if not link:
             return
-    target = resolve_link_target(context, source=link)
-    if isinstance(target, models.Dataset):
-        upsert_dataset(session=session, es=context.es, datasetUri=link.targetUri)
-    elif isinstance(target, models.DatasetTable):
-        upsert_table(session=session, es=context.es, tableUri=link.targetUri)
-    elif isinstance(target, models.DatasetStorageLocation):
-        upsert_folder(session=session, es=context.es, locationUri=link.targetUri)
-    elif isinstance(target, models.Dashboard):
-        upsert_dashboard(session=session, es=context.es, dashboardUri=link.targetUri)
+
+    GlossaryRegistry.reindex(session, context.es, link.targetType, link.targetUri)
 
 
 def _target_model(target_type: str):

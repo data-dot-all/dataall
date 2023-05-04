@@ -4,7 +4,7 @@ from .... import db
 from ....db import exceptions
 from ....db.models import Group
 from ....aws.handlers.cognito import Cognito
-
+from ....modules.datasets.services.dataset_share_service import DatasetShareService
 
 log = logging.getLogger()
 
@@ -66,7 +66,7 @@ def list_data_items_shared_with_env_group(
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_shared_with_environment_group_datasets(
+        return DatasetShareService.paginated_shared_with_environment_group_datasets(
             session=session,
             username=context.username,
             groups=context.groups,

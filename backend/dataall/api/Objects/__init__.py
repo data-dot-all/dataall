@@ -24,7 +24,6 @@ from . import (
     Dashboard,
     ShareObject,
     Organization,
-    DatasetStorageLocation,
     Stack,
     Test,
     SagemakerStudio,

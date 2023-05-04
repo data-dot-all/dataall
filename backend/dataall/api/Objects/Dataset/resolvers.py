@@ -13,11 +13,13 @@ from ....api.context import Context
 from ....aws.handlers.glue import Glue
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.sns import Sns
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
-from ....searchproxy import indexers
+from dataall.searchproxy import indexers
+from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +36,8 @@ def create_dataset(context: Context, source, input=None):
         )
         Dataset.create_dataset_stack(session, dataset)
 
-        indexers.upsert_dataset(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetIndexer.upsert(
+            session=session, dataset_uri=dataset.datasetUri
         )
 
     stack_helper.deploy_dataset_stack(dataset)
@@ -72,8 +74,8 @@ def import_dataset(context: Context, source, input=None):
 
         Dataset.create_dataset_stack(session, dataset)
 
-        indexers.upsert_dataset(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetIndexer.upsert(
+            session=session, dataset_uri=dataset.datasetUri
         )
 
     stack_helper.deploy_dataset_stack(dataset)
@@ -160,7 +162,7 @@ def list_locations(context, source: models.Dataset, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return Dataset.paginated_dataset_locations(
+        return DatasetLocationService.paginated_dataset_locations(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -220,7 +222,7 @@ def update_dataset(context, source, datasetUri: str = None, input: dict = None):
             data=input,
             check_perm=True,
         )
-        indexers.upsert_dataset(session, context.es, datasetUri)
+        DatasetIndexer.upsert(session, dataset_uri=datasetUri)
 
     stack_helper.deploy_dataset_stack(updated_dataset)
 
@@ -232,7 +234,7 @@ def get_dataset_statistics(context: Context, source: models.Dataset, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         count_tables = db.api.Dataset.count_dataset_tables(session, source.datasetUri)
-        count_locations = db.api.Dataset.count_dataset_locations(
+        count_locations = DatasetLocationService.count_dataset_locations(
             session, source.datasetUri
         )
         count_upvotes = db.api.Vote.count_upvotes(
@@ -323,8 +325,8 @@ def sync_tables(context: Context, source, datasetUri: str = None):
         session.add(task)
     Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
     with context.engine.scoped_session() as session:
-        indexers.upsert_dataset_tables(
-            session=session, es=context.es, datasetUri=dataset.datasetUri
+        DatasetTableIndexer.upsert_all(
+            session=session, dataset_uri=dataset.datasetUri
         )
         indexers.remove_deleted_tables(
             session=session, es=context.es, datasetUri=dataset.datasetUri
@@ -557,7 +559,7 @@ def delete_dataset(
         for uri in tables:
             indexers.delete_doc(es=context.es, doc_id=uri)
 
-        folders = [f.locationUri for f in Dataset.get_dataset_folders(session, datasetUri)]
+        folders = [f.locationUri for f in DatasetLocationService.get_dataset_folders(session, datasetUri)]
         for uri in folders:
             indexers.delete_doc(es=context.es, doc_id=uri)
 

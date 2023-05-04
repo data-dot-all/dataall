@@ -71,7 +71,8 @@ def test_get_dataset(client, dataset1, env1, user, group):
 
 def test_create_location(client, dataset1, env1, user, group, patch_es, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.s3.S3.create_bucket_prefix', return_value=True
+        'dataall.modules.datasets.handlers.s3_location_handler.S3DatasetLocationHandler.create_bucket_prefix',
+        return_value=True
     )
     response = client.query(
         """

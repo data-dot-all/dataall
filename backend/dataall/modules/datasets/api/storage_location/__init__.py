@@ -1,4 +1,4 @@
-from . import (
+from dataall.modules.datasets.api.storage_location import (
     input_types,
     mutations,
     queries,

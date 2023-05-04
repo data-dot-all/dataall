@@ -8,6 +8,7 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.searchproxy import indexers
 from dataall.searchproxy.connect import connect
 from dataall.utils.alarm_service import AlarmService
@@ -87,7 +88,7 @@ def sync_tables(engine, es=None):
                     processed_tables.extend(tables)
 
                     if es:
-                        indexers.upsert_dataset_tables(session, es, dataset.datasetUri)
+                        DatasetTableIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
             except Exception as e:
                 log.error(
                     f'Failed to sync tables for dataset '

@@ -8,6 +8,7 @@ from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary, Vote
 from ....searchproxy import indexers
 from ....utils import Parameter
+from dataall.searchproxy.indexers import DashboardIndexer
 
 param_store = Parameter()
 ENVNAME = os.getenv("envname", "local")
@@ -146,7 +147,7 @@ def import_dashboard(context: Context, source, input: dict = None):
             check_perm=True,
         )
 
-        indexers.upsert_dashboard(session, context.es, dashboard.dashboardUri)
+        DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
 
     return dashboard
 
@@ -166,7 +167,7 @@ def update_dashboard(context, source, input: dict = None):
             check_perm=True,
         )
 
-        indexers.upsert_dashboard(session, context.es, dashboard.dashboardUri)
+        DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
 
         return dashboard
 

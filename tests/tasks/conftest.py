@@ -1,9 +1,8 @@
-import boto3
-import os
 import pytest
 
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 @pytest.fixture(scope="module")
@@ -128,10 +127,10 @@ def dataset(db):
 
 @pytest.fixture(scope="module")
 def location(db):
-    def factory(dataset: models.Dataset, label: str) -> models.DatasetStorageLocation:
+    def factory(dataset: models.Dataset, label: str) -> DatasetStorageLocation:
 
         with db.scoped_session() as session:
-            ds_location = models.DatasetStorageLocation(
+            ds_location = DatasetStorageLocation(
                 name=label,
                 label=label,
                 owner=dataset.owner,
@@ -198,7 +197,7 @@ def share(db):
 def share_item_folder(db):
     def factory(
         share: models.ShareObject,
-        location: models.DatasetStorageLocation,
+        location: DatasetStorageLocation,
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:
             share_item = models.ShareObjectItem(

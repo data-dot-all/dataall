@@ -12,7 +12,6 @@ class MockSagemakerClient:
         return "INSERVICE"
 
 
-
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
     org1 = org('testorg', user.userName, group.name)

@@ -6,7 +6,6 @@ from .DashboardShare import DashboardShare
 from .DashboardShare import DashboardShareStatus
 from .Dataset import Dataset
 from .DatasetQualityRule import DatasetQualityRule
-from .DatasetStorageLocation import DatasetStorageLocation
 from .DatasetTable import DatasetTable
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup

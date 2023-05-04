@@ -3,6 +3,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -235,7 +236,7 @@ def test_add_locations(location, dataset1, db):
         location(dataset=dataset1, name=f'unstructured{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetStorageLocation).count()
+        nb = session.query(DatasetStorageLocation).count()
     assert nb == 10
 
 
