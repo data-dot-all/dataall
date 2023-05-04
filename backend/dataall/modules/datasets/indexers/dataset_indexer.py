@@ -3,7 +3,7 @@
 from dataall import db
 from dataall.db import models
 from dataall.modules.datasets.services.dataset_location import DatasetLocationService
-from dataall.searchproxy.upsert import BaseIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
 
 
 class DatasetIndexer(BaseIndexer):

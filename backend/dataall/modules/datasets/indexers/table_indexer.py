@@ -4,7 +4,7 @@ from operator import and_
 from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
-from dataall.searchproxy.upsert import BaseIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
 
 
 class DatasetTableIndexer(BaseIndexer):
