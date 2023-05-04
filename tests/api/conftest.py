@@ -1,6 +1,8 @@
+import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -32,11 +34,17 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
     module_mocker.patch('dataall.searchproxy.upsert', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset_tables', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_table', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_folder', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dashboard', return_value={})
+    module_mocker.patch(
+        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
+        return_value={}
+    )
+    module_mocker.patch('dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert', return_value={})
+    module_mocker.patch(
+        'dataall.modules.datasets.indexers.location_indexer.DatasetLocationIndexer.upsert',
+        return_value={}
+    )
+    module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
 
 
@@ -526,12 +534,12 @@ def share_item(db):
 def location(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> models.DatasetStorageLocation:
+    def factory(dataset: models.Dataset, name, username) -> DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
         with db.scoped_session() as session:
-            ds_location = models.DatasetStorageLocation(
+            ds_location = DatasetStorageLocation(
                 name=name,
                 label=name,
                 owner=username,

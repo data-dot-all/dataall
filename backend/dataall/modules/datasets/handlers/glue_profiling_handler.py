@@ -68,6 +68,7 @@ class DatasetProfilingGlueHandler:
             )
             return run
 
+    # TODO move to client once dataset is migrated
     @staticmethod
     def get_job_run(**data):
         accountid = data['accountid']

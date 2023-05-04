@@ -3,14 +3,14 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.cdkproxy.stacks import Dataset
+from dataall.modules.datasets.cdk.dataset_stack import DatasetStack
 
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, dataset, env, org):
-    mocker.patch('dataall.cdkproxy.stacks.dataset.Dataset.get_engine', return_value=db)
+    mocker.patch('dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_engine', return_value=db)
     mocker.patch(
-        'dataall.cdkproxy.stacks.dataset.Dataset.get_target', return_value=dataset
+        'dataall.modules.datasets.cdk.dataset_stack.DatasetStack.get_target', return_value=dataset
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
@@ -41,7 +41,7 @@ def patch_methods(mocker, db, dataset, env, org):
 @pytest.fixture(scope='function', autouse=True)
 def template(dataset):
     app = App()
-    Dataset(app, 'Dataset', target_uri=dataset.datasetUri)
+    DatasetStack(app, 'Dataset', target_uri=dataset.datasetUri)
     return json.dumps(app.synth().get_stack_by_name('Dataset').template)
 
 

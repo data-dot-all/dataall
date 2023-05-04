@@ -10,6 +10,7 @@ from ....aws.handlers.kms import KMS
 from ....aws.handlers.iam import IAM
 
 from ....utils.alarm_service import AlarmService
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -22,7 +23,7 @@ class S3ShareManager:
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        target_folder: models.DatasetStorageLocation,
+        target_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -397,12 +398,9 @@ class S3ShareManager:
                 json.dumps(policy)
             )
 
-    def handle_share_failure(self, error: Exception) -> bool:
+    def log_share_failure(self, error: Exception) -> None:
         """
-        Handles share failure by raising an alarm to alarmsTopic
-        Returns
-        -------
-        True if alarm published successfully
+        Writes a log if the failure happened while sharing
         """
         logger.error(
             f'Failed to share folder {self.s3_prefix} '
@@ -410,17 +408,10 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_folder_sharing_failure_alarm(
-            self.target_folder, self.share, self.target_environment
-        )
-        return True
 
-    def handle_revoke_failure(self, error: Exception) -> bool:
+    def log_revoke_failure(self, error: Exception) -> None:
         """
-        Handles share failure by raising an alarm to alarmsTopic
-        Returns
-        -------
-        True if alarm published successfully
+        Writes a log if the failure happened while revoking share
         """
         logger.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
@@ -428,7 +419,3 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_revoke_folder_sharing_failure_alarm(
-            self.target_folder, self.share, self.target_environment
-        )
-        return True

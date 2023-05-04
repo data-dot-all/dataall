@@ -10,6 +10,7 @@ from sqlalchemy import and_
 from ..aws.handlers.sts import SessionHelper
 from ..db import get_engine
 from ..db import models, api
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -201,13 +202,13 @@ class BucketPoliciesUpdater:
             ).all()
         return tables
 
-    def get_shared_folders(self, dataset) -> typing.List[models.DatasetStorageLocation]:
+    def get_shared_folders(self, dataset) -> typing.List[DatasetStorageLocation]:
         with self.engine.scoped_session() as session:
             locations = (
                 session.query(
-                    models.DatasetStorageLocation.locationUri.label('locationUri'),
-                    models.DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    models.DatasetStorageLocation.S3Prefix.label('S3Prefix'),
+                    DatasetStorageLocation.locationUri.label('locationUri'),
+                    DatasetStorageLocation.S3BucketName.label('S3BucketName'),
+                    DatasetStorageLocation.S3Prefix.label('S3Prefix'),
                     models.Environment.AwsAccountId.label('AwsAccountId'),
                     models.Environment.region.label('region'),
                 )
@@ -215,7 +216,7 @@ class BucketPoliciesUpdater:
                     models.ShareObjectItem,
                     and_(
                         models.ShareObjectItem.itemUri
-                        == models.DatasetStorageLocation.locationUri
+                        == DatasetStorageLocation.locationUri
                     ),
                 )
                 .join(
@@ -229,8 +230,8 @@ class BucketPoliciesUpdater:
                 )
                 .filter(
                     and_(
-                        models.DatasetStorageLocation.datasetUri == dataset.datasetUri,
-                        models.DatasetStorageLocation.deleted.is_(None),
+                        DatasetStorageLocation.datasetUri == dataset.datasetUri,
+                        DatasetStorageLocation.deleted.is_(None),
                         models.ShareObjectItem.status
                         == models.Enums.ShareObjectStatus.Approved.value,
                     )

@@ -2,6 +2,7 @@ import logging
 
 from ....db import models, api
 from ..share_managers import S3ShareManager
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 
 log = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ class ProcessS3Share(S3ShareManager):
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        share_folder: models.DatasetStorageLocation,
+        share_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -37,7 +38,7 @@ class ProcessS3Share(S3ShareManager):
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        share_folders: [models.DatasetStorageLocation],
+        share_folders: [DatasetStorageLocation],
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -91,7 +92,7 @@ class ProcessS3Share(S3ShareManager):
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             except Exception as e:
-                sharing_folder.handle_share_failure(e)
+                sharing_folder.log_share_failure(e)
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 success = False
@@ -104,7 +105,7 @@ class ProcessS3Share(S3ShareManager):
             session,
             dataset: models.Dataset,
             share: models.ShareObject,
-            revoke_folders: [models.DatasetStorageLocation],
+            revoke_folders: [DatasetStorageLocation],
             source_environment: models.Environment,
             target_environment: models.Environment,
             source_env_group: models.EnvironmentGroup,
@@ -154,7 +155,7 @@ class ProcessS3Share(S3ShareManager):
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
-                removing_folder.handle_revoke_failure(e)
+                removing_folder.log_revoke_failure(e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False

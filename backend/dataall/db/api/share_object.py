@@ -10,6 +10,7 @@ from . import (
 from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
+from dataall.modules.datasets.db.models import DatasetStorageLocation
 
 logger = logging.getLogger(__name__)
 
@@ -419,7 +420,7 @@ class ShareObject:
             item = None
             if itemType:
                 if itemType == ShareableType.StorageLocation.value:
-                    item = session.query(models.DatasetStorageLocation).get(itemUri)
+                    item = session.query(DatasetStorageLocation).get(itemUri)
                 if itemType == ShareableType.Table.value:
                     item = session.query(models.DatasetTable).get(itemUri)
 
@@ -718,7 +719,7 @@ class ShareObject:
         if share_item.itemType == ShareableType.Table.value:
             return session.query(models.DatasetTable).get(share_item.itemUri)
         if share_item.itemType == ShareableType.StorageLocation:
-            return session.Query(models.DatasetStorageLocation).get(share_item.itemUri)
+            return session.Query(DatasetStorageLocation).get(share_item.itemUri)
 
     @staticmethod
     def get_share_by_uri(session, uri):
@@ -771,7 +772,7 @@ class ShareObject:
                 )
 
         elif itemType == ShareableType.StorageLocation.value:
-            item = session.query(models.DatasetStorageLocation).get(itemUri)
+            item = session.query(DatasetStorageLocation).get(itemUri)
 
         if not item:
             raise exceptions.ObjectNotFound('ShareObjectItem', itemUri)
@@ -971,10 +972,10 @@ class ShareObject:
         # marking the folder as part of the shareObject
         locations = (
             session.query(
-                models.DatasetStorageLocation.locationUri.label('itemUri'),
+                DatasetStorageLocation.locationUri.label('itemUri'),
                 func.coalesce('DatasetStorageLocation').label('itemType'),
-                models.DatasetStorageLocation.S3Prefix.label('itemName'),
-                models.DatasetStorageLocation.description.label('description'),
+                DatasetStorageLocation.S3Prefix.label('itemName'),
+                DatasetStorageLocation.description.label('description'),
                 models.ShareObjectItem.shareItemUri.label('shareItemUri'),
                 models.ShareObjectItem.status.label('status'),
                 case(
@@ -986,11 +987,11 @@ class ShareObject:
                 models.ShareObjectItem,
                 and_(
                     models.ShareObjectItem.shareUri == share.shareUri,
-                    models.DatasetStorageLocation.locationUri
+                    DatasetStorageLocation.locationUri
                     == models.ShareObjectItem.itemUri,
                 ),
             )
-            .filter(models.DatasetStorageLocation.datasetUri == datasetUri)
+            .filter(DatasetStorageLocation.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
@@ -1162,7 +1163,7 @@ class ShareObject:
     def find_share_item_by_folder(
         session,
         share: models.ShareObject,
-        folder: models.DatasetStorageLocation,
+        folder: DatasetStorageLocation,
     ) -> models.ShareObjectItem:
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
@@ -1268,10 +1269,10 @@ class ShareObject:
         )
 
         folders = (
-            session.query(models.DatasetStorageLocation)
+            session.query(DatasetStorageLocation)
             .join(
                 models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == models.DatasetStorageLocation.locationUri,
+                models.ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
             )
             .join(
                 models.ShareObject,
