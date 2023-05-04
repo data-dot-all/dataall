@@ -398,12 +398,9 @@ class S3ShareManager:
                 json.dumps(policy)
             )
 
-    def handle_share_failure(self, error: Exception) -> None:
+    def log_share_failure(self, error: Exception) -> None:
         """
-        Handles share failure by raising an alarm to alarmsTopic
-        Returns
-        -------
-        True if alarm published successfully
+        Writes a log if the failure happened while sharing
         """
         logger.error(
             f'Failed to share folder {self.s3_prefix} '
@@ -412,12 +409,9 @@ class S3ShareManager:
             f'due to: {error}'
         )
 
-    def handle_revoke_failure(self, error: Exception) -> None:
+    def log_revoke_failure(self, error: Exception) -> None:
         """
-        Handles share failure by raising an alarm to alarmsTopic
-        Returns
-        -------
-        True if alarm published successfully
+        Writes a log if the failure happened while revoking share
         """
         logger.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '

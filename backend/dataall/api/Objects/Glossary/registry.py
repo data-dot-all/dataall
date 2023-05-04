@@ -7,7 +7,7 @@ from dataall.api import gql
 from dataall.api.gql.graphql_union_type import UnionTypeRegistry
 from dataall.db import Resource, models
 from dataall.searchproxy.indexers import DashboardIndexer
-from dataall.searchproxy.upsert import BaseIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
 
 
 class Identifiable(Protocol):
