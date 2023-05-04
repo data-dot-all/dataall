@@ -4,7 +4,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.db.models import DatasetTableColumn
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -72,7 +72,7 @@ def test_add_tables(table, dataset1, db):
         table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetTable).count()
+        nb = session.query(DatasetTable).count()
     assert nb == 10
 
 
@@ -105,8 +105,8 @@ def test_update_table(client, env1, table, dataset1, db, user, group):
 def test_add_columns(table, dataset1, db):
     with db.scoped_session() as session:
         table = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'table1')
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'table1')
             .first()
         )
         table_col = DatasetTableColumn(
@@ -178,8 +178,8 @@ def test_list_dataset_tables(client, dataset1):
 def test_update_dataset_table_column(client, table, dataset1, db):
     with db.scoped_session() as session:
         table = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'table1')
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'table1')
             .first()
         )
         column = (
@@ -227,8 +227,8 @@ def test_update_dataset_table_column(client, table, dataset1, db):
 def test_sync_tables_and_columns(client, table, dataset1, db):
     with db.scoped_session() as session:
         table = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'table1')
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'table1')
             .first()
         )
         column = (
@@ -288,9 +288,9 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         ]
 
         assert DatasetTableService.sync_existing_tables(session, dataset1.datasetUri, glue_tables)
-        new_table: dataall.db.models.DatasetTable = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'new_table')
+        new_table: DatasetTable = (
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'new_table')
             .first()
         )
         assert new_table
@@ -305,9 +305,9 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         assert columns[0].columnType == 'column'
         assert columns[1].columnType == 'partition_0'
 
-        existing_table: dataall.db.models.DatasetTable = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'table1')
+        existing_table: DatasetTable = (
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'table1')
             .first()
         )
         assert existing_table
@@ -322,9 +322,9 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
         assert columns[0].columnType == 'column'
         assert columns[1].columnType == 'partition_0'
 
-        deleted_table: dataall.db.models.DatasetTable = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.name == 'table2')
+        deleted_table: DatasetTable = (
+            session.query(DatasetTable)
+            .filter(DatasetTable.name == 'table2')
             .first()
         )
         assert deleted_table.LastGlueTableStatus == 'Deleted'

@@ -6,7 +6,6 @@ Create Date: 2022-12-22 10:18:55.835315
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Text, DateTime, and_
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
@@ -95,7 +94,7 @@ def upgrade():
                     resource_uri=table.tableUri,
                     group=group,
                     permissions=permissions.DATASET_TABLE_READ,
-                    resource_type=models.DatasetTable.__name__,
+                    resource_type=DatasetTable.__name__,
                 )
         print('dataset table permissions updated successfully for owners/stewards')
     except Exception as e:
@@ -120,7 +119,7 @@ def upgrade():
                 group=share.principalId,
                 permissions=permissions.DATASET_TABLE_READ,
                 resource_uri=shared_table.itemUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
         print('dataset table permissions updated for all shared tables')
     except Exception as e:

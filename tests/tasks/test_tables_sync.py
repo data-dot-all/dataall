@@ -1,6 +1,7 @@
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.datasets.db.models import DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -76,7 +77,7 @@ def sync_dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, sync_dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=sync_dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -163,9 +164,9 @@ def test_tables_sync(db, org, env, sync_dataset, table, mocker):
     processed_tables = dataall.modules.datasets.tasks.tables_syncer.sync_tables(engine=db)
     assert len(processed_tables) == 2
     with db.scoped_session() as session:
-        saved_table: dataall.db.models.DatasetTable = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.GlueTableName == 'table1')
+        saved_table: DatasetTable = (
+            session.query(DatasetTable)
+            .filter(DatasetTable.GlueTableName == 'table1')
             .first()
         )
         assert saved_table

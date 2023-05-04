@@ -1,9 +1,14 @@
-from ... import gql
-from .input_types import (
+from dataall.api import gql
+from dataall.modules.datasets.api.table.input_types import (
     ModifyDatasetTableInput,
     NewDatasetTableInput,
 )
-from .resolvers import *
+from dataall.modules.datasets.api.table.resolvers import (
+    create_table,
+    update_table,
+    delete_table,
+    publish_table_update
+)
 
 createDatasetTable = gql.MutationField(
     name='createDatasetTable',

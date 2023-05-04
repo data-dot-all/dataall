@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
 from ..db import models
+from dataall.modules.datasets.db.models import DatasetTable
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ Alarm Details:
 
     def trigger_table_sharing_failure_alarm(
         self,
-        table: models.DatasetTable,
+        table: DatasetTable,
         share: models.ShareObject,
         target_environment: models.Environment,
     ):
@@ -74,7 +75,7 @@ Alarm Details:
 
     def trigger_revoke_table_sharing_failure_alarm(
         self,
-        table: models.DatasetTable,
+        table: DatasetTable,
         share: models.ShareObject,
         target_environment: models.Environment,
     ):

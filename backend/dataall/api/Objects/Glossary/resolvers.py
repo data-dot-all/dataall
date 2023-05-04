@@ -458,7 +458,7 @@ def reindex(context, linkUri):
         if not link:
             return
 
-    GlossaryRegistry.reindex(session, context.es, link.targetType, link.targetUri)
+    GlossaryRegistry.reindex(session, link.targetType, link.targetUri)
 
 
 def _target_model(target_type: str):

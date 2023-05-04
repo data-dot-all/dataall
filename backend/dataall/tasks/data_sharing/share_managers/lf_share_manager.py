@@ -11,7 +11,8 @@ from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
 from ....db import api, exceptions, models
-from ....utils.alarm_service import AlarmService
+from dataall.modules.datasets.db.models import DatasetTable
+from dataall.utils.alarm_service import AlarmService
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,8 @@ class LFShareManager:
         session,
         dataset: models.Dataset,
         share: models.ShareObject,
-        shared_tables: [models.DatasetTable],
-        revoked_tables: [models.DatasetTable],
+        shared_tables: [DatasetTable],
+        revoked_tables: [DatasetTable],
         source_environment: models.Environment,
         target_environment: models.Environment,
         env_group: models.EnvironmentGroup,
@@ -83,7 +84,7 @@ class LFShareManager:
         """
         return (self.dataset.GlueDatabaseName + '_shared_' + self.share.shareUri)[:254]
 
-    def build_share_data(self, table: models.DatasetTable) -> dict:
+    def build_share_data(self, table: DatasetTable) -> dict:
         """
         Build aws dict for boto3 operations on Glue and LF from share data
         Parameters
@@ -111,7 +112,7 @@ class LFShareManager:
         return data
 
     def check_share_item_exists_on_glue_catalog(
-        self, share_item: models.ShareObjectItem, table: models.DatasetTable
+        self, share_item: models.ShareObjectItem, table: DatasetTable
     ) -> None:
         """
         Checks if a table in the share request
@@ -272,12 +273,12 @@ class LFShareManager:
             )
             raise e
 
-    def revoke_table_resource_link_access(self, table: models.DatasetTable, principals: [str]):
+    def revoke_table_resource_link_access(self, table: DatasetTable, principals: [str]):
         """
         Revokes access to glue table resource link
         Parameters
         ----------
-        table : models.DatasetTable
+        table : DatasetTable
         principals: List of strings. IAM role arn and Quicksight groups
 
         Returns
@@ -333,7 +334,7 @@ class LFShareManager:
         Revokes access to the source glue table
         Parameters
         ----------
-        table : models.DatasetTable
+        table : DatasetTable
 
         Returns
         -------
@@ -367,7 +368,7 @@ class LFShareManager:
         )
         return True
 
-    def delete_resource_link_table(self, table: models.DatasetTable):
+    def delete_resource_link_table(self, table: DatasetTable):
         logger.info(f'Deleting shared table {table.GlueTableName}')
 
         if not Glue.table_exists(
@@ -503,7 +504,7 @@ class LFShareManager:
 
     def handle_share_failure(
         self,
-        table: models.DatasetTable,
+        table: DatasetTable,
         share_item: models.ShareObjectItem,
         error: Exception,
     ) -> bool:
@@ -533,7 +534,7 @@ class LFShareManager:
 
     def handle_revoke_failure(
             self,
-            table: models.DatasetTable,
+            table: DatasetTable,
             share_item: models.ShareObjectItem,
             error: Exception,
     ) -> bool:

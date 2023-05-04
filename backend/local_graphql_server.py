@@ -86,12 +86,11 @@ def request_context(headers, mock=False):
                 tenant_name='dataall',
             )
 
-    set_context(RequestContext(engine, username, groups, es))
+    set_context(RequestContext(engine, username, groups))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
     context = Context(
         engine=engine,
-        es=es,
         schema=schema,
         username=username,
         groups=groups,

@@ -3,6 +3,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import DatasetTable
 
 
 def random_table_name():
@@ -64,7 +65,7 @@ def tables1(table: typing.Callable, dataset1: dataall.db.models.Dataset):
 
 @pytest.fixture(scope="module", autouse=True)
 def table1(table: typing.Callable, dataset1: dataall.db.models.Dataset,
-           user: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+           user: dataall.db.models.User) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
@@ -112,7 +113,7 @@ def tables2(table, dataset2):
 
 @pytest.fixture(scope="module", autouse=True)
 def table2(table: typing.Callable, dataset2: dataall.db.models.Dataset,
-           user2: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+           user2: dataall.db.models.User) -> DatasetTable:
     yield table(
         dataset=dataset2,
         name="table2",
@@ -195,7 +196,7 @@ def share1_draft(
 def share1_item_pa(
         share_item: typing.Callable,
         share1_draft: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1: DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share1_draft
     yield share_item(
@@ -270,7 +271,7 @@ def share2_submitted(
 def share2_item_pa(
         share_item: typing.Callable,
         share2_submitted: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1: DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share2
     yield share_item(
@@ -345,7 +346,7 @@ def share3_processed(
 def share3_item_shared(
         share_item: typing.Callable,
         share3_processed: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1:DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share3
     yield share_item(

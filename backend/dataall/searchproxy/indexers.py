@@ -1,7 +1,5 @@
 import logging
 
-from sqlalchemy import and_
-
 from .. import db
 from ..db import models
 from dataall.searchproxy.base_indexer import BaseIndexer
@@ -71,24 +69,3 @@ class DashboardIndexer(BaseIndexer):
                 },
             )
         return dashboard
-
-
-def remove_deleted_tables(session, es, datasetUri: str):
-    tables = (
-        session.query(models.DatasetTable)
-        .filter(
-            and_(
-                models.DatasetTable.datasetUri == datasetUri,
-                models.DatasetTable.LastGlueTableStatus == 'Deleted',
-            )
-        )
-        .all()
-    )
-    for table in tables:
-        delete_doc(es, doc_id=table.tableUri)
-    return tables
-
-
-def delete_doc(es, doc_id, index='dataall-index'):
-    es.delete(index=index, id=doc_id, ignore=[400, 404])
-    return True

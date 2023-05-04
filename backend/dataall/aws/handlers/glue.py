@@ -6,6 +6,7 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
+from dataall.modules.datasets.db.models import DatasetTable
 
 log = logging.getLogger('aws:glue')
 
@@ -523,7 +524,7 @@ class Glue:
 
     @staticmethod
     def grant_principals_all_table_permissions(
-        table: models.DatasetTable, principals: [str], client=None
+        table: DatasetTable, principals: [str], client=None
     ):
         """
         Update the table permissions on Lake Formation

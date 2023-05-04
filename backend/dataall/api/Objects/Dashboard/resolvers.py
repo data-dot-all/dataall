@@ -311,7 +311,7 @@ def delete_dashboard(context: Context, source, dashboardUri: str = None):
             data=None,
             check_perm=True,
         )
-        indexers.delete_doc(es=context.es, doc_id=dashboardUri)
+        DashboardIndexer.delete_doc(doc_id=dashboardUri)
         return True
 
 

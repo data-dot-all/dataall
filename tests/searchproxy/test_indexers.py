@@ -5,8 +5,7 @@ import pytest
 import dataall
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.searchproxy import indexers
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
@@ -74,7 +73,7 @@ def dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',

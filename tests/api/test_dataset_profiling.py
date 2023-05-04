@@ -2,7 +2,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -29,7 +29,7 @@ def test_add_tables(table, dataset1, db):
         table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetTable).count()
+        nb = session.query(DatasetTable).count()
     assert nb == 10
 
 
@@ -137,8 +137,8 @@ def test_get_table_profiling_run(
     table = table(dataset=dataset1, name='table1', username=dataset1.owner)
     with db.scoped_session() as session:
         table = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.GlueTableName == 'table1')
+            session.query(DatasetTable)
+            .filter(DatasetTable.GlueTableName == 'table1')
             .first()
         )
     response = client.query(
@@ -174,8 +174,8 @@ def test_list_table_profiling_runs(
     table1000 = table(dataset=dataset1, name='table1000', username=dataset1.owner)
     with db.scoped_session() as session:
         table = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.GlueTableName == 'table1')
+            session.query(DatasetTable)
+            .filter(DatasetTable.GlueTableName == 'table1')
             .first()
         )
     module_mocker.patch(

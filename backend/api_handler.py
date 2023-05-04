@@ -15,7 +15,6 @@ from dataall.aws.handlers.sqs import SqsQueue
 from dataall.core.context import set_context, dispose_context, RequestContext
 from dataall.db import init_permissions, get_engine, api, permissions
 from dataall.modules.loader import load_modules, ImportMode
-from dataall.searchproxy import connect
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -30,7 +29,6 @@ SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
-ES = connect(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
 init_permissions(ENGINE)
@@ -99,7 +97,6 @@ def handler(event, context):
 
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)
-    log.debug('ElasticSearch %s', ES)
     log.debug('Engine %s', ENGINE.engine.url)
 
     if event['httpMethod'] == 'OPTIONS':
@@ -137,11 +134,10 @@ def handler(event, context):
             print(f'Error managing groups due to: {e}')
             groups = []
 
-        set_context(RequestContext(ENGINE, username, groups, ES))
+        set_context(RequestContext(ENGINE, username, groups))
 
         app_context = {
             'engine': ENGINE,
-            'es': ES,
             'username': username,
             'groups': groups,
             'schema': SCHEMA,

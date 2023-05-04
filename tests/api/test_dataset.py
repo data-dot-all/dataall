@@ -3,7 +3,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -223,7 +223,7 @@ def test_add_tables(table, dataset1, db):
         table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetTable).count()
+        nb = session.query(DatasetTable).count()
     assert nb == 10
 
 

@@ -38,5 +38,4 @@ class FeedRegistry(UnionTypeRegistry):
 
 FeedRegistry.register(FeedDefinition("Worksheet", models.Worksheet))
 FeedRegistry.register(FeedDefinition("DataPipeline", models.DataPipeline))
-FeedRegistry.register(FeedDefinition("DatasetTable", models.DatasetTable))
 FeedRegistry.register(FeedDefinition("Dashboard", models.Dashboard))

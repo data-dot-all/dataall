@@ -8,9 +8,8 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.db.models import DatasetTable
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.searchproxy import indexers
-from dataall.searchproxy.connect import connect
 from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.services.dataset_table import DatasetTableService
 
@@ -21,7 +20,7 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-def sync_tables(engine, es=None):
+def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
         all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
@@ -68,8 +67,8 @@ def sync_tables(engine, es=None):
                     )
 
                     tables = (
-                        session.query(models.DatasetTable)
-                        .filter(models.DatasetTable.datasetUri == dataset.datasetUri)
+                        session.query(DatasetTable)
+                        .filter(DatasetTable.datasetUri == dataset.datasetUri)
                         .all()
                     )
 
@@ -87,8 +86,7 @@ def sync_tables(engine, es=None):
 
                     processed_tables.extend(tables)
 
-                    if es:
-                        DatasetTableIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
+                    DatasetTableIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
             except Exception as e:
                 log.error(
                     f'Failed to sync tables for dataset '
@@ -112,5 +110,4 @@ def is_assumable_pivot_role(env: models.Environment):
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    ES = connect(envname=ENVNAME)
-    sync_tables(engine=ENGINE, es=ES)
+    sync_tables(engine=ENGINE)
