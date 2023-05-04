@@ -21,7 +21,10 @@ class BaseIndexer(ABC):
     def es(cls):
         """Lazy creation of the OpenSearch connection"""
         if cls._es is None:
-            cls._es = connect(envname=os.getenv('envname', 'local'))
+            es = connect(envname=os.getenv('envname', 'local'))
+            if not es:
+                raise Exception('Failed to create ES connection')
+            cls._es = es
 
         return cls._es
 
@@ -41,7 +44,7 @@ class BaseIndexer(ABC):
         es = cls.es()
         doc['_indexed'] = datetime.now()
         if es:
-            res = es.index(index=BaseIndexer._INDEX, id=doc_id, body=doc)
+            res = es.index(index=cls._INDEX, id=doc_id, body=doc)
             log.info(f'doc {doc} for id {doc_id} indexed with response {res}')
             return True
         else:
