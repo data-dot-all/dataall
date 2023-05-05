@@ -1,8 +1,10 @@
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
 import dataall
+from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets_base.db.models import Dataset
 
 
@@ -67,10 +69,7 @@ def test_get_dataset(client, dataset1, env1, user, group):
 
 
 def test_create_location(client, dataset1, env1, user, group, patch_es, module_mocker):
-    module_mocker.patch(
-        'dataall.modules.datasets.handlers.s3_location_handler.S3DatasetLocationHandler.create_bucket_prefix',
-        return_value=True
-    )
+    module_mocker.patch.object(S3LocationClient, "create_bucket_prefix")
     response = client.query(
         """
         mutation createDatasetStorageLocation($datasetUri:String!, $input:NewDatasetStorageLocationInput!){

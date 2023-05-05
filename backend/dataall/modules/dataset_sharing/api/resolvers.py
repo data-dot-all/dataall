@@ -225,7 +225,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
+        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if dataset and dataset.stewards in context.groups:
             return ShareObjectPermission.Approvers.value
         if (
@@ -253,7 +253,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
+        ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             env: models.Environment = db.api.Environment.get_environment_by_uri(session, ds.environmentUri)
             return {
@@ -294,7 +294,7 @@ def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: Dataset = DatasetService.get_dataset_by_uri(session, source.datasetUri)
+        ds: Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             S3AccessPointName = utils.slugify(
                 source.datasetUri + '-' + source.principalId,

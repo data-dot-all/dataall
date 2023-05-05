@@ -6,7 +6,7 @@ from dataall.db.api import (
     Glossary,
     Environment,
 )
-from dataall.modules.datasets.handlers.s3_location_handler import S3DatasetLocationHandler
+from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
@@ -24,7 +24,7 @@ def create_storage_location(
             data=input,
         )
 
-        S3DatasetLocationHandler.create_bucket_prefix(location)
+        S3LocationClient.create_bucket_prefix(location)
 
         DatasetLocationIndexer.upsert(session=session, folder_uri=location.locationUri)
     return location
