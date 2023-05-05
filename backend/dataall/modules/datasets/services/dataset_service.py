@@ -24,7 +24,8 @@ from dataall.modules.datasets_base.db.dataset_repository import DatasetRepositor
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
-    DATASET_TABLE_READ, LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+    LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

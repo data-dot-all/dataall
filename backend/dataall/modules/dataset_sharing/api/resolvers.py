@@ -9,8 +9,8 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def create_share_object(
 ):
 
     with context.engine.scoped_session() as session:
-        dataset: Dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
+        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
         environment: models.Environment = db.api.Environment.get_environment_by_uri(
             session, input['environmentUri']
         )
