@@ -1,17 +1,12 @@
 import logging
-import os
 
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
 
-from dataall.aws.handlers.ram import Ram
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models, Engine
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus, ShareObjectStatus
-from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectSM, ShareObjectService, ShareItemSM
-from dataall.utils import Parameter
 
 log = logging.getLogger(__name__)
 
