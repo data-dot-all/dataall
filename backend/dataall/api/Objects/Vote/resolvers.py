@@ -3,7 +3,7 @@ from typing import Dict, Type
 from dataall import db
 from dataall.api.context import Context
 from dataall.searchproxy.indexers import DashboardIndexer
-from dataall.searchproxy.upsert import BaseIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
 

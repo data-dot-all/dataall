@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
-from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
