@@ -3,13 +3,13 @@ import logging
 import json
 import time
 
-from ....db import models, utils
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.s3 import S3
-from ....aws.handlers.kms import KMS
-from ....aws.handlers.iam import IAM
-from ....modules.dataset_sharing.db.models import ShareObject
-from ....modules.dataset_sharing.services.share_object import ShareObjectService
+from dataall.db import models, utils
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.s3 import S3
+from dataall.aws.handlers.kms import KMS
+from dataall.aws.handlers.iam import IAM
+from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
 
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 

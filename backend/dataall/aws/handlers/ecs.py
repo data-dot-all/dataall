@@ -9,7 +9,7 @@ from .service_handlers import Worker
 from ... import db
 from ...db import models
 from ...utils import Parameter
-from ...tasks.data_sharing.data_sharing_service import DataSharingService
+from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
 
 log = logging.getLogger('aws:ecs')
 

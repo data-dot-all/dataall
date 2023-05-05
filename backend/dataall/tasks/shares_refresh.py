@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
-from .data_sharing.data_sharing_service import DataSharingService
-from ..db import get_engine
+from dataall.modules.dataset_sharing.services.data_sharing_service import DataSharingService
+from dataall.db import get_engine
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

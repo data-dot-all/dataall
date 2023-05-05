@@ -12,10 +12,10 @@ from dataall.db import models
 from dataall.api import constants
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 
-from dataall.tasks.data_sharing.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
-from dataall.tasks.data_sharing.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 
 
 SOURCE_ENV_ACCOUNT = "1" *  12

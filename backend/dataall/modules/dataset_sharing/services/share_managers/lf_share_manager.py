@@ -5,14 +5,14 @@ import time
 
 from botocore.exceptions import ClientError
 
-from ....aws.handlers.glue import Glue
-from ....aws.handlers.lakeformation import LakeFormation
-from ....aws.handlers.quicksight import Quicksight
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.ram import Ram
-from ....db import exceptions, models
+from dataall.aws.handlers.glue import Glue
+from dataall.aws.handlers.lakeformation import LakeFormation
+from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.ram import Ram
+from dataall.db import exceptions, models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 
 logger = logging.getLogger(__name__)

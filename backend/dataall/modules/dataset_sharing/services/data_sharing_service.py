@@ -1,9 +1,9 @@
 import logging
 import os
 
-from .share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
-from .share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
-from .share_processors.s3_process_share import ProcessS3Share
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
+from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
 
 from dataall.aws.handlers.ram import Ram
 from dataall.aws.handlers.sts import SessionHelper
