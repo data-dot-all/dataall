@@ -1,4 +1,4 @@
-from .resolvers import *
+from dataall.modules.dataset_sharing.api.resolvers import *
 from dataall.api.Objects.Environment.resolvers import resolve_environment
 
 ShareableObject = gql.Union(

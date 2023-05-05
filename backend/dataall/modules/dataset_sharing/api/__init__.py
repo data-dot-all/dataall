@@ -1,4 +1,4 @@
-from . import (
+from dataall.modules.dataset_sharing.api import (
     input_types,
     mutations,
     queries,

@@ -1,12 +1,11 @@
 import logging
 
-
-from .... import db
-from .... import utils
-from ....api.constants import *
-from ....api.context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....db import models
+from dataall import db
+from dataall import utils
+from dataall.api.constants import *
+from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.db import models
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 

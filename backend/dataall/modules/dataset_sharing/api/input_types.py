@@ -1,4 +1,4 @@
-from ....api.constants import *
+from dataall.api.constants import *
 
 
 NewShareObjectInput = gql.InputType(
