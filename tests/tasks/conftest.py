@@ -4,7 +4,7 @@ from dataall.api.constants import ShareObjectStatus
 from dataall.db import models
 from dataall.api import constants
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope="module")

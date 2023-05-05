@@ -11,7 +11,7 @@ from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
 from ....db import exceptions, models
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 

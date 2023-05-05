@@ -1,7 +1,7 @@
 from operator import and_
 
 from dataall.db import exceptions
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 
 class DatasetRepository:

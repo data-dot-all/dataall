@@ -11,7 +11,7 @@ from typing import Callable
 from dataall.db import models
 from dataall.api import constants
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 from dataall.tasks.data_sharing.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare

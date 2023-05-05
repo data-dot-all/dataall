@@ -13,7 +13,7 @@ from dataall.db.models.Enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import DATASET_TABLE_READ
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService

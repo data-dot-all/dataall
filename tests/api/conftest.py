@@ -3,7 +3,7 @@ from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectIt
 from .client import *
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)

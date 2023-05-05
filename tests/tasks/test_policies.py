@@ -1,5 +1,5 @@
 from dataall.api.constants import OrganisationUserRole
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
 import pytest
 import dataall

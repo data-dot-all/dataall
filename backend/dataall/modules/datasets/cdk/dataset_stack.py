@@ -1,6 +1,5 @@
 import logging
 import os
-import typing
 
 from aws_cdk import (
     custom_resources as cr,
@@ -27,7 +26,7 @@ from dataall.db import models
 from dataall.db.api import Environment
 from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 

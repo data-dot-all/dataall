@@ -1,8 +1,6 @@
-import typing
 import pytest
 
-import dataall
-from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)

@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_service import DatasetService

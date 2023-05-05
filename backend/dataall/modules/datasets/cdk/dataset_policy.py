@@ -2,7 +2,7 @@ from typing import List
 from aws_cdk import aws_iam as iam
 
 from dataall.cdkproxy.stacks.policies.data_policy import DataPolicy
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 

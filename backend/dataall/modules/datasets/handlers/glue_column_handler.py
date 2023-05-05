@@ -5,7 +5,7 @@ from dataall.db import models
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)

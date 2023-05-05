@@ -9,7 +9,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.datasets.services.dataset_service import DatasetService

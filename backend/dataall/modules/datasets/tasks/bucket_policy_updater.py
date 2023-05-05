@@ -12,7 +12,7 @@ from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

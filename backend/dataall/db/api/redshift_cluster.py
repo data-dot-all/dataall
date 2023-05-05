@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy import and_, or_, literal
 
-from .. import models, api, exceptions, paginate, permissions
+from .. import models, exceptions, paginate, permissions
 from . import has_resource_perm, ResourcePolicy, Environment
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

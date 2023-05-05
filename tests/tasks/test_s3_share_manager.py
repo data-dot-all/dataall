@@ -7,7 +7,7 @@ from dataall.db import models
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 
 from dataall.tasks.data_sharing.share_managers.s3_share_manager import S3ShareManager
-from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"

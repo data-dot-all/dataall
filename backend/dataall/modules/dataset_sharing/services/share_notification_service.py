@@ -1,7 +1,7 @@
 from dataall.db import models
 from dataall.db.api import Notification
 from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 
 class ShareNotificationService:

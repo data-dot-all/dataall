@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.db import models, api
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)

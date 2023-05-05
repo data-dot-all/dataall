@@ -19,7 +19,7 @@ from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

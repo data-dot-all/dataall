@@ -1,5 +1,5 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
-from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
 from dataall.db import models
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer

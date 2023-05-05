@@ -4,7 +4,7 @@ from typing import List, Type
 
 from dataall.modules.dataset_sharing import SharingApiModuleInterface
 from dataall.core.group.services.group_resource_manager import GroupResourceManager
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer

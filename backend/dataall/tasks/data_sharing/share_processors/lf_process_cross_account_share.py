@@ -3,8 +3,8 @@ import logging
 from dataall.modules.dataset_sharing.db.Enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
 from dataall.aws.handlers.ram import Ram
-from dataall.db import models, api
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.db import models
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
 

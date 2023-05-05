@@ -1,5 +1,5 @@
-from dataall.core.group.services.group_resource_manager import GroupResource, GroupResourceManager
-from dataall.modules.datasets.db.dataset_repository import DatasetRepository
+from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 
 
 class DatasetGroupResource(GroupResource):

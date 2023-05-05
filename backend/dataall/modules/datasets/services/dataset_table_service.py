@@ -12,7 +12,7 @@ from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREAT
     UPDATE_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.db import models
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 
 @pytest.fixture(scope='module')

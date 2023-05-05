@@ -5,7 +5,7 @@ from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
 from ..share_managers import LFShareManager
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
 

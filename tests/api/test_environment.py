@@ -1,8 +1,7 @@
 import pytest
 
 import dataall
-from dataall.db import permissions
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.services.permissions import CREATE_DATASET
 
 

@@ -8,8 +8,8 @@ from dataall.db.api import Glossary
 from dataall.db import paginate, exceptions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
-from dataall.modules.datasets.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, CREATE_DATASET_FOLDER, \
     DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER
 

@@ -4,8 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import dataall
-from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 

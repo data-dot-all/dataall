@@ -7,7 +7,7 @@ from dataall.api.constants import ShareObjectStatus, ShareItemStatus
 from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM, ShareObjectSM
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 
 def random_table_name():
