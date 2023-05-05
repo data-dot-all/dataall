@@ -13,7 +13,7 @@ from dataall.aws.handlers.sqs import SqsQueue
 from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
-from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
+`from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService

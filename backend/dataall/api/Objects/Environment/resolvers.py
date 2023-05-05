@@ -11,7 +11,6 @@ from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
 from ....aws.handlers.parameter_store import ParameterStoreManager
@@ -22,7 +21,7 @@ from ....utils.naming_convention import (
     NamingConventionPattern,
 )
 
-from dataall.modules.datasets.services.dataset_share_service import DatasetShareService
+from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
 
 log = logging.getLogger()
 

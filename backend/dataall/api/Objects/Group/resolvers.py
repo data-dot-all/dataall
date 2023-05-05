@@ -4,7 +4,7 @@ from .... import db
 from ....db import exceptions
 from ....db.models import Group
 from ....aws.handlers.cognito import Cognito
-from ....modules.datasets.services.dataset_share_service import DatasetShareService
+from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
 
 log = logging.getLogger()
 

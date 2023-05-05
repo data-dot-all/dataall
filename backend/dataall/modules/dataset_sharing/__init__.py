@@ -13,4 +13,5 @@ class SharingApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
-        log.info("API pf dataset sharing has been imported")
+        from dataall.modules.dataset_sharing import api
+        log.info("API of dataset sharing has been imported")
