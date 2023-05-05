@@ -5,7 +5,9 @@ from sqlalchemy import and_, or_
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import Glossary
-from dataall.db import models, api, paginate, exceptions
+from dataall.db import paginate, exceptions
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem
+from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, CREATE_DATASET_FOLDER, \
@@ -136,13 +138,13 @@ class DatasetLocationService:
         location = DatasetLocationService.get_location_by_uri(
             session, data['locationUri']
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         share_item = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == location.locationUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states)
+                    ShareObjectItem.itemUri == location.locationUri,
+                    ShareObjectItem.status.in_(share_item_shared_states)
                 )
             )
             .first()
@@ -152,8 +154,8 @@ class DatasetLocationService:
                 action=DELETE_DATASET_FOLDER,
                 message='Revoke all folder shares before deletion',
             )
-        session.query(models.ShareObjectItem).filter(
-            models.ShareObjectItem.itemUri == location.locationUri,
+        session.query(ShareObjectItem).filter(
+            ShareObjectItem.itemUri == location.locationUri,
         ).delete()
 
         session.delete(location)

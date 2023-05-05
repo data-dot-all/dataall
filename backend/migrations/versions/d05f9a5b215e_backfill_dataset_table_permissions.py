@@ -12,7 +12,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import api, utils, Resource
 from datetime import datetime
-from dataall.db.models.Enums import ShareObjectStatus, ShareableType
+from dataall.db.models.Enums import ShareableType
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import DATASET_TABLE_READ
 
@@ -114,7 +116,7 @@ def upgrade():
             )
         ).all()
         for shared_table in share_table_items:
-            share = api.ShareObject.get_share_by_uri(session, shared_table.shareUri)
+            share = ShareObjectService.get_share_by_uri(session, shared_table.shareUri)
             api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,

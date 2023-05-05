@@ -1,12 +1,13 @@
 from dataall.db import models
 from dataall.db.api import Notification
+from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets.db.models import Dataset
 
 
 class ShareNotificationService:
     @staticmethod
     def notify_share_object_submission(
-            session, username: str, dataset: Dataset, share: models.ShareObject
+            session, username: str, dataset: Dataset, share: ShareObject
     ):
         notifications = []
         # stewards = Notification.get_dataset_stewards(session, dataset)
@@ -25,7 +26,7 @@ class ShareNotificationService:
 
     @staticmethod
     def notify_share_object_approval(
-            session, username: str, dataset: Dataset, share: models.ShareObject
+            session, username: str, dataset: Dataset, share: ShareObject
     ):
         notifications = []
         targeted_users = ShareNotificationService._get_share_object_targeted_users(
@@ -46,7 +47,7 @@ class ShareNotificationService:
 
     @staticmethod
     def notify_share_object_rejection(
-            session, username: str, dataset: Dataset, share: models.ShareObject
+            session, username: str, dataset: Dataset, share: ShareObject
     ):
         notifications = []
         targeted_users = ShareNotificationService._get_share_object_targeted_users(
@@ -67,7 +68,7 @@ class ShareNotificationService:
 
     @staticmethod
     def notify_new_data_available_from_owners(
-            session, dataset: Dataset, share: models.ShareObject, s3_prefix
+            session, dataset: Dataset, share: ShareObject, s3_prefix
     ):
         notifications = []
         targeted_users = ShareNotificationService._get_share_object_targeted_users(

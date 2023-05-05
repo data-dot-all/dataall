@@ -4,9 +4,9 @@ import json
 from typing import Callable
 
 from dataall.db import models
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 
 from dataall.tasks.data_sharing.share_managers.s3_share_manager import S3ShareManager
-from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
@@ -75,13 +75,13 @@ def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
 @pytest.fixture(scope="module")
 def share1(share: Callable, dataset1: Dataset,
            target_environment: models.Environment,
-           target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
+           target_environment_group: models.EnvironmentGroup) -> ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
     yield share1
 
 
 @pytest.fixture(scope="module")
-def share_item_folder1(share_item_folder: Callable, share1: models.ShareObject, location1: DatasetStorageLocation):
+def share_item_folder1(share_item_folder: Callable, share1: ShareObject, location1: DatasetStorageLocation):
     share_item_folder1 = share_item_folder(share1, location1)
     return share_item_folder1
 
@@ -169,7 +169,7 @@ def test_manage_bucket_policy_no_policy(
     target_environment_group,
     dataset1,
     db,
-    share1: models.ShareObject,
+    share1: ShareObject,
     share_item_folder1,
     location1,
     source_environment: models.Environment,
@@ -233,7 +233,7 @@ def test_manage_bucket_policy_existing_policy(
     target_environment_group,
     dataset1,
     db,
-    share1: models.ShareObject,
+    share1: ShareObject,
     share_item_folder1,
     location1,
     source_environment: models.Environment,
@@ -282,7 +282,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     target_environment_group,
     dataset1,
     db,
-    share1: models.ShareObject,
+    share1: ShareObject,
     share_item_folder1,
     location1,
     source_environment: models.Environment,
@@ -335,7 +335,7 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     target_environment_group,
     dataset1,
     db,
-    share1: models.ShareObject,
+    share1: ShareObject,
     share_item_folder1,
     location1,
     source_environment: models.Environment,
@@ -381,8 +381,8 @@ def test_grant_target_role_access_policy_test_no_policy(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -443,8 +443,8 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -560,8 +560,8 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -640,8 +640,8 @@ def test_manage_access_point_and_policy_1(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -731,8 +731,8 @@ def test_manage_access_point_and_policy_2(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -805,8 +805,8 @@ def test_manage_access_point_and_policy_3(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -876,8 +876,8 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -948,8 +948,8 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1015,8 +1015,8 @@ def test_dont_delete_access_point_with_policy(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1061,8 +1061,8 @@ def test_delete_access_point_without_policy(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1107,8 +1107,8 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1172,8 +1172,8 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1258,8 +1258,8 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
@@ -1349,8 +1349,8 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     target_environment_group: models.EnvironmentGroup,
     dataset1: Dataset,
     db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
+    share1: ShareObject,
+    share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,

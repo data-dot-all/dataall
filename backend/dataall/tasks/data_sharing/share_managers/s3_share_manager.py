@@ -8,8 +8,9 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.s3 import S3
 from ....aws.handlers.kms import KMS
 from ....aws.handlers.iam import IAM
+from ....modules.dataset_sharing.db.models import ShareObject
+from ....modules.dataset_sharing.services.share_object import ShareObjectService
 
-from ....utils.alarm_service import AlarmService
 from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class S3ShareManager:
         self,
         session,
         dataset: Dataset,
-        share: models.ShareObject,
+        share: ShareObject,
         target_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
@@ -37,7 +38,7 @@ class S3ShareManager:
         self.target_folder = target_folder
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.share_item = api.ShareObject.find_share_item_by_folder(
+        self.share_item = ShareObjectService.find_share_item_by_folder(
             session,
             share,
             target_folder,
@@ -56,15 +57,15 @@ class S3ShareManager:
 
     @abc.abstractmethod
     def process_approved_shares(self, *kwargs) -> bool:
-        return NotImplementedError
+        raise NotImplementedError
 
     @abc.abstractmethod
     def process_revoked_shares(self, *kwargs) -> bool:
-        return NotImplementedError
+        raise NotImplementedError
 
     @abc.abstractmethod
     def clean_up_share(self, *kwargs):
-        return NotImplementedError
+        raise NotImplementedError
 
     @staticmethod
     def build_access_point_name(share):
@@ -324,7 +325,7 @@ class S3ShareManager:
 
     @staticmethod
     def delete_access_point(
-            share: models.ShareObject,
+            share: ShareObject,
             dataset: Dataset,
     ):
         access_point_name = S3ShareManager.build_access_point_name(share)
@@ -341,7 +342,7 @@ class S3ShareManager:
 
     @staticmethod
     def delete_target_role_access_policy(
-            share: models.ShareObject,
+            share: ShareObject,
             dataset: Dataset,
             target_environment: models.Environment,
     ):
@@ -376,7 +377,7 @@ class S3ShareManager:
 
     @staticmethod
     def delete_dataset_bucket_key_policy(
-            share: models.ShareObject,
+            share: ShareObject,
             dataset: Dataset,
             target_environment: models.Environment,
     ):

@@ -1,10 +1,12 @@
 import logging
 
-
+from dataall.modules.dataset_sharing.db.Enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
-from ....aws.handlers.ram import Ram
-from ....db import models, api
+from dataall.aws.handlers.ram import Ram
+from dataall.db import models, api
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +16,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         self,
         session,
         dataset: Dataset,
-        share: models.ShareObject,
+        share: ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
         source_environment: models.Environment,
@@ -72,7 +74,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
 
-                share_item = api.ShareObject.find_share_item_by_table(
+                share_item = ShareObjectService.find_share_item_by_table(
                     self.session, self.share, table
                 )
 
@@ -83,8 +85,8 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     )
                     continue
 
-                shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
-                new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+                shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+                new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
                 shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
@@ -105,12 +107,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                     self.create_resource_link(**data)
 
-                    new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 except Exception as e:
                     self.handle_share_failure(table=table, share_item=share_item, error=e)
-                    new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                    new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     success = False
 
@@ -138,12 +140,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
         shared_db_name = self.build_shared_db_name()
         principals = self.get_share_principals()
         for table in self.revoked_tables:
-            share_item = api.ShareObject.find_share_item_by_table(
+            share_item = ShareObjectService.find_share_item_by_table(
                 self.session, self.share, table
             )
 
-            revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
-            new_state = revoked_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+            new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             try:
@@ -159,12 +161,12 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
                 self.delete_resource_link_table(table)
 
-                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
             except Exception as e:
                 self.handle_revoke_failure(share_item=share_item, table=table, error=e)
-                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
                 success = False
 
@@ -182,7 +184,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
         self.delete_shared_database()
 
-        if not api.ShareObject.other_approved_share_object_exists(
+        if not ShareObjectService.other_approved_share_object_exists(
                 self.session,
                 self.target_environment.environmentUri,
                 self.dataset.datasetUri,

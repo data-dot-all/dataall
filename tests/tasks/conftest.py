@@ -1,7 +1,9 @@
 import pytest
 
+from dataall.api.constants import ShareObjectStatus
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
@@ -175,16 +177,16 @@ def share(db):
         dataset: Dataset,
         environment: models.Environment,
         env_group: models.EnvironmentGroup
-    ) -> models.ShareObject:
+    ) -> ShareObject:
         with db.scoped_session() as session:
-            share = models.ShareObject(
+            share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner="bob",
                 principalId=environment.SamlGroupName,
                 principalType=constants.PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
-                status=constants.ShareObjectStatus.Approved.value,
+                status=ShareObjectStatus.Approved.value,
             )
             session.add(share)
             session.commit()
@@ -196,11 +198,11 @@ def share(db):
 @pytest.fixture(scope="module")
 def share_item_folder(db):
     def factory(
-        share: models.ShareObject,
+        share: ShareObject,
         location: DatasetStorageLocation,
-    ) -> models.ShareObjectItem:
+    ) -> ShareObjectItem:
         with db.scoped_session() as session:
-            share_item = models.ShareObjectItem(
+            share_item = ShareObjectItem(
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=location.locationUri,
@@ -217,12 +219,12 @@ def share_item_folder(db):
 @pytest.fixture(scope="module")
 def share_item_table(db):
     def factory(
-        share: models.ShareObject,
+        share: ShareObject,
         table: DatasetTable,
         status: str,
-    ) -> models.ShareObjectItem:
+    ) -> ShareObjectItem:
         with db.scoped_session() as session:
-            share_item = models.ShareObjectItem(
+            share_item = ShareObjectItem(
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=table.tableUri,

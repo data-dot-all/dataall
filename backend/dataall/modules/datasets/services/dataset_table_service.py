@@ -4,8 +4,10 @@ from sqlalchemy.sql import and_
 
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.db import models, api, exceptions, paginate
+from dataall.db import exceptions, paginate
 from dataall.db.api import Glossary, ResourcePolicy, Environment
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
     UPDATE_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
@@ -137,13 +139,13 @@ class DatasetTableService:
         data: dict = None,
     ):
         table = DatasetTableService.get_dataset_table_by_uri(session, data['tableUri'])
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         share_item = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == table.tableUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states)
+                    ShareObjectItem.itemUri == table.tableUri,
+                    ShareObjectItem.status.in_(share_item_shared_states)
                 )
             )
             .first()
@@ -153,8 +155,8 @@ class DatasetTableService:
                 action=DELETE_DATASET_TABLE,
                 message='Revoke all table shares before deletion',
             )
-        session.query(models.ShareObjectItem).filter(
-            models.ShareObjectItem.itemUri == table.tableUri,
+        session.query(ShareObjectItem).filter(
+            ShareObjectItem.itemUri == table.tableUri,
         ).delete()
         session.delete(table)
         Glossary.delete_glossary_terms_links(
@@ -170,23 +172,22 @@ class DatasetTableService:
         This means looking at approved ShareObject items
         for the share object associating the dataset and environment
         """
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         env_tables_shared = (
             session.query(DatasetTable)  # all tables
             .join(
-                models.ShareObjectItem,  # found in ShareObjectItem
-                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
+                ShareObjectItem,  # found in ShareObjectItem
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .join(
-                models.ShareObject,  # jump to share object
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,  # jump to share object
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .filter(
                 and_(
-                    models.ShareObject.datasetUri == dataset_uri,  # for this dataset
-                    models.ShareObject.environmentUri
-                    == environment_uri,  # for this environment
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.datasetUri == dataset_uri,  # for this dataset
+                    ShareObject.environmentUri == environment_uri,  # for this environment
+                    ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
             .all()

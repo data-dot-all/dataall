@@ -21,8 +21,6 @@ from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
 from .SagemakerStudio import SagemakerStudio, SagemakerStudioUserProfile
-from .ShareObject import ShareObject
-from .ShareObjectItem import ShareObjectItem
 from .DataPipeline import DataPipeline
 from .DataPipelineEnvironment import DataPipelineEnvironment
 from .Stack import Stack

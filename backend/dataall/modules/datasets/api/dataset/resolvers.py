@@ -13,8 +13,9 @@ from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import paginate, exceptions, models
-from dataall.db.api import Environment, ShareObject, ResourcePolicy
+from dataall.db.api import Environment, ResourcePolicy
 from dataall.db.api.organization import Organization
+from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
@@ -124,8 +125,8 @@ def resolve_user_role(context: Context, source: Dataset, **kwargs):
     else:
         with context.engine.scoped_session() as session:
             share = (
-                session.query(models.ShareObject)
-                .filter(models.ShareObject.datasetUri == source.datasetUri)
+                session.query(ShareObject)
+                .filter(ShareObject.datasetUri == source.datasetUri)
                 .first()
             )
             if share and (

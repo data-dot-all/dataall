@@ -10,12 +10,12 @@ from typing import Callable
 
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 from dataall.tasks.data_sharing.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
 from dataall.tasks.data_sharing.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
-from dataall.utils.alarm_service import AlarmService
 
 
 SOURCE_ENV_ACCOUNT = "1" *  12
@@ -114,7 +114,7 @@ def table2(table: Callable, dataset1: Dataset) -> DatasetTable:
 @pytest.fixture(scope="module")
 def share_same_account(
         share: Callable, dataset1: Dataset, source_environment: models.Environment,
-        source_environment_group_requesters: models.EnvironmentGroup) -> models.ShareObject:
+        source_environment_group_requesters: models.EnvironmentGroup) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=source_environment,
@@ -125,7 +125,7 @@ def share_same_account(
 @pytest.fixture(scope="module")
 def share_cross_account(
         share: Callable, dataset1: Dataset, target_environment: models.Environment,
-        target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
+        target_environment_group: models.EnvironmentGroup) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=target_environment,
@@ -134,8 +134,8 @@ def share_cross_account(
 
 
 @pytest.fixture(scope="module")
-def share_item_same_account(share_item_table: Callable, share_same_account: models.ShareObject,
-                            table1: DatasetTable) -> models.ShareObjectItem:
+def share_item_same_account(share_item_table: Callable, share_same_account: ShareObject,
+                            table1: DatasetTable) -> ShareObjectItem:
     yield share_item_table(
         share=share_same_account,
         table=table1,
@@ -143,8 +143,8 @@ def share_item_same_account(share_item_table: Callable, share_same_account: mode
     )
 
 @pytest.fixture(scope="module")
-def revoke_item_same_account(share_item_table: Callable, share_same_account: models.ShareObject,
-                             table2: DatasetTable) -> models.ShareObjectItem:
+def revoke_item_same_account(share_item_table: Callable, share_same_account: ShareObject,
+                             table2: DatasetTable) -> ShareObjectItem:
     yield share_item_table(
         share=share_same_account,
         table=table2,
@@ -152,22 +152,24 @@ def revoke_item_same_account(share_item_table: Callable, share_same_account: mod
     )
 
 @pytest.fixture(scope="module")
-def share_item_cross_account(share_item_table: Callable, share_cross_account: models.ShareObject,
-                             table1: DatasetTable) -> models.ShareObjectItem:
+def share_item_cross_account(share_item_table: Callable, share_cross_account: ShareObject,
+                             table1: DatasetTable) -> ShareObjectItem:
     yield share_item_table(
         share=share_cross_account,
         table=table1,
         status=constants.ShareItemStatus.Share_Approved.value
     )
 
+
 @pytest.fixture(scope="module")
-def revoke_item_cross_account(share_item_table: Callable, share_cross_account: models.ShareObject,
-                              table2: DatasetTable) -> models.ShareObjectItem:
+def revoke_item_cross_account(share_item_table: Callable, share_cross_account: ShareObject,
+                              table2: DatasetTable) -> ShareObjectItem:
     yield share_item_table(
         share=share_cross_account,
         table=table2,
         status=constants.ShareItemStatus.Revoke_Approved.value
     )
+
 
 @pytest.fixture(scope="module", autouse=True)
 def processor_cross_account(db, dataset1, share_cross_account, table1, table2, source_environment, target_environment,
@@ -184,6 +186,7 @@ def processor_cross_account(db, dataset1, share_cross_account, table1, table2, s
             target_environment_group,
         )
     yield processor
+
 
 @pytest.fixture(scope="module", autouse=True)
 def processor_same_account(db, dataset1, share_same_account, table1, source_environment,
@@ -211,8 +214,8 @@ def test_build_shared_db_name(
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
         dataset1: Dataset,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
     # Then, it should return
@@ -225,8 +228,8 @@ def test_get_share_principals(
         processor_cross_account: ProcessLFCrossAccountShare,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
 ):
     # Given a dataset and its share, build db_share name
     # Then, it should return
@@ -238,8 +241,8 @@ def test_create_shared_database(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -297,8 +300,8 @@ def test_check_share_item_exists_on_glue_catalog(
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
         table1: DatasetTable,
-        share_item_same_account: models.ShareObjectItem,
-        share_item_cross_account: models.ShareObjectItem,
+        share_item_same_account: ShareObjectItem,
+        share_item_cross_account: ShareObjectItem,
         mocker,
 ):
 
@@ -329,8 +332,8 @@ def test_build_share_data(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -377,8 +380,8 @@ def test_create_resource_link(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -460,8 +463,8 @@ def test_revoke_table_resource_link_access(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -508,8 +511,8 @@ def test_revoke_source_table_access(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -551,8 +554,8 @@ def test_delete_resource_link_table(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -593,8 +596,8 @@ def test_delete_shared_database(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -622,8 +625,8 @@ def test_revoke_external_account_access_on_source_account(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_same_account: models.ShareObject,
-        share_cross_account: models.ShareObject,
+        share_same_account: ShareObject,
+        share_cross_account: ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
         dataset1: Dataset,
@@ -650,8 +653,8 @@ def test_handle_share_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        share_item_same_account: models.ShareObjectItem,
-        share_item_cross_account: models.ShareObjectItem,
+        share_item_same_account: ShareObjectItem,
+        share_item_cross_account: ShareObjectItem,
         table1: DatasetTable,
         mocker,
 ):
@@ -680,8 +683,8 @@ def test_handle_revoke_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        revoke_item_same_account: models.ShareObjectItem,
-        revoke_item_cross_account: models.ShareObjectItem,
+        revoke_item_same_account: ShareObjectItem,
+        revoke_item_cross_account: ShareObjectItem,
         table1: DatasetTable,
         mocker,
 ):

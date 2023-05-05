@@ -2,7 +2,10 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.tasks.subscription_service import SubscriptionService
 
 
 @pytest.fixture(scope='module')
@@ -110,17 +113,17 @@ def share(
             region=dataset.region,
         )
         session.add(table)
-        share = dataall.db.models.ShareObject(
+        share = ShareObject(
             datasetUri=dataset.datasetUri,
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
             principalType=dataall.api.constants.PrincipalType.Environment.value,
-            status=dataall.api.constants.ShareObjectStatus.Approved.value,
+            status=ShareObjectStatus.Approved.value,
         )
         session.add(share)
         session.commit()
-        share_item = dataall.db.models.ShareObjectItem(
+        share_item = ShareObjectItem(
             shareUri=share.shareUri,
             owner='alice',
             itemUri=table.tableUri,
@@ -138,7 +141,7 @@ def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
         'dataall.modules.datasets.tasks.subscription_service.SubscriptionService.sns_call',
         return_value=True,
     )
-    subscriber = dataall.modules.datasets.tasks.subscription_service.SubscriptionService()
+    subscriber = SubscriptionService()
     messages = [
         {
             'prefix': 's3://dataset/testtable/csv/',

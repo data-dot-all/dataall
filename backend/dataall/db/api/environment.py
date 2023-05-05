@@ -28,6 +28,8 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.core.group.services.group_resource_manager import GroupResourceManager
+# TODO get rid of it
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 
 log = logging.getLogger(__name__)
 
@@ -988,14 +990,14 @@ class Environment:
         )
 
         env_shared_with_objects = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.environmentUri == environment.environmentUri)
+            session.query(ShareObject)
+            .filter(ShareObject.environmentUri == environment.environmentUri)
             .all()
         )
         for share in env_shared_with_objects:
             (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.shareUri == share.shareUri)
+                session.query(ShareObjectItem)
+                .filter(ShareObjectItem.shareUri == share.shareUri)
                 .delete()
             )
             session.delete(share)

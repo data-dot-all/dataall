@@ -16,8 +16,10 @@ from dataall.db.api import (
     has_resource_perm,
 )
 from dataall.db.api import Organization
-from dataall.db import models, api, exceptions, paginate, permissions
+from dataall.db import models, exceptions, paginate, permissions
 from dataall.db.models.Enums import Language, ConfidentialityClassification
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
@@ -213,16 +215,16 @@ class DatasetService:
 
     @staticmethod
     def query_user_datasets(session, username, groups, filter) -> Query:
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         query = (
             session.query(Dataset)
             .outerjoin(
-                models.ShareObject,
-                models.ShareObject.datasetUri == Dataset.datasetUri,
+                ShareObject,
+                ShareObject.datasetUri == Dataset.datasetUri,
             )
             .outerjoin(
-                models.ShareObjectItem,
-                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
             )
             .filter(
                 or_(
@@ -230,12 +232,12 @@ class DatasetService:
                     Dataset.SamlAdminGroupName.in_(groups),
                     Dataset.stewards.in_(groups),
                     and_(
-                        models.ShareObject.principalId.in_(groups),
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        ShareObject.principalId.in_(groups),
+                        ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                     and_(
-                        models.ShareObject.owner == username,
-                        models.ShareObjectItem.status.in_(share_item_shared_states),
+                        ShareObject.owner == username,
+                        ShareObjectItem.status.in_(share_item_shared_states),
                     ),
                 )
             )
@@ -331,8 +333,8 @@ class DatasetService:
     @staticmethod
     def transfer_stewardship_to_owners(session, dataset):
         dataset_shares = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.datasetUri == dataset.datasetUri)
+            session.query(ShareObject)
+            .filter(ShareObject.datasetUri == dataset.datasetUri)
             .all()
         )
         if dataset_shares:
@@ -342,7 +344,7 @@ class DatasetService:
                     group=dataset.SamlAdminGroupName,
                     permissions=permissions.SHARE_OBJECT_APPROVER,
                     resource_uri=share.shareUri,
-                    resource_type=models.ShareObject.__name__,
+                    resource_type=ShareObject.__name__,
                 )
         return dataset
 
@@ -380,8 +382,8 @@ class DatasetService:
             )
 
         dataset_shares = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.datasetUri == dataset.datasetUri)
+            session.query(ShareObject)
+            .filter(ShareObject.datasetUri == dataset.datasetUri)
             .all()
         )
         if dataset_shares:
@@ -391,7 +393,7 @@ class DatasetService:
                     group=new_stewards,
                     permissions=permissions.SHARE_OBJECT_APPROVER,
                     resource_uri=share.shareUri,
-                    resource_type=models.ShareObject.__name__,
+                    resource_type=ShareObject.__name__,
                 )
                 ResourcePolicy.delete_resource_policy(
                     session=session,
@@ -459,35 +461,35 @@ class DatasetService:
 
     @staticmethod
     def query_dataset_shares(session, dataset_uri) -> Query:
-        return session.query(models.ShareObject).filter(
+        return session.query(ShareObject).filter(
             and_(
-                models.ShareObject.datasetUri == dataset_uri,
-                models.ShareObject.deleted.is_(None),
+                ShareObject.datasetUri == dataset_uri,
+                ShareObject.deleted.is_(None),
             )
         )
 
     @staticmethod
     def paginated_dataset_shares(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> [models.ShareObject]:
+    ) -> [ShareObject]:
         query = DatasetService.query_dataset_shares(session, uri)
         return paginate(
             query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
         ).to_dict()
 
     @staticmethod
-    def list_dataset_shares(session, dataset_uri) -> [models.ShareObject]:
+    def list_dataset_shares(session, dataset_uri) -> [ShareObject]:
         """return the dataset shares"""
         query = DatasetService.query_dataset_shares(session, dataset_uri)
         return query.all()
 
     @staticmethod
-    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [models.ShareObject]:
-        query = session.query(models.ShareObject).filter(
+    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
+        query = session.query(ShareObject).filter(
             and_(
-                models.ShareObject.datasetUri == dataset_uri,
-                models.ShareObject.deleted.is_(None),
-                models.ShareObject.existingSharedItems.is_(True),
+                ShareObject.datasetUri == dataset_uri,
+                ShareObject.deleted.is_(None),
+                ShareObject.existingSharedItems.is_(True),
             )
         )
         return query.all()
@@ -532,19 +534,19 @@ class DatasetService:
     @staticmethod
     def _delete_dataset_shares_with_no_shared_items(session, dataset_uri):
         share_objects = (
-            session.query(models.ShareObject)
+            session.query(ShareObject)
             .filter(
                 and_(
-                    models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.existingSharedItems.is_(False),
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.existingSharedItems.is_(False),
                 )
             )
             .all()
         )
         for share in share_objects:
             (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.shareUri == share.shareUri)
+                session.query(ShareObjectItem)
+                .filter(ShareObjectItem.shareUri == share.shareUri)
                 .delete()
             )
             session.delete(share)

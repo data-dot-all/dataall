@@ -1,4 +1,5 @@
 import dataall.searchproxy.indexers
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from .client import *
 from dataall.db import models
 from dataall.api import constants
@@ -458,9 +459,9 @@ def share(db):
             env_group: models.EnvironmentGroup,
             owner: str,
             status: str
-    ) -> models.ShareObject:
+    ) -> ShareObject:
         with db.scoped_session() as session:
-            share = models.ShareObject(
+            share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner=owner,
@@ -477,21 +478,21 @@ def share(db):
                 group=env_group.groupUri,
                 permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
                 permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
-                resource_type=dataall.db.models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.stewards,
                 permissions=dataall.db.permissions.SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
-                resource_type=dataall.db.models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
             if dataset.SamlAdminGroupName != environment.SamlGroupName:
                 dataall.db.api.ResourcePolicy.attach_resource_policy(
@@ -499,7 +500,7 @@ def share(db):
                     group=environment.SamlGroupName,
                     permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
                     resource_uri=share.shareUri,
-                    resource_type=dataall.db.models.ShareObject.__name__,
+                    resource_type=ShareObject.__name__,
                 )
             session.commit()
             return share
@@ -510,12 +511,12 @@ def share(db):
 @pytest.fixture(scope="module")
 def share_item(db):
     def factory(
-            share: models.ShareObject,
+            share: ShareObject,
             table: DatasetTable,
             status: str
-    ) -> models.ShareObjectItem:
+    ) -> ShareObjectItem:
         with db.scoped_session() as session:
-            share_item = models.ShareObjectItem(
+            share_item = ShareObjectItem(
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=table.tableUri,

@@ -1,9 +1,6 @@
 import logging
 
-from botocore.exceptions import ClientError
-
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.models import Dataset

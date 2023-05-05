@@ -2,10 +2,13 @@ import logging
 
 from dataall import db
 from dataall import utils
+from dataall.api.Objects.Principal.resolvers import get_principal
 from dataall.api.constants import *
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
@@ -16,7 +19,7 @@ def get_share_object_dataset(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        share: models.ShareObject = session.query(models.ShareObject).get(
+        share: ShareObject = session.query(ShareObject).get(
             source.shareUri
         )
         return session.query(Dataset).get(share.datasetUri)
@@ -41,7 +44,7 @@ def create_share_object(
         input['itemUri'] = itemUri
         input['itemType'] = itemType
         input['datasetUri'] = datasetUri
-        return db.api.ShareObject.create_share_object(
+        return ShareObjectService.create_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -53,7 +56,7 @@ def create_share_object(
 
 def submit_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.submit_share_object(
+        return ShareObjectService.submit_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -65,7 +68,7 @@ def submit_share_object(context: Context, source, shareUri: str = None):
 
 def approve_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.approve_share_object(
+        share = ShareObjectService.approve_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -88,7 +91,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
 
 def reject_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.reject_share_object(
+        return ShareObjectService.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -100,7 +103,7 @@ def reject_share_object(context: Context, source, shareUri: str = None):
 
 def revoke_items_share_object(context: Context, source, input):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.revoke_items_share_object(
+        share = ShareObjectService.revoke_items_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -123,11 +126,11 @@ def revoke_items_share_object(context: Context, source, input):
 
 def delete_share_object(context: Context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.get_share_by_uri(session, shareUri)
+        share = ShareObjectService.get_share_by_uri(session, shareUri)
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
 
-        db.api.ShareObject.delete_share_object(
+        ShareObjectService.delete_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -140,7 +143,7 @@ def delete_share_object(context: Context, source, shareUri: str = None):
 
 def add_shared_item(context, source, shareUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
-        share_item = db.api.ShareObject.add_share_object_item(
+        share_item = ShareObjectService.add_share_object_item(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -153,13 +156,13 @@ def add_shared_item(context, source, shareUri: str = None, input: dict = None):
 
 def remove_shared_item(context, source, shareItemUri: str = None):
     with context.engine.scoped_session() as session:
-        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
+        share_item: ShareObjectItem = session.query(ShareObjectItem).get(
             shareItemUri
         )
         if not share_item:
             raise db.exceptions.ObjectNotFound('ShareObjectItem', shareItemUri)
-        share = db.api.ShareObject.get_share_by_uri(session, share_item.shareUri)
-        db.api.ShareObject.remove_share_object_item(
+        share = ShareObjectService.get_share_by_uri(session, share_item.shareUri)
+        ShareObjectService.remove_share_object_item(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -175,14 +178,14 @@ def remove_shared_item(context, source, shareItemUri: str = None):
 
 
 def list_shared_items(
-    context: Context, source: models.ShareObject, filter: dict = None
+    context: Context, source: ShareObject, filter: dict = None
 ):
     if not source:
         return None
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.list_shared_items(
+        return ShareObjectService.list_shared_items(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -192,11 +195,11 @@ def list_shared_items(
         )
 
 
-def resolve_shared_item(context, source: models.ShareObjectItem, **kwargs):
+def resolve_shared_item(context, source: ShareObjectItem, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.get_share_item(
+        return ShareObjectService.get_share_item(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -208,7 +211,7 @@ def resolve_shared_item(context, source: models.ShareObjectItem, **kwargs):
 
 def get_share_object(context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.get_share_object(
+        return ShareObjectService.get_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -218,7 +221,7 @@ def get_share_object(context, source, shareUri: str = None):
         )
 
 
-def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
+def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -246,7 +249,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
             return ShareObjectPermission.NoPermission.value
 
 
-def resolve_dataset(context: Context, source: models.ShareObject, **kwargs):
+def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -271,10 +274,9 @@ def union_resolver(object, *_):
         return 'DatasetStorageLocation'
 
 
-def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
+def resolve_principal(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
-    from ..Principal.resolvers import get_principal
 
     with context.engine.scoped_session() as session:
         return get_principal(
@@ -282,13 +284,13 @@ def resolve_principal(context: Context, source: models.ShareObject, **kwargs):
         )
 
 
-def resolve_group(context: Context, source: models.ShareObject, **kwargs):
+def resolve_group(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     return source.groupUri
 
 
-def resolve_consumption_data(context: Context, source: models.ShareObject, **kwargs):
+def resolve_consumption_data(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -304,33 +306,33 @@ def resolve_consumption_data(context: Context, source: models.ShareObject, **kwa
             }
 
 
-def resolve_share_object_statistics(context: Context, source: models.ShareObject, **kwargs):
+def resolve_share_object_statistics(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.resolve_share_object_statistics(
+        return ShareObjectService.resolve_share_object_statistics(
             session, source.shareUri
         )
 
 
-def resolve_existing_shared_items(context: Context, source: models.ShareObject, **kwargs):
+def resolve_existing_shared_items(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.check_existing_shared_items(
+        return ShareObjectService.check_existing_shared_items(
             session, source.shareUri
         )
 
 
 def list_shareable_objects(
-    context: Context, source: models.ShareObject, filter: dict = None
+    context: Context, source: ShareObject, filter: dict = None
 ):
     if not source:
         return None
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.list_shareable_items(
+        return ShareObjectService.list_shareable_items(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -344,7 +346,7 @@ def list_shares_in_my_inbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.list_user_received_share_requests(
+        return ShareObjectService.list_user_received_share_requests(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -358,7 +360,7 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.ShareObject.list_user_sent_share_requests(
+        return ShareObjectService.list_user_sent_share_requests(
             session=session,
             username=context.username,
             groups=context.groups,

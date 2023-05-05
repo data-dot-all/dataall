@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from dataall.db import models
+from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.utils.alarm_service import AlarmService
 
@@ -14,7 +15,7 @@ class DatasetAlarmService(AlarmService):
     def trigger_table_sharing_failure_alarm(
             self,
             table: DatasetTable,
-            share: models.ShareObject,
+            share: ShareObject,
             target_environment: models.Environment,
     ):
         log.info('Triggering share failure alarm...')
@@ -46,7 +47,7 @@ class DatasetAlarmService(AlarmService):
     def trigger_revoke_table_sharing_failure_alarm(
             self,
             table: DatasetTable,
-            share: models.ShareObject,
+            share: ShareObject,
             target_environment: models.Environment,
     ):
         log.info('Triggering share failure alarm...')

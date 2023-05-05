@@ -3,6 +3,10 @@ import typing
 import pytest
 
 import dataall
+from dataall.api.constants import ShareObjectStatus, ShareItemStatus
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
@@ -139,13 +143,13 @@ def share1_draft(
         dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
-) -> dataall.db.models.ShareObject:
+) -> ShareObject:
     share1 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
         owner=user2.userName,
-        status=dataall.api.constants.ShareObjectStatus.Draft.value
+        status=ShareObjectStatus.Draft.value
     )
     yield share1
 
@@ -195,9 +199,9 @@ def share1_draft(
 @pytest.fixture(scope='function')
 def share1_item_pa(
         share_item: typing.Callable,
-        share1_draft: dataall.db.models.ShareObject,
+        share1_draft: ShareObject,
         table1: DatasetTable
-) -> dataall.db.models.ShareObjectItem:
+) -> ShareObjectItem:
     # Cleaned up with share1_draft
     yield share_item(
         share=share1_draft,
@@ -216,13 +220,13 @@ def share2_submitted(
         dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
-) -> dataall.db.models.ShareObject:
+) -> ShareObject:
     share2 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
         owner=user2.userName,
-        status=dataall.api.constants.ShareObjectStatus.Submitted.value
+        status=ShareObjectStatus.Submitted.value
     )
     yield share2
     # Cleanup share
@@ -270,9 +274,9 @@ def share2_submitted(
 @pytest.fixture(scope='function')
 def share2_item_pa(
         share_item: typing.Callable,
-        share2_submitted: dataall.db.models.ShareObject,
+        share2_submitted: ShareObject,
         table1: DatasetTable
-) -> dataall.db.models.ShareObjectItem:
+) -> ShareObjectItem:
     # Cleaned up with share2
     yield share_item(
         share=share2_submitted,
@@ -291,13 +295,13 @@ def share3_processed(
         dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
-) -> dataall.db.models.ShareObject:
+) -> ShareObject:
     share3 = share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
         owner=user2.userName,
-        status=dataall.api.constants.ShareObjectStatus.Processed.value
+        status=ShareObjectStatus.Processed.value
     )
     yield share3
     # Cleanup share
@@ -345,14 +349,14 @@ def share3_processed(
 @pytest.fixture(scope='function')
 def share3_item_shared(
         share_item: typing.Callable,
-        share3_processed: dataall.db.models.ShareObject,
+        share3_processed: ShareObject,
         table1:DatasetTable
-) -> dataall.db.models.ShareObjectItem:
+) -> ShareObjectItem:
     # Cleaned up with share3
     yield share_item(
         share=share3_processed,
         table=table1,
-        status=dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+        status=ShareItemStatus.Share_Succeeded.value
     )
 
 
@@ -363,13 +367,13 @@ def share4_draft(
         dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
-) -> dataall.db.models.ShareObject:
+) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=env2,
         env_group=env2group,
         owner=user2.userName,
-        status=dataall.api.constants.ShareObjectStatus.Draft.value
+        status=ShareObjectStatus.Draft.value
     )
 
 
@@ -810,7 +814,7 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     )
     # Then share object created with status Draft and user is 'Requester'
     assert create_share_object_response.data.createShareObject.shareUri
-    assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
 
 
@@ -830,7 +834,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
 
     # Then share object created with status Draft and user is 'Requester'
     assert create_share_object_response.data.createShareObject.shareUri
-    assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
 
     # And item has been added to the share request
@@ -994,8 +998,7 @@ def test_add_share_item(
 
     # Then shared item was added to share object in status PendingApproval
     assert add_share_item_response.data.addSharedItem.shareUri == share1_draft.shareUri
-    assert add_share_item_response.data.addSharedItem.status == \
-           dataall.api.constants.ShareItemStatus.PendingApproval.name
+    assert add_share_item_response.data.addSharedItem.status == ShareItemStatus.PendingApproval.name
 
 
 def test_remove_share_item(
@@ -1011,11 +1014,11 @@ def test_remove_share_item(
         filter={"isShared": True},
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Draft.value
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share1_item_pa.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When
@@ -1052,11 +1055,11 @@ def test_submit_share_request(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Draft.value
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share1_item_pa.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When
@@ -1069,8 +1072,7 @@ def test_submit_share_request(
     )
 
     # Then share object status is changed to Submitted
-    assert submit_share_object_response.data.submitShareObject.status == \
-           dataall.api.constants.ShareObjectStatus.Submitted.name
+    assert submit_share_object_response.data.submitShareObject.status == ShareObjectStatus.Submitted.name
     assert submit_share_object_response.data.submitShareObject.userRoleForShareObject == 'Requesters'
 
     # and share item status stays in PendingApproval
@@ -1083,7 +1085,7 @@ def test_submit_share_request(
     )
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     status = shareItem['status']
-    assert status == dataall.api.constants.ShareItemStatus.PendingApproval.name
+    assert status == ShareItemStatus.PendingApproval.name
 
 
 def test_approve_share_request(
@@ -1100,10 +1102,10 @@ def test_approve_share_request(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Submitted.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted.value
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share2_item_pa.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When we approve the share object
@@ -1118,8 +1120,7 @@ def test_approve_share_request(
     assert approve_share_object_response.data.approveShareObject.userRoleForShareObject == 'Approvers'
 
     # Then share object status is changed to Approved
-    assert approve_share_object_response.data.approveShareObject.status == \
-           dataall.api.constants.ShareObjectStatus.Approved.name
+    assert approve_share_object_response.data.approveShareObject.status == ShareObjectStatus.Approved.name
 
     # and share item status is changed to Share_Approved
     get_share_object_response = get_share_object(
@@ -1131,7 +1132,7 @@ def test_approve_share_request(
     )
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Approved.value
+    assert shareItem.status == ShareItemStatus.Share_Approved.value
 
     # When approved share object is processed and the shared items successfully shared
     _successfull_processing_for_share_object(db, share2_submitted)
@@ -1145,11 +1146,11 @@ def test_approve_share_request(
     )
 
     # Then share object status is changed to Processed
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     # And share item status is changed to Share_Succeeded
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
 
 
 def test_reject_share_request(
@@ -1166,10 +1167,10 @@ def test_reject_share_request(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Submitted.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted.value
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share2_item_pa.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.PendingApproval.value
+    assert shareItem.status == ShareItemStatus.PendingApproval.value
     assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When we reject the share object
@@ -1181,8 +1182,7 @@ def test_reject_share_request(
     )
 
     # Then share object status is changed to Rejected
-    assert reject_share_object_response.data.rejectShareObject.status == \
-           dataall.api.constants.ShareObjectStatus.Rejected.name
+    assert reject_share_object_response.data.rejectShareObject.status == ShareObjectStatus.Rejected.name
 
     # and share item status is changed to Share_Rejected
     get_share_object_response = get_share_object(
@@ -1194,7 +1194,7 @@ def test_reject_share_request(
     )
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Rejected.value
+    assert shareItem.status == ShareItemStatus.Share_Rejected.value
 
 
 def test_search_shared_items_in_environment(
@@ -1210,7 +1210,7 @@ def test_search_shared_items_in_environment(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     list_datasets_published_in_environment_response = list_datasets_published_in_environment(
         client=client,
@@ -1237,11 +1237,11 @@ def test_revoke_items_share_request(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share3_item_shared.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
     revoked_items_uris = [node.shareItemUri for node in
                           get_share_object_response.data.getShareObject.get('items').nodes]
 
@@ -1255,7 +1255,7 @@ def test_revoke_items_share_request(
         revoked_items_uris=revoked_items_uris
     )
     # Then share object changes to status Rejected
-    assert revoke_items_share_object_response.data.revokeItemsShareObject.status == dataall.api.constants.ShareObjectStatus.Revoked.value
+    assert revoke_items_share_object_response.data.revokeItemsShareObject.status == ShareObjectStatus.Revoked.value
 
     # And shared item changes to status Revoke_Approved
     get_share_object_response = get_share_object(
@@ -1267,7 +1267,7 @@ def test_revoke_items_share_request(
     )
     sharedItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     status = sharedItem['status']
-    assert status == dataall.api.constants.ShareItemStatus.Revoke_Approved.value
+    assert status == ShareItemStatus.Revoke_Approved.value
 
     # Given the revoked share object is processed and the shared items
     # When approved share object is processed and the shared items successfully revoked (we re-use same function)
@@ -1282,11 +1282,11 @@ def test_revoke_items_share_request(
     )
 
     # Then share object status is changed to Processed
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     # And share item status is changed to Revoke_Succeeded
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Revoke_Succeeded.value
+    assert shareItem.status == ShareItemStatus.Revoke_Succeeded.value
 
 
 def test_delete_share_object(
@@ -1302,7 +1302,7 @@ def test_delete_share_object(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Draft.value
 
     # When deleting the share object
     delete_share_object_response = delete_share_object(
@@ -1329,11 +1329,11 @@ def test_delete_share_object_remaining_items_error(
         filter={"isShared": True}
     )
 
-    assert get_share_object_response.data.getShareObject.status == dataall.api.constants.ShareObjectStatus.Processed.value
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     assert shareItem.shareItemUri == share3_item_shared.shareItemUri
-    assert shareItem.status == dataall.api.constants.ShareItemStatus.Share_Succeeded.value
+    assert shareItem.status == ShareItemStatus.Share_Succeeded.value
     assert get_share_object_response.data.getShareObject.get("items").count == 1
 
     # When deleting the share object
@@ -1350,16 +1350,16 @@ def test_delete_share_object_remaining_items_error(
 def _successfull_processing_for_share_object(db, share):
     with db.scoped_session() as session:
         print('Processing share with action ShareObjectActions.Start')
-        share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)
+        share = ShareObjectService.get_share_by_uri(session, share.shareUri)
 
-        share_items_states = dataall.db.api.ShareObject.get_share_items_states(session, share.shareUri)
+        share_items_states = ShareObjectService.get_share_items_states(session, share.shareUri)
 
-        Share_SM = dataall.db.api.ShareObjectSM(share.status)
-        new_share_state = Share_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Start.value)
+        Share_SM = ShareObjectSM(share.status)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
 
         for item_state in share_items_states:
-            Item_SM = dataall.db.api.ShareItemSM(item_state)
-            new_state = Item_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Start.value)
+            Item_SM = ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(ShareObjectActions.Start.value)
             Item_SM.update_state(session, share.shareUri, new_state)
 
         Share_SM.update_state(session, share, new_share_state)
@@ -1367,14 +1367,14 @@ def _successfull_processing_for_share_object(db, share):
         print('Processing share with action ShareObjectActions.Finish \
             and ShareItemActions.Success')
 
-        share = dataall.db.api.ShareObject.get_share_by_uri(session, share.shareUri)
-        share_items_states = dataall.db.api.ShareObject.get_share_items_states(session, share.shareUri)
+        share = ShareObjectService.get_share_by_uri(session, share.shareUri)
+        share_items_states = ShareObjectService.get_share_items_states(session, share.shareUri)
 
-        new_share_state = Share_SM.run_transition(dataall.db.models.Enums.ShareObjectActions.Finish.value)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
 
         for item_state in share_items_states:
-            Item_SM = dataall.db.api.ShareItemSM(item_state)
-            new_state = Item_SM.run_transition(dataall.db.models.Enums.ShareItemActions.Success.value)
+            Item_SM = ShareItemSM(item_state)
+            new_state = Item_SM.run_transition(ShareItemActions.Success.value)
             Item_SM.update_state(session, share.shareUri, new_state)
 
         Share_SM.update_state(session, share, new_share_state)

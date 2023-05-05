@@ -12,8 +12,8 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
 from ....db import exceptions, models
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
-from dataall.utils.alarm_service import AlarmService
 from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class LFShareManager:
         self,
         session,
         dataset: Dataset,
-        share: models.ShareObject,
+        share: ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
         source_environment: models.Environment,
@@ -77,7 +77,7 @@ class LFShareManager:
         Parameters
         ----------
         dataset : Dataset
-        share : models.ShareObject
+        share : ShareObject
 
         Returns
         -------
@@ -113,7 +113,7 @@ class LFShareManager:
         return data
 
     def check_share_item_exists_on_glue_catalog(
-        self, share_item: models.ShareObjectItem, table: DatasetTable
+        self, share_item: ShareObjectItem, table: DatasetTable
     ) -> None:
         """
         Checks if a table in the share request
@@ -506,7 +506,7 @@ class LFShareManager:
     def handle_share_failure(
         self,
         table: DatasetTable,
-        share_item: models.ShareObjectItem,
+        share_item: ShareObjectItem,
         error: Exception,
     ) -> bool:
         """
@@ -536,7 +536,7 @@ class LFShareManager:
     def handle_revoke_failure(
             self,
             table: DatasetTable,
-            share_item: models.ShareObjectItem,
+            share_item: ShareObjectItem,
             error: Exception,
     ) -> bool:
         """

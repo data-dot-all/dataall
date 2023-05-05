@@ -5,10 +5,13 @@ from .share_processors.lf_process_cross_account_share import ProcessLFCrossAccou
 from .share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 from .share_processors.s3_process_share import ProcessS3Share
 
-from ...aws.handlers.ram import Ram
-from ...aws.handlers.sts import SessionHelper
-from ...db import api, models, Engine
-from ...utils import Parameter
+from dataall.aws.handlers.ram import Ram
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import models, Engine
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus, ShareObjectStatus
+from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectSM, ShareObjectService, ShareItemSM
+from dataall.utils import Parameter
 
 log = logging.getLogger(__name__)
 
@@ -44,16 +47,16 @@ class DataSharingService:
                 share,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri)
+            ) = ShareObjectService.get_share_data(session, share_uri)
 
-            Share_SM = api.ShareObjectSM(share.status)
-            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM = ShareObjectSM(share.status)
+            new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
             Share_SM.update_state(session, share, new_share_state)
 
             (
                 shared_tables,
                 shared_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Share_Approved.value)
+            ) = ShareObjectService.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -96,7 +99,7 @@ class DataSharingService:
         approved_tables_succeed = processor.process_approved_shares()
         log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
-        new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+        new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
         Share_SM.update_state(session, share, new_share_state)
 
         return approved_tables_succeed if approved_folders_succeed else False
@@ -131,20 +134,20 @@ class DataSharingService:
                 share,
                 source_environment,
                 target_environment,
-            ) = api.ShareObject.get_share_data(session, share_uri)
+            ) = ShareObjectService.get_share_data(session, share_uri)
 
-            Share_SM = api.ShareObjectSM(share.status)
-            new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            Share_SM = ShareObjectSM(share.status)
+            new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
             Share_SM.update_state(session, share, new_share_state)
 
-            revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
+            revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
 
             (
                 revoked_tables,
                 revoked_folders
-            ) = api.ShareObject.get_share_data_items(session, share_uri, models.ShareItemStatus.Revoke_Approved.value)
+            ) = ShareObjectService.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
 
-            new_state = revoked_item_SM.run_transition(models.ShareObjectActions.Start.value)
+            new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state(session, share_uri, new_state)
 
             log.info(f'Revoking permissions to folders: {revoked_folders}')
@@ -160,7 +163,7 @@ class DataSharingService:
                 env_group,
             )
             log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+            existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 models.ShareableType.StorageLocation.value
@@ -201,7 +204,7 @@ class DataSharingService:
             revoked_tables_succeed = processor.process_revoked_shares()
             log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 
-            existing_shared_items = api.ShareObject.check_existing_shared_items_of_type(
+            existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 models.ShareableType.Table.value
@@ -212,11 +215,11 @@ class DataSharingService:
                 clean_up_tables = processor.clean_up_share()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
-            existing_pending_items = api.ShareObject.check_pending_share_items(session, share_uri)
+            existing_pending_items = ShareObjectService.check_pending_share_items(session, share_uri)
             if existing_pending_items:
-                new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.FinishPending.value)
+                new_share_state = Share_SM.run_transition(ShareObjectActions.FinishPending.value)
             else:
-                new_share_state = Share_SM.run_transition(models.Enums.ShareObjectActions.Finish.value)
+                new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
             Share_SM.update_state(session, share, new_share_state)
 
             return revoked_tables_succeed and revoked_folders_succeed
@@ -254,12 +257,12 @@ class DataSharingService:
         -------
         true if refresh succeeds
         """
-        share_object_refreshable_states = api.ShareObjectSM.get_share_object_refreshable_states()
+        share_object_refreshable_states = ShareObjectSM.get_share_object_refreshable_states()
         with engine.scoped_session() as session:
             environments = session.query(models.Environment).all()
             shares = (
-                session.query(models.ShareObject)
-                .filter(models.ShareObject.status.in_(share_object_refreshable_states))
+                session.query(ShareObject)
+                .filter(ShareObject.status.in_(share_object_refreshable_states))
                 .all()
             )
 
@@ -286,7 +289,7 @@ class DataSharingService:
                 log.info(
                     f'Refreshing share {share.shareUri} with {share.status} status...'
                 )
-                if share.status in [models.ShareObjectStatus.Approved.value]:
+                if share.status in [ShareObjectStatus.Approved.value]:
                     cls.approve_share(engine, share.shareUri)
                 else:
                     cls.revoke_share(engine, share.shareUri)

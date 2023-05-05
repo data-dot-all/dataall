@@ -12,8 +12,9 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
-`from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
+from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
@@ -88,9 +89,9 @@ class SubscriptionService:
                 log.info(
                     f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}'
                 )
-                share_items: [models.ShareObjectItem] = (
-                    session.query(models.ShareObjectItem)
-                    .filter(models.ShareObjectItem.itemUri == table.tableUri)
+                share_items: [ShareObjectItem] = (
+                    session.query(ShareObjectItem)
+                    .filter(ShareObjectItem.itemUri == table.tableUri)
                     .all()
                 )
                 log.info(f'Found shared items for table {share_items}')
@@ -126,9 +127,9 @@ class SubscriptionService:
             log.info(
                 f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}'
             )
-            share_items: [models.ShareObjectItem] = (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.itemUri == location.locationUri)
+            share_items: [ShareObjectItem] = (
+                session.query(ShareObjectItem)
+                .filter(ShareObjectItem.itemUri == location.locationUri)
                 .all()
             )
             log.info(f'Found shared items for location {share_items}')
@@ -316,12 +317,12 @@ class SubscriptionService:
 
     @staticmethod
     def get_approved_share_object(session, item):
-        share_object: models.ShareObject = (
-            session.query(models.ShareObject)
+        share_object: ShareObject = (
+            session.query(ShareObject)
             .filter(
                 and_(
-                    models.ShareObject.shareUri == item.shareUri,
-                    models.ShareObject.status == 'Approved',
+                    ShareObject.shareUri == item.shareUri,
+                    ShareObject.status == 'Approved',
                 )
             )
             .first()

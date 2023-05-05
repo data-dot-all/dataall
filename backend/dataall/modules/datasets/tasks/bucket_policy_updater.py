@@ -10,6 +10,8 @@ from sqlalchemy import and_
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
@@ -164,7 +166,7 @@ class BucketPoliciesUpdater:
             account_prefixes[accountid] = [prefix]
         return account_prefixes
 
-    def get_shared_tables(self, dataset) -> typing.List[models.ShareObjectItem]:
+    def get_shared_tables(self, dataset) -> typing.List[ShareObjectItem]:
         with self.engine.scoped_session() as session:
             tables = (
                 session.query(
@@ -177,26 +179,25 @@ class BucketPoliciesUpdater:
                     models.Environment.region.label('TargetRegion'),
                 )
                 .join(
-                    models.ShareObjectItem,
+                    ShareObjectItem,
                     and_(
-                        models.ShareObjectItem.itemUri == DatasetTable.tableUri
+                        ShareObjectItem.itemUri == DatasetTable.tableUri
                     ),
                 )
                 .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                    ShareObject,
+                    ShareObject.shareUri == ShareObjectItem.shareUri,
                 )
                 .join(
                     models.Environment,
                     models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
+                    == ShareObject.environmentUri,
                 )
                 .filter(
                     and_(
                         DatasetTable.datasetUri == dataset.datasetUri,
                         DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        ShareObjectItem.status == ShareObjectStatus.Approved.value,
                     )
                 )
             ).all()
@@ -213,27 +214,26 @@ class BucketPoliciesUpdater:
                     models.Environment.region.label('region'),
                 )
                 .join(
-                    models.ShareObjectItem,
+                    ShareObjectItem,
                     and_(
-                        models.ShareObjectItem.itemUri
+                        ShareObjectItem.itemUri
                         == DatasetStorageLocation.locationUri
                     ),
                 )
                 .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                    ShareObject,
+                    ShareObject.shareUri == ShareObjectItem.shareUri,
                 )
                 .join(
                     models.Environment,
                     models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
+                    == ShareObject.environmentUri,
                 )
                 .filter(
                     and_(
                         DatasetStorageLocation.datasetUri == dataset.datasetUri,
                         DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
+                        ShareObjectItem.status == ShareObjectStatus.Approved.value,
                     )
                 )
             ).all()

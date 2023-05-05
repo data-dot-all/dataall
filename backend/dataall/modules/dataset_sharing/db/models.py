@@ -4,8 +4,8 @@ from uuid import uuid4
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
-from .Enums import ShareObjectStatus
-from .. import Base, utils
+from dataall.db import Base, utils
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareItemStatus
 
 
 def in_one_month():
@@ -35,3 +35,25 @@ class ShareObject(Base):
     confirmed = Column(Boolean, default=False)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
+
+
+class ShareObjectItem(Base):
+    __tablename__ = 'share_object_item'
+    shareUri = Column(String, nullable=False)
+    shareItemUri = Column(
+        String, default=utils.uuid('shareitem'), nullable=False, primary_key=True
+    )
+    itemType = Column(String, nullable=False)
+    itemUri = Column(String, nullable=False)
+    itemName = Column(String, nullable=False)
+    permission = Column(String, nullable=True)
+    created = Column(DateTime, nullable=False, default=datetime.now)
+    updated = Column(DateTime, nullable=True, onupdate=datetime.now)
+    deleted = Column(DateTime, nullable=True)
+    owner = Column(String, nullable=False)
+    GlueDatabaseName = Column(String, nullable=True)
+    GlueTableName = Column(String, nullable=True)
+    S3AccessPointName = Column(String, nullable=True)
+    status = Column(String, nullable=False, default=ShareItemStatus.PendingApproval.value)
+    action = Column(String, nullable=True)
+

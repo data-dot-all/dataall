@@ -6,8 +6,10 @@ from sqlalchemy.sql import and_
 
 from dataall.api.constants import ShareableType, PrincipalType
 from dataall.db import models, permissions
-from dataall.db.api import has_resource_perm, ShareItemSM
+from dataall.db.api import has_resource_perm
 from dataall.db.paginator import paginate
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
@@ -21,25 +23,25 @@ class DatasetShareService:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
-                models.ShareObjectItem.shareUri.label('shareUri'),
+                ShareObjectItem.shareUri.label('shareUri'),
                 Dataset.datasetUri.label('datasetUri'),
                 Dataset.name.label('datasetName'),
                 Dataset.description.label('datasetDescription'),
                 models.Environment.environmentUri.label('environmentUri'),
                 models.Environment.name.label('environmentName'),
-                models.ShareObject.created.label('created'),
-                models.ShareObject.principalId.label('principalId'),
-                models.ShareObject.principalType.label('principalType'),
-                models.ShareObjectItem.itemType.label('itemType'),
-                models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
-                models.ShareObjectItem.GlueTableName.label('GlueTableName'),
-                models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+                ShareObject.created.label('created'),
+                ShareObject.principalId.label('principalId'),
+                ShareObject.principalType.label('principalType'),
+                ShareObjectItem.itemType.label('itemType'),
+                ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+                ShareObjectItem.GlueTableName.label('GlueTableName'),
+                ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
                 models.Organization.organizationUri.label('organizationUri'),
                 models.Organization.name.label('organizationName'),
                 case(
                     [
                         (
-                            models.ShareObjectItem.itemType
+                            ShareObjectItem.itemType
                             == ShareableType.Table.value,
                             func.concat(
                                 DatasetTable.GlueDatabaseName,
@@ -48,7 +50,7 @@ class DatasetShareService:
                             ),
                         ),
                         (
-                            models.ShareObjectItem.itemType
+                            ShareObjectItem.itemType
                             == ShareableType.StorageLocation.value,
                             func.concat(DatasetStorageLocation.name),
                         ),
@@ -57,12 +59,12 @@ class DatasetShareService:
                 ).label('itemAccess'),
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
                 Dataset,
-                models.ShareObject.datasetUri == Dataset.datasetUri,
+                ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
                 models.Environment,
@@ -75,38 +77,38 @@ class DatasetShareService:
             )
             .outerjoin(
                 DatasetTable,
-                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .outerjoin(
                 DatasetStorageLocation,
-                models.ShareObjectItem.itemUri
+                ShareObjectItem.itemUri
                 == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
-                    models.ShareObject.environmentUri == uri,
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.environmentUri == uri,
                 )
             )
         )
 
         if data.get('datasetUri'):
             datasetUri = data.get('datasetUri')
-            q = q.filter(models.ShareObject.datasetUri == datasetUri)
+            q = q.filter(ShareObject.datasetUri == datasetUri)
 
         if data.get('itemTypes', None):
             itemTypes = data.get('itemTypes')
             q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+                or_(*[ShareObjectItem.itemType == t for t in itemTypes])
             )
 
         if data.get("uniqueShares", False):
-            q = q.filter(models.ShareObject.principalType != PrincipalType.ConsumptionRole.value)
-            q = q.distinct(models.ShareObject.shareUri)
+            q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
+            q = q.distinct(ShareObject.shareUri)
 
         if data.get('term'):
             term = data.get('term')
-            q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
+            q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
 
         return paginate(
             query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
@@ -119,24 +121,24 @@ class DatasetShareService:
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
-                models.ShareObjectItem.shareUri.label('shareUri'),
+                ShareObjectItem.shareUri.label('shareUri'),
                 Dataset.datasetUri.label('datasetUri'),
                 Dataset.name.label('datasetName'),
                 Dataset.description.label('datasetDescription'),
                 models.Environment.environmentUri.label('environmentUri'),
                 models.Environment.name.label('environmentName'),
-                models.ShareObject.created.label('created'),
-                models.ShareObject.principalId.label('principalId'),
-                models.ShareObjectItem.itemType.label('itemType'),
-                models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
-                models.ShareObjectItem.GlueTableName.label('GlueTableName'),
-                models.ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+                ShareObject.created.label('created'),
+                ShareObject.principalId.label('principalId'),
+                ShareObjectItem.itemType.label('itemType'),
+                ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+                ShareObjectItem.GlueTableName.label('GlueTableName'),
+                ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
                 models.Organization.organizationUri.label('organizationUri'),
                 models.Organization.name.label('organizationName'),
                 case(
                     [
                         (
-                            models.ShareObjectItem.itemType
+                            ShareObjectItem.itemType
                             == ShareableType.Table.value,
                             func.concat(
                                 DatasetTable.GlueDatabaseName,
@@ -145,7 +147,7 @@ class DatasetShareService:
                             ),
                         ),
                         (
-                            models.ShareObjectItem.itemType
+                            ShareObjectItem.itemType
                             == ShareableType.StorageLocation.value,
                             func.concat(DatasetStorageLocation.name),
                         ),
@@ -154,12 +156,12 @@ class DatasetShareService:
                 ).label('itemAccess'),
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
                 Dataset,
-                models.ShareObject.datasetUri == Dataset.datasetUri,
+                ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
                 models.Environment,
@@ -172,34 +174,34 @@ class DatasetShareService:
             )
             .outerjoin(
                 DatasetTable,
-                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .outerjoin(
                 DatasetStorageLocation,
-                models.ShareObjectItem.itemUri
+                ShareObjectItem.itemUri
                 == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
-                    models.ShareObject.environmentUri == envUri,
-                    models.ShareObject.principalId == groupUri,
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.environmentUri == envUri,
+                    ShareObject.principalId == groupUri,
                 )
             )
         )
 
         if data.get('datasetUri'):
             datasetUri = data.get('datasetUri')
-            q = q.filter(models.ShareObject.datasetUri == datasetUri)
+            q = q.filter(ShareObject.datasetUri == datasetUri)
 
         if data.get('itemTypes', None):
             itemTypes = data.get('itemTypes')
             q = q.filter(
-                or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
+                or_(*[ShareObjectItem.itemType == t for t in itemTypes])
             )
         if data.get('term'):
             term = data.get('term')
-            q = q.filter(models.ShareObjectItem.itemName.ilike('%' + term + '%'))
+            q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
 
         return paginate(
             query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)

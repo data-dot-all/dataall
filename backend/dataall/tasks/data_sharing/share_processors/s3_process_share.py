@@ -1,8 +1,11 @@
 import logging
 
-from ....db import models, api
+from dataall.db import models
 from ..share_managers import S3ShareManager
 from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
+from dataall.modules.dataset_sharing.db.Enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.db.models import ShareObject
+from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -12,7 +15,7 @@ class ProcessS3Share(S3ShareManager):
         self,
         session,
         dataset: Dataset,
-        share: models.ShareObject,
+        share: ShareObject,
         share_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
@@ -36,7 +39,7 @@ class ProcessS3Share(S3ShareManager):
         cls,
         session,
         dataset: Dataset,
-        share: models.ShareObject,
+        share: ShareObject,
         share_folders: [DatasetStorageLocation],
         source_environment: models.Environment,
         target_environment: models.Environment,
@@ -61,13 +64,13 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in share_folders:
             log.info(f'sharing folder: {folder}')
-            sharing_item = api.ShareObject.find_share_item_by_folder(
+            sharing_item = ShareObjectService.find_share_item_by_folder(
                 session,
                 share,
                 folder,
             )
-            shared_item_SM = api.ShareItemSM(models.ShareItemStatus.Share_Approved.value)
-            new_state = shared_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
+            new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
             shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             sharing_folder = cls(
@@ -87,12 +90,12 @@ class ProcessS3Share(S3ShareManager):
                 sharing_folder.manage_access_point_and_policy()
                 sharing_folder.update_dataset_bucket_key_policy()
 
-                new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             except Exception as e:
                 sharing_folder.log_share_failure(e)
-                new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 success = False
 
@@ -103,7 +106,7 @@ class ProcessS3Share(S3ShareManager):
             cls,
             session,
             dataset: Dataset,
-            share: models.ShareObject,
+            share: ShareObject,
             revoke_folders: [DatasetStorageLocation],
             source_environment: models.Environment,
             target_environment: models.Environment,
@@ -126,14 +129,14 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
-            removing_item = api.ShareObject.find_share_item_by_folder(
+            removing_item = ShareObjectService.find_share_item_by_folder(
                 session,
                 share,
                 folder,
             )
 
-            revoked_item_SM = api.ShareItemSM(models.ShareItemStatus.Revoke_Approved.value)
-            new_state = revoked_item_SM.run_transition(models.Enums.ShareObjectActions.Start.value)
+            revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+            new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             removing_folder = cls(
@@ -150,12 +153,12 @@ class ProcessS3Share(S3ShareManager):
             try:
                 removing_folder.delete_access_point_policy()
 
-                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Success.value)
+                new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
                 removing_folder.log_revoke_failure(e)
-                new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
+                new_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False
 
@@ -164,7 +167,7 @@ class ProcessS3Share(S3ShareManager):
     @staticmethod
     def clean_up_share(
             dataset: Dataset,
-            share: models.ShareObject,
+            share: ShareObject,
             target_environment: models.Environment
     ):
         """

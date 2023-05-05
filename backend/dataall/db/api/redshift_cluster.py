@@ -11,6 +11,8 @@ from dataall.utils.naming_convention import (
 )
 from dataall.utils.slugify import slugify
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -185,29 +187,29 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
+                ShareObject.datasetUri.label('datasetUri'),
                 literal(cluster.clusterUri).label('clusterUri'),
             )
             .join(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                == ShareObject.environmentUri,
             )
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
-                        models.ShareObject.owner == username,
-                        models.ShareObject.principalId.in_(groups),
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
                     ),
                 )
             )
-            .group_by(models.ShareObject.datasetUri, models.RedshiftCluster.clusterUri)
+            .group_by(ShareObject.datasetUri, models.RedshiftCluster.clusterUri)
         )
         created = (
             session.query(
@@ -300,36 +302,36 @@ class RedshiftCluster:
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
-                models.ShareObjectItem.itemUri.label('tableUri'),
+                ShareObject.datasetUri.label('datasetUri'),
+                ShareObjectItem.itemUri.label('tableUri'),
                 literal(cluster.clusterUri).label('clusterUri'),
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                == ShareObject.environmentUri,
             )
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
-                        models.ShareObject.owner == username,
-                        models.ShareObject.principalId.in_(groups),
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
                     ),
                 )
             )
             .group_by(
-                models.ShareObject.datasetUri,
-                models.ShareObjectItem.itemUri,
+                ShareObject.datasetUri,
+                ShareObjectItem.itemUri,
                 models.RedshiftCluster.clusterUri,
             )
         )

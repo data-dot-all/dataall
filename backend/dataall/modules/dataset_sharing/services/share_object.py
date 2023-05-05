@@ -9,7 +9,10 @@ from dataall.db.api import (
 )
 from dataall.db import api, utils
 from dataall.db import models, exceptions, permissions, paginate
-from dataall.db.models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
+from dataall.db.models.Enums import ShareableType, PrincipalType
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
+    ShareItemStatus
+from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import DATASET_TABLE_READ
@@ -146,7 +149,7 @@ class ShareObjectSM:
 
     def update_state(self, session, share, new_state):
         logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
-        ShareObject.update_share_object_status(
+        ShareObjectService.update_share_object_status(
             session=session,
             shareUri=share.shareUri,
             status=new_state
@@ -276,14 +279,14 @@ class ShareItemSM:
         if share_uri and (new_state != self._state):
             if new_state == ShareItemStatus.Deleted.value:
                 logger.info(f"Deleting share items in DB in {self._state} state")
-                ShareObject.delete_share_item_status_batch(
+                ShareObjectService.delete_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
                     status=self._state
                 )
             else:
                 logger.info(f"Updating share items in DB from {self._state} to state {new_state}")
-                ShareObject.update_share_item_status_batch(
+                ShareObjectService.update_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
                     old_status=self._state,
@@ -296,7 +299,7 @@ class ShareItemSM:
 
     def update_state_single_item(self, session, share_item, new_state):
         logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
-        ShareObject.update_share_item_status(
+        ShareObjectService.update_share_item_status(
             session=session,
             uri=share_item.shareItemUri,
             status=new_state
@@ -322,7 +325,7 @@ class ShareItemSM:
         ]
 
 
-class ShareObject:
+class ShareObjectService:
     @staticmethod
     @has_resource_perm(permissions.CREATE_SHARE_OBJECT)
     def create_share_object(
@@ -332,7 +335,7 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObject:
+    ) -> ShareObject:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('principalId'):
@@ -385,7 +388,7 @@ class ShareObject:
                 message=f'Team: {groupUri} is managing the dataset {dataset.name}',
             )
 
-        ShareObject.validate_group_membership(
+        ShareObjectService.validate_group_membership(
             session=session,
             username=username,
             groups=groups,
@@ -393,20 +396,20 @@ class ShareObject:
             environment_uri=uri,
         )
 
-        share: models.ShareObject = (
-            session.query(models.ShareObject)
+        share: ShareObject = (
+            session.query(ShareObject)
             .filter(
                 and_(
-                    models.ShareObject.datasetUri == datasetUri,
-                    models.ShareObject.principalId == principalId,
-                    models.ShareObject.environmentUri == environmentUri,
-                    models.ShareObject.groupUri == groupUri,
+                    ShareObject.datasetUri == datasetUri,
+                    ShareObject.principalId == principalId,
+                    ShareObject.environmentUri == environmentUri,
+                    ShareObject.groupUri == groupUri,
                 )
             )
             .first()
         )
         if not share:
-            share = models.ShareObject(
+            share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner=username,
@@ -428,11 +431,11 @@ class ShareObject:
                     item = session.query(DatasetTable).get(itemUri)
 
             share_item = (
-                session.query(models.ShareObjectItem)
+                session.query(ShareObjectItem)
                 .filter(
                     and_(
-                        models.ShareObjectItem.shareUri == share.shareUri,
-                        models.ShareObjectItem.itemUri == itemUri,
+                        ShareObjectItem.shareUri == share.shareUri,
+                        ShareObjectItem.itemUri == itemUri,
                     )
                 )
                 .first()
@@ -443,7 +446,7 @@ class ShareObject:
             )
 
             if not share_item and item:
-                new_share_item: models.ShareObjectItem = models.ShareObjectItem(
+                new_share_item: ShareObjectItem = ShareObjectItem(
                     shareUri=share.shareUri,
                     itemUri=itemUri,
                     itemType=itemType,
@@ -481,14 +484,14 @@ class ShareObject:
             group=groupUri,
             permissions=permissions.SHARE_OBJECT_REQUESTER,
             resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
+            resource_type=ShareObject.__name__,
         )
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=dataset.SamlAdminGroupName,
             permissions=permissions.SHARE_OBJECT_REQUESTER,
             resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
+            resource_type=ShareObject.__name__,
         )
         if dataset.SamlAdminGroupName != environment.SamlGroupName:
             ResourcePolicy.attach_resource_policy(
@@ -496,7 +499,7 @@ class ShareObject:
                 group=environment.SamlGroupName,
                 permissions=permissions.SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
+                resource_type=ShareObject.__name__,
             )
         # Attaching REQUESTER permissions to:
         # dataset.stewards (includes the dataset Admins)
@@ -505,7 +508,7 @@ class ShareObject:
             group=dataset.stewards,
             permissions=permissions.SHARE_OBJECT_APPROVER,
             resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
+            resource_type=ShareObject.__name__,
         )
         return share
 
@@ -540,10 +543,10 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObject:
-        share = ShareObject.get_share_by_uri(session, uri)
+    ) -> ShareObject:
+        share = ShareObjectService.get_share_by_uri(session, uri)
         dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObject.get_share_items_states(session, uri)
+        share_items_states = ShareObjectService.get_share_items_states(session, uri)
 
         valid_states = [ShareItemStatus.PendingApproval.value]
         valid_share_items_states = [x for x in valid_states if x in share_items_states]
@@ -578,10 +581,10 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObject:
-        share = ShareObject.get_share_by_uri(session, uri)
+    ) -> ShareObject:
+        share = ShareObjectService.get_share_by_uri(session, uri)
         dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObject.get_share_items_states(session, uri)
+        share_items_states = ShareObjectService.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Approve.value)
@@ -594,11 +597,11 @@ class ShareObject:
         Share_SM.update_state(session, share, new_share_state)
 
         # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
-        share_table_items = session.query(models.ShareObjectItem).filter(
+        share_table_items = session.query(ShareObjectItem).filter(
             (
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.itemType == ShareableType.Table.value
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.itemType == ShareableType.Table.value
                 )
             )
         ).all()
@@ -624,11 +627,11 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObject:
+    ) -> ShareObject:
 
-        share = ShareObject.get_share_by_uri(session, uri)
+        share = ShareObjectService.get_share_by_uri(session, uri)
         dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObject.get_share_items_states(session, uri)
+        share_items_states = ShareObjectService.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
@@ -659,12 +662,12 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObject:
+    ) -> ShareObject:
 
-        share = ShareObject.get_share_by_uri(session, uri)
+        share = ShareObjectService.get_share_by_uri(session, uri)
         dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
-        revoked_items_states = ShareObject.get_share_items_states(session, uri, data.get("revokedItemUris"))
-        revoked_items = [ShareObject.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
+        revoked_items_states = ShareObjectService.get_share_items_states(session, uri, data.get("revokedItemUris"))
+        revoked_items = [ShareObjectService.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
 
         if revoked_items_states == []:
             raise exceptions.ShareItemsFound(
@@ -704,7 +707,7 @@ class ShareObject:
         data: dict = None,
         check_perm: bool = False,
     ):
-        share = session.query(models.ShareObject).get(uri)
+        share = session.query(ShareObject).get(uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', uri)
 
@@ -720,9 +723,9 @@ class ShareObject:
         data: dict = None,
         check_perm: bool = False,
     ):
-        share_item: models.ShareObjectItem = data.get(
+        share_item: ShareObjectItem = data.get(
             'share_item',
-            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
+            ShareObjectService.get_share_item_by_uri(session, data['shareItemUri']),
         )
         if share_item.itemType == ShareableType.Table.value:
             return session.query(DatasetTable).get(share_item.itemUri)
@@ -731,17 +734,17 @@ class ShareObject:
 
     @staticmethod
     def get_share_by_uri(session, uri):
-        share = session.query(models.ShareObject).get(uri)
+        share = session.query(ShareObject).get(uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', uri)
         return share
 
     @staticmethod
     def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner):
-        share: models.ShareObject = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.datasetUri == dataset_uri)
-            .filter(models.ShareObject.owner == dataset_owner)
+        share: ShareObject = (
+            session.query(ShareObject)
+            .filter(ShareObject.datasetUri == dataset_uri)
+            .filter(ShareObject.owner == dataset_owner)
             .first()
         )
         return share
@@ -755,11 +758,11 @@ class ShareObject:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.ShareObjectItem:
+    ) -> ShareObjectItem:
         itemType = data.get('itemType')
         itemUri = data.get('itemUri')
         item = None
-        share: models.ShareObject = session.query(models.ShareObject).get(uri)
+        share: ShareObject = session.query(ShareObject).get(uri)
         dataset: Dataset = session.query(Dataset).get(share.datasetUri)
         target_environment: models.Environment = session.query(models.Environment).get(
             share.environmentUri
@@ -785,12 +788,12 @@ class ShareObject:
         if not item:
             raise exceptions.ObjectNotFound('ShareObjectItem', itemUri)
 
-        shareItem: models.ShareObjectItem = (
-            session.query(models.ShareObjectItem)
+        shareItem: ShareObjectItem = (
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.itemUri == itemUri,
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.itemUri == itemUri,
                 )
             )
             .first()
@@ -802,7 +805,7 @@ class ShareObject:
         logger.info(f"S3AccessPointName={S3AccessPointName}")
 
         if not shareItem:
-            shareItem = models.ShareObjectItem(
+            shareItem = ShareObjectItem(
                 shareUri=uri,
                 itemUri=itemUri,
                 itemType=itemType,
@@ -834,13 +837,13 @@ class ShareObject:
         check_perm: bool = False,
     ) -> bool:
 
-        share_item: models.ShareObjectItem = data.get(
+        share_item: ShareObjectItem = data.get(
             'share_item',
-            ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
+            ShareObjectService.get_share_item_by_uri(session, data['shareItemUri']),
         )
-        share: models.ShareObject = data.get(
+        share: ShareObject = data.get(
             'share',
-            ShareObject.get_share_by_uri(session, uri),
+            ShareObjectService.get_share_by_uri(session, uri),
         )
 
         Item_SM = ShareItemSM(share_item.status)
@@ -852,8 +855,8 @@ class ShareObject:
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        share_items_states = ShareObject.get_share_items_states(session, uri)
+        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        share_items_states = ShareObjectService.get_share_items_states(session, uri)
         shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in share_items_states]
 
         Share_SM = ShareObjectSM(share.status)
@@ -876,12 +879,12 @@ class ShareObject:
 
     @staticmethod
     def check_existing_shared_items(session, uri):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = session.query(models.ShareObjectItem).filter(
+        shared_items = session.query(ShareObjectItem).filter(
             and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.status.in_(share_item_shared_states)
+                ShareObjectItem.shareUri == share.shareUri,
+                ShareObjectItem.status.in_(share_item_shared_states)
             )
         ).all()
         if shared_items:
@@ -890,13 +893,13 @@ class ShareObject:
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = session.query(models.ShareObjectItem).filter(
+        shared_items = session.query(ShareObjectItem).filter(
             and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.itemType == item_type,
-                models.ShareObjectItem.status.in_(share_item_shared_states)
+                ShareObjectItem.shareUri == share.shareUri,
+                ShareObjectItem.itemType == item_type,
+                ShareObjectItem.status.in_(share_item_shared_states)
             )
         ).all()
         if shared_items:
@@ -905,11 +908,11 @@ class ShareObject:
 
     @staticmethod
     def check_pending_share_items(session, uri):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        shared_items = session.query(models.ShareObjectItem).filter(
+        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        shared_items = session.query(ShareObjectItem).filter(
             and_(
-                models.ShareObjectItem.shareUri == share.shareUri,
-                models.ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
+                ShareObjectItem.shareUri == share.shareUri,
+                ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value])
             )
         ).all()
         if shared_items:
@@ -918,7 +921,7 @@ class ShareObject:
 
     @staticmethod
     def get_share_item_by_uri(session, uri):
-        share_item: models.ShareObjectItem = session.query(models.ShareObjectItem).get(
+        share_item: ShareObjectItem = session.query(ShareObjectItem).get(
             uri
         )
         if not share_item:
@@ -929,9 +932,9 @@ class ShareObject:
     @staticmethod
     @has_resource_perm(permissions.LIST_SHARED_ITEMS)
     def list_shared_items(session, username, groups, uri, data=None, check_perm=None):
-        share: models.ShareObject = ShareObject.get_share_by_uri(session, uri)
-        query = session.query(models.ShareObjectItem).filter(
-            models.ShareObjectItem.shareUri == share.shareUri,
+        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        query = session.query(ShareObjectItem).filter(
+            ShareObjectItem.shareUri == share.shareUri,
         )
         return paginate(
             query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
@@ -942,8 +945,8 @@ class ShareObject:
         session, username, groups, uri, data=None, check_perm=None
     ):
 
-        share: models.ShareObject = data.get(
-            'share', ShareObject.get_share_by_uri(session, uri)
+        share: ShareObject = data.get(
+            'share', ShareObjectService.get_share_by_uri(session, uri)
         )
         share_item_revokable_states = ShareItemSM.get_share_item_revokable_states()
         datasetUri = share.datasetUri
@@ -956,25 +959,25 @@ class ShareObject:
                 func.coalesce('DatasetTable').label('itemType'),
                 DatasetTable.GlueTableName.label('itemName'),
                 DatasetTable.description.label('description'),
-                models.ShareObjectItem.shareItemUri.label('shareItemUri'),
-                models.ShareObjectItem.status.label('status'),
+                ShareObjectItem.shareItemUri.label('shareItemUri'),
+                ShareObjectItem.status.label('status'),
                 case(
-                    [(models.ShareObjectItem.shareItemUri.isnot(None), True)],
+                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
                 ).label('isShared'),
             )
             .outerjoin(
-                models.ShareObjectItem,
+                ShareObjectItem,
                 and_(
-                    models.ShareObjectItem.shareUri == share.shareUri,
-                    DatasetTable.tableUri == models.ShareObjectItem.itemUri,
+                    ShareObjectItem.shareUri == share.shareUri,
+                    DatasetTable.tableUri == ShareObjectItem.itemUri,
                 ),
             )
             .filter(DatasetTable.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
-                tables = tables.filter(models.ShareObjectItem.status.in_(share_item_revokable_states))
+                tables = tables.filter(ShareObjectItem.status.in_(share_item_revokable_states))
 
         # All folders from the dataset with a column isShared
         # marking the folder as part of the shareObject
@@ -984,26 +987,26 @@ class ShareObject:
                 func.coalesce('DatasetStorageLocation').label('itemType'),
                 DatasetStorageLocation.S3Prefix.label('itemName'),
                 DatasetStorageLocation.description.label('description'),
-                models.ShareObjectItem.shareItemUri.label('shareItemUri'),
-                models.ShareObjectItem.status.label('status'),
+                ShareObjectItem.shareItemUri.label('shareItemUri'),
+                ShareObjectItem.status.label('status'),
                 case(
-                    [(models.ShareObjectItem.shareItemUri.isnot(None), True)],
+                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
                 ).label('isShared'),
             )
             .outerjoin(
-                models.ShareObjectItem,
+                ShareObjectItem,
                 and_(
-                    models.ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.shareUri == share.shareUri,
                     DatasetStorageLocation.locationUri
-                    == models.ShareObjectItem.itemUri,
+                    == ShareObjectItem.itemUri,
                 ),
             )
             .filter(DatasetStorageLocation.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
-                locations = locations.filter(models.ShareObjectItem.status.in_(share_item_revokable_states))
+                locations = locations.filter(ShareObjectItem.status.in_(share_item_revokable_states))
 
         shareable_objects = tables.union(locations).subquery('shareable_objects')
         query = session.query(shareable_objects)
@@ -1028,10 +1031,10 @@ class ShareObject:
         session, username, groups, uri, data=None, check_perm=None
     ):
         query = (
-            session.query(models.ShareObject)
+            session.query(ShareObject)
             .join(
                 Dataset,
-                Dataset.datasetUri == models.ShareObject.datasetUri,
+                Dataset.datasetUri == ShareObject.datasetUri,
             )
             .filter(
                 or_(
@@ -1050,17 +1053,17 @@ class ShareObject:
         session, username, groups, uri, data=None, check_perm=None
     ):
         query = (
-            session.query(models.ShareObject)
+            session.query(ShareObject)
             .join(
                 models.Environment,
-                models.Environment.environmentUri == models.ShareObject.environmentUri,
+                models.Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 or_(
-                    models.ShareObject.owner == username,
+                    ShareObject.owner == username,
                     and_(
-                        models.ShareObject.groupUri.in_(groups),
-                        models.ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value])
+                        ShareObject.groupUri.in_(groups),
+                        ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value])
                     ),
                 )
             )
@@ -1073,11 +1076,11 @@ class ShareObject:
             models.EnvironmentGroup.environmentUri == environment_uri
         )
         groups = [g.groupUri for g in environment_groups]
-        share = session.query(models.ShareObject).filter(
+        share = session.query(ShareObject).filter(
             and_(
-                models.ShareObject.datasetUri == dataset_uri,
-                models.ShareObject.environmentUri == environment_uri,
-                models.ShareObject.groupUri.in_(groups),
+                ShareObject.datasetUri == dataset_uri,
+                ShareObject.environmentUri == environment_uri,
+                ShareObject.groupUri.in_(groups),
             )
         )
         if not share:
@@ -1089,9 +1092,9 @@ class ShareObject:
             session,
             shareUri: str,
             status: str,
-    ) -> models.ShareObject:
+    ) -> ShareObject:
 
-        share = ShareObject.get_share_by_uri(session, shareUri)
+        share = ShareObjectService.get_share_by_uri(session, shareUri)
         share.status = status
         session.commit()
         return share
@@ -1101,9 +1104,9 @@ class ShareObject:
         session,
         uri: str,
         status: str,
-    ) -> models.ShareObjectItem:
+    ) -> ShareObjectItem:
 
-        share_item = ShareObject.get_share_item_by_uri(session, uri)
+        share_item = ShareObjectService.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
         return share_item
@@ -1115,11 +1118,11 @@ class ShareObject:
         status: str,
     ):
         (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == share_uri,
-                    models.ShareObjectItem.status == status
+                    ShareObjectItem.shareUri == share_uri,
+                    ShareObjectItem.status == status
                 )
             )
             .delete()
@@ -1134,16 +1137,16 @@ class ShareObject:
     ) -> bool:
 
         (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == share_uri,
-                    models.ShareObjectItem.status == old_status
+                    ShareObjectItem.shareUri == share_uri,
+                    ShareObjectItem.status == old_status
                 )
             )
             .update(
                 {
-                    models.ShareObjectItem.status: new_status,
+                    ShareObjectItem.status: new_status,
                 }
             )
         )
@@ -1152,15 +1155,15 @@ class ShareObject:
     @staticmethod
     def find_share_item_by_table(
         session,
-        share: models.ShareObject,
+        share: ShareObject,
         table: DatasetTable,
-    ) -> models.ShareObjectItem:
-        share_item: models.ShareObjectItem = (
-            session.query(models.ShareObjectItem)
+    ) -> ShareObjectItem:
+        share_item: ShareObjectItem = (
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == table.tableUri,
-                    models.ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.itemUri == table.tableUri,
+                    ShareObjectItem.shareUri == share.shareUri,
                 )
             )
             .first()
@@ -1170,15 +1173,15 @@ class ShareObject:
     @staticmethod
     def find_share_item_by_folder(
         session,
-        share: models.ShareObject,
+        share: ShareObject,
         folder: DatasetStorageLocation,
-    ) -> models.ShareObjectItem:
-        share_item: models.ShareObjectItem = (
-            session.query(models.ShareObjectItem)
+    ) -> ShareObjectItem:
+        share_item: ShareObjectItem = (
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.itemUri == folder.locationUri,
-                    models.ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.itemUri == folder.locationUri,
+                    ShareObjectItem.shareUri == share.shareUri,
                 )
             )
             .first()
@@ -1187,7 +1190,7 @@ class ShareObject:
 
     @staticmethod
     def get_share_data(session, share_uri):
-        share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
+        share: ShareObject = session.query(ShareObject).get(share_uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
@@ -1250,27 +1253,27 @@ class ShareObject:
 
     @staticmethod
     def get_share_data_items(session, share_uri, status):
-        share: models.ShareObject = session.query(models.ShareObject).get(share_uri)
+        share: ShareObject = session.query(ShareObject).get(share_uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
         tables = (
             session.query(DatasetTable)
             .join(
-                models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
+                ShareObjectItem,
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .filter(
                 and_(
-                    models.ShareObject.datasetUri == share.datasetUri,
-                    models.ShareObject.environmentUri
+                    ShareObject.datasetUri == share.datasetUri,
+                    ShareObject.environmentUri
                     == share.environmentUri,
-                    models.ShareObject.shareUri == share_uri,
-                    models.ShareObjectItem.status == status,
+                    ShareObject.shareUri == share_uri,
+                    ShareObjectItem.status == status,
                 )
             )
             .all()
@@ -1279,20 +1282,20 @@ class ShareObject:
         folders = (
             session.query(DatasetStorageLocation)
             .join(
-                models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
+                ShareObjectItem,
+                ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .filter(
                 and_(
-                    models.ShareObject.datasetUri == share.datasetUri,
-                    models.ShareObject.environmentUri
+                    ShareObject.datasetUri == share.datasetUri,
+                    ShareObject.environmentUri
                     == share.environmentUri,
-                    models.ShareObject.shareUri == share_uri,
-                    models.ShareObjectItem.status == status,
+                    ShareObject.shareUri == share_uri,
+                    ShareObjectItem.status == status,
                 )
             )
             .all()
@@ -1306,13 +1309,12 @@ class ShareObject:
     @staticmethod
     def other_approved_share_object_exists(session, environment_uri, dataset_uri):
         return (
-            session.query(models.ShareObject)
+            session.query(ShareObject)
             .filter(
                 and_(
                     models.Environment.environmentUri == environment_uri,
-                    models.ShareObject.status
-                    == models.Enums.ShareObjectStatus.Approved.value,
-                    models.ShareObject.datasetUri == dataset_uri,
+                    ShareObject.status == ShareObjectStatus.Approved.value,
+                    ShareObject.datasetUri == dataset_uri,
                 )
             )
             .all()
@@ -1321,60 +1323,60 @@ class ShareObject:
     @staticmethod
     def get_share_items_states(session, share_uri, item_uris=None):
         query = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .join(
-                models.ShareObject,
-                models.ShareObjectItem.shareUri == models.ShareObject.shareUri,
+                ShareObject,
+                ShareObjectItem.shareUri == ShareObject.shareUri,
             )
             .filter(
                 and_(
-                    models.ShareObject.shareUri == share_uri,
+                    ShareObject.shareUri == share_uri,
                 )
             )
         )
         if item_uris:
-            query = query.filter(models.ShareObjectItem.shareItemUri.in_(item_uris))
-        return [item.status for item in query.distinct(models.ShareObjectItem.status)]
+            query = query.filter(ShareObjectItem.shareItemUri.in_(item_uris))
+        return [item.status for item in query.distinct(ShareObjectItem.status)]
 
     @staticmethod
     def resolve_share_object_statistics(session, uri, **kwargs):
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         tables = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.itemType == 'DatasetTable',
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.itemType == 'DatasetTable',
                 )
             )
             .count()
         )
         locations = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.itemType == 'DatasetStorageLocation',
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.itemType == 'DatasetStorageLocation',
                 )
             )
             .count()
         )
         shared_items = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
             .count()
         )
         revoked_items = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_([ShareItemStatus.Revoke_Succeeded.value]),
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.status.in_([ShareItemStatus.Revoke_Succeeded.value]),
                 )
             )
             .count()
@@ -1384,11 +1386,11 @@ class ShareObject:
             ShareItemStatus.Revoke_Failed.value
         ]
         failed_items = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_(failed_states),
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.status.in_(failed_states),
                 )
             )
             .count()
@@ -1397,11 +1399,11 @@ class ShareObject:
             ShareItemStatus.PendingApproval.value
         ]
         pending_items = (
-            session.query(models.ShareObjectItem)
+            session.query(ShareObjectItem)
             .filter(
                 and_(
-                    models.ShareObjectItem.shareUri == uri,
-                    models.ShareObjectItem.status.in_(pending_states),
+                    ShareObjectItem.shareUri == uri,
+                    ShareObjectItem.status.in_(pending_states),
                 )
             )
             .count()
