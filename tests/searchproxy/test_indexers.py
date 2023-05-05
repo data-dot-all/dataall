@@ -5,7 +5,6 @@ import pytest
 import dataall
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.searchproxy import indexers
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 

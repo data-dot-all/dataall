@@ -2,11 +2,12 @@ import logging
 
 from .. import db
 from ..db import models
-from dataall.searchproxy.upsert import BaseIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
 
 log = logging.getLogger(__name__)
 
 
+# TODO Should be moved to dashboard module
 class DashboardIndexer(BaseIndexer):
     @classmethod
     def upsert(cls, session, dashboard_uri: str):
