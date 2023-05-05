@@ -103,7 +103,7 @@ class DataPolicy:
 
         return policy
 
-    def get_statements(self, session):
+    def get_statements(self, *args, **kwargs):
         statements = [
             iam.PolicyStatement(
                 actions=[
