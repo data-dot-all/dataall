@@ -5,7 +5,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
-from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
+from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class DatasetProfilingGlueHandler:
     def get_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
             profiling: DatasetProfilingRun = (
-                DatasetProfilingService.get_profiling_run(
+                DatasetProfilingRepository.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )
             )
@@ -42,7 +42,7 @@ class DatasetProfilingGlueHandler:
     def start_profiling_run(engine, task: models.Task):
         with engine.scoped_session() as session:
             profiling: DatasetProfilingRun = (
-                DatasetProfilingService.get_profiling_run(
+                DatasetProfilingRepository.get_profiling_run(
                     session, profilingRunUri=task.targetUri
                 )
             )
@@ -61,7 +61,7 @@ class DatasetProfilingGlueHandler:
                     ),
                 }
             )
-            DatasetProfilingService.update_run(
+            DatasetProfilingRepository.update_run(
                 session,
                 profilingRunUri=profiling.profilingRunUri,
                 GlueJobRunId=run['JobRunId'],

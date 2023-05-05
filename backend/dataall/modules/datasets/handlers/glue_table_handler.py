@@ -5,7 +5,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 
 log = logging.getLogger(__name__)
 
@@ -25,5 +25,5 @@ class DatasetColumnGlueHandler:
             tables = Glue.list_glue_database_tables(
                 account_id, dataset.GlueDatabaseName, region
             )
-            DatasetTableService.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+            DatasetTableRepository.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
             return tables

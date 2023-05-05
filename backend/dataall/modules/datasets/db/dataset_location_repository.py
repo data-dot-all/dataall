@@ -16,7 +16,7 @@ from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_
 logger = logging.getLogger(__name__)
 
 
-class DatasetLocationService:
+class DatasetLocationRepository:
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
     @has_resource_permission(CREATE_DATASET_FOLDER)
@@ -98,7 +98,7 @@ class DatasetLocationService:
         uri: str,
         data: dict = None,
     ) -> DatasetStorageLocation:
-        return DatasetLocationService.get_location_by_uri(session, data['locationUri'])
+        return DatasetLocationRepository.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
@@ -111,7 +111,7 @@ class DatasetLocationService:
 
         location = data.get(
             'location',
-            DatasetLocationService.get_location_by_uri(session, data['locationUri']),
+            DatasetLocationRepository.get_location_by_uri(session, data['locationUri']),
         )
 
         for k in data.keys():
@@ -135,7 +135,7 @@ class DatasetLocationService:
         uri: str,
         data: dict = None,
     ):
-        location = DatasetLocationService.get_location_by_uri(
+        location = DatasetLocationRepository.get_location_by_uri(
             session, data['locationUri']
         )
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()

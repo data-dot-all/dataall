@@ -13,12 +13,12 @@ from dataall.aws.handlers.sqs import SqsQueue
 from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
+from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()
@@ -70,7 +70,7 @@ class SubscriptionService:
     @staticmethod
     def publish_table_update_message(engine, message):
         with engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableService.get_table_by_s3_prefix(
+            table: DatasetTable = DatasetTableRepository.get_table_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
@@ -108,7 +108,7 @@ class SubscriptionService:
     @staticmethod
     def publish_location_update_message(session, message):
         location: DatasetStorageLocation = (
-            DatasetLocationService.get_location_by_s3_prefix(
+            DatasetLocationRepository.get_location_by_s3_prefix(
                 session,
                 message.get('prefix'),
                 message.get('accountid'),
@@ -141,14 +141,14 @@ class SubscriptionService:
     @staticmethod
     def store_dataquality_results(session, message):
 
-        table: DatasetTable = DatasetTableService.get_table_by_s3_prefix(
+        table: DatasetTable = DatasetTableRepository.get_table_by_s3_prefix(
             session,
             message.get('prefix'),
             message.get('accountid'),
             message.get('region'),
         )
 
-        run = DatasetProfilingService.start_profiling(
+        run = DatasetProfilingRepository.start_profiling(
             session=session,
             datasetUri=table.datasetUri,
             GlueTableName=table.GlueTableName,

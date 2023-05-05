@@ -9,7 +9,7 @@ from dataall.db.api import (
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
-from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.permissions import UPDATE_DATASET_FOLDER
 
@@ -18,7 +18,7 @@ def create_storage_location(
     context, source, datasetUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        location = DatasetLocationService.create_dataset_location(
+        location = DatasetLocationRepository.create_dataset_location(
             session=session,
             uri=datasetUri,
             data=input,
@@ -36,15 +36,15 @@ def list_dataset_locations(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return DatasetLocationService.list_dataset_locations(
+        return DatasetLocationRepository.list_dataset_locations(
             session=session, uri=source.datasetUri, data=filter
         )
 
 
 def get_storage_location(context, source, locationUri=None):
     with context.engine.scoped_session() as session:
-        location = DatasetLocationService.get_location_by_uri(session, locationUri)
-        return DatasetLocationService.get_dataset_location(
+        location = DatasetLocationRepository.get_location_by_uri(session, locationUri)
+        return DatasetLocationRepository.get_dataset_location(
             session=session,
             uri=location.datasetUri,
             data={'locationUri': location.locationUri},
@@ -55,10 +55,10 @@ def update_storage_location(
     context, source, locationUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        location = DatasetLocationService.get_location_by_uri(session, locationUri)
+        location = DatasetLocationRepository.get_location_by_uri(session, locationUri)
         input['location'] = location
         input['locationUri'] = location.locationUri
-        DatasetLocationService.update_dataset_location(
+        DatasetLocationRepository.update_dataset_location(
             session=session,
             uri=location.datasetUri,
             data=input,
@@ -70,8 +70,8 @@ def update_storage_location(
 
 def remove_storage_location(context, source, locationUri: str = None):
     with context.engine.scoped_session() as session:
-        location = DatasetLocationService.get_location_by_uri(session, locationUri)
-        DatasetLocationService.delete_dataset_location(
+        location = DatasetLocationRepository.get_location_by_uri(session, locationUri)
+        DatasetLocationRepository.delete_dataset_location(
             session=session,
             uri=location.datasetUri,
             data={'locationUri': location.locationUri},
@@ -90,7 +90,7 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
 
 def publish_location_update(context: Context, source, locationUri: str = None):
     with context.engine.scoped_session() as session:
-        location = DatasetLocationService.get_location_by_uri(session, locationUri)
+        location = DatasetLocationRepository.get_location_by_uri(session, locationUri)
         ResourcePolicy.check_user_resource_permission(
             session=session,
             username=context.username,

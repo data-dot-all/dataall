@@ -18,7 +18,7 @@ from dataall.db.api.organization import Organization
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -177,7 +177,7 @@ def list_locations(context, source: Dataset, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
-        return DatasetLocationService.paginated_dataset_locations(
+        return DatasetLocationRepository.paginated_dataset_locations(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -249,7 +249,7 @@ def get_dataset_statistics(context: Context, source: Dataset, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         count_tables = DatasetService.count_dataset_tables(session, source.datasetUri)
-        count_locations = DatasetLocationService.count_dataset_locations(
+        count_locations = DatasetLocationRepository.count_dataset_locations(
             session, source.datasetUri
         )
         count_upvotes = db.api.Vote.count_upvotes(
@@ -566,7 +566,7 @@ def delete_dataset(
         for uri in tables:
             DatasetIndexer.delete_doc(doc_id=uri)
 
-        folders = [f.locationUri for f in DatasetLocationService.get_dataset_folders(session, datasetUri)]
+        folders = [f.locationUri for f in DatasetLocationRepository.get_dataset_folders(session, datasetUri)]
         for uri in folders:
             DatasetIndexer.delete_doc(doc_id=uri)
 

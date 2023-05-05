@@ -5,7 +5,7 @@ from dataall.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable, Dataset
 
 
-class DatasetProfilingService:
+class DatasetProfilingRepository:
     def __init__(self):
         pass
 
@@ -56,7 +56,7 @@ class DatasetProfilingService:
         GlueJobRunState=None,
         results=None,
     ):
-        run = DatasetProfilingService.get_profiling_run(
+        run = DatasetProfilingRepository.get_profiling_run(
             session, profilingRunUri=profilingRunUri, GlueJobRunId=GlueJobRunId
         )
         if GlueJobRunId:

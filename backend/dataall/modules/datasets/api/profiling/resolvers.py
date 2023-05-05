@@ -7,8 +7,8 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import api, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun
 from dataall.modules.datasets.services.permissions import PROFILE_DATASET_TABLE
 
@@ -36,7 +36,7 @@ def start_profiling_run(context: Context, source, input: dict = None):
         )
         dataset = DatasetService.get_dataset_by_uri(session, input['datasetUri'])
 
-        run = DatasetProfilingService.start_profiling(
+        run = DatasetProfilingRepository.start_profiling(
             session=session,
             datasetUri=dataset.datasetUri,
             tableUri=input.get('tableUri'),
@@ -74,7 +74,7 @@ def get_profiling_results(context: Context, source: DatasetProfilingRun):
 
 def update_profiling_run_results(context: Context, source, profilingRunUri, results):
     with context.engine.scoped_session() as session:
-        run = DatasetProfilingService.update_run(
+        run = DatasetProfilingRepository.update_run(
             session=session, profilingRunUri=profilingRunUri, results=results
         )
         return run
@@ -82,12 +82,12 @@ def update_profiling_run_results(context: Context, source, profilingRunUri, resu
 
 def list_profiling_runs(context: Context, source, datasetUri=None):
     with context.engine.scoped_session() as session:
-        return DatasetProfilingService.list_profiling_runs(session, datasetUri)
+        return DatasetProfilingRepository.list_profiling_runs(session, datasetUri)
 
 
 def get_profiling_run(context: Context, source, profilingRunUri=None):
     with context.engine.scoped_session() as session:
-        return DatasetProfilingService.get_profiling_run(
+        return DatasetProfilingRepository.get_profiling_run(
             session=session, profilingRunUri=profilingRunUri
         )
 
@@ -95,14 +95,14 @@ def get_profiling_run(context: Context, source, profilingRunUri=None):
 def get_last_table_profiling_run(context: Context, source, tableUri=None):
     with context.engine.scoped_session() as session:
         run: DatasetProfilingRun = (
-            DatasetProfilingService.get_table_last_profiling_run(
+            DatasetProfilingRepository.get_table_last_profiling_run(
                 session=session, tableUri=tableUri
             )
         )
 
         if run:
             if not run.results:
-                table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
+                table = DatasetTableRepository.get_dataset_table_by_uri(session, tableUri)
                 dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
                 environment = api.Environment.get_environment_by_uri(
                     session, dataset.environmentUri
@@ -116,7 +116,7 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
 
             if not run.results:
                 run_with_results = (
-                    DatasetProfilingService.get_table_last_profiling_run_with_results(
+                    DatasetProfilingRepository.get_table_last_profiling_run_with_results(
                         session=session, tableUri=tableUri
                     )
                 )
@@ -147,6 +147,6 @@ def get_profiling_results_from_s3(environment, dataset, table, run):
 
 def list_table_profiling_runs(context: Context, source, tableUri=None):
     with context.engine.scoped_session() as session:
-        return DatasetProfilingService.list_table_profiling_runs(
+        return DatasetProfilingRepository.list_table_profiling_runs(
             session=session, tableUri=tableUri, filter={}
         )

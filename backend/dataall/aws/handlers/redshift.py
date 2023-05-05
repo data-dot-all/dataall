@@ -10,7 +10,7 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 # TODO should be migrated in the redshift module
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
@@ -450,7 +450,7 @@ class Redshift:
                 session, task.payload['datasetUri']
             )
 
-            table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
                 session, task.payload['tableUri']
             )
 

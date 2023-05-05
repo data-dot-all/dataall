@@ -6,7 +6,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class DatasetColumnGlueHandler:
             aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
             glue_table = GlueTableClient(aws, dataset_table).get_table()
 
-            DatasetTableService.sync_table_columns(
+            DatasetTableRepository.sync_table_columns(
                 session, dataset_table, glue_table['Table']
             )
         return True

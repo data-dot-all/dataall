@@ -22,7 +22,7 @@ from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObje
 from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
     LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
@@ -514,7 +514,7 @@ class DatasetService:
         DatasetService._delete_dataset_shares_with_no_shared_items(session, uri)
         DatasetService._delete_dataset_term_links(session, uri)
         DatasetService._delete_dataset_tables(session, dataset.datasetUri)
-        DatasetLocationService.delete_dataset_locations(session, dataset.datasetUri)
+        DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
         KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
         Vote.delete_votes(session, dataset.datasetUri, 'dataset')
         session.delete(dataset)

@@ -3,7 +3,7 @@
 from dataall import db
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.searchproxy.base_indexer import BaseIndexer
 
@@ -46,7 +46,7 @@ class DatasetIndexer(BaseIndexer):
             .first()
         )
         count_tables = DatasetService.count_dataset_tables(session, dataset_uri)
-        count_folders = DatasetLocationService.count_dataset_locations(session, dataset_uri)
+        count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
         count_upvotes = db.api.Vote.count_upvotes(
             session, None, None, dataset_uri, {'targetType': 'dataset'}
         )

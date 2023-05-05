@@ -13,7 +13,7 @@ from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -64,7 +64,7 @@ def sync_tables(engine):
                         f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'
                     )
 
-                    DatasetTableService.sync_existing_tables(
+                    DatasetTableRepository.sync_existing_tables(
                         session, dataset.datasetUri, glue_tables=tables
                     )
 
