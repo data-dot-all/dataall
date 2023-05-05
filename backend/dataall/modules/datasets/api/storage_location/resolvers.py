@@ -24,7 +24,7 @@ def create_storage_location(
             data=input,
         )
 
-        S3LocationClient.create_bucket_prefix(location)
+        S3LocationClient(location).create_bucket_prefix()
 
         DatasetLocationIndexer.upsert(session=session, folder_uri=location.locationUri)
     return location
