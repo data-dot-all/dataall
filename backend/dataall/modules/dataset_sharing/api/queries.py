@@ -21,3 +21,15 @@ getShareRequestsToMe = gql.QueryField(
     type=gql.Ref('ShareSearchResult'),
     resolver=list_shares_in_my_inbox,
 )
+
+listDataItemsSharedWithEnvGroup = gql.QueryField(
+    name='listDataItemsSharedWithEnvGroup',
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('EnvironmentDataItemFilter')),
+    ],
+    resolver=list_data_items_shared_with_env_group,
+    type=gql.Ref('EnvironmentPublishedItemSearchResults'),
+    test_scope='Dataset',
+)
