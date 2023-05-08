@@ -5,5 +5,5 @@ from . import (
     resolvers,
     schema,
 )
-
+# Test change
 __all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations']
