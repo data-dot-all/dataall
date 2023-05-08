@@ -14,7 +14,7 @@ from dataall.db import api, utils, Resource
 from datetime import datetime
 from dataall.db.models.Enums import ShareObjectStatus, ShareableType
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'

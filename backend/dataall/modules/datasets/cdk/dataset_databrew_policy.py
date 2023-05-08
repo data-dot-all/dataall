@@ -1,10 +1,10 @@
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
 
-from dataall.modules.datasets.services.permissions import CREATE_DATASET
+from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
-class DatabrewPolicy(ServicePolicy):
+class DatasetDatabrewServicePolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_DATASET not in group_permissions:
             return []

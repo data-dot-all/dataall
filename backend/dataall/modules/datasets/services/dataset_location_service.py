@@ -8,8 +8,8 @@ from dataall.db.api import Glossary
 from dataall.db import models, api, paginate, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, CREATE_DATASET_FOLDER, \
-    DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, \
+    CREATE_DATASET_FOLDER, DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from dataall.modules.notebooks.api.enums import SagemakerNotebookRole
 from dataall.api.context import Context
 from dataall.db import exceptions
 from dataall.api.Objects.Stack import stack_helper
-from dataall.modules.notebooks.services.services import NotebookService, NotebookCreationRequest
+from dataall.modules.notebooks.services.notebook_service import NotebookService, NotebookCreationRequest
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 
 

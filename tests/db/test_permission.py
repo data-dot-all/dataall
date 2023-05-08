@@ -6,7 +6,7 @@ from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_WRITE, \
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_WRITE, \
     DATASET_TABLE_READ
 
 

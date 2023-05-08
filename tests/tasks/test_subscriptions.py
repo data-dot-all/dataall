@@ -135,10 +135,10 @@ def share(
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
     mocker.patch(
-        'dataall.modules.datasets.tasks.subscription_service.SubscriptionService.sns_call',
+        'dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService.sns_call',
         return_value=True,
     )
-    subscriber = dataall.modules.datasets.tasks.subscription_service.SubscriptionService()
+    subscriber = dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService()
     messages = [
         {
             'prefix': 's3://dataset/testtable/csv/',
