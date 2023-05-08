@@ -141,7 +141,7 @@ def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
         'dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService.sns_call',
         return_value=True,
     )
-    subscriber = SubscriptionService()
+    subscriber = DatasetSubscriptionService()
     messages = [
         {
             'prefix': 's3://dataset/testtable/csv/',
