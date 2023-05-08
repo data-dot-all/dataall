@@ -9,7 +9,7 @@ from dataall.db import paginate
 from dataall.modules.mlstudio.db.models import MLStudio
 
 
-class MLStudioRepository:
+class SageMakerStudioRepository:
     """DAO layer for ML Studio"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10

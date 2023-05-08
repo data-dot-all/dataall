@@ -1,9 +1,14 @@
 import logging
 #TODO: fix imports
-from ..Stack import stack_helper
+from dataall.api.context import Context
+from dataall.db import exceptions
+from dataall.api.Objects.Stack import stack_helper
+from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
+from dataall.modules.mlstudio.services.services import SagemakerStudioService, SagemakerStudioCreationRequest
+from dataall.modules.mlstudio.db.models import SageMakerStudioUserProfile
+
+
 from .... import db
-from ....api.constants import SagemakerStudioRole
-from ....api.context import Context
 from ....aws.handlers.sagemaker_studio import (
     SagemakerStudio,
 )
@@ -14,6 +19,8 @@ log = logging.getLogger(__name__)
 
 #TODO: move business logic to services
 def create_sagemaker_studio_user_profile(context: Context, source, input: dict = None):
+    """Creates an ML Studio user. Deploys the ML Studio stack into AWS"""
+    RequestValidator.validate_creation_request(input)
     with context.engine.scoped_session() as session:
         if not input.get('environmentUri'):
             raise exceptions.RequiredParameter('environmentUri')
@@ -75,6 +82,10 @@ def create_sagemaker_studio_user_profile(context: Context, source, input: dict =
 
 
 def list_sm_studio_user_profile(context, source, filter: dict = None):
+    """
+    Lists all SageMaker Studio users using the given filter.
+    If the filter is not provided, all users are returned.
+    """
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
@@ -225,3 +236,26 @@ def resolve_mlstudio_stack(
         targetUri=source.sagemakerStudioUserProfileUri,
         environmentUri=source.environmentUri,
     )
+
+class RequestValidator:
+    """Aggregates all validation logic for operating with mlstudio"""
+    @staticmethod
+    def required_uri(uri):
+        if not uri:
+            raise exceptions.RequiredParameter('URI')
+
+    @staticmethod
+    def validate_creation_request(data):
+        required = RequestValidator._required
+        if not data:
+            raise exceptions.RequiredParameter('data')
+        if not data.get('label'):
+            raise exceptions.RequiredParameter('name')
+
+        required(data, "environmentUri")
+        required(data, "SamlAdminGroupName")
+
+    @staticmethod
+    def _required(data: dict, name: str):
+        if not data.get(name):
+            raise exceptions.RequiredParameter(name)
