@@ -27,7 +27,7 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-class SubscriptionService:
+class DatasetSubscriptionService:
     def __init__(self):
         pass
 
@@ -60,9 +60,9 @@ class SubscriptionService:
 
             for message in messages:
 
-                SubscriptionService.publish_table_update_message(engine, message)
+                DatasetSubscriptionService.publish_table_update_message(engine, message)
 
-                SubscriptionService.publish_location_update_message(session, message)
+                DatasetSubscriptionService.publish_location_update_message(session, message)
 
         return True
 
@@ -95,7 +95,7 @@ class SubscriptionService:
                 )
                 log.info(f'Found shared items for table {share_items}')
 
-                return SubscriptionService.publish_sns_message(
+                return DatasetSubscriptionService.publish_sns_message(
                     engine,
                     message,
                     dataset,
@@ -133,7 +133,7 @@ class SubscriptionService:
             )
             log.info(f'Found shared items for location {share_items}')
 
-            return SubscriptionService.publish_sns_message(
+            return DatasetSubscriptionService.publish_sns_message(
                 session, message, dataset, share_items, location.S3Prefix
             )
 
@@ -164,9 +164,9 @@ class SubscriptionService:
         if message.get('rows'):
             quality_results['table_nb_rows'] = message.get('rows')
 
-        SubscriptionService.set_columns_type(quality_results, message)
+        DatasetSubscriptionService.set_columns_type(quality_results, message)
 
-        data_types = SubscriptionService.set_data_types(message)
+        data_types = DatasetSubscriptionService.set_data_types(message)
 
         quality_results['dataTypes'] = data_types
 
@@ -213,7 +213,7 @@ class SubscriptionService:
         with engine.scoped_session() as session:
             for item in share_items:
 
-                share_object = SubscriptionService.get_approved_share_object(
+                share_object = DatasetSubscriptionService.get_approved_share_object(
                     session, item
                 )
 
@@ -245,7 +245,7 @@ class SubscriptionService:
                                 f'Producer message before notifications: {message}'
                             )
 
-                            SubscriptionService.redshift_copy(
+                            DatasetSubscriptionService.redshift_copy(
                                 engine, message, dataset, environment, table
                             )
 
@@ -256,7 +256,7 @@ class SubscriptionService:
                                 f'has updated the table shared with you {prefix}',
                             }
 
-                            response = SubscriptionService.sns_call(
+                            response = DatasetSubscriptionService.sns_call(
                                 message, environment
                             )
 
@@ -334,7 +334,7 @@ if __name__ == '__main__':
     ENGINE = get_engine(envname=ENVNAME)
     Worker.queue = SqsQueue.send
     log.info('Polling datasets updates...')
-    service = SubscriptionService()
+    service = DatasetSubscriptionService()
     queues = service.get_queues(service.get_environments(ENGINE))
     messages = poll_queues(queues)
     service.notify_consumers(ENGINE, messages)

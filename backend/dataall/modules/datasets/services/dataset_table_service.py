@@ -6,7 +6,7 @@ from dataall.core.context import get_context
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import models, api, exceptions, paginate
 from dataall.db.api import Glossary, ResourcePolicy, Environment
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
     UPDATE_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.utils import json_utils

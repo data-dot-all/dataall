@@ -10,7 +10,7 @@ from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.db.models import DatasetProfilingRun
-from dataall.modules.datasets.services.permissions import PROFILE_DATASET_TABLE
+from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
 
 log = logging.getLogger(__name__)
 

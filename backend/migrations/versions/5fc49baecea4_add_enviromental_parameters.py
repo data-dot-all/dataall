@@ -15,8 +15,8 @@ from dataall.db.api import ResourcePolicy
 from dataall.db.api.permission import Permission
 from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType, EnvironmentGroup
 from dataall.db.permissions import MANAGE_SGMSTUDIO_NOTEBOOKS
-from dataall.modules.datasets.services.permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
-from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
+from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"

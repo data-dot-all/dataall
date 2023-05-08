@@ -12,7 +12,7 @@ from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
 from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from ...modules.datasets.services.permissions import DATASET_TABLE_READ
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 logger = logging.getLogger(__name__)
 

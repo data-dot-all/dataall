@@ -1,9 +1,10 @@
-from typing import Protocol, List
+from abc import ABC
+from typing import List
 
 
-class GroupResource(Protocol):
+class GroupResource(ABC):
     def count_resources(self, session, environment_uri, group_uri) -> int:
-        ...
+        raise NotImplementedError()
 
 
 class GroupResourceManager:
