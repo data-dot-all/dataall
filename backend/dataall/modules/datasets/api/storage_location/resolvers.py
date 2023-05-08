@@ -10,7 +10,7 @@ from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER
 
 

@@ -12,7 +12,7 @@ from ...db import models
 # TODO should be migrated in the redshift module
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 

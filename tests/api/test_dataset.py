@@ -5,7 +5,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module', autouse=True)

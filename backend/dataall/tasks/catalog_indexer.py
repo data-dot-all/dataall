@@ -5,7 +5,7 @@ import sys
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.db import get_engine, models
 from dataall.searchproxy.indexers import DashboardIndexer
 from dataall.utils.alarm_service import AlarmService

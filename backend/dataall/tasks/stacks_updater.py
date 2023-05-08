@@ -4,7 +4,7 @@ import sys
 import time
 
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from .. import db
 from ..db import models
 from ..aws.handlers.ecs import Ecs

@@ -3,7 +3,7 @@ from aws_cdk import aws_iam as iam
 
 from dataall.cdkproxy.stacks.policies.data_policy import DataPolicy
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 
 
 class DatasetDataPolicy(DataPolicy):

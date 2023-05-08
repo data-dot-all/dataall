@@ -4,7 +4,7 @@ from dataall import db
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.searchproxy.base_indexer import BaseIndexer
 
 

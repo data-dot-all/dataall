@@ -10,7 +10,7 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 

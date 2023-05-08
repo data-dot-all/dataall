@@ -4,7 +4,7 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 
 log = logging.getLogger(__name__)
