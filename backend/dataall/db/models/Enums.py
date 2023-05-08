@@ -49,16 +49,6 @@ class DataPipelineRole(Enum):
     NoPermission = '000'
 
 
-class DatasetRole(Enum):
-    # Permissions on a dataset
-    BusinessOwner = '999'
-    DataSteward = '998'
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class RedshiftClusterRole(Enum):
     Creator = '950'
     Admin = '900'
