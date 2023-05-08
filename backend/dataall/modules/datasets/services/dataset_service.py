@@ -21,8 +21,8 @@ from dataall.db.models.Enums import Language, ConfidentialityClassification
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
-    DATASET_TABLE_READ, LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, \
+    DATASET_ALL, DATASET_TABLE_READ, LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

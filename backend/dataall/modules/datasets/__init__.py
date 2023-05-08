@@ -3,12 +3,12 @@ import logging
 from typing import List
 
 from dataall.core.group.services.group_resource_manager import GroupResourceManager
+from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_group_resource import DatasetGroupResource
-from dataall.modules.datasets.services.permissions import GET_DATASET, UPDATE_DATASET
+from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
 from dataall.modules.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         TargetType("dataset", GET_DATASET, UPDATE_DATASET)
 
-        GroupResourceManager.register(DatasetGroupResource())
+        GroupResourceManager.register(DatasetRepository())
 
         log.info("API of datasets has been imported")
 
