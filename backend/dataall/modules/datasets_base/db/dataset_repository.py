@@ -1,10 +1,11 @@
 from operator import and_
 
+from dataall.core.group.services.group_resource_manager import GroupResource
 from dataall.db import exceptions
 from dataall.modules.datasets_base.db.models import Dataset
 
 
-class DatasetRepository:
+class DatasetRepository(GroupResource):
     """DAO layer for Datasets"""
 
     @staticmethod
@@ -14,8 +15,7 @@ class DatasetRepository:
             raise exceptions.ObjectNotFound('Dataset', dataset_uri)
         return dataset
 
-    @staticmethod
-    def count_group_datasets(session, environment_uri, group_uri) -> int:
+    def count_resources(self, session, environment_uri, group_uri) -> int:
         return (
             session.query(Dataset)
             .filter(
@@ -25,4 +25,3 @@ class DatasetRepository:
                 ))
             .count()
         )
-

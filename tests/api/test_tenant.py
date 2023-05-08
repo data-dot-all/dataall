@@ -1,5 +1,5 @@
 from dataall.db import permissions
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS
 
 
 def test_list_tenant_permissions(client, user, group, tenant):

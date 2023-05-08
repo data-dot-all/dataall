@@ -22,7 +22,7 @@ from dataall.modules.datasets.db.dataset_location_repository import DatasetLocat
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.permissions import CREDENTIALS_DATASET, SYNC_DATASET, SUMMARY_DATASET, \
+from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, SUMMARY_DATASET, \
     CRAWL_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET
 from dataall.aws.handlers.quicksight import Quicksight
 

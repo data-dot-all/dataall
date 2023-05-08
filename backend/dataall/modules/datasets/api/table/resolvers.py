@@ -13,7 +13,7 @@ from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
+from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer

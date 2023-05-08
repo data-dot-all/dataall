@@ -8,7 +8,7 @@ from dataall.db import exceptions, paginate
 from dataall.db.api import Glossary, ResourcePolicy, Environment
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
     UPDATE_DATASET_TABLE
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ

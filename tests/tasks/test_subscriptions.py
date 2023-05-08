@@ -5,7 +5,7 @@ from dataall.api.constants import OrganisationUserRole
 from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.tasks.subscription_service import SubscriptionService
+from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
 
 
 @pytest.fixture(scope='module')
@@ -138,7 +138,7 @@ def share(
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
     mocker.patch(
-        'dataall.modules.datasets.tasks.subscription_service.SubscriptionService.sns_call',
+        'dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService.sns_call',
         return_value=True,
     )
     subscriber = SubscriptionService()

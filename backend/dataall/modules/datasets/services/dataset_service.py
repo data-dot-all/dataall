@@ -23,7 +23,7 @@ from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.services.permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
     LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.utils.naming_convention import (

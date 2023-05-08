@@ -37,7 +37,7 @@ def test_sgm_notebook(sgm_notebook, group):
 @pytest.fixture(scope='module', autouse=True)
 def patch_aws(module_mocker):
     module_mocker.patch(
-        "dataall.modules.notebooks.services.services.client",
+        "dataall.modules.notebooks.services.notebook_service.client",
         return_value=MockSagemakerClient(),
     )
 

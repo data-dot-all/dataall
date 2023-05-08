@@ -2,7 +2,7 @@ import pytest
 
 import dataall
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.permissions import CREATE_DATASET
+from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
 @pytest.fixture(scope='module', autouse=True)

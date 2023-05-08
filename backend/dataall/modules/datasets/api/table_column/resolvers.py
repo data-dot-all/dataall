@@ -7,7 +7,7 @@ from dataall.db import paginate, models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
-from dataall.modules.datasets.services.permissions import UPDATE_DATASET_TABLE
+from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 
 
 def list_table_columns(

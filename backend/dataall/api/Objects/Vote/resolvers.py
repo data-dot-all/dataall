@@ -53,4 +53,5 @@ def get_vote(context: Context, source, targetUri: str = None, targetType: str = 
         )
 
 
+# TODO should migrate after into the Dashboard module
 add_vote_type("dashboard", DashboardIndexer)

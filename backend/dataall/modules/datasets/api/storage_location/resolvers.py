@@ -11,7 +11,7 @@ from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIn
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.permissions import UPDATE_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER
 
 
 def create_storage_location(
