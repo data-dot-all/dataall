@@ -91,7 +91,7 @@ class ProcessS3Share(S3ShareManager):
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
 
             except Exception as e:
-                sharing_folder.log_share_failure(e)
+                sharing_folder.handle_share_failure(e)
                 new_state = shared_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 shared_item_SM.update_state_single_item(session, sharing_item, new_state)
                 success = False
@@ -154,7 +154,7 @@ class ProcessS3Share(S3ShareManager):
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
 
             except Exception as e:
-                removing_folder.log_revoke_failure(e)
+                removing_folder.handle_revoke_failure(e)
                 new_state = revoked_item_SM.run_transition(models.Enums.ShareItemActions.Failure.value)
                 revoked_item_SM.update_state_single_item(session, removing_item, new_state)
                 success = False
