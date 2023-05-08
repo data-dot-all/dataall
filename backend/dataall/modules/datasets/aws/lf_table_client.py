@@ -20,9 +20,6 @@ class LakeFormationTableClient:
         """
         Pivot role needs to have all permissions
         for tables managed inside dataall
-        :param aws_session:
-        :param table:
-        :return:
         """
         table = self._table
         principal = SessionHelper.get_delegation_role_arn(table.AWSAccountId)

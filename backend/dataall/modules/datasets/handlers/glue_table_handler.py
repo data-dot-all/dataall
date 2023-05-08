@@ -10,7 +10,7 @@ from dataall.modules.datasets.services.dataset_table_service import DatasetTable
 log = logging.getLogger(__name__)
 
 
-class DatasetColumnGlueHandler:
+class DatasetTableSyncHandler:
     """A handler for dataset table"""
 
     @staticmethod

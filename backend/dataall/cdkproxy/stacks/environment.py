@@ -28,7 +28,7 @@ from constructs import DependencyGroup
 from botocore.exceptions import ClientError
 
 from .manager import stack
-from .policies.data_policy import DataPolicy
+from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
@@ -587,7 +587,7 @@ class EnvironmentSetup(Stack):
                 ),
             ).generate_policies()
 
-            data_policy = DataPolicy(
+            data_policy = S3Policy(
                 stack=self,
                 tag_key='Team',
                 tag_value=self._environment.SamlGroupName,
@@ -656,7 +656,7 @@ class EnvironmentSetup(Stack):
         ).generate_policies()
 
         with self.engine.scoped_session() as session:
-            data_policy = DataPolicy(
+            data_policy = S3Policy(
                 stack=self,
                 tag_key='Team',
                 tag_value=group.groupUri,

@@ -38,8 +38,10 @@ class DatasetColumnGlueHandler:
 
             aws_session = SessionHelper.remote_session(table.AWSAccountId)
 
-            LakeFormationTableClient(table, aws_session).grant_pivot_role_all_table_permissions()
-            glue_client = GlueTableClient(aws_session, table)
+            lf_client = LakeFormationTableClient(table=table, aws_session=aws_session)
+            lf_client.grant_pivot_role_all_table_permissions()
+
+            glue_client = GlueTableClient(aws_session=aws_session, table=table)
             original_table = glue_client.get_table()
             updated_table = {
                 k: v
