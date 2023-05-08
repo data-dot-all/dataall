@@ -386,3 +386,19 @@ def list_data_items_shared_with_env_group(
             data=filter,
             check_perm=True,
         )
+
+
+def list_shared_with_environment_data_items(
+    context: Context, source, environmentUri: str = None, filter: dict = None
+):
+    if not filter:
+        filter = {}
+    with context.engine.scoped_session() as session:
+        return DatasetShareService.paginated_shared_with_environment_datasets(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            uri=environmentUri,
+            data=filter,
+            check_perm=True,
+        )

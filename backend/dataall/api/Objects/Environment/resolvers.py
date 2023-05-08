@@ -21,8 +21,6 @@ from ....utils.naming_convention import (
     NamingConventionPattern,
 )
 
-from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
-
 log = logging.getLogger()
 
 
@@ -398,21 +396,6 @@ def list_environment_group_permissions(
             groups=context.groups,
             uri=environmentUri,
             data={'groupUri': groupUri},
-            check_perm=True,
-        )
-
-def list_shared_with_environment_data_items(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return DatasetShareService.paginated_shared_with_environment_datasets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
             check_perm=True,
         )
 

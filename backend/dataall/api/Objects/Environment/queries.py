@@ -48,18 +48,6 @@ listEnvironmentNetworks = gql.QueryField(
 )
 
 
-searchEnvironmentDataItems = gql.QueryField(
-    name='searchEnvironmentDataItems',
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('EnvironmentDataItemFilter')),
-    ],
-    resolver=list_shared_with_environment_data_items,
-    type=gql.Ref('EnvironmentPublishedItemSearchResults'),
-    test_scope='Dataset',
-)
-
-
 generateEnvironmentAccessToken = gql.QueryField(
     name='generateEnvironmentAccessToken',
     args=[
