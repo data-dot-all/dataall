@@ -1,5 +1,14 @@
-from ... import gql
-from ..Worksheet.resolvers import *
+from dataall.api import gql
+from dataall.api.constants import GraphQLEnumMapper
+from dataall.modules.worksheets.api.resolvers import *
+
+
+class WorksheetRole(GraphQLEnumMapper):
+    Creator = '950'
+    Admin = '900'
+    SharedWithWritePermission = '500'
+    SharedWithReadPermission = '400'
+    NoPermission = '000'
 
 
 Worksheet = gql.ObjectType(

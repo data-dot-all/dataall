@@ -1,5 +1,5 @@
 import pytest
-from dataall.api.constants import WorksheetRole
+from dataall.modules.worksheets.api.schema import WorksheetRole
 
 
 @pytest.fixture(scope='module', autouse=True)

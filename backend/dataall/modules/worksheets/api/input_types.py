@@ -1,4 +1,4 @@
-from ... import gql
+from dataall.api import gql
 
 NewWorksheetInput = gql.InputType(
     name='NewWorksheetInput',
