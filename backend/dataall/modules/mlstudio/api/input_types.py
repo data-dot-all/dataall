@@ -1,4 +1,5 @@
-from ... import gql
+"""The module defines GraphQL input types for the SageMaker ML Studio"""
+from dataall.api import gql
 
 NewSagemakerStudioUserProfileInput = gql.InputType(
     name='NewSagemakerStudioUserProfileInput',

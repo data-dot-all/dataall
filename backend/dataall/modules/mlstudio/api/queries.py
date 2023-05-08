@@ -1,5 +1,11 @@
-from ... import gql
-from .resolvers import *
+"""The module defines GraphQL queries for the SageMaker ML Studio"""
+from dataall.api import gql
+from dataall.modules.mlstudio.api.resolvers import (
+    get_sagemaker_studio_user_profile,
+    get_user_profile_applications,
+    list_sm_studio_user_profile,
+    get_sagemaker_studio_user_profile_presigned_url,
+)
 
 getSagemakerStudioUserProfile = gql.QueryField(
     name='getSagemakerStudioUserProfile',

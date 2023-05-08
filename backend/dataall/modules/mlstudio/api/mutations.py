@@ -1,5 +1,9 @@
-from ... import gql
-from .resolvers import *
+"""The module defines GraphQL mutations for the SageMaker ML Studio"""
+from dataall.api import gql
+from dataall.modules.mlstudio.api.resolvers import (
+    create_sagemaker_studio_user_profile,
+    delete_sagemaker_studio_user_profile,
+)
 
 createSagemakerStudioUserProfile = gql.MutationField(
     name='createSagemakerStudioUserProfile',

@@ -1,6 +1,12 @@
-from ... import gql
-from .resolvers import *
-from ....api.constants import SagemakerStudioRole
+"""Defines the object types of the SageMaker ML Studio"""
+from dataall.api import gql
+from dataall.modules.mlstudio.api.resolvers import (
+    resolve_user_role,
+    resolve_mlstudio_status,
+    resolve_mlstudio_stack,
+    get_user_profile_applications,
+)
+from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 
 
 from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env

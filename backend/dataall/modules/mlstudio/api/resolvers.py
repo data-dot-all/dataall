@@ -1,5 +1,5 @@
 import logging
-
+#TODO: fix imports
 from ..Stack import stack_helper
 from .... import db
 from ....api.constants import SagemakerStudioRole
@@ -12,7 +12,7 @@ from ....db.api import ResourcePolicy, Stack
 
 log = logging.getLogger(__name__)
 
-
+#TODO: move business logic to services
 def create_sagemaker_studio_user_profile(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
         if not input.get('environmentUri'):
@@ -110,7 +110,7 @@ def resolve_user_role(context: Context, source: models.SagemakerStudioUserProfil
     return SagemakerStudioRole.NoPermission.value
 
 
-def resolve_status(context, source: models.SagemakerStudioUserProfile, **kwargs):
+def resolve_mlstudio_status(context, source: models.SagemakerStudioUserProfile, **kwargs):
     if not source:
         return None
     try:
@@ -216,7 +216,7 @@ def delete_sagemaker_studio_user_profile(
     return True
 
 
-def resolve_stack(
+def resolve_mlstudio_stack(
     context: Context, source: models.SagemakerStudioUserProfile, **kwargs
 ):
     if not source:

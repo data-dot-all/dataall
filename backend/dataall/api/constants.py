@@ -100,13 +100,6 @@ class ScheduledQueryRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class SagemakerStudioRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class AirflowClusterRole(GraphQLEnumMapper):
     Creator = '950'
     Admin = '900'
