@@ -3,10 +3,10 @@ import logging
 from dataall import db
 from dataall import utils
 from dataall.api.Objects.Principal.resolvers import get_principal
-from dataall.api.constants import *
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
+from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService

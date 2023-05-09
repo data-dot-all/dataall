@@ -1,5 +1,5 @@
 from dataall.api.constants import *
-
+from dataall.modules.dataset_sharing.api.enums import ShareableType
 
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
