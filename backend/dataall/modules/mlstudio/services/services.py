@@ -15,15 +15,17 @@ from dataall.db.api import (
     Environment, KeyValueTag, Stack,
 )
 from dataall.db import models, exceptions
-from dataall.modules.mlstudio.aws.sagemaker_studio_client import sm_studio_client
+from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client
 from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
-from dataall.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
+
 from dataall.utils.slugify import slugify
-from dataall.modules.mlstudio.db.models import SagemakerStudioUserProfile
-from dataall.modules.mlstudio.services.permissions import MANAGE_SGMSTUDIO_NOTEBOOKS, CREATE_SGMSTUDIO_NOTEBOOK, SGMSTUDIO_NOTEBOOK_ALL
+from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.services.permissions import (
+    MANAGE_SGMSTUDIO_NOTEBOOKS,
+    CREATE_SGMSTUDIO_NOTEBOOK,
+    SGMSTUDIO_NOTEBOOK_ALL,
+    GET_SGMSTUDIO_NOTEBOOK,
+)
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
@@ -59,7 +61,7 @@ class SagemakerStudioService:
     @has_resource_permission(CREATE_SGMSTUDIO_NOTEBOOK)
     @has_group_permission(CREATE_SGMSTUDIO_NOTEBOOK)
     #TODO: question, why the * here?
-    def create_sagemaker_studio_user_profile(*, uri: str, admin_group: str, request:SagemakerStudioCreationRequest):
+    def create_sagemaker_studio_user(*, uri: str, admin_group: str, request:SagemakerStudioCreationRequest):
         """
         Creates an ML Studio user
         Throws an exception if ML Studio is not enabled for the environment
@@ -74,7 +76,7 @@ class SagemakerStudioService:
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
             #TODO: check with v1.5 how the checking affects this method
-            response = sm_studio_client(environment=env).get_sagemaker_studio_domain()
+            response = sagemaker_studio_client(environment=env).get_sagemaker_studio_domain()
             existing_domain = response.get('DomainId', False)
 
             if not existing_domain:
@@ -84,7 +86,7 @@ class SagemakerStudioService:
                             'or create a Sagemaker studio domain on your AWS account.',
                 )
 
-            sm_user = SagemakerStudioUserProfile(
+            sagemaker_studio_user = SagemakerStudioUser(
                 label=request.label,
                 environmentUri=env.environmentUri,
                 description=request.description,
@@ -98,35 +100,55 @@ class SagemakerStudioService:
                 SamlAdminGroupName=admin_group,
                 tags=request.tags,
             )
-            SageMakerStudioRepository(session).save_sm_studiouser(sm_user)
+            SageMakerStudioRepository(session).save_sm_user(user=sagemaker_studio_user)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=SGMSTUDIO_NOTEBOOK_ALL,
-                resource_uri=sm_user.sagemakerStudioUserProfileUri,
+                resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
                 resource_type=models.SagemakerStudioUserProfile.__name__,
             )
 
-            if env.SamlGroupName != sm_user.SamlAdminGroupName:
+            if env.SamlGroupName != sagemaker_studio_user.SamlAdminGroupName:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
                     permissions=SGMSTUDIO_NOTEBOOK_ALL,
-                    resource_uri=sm_user.sagemakerStudioUserProfileUri,
+                    resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
                     resource_type=models.SagemakerStudioUserProfile.__name__,
                 )
 
 
             Stack.create_stack(
                 session=session,
-                environment_uri=sm_user.environmentUri,
+                environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='sagemakerstudiouserprofile',
-                target_uri=sm_user.sagemakerStudioUserProfileUri,
-                target_label=sm_user.label,
+                target_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
+                target_label=sagemaker_studio_user.label,
             )
 
-        stack_helper.deploy_stack(targetUri=sm_user.sagemakerStudioUserProfileUri)
+        stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserProfileUri)
 
-        return sm_user
+        return sagemaker_studio_user
+
+    @staticmethod
+    def list_sagemaker_studio_users(*, filter) -> dict:
+        with _session() as session:
+            return SageMakerStudioRepository(session).paginated_sagemaker_studio_users(
+                username=context.username,
+                groups=context.groups,
+                filter=filter,
+            )
+
+    @staticmethod
+    @has_resource_permission(GET_SGMSTUDIO_NOTEBOOK)
+    def get_sagemaker_studio_user(*, uri):
+        with _session() as session:
+            user = SageMakerStudioRepository(session).find_sagemaker_studio_user(uri=uri)
+            if not user:
+                raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
+            return user
+
+
 
