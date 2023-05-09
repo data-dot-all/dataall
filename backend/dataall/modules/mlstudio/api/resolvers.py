@@ -5,7 +5,7 @@ from dataall.db import exceptions
 from dataall.api.Objects.Stack import stack_helper
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 from dataall.modules.mlstudio.services.services import SagemakerStudioService, SagemakerStudioCreationRequest
-from dataall.modules.mlstudio.db.models import SageMakerStudioUserProfile
+from dataall.modules.mlstudio.db.models import SageMakerStudioUser
 
 
 from .... import db
@@ -61,92 +61,60 @@ def list_sagemaker_studio_users(context, source, filter: dict = None):
 
 
 def get_sagemaker_studio_user(
-    context, source, sagemakerStudioUserProfileUri: str = None
-) -> models.SagemakerStudioUserProfile:
-    return SagemakerStudioService.get_sagemaker_studio_user(uri=sagemakerStudioUserProfileUri)
+    context, source, sagemakerStudioUserUri: str = None
+) -> models.SagemakerStudioUser:
+    return SagemakerStudioService.get_sagemaker_studio_user(uri=sagemakerStudioUserUri)
 
 
-def get_sagemaker_studio_user_profile_presigned_url(
+def get_sagemaker_studio_user_presigned_url(
     context,
-    source: models.SagemakerStudioUserProfile,
-    sagemakerStudioUserProfileUri: str,
-):
-    # TODO: move logic to service
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            resource_uri=sagemakerStudioUserProfileUri,
-            permission_name=permissions.SGMSTUDIO_NOTEBOOK_URL,
-            groups=context.groups,
-            username=context.username,
-        )
-        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(
-            session, sagemakerStudioUserProfileUri
-        )
-
-        url = SagemakerStudio.presigned_url(
-            AwsAccountId=sm_user_profile.AWSAccountId,
-            region=sm_user_profile.region,
-            sagemakerStudioDomainID=sm_user_profile.sagemakerStudioDomainID,
-            sagemakerStudioUserProfileNameSlugify=sm_user_profile.sagemakerStudioUserProfileNameSlugify,
-        )
-        return url
+    source: models.SagemakerStudioUser,
+    sagemakerStudioUserUri: str,
+) -> str:
+    # TODO: why NOT use source?
+    return SagemakerStudioService.get_sagemaker_studio_user_presigned_url(uri=sagemakerStudioUserUri)
 
 
-def get_user_profile_applications(context, source: models.SagemakerStudioUserProfile):
-    # TODO: move logic to service
+def get_sagemaker_studio_user_applications(context, source: models.SagemakerStudioUser):
+    # TODO: why source?
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        sm_user_profile = get_sagemaker_studio_user_profile(
-            context,
-            source=source,
-            sagemakerStudioUserProfileUri=source.sagemakerStudioUserProfileUri,
-        )
-
-        user_profiles_applications = SagemakerStudio.get_user_profile_applications(
-            AwsAccountId=sm_user_profile.AWSAccountId,
-            region=sm_user_profile.region,
-            sagemakerStudioDomainID=sm_user_profile.sagemakerStudioDomainID,
-            sagemakerStudioUserProfileNameSlugify=sm_user_profile.sagemakerStudioUserProfileNameSlugify,
-        )
-
-        return user_profiles_applications
+    return SagemakerStudioService.get_sagemaker_studio_user_applications(uri=source.sagemakerStudioUserUri)
 
 
-def delete_sagemaker_studio_user_profile(
+def delete_sagemaker_studio_user(
     context,
-    source: models.SagemakerStudioUserProfile,
-    sagemakerStudioUserProfileUri: str = None,
+    source: models.SagemakerStudioUser,
+    sagemakerStudioUserUri: str = None,
     deleteFromAWS: bool = None,
 ):
     # TODO: move logic to service
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
-            resource_uri=sagemakerStudioUserProfileUri,
+            resource_uri=sagemakerStudioUserUri,
             permission_name=permissions.DELETE_SGMSTUDIO_NOTEBOOK,
             groups=context.groups,
             username=context.username,
         )
-        sm_user_profile = db.api.SgmStudioNotebook.get_notebook_by_uri(
-            session, sagemakerStudioUserProfileUri
+        sm_user = db.api.SgmStudioNotebook.get_notebook_by_uri(
+            session, sagemakerStudioUserUri
         )
         env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, sm_user_profile.environmentUri
+            session, sm_user.environmentUri
         )
 
-        session.delete(sm_user_profile)
+        session.delete(sm_user)
 
         ResourcePolicy.delete_resource_policy(
             session=session,
-            resource_uri=sm_user_profile.sagemakerStudioUserProfileUri,
-            group=sm_user_profile.SamlAdminGroupName,
+            resource_uri=sm_user.sagemakerStudioUserUri,
+            group=sm_user.SamlAdminGroupName,
         )
 
     if deleteFromAWS:
         stack_helper.delete_stack(
-            target_uri=sagemakerStudioUserProfileUri,
+            target_uri=sagemakerStudioUserUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region
@@ -154,7 +122,7 @@ def delete_sagemaker_studio_user_profile(
 
     return True
 
-def resolve_user_role(context: Context, source: models.SagemakerStudioUserProfile):
+def resolve_user_role(context: Context, source: models.SagemakerStudioUser):
     # TODO: move logic to service
     if source.owner == context.username:
         return SagemakerStudioRole.Creator.value
@@ -163,34 +131,34 @@ def resolve_user_role(context: Context, source: models.SagemakerStudioUserProfil
     return SagemakerStudioRole.NoPermission.value
 
 
-def resolve_mlstudio_status(context, source: models.SagemakerStudioUserProfile, **kwargs):
+def resolve_mlstudio_status(context, source: models.SagemakerStudioUser, **kwargs):
     # TODO: move logic to service
     if not source:
         return None
     try:
-        user_profile_status = SagemakerStudio.get_user_profile_status(
+        user_status = SagemakerStudio.get_user_status(
             AwsAccountId=source.AWSAccountId,
             region=source.region,
             sagemakerStudioDomainID=source.sagemakerStudioDomainID,
-            sagemakerStudioUserProfileNameSlugify=source.sagemakerStudioUserProfileNameSlugify,
+            sagemakerStudioUserNameSlugify=source.sagemakerStudioUserNameSlugify,
         )
         with context.engine.scoped_session() as session:
-            sm_user_profile = session.query(models.SagemakerStudioUserProfile).get(
-                source.sagemakerStudioUserProfileUri
+            sm_user = session.query(models.SagemakerStudioUser).get(
+                source.sagemakerStudioUserUri
             )
-            sm_user_profile.sagemakerStudioUserProfileStatus = user_profile_status
-        return user_profile_status
+            sm_user.sagemakerStudioUserStatus = user_status
+        return user_status
     except Exception:
         return 'NOT FOUND'
 
 def resolve_mlstudio_stack(
-    context: Context, source: models.SagemakerStudioUserProfile, **kwargs
+    context: Context, source: models.SagemakerStudioUser, **kwargs
 ):
     # TODO: move logic to service
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
-        targetUri=source.sagemakerStudioUserProfileUri,
+        targetUri=source.sagemakerStudioUserUri,
         environmentUri=source.environmentUri,
     )
 

@@ -15,7 +15,7 @@ from dataall.db.api import (
     Environment, KeyValueTag, Stack,
 )
 from dataall.db import models, exceptions
-from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client
+from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, SagemakerStudioClient
 from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
 
 from dataall.utils.slugify import slugify
@@ -25,6 +25,7 @@ from dataall.modules.mlstudio.services.permissions import (
     CREATE_SGMSTUDIO_USER,
     SGMSTUDIO_USER_ALL,
     GET_SGMSTUDIO_USER,
+    SGMSTUDIO_USER_URL,
 )
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
@@ -76,7 +77,10 @@ class SagemakerStudioService:
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
             #TODO: check with v1.5 how the checking affects this method
-            response = sagemaker_studio_client(environment=env).get_sagemaker_studio_domain()
+            response = SagemakerStudioClient.get_sagemaker_studio_domain(
+                AwsAccountId=env.AwsAccountId,
+                region=env.region
+            )
             existing_domain = response.get('DomainId', False)
 
             if not existing_domain:
@@ -145,10 +149,24 @@ class SagemakerStudioService:
     @has_resource_permission(GET_SGMSTUDIO_USER)
     def get_sagemaker_studio_user(*, uri):
         with _session() as session:
-            user = SageMakerStudioRepository(session).find_sagemaker_studio_user(uri=uri)
-            if not user:
-                raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
-            return user
+            return SagemakerStudioService._get_sagemaker_studio_user(session, uri)
 
+    @staticmethod
+    @has_resource_permission(SGMSTUDIO_USER_URL)
+    def get_sagemaker_studio_user_presigned_url(*, uri):
+        with _session() as session:
+            user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
+            return SagemakerStudioService(user).get_sagemaker_studio_user_profile_presigned_url()
 
+    @staticmethod
+    def get_sagemaker_studio_user_applications(*, uri):
+        with _session() as session:
+            user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
+            return SagemakerStudioService(user).get_sagemaker_studio_user_applications()
 
+    @staticmethod
+    def _get_sagemaker_studio_user(session, uri):
+        user = SageMakerStudioRepository(session).find_sagemaker_studio_user(uri=uri)
+        if not user:
+            raise exceptions.ObjectNotFound('SagemakerStudioUser', uri)
+        return user

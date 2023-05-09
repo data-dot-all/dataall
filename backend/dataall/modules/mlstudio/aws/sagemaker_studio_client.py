@@ -1,7 +1,7 @@
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.modules.notebooks.db.models import SagemakerStudioUser
 from dataall.core.environment.db.models import Environment #TODO: Question: I do not find it in the project
 from botocore.exceptions import ClientError
 
@@ -13,19 +13,29 @@ class SagemakerStudioClient:
     A Sagemaker studio proxy client that is used to send requests to AWS
     """
 
-    def __init__(self, environment:Environment):
-        session = SessionHelper.remote_session(environment.AWSAccountId)
-        self._client = session.client('sagemaker', region_name=environment.region)
-        self._domain_name = ''
+    def __init__(self, sm_user:SagemakerStudioUser):
+        self._client = SagemakerStudioClient.get_client(
+            AwsAccountId=sm_user.AwsAccountId,
+            region=sm_user.region
+        )
+        self._sagemakerStudioDomainID = sm_user.sagemakerStudioDomainID
+        self._sagemakerStudioUserNameSlugify = sm_user.sagemakerStudioUserNameSlugify
 
-    def get_sagemaker_studio_domain(self):
+    @staticmethod
+    def get_client(AwsAccountId, region):
+        session = SessionHelper.remote_session(AwsAccountId)
+        return session.client('sagemaker', region_name=region)
+
+    @staticmethod
+    def get_sagemaker_studio_domain(AwsAccount, region):
         """
         Sagemaker studio domain is limited to one per account,
         RETURN: an existing domain or None if no domain is in the AWS account
         """
+        client = SagemakerStudioClient.get_client(AwsAccountId=AwsAccount, region=region)
         existing_domain = dict()
         try:
-            domain_id_paginator = self._client.get_paginator('list_domains')
+            domain_id_paginator = client.get_paginator('list_domains')
             domains = domain_id_paginator.paginate()
             for _domain in domains:
                 print(_domain)
@@ -40,43 +50,34 @@ class SagemakerStudioClient:
             print(e)
             return 'NotFound'
 
-    def presigned_url(self,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
+    def get_sagemaker_studio_user_profile_presigned_url(self):
         try:
             response_signed_url =  self._client.create_presigned_domain_url(
-                DomainId=sagemakerStudioDomainID,
-                UserProfileName=sagemakerStudioUserProfileNameSlugify,
+                DomainId=self._sagemakerStudioDomainID,
+                UserProfileName=self._sagemakerStudioUserNameSlugify,
             )
             return response_signed_url['AuthorizedUrl']
         except ClientError:
             return ''
 
-    def get_user_profile_status(self,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
+    def get_user_profile_status(self):
         try:
             response =  self._client.describe_user_profile(
-                DomainId=sagemakerStudioDomainID,
-                UserProfileName=sagemakerStudioUserProfileNameSlugify,
+                DomainId=self._sagemakerStudioDomainID,
+                UserProfileName=self._sagemakerStudioUserNameSlugify,
             )
             return response['Status']
         except ClientError as e:
             print(e)
             return 'NotFound'
 
-    def get_user_profile_applications(self,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
+    def get_sagemaker_studio_user_applications(self):
         _running_apps = []
         try:
             paginator_app =  self._client.get_paginator('list_apps')
             response_paginator = paginator_app.paginate(
-                DomainIdEquals=sagemakerStudioDomainID,
-                UserProfileNameEquals=sagemakerStudioUserProfileNameSlugify,
+                DomainIdEquals=self._sagemakerStudioDomainID,
+                UserProfileNameEquals=self._sagemakerStudioUserNameSlugify,
             )
             for _response_app in response_paginator:
                 for _app in _response_app['Apps']:
@@ -94,6 +95,6 @@ class SagemakerStudioClient:
         except ClientError as e:
             raise e
 
-def sagemaker_studio_client(environment: Environment) -> SagemakerStudioClient:
+def sagemaker_studio_client(sm_user:SagemakerStudioUser) -> SagemakerStudioClient:
     """Factory method to retrieve the client to send request to AWS"""
-    return SagemakerStudioClient(environment)
+    return SagemakerStudioClient(sm_user)
