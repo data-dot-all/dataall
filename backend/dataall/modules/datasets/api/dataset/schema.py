@@ -1,4 +1,5 @@
 from dataall.api import gql
+from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_environment,
     get_dataset_organization,
@@ -13,18 +14,7 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     resolve_redshift_copy_enabled,
     get_dataset_stack
 )
-from dataall.api.constants import EnvironmentPermission, GraphQLEnumMapper
-
-
-class DatasetRole(GraphQLEnumMapper):
-    # Permissions on a dataset
-    BusinessOwner = '999'
-    DataSteward = '998'
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
+from dataall.api.constants import EnvironmentPermission
 
 DatasetStatistics = gql.ObjectType(
     name='DatasetStatistics',
