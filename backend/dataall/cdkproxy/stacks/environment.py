@@ -242,8 +242,6 @@ class EnvironmentSetup(Stack):
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
 
-        self.pivot_role = pivot_role
-
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
         entry_point = str(
