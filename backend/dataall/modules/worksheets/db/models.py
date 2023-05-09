@@ -5,8 +5,8 @@ from sqlalchemy import Column, Boolean, DateTime, Integer, Enum, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
-from .. import Base
-from .. import Resource, utils
+from dataall.db import Base
+from dataall.db import Resource, utils
 
 
 class QueryType(enum.Enum):

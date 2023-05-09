@@ -1,34 +1,30 @@
 import logging
 
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Query
-
-from .. import exceptions, permissions, paginate
-from .. import models
-from . import has_tenant_perm, ResourcePolicy, has_resource_perm
+from dataall.db import exceptions, permissions
+from dataall.db import models
+from dataall.db.api import has_tenant_perm, ResourcePolicy, has_resource_perm
+from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
+from dataall.modules.worksheets.db.repositories import WorksheetRepository
 
 logger = logging.getLogger(__name__)
 
 
-class Worksheet:
+class WorksheetService:
     @staticmethod
-    def get_worksheet_by_uri(session, uri: str) -> models.Worksheet:
+    def get_worksheet_by_uri(session, uri: str) -> Worksheet:
         if not uri:
             raise exceptions.RequiredParameter(param_name='worksheetUri')
-        worksheet = Worksheet.find_worksheet_by_uri(session, uri)
+        worksheet = WorksheetRepository(session).find_worksheet_by_uri(uri)
         if not worksheet:
             raise exceptions.ObjectNotFound('Worksheet', uri)
         return worksheet
 
-    @staticmethod
-    def find_worksheet_by_uri(session, uri) -> models.Worksheet:
-        return session.query(models.Worksheet).get(uri)
 
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_WORKSHEETS)
     def create_worksheet(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Worksheet:
+    ) -> Worksheet:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('SamlAdminGroupName'):
@@ -36,7 +32,7 @@ class Worksheet:
         if not data.get('label'):
             raise exceptions.RequiredParameter('label')
 
-        worksheet = models.Worksheet(
+        worksheet = Worksheet(
             owner=username,
             label=data.get('label'),
             description=data.get('description', 'No description provided'),
@@ -44,6 +40,7 @@ class Worksheet:
             chartConfig={'dimensions': [], 'measures': [], 'chartType': 'bar'},
             SamlAdminGroupName=data['SamlAdminGroupName'],
         )
+
         session.add(worksheet)
         session.commit()
 
@@ -62,14 +59,14 @@ class Worksheet:
             group=data['SamlAdminGroupName'],
             permissions=permissions.WORKSHEET_ALL,
             resource_uri=worksheet.worksheetUri,
-            resource_type=models.Worksheet.__name__,
+            resource_type=Worksheet.__name__,
         )
         return worksheet
 
     @staticmethod
     @has_resource_perm(permissions.UPDATE_WORKSHEET)
     def update_worksheet(session, username, groups, uri, data=None, check_perm=None):
-        worksheet = Worksheet.get_worksheet_by_uri(session, uri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         for field in data.keys():
             setattr(worksheet, field, data.get(field))
         session.commit()
@@ -88,56 +85,18 @@ class Worksheet:
     @staticmethod
     @has_resource_perm(permissions.GET_WORKSHEET)
     def get_worksheet(session, username, groups, uri, data=None, check_perm=None):
-        worksheet = Worksheet.get_worksheet_by_uri(session, uri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         return worksheet
-
-    @staticmethod
-    def query_user_worksheets(session, username, groups, filter) -> Query:
-        query = session.query(models.Worksheet).filter(
-            or_(
-                models.Worksheet.owner == username,
-                models.Worksheet.SamlAdminGroupName.in_(groups),
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    models.Worksheet.label.ilike('%' + filter.get('term') + '%'),
-                    models.Worksheet.description.ilike('%' + filter.get('term') + '%'),
-                    models.Worksheet.tags.contains(f"{{{filter.get('term')}}}"),
-                )
-            )
-        return query
-
-    @staticmethod
-    def paginated_user_worksheets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        return paginate(
-            query=Worksheet.query_user_worksheets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
 
     @staticmethod
     @has_resource_perm(permissions.SHARE_WORKSHEET)
     def share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.WorksheetShare:
-        share = (
-            session.query(models.WorksheetShare)
-            .filter(
-                and_(
-                    models.WorksheetShare.worksheetUri == uri,
-                    models.WorksheetShare.principalId == data.get('principalId'),
-                    models.WorksheetShare.principalType == data.get('principalType'),
-                )
-            )
-            .first()
-        )
+    ) -> WorksheetShare:
+        share = WorksheetRepository(session).get_worksheet_share(uri, data)
 
         if not share:
-            share = models.WorksheetShare(
+            share = WorksheetShare(
                 worksheetUri=uri,
                 principalType=data['principalType'],
                 principalId=data['principalId'],
@@ -151,7 +110,7 @@ class Worksheet:
                 group=data['principalId'],
                 permissions=permissions.WORKSHEET_SHARED,
                 resource_uri=uri,
-                resource_type=models.Worksheet.__name__,
+                resource_type=Worksheet.__name__,
             )
         return share
 
@@ -159,16 +118,16 @@ class Worksheet:
     @has_resource_perm(permissions.SHARE_WORKSHEET)
     def update_share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
-    ) -> models.WorksheetShare:
-        share: models.WorksheetShare = data['share']
+    ) -> WorksheetShare:
+        share: WorksheetShare = data['share']
         share.canEdit = data['canEdit']
-        worksheet = Worksheet.get_worksheet_by_uri(session, uri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=share.principalId,
             permissions=permissions.WORKSHEET_SHARED,
             resource_uri=uri,
-            resource_type=models.Worksheet.__name__,
+            resource_type=Worksheet.__name__,
         )
         return share
 
@@ -177,12 +136,12 @@ class Worksheet:
     def delete_share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
-        share: models.WorksheetShare = data['share']
+        share: WorksheetShare = data['share']
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=share.principalId,
             resource_uri=uri,
-            resource_type=models.Worksheet.__name__,
+            resource_type=Worksheet.__name__,
         )
         session.delete(share)
         session.commit()
@@ -193,12 +152,12 @@ class Worksheet:
     def delete_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
-        worksheet = Worksheet.get_worksheet_by_uri(session, uri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         session.delete(worksheet)
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=worksheet.SamlAdminGroupName,
             resource_uri=uri,
-            resource_type=models.Worksheet.__name__,
+            resource_type=Worksheet.__name__,
         )
         return True

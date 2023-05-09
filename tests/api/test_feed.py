@@ -1,12 +1,12 @@
 import pytest
 
-from dataall.db import models
+from dataall.modules.worksheets.db.models import Worksheet
 
 
 @pytest.fixture(scope='module', autouse=True)
 def worksheet(db):
     with db.scoped_session() as session:
-        w = models.Worksheet(
+        w = Worksheet(
             owner='me',
             label='xxx',
             SamlAdminGroupName='g',

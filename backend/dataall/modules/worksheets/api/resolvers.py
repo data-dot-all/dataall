@@ -1,14 +1,17 @@
 from dataall import db
 from dataall.api.Objects.AthenaQueryResult import helpers as athena_helpers
 from dataall.modules.worksheets.api.schema import WorksheetRole
+from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
+from dataall.modules.worksheets.db.repositories import WorksheetRepository
+from dataall.modules.worksheets.services.services import WorksheetService
 from dataall.api.context import Context
-from dataall.db import paginate, exceptions, permissions, models
+from dataall.db import paginate, exceptions, permissions
 from dataall.db.api import ResourcePolicy
 
 
 def create_worksheet(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.create_worksheet(
+        return WorksheetService.create_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -22,7 +25,7 @@ def update_worksheet(
     context: Context, source, worksheetUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.update_worksheet(
+        return WorksheetService.update_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -34,7 +37,7 @@ def update_worksheet(
 
 def get_worksheet(context: Context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.get_worksheet(
+        return WorksheetService.get_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -44,7 +47,7 @@ def get_worksheet(context: Context, source, worksheetUri: str = None):
         )
 
 
-def resolve_user_role(context: Context, source: models.Worksheet):
+def resolve_user_role(context: Context, source: Worksheet):
     if context.username and source.owner == context.username:
         return WorksheetRole.Creator.value
     elif context.groups and source.SamlAdminGroupName in context.groups:
@@ -56,8 +59,7 @@ def list_worksheets(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.paginated_user_worksheets(
-            session=session,
+        return WorksheetRepository(session).paginated_user_worksheets(
             username=context.username,
             groups=context.groups,
             uri=None,
@@ -70,7 +72,7 @@ def share_worksheet(
     context: Context, source, worksheetUri: str = None, input: dict = None
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.share_worksheet(
+        return WorksheetService.share_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -84,13 +86,13 @@ def update_worksheet_share(
     context, source, worksheetShareUri: str = None, canEdit: bool = None
 ):
     with context.engine.scoped_session() as session:
-        share: models.WorksheetShare = session.query(models.WorksheetShare).get(
+        share: WorksheetShare = session.query(WorksheetShare).get(
             worksheetShareUri
         )
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
-        return db.api.Worksheet.update_share_worksheet(
+        return WorksheetService.update_share_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -104,13 +106,13 @@ def update_worksheet_share(
 
 def remove_worksheet_share(context, source, worksheetShareUri):
     with context.engine.scoped_session() as session:
-        share: models.WorksheetShare = session.query(models.WorksheetShare).get(
+        share: WorksheetShare = session.query(WorksheetShare).get(
             worksheetShareUri
         )
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
-        return db.api.Worksheet.delete_share_worksheet(
+        return WorksheetService.delete_share_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -120,12 +122,12 @@ def remove_worksheet_share(context, source, worksheetShareUri):
         )
 
 
-def resolve_shares(context: Context, source: models.Worksheet, filter: dict = None):
+def resolve_shares(context: Context, source: Worksheet, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        q = session.query(models.WorksheetShare).filter(
-            models.WorksheetShare.worksheetUri == source.worksheetUri
+        q = session.query(WorksheetShare).filter(
+            WorksheetShare.worksheetUri == source.worksheetUri
         )
     return paginate(
         q, page_size=filter.get('pageSize', 15), page=filter.get('page', 1)
@@ -144,7 +146,7 @@ def run_sql_query(
             permission_name=permissions.RUN_ATHENA_QUERY,
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
-        worksheet = db.api.Worksheet.get_worksheet_by_uri(session, worksheetUri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
         env_group = db.api.Environment.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
@@ -157,7 +159,7 @@ def run_sql_query(
 
 def delete_worksheet(context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Worksheet.delete_worksheet(
+        return WorksheetService.delete_worksheet(
             session=session,
             username=context.username,
             groups=context.groups,

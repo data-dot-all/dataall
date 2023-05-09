@@ -36,5 +36,4 @@ from .TenantPolicyPermission import TenantPolicyPermission
 from .TenantAdministrator import TenantAdministrator
 from .User import User
 from .Vpc import Vpc
-from .Worksheet import Worksheet, WorksheetQueryResult, WorksheetShare
 from .Vote import Vote
