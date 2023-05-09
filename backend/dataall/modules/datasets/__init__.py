@@ -91,4 +91,9 @@ class DatasetCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.datasets.cdk
+        from dataall.cdkproxy.stacks.environment import EnvironmentSetup
+        from dataall.modules.datasets.cdk.dataset_glue_profiler_extension import DatasetGlueProfilerExtension
+
+        EnvironmentSetup.register(DatasetGlueProfilerExtension)
+
         log.info("Dataset stacks have been imported")

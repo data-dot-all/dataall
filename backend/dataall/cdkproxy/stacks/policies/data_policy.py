@@ -8,7 +8,7 @@ from ....db import models
 logger = logging.getLogger()
 
 
-class DataPolicy:
+class S3Policy:
     def __init__(
         self,
         stack,
@@ -90,7 +90,7 @@ class DataPolicy:
         """
         statements: List[iam.PolicyStatement] = self.get_statements(session)
 
-        for extension in DataPolicy.__subclasses__():
+        for extension in S3Policy.__subclasses__():
             statements.extend(extension.get_statements(self, session=session))
 
         policy: iam.Policy = iam.Policy(
