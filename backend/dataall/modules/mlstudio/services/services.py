@@ -21,10 +21,10 @@ from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
 from dataall.utils.slugify import slugify
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 from dataall.modules.mlstudio.services.permissions import (
-    MANAGE_SGMSTUDIO_NOTEBOOKS,
-    CREATE_SGMSTUDIO_NOTEBOOK,
-    SGMSTUDIO_NOTEBOOK_ALL,
-    GET_SGMSTUDIO_NOTEBOOK,
+    MANAGE_SGMSTUDIO_USERS,
+    CREATE_SGMSTUDIO_USER,
+    SGMSTUDIO_USER_ALL,
+    GET_SGMSTUDIO_USER,
 )
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
@@ -57,9 +57,9 @@ class SagemakerStudioService:
     Encapsulate the logic of interactions with sagemaker ml studio.
     """
     @staticmethod
-    @has_tenant_permission(MANAGE_SGMSTUDIO_NOTEBOOKS)
-    @has_resource_permission(CREATE_SGMSTUDIO_NOTEBOOK)
-    @has_group_permission(CREATE_SGMSTUDIO_NOTEBOOK)
+    @has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
+    @has_resource_permission(CREATE_SGMSTUDIO_USER)
+    @has_group_permission(CREATE_SGMSTUDIO_USER)
     #TODO: question, why the * here?
     def create_sagemaker_studio_user(*, uri: str, admin_group: str, request:SagemakerStudioCreationRequest):
         """
@@ -68,11 +68,11 @@ class SagemakerStudioService:
         """
         with _session() as session:
             env = Environment.get_environment_by_uri(session, uri)
-            enabled = EnvironmentParameterRepository(session).get_param(uri, "notebooksEnabled")
+            enabled = EnvironmentParameterRepository(session).get_param(uri, "mlstudioEnabled")
 
             if not enabled and enabled.lower() != "true":
                 raise exceptions.UnauthorizedOperation(
-                    action=CREATE_SGMSTUDIO_NOTEBOOK,
+                    action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
             #TODO: check with v1.5 how the checking affects this method
@@ -105,7 +105,7 @@ class SagemakerStudioService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
-                permissions=SGMSTUDIO_NOTEBOOK_ALL,
+                permissions=SGMSTUDIO_USER_ALL,
                 resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
                 resource_type=models.SagemakerStudioUserProfile.__name__,
             )
@@ -114,7 +114,7 @@ class SagemakerStudioService:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
-                    permissions=SGMSTUDIO_NOTEBOOK_ALL,
+                    permissions=SGMSTUDIO_USER_ALL,
                     resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
                     resource_type=models.SagemakerStudioUserProfile.__name__,
                 )
@@ -142,7 +142,7 @@ class SagemakerStudioService:
             )
 
     @staticmethod
-    @has_resource_permission(GET_SGMSTUDIO_NOTEBOOK)
+    @has_resource_permission(GET_SGMSTUDIO_USER)
     def get_sagemaker_studio_user(*, uri):
         with _session() as session:
             user = SageMakerStudioRepository(session).find_sagemaker_studio_user(uri=uri)
