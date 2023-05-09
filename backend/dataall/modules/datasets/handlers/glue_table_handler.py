@@ -15,7 +15,7 @@ class DatasetTableSyncHandler:
 
     @staticmethod
     @Worker.handler(path='glue.dataset.database.tables')
-    def list_tables(engine, task: models.Task):
+    def sync_existing_tables(engine, task: models.Task):
         with engine.scoped_session() as session:
             dataset: Dataset = DatasetService.get_dataset_by_uri(
                 session, task.targetUri
