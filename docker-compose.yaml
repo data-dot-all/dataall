@@ -16,7 +16,8 @@ services:
       - db
     environment:
       envname: 'dkrcompose'
-      AWS_DEFAULT_REGION: "eu-west-1"
+      AWS_REGION: "${AWS_REGION}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
@@ -36,7 +37,8 @@ services:
       - 5000:5000
     environment:
       envname: 'dkrcompose'
-      AWS_DEFAULT_REGION: "eu-west-1"
+      AWS_REGION: "${AWS_REGION}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
