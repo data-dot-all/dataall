@@ -21,64 +21,70 @@ log = logging.getLogger(__name__)
 def create_sagemaker_studio_user_profile(context: Context, source, input: dict = None):
     """Creates an ML Studio user. Deploys the ML Studio stack into AWS"""
     RequestValidator.validate_creation_request(input)
-    with context.engine.scoped_session() as session:
-        if not input.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not input.get('label'):
-            raise exceptions.RequiredParameter('name')
-
-        environment_uri = input.get('environmentUri')
-
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environment_uri,
-            permission_name=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
-        )
-
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, environment_uri
-        )
-
-        if not env.mlStudiosEnabled:
-            raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
-                message=f'ML Studio feature is disabled for the environment {env.label}',
-            )
-
-        existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-            env.AwsAccountId, env.region
-        )
-        input['domain_id'] = existing_domain.get('DomainId', False)
-
-        if not input['domain_id']:
-            raise exceptions.AWSResourceNotAvailable(
-                action='Sagemaker Studio domain',
-                message='Add a VPC to your environment and update the environment stack '
-                'or create a Sagemaker studio domain on your AWS account.',
-            )
-
-        sm_user_profile = db.api.SgmStudioNotebook.create_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=env.environmentUri,
-            data=input,
-            check_perm=True,
-        )
-
-        Stack.create_stack(
-            session=session,
-            environment_uri=sm_user_profile.environmentUri,
-            target_type='sagemakerstudiouserprofile',
-            target_uri=sm_user_profile.sagemakerStudioUserProfileUri,
-            target_label=sm_user_profile.label,
-        )
-
-    stack_helper.deploy_stack(targetUri=sm_user_profile.sagemakerStudioUserProfileUri)
-
-    return sm_user_profile
+    request = SagemakerStudioCreationRequest.from_dict(input)
+    return SagemakerStudioService.create_sagemaker_studio_user_profile(
+        uri=input["environmentUri"],
+        admin_group=input["SamlAdminGroupName"],
+        request=request
+    )
+    # with context.engine.scoped_session() as session:
+    #     if not input.get('environmentUri'):
+    #         raise exceptions.RequiredParameter('environmentUri')
+    #     if not input.get('label'):
+    #         raise exceptions.RequiredParameter('name')
+    #
+    #     environment_uri = input.get('environmentUri')
+    #
+    #     ResourcePolicy.check_user_resource_permission(
+    #         session=session,
+    #         username=context.username,
+    #         groups=context.groups,
+    #         resource_uri=environment_uri,
+    #         permission_name=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
+    #     )
+    #
+    #     env: models.Environment = db.api.Environment.get_environment_by_uri(
+    #         session, environment_uri
+    #     )
+    #
+    #     if not env.mlStudiosEnabled:
+    #         raise exceptions.UnauthorizedOperation(
+    #             action=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
+    #             message=f'ML Studio feature is disabled for the environment {env.label}',
+    #         )
+    #
+    #     existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
+    #         env.AwsAccountId, env.region
+    #     )
+    #     input['domain_id'] = existing_domain.get('DomainId', False)
+    #
+    #     if not input['domain_id']:
+    #         raise exceptions.AWSResourceNotAvailable(
+    #             action='Sagemaker Studio domain',
+    #             message='Add a VPC to your environment and update the environment stack '
+    #             'or create a Sagemaker studio domain on your AWS account.',
+    #         )
+    #
+    #     sm_user_profile = db.api.SgmStudioNotebook.create_notebook(
+    #         session=session,
+    #         username=context.username,
+    #         groups=context.groups,
+    #         uri=env.environmentUri,
+    #         data=input,
+    #         check_perm=True,
+    #     )
+    #
+    #     Stack.create_stack(
+    #         session=session,
+    #         environment_uri=sm_user_profile.environmentUri,
+    #         target_type='sagemakerstudiouserprofile',
+    #         target_uri=sm_user_profile.sagemakerStudioUserProfileUri,
+    #         target_label=sm_user_profile.label,
+    #     )
+    #
+    # stack_helper.deploy_stack(targetUri=sm_user_profile.sagemakerStudioUserProfileUri)
+    #
+    # return sm_user_profile
 
 
 def list_sm_studio_user_profile(context, source, filter: dict = None):
