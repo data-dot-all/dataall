@@ -1,12 +1,12 @@
 import logging
 import os
 import pathlib
-import shutil
+from abc import abstractmethod
+from typing import List
 
 from aws_cdk import (
     custom_resources as cr,
     aws_s3 as s3,
-    aws_s3_deployment,
     aws_iam as iam,
     aws_lambda as _lambda,
     aws_lambda_destinations as lambda_destination,
@@ -44,9 +44,25 @@ from ...utils.runtime_stacks_tagging import TagsUtil
 logger = logging.getLogger(__name__)
 
 
+class EnvironmentStackExtension:
+    @staticmethod
+    @abstractmethod
+    def extent(setup: 'EnvironmentSetup'):
+        raise NotImplementedError
+
+
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     module_name = __file__
+    _EXTENSIONS: List[EnvironmentStackExtension] = []
+
+    @staticmethod
+    def register(extension: EnvironmentStackExtension):
+        EnvironmentSetup._EXTENSIONS.append(extension)
+
+    @property
+    def environment(self) -> models.Environment:
+        return self._environment
 
     def get_engine(self):
         envname = os.environ.get('envname', 'local')
@@ -173,6 +189,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        self.default_environment_bucket = default_environment_bucket
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
                 sid='RedshiftLogging',
@@ -220,22 +237,6 @@ class EnvironmentSetup(Stack):
             enabled=True,
         )
 
-        profiling_assetspath = self.zip_code(
-            os.path.realpath(
-                os.path.abspath(
-                    os.path.join(__file__, '..', '..', 'assets', 'glueprofilingjob')
-                )
-            )
-        )
-
-        aws_s3_deployment.BucketDeployment(
-            self,
-            f'{self._environment.resourcePrefix}GlueProflingJobDeployment',
-            sources=[aws_s3_deployment.Source.asset(profiling_assetspath)],
-            destination_bucket=default_environment_bucket,
-            destination_key_prefix='profiling/code',
-        )
-
         default_role = self.create_or_import_environment_default_role()
         roles_sagemaker_dependency_group.add(default_role)
 
@@ -249,6 +250,8 @@ class EnvironmentSetup(Stack):
             f'PivotRole{self._environment.environmentUri}',
             f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
         )
+
+        self.pivot_role = pivot_role
 
         # Lakeformation default settings
         entry_point = str(
@@ -558,6 +561,9 @@ class EnvironmentSetup(Stack):
                 parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 
+        for extension in EnvironmentSetup._EXTENSIONS:
+            extension.extent(self)
+
         TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")
 
         CDKNagUtil.check_rules(self)
@@ -766,14 +772,6 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
-
-    @staticmethod
-    def zip_code(assetspath, s3_key='profiler'):
-        logger.info('Zipping code')
-        shutil.make_archive(
-            base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}'
-        )
-        return assetspath
 
     def set_dlq(self, queue_name) -> sqs.Queue:
         queue_key = kms.Key(
