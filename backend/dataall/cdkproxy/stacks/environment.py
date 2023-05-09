@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 from abc import abstractmethod
-from typing import List
+from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
@@ -54,13 +54,12 @@ class EnvironmentStackExtension:
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     module_name = __file__
-    _EXTENSIONS: List[EnvironmentStackExtension] = []
+    _EXTENSIONS: List[Type[EnvironmentStackExtension]] = []
 
     @staticmethod
-    def register(extension: EnvironmentStackExtension):
+    def register(extension: Type[EnvironmentStackExtension]):
         EnvironmentSetup._EXTENSIONS.append(extension)
 
-    @property
     def environment(self) -> models.Environment:
         return self._environment
 

@@ -19,7 +19,7 @@ class DatasetGlueProfilerExtension(EnvironmentStackExtension):
 
         aws_s3_deployment.BucketDeployment(
             setup,
-            f'{setup.environment.resourcePrefix}GlueProflingJobDeployment',
+            f'{setup.environment().resourcePrefix}GlueProflingJobDeployment',
             sources=[aws_s3_deployment.Source.asset(profiling_assetspath)],
             destination_bucket=setup.default_environment_bucket,
             destination_key_prefix='profiling/code',
