@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.datasets import Dataset
-from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
 

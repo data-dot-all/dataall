@@ -97,7 +97,7 @@ Alarm Details:
     def trigger_folder_sharing_failure_alarm(
         self,
         folder: DatasetStorageLocation,
-        share: models.ShareObject,
+        share: ShareObject,
         target_environment: models.Environment,
     ):
         log.info('Triggering share failure alarm...')
@@ -125,7 +125,7 @@ Alarm Details:
     def trigger_revoke_folder_sharing_failure_alarm(
         self,
         folder: DatasetStorageLocation,
-        share: models.ShareObject,
+        share: ShareObject,
         target_environment: models.Environment,
     ):
         log.info('Triggering share failure alarm...')
