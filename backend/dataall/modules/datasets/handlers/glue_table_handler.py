@@ -10,12 +10,12 @@ from dataall.modules.datasets.services.dataset_table_service import DatasetTable
 log = logging.getLogger(__name__)
 
 
-class DatasetColumnGlueHandler:
+class DatasetTableSyncHandler:
     """A handler for dataset table"""
 
     @staticmethod
     @Worker.handler(path='glue.dataset.database.tables')
-    def list_tables(engine, task: models.Task):
+    def sync_existing_tables(engine, task: models.Task):
         with engine.scoped_session() as session:
             dataset: Dataset = DatasetService.get_dataset_by_uri(
                 session, task.targetUri

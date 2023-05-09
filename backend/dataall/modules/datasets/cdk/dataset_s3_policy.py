@@ -1,12 +1,12 @@
 from typing import List
 from aws_cdk import aws_iam as iam
 
-from dataall.cdkproxy.stacks.policies.data_policy import DataPolicy
+from dataall.cdkproxy.stacks.policies.data_policy import S3Policy
 from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
-class DatasetDataPolicy(DataPolicy):
+class DatasetS3Policy(S3Policy):
 
     def get_statements(self, session):
         datasets = DatasetService.list_group_datasets(
@@ -14,7 +14,7 @@ class DatasetDataPolicy(DataPolicy):
             environment_id=self.environment.environmentUri,
             group_uri=self.team.groupUri,
         )
-        return DatasetDataPolicy._generate_dataset_statements(datasets)
+        return DatasetS3Policy._generate_dataset_statements(datasets)
 
     @staticmethod
     def _generate_dataset_statements(datasets: List[Dataset]):
