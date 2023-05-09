@@ -2,6 +2,7 @@ import logging
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.core.environment.db.models import Environment #TODO: Question: I do not find it in the project
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,6 @@ class SagemakerStudioClient:
         except ClientError as e:
             raise e
 
-def sm_studio_client(environment: Environment) -> SagemakerStudioClient:
+def sagemaker_studio_client(environment: Environment) -> SagemakerStudioClient:
     """Factory method to retrieve the client to send request to AWS"""
     return SagemakerStudioClient(environment)

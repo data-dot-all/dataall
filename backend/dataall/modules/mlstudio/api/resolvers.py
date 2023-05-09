@@ -17,134 +17,53 @@ from ....db.api import ResourcePolicy, Stack
 
 log = logging.getLogger(__name__)
 
-#TODO: move business logic to services
-def create_sagemaker_studio_user_profile(context: Context, source, input: dict = None):
+class RequestValidator:
+    """Aggregates all validation logic for operating with mlstudio"""
+    @staticmethod
+    def required_uri(uri):
+        if not uri:
+            raise exceptions.RequiredParameter('URI')
+
+    @staticmethod
+    def validate_creation_request(data):
+        required = RequestValidator._required
+        if not data:
+            raise exceptions.RequiredParameter('data')
+        if not data.get('label'):
+            raise exceptions.RequiredParameter('name')
+
+        required(data, "environmentUri")
+        required(data, "SamlAdminGroupName")
+
+    @staticmethod
+    def _required(data: dict, name: str):
+        if not data.get(name):
+            raise exceptions.RequiredParameter(name)
+
+def create_sagemaker_studio_user(context: Context, source, input: dict = None):
     """Creates an ML Studio user. Deploys the ML Studio stack into AWS"""
     RequestValidator.validate_creation_request(input)
     request = SagemakerStudioCreationRequest.from_dict(input)
-    return SagemakerStudioService.create_sagemaker_studio_user_profile(
+    return SagemakerStudioService.create_sagemaker_studio_user(
         uri=input["environmentUri"],
         admin_group=input["SamlAdminGroupName"],
         request=request
     )
-    # with context.engine.scoped_session() as session:
-    #     if not input.get('environmentUri'):
-    #         raise exceptions.RequiredParameter('environmentUri')
-    #     if not input.get('label'):
-    #         raise exceptions.RequiredParameter('name')
-    #
-    #     environment_uri = input.get('environmentUri')
-    #
-    #     ResourcePolicy.check_user_resource_permission(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         resource_uri=environment_uri,
-    #         permission_name=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
-    #     )
-    #
-    #     env: models.Environment = db.api.Environment.get_environment_by_uri(
-    #         session, environment_uri
-    #     )
-    #
-    #     if not env.mlStudiosEnabled:
-    #         raise exceptions.UnauthorizedOperation(
-    #             action=permissions.CREATE_SGMSTUDIO_NOTEBOOK,
-    #             message=f'ML Studio feature is disabled for the environment {env.label}',
-    #         )
-    #
-    #     existing_domain = SagemakerStudio.get_sagemaker_studio_domain(
-    #         env.AwsAccountId, env.region
-    #     )
-    #     input['domain_id'] = existing_domain.get('DomainId', False)
-    #
-    #     if not input['domain_id']:
-    #         raise exceptions.AWSResourceNotAvailable(
-    #             action='Sagemaker Studio domain',
-    #             message='Add a VPC to your environment and update the environment stack '
-    #             'or create a Sagemaker studio domain on your AWS account.',
-    #         )
-    #
-    #     sm_user_profile = db.api.SgmStudioNotebook.create_notebook(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=env.environmentUri,
-    #         data=input,
-    #         check_perm=True,
-    #     )
-    #
-    #     Stack.create_stack(
-    #         session=session,
-    #         environment_uri=sm_user_profile.environmentUri,
-    #         target_type='sagemakerstudiouserprofile',
-    #         target_uri=sm_user_profile.sagemakerStudioUserProfileUri,
-    #         target_label=sm_user_profile.label,
-    #     )
-    #
-    # stack_helper.deploy_stack(targetUri=sm_user_profile.sagemakerStudioUserProfileUri)
-    #
-    # return sm_user_profile
 
-
-def list_sm_studio_user_profile(context, source, filter: dict = None):
+def list_sagemaker_studio_users(context, source, filter: dict = None):
     """
     Lists all SageMaker Studio users using the given filter.
     If the filter is not provided, all users are returned.
     """
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.SgmStudioNotebook.paginated_user_notebooks(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=filter,
-            check_perm=True,
-        )
+    return SagemakerStudioService.list_sagemaker_studio_users(filter=filter)
 
 
-def get_sagemaker_studio_user_profile(
+def get_sagemaker_studio_user(
     context, source, sagemakerStudioUserProfileUri: str = None
 ) -> models.SagemakerStudioUserProfile:
-    with context.engine.scoped_session() as session:
-        return db.api.SgmStudioNotebook.get_notebook(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=sagemakerStudioUserProfileUri,
-            data=None,
-            check_perm=True,
-        )
-
-
-def resolve_user_role(context: Context, source: models.SagemakerStudioUserProfile):
-    if source.owner == context.username:
-        return SagemakerStudioRole.Creator.value
-    elif context.groups and source.SamlAdminGroupName in context.groups:
-        return SagemakerStudioRole.Admin.value
-    return SagemakerStudioRole.NoPermission.value
-
-
-def resolve_mlstudio_status(context, source: models.SagemakerStudioUserProfile, **kwargs):
-    if not source:
-        return None
-    try:
-        user_profile_status = SagemakerStudio.get_user_profile_status(
-            AwsAccountId=source.AWSAccountId,
-            region=source.region,
-            sagemakerStudioDomainID=source.sagemakerStudioDomainID,
-            sagemakerStudioUserProfileNameSlugify=source.sagemakerStudioUserProfileNameSlugify,
-        )
-        with context.engine.scoped_session() as session:
-            sm_user_profile = session.query(models.SagemakerStudioUserProfile).get(
-                source.sagemakerStudioUserProfileUri
-            )
-            sm_user_profile.sagemakerStudioUserProfileStatus = user_profile_status
-        return user_profile_status
-    except Exception:
-        return 'NOT FOUND'
+    return SagemakerStudioService.get_sagemaker_studio_user(uri=sagemakerStudioUserProfileUri)
 
 
 def get_sagemaker_studio_user_profile_presigned_url(
@@ -152,6 +71,7 @@ def get_sagemaker_studio_user_profile_presigned_url(
     source: models.SagemakerStudioUserProfile,
     sagemakerStudioUserProfileUri: str,
 ):
+    # TODO: move logic to service
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -174,6 +94,7 @@ def get_sagemaker_studio_user_profile_presigned_url(
 
 
 def get_user_profile_applications(context, source: models.SagemakerStudioUserProfile):
+    # TODO: move logic to service
     if not source:
         return None
     with context.engine.scoped_session() as session:
@@ -199,6 +120,7 @@ def delete_sagemaker_studio_user_profile(
     sagemakerStudioUserProfileUri: str = None,
     deleteFromAWS: bool = None,
 ):
+    # TODO: move logic to service
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,
@@ -232,10 +154,39 @@ def delete_sagemaker_studio_user_profile(
 
     return True
 
+def resolve_user_role(context: Context, source: models.SagemakerStudioUserProfile):
+    # TODO: move logic to service
+    if source.owner == context.username:
+        return SagemakerStudioRole.Creator.value
+    elif context.groups and source.SamlAdminGroupName in context.groups:
+        return SagemakerStudioRole.Admin.value
+    return SagemakerStudioRole.NoPermission.value
+
+
+def resolve_mlstudio_status(context, source: models.SagemakerStudioUserProfile, **kwargs):
+    # TODO: move logic to service
+    if not source:
+        return None
+    try:
+        user_profile_status = SagemakerStudio.get_user_profile_status(
+            AwsAccountId=source.AWSAccountId,
+            region=source.region,
+            sagemakerStudioDomainID=source.sagemakerStudioDomainID,
+            sagemakerStudioUserProfileNameSlugify=source.sagemakerStudioUserProfileNameSlugify,
+        )
+        with context.engine.scoped_session() as session:
+            sm_user_profile = session.query(models.SagemakerStudioUserProfile).get(
+                source.sagemakerStudioUserProfileUri
+            )
+            sm_user_profile.sagemakerStudioUserProfileStatus = user_profile_status
+        return user_profile_status
+    except Exception:
+        return 'NOT FOUND'
 
 def resolve_mlstudio_stack(
     context: Context, source: models.SagemakerStudioUserProfile, **kwargs
 ):
+    # TODO: move logic to service
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
@@ -243,25 +194,3 @@ def resolve_mlstudio_stack(
         environmentUri=source.environmentUri,
     )
 
-class RequestValidator:
-    """Aggregates all validation logic for operating with mlstudio"""
-    @staticmethod
-    def required_uri(uri):
-        if not uri:
-            raise exceptions.RequiredParameter('URI')
-
-    @staticmethod
-    def validate_creation_request(data):
-        required = RequestValidator._required
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('name')
-
-        required(data, "environmentUri")
-        required(data, "SamlAdminGroupName")
-
-    @staticmethod
-    def _required(data: dict, name: str):
-        if not data.get(name):
-            raise exceptions.RequiredParameter(name)

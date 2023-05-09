@@ -7,7 +7,7 @@ from dataall.db import Base
 from dataall.db import Resource, utils
 
 
-class SagemakerStudio(Resource, Base):
+class SagemakerStudioDomain(Resource, Base):
     """Describes ORM model for sagemaker ML Studio domain"""
     __tablename__ = 'sagemaker_studio_domain'
     environmentUri = Column(String, nullable=False)
@@ -22,7 +22,7 @@ class SagemakerStudio(Resource, Base):
     userRoleForSagemakerStudio = query_expression()
 
 
-class SagemakerStudioUserProfile(Resource, Base):
+class SagemakerStudioUser(Resource, Base):
     """Describes ORM model for sagemaker ML Studio user"""
     __tablename__ = 'sagemaker_studio_user_profile'
     environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
