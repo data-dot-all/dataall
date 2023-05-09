@@ -20,3 +20,15 @@ class SharingApiModuleInterface(ModuleInterface):
     def __init__(self):
         from dataall.modules.dataset_sharing import api
         log.info("API of dataset sharing has been imported")
+
+
+class SharingAsyncHandlersModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for dataset async lambda"""
+
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
+        return ImportMode.HANDLERS in modes
+
+    def __init__(self):
+        import dataall.modules.dataset_sharing.handlers
+        log.info("Sharing handlers have been imported")

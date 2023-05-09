@@ -2,7 +2,6 @@
 import logging
 from typing import List, Type
 
-from dataall.modules.dataset_sharing import SharingApiModuleInterface
 from dataall.core.group.services.group_resource_manager import GroupResourceManager
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
@@ -25,6 +24,8 @@ class DatasetApiModuleInterface(ModuleInterface):
 
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.dataset_sharing import SharingApiModuleInterface
+
         return [SharingApiModuleInterface, DatasetBaseModuleInterface]
 
     def __init__(self):
@@ -82,6 +83,12 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
         import dataall.modules.datasets.handlers
         log.info("Dataset handlers have been imported")
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.dataset_sharing import SharingAsyncHandlersModuleInterface
+
+        return [SharingAsyncHandlersModuleInterface, DatasetBaseModuleInterface]
+
 
 class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks """
@@ -98,3 +105,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
         EnvironmentSetup.register(DatasetGlueProfilerExtension)
 
         log.info("Dataset stacks have been imported")
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
