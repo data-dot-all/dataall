@@ -1,10 +1,14 @@
 import logging
 
-from dataall.db import exceptions, permissions
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.db import exceptions
 from dataall.db import models
-from dataall.db.api import has_tenant_perm, ResourcePolicy, has_resource_perm
+from dataall.db.api import ResourcePolicy
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
+from dataall.modules.worksheets.services.permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
+    WORKSHEET_ALL, GET_WORKSHEET, SHARE_WORKSHEET, WORKSHEET_SHARED, DELETE_WORKSHEET
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +25,7 @@ class WorksheetService:
 
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_WORKSHEETS)
+    @has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> Worksheet:
@@ -57,14 +61,14 @@ class WorksheetService:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=data['SamlAdminGroupName'],
-            permissions=permissions.WORKSHEET_ALL,
+            permissions=WORKSHEET_ALL,
             resource_uri=worksheet.worksheetUri,
             resource_type=Worksheet.__name__,
         )
         return worksheet
 
     @staticmethod
-    @has_resource_perm(permissions.UPDATE_WORKSHEET)
+    @has_resource_permission(UPDATE_WORKSHEET)
     def update_worksheet(session, username, groups, uri, data=None, check_perm=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         for field in data.keys():
@@ -83,13 +87,13 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
-    @has_resource_perm(permissions.GET_WORKSHEET)
+    @has_resource_permission(GET_WORKSHEET)
     def get_worksheet(session, username, groups, uri, data=None, check_perm=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         return worksheet
 
     @staticmethod
-    @has_resource_perm(permissions.SHARE_WORKSHEET)
+    @has_resource_permission(SHARE_WORKSHEET)
     def share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> WorksheetShare:
@@ -108,14 +112,14 @@ class WorksheetService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=data['principalId'],
-                permissions=permissions.WORKSHEET_SHARED,
+                permissions=WORKSHEET_SHARED,
                 resource_uri=uri,
                 resource_type=Worksheet.__name__,
             )
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.SHARE_WORKSHEET)
+    @has_resource_permission(SHARE_WORKSHEET)
     def update_share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> WorksheetShare:
@@ -125,14 +129,14 @@ class WorksheetService:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=share.principalId,
-            permissions=permissions.WORKSHEET_SHARED,
+            permissions=WORKSHEET_SHARED,
             resource_uri=uri,
             resource_type=Worksheet.__name__,
         )
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.SHARE_WORKSHEET)
+    @has_resource_permission(SHARE_WORKSHEET)
     def delete_share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
@@ -148,7 +152,7 @@ class WorksheetService:
         return True
 
     @staticmethod
-    @has_resource_perm(permissions.DELETE_WORKSHEET)
+    @has_resource_permission(DELETE_WORKSHEET)
     def delete_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
