@@ -6,9 +6,6 @@ from botocore.exceptions import ClientError
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall import db
-from dataall.api.constants import (
-    DatasetRole,
-)
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
@@ -17,6 +14,7 @@ from dataall.db.api import Environment, ResourcePolicy
 from dataall.db.api.organization import Organization
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
+from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.db.dataset_service import DatasetService

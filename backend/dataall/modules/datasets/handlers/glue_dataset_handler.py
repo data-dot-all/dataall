@@ -9,7 +9,7 @@ from dataall.modules.datasets.db.dataset_service import DatasetService
 log = logging.getLogger(__name__)
 
 
-class GlueDatasetHandler:
+class DatasetCrawlerHandler:
 
     @staticmethod
     @Worker.handler(path='glue.crawler.start')

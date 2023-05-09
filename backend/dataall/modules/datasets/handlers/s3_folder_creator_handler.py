@@ -8,8 +8,8 @@ from dataall.modules.datasets.db.dataset_location_repository import DatasetLocat
 log = logging.getLogger(__name__)
 
 
-class S3DatasetLocationHandler:
-    """Handles async requests related to s3 for dataset storage location"""
+class S3FolderCreatorHandler:
+    """Handles async requests related to s3 for dataset folders"""
 
     @staticmethod
     @Worker.handler(path='s3.prefix.create')

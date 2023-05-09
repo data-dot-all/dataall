@@ -10,6 +10,7 @@ from dataall.aws.handlers.kms import KMS
 from dataall.aws.handlers.iam import IAM
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
@@ -399,9 +400,12 @@ class S3ShareManager:
                 json.dumps(policy)
             )
 
-    def log_share_failure(self, error: Exception) -> None:
+    def handle_share_failure(self, error: Exception) -> None:
         """
-        Writes a log if the failure happened while sharing
+        Handles share failure by raising an alarm to alarmsTopic
+        Returns
+        -------
+        True if alarm published successfully
         """
         logger.error(
             f'Failed to share folder {self.s3_prefix} '
@@ -409,14 +413,23 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
+        DatasetAlarmService().trigger_folder_sharing_failure_alarm(
+            self.target_folder, self.share, self.target_environment
+        )
 
-    def log_revoke_failure(self, error: Exception) -> None:
+    def handle_revoke_failure(self, error: Exception) -> None:
         """
-        Writes a log if the failure happened while revoking share
+        Handles share failure by raising an alarm to alarmsTopic
+        Returns
+        -------
+        True if alarm published successfully
         """
         logger.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
+        )
+        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+            self.target_folder, self.share, self.target_environment
         )
