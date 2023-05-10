@@ -52,10 +52,10 @@ class NotebookStack(Stack):
     ) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = Environment.get_environment_group(
+            env_group = Environment.get_environment_group(
                 session, notebook.SamlAdminGroupName, notebook.environmentUri
             )
-        return env
+        return env_group
 
     def __init__(self, scope, id: str, target_uri: str = None, **kwargs) -> None:
         super().__init__(scope,
@@ -70,7 +70,7 @@ class NotebookStack(Stack):
         # Required for dynamic stack tagging
         self.target_uri = target_uri
 
-        notebook = self.get_target(target_uri=target_uri)
+        notebook: SagemakerNotebook = self.get_target(target_uri=target_uri)
 
         env_group = self.get_env_group(notebook)
 

@@ -6,7 +6,7 @@ from dataall.modules.sagemaker_base.cdk.statements import create_sagemaker_state
 
 class SagemakerPolicy(ServicePolicy):
     """
-    Creates a sagemaker policy for accessing and interacting with notebooks
+    Creates a sagemaker policy for accessing and interacting with SageMaker notebooks
     """
 
     def get_statements(self, group_permissions, **kwargs):
