@@ -1,15 +1,12 @@
-import json
 import logging
 
-from botocore.exceptions import ClientError
-from pyathena import connect
 
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
 from dataall.db import models
 from dataall.db.api import ResourcePolicy, Environment
 from dataall.modules.datasets import DatasetTableIndexer
+from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
@@ -105,39 +102,7 @@ class DatasetTableService:
                     permission_name=PREVIEW_DATASET_TABLE,
                 )
             env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            env_workgroup = {}
-            boto3_session = SessionHelper.remote_session(accountid=table.AWSAccountId)
-            creds = boto3_session.get_credentials()
-            try:
-                env_workgroup = boto3_session.client(
-                    'athena', region_name=env.region
-                ).get_work_group(WorkGroup=env.EnvironmentDefaultAthenaWorkGroup)
-            except ClientError as e:
-                log.info(
-                    f'Workgroup {env.EnvironmentDefaultAthenaWorkGroup} can not be found'
-                    f'due to: {e}'
-                )
-
-            connection = connect(
-                aws_access_key_id=creds.access_key,
-                aws_secret_access_key=creds.secret_key,
-                aws_session_token=creds.token,
-                work_group=env_workgroup.get('WorkGroup', {}).get('Name', 'primary'),
-                s3_staging_dir=f's3://{env.EnvironmentDefaultBucketName}/preview/{dataset.datasetUri}/{table.tableUri}',
-                region_name=table.region,
-            )
-            cursor = connection.cursor()
-
-            sql = f'select * from "{table.GlueDatabaseName}"."{table.GlueTableName}" limit 50'  # nosec
-            cursor.execute(sql)
-            fields = []
-            for f in cursor.description:
-                fields.append(json.dumps({'name': f[0]}))
-            rows = []
-            for row in cursor:
-                rows.append(json.dumps(json_utils.to_json(list(row))))
-
-        return {'rows': rows, 'fields': fields}
+            return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
 
     @staticmethod
     def get_glue_table_properties(table_uri: str):
