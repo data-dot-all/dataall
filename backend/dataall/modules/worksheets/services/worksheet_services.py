@@ -21,7 +21,7 @@ class WorksheetService:
     def get_worksheet_by_uri(session, uri: str) -> Worksheet:
         if not uri:
             raise exceptions.RequiredParameter(param_name='worksheetUri')
-        worksheet = WorksheetRepository(session).find_worksheet_by_uri(uri)
+        worksheet = WorksheetRepository.find_worksheet_by_uri(session, uri)
         if not worksheet:
             raise exceptions.ObjectNotFound('Worksheet', uri)
         return worksheet
@@ -100,7 +100,7 @@ class WorksheetService:
     def share_worksheet(
         session, username, groups, uri, data=None, check_perm=None
     ) -> WorksheetShare:
-        share = WorksheetRepository(session).get_worksheet_share(uri, data)
+        share = WorksheetRepository.get_worksheet_share(session, uri, data)
 
         if not share:
             share = WorksheetShare(

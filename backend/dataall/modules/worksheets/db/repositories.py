@@ -4,29 +4,33 @@ DAO layer that encapsulates the logic and interaction with the database for work
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
+from dataall.core.group.services.group_resource_manager import GroupResource
 from dataall.db import paginate
-from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
+from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare, WorksheetQueryResult
 
 
-class WorksheetRepository:
+class WorksheetRepository(GroupResource):
     """DAO layer for worksheets"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
-    def __init__(self, session):
-        self._session = session
+    def count_resources(self, session, environment, group_uri) -> int:
+        return (
+            session.query(WorksheetQueryResult)
+            .filter(
+                WorksheetQueryResult.AwsAccountId == environment.AwsAccountId
+            )
+            .count()
+        )
 
-    @classmethod
-    def find_worksheet_by_uri(self, uri) -> Worksheet:
-        return self._session.query(Worksheet).get(uri)
+    def find_worksheet_by_uri(session, uri) -> Worksheet:
+        return session.query(Worksheet).get(uri)
     
-    @classmethod
-    def find_worksheet_share_by_uri(self, uri) -> WorksheetShare:
-        return self._session.query(WorksheetShare).get(uri)
+    def find_worksheet_share_by_uri(session, uri) -> WorksheetShare:
+        return session.query(WorksheetShare).get(uri)
     
-    @classmethod
-    def query_user_worksheets(self, username, groups, filter) -> Query:
-        query = self._session.query(Worksheet).filter(
+    def query_user_worksheets(session, username, groups, filter) -> Query:
+        query = session.query(Worksheet).filter(
             or_(
                 Worksheet.owner == username,
                 Worksheet.SamlAdminGroupName.in_(groups),
@@ -42,20 +46,19 @@ class WorksheetRepository:
             )
         return query
 
-    @classmethod
     def paginated_user_worksheets(
-        self, username, groups, uri, data=None, check_perm=None
+        session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=self.query_user_worksheets(username, groups, data),
-            page=data.get('page', self._DEFAULT_PAGE),
-            page_size=data.get('pageSize', self._DEFAULT_PAGE_SIZE),
+            query=WorksheetRepository.query_user_worksheets(session, username, groups, data),
+            page=data.get('page', WorksheetRepository._DEFAULT_PAGE),
+            page_size=data.get('pageSize', WorksheetRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
     
     @classmethod
-    def get_worksheet_share(self, uri, data) -> WorksheetShare:
+    def get_worksheet_share(session, uri, data) -> WorksheetShare:
         return (
-            self._session.query(WorksheetShare)
+            session.query(WorksheetShare)
             .filter(
                 and_(
                     WorksheetShare.worksheetUri == uri,

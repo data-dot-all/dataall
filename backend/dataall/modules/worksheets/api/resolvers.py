@@ -58,7 +58,8 @@ def list_worksheets(context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return WorksheetRepository(session).paginated_user_worksheets(
+        return WorksheetRepository.paginated_user_worksheets(
+            session=session,
             username=context.username,
             groups=context.groups,
             uri=None,
@@ -85,8 +86,8 @@ def update_worksheet_share(
     context, source, worksheetShareUri: str = None, canEdit: bool = None
 ):
     with context.engine.scoped_session() as session:
-        share: WorksheetShare = WorksheetRepository(session).find_worksheet_share_by_uri(
-            worksheetShareUri)
+        share: WorksheetShare = WorksheetRepository.find_worksheet_share_by_uri(
+            session, worksheetShareUri)
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
@@ -104,8 +105,8 @@ def update_worksheet_share(
 
 def remove_worksheet_share(context, source, worksheetShareUri):
     with context.engine.scoped_session() as session:
-        share: WorksheetShare = WorksheetRepository(session).find_worksheet_share_by_uri(
-            worksheetShareUri)
+        share: WorksheetShare = WorksheetRepository.find_worksheet_share_by_uri(
+            session, worksheetShareUri)
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
