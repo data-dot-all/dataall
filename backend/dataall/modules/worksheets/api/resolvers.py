@@ -1,13 +1,11 @@
-from dataall import db
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.common.athena.athena_client import run_athena_query
+
+
 from dataall.modules.worksheets.api.schema import WorksheetRole
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.services import WorksheetService
 from dataall.api.context import Context
-from dataall.db import paginate, exceptions, permissions
-from dataall.db.api import ResourcePolicy
+from dataall.db import paginate, exceptions
 
 
 def create_worksheet(context: Context, source, input: dict = None):
@@ -139,52 +137,14 @@ def run_sql_query(
     context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
+        return WorksheetService.run_sql_query(
             session=session,
             username=context.username,
             groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.RUN_ATHENA_QUERY,
+            environmentUri=environmentUri,
+            worksheetUri=worksheetUri,
+            sqlQuery=sqlQuery
         )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
-        worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
-
-        env_group = db.api.Environment.get_environment_group(
-            session, worksheet.SamlAdminGroupName, environment.environmentUri
-        )
-
-    base_session = SessionHelper.remote_session(accountid=environment.AwsAccountId)
-    boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
-    
-    cursor = run_athena_query(
-        session=boto3_session,
-        work_group=env_group.environmentAthenaWorkGroup,
-        s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
-        region=environment.region,
-        sql=sqlQuery
-    )
-
-    columns = []
-    for f in cursor.description:
-        columns.append({'columnName': f[0], 'typeName': 'String'})
-
-    rows = []
-    for row in cursor:
-        record = {'cells': []}
-        for col_position, column in enumerate(columns):
-            cell = {}
-            cell['columnName'] = column['columnName']
-            cell['typeName'] = column['typeName']
-            cell['value'] = str(row[col_position])
-            record['cells'].append(cell)
-        rows.append(record)
-    return {
-        'error': None,
-        'AthenaQueryId': cursor.query_id,
-        'ElapsedTime': cursor.total_execution_time_in_millis,
-        'rows': rows,
-        'columns': columns,
-    }
 
 
 def delete_worksheet(context, source, worksheetUri: str = None):
