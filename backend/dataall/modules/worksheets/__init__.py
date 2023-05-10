@@ -1,8 +1,10 @@
 """Contains the code related to worksheets"""
 import logging
 
+from dataall.core.group.services.group_resource_manager import GroupResourceManager
 from dataall.modules.loader import ImportMode, ModuleInterface
 from dataall.modules.worksheets.db.models import Worksheet
+from dataall.modules.worksheets.db.repositories import WorksheetRepository
 
 log = logging.getLogger(__name__)
 
@@ -20,5 +22,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
         import dataall.modules.worksheets.api
 
         FeedRegistry.register(FeedDefinition("Worksheet", Worksheet))
+
+        GroupResourceManager.register(WorksheetRepository())
 
         log.info("API of worksheets has been imported")
