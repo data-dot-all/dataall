@@ -3,7 +3,7 @@
 from dataall.modules.worksheets.api.schema import WorksheetRole
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
-from dataall.modules.worksheets.services.services import WorksheetService
+from dataall.modules.worksheets.services.worksheet_services import WorksheetService
 from dataall.api.context import Context
 from dataall.db import paginate, exceptions
 

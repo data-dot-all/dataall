@@ -9,7 +9,7 @@ from dataall.db.api import ResourcePolicy
 from dataall.modules.common.athena.athena_client import run_athena_query
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
-from dataall.modules.worksheets.services.permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
+from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
     WORKSHEET_ALL, GET_WORKSHEET, SHARE_WORKSHEET, WORKSHEET_SHARED, DELETE_WORKSHEET, RUN_ATHENA_QUERY
 
 
