@@ -1,8 +1,8 @@
 import pytest
 
-from dataall.api.constants import ShareObjectStatus
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.dataset_sharing.db.Enums import ShareableType, ShareItemStatus, ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
@@ -206,9 +206,9 @@ def share_item_folder(db):
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=location.locationUri,
-                itemType=constants.ShareableType.StorageLocation.value,
+                itemType=ShareableType.StorageLocation.value,
                 itemName=location.name,
-                status=constants.ShareItemStatus.Share_Approved.value,
+                status=ShareItemStatus.Share_Approved.value,
             )
             session.add(share_item)
             session.commit()
@@ -228,7 +228,7 @@ def share_item_table(db):
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=table.tableUri,
-                itemType=constants.ShareableType.Table.value,
+                itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
             )

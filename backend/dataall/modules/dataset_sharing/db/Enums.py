@@ -50,3 +50,9 @@ class ShareItemActions(Enum):
     RemoveItem = 'RemoveItem'
     Failure = 'Failure'
     Success = 'Success'
+
+
+class ShareableType(Enum):
+    Table = 'DatasetTable'
+    StorageLocation = 'DatasetStorageLocation'
+    View = 'View'

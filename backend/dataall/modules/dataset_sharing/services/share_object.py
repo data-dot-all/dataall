@@ -9,9 +9,9 @@ from dataall.db.api import (
 )
 from dataall.db import api, utils
 from dataall.db import models, exceptions, permissions, paginate
-from dataall.db.models.Enums import ShareableType, PrincipalType
+from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
-    ShareItemStatus
+    ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset

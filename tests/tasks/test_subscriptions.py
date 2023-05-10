@@ -2,7 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
@@ -127,11 +127,11 @@ def share(
             shareUri=share.shareUri,
             owner='alice',
             itemUri=table.tableUri,
-            itemType=dataall.api.constants.ShareableType.Table.value,
+            itemType=ShareableType.Table.value,
             itemName=table.GlueTableName,
             GlueDatabaseName=table.GlueDatabaseName,
             GlueTableName=table.GlueTableName,
-            status=dataall.api.constants.ShareItemStatus.Share_Approved.value,
+            status=ShareItemStatus.Share_Approved.value,
         )
         session.add(share_item)
 

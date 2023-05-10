@@ -12,11 +12,10 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import api, utils, Resource
 from datetime import datetime
-from dataall.db.models.Enums import ShareableType
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareableType, ShareItemStatus
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
 from dataall.modules.datasets.db.dataset_service import DatasetService
-from dataall.modules.datasets_base.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'
@@ -110,7 +109,7 @@ def upgrade():
         share_table_items: [ShareObjectItem] = session.query(ShareObjectItem).filter(
             (
                 and_(
-                    ShareObjectItem.status == ShareObjectStatus.Share_Succeeded.value,
+                    ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
                     ShareObjectItem.itemType == ShareableType.Table.value
                 )
             )

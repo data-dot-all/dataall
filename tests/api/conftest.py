@@ -1,4 +1,5 @@
 import dataall.searchproxy.indexers
+from dataall.modules.dataset_sharing.db.Enums import ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from .client import *
 from dataall.db import models
@@ -519,7 +520,7 @@ def share_item(db):
                 shareUri=share.shareUri,
                 owner="alice",
                 itemUri=table.tableUri,
-                itemType=constants.ShareableType.Table.value,
+                itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
             )

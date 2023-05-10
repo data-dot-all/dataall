@@ -1,10 +1,11 @@
 from sqlalchemy import or_, case, func
 from sqlalchemy.sql import and_
 
-from dataall.api.constants import ShareableType, PrincipalType
+from dataall.api.constants import PrincipalType
 from dataall.db import models, permissions
 from dataall.db.api import has_resource_perm
 from dataall.db.paginator import paginate
+from dataall.modules.dataset_sharing.db.Enums import ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset

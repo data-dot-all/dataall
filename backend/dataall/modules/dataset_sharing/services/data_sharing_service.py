@@ -4,8 +4,8 @@ from dataall.modules.dataset_sharing.services.share_processors.lf_process_cross_
 from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
 from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
 
-from dataall.db import models, Engine
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus
+from dataall.db import Engine
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectSM, ShareObjectService, ShareItemSM
 
 log = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ class DataSharingService:
             existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
                 session,
                 share_uri,
-                models.ShareableType.StorageLocation.value
+                ShareableType.StorageLocation.value
             )
             log.info(f'Still remaining S3 resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_folders:
@@ -202,7 +202,7 @@ class DataSharingService:
             existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
                 session,
                 share_uri,
-                models.ShareableType.Table.value
+                ShareableType.Table.value
             )
             log.info(f'Still remaining LF resources shared = {existing_shared_items}')
             if not existing_shared_items and revoked_tables:

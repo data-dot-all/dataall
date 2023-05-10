@@ -9,7 +9,7 @@ import pytest
 from typing import Callable
 
 from dataall.db import models
-from dataall.api import constants
+from dataall.modules.dataset_sharing.api.enums import ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -139,7 +139,7 @@ def share_item_same_account(share_item_table: Callable, share_same_account: Shar
     yield share_item_table(
         share=share_same_account,
         table=table1,
-        status=constants.ShareItemStatus.Share_Approved.value
+        status=ShareItemStatus.Share_Approved.value
     )
 
 @pytest.fixture(scope="module")
@@ -148,7 +148,7 @@ def revoke_item_same_account(share_item_table: Callable, share_same_account: Sha
     yield share_item_table(
         share=share_same_account,
         table=table2,
-        status=constants.ShareItemStatus.Revoke_Approved.value
+        status=ShareItemStatus.Revoke_Approved.value
     )
 
 @pytest.fixture(scope="module")
@@ -157,7 +157,7 @@ def share_item_cross_account(share_item_table: Callable, share_cross_account: Sh
     yield share_item_table(
         share=share_cross_account,
         table=table1,
-        status=constants.ShareItemStatus.Share_Approved.value
+        status=ShareItemStatus.Share_Approved.value
     )
 
 
@@ -167,7 +167,7 @@ def revoke_item_cross_account(share_item_table: Callable, share_cross_account: S
     yield share_item_table(
         share=share_cross_account,
         table=table2,
-        status=constants.ShareItemStatus.Revoke_Approved.value
+        status=ShareItemStatus.Revoke_Approved.value
     )
 
 

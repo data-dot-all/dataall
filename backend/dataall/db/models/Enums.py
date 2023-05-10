@@ -82,12 +82,6 @@ class SortDirection(Enum):
     desc = 'desc'
 
 
-class ShareableType(Enum):
-    Table = 'DatasetTable'
-    StorageLocation = 'DatasetStorageLocation'
-    View = 'View'
-
-
 class PrincipalType(Enum):
     Any = 'Any'
     Organization = 'Organization'

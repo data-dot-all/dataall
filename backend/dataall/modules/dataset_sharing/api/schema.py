@@ -1,3 +1,4 @@
+from dataall.api import gql
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 from dataall.modules.dataset_sharing.api.resolvers import *
 from dataall.api.Objects.Environment.resolvers import resolve_environment

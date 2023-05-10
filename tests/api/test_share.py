@@ -3,8 +3,10 @@ import typing
 import pytest
 
 import dataall
-from dataall.api.constants import ShareObjectStatus, ShareItemStatus
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemActions
+from dataall.api.constants import PrincipalType
+from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
+    ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -206,7 +208,7 @@ def share1_item_pa(
     yield share_item(
         share=share1_draft,
         table=table1,
-        status=dataall.api.constants.ShareItemStatus.PendingApproval.value
+        status=ShareItemStatus.PendingApproval.value
     )
 
 
@@ -281,7 +283,7 @@ def share2_item_pa(
     yield share_item(
         share=share2_submitted,
         table=table1,
-        status=dataall.api.constants.ShareItemStatus.PendingApproval.value
+        status=ShareItemStatus.PendingApproval.value
     )
 
 
@@ -409,13 +411,13 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
         username=userName,
         groups=[group.name],
         datasetUri=datasetUri,
-        itemType=dataall.api.constants.ShareableType.Table.value if itemUri else None,
+        itemType=ShareableType.Table.value if itemUri else None,
         itemUri=itemUri,
         input={
             'environmentUri': environmentUri,
             'groupUri': groupUri,
             'principalId': groupUri,
-            'principalType': dataall.api.constants.PrincipalType.Group.value,
+            'principalType': PrincipalType.Group.value,
         },
     )
 
@@ -847,8 +849,7 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     )
 
     assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemUri == table1.tableUri
-    assert get_share_object_response.data.getShareObject.get('items').nodes[
-               0].itemType == dataall.api.constants.ShareableType.Table.name
+    assert get_share_object_response.data.getShareObject.get('items').nodes[0].itemType == ShareableType.Table.name
 
 
 def test_get_share_object(client, share1_draft, user, group):
@@ -865,7 +866,7 @@ def test_get_share_object(client, share1_draft, user, group):
     # Then we get the info about the share
     assert get_share_object_response.data.getShareObject.shareUri == share1_draft.shareUri
     assert get_share_object_response.data.getShareObject.get(
-        'principal').principalType == dataall.api.constants.PrincipalType.Group.name
+        'principal').principalType == PrincipalType.Group.name
     assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
     assert get_share_object_response.data.getShareObject.get('principal').region
