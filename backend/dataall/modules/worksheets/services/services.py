@@ -4,13 +4,13 @@ from dataall import db
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions
-from dataall.db import models, permissions
+from dataall.db import models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.common.athena.athena_client import run_athena_query
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
-    WORKSHEET_ALL, GET_WORKSHEET, SHARE_WORKSHEET, WORKSHEET_SHARED, DELETE_WORKSHEET
+    WORKSHEET_ALL, GET_WORKSHEET, SHARE_WORKSHEET, WORKSHEET_SHARED, DELETE_WORKSHEET, RUN_ATHENA_QUERY
 
 
 logger = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ class WorksheetService:
             username=username,
             groups=groups,
             resource_uri=environmentUri,
-            permission_name=permissions.RUN_ATHENA_QUERY,
+            permission_name=RUN_ATHENA_QUERY,
         )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)

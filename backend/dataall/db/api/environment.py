@@ -305,7 +305,6 @@ class Environment:
         if permissions.CREATE_NETWORK in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
 
-        g_permissions.append(permissions.RUN_ATHENA_QUERY)
         g_permissions.append(permissions.GET_ENVIRONMENT)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
