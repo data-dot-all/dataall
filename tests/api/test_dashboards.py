@@ -2,6 +2,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -25,7 +26,7 @@ def dataset1(
     org1: dataall.db.models.Organization,
     env1: dataall.db.models.Environment,
     dataset: typing.Callable,
-) -> dataall.db.models.Dataset:
+) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=env1.owner, group='dataset1admins'
     )

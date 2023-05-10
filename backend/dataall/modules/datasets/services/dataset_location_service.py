@@ -1,27 +1,27 @@
 import logging
-from typing import List
 
 from sqlalchemy import and_, or_
 
-from dataall.db.api import has_tenant_perm, has_resource_perm, Glossary
-from dataall.db import models, api, paginate, permissions, exceptions
+from dataall.core.context import get_context
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.db.api import Glossary
+from dataall.db import models, api, paginate, exceptions
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, \
+    CREATE_DATASET_FOLDER, DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetLocationService:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
-    @has_resource_perm(permissions.CREATE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET_FOLDER)
     def create_dataset_location(
         session,
-        username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
+        data: dict = None
     ) -> DatasetStorageLocation:
         dataset = DatasetRepository.get_dataset_by_uri(session, uri)
         exists = (
@@ -58,7 +58,7 @@ class DatasetLocationService:
         if 'terms' in data.keys():
             Glossary.set_glossary_terms_links(
                 session,
-                username,
+                get_context().username,
                 location.locationUri,
                 'DatasetStorageLocation',
                 data.get('terms', []),
@@ -67,15 +67,12 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
-    @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> dict:
         query = (
             session.query(DatasetStorageLocation)
@@ -92,28 +89,22 @@ class DatasetLocationService:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
-    @has_resource_perm(permissions.LIST_DATASET_FOLDERS)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(LIST_DATASET_FOLDERS)
     def get_dataset_location(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> DatasetStorageLocation:
         return DatasetLocationService.get_location_by_uri(session, data['locationUri'])
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
-    @has_resource_perm(permissions.UPDATE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET_FOLDER)
     def update_dataset_location(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> DatasetStorageLocation:
 
         location = data.get(
@@ -127,7 +118,7 @@ class DatasetLocationService:
         if 'terms' in data.keys():
             Glossary.set_glossary_terms_links(
                 session,
-                username,
+                get_context().username,
                 location.locationUri,
                 'DatasetStorageLocation',
                 data.get('terms', []),
@@ -135,15 +126,12 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_DATASETS)
-    @has_resource_perm(permissions.DELETE_DATASET_FOLDER)
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(DELETE_DATASET_FOLDER)
     def delete_dataset_location(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ):
         location = DatasetLocationService.get_location_by_uri(
             session, data['locationUri']
@@ -161,7 +149,7 @@ class DatasetLocationService:
         )
         if share_item:
             raise exceptions.ResourceShared(
-                action=permissions.DELETE_DATASET_FOLDER,
+                action=DELETE_DATASET_FOLDER,
                 message='Revoke all folder shares before deletion',
             )
         session.query(models.ShareObjectItem).filter(

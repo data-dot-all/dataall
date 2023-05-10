@@ -36,7 +36,6 @@ class TargetType:
             )
 
 
-TargetType("dataset", permissions.GET_DATASET, permissions.UPDATE_DATASET)
 TargetType("environment", permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)
 TargetType("mlstudio", permissions.GET_SGMSTUDIO_NOTEBOOK, permissions.UPDATE_SGMSTUDIO_NOTEBOOK)
 TargetType("pipeline", permissions.GET_PIPELINE, permissions.UPDATE_PIPELINE)

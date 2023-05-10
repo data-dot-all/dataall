@@ -3,13 +3,14 @@ import logging
 from sqlalchemy import and_, or_, literal
 
 from .. import models, api, exceptions, paginate, permissions
-from . import has_resource_perm, ResourcePolicy, Environment, Dataset
-from dataall.modules.datasets.db.models import DatasetTable
+from . import has_resource_perm, ResourcePolicy, Environment
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class RedshiftCluster:
                 group=environment.SamlGroupName,
                 permissions=permissions.REDSHIFT_CLUSTER_ALL,
                 resource_uri=redshift_cluster.clusterUri,
-                resource_type=models.Dataset.__name__,
+                resource_type=Dataset.__name__,
             )
         return redshift_cluster
 
@@ -210,36 +211,35 @@ class RedshiftCluster:
         )
         created = (
             session.query(
-                models.Dataset.datasetUri.label('datasetUri'),
+                Dataset.datasetUri.label('datasetUri'),
                 models.RedshiftCluster.clusterUri.label('clusterUri'),
             )
             .filter(
                 and_(
                     or_(
-                        models.Dataset.owner == username,
-                        models.Dataset.SamlAdminGroupName.in_(groups),
+                        Dataset.owner == username,
+                        Dataset.SamlAdminGroupName.in_(groups),
                     ),
-                    models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.Dataset.environmentUri
+                    RedshiftCluster.clusterUri == cluster.clusterUri,
+                    Dataset.environmentUri
                     == models.RedshiftCluster.environmentUri,
                 )
             )
-            .group_by(models.Dataset.datasetUri, models.RedshiftCluster.clusterUri)
+            .group_by(Dataset.datasetUri, models.RedshiftCluster.clusterUri)
         )
         all_group_datasets_sub_query = shared.union(created).subquery(
             'all_group_datasets_sub_query'
         )
         query = (
-            session.query(models.Dataset)
+            session.query(Dataset)
             .join(
                 all_group_datasets_sub_query,
-                models.Dataset.datasetUri == all_group_datasets_sub_query.c.datasetUri,
+                Dataset.datasetUri == all_group_datasets_sub_query.c.datasetUri,
             )
             .outerjoin(
                 models.RedshiftClusterDataset,
                 and_(
-                    models.RedshiftClusterDataset.datasetUri
-                    == models.Dataset.datasetUri,
+                    models.RedshiftClusterDataset.datasetUri == Dataset.datasetUri,
                     models.RedshiftClusterDataset.clusterUri == cluster.clusterUri,
                 ),
             )
@@ -247,7 +247,7 @@ class RedshiftCluster:
                 and_(
                     all_group_datasets_sub_query.c.clusterUri == cluster.clusterUri,
                     models.RedshiftClusterDataset.datasetUri.is_(None),
-                    models.Dataset.deleted.is_(None),
+                    Dataset.deleted.is_(None),
                 )
             )
         )
@@ -255,9 +255,9 @@ class RedshiftCluster:
             term = data.get('term')
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.tags.any(term),
-                    models.Dataset.topics.any(term),
+                    Dataset.label.ilike('%' + term + '%'),
+                    Dataset.tags.any(term),
+                    Dataset.topics.any(term),
                 )
             )
         return paginate(
@@ -270,10 +270,10 @@ class RedshiftCluster:
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
         query = (
-            session.query(models.Dataset)
+            session.query(Dataset)
             .join(
                 models.RedshiftClusterDataset,
-                models.Dataset.datasetUri == models.RedshiftClusterDataset.datasetUri,
+                Dataset.datasetUri == models.RedshiftClusterDataset.datasetUri,
             )
             .filter(
                 models.RedshiftClusterDataset.clusterUri == uri,
@@ -283,9 +283,9 @@ class RedshiftCluster:
             term = data.get('term')
             query = query.filter(
                 or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.tags.any(term),
-                    models.Dataset.topics.any(term),
+                    Dataset.label.ilike('%' + term + '%'),
+                    Dataset.tags.any(term),
+                    Dataset.topics.any(term),
                 )
             )
         return paginate(
@@ -340,17 +340,17 @@ class RedshiftCluster:
                 models.RedshiftCluster.clusterUri.label('clusterUri'),
             )
             .join(
-                models.Dataset,
-                DatasetTable.datasetUri == models.Dataset.datasetUri,
+                Dataset,
+                DatasetTable.datasetUri == Dataset.datasetUri,
             )
             .filter(
                 and_(
                     or_(
-                        models.Dataset.owner == username,
-                        models.Dataset.SamlAdminGroupName.in_(groups),
+                        Dataset.owner == username,
+                        Dataset.SamlAdminGroupName.in_(groups),
                     ),
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.Dataset.environmentUri
+                    Dataset.environmentUri
                     == models.RedshiftCluster.environmentUri,
                 )
             )
@@ -394,7 +394,7 @@ class RedshiftCluster:
                 message=f'Cluster {cluster.name} is not on available state ({cluster.status})',
             )
 
-        dataset = Dataset.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
+        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
 
         exists = session.query(models.RedshiftClusterDataset).get(
             (uri, data['datasetUri'])
@@ -432,7 +432,7 @@ class RedshiftCluster:
         )
         if exists:
             session.delete(exists)
-            dataset = session.query(models.Dataset).get(data['datasetUri'])
+            dataset = session.query(Dataset).get(data['datasetUri'])
             if not dataset:
                 raise exceptions.ObjectNotFound('Dataset', data['datasetUri'])
 
@@ -497,7 +497,7 @@ class RedshiftCluster:
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
         # TODO this dirty hack should be removed in the redshift module or after pipeline migration (circular import)
-        from dataall.modules.datasets.services.dataset_table import DatasetTableService
+        from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
         table = DatasetTableService.get_dataset_table_by_uri(
             session, data['tableUri']
         )

@@ -22,11 +22,12 @@ from ..models.Enums import (
 from ..models.Permission import PermissionType
 from ..paginator import paginate
 from dataall.core.environment.models import EnvironmentParameter
-from ...core.environment.db.repositories import EnvironmentParameterRepository
-from ...utils.naming_convention import (
+from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.core.group.services.group_resource_manager import GroupResourceManager
 
 log = logging.getLogger(__name__)
 
@@ -285,10 +286,6 @@ class Environment:
 
     @staticmethod
     def validate_permissions(session, uri, g_permissions, group):
-
-        if permissions.CREATE_DATASET in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_DATASETS)
-
         if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
 
@@ -356,10 +353,6 @@ class Environment:
         group_env_objects_count = (
             session.query(models.Environment)
             .outerjoin(
-                models.Dataset,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
                 models.SagemakerStudioUserProfile,
                 models.SagemakerStudioUserProfile.environmentUri
                 == models.Environment.environmentUri,
@@ -387,7 +380,6 @@ class Environment:
                     models.Environment.environmentUri == environment.environmentUri,
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
-                        models.Dataset.SamlAdminGroupName == group,
                         models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
                         models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
@@ -395,6 +387,12 @@ class Environment:
                 )
             )
             .count()
+        )
+
+        group_env_objects_count += GroupResourceManager.count_group_resources(
+            session=session,
+            environment_uri=environment.environmentUri,
+            group_uri=group
         )
 
         if group_env_objects_count > 0:
@@ -803,75 +801,6 @@ class Environment:
         ).first()
 
     @staticmethod
-    def query_environment_datasets(session, username, groups, uri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
-            and_(
-                models.Dataset.environmentUri == uri,
-                models.Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    def query_environment_group_datasets(session, username, groups, envUri, groupUri, filter) -> Query:
-        query = session.query(models.Dataset).filter(
-            and_(
-                models.Dataset.environmentUri == envUri,
-                models.Dataset.SamlAdminGroupName == groupUri,
-                models.Dataset.deleted.is_(None),
-            )
-        )
-        if filter and filter.get('term'):
-            term = filter['term']
-            query = query.filter(
-                or_(
-                    models.Dataset.label.ilike('%' + term + '%'),
-                    models.Dataset.description.ilike('%' + term + '%'),
-                    models.Dataset.tags.contains(f'{{{term}}}'),
-                    models.Dataset.region.ilike('%' + term + '%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_DATASETS)
-    def paginated_environment_datasets(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        return paginate(
-            query=Environment.query_environment_datasets(
-                session, username, groups, uri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
-    def paginated_environment_group_datasets(
-        session, username, groups, envUri, groupUri, data=None, check_perm=None
-    ) -> dict:
-        return paginate(
-            query=Environment.query_environment_group_datasets(
-                session, username, groups, envUri, groupUri, data
-            ),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-
-
-
-    @staticmethod
     def query_environment_networks(session, username, groups, uri, filter) -> Query:
         query = session.query(models.Vpc).filter(
             models.Vpc.environmentUri == uri,
@@ -1017,24 +946,6 @@ class Environment:
             page_size=data.get('pageSize', 10),
             page=data.get('page', 1),
         ).to_dict()
-
-    @staticmethod
-    def list_group_datasets(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
-
-        return (
-            session.query(models.Dataset)
-            .filter(
-                and_(
-                    models.Dataset.environmentUri == uri,
-                    models.Dataset.SamlAdminGroupName == data['groupUri'],
-                )
-            )
-            .all()
-        )
 
     @staticmethod
     @has_resource_perm(permissions.GET_ENVIRONMENT)

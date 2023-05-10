@@ -8,9 +8,9 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.s3 import S3
 from ....aws.handlers.kms import KMS
 from ....aws.handlers.iam import IAM
+from ....modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
-from ....utils.alarm_service import AlarmService
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -21,7 +21,7 @@ class S3ShareManager:
     def __init__(
         self,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
         target_folder: DatasetStorageLocation,
         source_environment: models.Environment,
@@ -325,7 +325,7 @@ class S3ShareManager:
     @staticmethod
     def delete_access_point(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
     ):
         access_point_name = S3ShareManager.build_access_point_name(share)
         logger.info(
@@ -342,7 +342,7 @@ class S3ShareManager:
     @staticmethod
     def delete_target_role_access_policy(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
             target_environment: models.Environment,
     ):
         logger.info(
@@ -377,7 +377,7 @@ class S3ShareManager:
     @staticmethod
     def delete_dataset_bucket_key_policy(
             share: models.ShareObject,
-            dataset: models.Dataset,
+            dataset: Dataset,
             target_environment: models.Environment,
     ):
         logger.info(
@@ -398,9 +398,12 @@ class S3ShareManager:
                 json.dumps(policy)
             )
 
-    def log_share_failure(self, error: Exception) -> None:
+    def handle_share_failure(self, error: Exception) -> None:
         """
-        Writes a log if the failure happened while sharing
+        Handles share failure by raising an alarm to alarmsTopic
+        Returns
+        -------
+        True if alarm published successfully
         """
         logger.error(
             f'Failed to share folder {self.s3_prefix} '
@@ -408,14 +411,23 @@ class S3ShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
+        DatasetAlarmService().trigger_folder_sharing_failure_alarm(
+            self.target_folder, self.share, self.target_environment
+        )
 
-    def log_revoke_failure(self, error: Exception) -> None:
+    def handle_revoke_failure(self, error: Exception) -> None:
         """
-        Writes a log if the failure happened while revoking share
+        Handles share failure by raising an alarm to alarmsTopic
+        Returns
+        -------
+        True if alarm published successfully
         """
         logger.error(
             f'Failed to revoke S3 permissions to folder {self.s3_prefix} '
             f'from source account {self.source_environment.AwsAccountId}//{self.source_environment.region} '
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
+        )
+        DatasetAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+            self.target_folder, self.share, self.target_environment
         )

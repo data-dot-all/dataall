@@ -80,16 +80,6 @@ class DataPipelineRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class DatasetRole(GraphQLEnumMapper):
-    # Permissions on a dataset
-    BusinessOwner = '999'
-    DataSteward = '998'
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class GlossaryRole(GraphQLEnumMapper):
     # Permissions on a glossary
     Admin = '900'

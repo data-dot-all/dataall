@@ -1,16 +1,15 @@
 import logging
 
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 
 log = logging.getLogger(__name__)
 
 
-class S3DatasetLocationHandler:
-    """Handles async requests related to s3 for dataset storage location"""
+class S3FolderCreatorHandler:
+    """Handles async requests related to s3 for dataset folders"""
 
     @staticmethod
     @Worker.handler(path='s3.prefix.create')

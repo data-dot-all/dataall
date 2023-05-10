@@ -17,7 +17,6 @@ from . import (
     DataPipeline,
     Environment,
     Activity,
-    Dataset,
     Group,
     Principal,
     Dashboard,
@@ -81,7 +80,6 @@ def resolver_adapter(resolver):
         response = resolver(
             context=Namespace(
                 engine=info.context['engine'],
-                es=info.context['es'],
                 username=info.context['username'],
                 groups=info.context['groups'],
                 schema=info.context['schema'],
