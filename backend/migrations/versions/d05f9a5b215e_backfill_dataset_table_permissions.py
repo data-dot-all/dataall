@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import api, utils, Resource
 from datetime import datetime
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareableType, ShareItemStatus
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
 from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ

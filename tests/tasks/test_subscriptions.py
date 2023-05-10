@@ -2,7 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareItemStatus, ShareableType
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService

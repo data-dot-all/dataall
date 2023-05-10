@@ -5,7 +5,7 @@ from dataall.modules.dataset_sharing.services.share_processors.lf_process_same_a
 from dataall.modules.dataset_sharing.services.share_processors.s3_process_share import ProcessS3Share
 
 from dataall.db import Engine
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemStatus, ShareableType
+from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectSM, ShareObjectService, ShareItemSM
 
 log = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 import dataall.searchproxy.indexers
-from dataall.modules.dataset_sharing.db.Enums import ShareableType
+from dataall.modules.dataset_sharing.db.enums import ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from .client import *
 from dataall.db import models

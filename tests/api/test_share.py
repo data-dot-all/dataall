@@ -5,7 +5,7 @@ import pytest
 import dataall
 from dataall.api.constants import PrincipalType
 from dataall.modules.dataset_sharing.api.enums import ShareableType
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
+from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM, ShareObjectSM

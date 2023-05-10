@@ -1,6 +1,6 @@
 import logging
 
-from dataall.modules.dataset_sharing.db.Enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
 from dataall.aws.handlers.ram import Ram
 from dataall.db import models

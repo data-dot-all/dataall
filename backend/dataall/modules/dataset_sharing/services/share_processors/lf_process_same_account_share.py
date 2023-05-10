@@ -1,6 +1,6 @@
 import logging
 
-from dataall.modules.dataset_sharing.db.Enums import ShareItemStatus, ShareObjectActions, ShareItemActions
+from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
 from ..share_managers import LFShareManager

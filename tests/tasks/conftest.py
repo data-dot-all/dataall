@@ -2,7 +2,7 @@ import pytest
 
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.dataset_sharing.db.Enums import ShareableType, ShareItemStatus, ShareObjectStatus
+from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 

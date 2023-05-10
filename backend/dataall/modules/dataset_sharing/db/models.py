@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.orm import query_expression
 
 from dataall.db import Base, utils
-from dataall.modules.dataset_sharing.db.Enums import ShareObjectStatus, ShareItemStatus
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus
 
 
 def in_one_month():
