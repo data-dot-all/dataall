@@ -51,8 +51,10 @@ class SagemakerStudioCreationRequest:
             if k in fields
         })
 
+
 def _session():
     return context().db_engine.scoped_session()
+
 
 class SagemakerStudioService:
     """
@@ -62,8 +64,8 @@ class SagemakerStudioService:
     @has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @has_resource_permission(CREATE_SGMSTUDIO_USER)
     @has_group_permission(CREATE_SGMSTUDIO_USER)
-    #TODO: question, why the * here?
-    def create_sagemaker_studio_user(*, uri: str, admin_group: str, request:SagemakerStudioCreationRequest):
+    # TODO: question, why the * here?
+    def create_sagemaker_studio_user(*, uri: str, admin_group: str, request: SagemakerStudioCreationRequest):
         """
         Creates an ML Studio user
         Throws an exception if ML Studio is not enabled for the environment
@@ -77,7 +79,7 @@ class SagemakerStudioService:
                     action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
-            #TODO: check with v1.5 how the checking affects this method
+            # TODO: check with v1.5 how the checking affects this method
             response = SagemakerStudioClient.get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region
@@ -123,7 +125,6 @@ class SagemakerStudioService:
                     resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
                     resource_type=models.SagemakerStudioUserProfile.__name__,
                 )
-
 
             Stack.create_stack(
                 session=session,
@@ -172,7 +173,6 @@ class SagemakerStudioService:
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
             return SagemakerStudioService(user).get_sagemaker_studio_user_applications()
-
 
     @staticmethod
     @has_resource_permission(DELETE_SGMSTUDIO_NOTEBOOK)
