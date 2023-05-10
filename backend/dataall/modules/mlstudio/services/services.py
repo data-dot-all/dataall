@@ -26,6 +26,7 @@ from dataall.modules.mlstudio.services.permissions import (
     SGMSTUDIO_USER_ALL,
     GET_SGMSTUDIO_USER,
     SGMSTUDIO_USER_URL,
+    DELETE_SGMSTUDIO_NOTEBOOK,
 )
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
@@ -137,7 +138,7 @@ class SagemakerStudioService:
         return sagemaker_studio_user
 
     @staticmethod
-    def list_sagemaker_studio_users(*, filter) -> dict:
+    def list_sagemaker_studio_users(*, filter: dict) -> dict:
         with _session() as session:
             return SageMakerStudioRepository(session).paginated_sagemaker_studio_users(
                 username=context.username,
@@ -147,22 +148,56 @@ class SagemakerStudioService:
 
     @staticmethod
     @has_resource_permission(GET_SGMSTUDIO_USER)
-    def get_sagemaker_studio_user(*, uri):
+    def get_sagemaker_studio_user(*, uri: str):
         with _session() as session:
             return SagemakerStudioService._get_sagemaker_studio_user(session, uri)
 
     @staticmethod
-    @has_resource_permission(SGMSTUDIO_USER_URL)
-    def get_sagemaker_studio_user_presigned_url(*, uri):
+    def get_sagemaker_studio_user_status(*, uri: str):
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
-            return SagemakerStudioService(user).get_sagemaker_studio_user_profile_presigned_url()
+            status = sagemaker_studio_client(user).get_sagemaker_studio_user_status()
+            user.sagemakerStudioUserStatus = status
+            return status
 
     @staticmethod
-    def get_sagemaker_studio_user_applications(*, uri):
+    @has_resource_permission(SGMSTUDIO_USER_URL)
+    def get_sagemaker_studio_user_presigned_url(*, uri: str):
+        with _session() as session:
+            user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
+            return SagemakerStudioService(user).get_sagemaker_studio_user_presigned_url()
+
+    @staticmethod
+    def get_sagemaker_studio_user_applications(*, uri: str):
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
             return SagemakerStudioService(user).get_sagemaker_studio_user_applications()
+
+
+    @staticmethod
+    @has_resource_permission(DELETE_SGMSTUDIO_NOTEBOOK)
+    def delete_sagemaker_studio_user(*, uri: str, delete_from_aws: bool):
+        """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
+        with _session() as session:
+            user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
+            session.delete(user)
+
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                resource_uri=user.sagemakerStudioUserUri,
+                group=user.SamlAdminGroupName,
+            )
+
+            env = Environment.get_environment_by_uri(session, uri)
+
+            if delete_from_aws:
+                stack_helper.delete_stack(
+                    target_uri=uri,
+                    accountid=env.AwsAccountId,
+                    cdk_role_arn=env.CDKRoleArn,
+                    region=env.region
+                )
+            return True
 
     @staticmethod
     def _get_sagemaker_studio_user(session, uri):
