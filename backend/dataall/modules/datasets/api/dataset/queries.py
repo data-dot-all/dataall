@@ -1,7 +1,17 @@
-from ... import gql
-from .input_types import DatasetFilter
-from .resolvers import *
-from .schema import DatasetSearchResult
+from dataall.api import gql
+from dataall.modules.datasets.api.dataset.input_types import DatasetFilter
+from dataall.modules.datasets.api.dataset.resolvers import (
+    get_dataset,
+    list_datasets,
+    get_dataset_assume_role_url,
+    get_dataset_etl_credentials,
+    get_dataset_summary,
+    get_file_upload_presigned_url,
+    list_dataset_share_objects,
+    list_datasets_owned_by_env_group,
+    list_datasets_created_in_environment,
+)
+from dataall.modules.datasets.api.dataset.schema import DatasetSearchResult
 
 getDataset = gql.QueryField(
     name='getDataset',
@@ -79,4 +89,27 @@ listShareObjects = gql.QueryField(
         gql.Argument(name='page', type=gql.Integer),
     ],
     type=gql.Ref('ShareSearchResult'),
+)
+
+listDatasetsOwnedByEnvGroup = gql.QueryField(
+    name='listDatasetsOwnedByEnvGroup',
+    type=gql.Ref('DatasetSearchResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
+    ],
+    resolver=list_datasets_owned_by_env_group,
+    test_scope='Dataset',
+)
+
+listDatasetsCreatedInEnvironment = gql.QueryField(
+    name='listDatasetsCreatedInEnvironment',
+    type=gql.Ref('DatasetSearchResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
+    ],
+    resolver=list_datasets_created_in_environment,
+    test_scope='Dataset',
 )

@@ -43,23 +43,6 @@ def get_group(context, source, groupUri):
     return Group(groupUri=groupUri, name=groupUri, label=groupUri)
 
 
-def list_datasets_owned_by_env_group(
-    context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_environment_group_datasets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            envUri=environmentUri,
-            groupUri=groupUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def list_data_items_shared_with_env_group(
     context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
 ):

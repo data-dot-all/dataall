@@ -2,7 +2,7 @@
 from operator import and_
 
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.searchproxy.base_indexer import BaseIndexer
 
@@ -19,32 +19,32 @@ class DatasetTableIndexer(BaseIndexer):
                 DatasetTable.owner.label('owner'),
                 DatasetTable.label.label('label'),
                 DatasetTable.description.label('description'),
-                models.Dataset.confidentiality.label('classification'),
+                Dataset.confidentiality.label('classification'),
                 DatasetTable.tags.label('tags'),
-                models.Dataset.topics.label('topics'),
-                models.Dataset.region.label('region'),
+                Dataset.topics.label('topics'),
+                Dataset.region.label('region'),
                 models.Organization.organizationUri.label('orgUri'),
                 models.Organization.name.label('orgName'),
                 models.Environment.environmentUri.label('envUri'),
                 models.Environment.name.label('envName'),
-                models.Dataset.SamlAdminGroupName.label('admins'),
-                models.Dataset.GlueDatabaseName.label('database'),
-                models.Dataset.S3BucketName.label('source'),
+                Dataset.SamlAdminGroupName.label('admins'),
+                Dataset.GlueDatabaseName.label('database'),
+                Dataset.S3BucketName.label('source'),
                 DatasetTable.created,
                 DatasetTable.updated,
                 DatasetTable.deleted,
             )
             .join(
-                models.Dataset,
-                models.Dataset.datasetUri == DatasetTable.datasetUri,
+                Dataset,
+                Dataset.datasetUri == DatasetTable.datasetUri,
             )
             .join(
                 models.Organization,
-                models.Dataset.organizationUri == models.Organization.organizationUri,
+                Dataset.organizationUri == models.Organization.organizationUri,
             )
             .join(
                 models.Environment,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
+                Dataset.environmentUri == models.Environment.environmentUri,
             )
             .filter(DatasetTable.tableUri == table_uri)
             .first()

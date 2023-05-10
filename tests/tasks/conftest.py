@@ -2,7 +2,7 @@ import pytest
 
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope="module")
@@ -100,9 +100,9 @@ def dataset(db):
         organization: models.Organization,
         environment: models.Environment,
         label: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         with db.scoped_session() as session:
-            dataset = models.Dataset(
+            dataset = Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -127,7 +127,7 @@ def dataset(db):
 
 @pytest.fixture(scope="module")
 def location(db):
-    def factory(dataset: models.Dataset, label: str) -> DatasetStorageLocation:
+    def factory(dataset: Dataset, label: str) -> DatasetStorageLocation:
 
         with db.scoped_session() as session:
             ds_location = DatasetStorageLocation(
@@ -148,7 +148,7 @@ def location(db):
 
 @pytest.fixture(scope='module')
 def table(db):
-    def factory(dataset: models.Dataset, label: str) -> DatasetTable:
+    def factory(dataset: Dataset, label: str) -> DatasetTable:
 
         with db.scoped_session() as session:
             table = DatasetTable(
@@ -172,7 +172,7 @@ def table(db):
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
-        dataset: models.Dataset,
+        dataset: Dataset,
         environment: models.Environment,
         env_group: models.EnvironmentGroup
     ) -> models.ShareObject:

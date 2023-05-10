@@ -5,16 +5,18 @@ from botocore.exceptions import ClientError
 from pyathena import connect
 
 from dataall import db
-from dataall.api.Objects.Dataset.resolvers import get_dataset
+from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import permissions, models
+from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, PREVIEW_DATASET_TABLE
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -23,11 +25,8 @@ def create_table(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.create_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=datasetUri,
             data=input,
-            check_perm=True,
         )
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
@@ -41,26 +40,20 @@ def list_dataset_tables(context, source, filter: dict = None):
     with context.engine.scoped_session() as session:
         return DatasetTableService.list_dataset_tables(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.datasetUri,
             data=filter,
-            check_perm=True,
         )
 
 
-def get_table(context, source: models.Dataset, tableUri: str = None):
+def get_table(context, source: Dataset, tableUri: str = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         return DatasetTableService.get_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=table.datasetUri,
             data={
                 'tableUri': tableUri,
             },
-            check_perm=True,
         )
 
 
@@ -68,18 +61,15 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
 
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
 
         input['table'] = table
         input['tableUri'] = table.tableUri
 
         DatasetTableService.update_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=dataset.datasetUri,
             data=input,
-            check_perm=True,
         )
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
     return table
@@ -90,13 +80,10 @@ def delete_table(context, source, tableUri: str = None):
         table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
         DatasetTableService.delete_dataset_table(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=table.datasetUri,
             data={
                 'tableUri': tableUri,
             },
-            check_perm=True,
         )
     DatasetTableIndexer.delete_doc(doc_id=tableUri)
     return True
@@ -107,7 +94,7 @@ def preview(context, source, tableUri: str = None):
         table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
             session, tableUri
         )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
         if (
             dataset.confidentiality
             != models.ConfidentialityClassification.Unclassified.value
@@ -117,7 +104,7 @@ def preview(context, source, tableUri: str = None):
                 username=context.username,
                 groups=context.groups,
                 resource_uri=table.tableUri,
-                permission_name=permissions.PREVIEW_DATASET_TABLE,
+                permission_name=PREVIEW_DATASET_TABLE,
             )
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         env_workgroup = {}
@@ -196,9 +183,9 @@ def publish_table_update(context: Context, source, tableUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=table.datasetUri,
-            permission_name=permissions.UPDATE_DATASET_TABLE,
+            permission_name=UPDATE_DATASET_TABLE,
         )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
             raise Exception(

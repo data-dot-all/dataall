@@ -4,6 +4,8 @@ import typing
 import pytest
 import dataall
 from dataall.api.constants import RedshiftClusterRole
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -23,7 +25,7 @@ def env1(env, org1, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.Dataset:
+def dataset1(db, user, env1, org1, dataset, group, group3) -> Dataset:
     with db.scoped_session() as session:
         data = dict(
             label='label',
@@ -41,7 +43,7 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> dataall.db.models.
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
             stewards=group3.name,
         )
-        dataset = dataall.db.api.Dataset.create_dataset(
+        dataset = DatasetService.create_dataset(
             session=session,
             username=user.userName,
             groups=[group.name],
@@ -70,7 +72,7 @@ def env2(
 
 
 @pytest.fixture(scope='module')
-def dataset2(env2, org2, dataset, group2, user2) -> dataall.db.models.Dataset:
+def dataset2(env2, org2, dataset, group2, user2) -> Dataset:
     yield dataset(
         org=org2,
         env=env2,

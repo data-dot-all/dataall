@@ -1,12 +1,12 @@
 import logging
 import os
 import pathlib
-import shutil
+from abc import abstractmethod
+from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
     aws_s3 as s3,
-    aws_s3_deployment,
     aws_iam as iam,
     aws_lambda as _lambda,
     aws_lambda_destinations as lambda_destination,
@@ -28,7 +28,7 @@ from constructs import DependencyGroup
 from botocore.exceptions import ClientError
 
 from .manager import stack
-from .policies.data_policy import DataPolicy
+from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.quicksight import Quicksight
@@ -44,9 +44,24 @@ from ...utils.runtime_stacks_tagging import TagsUtil
 logger = logging.getLogger(__name__)
 
 
+class EnvironmentStackExtension:
+    @staticmethod
+    @abstractmethod
+    def extent(setup: 'EnvironmentSetup'):
+        raise NotImplementedError
+
+
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     module_name = __file__
+    _EXTENSIONS: List[Type[EnvironmentStackExtension]] = []
+
+    @staticmethod
+    def register(extension: Type[EnvironmentStackExtension]):
+        EnvironmentSetup._EXTENSIONS.append(extension)
+
+    def environment(self) -> models.Environment:
+        return self._environment
 
     def get_engine(self):
         envname = os.environ.get('envname', 'local')
@@ -127,33 +142,6 @@ class EnvironmentSetup(Stack):
                 group_uri=environment.SamlGroupName,
             )
 
-    @staticmethod
-    def get_environment_group_datasets(
-        engine, environment: models.Environment, group: str
-    ) -> [models.Dataset]:
-        with engine.scoped_session() as session:
-            return db.api.Environment.list_group_datasets(
-                session,
-                username='cdk',
-                groups=[],
-                uri=environment.environmentUri,
-                data={'groupUri': group},
-                check_perm=False,
-            )
-
-    @staticmethod
-    def get_all_environment_datasets(
-        engine, environment: models.Environment
-    ) -> [models.Dataset]:
-        with engine.scoped_session() as session:
-            return (
-                session.query(models.Dataset)
-                .filter(
-                    models.Dataset.environmentUri == environment.environmentUri,
-                )
-                .all()
-            )
-
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(scope,
                          id,
@@ -176,10 +164,6 @@ class EnvironmentSetup(Stack):
         self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(self.engine, environment=self._environment)
 
         self.environment_admins_group: models.EnvironmentGroup = self.get_environment_admins_group(self.engine, self._environment)
-
-        self.all_environment_datasets = self.get_all_environment_datasets(
-            self.engine, self._environment
-        )
 
         roles_sagemaker_dependency_group = DependencyGroup()
 
@@ -204,6 +188,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        self.default_environment_bucket = default_environment_bucket
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
                 sid='RedshiftLogging',
@@ -251,22 +236,6 @@ class EnvironmentSetup(Stack):
             enabled=True,
         )
 
-        profiling_assetspath = self.zip_code(
-            os.path.realpath(
-                os.path.abspath(
-                    os.path.join(__file__, '..', '..', 'assets', 'glueprofilingjob')
-                )
-            )
-        )
-
-        aws_s3_deployment.BucketDeployment(
-            self,
-            f'{self._environment.resourcePrefix}GlueProflingJobDeployment',
-            sources=[aws_s3_deployment.Source.asset(profiling_assetspath)],
-            destination_bucket=default_environment_bucket,
-            destination_key_prefix='profiling/code',
-        )
-
         default_role = self.create_or_import_environment_default_role()
         roles_sagemaker_dependency_group.add(default_role)
 
@@ -280,6 +249,8 @@ class EnvironmentSetup(Stack):
             f'PivotRole{self._environment.environmentUri}',
             f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
         )
+
+        self.pivot_role = pivot_role
 
         # Lakeformation default settings
         entry_point = str(
@@ -589,6 +560,9 @@ class EnvironmentSetup(Stack):
                 parameter_name=f'/dataall/{self._environment.environmentUri}/sagemaker/sagemakerstudio/domain_id',
             )
 
+        for extension in EnvironmentSetup._EXTENSIONS:
+            extension.extent(self)
+
         TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")
 
         CDKNagUtil.check_rules(self)
@@ -618,7 +592,7 @@ class EnvironmentSetup(Stack):
                 ),
             ).generate_policies()
 
-            data_policy = DataPolicy(
+            data_policy = S3Policy(
                 stack=self,
                 tag_key='Team',
                 tag_value=self._environment.SamlGroupName,
@@ -629,7 +603,6 @@ class EnvironmentSetup(Stack):
                 region=self._environment.region,
                 environment=self._environment,
                 team=self.environment_admins_group,
-                datasets=self.all_environment_datasets,
             ).generate_admins_data_access_policy()
 
             default_role = iam.Role(
@@ -687,21 +660,19 @@ class EnvironmentSetup(Stack):
             permissions=group_permissions,
         ).generate_policies()
 
-        data_policy = DataPolicy(
-            stack=self,
-            tag_key='Team',
-            tag_value=group.groupUri,
-            resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            account=self._environment.AwsAccountId,
-            region=self._environment.region,
-            environment=self._environment,
-            team=group,
-            datasets=self.get_environment_group_datasets(
-                self.engine, self._environment, group.groupUri
-            ),
-        ).generate_data_access_policy()
+        with self.engine.scoped_session() as session:
+            data_policy = S3Policy(
+                stack=self,
+                tag_key='Team',
+                tag_value=group.groupUri,
+                resource_prefix=self._environment.resourcePrefix,
+                name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                account=self._environment.AwsAccountId,
+                region=self._environment.region,
+                environment=self._environment,
+                team=group,
+            ).generate_data_access_policy(session=session)
 
         group_role = iam.Role(
             self,
@@ -800,14 +771,6 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
-
-    @staticmethod
-    def zip_code(assetspath, s3_key='profiler'):
-        logger.info('Zipping code')
-        shutil.make_archive(
-            base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}'
-        )
-        return assetspath
 
     def set_dlq(self, queue_name) -> sqs.Queue:
         queue_key = kms.Key(

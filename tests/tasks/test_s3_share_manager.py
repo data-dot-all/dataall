@@ -7,8 +7,7 @@ from dataall.db import models
 
 from dataall.tasks.data_sharing.share_managers.s3_share_manager import S3ShareManager
 from dataall.utils.alarm_service import AlarmService
-from dataall.modules.datasets.db.models import DatasetStorageLocation
-
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
@@ -69,12 +68,12 @@ def dataset1(dataset: Callable, org1: models.Organization, source_environment: m
 
 
 @pytest.fixture(scope="module")
-def location1(location: Callable, dataset1: models.Dataset) -> DatasetStorageLocation:
+def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
     yield location(dataset1, "location1")
 
 
 @pytest.fixture(scope="module")
-def share1(share: Callable, dataset1: models.Dataset, 
+def share1(share: Callable, dataset1: Dataset,
            target_environment: models.Environment,
            target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
@@ -380,7 +379,7 @@ def test_grant_target_role_access_policy_test_no_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -442,7 +441,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -559,7 +558,7 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -639,7 +638,7 @@ def test_manage_access_point_and_policy_1(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -730,7 +729,7 @@ def test_manage_access_point_and_policy_2(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -804,7 +803,7 @@ def test_manage_access_point_and_policy_3(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -875,7 +874,7 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -947,7 +946,7 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1014,7 +1013,7 @@ def test_dont_delete_access_point_with_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1060,7 +1059,7 @@ def test_delete_access_point_without_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1106,7 +1105,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1171,7 +1170,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1257,7 +1256,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
@@ -1348,7 +1347,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,

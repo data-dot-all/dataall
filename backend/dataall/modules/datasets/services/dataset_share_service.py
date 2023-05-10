@@ -8,7 +8,7 @@ from dataall.api.constants import ShareableType
 from dataall.db import models, permissions
 from dataall.db.api import has_resource_perm, ShareItemSM
 from dataall.db.paginator import paginate
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 class DatasetShareService:
@@ -22,9 +22,9 @@ class DatasetShareService:
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('datasetName'),
-                models.Dataset.description.label('datasetDescription'),
+                Dataset.datasetUri.label('datasetUri'),
+                Dataset.name.label('datasetName'),
+                Dataset.description.label('datasetDescription'),
                 models.Environment.environmentUri.label('environmentUri'),
                 models.Environment.name.label('environmentName'),
                 models.ShareObject.created.label('created'),
@@ -60,12 +60,12 @@ class DatasetShareService:
                 models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
             )
             .join(
-                models.Dataset,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
+                Dataset,
+                models.ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
                 models.Environment,
-                models.Environment.environmentUri == models.Dataset.environmentUri,
+                models.Environment.environmentUri == Dataset.environmentUri,
             )
             .join(
                 models.Organization,
@@ -118,9 +118,9 @@ class DatasetShareService:
         q = (
             session.query(
                 models.ShareObjectItem.shareUri.label('shareUri'),
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('datasetName'),
-                models.Dataset.description.label('datasetDescription'),
+                Dataset.datasetUri.label('datasetUri'),
+                Dataset.name.label('datasetName'),
+                Dataset.description.label('datasetDescription'),
                 models.Environment.environmentUri.label('environmentUri'),
                 models.Environment.name.label('environmentName'),
                 models.ShareObject.created.label('created'),
@@ -156,12 +156,12 @@ class DatasetShareService:
                 models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
             )
             .join(
-                models.Dataset,
-                models.ShareObject.datasetUri == models.Dataset.datasetUri,
+                Dataset,
+                models.ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
                 models.Environment,
-                models.Environment.environmentUri == models.Dataset.environmentUri,
+                models.Environment.environmentUri == Dataset.environmentUri,
             )
             .join(
                 models.Organization,

@@ -48,18 +48,6 @@ listEnvironmentNetworks = gql.QueryField(
 )
 
 
-listDatasetsCreatedInEnvironment = gql.QueryField(
-    name='listDatasetsCreatedInEnvironment',
-    type=gql.Ref('DatasetSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
-    ],
-    resolver=list_datasets_created_in_environment,
-    test_scope='Dataset',
-)
-
-
 searchEnvironmentDataItems = gql.QueryField(
     name='searchEnvironmentDataItems',
     args=[

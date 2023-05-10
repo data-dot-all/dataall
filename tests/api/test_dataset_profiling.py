@@ -2,7 +2,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -22,7 +22,7 @@ def env1(env, org1, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group, user) -> dataall.db.models.Dataset:
+def dataset1(env1, org1, dataset, group, user) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
     )

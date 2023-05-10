@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
+from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable, Dataset
 import pytest
 
 
@@ -24,7 +24,7 @@ def _env(
 
 
 @pytest.fixture(scope='module', autouse=True)
-def _dataset(db, _env, _org, group, user, dataset) -> models.Dataset:
+def _dataset(db, _env, _org, group, user, dataset) -> Dataset:
     with db.scoped_session() as session:
         yield dataset(
             org=_org, env=_env, name='dataset1', owner=user.userName, group=group.name

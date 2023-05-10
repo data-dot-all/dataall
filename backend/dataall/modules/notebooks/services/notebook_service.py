@@ -24,8 +24,8 @@ from dataall.utils.naming_convention import (
 )
 from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.db.models import SagemakerNotebook
-from dataall.modules.notebooks.services import permissions
-from dataall.modules.notebooks.services.permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK
+from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
+    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class NotebookService:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
-                permissions=permissions.NOTEBOOK_ALL,
+                permissions=NOTEBOOK_ALL,
                 resource_uri=notebook.notebookUri,
                 resource_type=SagemakerNotebook.__name__,
             )
@@ -128,7 +128,7 @@ class NotebookService:
                 ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=env.SamlGroupName,
-                    permissions=permissions.NOTEBOOK_ALL,
+                    permissions=NOTEBOOK_ALL,
                     resource_uri=notebook.notebookUri,
                     resource_type=SagemakerNotebook.__name__,
                 )
@@ -156,42 +156,42 @@ class NotebookService:
             )
 
     @staticmethod
-    @has_resource_permission(permissions.GET_NOTEBOOK)
+    @has_resource_permission(GET_NOTEBOOK)
     def get_notebook(*, uri) -> SagemakerNotebook:
         """Gets a notebook by uri"""
         with _session() as session:
             return NotebookService._get_notebook(session, uri)
 
     @staticmethod
-    @has_resource_permission(permissions.UPDATE_NOTEBOOK)
+    @has_resource_permission(UPDATE_NOTEBOOK)
     def start_notebook(*, uri):
         """Starts notebooks instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).start_instance()
 
     @staticmethod
-    @has_resource_permission(permissions.UPDATE_NOTEBOOK)
+    @has_resource_permission(UPDATE_NOTEBOOK)
     def stop_notebook(*, uri: str) -> None:
         """Stop notebook instance"""
         notebook = NotebookService.get_notebook(uri=uri)
         client(notebook).stop_instance()
 
     @staticmethod
-    @has_resource_permission(permissions.GET_NOTEBOOK)
+    @has_resource_permission(GET_NOTEBOOK)
     def get_notebook_presigned_url(*, uri: str) -> str:
         """Creates and returns a presigned url for a notebook"""
         notebook = NotebookService.get_notebook(uri=uri)
         return client(notebook).presigned_url()
 
     @staticmethod
-    @has_resource_permission(permissions.GET_NOTEBOOK)
+    @has_resource_permission(GET_NOTEBOOK)
     def get_notebook_status(*, uri) -> str:
         """Retrieves notebook status"""
         notebook = NotebookService.get_notebook(uri=uri)
         return client(notebook).get_notebook_instance_status()
 
     @staticmethod
-    @has_resource_permission(permissions.DELETE_NOTEBOOK)
+    @has_resource_permission(DELETE_NOTEBOOK)
     def delete_notebook(*, uri: str, delete_from_aws: bool):
         """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:

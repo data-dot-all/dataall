@@ -153,9 +153,10 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_security_groups.extend(stacks_updater.task.security_groups)
 
+        # TODO introduce the ability to change the deployment depending on config.json file
         update_bucket_policies_task = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.bucket_policy_updater'],
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('DEBUG'),
@@ -181,7 +182,7 @@ class ContainerStack(pyNestedClass):
             command=[
                 'python3.8',
                 '-m',
-                'dataall.modules.datasets.tasks.subscription_service',
+                'dataall.modules.datasets.tasks.dataset_subscription_task',
             ],
             container_id=f'container',
             ecr_repository=ecr_repository,

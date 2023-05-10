@@ -4,11 +4,13 @@ import logging
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db import api, permissions, models
+from dataall.db import api, models
 from dataall.db.api import ResourcePolicy
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ def resolve_dataset(context, source: DatasetProfilingRun):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return api.Dataset.get_dataset_by_uri(
+        return DatasetService.get_dataset_by_uri(
             session=session, dataset_uri=source.datasetUri
         )
 
@@ -30,9 +32,9 @@ def start_profiling_run(context: Context, source, input: dict = None):
             username=context.username,
             groups=context.groups,
             resource_uri=input['datasetUri'],
-            permission_name=permissions.PROFILE_DATASET_TABLE,
+            permission_name=PROFILE_DATASET_TABLE,
         )
-        dataset = api.Dataset.get_dataset_by_uri(session, input['datasetUri'])
+        dataset = DatasetService.get_dataset_by_uri(session, input['datasetUri'])
 
         run = DatasetProfilingService.start_profiling(
             session=session,
@@ -101,7 +103,7 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
         if run:
             if not run.results:
                 table = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
-                dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+                dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
                 environment = api.Environment.get_environment_by_uri(
                     session, dataset.environmentUri
                 )
