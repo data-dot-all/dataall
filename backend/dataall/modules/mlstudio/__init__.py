@@ -18,7 +18,7 @@ class MLStudioApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.mlstudio.api
         log.info("API of sagemaker mlstudio has been imported")
-        #TODO: ask around permissions in notebooks
+        # TODO: ask around permissions in notebooks
 
 
 class MLStudioCdkModuleInterface(ModuleInterface):

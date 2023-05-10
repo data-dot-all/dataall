@@ -42,5 +42,3 @@ TENANT_ALL_WITH_DESC[MANAGE_SGMSTUDIO_USERS] = 'Manage SageMaker Studio users'
 
 RESOURCES_ALL.append(SGMSTUDIO_USER_ALL)
 RESOURCES_ALL_WITH_DESC[CREATE_SGMSTUDIO_USER] = 'Create SageMaker Studio users on this environment'
-
-

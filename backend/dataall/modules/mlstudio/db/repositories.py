@@ -45,7 +45,7 @@ class SageMakerStudioRepository:
     def paginated_sagemaker_studio_users(self, username, groups, filter=None) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
-            query=self._query_user_sagemaker_studio_users(username, groups, data),
+            query=self._query_user_sagemaker_studio_users(username, groups, filter),
             page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', SageMakerStudioRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
@@ -53,7 +53,6 @@ class SageMakerStudioRepository:
     def find_sagemaker_studio_user(self, uri):
         """Finds a sagemaker studio user. Returns None if it doesn't exist"""
         return self._session.query(SagemakerStudioUser).get(uri)
-
 
     def count_sagemaker_studio_user(self, environment_uri):
         return (

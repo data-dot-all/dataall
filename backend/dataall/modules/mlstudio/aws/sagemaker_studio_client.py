@@ -2,18 +2,14 @@ import logging
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.notebooks.db.models import SagemakerStudioUser
-from dataall.core.environment.db.models import Environment #TODO: Question: I do not find it in the project
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
 
 class SagemakerStudioClient:
-    """
-    A Sagemaker studio proxy client that is used to send requests to AWS
-    """
-
-    def __init__(self, sm_user:SagemakerStudioUser):
+    """A Sagemaker studio proxy client that is used to send requests to AWS"""
+    def __init__(self, sm_user: SagemakerStudioUser):
         self._client = SagemakerStudioClient.get_client(
             AwsAccountId=sm_user.AwsAccountId,
             region=sm_user.region
@@ -52,7 +48,7 @@ class SagemakerStudioClient:
 
     def get_sagemaker_studio_user_presigned_url(self):
         try:
-            response_signed_url =  self._client.create_presigned_domain_url(
+            response_signed_url = self._client.create_presigned_domain_url(
                 DomainId=self._sagemakerStudioDomainID,
                 UserProfileName=self._sagemakerStudioUserNameSlugify,
             )
@@ -62,7 +58,7 @@ class SagemakerStudioClient:
 
     def get_sagemaker_studio_user_status(self):
         try:
-            response =  self._client.describe_user_profile(
+            response = self._client.describe_user_profile(
                 DomainId=self._sagemakerStudioDomainID,
                 UserProfileName=self._sagemakerStudioUserNameSlugify,
             )
@@ -76,7 +72,7 @@ class SagemakerStudioClient:
     def get_sagemaker_studio_user_applications(self):
         _running_apps = []
         try:
-            paginator_app =  self._client.get_paginator('list_apps')
+            paginator_app = self._client.get_paginator('list_apps')
             response_paginator = paginator_app.paginate(
                 DomainIdEquals=self._sagemakerStudioDomainID,
                 UserProfileNameEquals=self._sagemakerStudioUserNameSlugify,
@@ -97,6 +93,7 @@ class SagemakerStudioClient:
         except ClientError as e:
             raise e
 
-def sagemaker_studio_client(sm_user:SagemakerStudioUser) -> SagemakerStudioClient:
+
+def sagemaker_studio_client(sm_user: SagemakerStudioUser) -> SagemakerStudioClient:
     """Factory method to retrieve the client to send request to AWS"""
     return SagemakerStudioClient(sm_user)

@@ -40,5 +40,3 @@ class SagemakerStudioUser(Resource, Base):
     region = Column(String, default='eu-west-1')
     SamlAdminGroupName = Column(String, nullable=True)
     userRoleForSagemakerStudioUser = query_expression()
-
-

@@ -9,7 +9,7 @@ class SagemakerStudioPolicy(ServicePolicy):
     """
     Creates a sagemaker policy for accessing and interacting with SageMaker Studio
     """
-    #TODO: Remove those policies that are only needed for Notebooks, right now we have both
+    # TODO: Remove those policies that are only needed for Notebooks, right now we have both
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_SGMSTUDIO_USER not in group_permissions:
             return []

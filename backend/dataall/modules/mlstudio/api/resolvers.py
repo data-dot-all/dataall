@@ -8,6 +8,7 @@ from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 
 log = logging.getLogger(__name__)
 
+
 class RequestValidator:
     """Aggregates all validation logic for operating with mlstudio"""
     @staticmethod
@@ -31,6 +32,7 @@ class RequestValidator:
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
 
+
 def create_sagemaker_studio_user(context: Context, source, input: dict = None):
     """Creates a SageMaker Studio user. Deploys the SageMaker Studio user stack into AWS"""
     RequestValidator.validate_creation_request(input)
@@ -40,6 +42,7 @@ def create_sagemaker_studio_user(context: Context, source, input: dict = None):
         admin_group=input["SamlAdminGroupName"],
         request=request
     )
+
 
 def list_sagemaker_studio_users(context, source, filter: dict = None):
     """
@@ -85,6 +88,7 @@ def delete_sagemaker_studio_user(
         delete_from_aws=deleteFromAWS
     )
 
+
 def resolve_user_role(context: Context, source: SagemakerStudioUser):
     if not source:
         return None
@@ -101,7 +105,8 @@ def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, *
     return SagemakerStudioService.get_sagemaker_studio_user_status(
         uri=source.sagemakerStudioUserUri
     )
-    #TODO: check Notebooks because they do not update the status. I verified with the current main and it never updated the db
+    # TODO: check Notebooks because they do not update the status (maybe there is a bug). I verified with the current main and it never updated the db
+
 
 def resolve_sagemaker_studio_user_stack(
     context: Context, source: SagemakerStudioUser, **kwargs
@@ -112,6 +117,7 @@ def resolve_sagemaker_studio_user_stack(
         targetUri=source.sagemakerStudioUserUri,
         environmentUri=source.environmentUri,
     )
+
 
 def resolve_sagemaker_studio_user_applications(context, source: SagemakerStudioUser):
     if not source:
