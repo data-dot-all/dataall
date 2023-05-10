@@ -21,6 +21,10 @@ class WorksheetRepository:
         return self._session.query(Worksheet).get(uri)
     
     @classmethod
+    def find_worksheet_share_by_uri(self, uri) -> WorksheetShare:
+        return self._session.query(WorksheetShare).get(uri)
+    
+    @classmethod
     def query_user_worksheets(self, username, groups, filter) -> Query:
         query = self._session.query(Worksheet).filter(
             or_(

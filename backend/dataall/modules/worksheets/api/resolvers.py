@@ -85,9 +85,8 @@ def update_worksheet_share(
     context, source, worksheetShareUri: str = None, canEdit: bool = None
 ):
     with context.engine.scoped_session() as session:
-        share: WorksheetShare = session.query(WorksheetShare).get(
-            worksheetShareUri
-        )
+        share: WorksheetShare = WorksheetRepository(session).find_worksheet_share_by_uri(
+            worksheetShareUri)
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
@@ -105,9 +104,8 @@ def update_worksheet_share(
 
 def remove_worksheet_share(context, source, worksheetShareUri):
     with context.engine.scoped_session() as session:
-        share: WorksheetShare = session.query(WorksheetShare).get(
-            worksheetShareUri
-        )
+        share: WorksheetShare = WorksheetRepository(session).find_worksheet_share_by_uri(
+            worksheetShareUri)
         if not share:
             raise exceptions.ObjectNotFound('WorksheetShare', worksheetShareUri)
 
