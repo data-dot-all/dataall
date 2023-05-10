@@ -1,6 +1,20 @@
-from ... import gql
-from .resolvers import *
-from ...constants import DatasetRole, EnvironmentPermission
+from dataall.api import gql
+from dataall.modules.datasets.api.dataset.enums import DatasetRole
+from dataall.modules.datasets.api.dataset.resolvers import (
+    get_dataset_environment,
+    get_dataset_organization,
+    get_dataset_owners_group,
+    get_dataset_stewards_group,
+    list_tables,
+    list_locations,
+    resolve_user_role,
+    get_dataset_statistics,
+    list_dataset_share_objects,
+    get_dataset_glossary_terms,
+    resolve_redshift_copy_enabled,
+    get_dataset_stack
+)
+from dataall.api.constants import EnvironmentPermission
 
 DatasetStatistics = gql.ObjectType(
     name='DatasetStatistics',

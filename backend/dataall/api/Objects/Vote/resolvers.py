@@ -1,7 +1,15 @@
-from .... import db
-from ....api.context import Context
+from typing import Dict, Type
+
+from dataall import db
+from dataall.api.context import Context
 from dataall.searchproxy.indexers import DashboardIndexer
-from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.searchproxy.base_indexer import BaseIndexer
+
+_VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
+
+
+def add_vote_type(target_type: str, indexer: Type[BaseIndexer]):
+    _VOTE_TYPES[target_type] = indexer
 
 
 def count_upvotes(
@@ -28,15 +36,9 @@ def upvote(context: Context, source, input=None):
             data=input,
             check_perm=True,
         )
-        reindex(session, vote)
+
+        _VOTE_TYPES[vote.targetType].upsert(session, vote.targetUri)
         return vote
-
-
-def reindex(session, vote):
-    if vote.targetType == 'dataset':
-        DatasetIndexer.upsert(session=session, dataset_uri=vote.targetUri)
-    elif vote.targetType == 'dashboard':
-        DashboardIndexer.upsert(session=session, dashboard_uri=vote.targetUri)
 
 
 def get_vote(context: Context, source, targetUri: str = None, targetType: str = None):
@@ -49,3 +51,7 @@ def get_vote(context: Context, source, targetUri: str = None, targetType: str = 
             data={'targetType': targetType},
             check_perm=True,
         )
+
+
+# TODO should migrate after into the Dashboard module
+add_vote_type("dashboard", DashboardIndexer)

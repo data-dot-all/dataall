@@ -33,7 +33,7 @@ class ClientWrapper:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def app(db, es):
+def app(db):
     app = Flask('tests')
     schema = dataall.api.get_executable_schema()
 
@@ -63,7 +63,7 @@ def app(db, es):
         username = request.headers.get('Username', 'anonym')
         groups = json.loads(request.headers.get('Groups', '[]'))
 
-        set_context(RequestContext(db, username, groups, es))
+        set_context(RequestContext(db, username, groups))
 
         success, result = graphql_sync(
             schema,
@@ -73,7 +73,6 @@ def app(db, es):
                 'engine': db,
                 'username': username,
                 'groups': groups,
-                'es': es,
             },
             debug=app.debug,
         )

@@ -6,7 +6,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -38,8 +38,10 @@ class DatasetColumnGlueHandler:
 
             aws_session = SessionHelper.remote_session(table.AWSAccountId)
 
-            LakeFormationTableClient(aws_session, table).grant_pivot_role_all_table_permissions()
-            glue_client = GlueTableClient(aws_session, table)
+            lf_client = LakeFormationTableClient(table=table, aws_session=aws_session)
+            lf_client.grant_pivot_role_all_table_permissions()
+
+            glue_client = GlueTableClient(aws_session=aws_session, table=table)
             original_table = glue_client.get_table()
             updated_table = {
                 k: v

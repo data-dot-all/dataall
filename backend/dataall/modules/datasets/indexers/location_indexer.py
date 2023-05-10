@@ -1,5 +1,5 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
-from dataall.modules.datasets.db.models import DatasetStorageLocation
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 from dataall.db import models
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
@@ -24,25 +24,25 @@ class DatasetLocationIndexer(BaseIndexer):
                 models.Organization.name.label('orgName'),
                 models.Environment.environmentUri.label('envUri'),
                 models.Environment.name.label('envName'),
-                models.Dataset.SamlAdminGroupName.label('admins'),
-                models.Dataset.S3BucketName.label('source'),
-                models.Dataset.topics.label('topics'),
-                models.Dataset.confidentiality.label('classification'),
+                Dataset.SamlAdminGroupName.label('admins'),
+                Dataset.S3BucketName.label('source'),
+                Dataset.topics.label('topics'),
+                Dataset.confidentiality.label('classification'),
                 DatasetStorageLocation.created,
                 DatasetStorageLocation.updated,
                 DatasetStorageLocation.deleted,
             )
             .join(
-                models.Dataset,
-                models.Dataset.datasetUri == DatasetStorageLocation.datasetUri,
+                Dataset,
+                Dataset.datasetUri == DatasetStorageLocation.datasetUri,
             )
             .join(
                 models.Organization,
-                models.Dataset.organizationUri == models.Organization.organizationUri,
+                Dataset.organizationUri == models.Organization.organizationUri,
             )
             .join(
                 models.Environment,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
+                Dataset.environmentUri == models.Environment.environmentUri,
             )
             .filter(DatasetStorageLocation.locationUri == folder_uri)
             .first()

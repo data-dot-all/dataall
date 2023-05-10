@@ -2,7 +2,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from dataall.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable
 
 log = logging.getLogger(__name__)
 

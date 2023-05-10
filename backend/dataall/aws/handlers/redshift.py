@@ -10,8 +10,9 @@ from .sts import SessionHelper
 from ... import db
 from ...db import models
 # TODO should be migrated in the redshift module
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -371,7 +372,7 @@ class Redshift:
             Redshift.set_cluster_secrets(secretsmanager, cluster)
             catalog_databases = []
             for d in cluster_datasets:
-                dataset = db.api.Dataset.get_dataset_by_uri(session, d.datasetUri)
+                dataset = DatasetService.get_dataset_by_uri(session, d.datasetUri)
                 if dataset.environmentUri != cluster.environmentUri:
                     catalog_databases.append(f'{dataset.GlueDatabaseName}shared')
                 else:
@@ -445,7 +446,7 @@ class Redshift:
                 task.targetUri
             )
 
-            dataset: models.Dataset = db.api.Dataset.get_dataset_by_uri(
+            dataset: Dataset = DatasetService.get_dataset_by_uri(
                 session, task.payload['datasetUri']
             )
 

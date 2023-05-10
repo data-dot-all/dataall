@@ -1,24 +1,23 @@
 import logging
 
-from botocore.exceptions import ClientError
-
 from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
-from dataall.db.api import Dataset
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 
 
-class DatasetColumnGlueHandler:
+class DatasetTableSyncHandler:
     """A handler for dataset table"""
 
     @staticmethod
     @Worker.handler(path='glue.dataset.database.tables')
-    def list_tables(engine, task: models.Task):
+    def sync_existing_tables(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: models.Dataset = Dataset.get_dataset_by_uri(
+            dataset: Dataset = DatasetService.get_dataset_by_uri(
                 session, task.targetUri
             )
             account_id = dataset.AwsAccountId

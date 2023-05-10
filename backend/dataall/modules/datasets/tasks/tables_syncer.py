@@ -8,10 +8,12 @@ from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.utils.alarm_service import AlarmService
-from dataall.modules.datasets.services.dataset_table import DatasetTableService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -23,11 +25,11 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
+        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
             session
         )
         log.info(f'Found {len(all_datasets)} datasets for tables sync')
-        dataset: models.Dataset
+        dataset: Dataset
         for dataset in all_datasets:
             log.info(
                 f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables'
@@ -75,8 +77,7 @@ def sync_tables(engine):
                     log.info('Updating tables permissions on Lake Formation...')
 
                     for table in tables:
-                        Glue.grant_principals_all_table_permissions(
-                            table,
+                        LakeFormationTableClient(table).grant_principals_all_table_permissions(
                             principals=[
                                 SessionHelper.get_delegation_role_arn(env.AwsAccountId),
                                 env.EnvironmentDefaultIAMRoleArn,
@@ -93,7 +94,7 @@ def sync_tables(engine):
                     f'{dataset.AwsAccountId}/{dataset.GlueDatabaseName} '
                     f'due to: {e}'
                 )
-                AlarmService().trigger_dataset_sync_failure_alarm(dataset, str(e))
+                DatasetAlarmService().trigger_dataset_sync_failure_alarm(dataset, str(e))
         return processed_tables
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.db import models, api
-from dataall.modules.datasets.db.models import DatasetTable
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -70,7 +70,7 @@ def another_group(db, env):
             environmentAthenaWorkGroup='workgroup',
         )
         session.add(env_group)
-        dataset = models.Dataset(
+        dataset = Dataset(
             label='thisdataset',
             environmentUri=env.environmentUri,
             organizationUri=env.organizationUri,
@@ -95,9 +95,9 @@ def another_group(db, env):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset(db, env: models.Environment) -> models.Dataset:
+def dataset(db, env: models.Environment) -> Dataset:
     with db.scoped_session() as session:
-        dataset = models.Dataset(
+        dataset = Dataset(
             label='thisdataset',
             environmentUri=env.environmentUri,
             organizationUri=env.organizationUri,
@@ -122,7 +122,7 @@ def dataset(db, env: models.Environment) -> models.Dataset:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table(db, dataset: models.Dataset) -> DatasetTable:
+def table(db, dataset: Dataset) -> DatasetTable:
     with db.scoped_session() as session:
         table = DatasetTable(
             label='thistable',

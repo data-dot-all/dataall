@@ -1,6 +1,6 @@
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 
-from dataall.modules.notebooks.services.permissions import CREATE_NOTEBOOK
+from dataall.modules.notebooks.services.notebook_permissions import CREATE_NOTEBOOK
 from dataall.modules.common.sagemaker.cdk.statements import create_sagemaker_statements
 
 

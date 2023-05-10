@@ -2,7 +2,9 @@
 
 from dataall import db
 from dataall.db import models
-from dataall.modules.datasets.services.dataset_location import DatasetLocationService
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.searchproxy.base_indexer import BaseIndexer
 
 
@@ -12,38 +14,38 @@ class DatasetIndexer(BaseIndexer):
     def upsert(cls, session, dataset_uri: str):
         dataset = (
             session.query(
-                models.Dataset.datasetUri.label('datasetUri'),
-                models.Dataset.name.label('name'),
-                models.Dataset.owner.label('owner'),
-                models.Dataset.label.label('label'),
-                models.Dataset.description.label('description'),
-                models.Dataset.confidentiality.label('classification'),
-                models.Dataset.tags.label('tags'),
-                models.Dataset.topics.label('topics'),
-                models.Dataset.region.label('region'),
+                Dataset.datasetUri.label('datasetUri'),
+                Dataset.name.label('name'),
+                Dataset.owner.label('owner'),
+                Dataset.label.label('label'),
+                Dataset.description.label('description'),
+                Dataset.confidentiality.label('classification'),
+                Dataset.tags.label('tags'),
+                Dataset.topics.label('topics'),
+                Dataset.region.label('region'),
                 models.Organization.organizationUri.label('orgUri'),
                 models.Organization.name.label('orgName'),
                 models.Environment.environmentUri.label('envUri'),
                 models.Environment.name.label('envName'),
-                models.Dataset.SamlAdminGroupName.label('admins'),
-                models.Dataset.GlueDatabaseName.label('database'),
-                models.Dataset.S3BucketName.label('source'),
-                models.Dataset.created,
-                models.Dataset.updated,
-                models.Dataset.deleted,
+                Dataset.SamlAdminGroupName.label('admins'),
+                Dataset.GlueDatabaseName.label('database'),
+                Dataset.S3BucketName.label('source'),
+                Dataset.created,
+                Dataset.updated,
+                Dataset.deleted,
             )
             .join(
                 models.Organization,
-                models.Dataset.organizationUri == models.Organization.organizationUri,
+                Dataset.organizationUri == models.Organization.organizationUri,
             )
             .join(
                 models.Environment,
-                models.Dataset.environmentUri == models.Environment.environmentUri,
+                Dataset.environmentUri == models.Environment.environmentUri,
             )
-            .filter(models.Dataset.datasetUri == dataset_uri)
+            .filter(Dataset.datasetUri == dataset_uri)
             .first()
         )
-        count_tables = db.api.Dataset.count_dataset_tables(session, dataset_uri)
+        count_tables = DatasetService.count_dataset_tables(session, dataset_uri)
         count_folders = DatasetLocationService.count_dataset_locations(session, dataset_uri)
         count_upvotes = db.api.Vote.count_upvotes(
             session, None, None, dataset_uri, {'targetType': 'dataset'}

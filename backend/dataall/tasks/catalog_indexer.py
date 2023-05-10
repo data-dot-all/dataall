@@ -2,9 +2,10 @@ import logging
 import os
 import sys
 
+from dataall.modules.datasets.db.models import Dataset
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from .. import db
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.db import get_engine, models
 from dataall.searchproxy.indexers import DashboardIndexer
 from dataall.utils.alarm_service import AlarmService
@@ -21,11 +22,11 @@ def index_objects(engine):
         indexed_objects_counter = 0
         with engine.scoped_session() as session:
 
-            all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
+            all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
                 session
             )
             log.info(f'Found {len(all_datasets)} datasets')
-            dataset: models.Dataset
+            dataset: Dataset
             for dataset in all_datasets:
                 tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
                 folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)

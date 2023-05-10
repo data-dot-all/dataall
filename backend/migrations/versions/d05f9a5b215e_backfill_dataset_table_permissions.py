@@ -10,10 +10,11 @@ from sqlalchemy import orm, Column, String, Text, DateTime, and_
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
-from dataall.db import api, models, permissions, utils, Resource
+from dataall.db import api, utils, Resource
 from datetime import datetime
 from dataall.db.models.Enums import ShareObjectStatus, ShareableType
-
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'
@@ -84,7 +85,7 @@ def upgrade():
         print('Back-filling dataset table permissions for owners/stewards...')
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
-            dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+            dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
             env = api.Environment.get_environment_by_uri(session, dataset.environmentUri)
 
             groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
@@ -93,7 +94,7 @@ def upgrade():
                     session=session,
                     resource_uri=table.tableUri,
                     group=group,
-                    permissions=permissions.DATASET_TABLE_READ,
+                    permissions=DATASET_TABLE_READ,
                     resource_type=DatasetTable.__name__,
                 )
         print('dataset table permissions updated successfully for owners/stewards')
@@ -117,7 +118,7 @@ def upgrade():
             api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=shared_table.itemUri,
                 resource_type=DatasetTable.__name__,
             )

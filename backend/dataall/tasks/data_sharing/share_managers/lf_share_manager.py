@@ -10,9 +10,10 @@ from ....aws.handlers.lakeformation import LakeFormation
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.ram import Ram
-from ....db import api, exceptions, models
-from dataall.modules.datasets.db.models import DatasetTable
+from ....db import exceptions, models
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 from dataall.utils.alarm_service import AlarmService
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
@@ -75,7 +76,7 @@ class LFShareManager:
         Unique per share Uri.
         Parameters
         ----------
-        dataset : models.Dataset
+        dataset : Dataset
         share : models.ShareObject
 
         Returns
@@ -156,7 +157,7 @@ class LFShareManager:
     def create_shared_database(
         cls,
         target_environment: models.Environment,
-        dataset: models.Dataset,
+        dataset: Dataset,
         shared_db_name: str,
         principals: [str],
     ) -> dict:
@@ -527,7 +528,7 @@ class LFShareManager:
             f'due to: {error}'
         )
 
-        AlarmService().trigger_table_sharing_failure_alarm(
+        DatasetAlarmService().trigger_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True
@@ -550,7 +551,7 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        AlarmService().trigger_revoke_table_sharing_failure_alarm(
+        DatasetAlarmService().trigger_revoke_table_sharing_failure_alarm(
             table, self.share, self.target_environment
         )
         return True
