@@ -1,8 +1,8 @@
 """The module defines GraphQL input types for the SageMaker ML Studio"""
 from dataall.api import gql
 
-NewSagemakerStudioUserProfileInput = gql.InputType(
-    name='NewSagemakerStudioUserProfileInput',
+NewSagemakerStudioUserInput = gql.InputType(
+    name='NewSagemakerStudioUserInput',
     arguments=[
         gql.Argument('label', gql.NonNullableType(gql.String)),
         gql.Argument('description', gql.String),
@@ -13,8 +13,8 @@ NewSagemakerStudioUserProfileInput = gql.InputType(
     ],
 )
 
-ModifySagemakerStudioUserProfileInput = gql.InputType(
-    name='ModifySagemakerStudioUserProfileInput',
+ModifySagemakerStudioUserInput = gql.InputType(
+    name='ModifySagemakerStudioUserInput',
     arguments=[
         gql.Argument('label', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
@@ -22,8 +22,8 @@ ModifySagemakerStudioUserProfileInput = gql.InputType(
     ],
 )
 
-SagemakerStudioUserProfileFilter = gql.InputType(
-    name='SagemakerStudioUserProfileFilter',
+SagemakerStudioUserFilter = gql.InputType(
+    name='SagemakerStudioUserFilter',
     arguments=[
         gql.Argument('term', gql.String),
         gql.Argument('page', gql.Integer),

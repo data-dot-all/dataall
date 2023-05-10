@@ -24,14 +24,14 @@ class SagemakerStudioDomain(Resource, Base):
 
 class SagemakerStudioUser(Resource, Base):
     """Describes ORM model for sagemaker ML Studio user"""
-    __tablename__ = 'sagemaker_studio_user_profile'
+    __tablename__ = 'sagemaker_studio_user'
     environmentUri = Column(String, ForeignKey("environment.environmentUri"), nullable=False)
-    sagemakerStudioUserProfileUri = Column(
-        String, primary_key=True, default=utils.uuid('sagemakerstudiouserprofile')
+    sagemakerStudioUserUri = Column(
+        String, primary_key=True, default=utils.uuid('sagemakerstudiouser')
     )
-    sagemakerStudioUserProfileStatus = Column(String, nullable=False)
-    sagemakerStudioUserProfileName = Column(String, nullable=False)
-    sagemakerStudioUserProfileNameSlugify = Column(
+    sagemakerStudioUserStatus = Column(String, nullable=False)
+    sagemakerStudioUserName = Column(String, nullable=False)
+    sagemakerStudioUserNameSlugify = Column(
         String, nullable=False, default=utils.slugifier('label')
     )
     sagemakerStudioDomainID = Column(String, nullable=False)
@@ -39,6 +39,6 @@ class SagemakerStudioUser(Resource, Base):
     RoleArn = Column(String, nullable=False)
     region = Column(String, default='eu-west-1')
     SamlAdminGroupName = Column(String, nullable=True)
-    userRoleForSagemakerStudioUserProfile = query_expression()
+    userRoleForSagemakerStudioUser = query_expression()
 
 

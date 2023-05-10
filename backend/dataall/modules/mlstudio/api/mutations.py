@@ -1,31 +1,31 @@
 """The module defines GraphQL mutations for the SageMaker ML Studio"""
 from dataall.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
-    create_sagemaker_studio_user_profile,
-    delete_sagemaker_studio_user_profile,
+    create_sagemaker_studio_user,
+    delete_sagemaker_studio_user,
 )
 
-createSagemakerStudioUserProfile = gql.MutationField(
-    name='createSagemakerStudioUserProfile',
+createSagemakerStudioUser = gql.MutationField(
+    name='createSagemakerStudioUser',
     args=[
         gql.Argument(
             name='input',
-            type=gql.NonNullableType(gql.Ref('NewSagemakerStudioUserProfileInput')),
+            type=gql.NonNullableType(gql.Ref('NewSagemakerStudioUserInput')),
         )
     ],
-    type=gql.Ref('SagemakerStudioUserProfile'),
-    resolver=create_sagemaker_studio_user_profile,
+    type=gql.Ref('SagemakerStudioUser'),
+    resolver=create_sagemaker_studio_user,
 )
 
-deleteSagemakerStudioUserProfile = gql.MutationField(
-    name='deleteSagemakerStudioUserProfile',
+deleteSagemakerStudioUser = gql.MutationField(
+    name='deleteSagemakerStudioUser',
     args=[
         gql.Argument(
-            name='sagemakerStudioUserProfileUri',
+            name='sagemakerStudioUserUri',
             type=gql.NonNullableType(gql.String),
         ),
         gql.Argument(name='deleteFromAWS', type=gql.Boolean),
     ],
     type=gql.String,
-    resolver=delete_sagemaker_studio_user_profile,
+    resolver=delete_sagemaker_studio_user,
 )

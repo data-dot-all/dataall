@@ -2,9 +2,9 @@
 from dataall.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     resolve_user_role,
-    resolve_mlstudio_status,
-    resolve_mlstudio_stack,
-    get_user_profile_applications,
+    resolve_sagemaker_studio_user_status,
+    resolve_sagemaker_studio_user_stack,
+    resolve_sagemaker_studio_user_applications,
 )
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 
@@ -31,7 +31,7 @@ SagemakerStudio = gql.ObjectType(
             resolver=resolve_user_role,
         ),
         gql.Field(
-            name='SagemakerStudioStatus', type=gql.String, resolver=resolve_status
+            name='SagemakerStudioStatus', type=gql.String, resolver=resolve_sagemaker_studio_user_status
         ),
         gql.Field(
             name='environment',
@@ -43,7 +43,7 @@ SagemakerStudio = gql.ObjectType(
             type=gql.Ref('Organization'),
             resolver=resolve_organization_by_env,
         ),
-        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
+        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_sagemaker_studio_user_stack),
     ],
 )
 
@@ -59,12 +59,12 @@ SagemakerStudioSearchResult = gql.ObjectType(
     ],
 )
 
-SagemakerStudioUserProfileApps = gql.ArrayType(
+SagemakerStudioUserApps = gql.ArrayType(
     gql.ObjectType(
-        name='SagemakerStudioUserProfileApps',
+        name='SagemakerStudioUserApps',
         fields=[
             gql.Field(name='DomainId', type=gql.String),
-            gql.Field(name='UserProfileName', type=gql.String),
+            gql.Field(name='UserName', type=gql.String),
             gql.Field(name='AppType', type=gql.String),
             gql.Field(name='AppName', type=gql.String),
             gql.Field(name='Status', type=gql.String),
@@ -72,10 +72,10 @@ SagemakerStudioUserProfileApps = gql.ArrayType(
     )
 )
 
-SagemakerStudioUserProfile = gql.ObjectType(
-    name='SagemakerStudioUserProfile',
+SagemakerStudioUser = gql.ObjectType(
+    name='SagemakerStudioUser',
     fields=[
-        gql.Field(name='sagemakerStudioUserProfileUri', type=gql.ID),
+        gql.Field(name='sagemakerStudioUserUri', type=gql.ID),
         gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='label', type=gql.String),
         gql.Field(name='description', type=gql.String),
@@ -86,19 +86,19 @@ SagemakerStudioUserProfile = gql.ObjectType(
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
         gql.Field(
-            name='userRoleForSagemakerStudioUserProfile',
+            name='userRoleForSagemakerStudioUser',
             type=SagemakerStudioRole.toGraphQLEnum(),
             resolver=resolve_user_role,
         ),
         gql.Field(
-            name='sagemakerStudioUserProfileStatus',
+            name='sagemakerStudioUserStatus',
             type=gql.String,
-            resolver=resolve_status,
+            resolver=resolve_sagemaker_studio_user_status,
         ),
         gql.Field(
-            name='sagemakerStudioUserProfileApps',
-            type=SagemakerStudioUserProfileApps,
-            resolver=get_user_profile_applications,
+            name='sagemakerStudioUserApps',
+            type=SagemakerStudioUserApps,
+            resolver=resolve_sagemaker_studio_user_applications,
         ),
         gql.Field(
             name='environment',
@@ -110,18 +110,18 @@ SagemakerStudioUserProfile = gql.ObjectType(
             type=gql.Ref('Organization'),
             resolver=resolve_organization_by_env,
         ),
-        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_stack),
+        gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_sagemaker_studio_user_stack),
     ],
 )
 
-SagemakerStudioUserProfileSearchResult = gql.ObjectType(
-    name='SagemakerStudioUserProfileSearchResult',
+SagemakerStudioUserSearchResult = gql.ObjectType(
+    name='SagemakerStudioUserSearchResult',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioUserProfile)),
+        gql.Field(name='nodes', type=gql.ArrayType(SagemakerStudioUser)),
     ],
 )

@@ -43,7 +43,7 @@ class SageMakerStudioRepository:
         return query
 
     def paginated_sagemaker_studio_users(self, username, groups, filter=None) -> dict:
-        """Returns a page of sagemaker users for a data.all user"""
+        """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
             query=self._query_user_sagemaker_studio_users(username, groups, data),
             page=filter.get('page', SageMakerStudioRepository._DEFAULT_PAGE),

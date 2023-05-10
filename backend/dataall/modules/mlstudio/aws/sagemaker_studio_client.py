@@ -50,7 +50,7 @@ class SagemakerStudioClient:
             print(e)
             return 'NotFound'
 
-    def get_sagemaker_studio_user_profile_presigned_url(self):
+    def get_sagemaker_studio_user_presigned_url(self):
         try:
             response_signed_url =  self._client.create_presigned_domain_url(
                 DomainId=self._sagemakerStudioDomainID,
@@ -60,7 +60,7 @@ class SagemakerStudioClient:
         except ClientError:
             return ''
 
-    def get_user_profile_status(self):
+    def get_sagemaker_studio_user_status(self):
         try:
             response =  self._client.describe_user_profile(
                 DomainId=self._sagemakerStudioDomainID,
@@ -68,8 +68,10 @@ class SagemakerStudioClient:
             )
             return response['Status']
         except ClientError as e:
-            print(e)
-            return 'NotFound'
+            logger.error(
+                f'Could not retrieve Studio user {self._sagemakerStudioUserNameSlugify} status due to: {e} '
+            )
+            return 'NOT FOUND'
 
     def get_sagemaker_studio_user_applications(self):
         _running_apps = []
