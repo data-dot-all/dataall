@@ -2,7 +2,6 @@ import json
 import logging
 
 from botocore.exceptions import ClientError
-from pyathena import connect
 
 from dataall import db
 from dataall.api.Objects.Dataset.resolvers import get_dataset
@@ -11,6 +10,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary
+from dataall.modules.common.athena.athena_client import run_athena_query
 from dataall.modules.datasets.db.models import DatasetTable
 from dataall.utils import json_utils
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -122,7 +122,6 @@ def preview(context, source, tableUri: str = None):
         env = db.api.Environment.get_environment_by_uri(session, dataset.environmentUri)
         env_workgroup = {}
         boto3_session = SessionHelper.remote_session(accountid=table.AWSAccountId)
-        creds = boto3_session.get_credentials()
         try:
             env_workgroup = boto3_session.client(
                 'athena', region_name=env.region
@@ -133,18 +132,15 @@ def preview(context, source, tableUri: str = None):
                 f'due to: {e}'
             )
 
-        connection = connect(
-            aws_access_key_id=creds.access_key,
-            aws_secret_access_key=creds.secret_key,
-            aws_session_token=creds.token,
+        SQL = f'select * from "{table.GlueDatabaseName}"."{table.GlueTableName}" limit 50'  # nosec
+        cursor = run_athena_query(
+            session=boto3_session,
             work_group=env_workgroup.get('WorkGroup', {}).get('Name', 'primary'),
             s3_staging_dir=f's3://{env.EnvironmentDefaultBucketName}/preview/{dataset.datasetUri}/{table.tableUri}',
-            region_name=table.region,
+            region=table.region,
+            sql=SQL
         )
-        cursor = connection.cursor()
 
-        SQL = f'select * from "{table.GlueDatabaseName}"."{table.GlueTableName}" limit 50'  # nosec
-        cursor.execute(SQL)
         fields = []
         for f in cursor.description:
             fields.append(json.dumps({'name': f[0]}))

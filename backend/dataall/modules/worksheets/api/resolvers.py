@@ -1,5 +1,6 @@
 from dataall import db
-from dataall.api.Objects.AthenaQueryResult import helpers as athena_helpers
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.modules.common.athena.athena_client import run_athena_query
 from dataall.modules.worksheets.api.schema import WorksheetRole
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
@@ -152,9 +153,38 @@ def run_sql_query(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
 
-    return athena_helpers.run_query_with_role(
-        environment=environment, environment_group=env_group, sql=sqlQuery
+    base_session = SessionHelper.remote_session(accountid=environment.AwsAccountId)
+    boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
+    
+    cursor = run_athena_query(
+        session=boto3_session,
+        work_group=env_group.environmentAthenaWorkGroup,
+        s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
+        region=environment.region,
+        sql=sqlQuery
     )
+
+    columns = []
+    for f in cursor.description:
+        columns.append({'columnName': f[0], 'typeName': 'String'})
+
+    rows = []
+    for row in cursor:
+        record = {'cells': []}
+        for col_position, column in enumerate(columns):
+            cell = {}
+            cell['columnName'] = column['columnName']
+            cell['typeName'] = column['typeName']
+            cell['value'] = str(row[col_position])
+            record['cells'].append(cell)
+        rows.append(record)
+    return {
+        'error': None,
+        'AthenaQueryId': cursor.query_id,
+        'ElapsedTime': cursor.total_execution_time_in_millis,
+        'rows': rows,
+        'columns': columns,
+    }
 
 
 def delete_worksheet(context, source, worksheetUri: str = None):
