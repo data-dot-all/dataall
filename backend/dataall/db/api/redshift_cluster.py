@@ -12,7 +12,7 @@ from dataall.utils.naming_convention import (
 from dataall.utils.slugify import slugify
 from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.share_object import ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 
 log = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ from ..share_managers import S3ShareManager
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in share_folders:
             log.info(f'sharing folder: {folder}')
-            sharing_item = ShareObjectService.find_share_item_by_folder(
+            sharing_item = ShareObjectRepository.find_share_item_by_folder(
                 session,
                 share,
                 folder,
@@ -129,7 +129,7 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
-            removing_item = ShareObjectService.find_share_item_by_folder(
+            removing_item = ShareObjectRepository.find_share_item_by_folder(
                 session,
                 share,
                 folder,

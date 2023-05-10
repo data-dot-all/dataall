@@ -2,7 +2,7 @@ import logging
 
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM
 from ..share_managers import LFShareManager
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -70,7 +70,7 @@ class ProcessLFSameAccountShare(LFShareManager):
 
         for table in self.shared_tables:
 
-            share_item = ShareObjectService.find_share_item_by_table(
+            share_item = ShareObjectRepository.find_share_item_by_table(
                 self.session, self.share, table
             )
 
@@ -121,7 +121,7 @@ class ProcessLFSameAccountShare(LFShareManager):
         shared_db_name = self.build_shared_db_name()
         principals = self.get_share_principals()
         for table in self.revoked_tables:
-            share_item = ShareObjectService.find_share_item_by_table(
+            share_item = ShareObjectRepository.find_share_item_by_table(
                 self.session, self.share, table
             )
             if not share_item:

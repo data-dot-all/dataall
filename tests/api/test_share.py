@@ -8,7 +8,7 @@ from dataall.modules.dataset_sharing.api.enums import ShareableType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM, ShareObjectSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM, ShareObjectSM
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 
@@ -1351,9 +1351,9 @@ def test_delete_share_object_remaining_items_error(
 def _successfull_processing_for_share_object(db, share):
     with db.scoped_session() as session:
         print('Processing share with action ShareObjectActions.Start')
-        share = ShareObjectService.get_share_by_uri(session, share.shareUri)
+        share = ShareObjectRepository.get_share_by_uri(session, share.shareUri)
 
-        share_items_states = ShareObjectService.get_share_items_states(session, share.shareUri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, share.shareUri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
@@ -1368,8 +1368,8 @@ def _successfull_processing_for_share_object(db, share):
         print('Processing share with action ShareObjectActions.Finish \
             and ShareItemActions.Success')
 
-        share = ShareObjectService.get_share_by_uri(session, share.shareUri)
-        share_items_states = ShareObjectService.get_share_items_states(session, share.shareUri)
+        share = ShareObjectRepository.get_share_by_uri(session, share.shareUri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, share.shareUri)
 
         new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
 

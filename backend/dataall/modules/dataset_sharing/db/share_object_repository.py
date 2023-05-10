@@ -149,7 +149,7 @@ class ShareObjectSM:
 
     def update_state(self, session, share, new_state):
         logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
-        ShareObjectService.update_share_object_status(
+        ShareObjectRepository.update_share_object_status(
             session=session,
             shareUri=share.shareUri,
             status=new_state
@@ -272,14 +272,14 @@ class ShareItemSM:
         if share_uri and (new_state != self._state):
             if new_state == ShareItemStatus.Deleted.value:
                 logger.info(f"Deleting share items in DB in {self._state} state")
-                ShareObjectService.delete_share_item_status_batch(
+                ShareObjectRepository.delete_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
                     status=self._state
                 )
             else:
                 logger.info(f"Updating share items in DB from {self._state} to state {new_state}")
-                ShareObjectService.update_share_item_status_batch(
+                ShareObjectRepository.update_share_item_status_batch(
                     session=session,
                     share_uri=share_uri,
                     old_status=self._state,
@@ -292,7 +292,7 @@ class ShareItemSM:
 
     def update_state_single_item(self, session, share_item, new_state):
         logger.info(f"Updating share item in DB {share_item.shareItemUri} status to {new_state}")
-        ShareObjectService.update_share_item_status(
+        ShareObjectRepository.update_share_item_status(
             session=session,
             uri=share_item.shareItemUri,
             status=new_state
@@ -318,7 +318,7 @@ class ShareItemSM:
         ]
 
 
-class ShareObjectService:
+class ShareObjectRepository:
     @staticmethod
     @has_resource_perm(permissions.CREATE_SHARE_OBJECT)
     def create_share_object(
@@ -381,7 +381,7 @@ class ShareObjectService:
                 message=f'Team: {groupUri} is managing the dataset {dataset.name}',
             )
 
-        ShareObjectService.validate_group_membership(
+        ShareObjectRepository.validate_group_membership(
             session=session,
             username=username,
             groups=groups,
@@ -537,9 +537,9 @@ class ShareObjectService:
         data: dict = None,
         check_perm: bool = False,
     ) -> ShareObject:
-        share = ShareObjectService.get_share_by_uri(session, uri)
+        share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObjectService.get_share_items_states(session, uri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
 
         valid_states = [ShareItemStatus.PendingApproval.value]
         valid_share_items_states = [x for x in valid_states if x in share_items_states]
@@ -575,9 +575,9 @@ class ShareObjectService:
         data: dict = None,
         check_perm: bool = False,
     ) -> ShareObject:
-        share = ShareObjectService.get_share_by_uri(session, uri)
+        share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObjectService.get_share_items_states(session, uri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Approve.value)
@@ -622,9 +622,9 @@ class ShareObjectService:
         check_perm: bool = False,
     ) -> ShareObject:
 
-        share = ShareObjectService.get_share_by_uri(session, uri)
+        share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObjectService.get_share_items_states(session, uri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
@@ -657,10 +657,10 @@ class ShareObjectService:
         check_perm: bool = False,
     ) -> ShareObject:
 
-        share = ShareObjectService.get_share_by_uri(session, uri)
+        share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-        revoked_items_states = ShareObjectService.get_share_items_states(session, uri, data.get("revokedItemUris"))
-        revoked_items = [ShareObjectService.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
+        revoked_items_states = ShareObjectRepository.get_share_items_states(session, uri, data.get("revokedItemUris"))
+        revoked_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
 
         if revoked_items_states == []:
             raise exceptions.ShareItemsFound(
@@ -718,7 +718,7 @@ class ShareObjectService:
     ):
         share_item: ShareObjectItem = data.get(
             'share_item',
-            ShareObjectService.get_share_item_by_uri(session, data['shareItemUri']),
+            ShareObjectRepository.get_share_item_by_uri(session, data['shareItemUri']),
         )
         if share_item.itemType == ShareableType.Table.value:
             return session.query(DatasetTable).get(share_item.itemUri)
@@ -832,11 +832,11 @@ class ShareObjectService:
 
         share_item: ShareObjectItem = data.get(
             'share_item',
-            ShareObjectService.get_share_item_by_uri(session, data['shareItemUri']),
+            ShareObjectRepository.get_share_item_by_uri(session, data['shareItemUri']),
         )
         share: ShareObject = data.get(
             'share',
-            ShareObjectService.get_share_by_uri(session, uri),
+            ShareObjectRepository.get_share_by_uri(session, uri),
         )
 
         Item_SM = ShareItemSM(share_item.status)
@@ -848,8 +848,8 @@ class ShareObjectService:
     @staticmethod
     @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
-        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
-        share_items_states = ShareObjectService.get_share_items_states(session, uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
         shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in share_items_states]
 
         Share_SM = ShareObjectSM(share.status)
@@ -872,7 +872,7 @@ class ShareObjectService:
 
     @staticmethod
     def check_existing_shared_items(session, uri):
-        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = session.query(ShareObjectItem).filter(
             and_(
@@ -886,7 +886,7 @@ class ShareObjectService:
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
-        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         shared_items = session.query(ShareObjectItem).filter(
             and_(
@@ -901,7 +901,7 @@ class ShareObjectService:
 
     @staticmethod
     def check_pending_share_items(session, uri):
-        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         shared_items = session.query(ShareObjectItem).filter(
             and_(
                 ShareObjectItem.shareUri == share.shareUri,
@@ -925,7 +925,7 @@ class ShareObjectService:
     @staticmethod
     @has_resource_perm(permissions.LIST_SHARED_ITEMS)
     def list_shared_items(session, username, groups, uri, data=None, check_perm=None):
-        share: ShareObject = ShareObjectService.get_share_by_uri(session, uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         query = session.query(ShareObjectItem).filter(
             ShareObjectItem.shareUri == share.shareUri,
         )
@@ -939,7 +939,7 @@ class ShareObjectService:
     ):
 
         share: ShareObject = data.get(
-            'share', ShareObjectService.get_share_by_uri(session, uri)
+            'share', ShareObjectRepository.get_share_by_uri(session, uri)
         )
         share_item_revokable_states = ShareItemSM.get_share_item_revokable_states()
         datasetUri = share.datasetUri
@@ -1087,7 +1087,7 @@ class ShareObjectService:
             status: str,
     ) -> ShareObject:
 
-        share = ShareObjectService.get_share_by_uri(session, shareUri)
+        share = ShareObjectRepository.get_share_by_uri(session, shareUri)
         share.status = status
         session.commit()
         return share
@@ -1099,7 +1099,7 @@ class ShareObjectService:
         status: str,
     ) -> ShareObjectItem:
 
-        share_item = ShareObjectService.get_share_item_by_uri(session, uri)
+        share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
         share_item.status = status
         session.commit()
         return share_item

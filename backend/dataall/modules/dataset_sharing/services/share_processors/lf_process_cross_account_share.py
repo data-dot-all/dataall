@@ -6,7 +6,7 @@ from dataall.aws.handlers.ram import Ram
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.models import ShareObject
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectService, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
 
-                share_item = ShareObjectService.find_share_item_by_table(
+                share_item = ShareObjectRepository.find_share_item_by_table(
                     self.session, self.share, table
                 )
 
@@ -140,7 +140,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
         shared_db_name = self.build_shared_db_name()
         principals = self.get_share_principals()
         for table in self.revoked_tables:
-            share_item = ShareObjectService.find_share_item_by_table(
+            share_item = ShareObjectRepository.find_share_item_by_table(
                 self.session, self.share, table
             )
 
@@ -184,7 +184,7 @@ class ProcessLFCrossAccountShare(LFShareManager):
 
         self.delete_shared_database()
 
-        if not ShareObjectService.other_approved_share_object_exists(
+        if not ShareObjectRepository.other_approved_share_object_exists(
                 self.session,
                 self.target_environment.environmentUri,
                 self.dataset.datasetUri,

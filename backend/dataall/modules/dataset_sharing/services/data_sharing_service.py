@@ -6,7 +6,7 @@ from dataall.modules.dataset_sharing.services.share_processors.s3_process_share 
 
 from dataall.db import Engine
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemStatus, ShareableType
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectSM, ShareObjectService, ShareItemSM
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectSM, ShareObjectRepository, ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class DataSharingService:
                 share,
                 source_environment,
                 target_environment,
-            ) = ShareObjectService.get_share_data(session, share_uri)
+            ) = ShareObjectRepository.get_share_data(session, share_uri)
 
             Share_SM = ShareObjectSM(share.status)
             new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
@@ -51,7 +51,7 @@ class DataSharingService:
             (
                 shared_tables,
                 shared_folders
-            ) = ShareObjectService.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Share_Approved.value)
 
         log.info(f'Granting permissions to folders: {shared_folders}')
 
@@ -129,7 +129,7 @@ class DataSharingService:
                 share,
                 source_environment,
                 target_environment,
-            ) = ShareObjectService.get_share_data(session, share_uri)
+            ) = ShareObjectRepository.get_share_data(session, share_uri)
 
             Share_SM = ShareObjectSM(share.status)
             new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
@@ -140,7 +140,7 @@ class DataSharingService:
             (
                 revoked_tables,
                 revoked_folders
-            ) = ShareObjectService.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
+            ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
 
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state(session, share_uri, new_state)
@@ -158,7 +158,7 @@ class DataSharingService:
                 env_group,
             )
             log.info(f'revoking folders succeeded = {revoked_folders_succeed}')
-            existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
+            existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 ShareableType.StorageLocation.value
@@ -199,7 +199,7 @@ class DataSharingService:
             revoked_tables_succeed = processor.process_revoked_shares()
             log.info(f'revoking tables succeeded = {revoked_tables_succeed}')
 
-            existing_shared_items = ShareObjectService.check_existing_shared_items_of_type(
+            existing_shared_items = ShareObjectRepository.check_existing_shared_items_of_type(
                 session,
                 share_uri,
                 ShareableType.Table.value
@@ -210,7 +210,7 @@ class DataSharingService:
                 clean_up_tables = processor.clean_up_share()
                 log.info(f"Clean up LF successful = {clean_up_tables}")
 
-            existing_pending_items = ShareObjectService.check_pending_share_items(session, share_uri)
+            existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
             if existing_pending_items:
                 new_share_state = Share_SM.run_transition(ShareObjectActions.FinishPending.value)
             else:

@@ -10,7 +10,7 @@ from dataall.aws.handlers.kms import KMS
 from dataall.aws.handlers.iam import IAM
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.dataset_sharing.services.share_object import ShareObjectService
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
@@ -39,7 +39,7 @@ class S3ShareManager:
         self.target_folder = target_folder
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.share_item = ShareObjectService.find_share_item_by_folder(
+        self.share_item = ShareObjectRepository.find_share_item_by_folder(
             session,
             share,
             target_folder,
