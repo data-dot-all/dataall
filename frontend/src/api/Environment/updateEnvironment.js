@@ -17,7 +17,6 @@ const updateEnvironment = ({ environmentUri, input }) => ({
         SamlGroupName
         AwsAccountId
         dashboardsEnabled
-        mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
         created
