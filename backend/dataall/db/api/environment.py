@@ -294,9 +294,6 @@ class Environment:
         if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
 
-        if permissions.CREATE_SGMSTUDIO_NOTEBOOK in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_SGMSTUDIO_NOTEBOOKS)
-
         if permissions.INVITE_ENVIRONMENT_GROUP in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
