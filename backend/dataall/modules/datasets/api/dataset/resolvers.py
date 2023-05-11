@@ -28,7 +28,7 @@ def import_dataset(context: Context, source, input=None):
     if not input.get('SamlAdminGroupName'):
         raise exceptions.RequiredParameter('group')
 
-    return DatasetService.import_dataset(data=input)
+    return DatasetService.import_dataset(uri=input['environmentUri'], data=input)
 
 
 def get_dataset(context, source, datasetUri=None):
@@ -214,7 +214,7 @@ def list_datasets_created_in_environment(
 ):
     if not filter:
         filter = {}
-    return DatasetService.list_datasets_created_in_environment(environmentUri, filter)
+    return DatasetService.list_datasets_created_in_environment(uri=environmentUri, data=filter)
 
 
 def list_datasets_owned_by_env_group(

@@ -6,7 +6,7 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.db.api import Vote
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Environment, Task
@@ -17,7 +17,8 @@ from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, CRAWL_DATASET, \
-    SUMMARY_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET
+    SUMMARY_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
+    CREATE_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -37,17 +38,19 @@ class DatasetService:
         return True
 
     @staticmethod
-    def create_dataset(env_uri, data: dict):
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
+    def create_dataset(uri, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            environment = Environment.get_environment_by_uri(session, env_uri)
+            environment = Environment.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(environment=environment)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
                 username=context.username,
                 groups=context.groups,
-                uri=env_uri,
+                uri=uri,
                 data=data,
                 check_perm=True,
             )
@@ -65,17 +68,19 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def import_dataset(data):
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(CREATE_DATASET)
+    def import_dataset(uri, data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            environment = Environment.get_environment_by_uri(session, data.get('environmentUri'))
+            environment = Environment.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(environment=environment)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
                 username=context.username,
                 groups=context.groups,
-                uri=data.get('environmentUri'),
+                uri=uri,
                 data=data,
                 check_perm=True,
             )
@@ -98,6 +103,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
+    @has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -117,7 +123,7 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return DatasetRepository.paginated_user_datasets(
-                session, context.username, context.groups, uri=None, data=data
+                session, context.username, context.groups, data=data
             )
 
     @staticmethod
@@ -135,13 +141,13 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             return DatasetRepository.paginated_dataset_tables(
                 session=session,
-                username=context.username,
-                groups=context.groups,
                 uri=dataset_uri,
                 data=data,
             )
 
     @staticmethod
+    @has_tenant_permission(MANAGE_DATASETS)
+    @has_resource_permission(UPDATE_DATASET)
     def update_dataset(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -244,11 +250,8 @@ class DatasetService:
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             return DatasetRepository.paginated_dataset_tables(
                 session=session,
-                username=context.username,
-                groups=context.groups,
                 uri=uri,
                 data={'page': 1, 'pageSize': 10},
-                check_perm=None,
             )
 
     @staticmethod
@@ -290,15 +293,11 @@ class DatasetService:
 
     @staticmethod
     def list_dataset_share_objects(dataset: Dataset, data: dict = None):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
+        with get_context().db_engine.scoped_session() as session:
             return DatasetRepository.paginated_dataset_shares(
                 session=session,
-                username=context.username,
-                groups=context.groups,
                 uri=dataset.datasetUri,
-                data=data,
-                check_perm=True,
+                data=data
             )
 
     @staticmethod
@@ -487,11 +486,12 @@ class DatasetService:
         stack_helper.deploy_stack(dataset.environmentUri)
 
     @staticmethod
-    def list_datasets_created_in_environment(env_uri: str, data: dict):
+    @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_datasets_created_in_environment(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_datasets(
                 session=session,
-                uri=env_uri,
+                uri=uri,
                 data=data,
             )
 

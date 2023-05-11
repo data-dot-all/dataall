@@ -14,9 +14,10 @@ class DatasetCrawler:
         self._client = session.client('glue', region_name=region)
         self._dataset = dataset
 
-    def get_crawler(self):
+    def get_crawler(self, crawler_name=None):
         crawler = None
-        crawler_name = self._dataset.GlueCrawlerName
+        if not crawler_name:
+            crawler_name = self._dataset.GlueCrawlerName
 
         try:
             crawler = self._client.get_crawler(Name=crawler_name)

@@ -10,11 +10,11 @@ from dataall.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets import DatasetTableIndexer
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, CREATE_DATASET_TABLE
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.utils import json_utils
@@ -33,7 +33,7 @@ class DatasetTableService:
     @has_resource_permission(CREATE_DATASET_TABLE)
     def create_table(uri: str, table_data: dict):
         with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetService.get_dataset_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             glue_table = table_data['name']
             exists = DatasetTableRepository.exists(session, dataset_uri=uri, glue_table_name=glue_table)
 
@@ -114,7 +114,7 @@ class DatasetTableService:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(
                 session, table_uri
             )
-            dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             if (
                     dataset.confidentiality != ConfidentialityClassification.Unclassified.value
             ):
@@ -141,7 +141,7 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = Environment.get_environment_by_uri(session, dataset.environmentUri)
             if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
                 raise Exception(
@@ -172,7 +172,7 @@ class DatasetTableService:
 
     @staticmethod
     def sync_existing_tables(session, dataset_uri, glue_tables=None):
-        dataset: Dataset = DatasetService.get_dataset_by_uri(session, dataset_uri)
+        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
         if dataset:
             existing_tables = DatasetTableRepository.find_dataset_tables(session, dataset_uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]
