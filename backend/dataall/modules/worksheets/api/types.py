@@ -1,5 +1,4 @@
 from dataall.api import gql
-#from dataall.modules.worksheets.api.resolvers import *
 from dataall.modules.worksheets.api.resolvers import resolve_shares, resolve_user_role, WorksheetRole
 
 
