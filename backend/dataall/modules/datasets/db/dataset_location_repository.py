@@ -3,23 +3,19 @@ import logging
 from sqlalchemy import and_, or_
 
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import Glossary
 from dataall.db import paginate, exceptions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation
-from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, LIST_DATASET_FOLDERS, \
-    DELETE_DATASET_FOLDER, UPDATE_DATASET_FOLDER, CREATE_DATASET_FOLDER
+from dataall.modules.datasets.services.dataset_permissions import DELETE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetLocationRepository:
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET_FOLDER)
     def create_dataset_location(
         session,
         uri: str,
@@ -69,8 +65,6 @@ class DatasetLocationRepository:
         return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(
         session,
         uri: str,
@@ -91,18 +85,6 @@ class DatasetLocationRepository:
         ).to_dict()
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(LIST_DATASET_FOLDERS)
-    def get_dataset_location(
-        session,
-        uri: str,
-        data: dict = None,
-    ) -> DatasetStorageLocation:
-        return DatasetLocationRepository.get_location_by_uri(session, data['locationUri'])
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET_FOLDER)
     def update_dataset_location(
         session,
         uri: str,
@@ -128,8 +110,6 @@ class DatasetLocationRepository:
         return location
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(DELETE_DATASET_FOLDER)
     def delete_dataset_location(
         session,
         uri: str,
