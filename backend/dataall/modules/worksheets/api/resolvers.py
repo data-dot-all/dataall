@@ -1,12 +1,17 @@
-
-
-from dataall.modules.worksheets.api.schema import WorksheetRole
+from dataall.api.constants import GraphQLEnumMapper
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_services import WorksheetService
 from dataall.api.context import Context
 from dataall.db import paginate, exceptions
 
+
+class WorksheetRole(GraphQLEnumMapper):
+    Creator = '950'
+    Admin = '900'
+    SharedWithWritePermission = '500'
+    SharedWithReadPermission = '400'
+    NoPermission = '000'
 
 def create_worksheet(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:

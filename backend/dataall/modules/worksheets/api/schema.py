@@ -1,14 +1,6 @@
 from dataall.api import gql
-from dataall.api.constants import GraphQLEnumMapper
-from dataall.modules.worksheets.api.resolvers import *
-
-
-class WorksheetRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    SharedWithWritePermission = '500'
-    SharedWithReadPermission = '400'
-    NoPermission = '000'
+#from dataall.modules.worksheets.api.resolvers import *
+from dataall.modules.worksheets.api.resolvers import resolve_shares, resolve_user_role, WorksheetRole
 
 
 AthenaResultColumnDescriptor = gql.ObjectType(

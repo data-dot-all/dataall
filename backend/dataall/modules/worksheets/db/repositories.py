@@ -55,7 +55,6 @@ class WorksheetRepository(GroupResource):
             page_size=data.get('pageSize', WorksheetRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
     
-    @classmethod
     def get_worksheet_share(session, uri, data) -> WorksheetShare:
         return (
             session.query(WorksheetShare)
