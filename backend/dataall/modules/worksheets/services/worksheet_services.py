@@ -7,10 +7,10 @@ from dataall.db import exceptions
 from dataall.db import models
 from dataall.db.api import ResourcePolicy
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
-from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
+from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
-    WORKSHEET_ALL, GET_WORKSHEET, SHARE_WORKSHEET, WORKSHEET_SHARED, DELETE_WORKSHEET, RUN_ATHENA_QUERY
+    WORKSHEET_ALL, GET_WORKSHEET, DELETE_WORKSHEET, RUN_ATHENA_QUERY
 
 
 logger = logging.getLogger(__name__)
@@ -94,65 +94,6 @@ class WorksheetService:
     def get_worksheet(session, username, groups, uri, data=None, check_perm=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         return worksheet
-
-    @staticmethod
-    @has_resource_permission(SHARE_WORKSHEET)
-    def share_worksheet(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> WorksheetShare:
-        share = WorksheetRepository.get_worksheet_share(session, uri, data)
-
-        if not share:
-            share = WorksheetShare(
-                worksheetUri=uri,
-                principalType=data['principalType'],
-                principalId=data['principalId'],
-                canEdit=data.get('canEdit', True),
-                owner=username,
-            )
-            session.add(share)
-
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=data['principalId'],
-                permissions=WORKSHEET_SHARED,
-                resource_uri=uri,
-                resource_type=Worksheet.__name__,
-            )
-        return share
-
-    @staticmethod
-    @has_resource_permission(SHARE_WORKSHEET)
-    def update_share_worksheet(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> WorksheetShare:
-        share: WorksheetShare = data['share']
-        share.canEdit = data['canEdit']
-        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=share.principalId,
-            permissions=WORKSHEET_SHARED,
-            resource_uri=uri,
-            resource_type=Worksheet.__name__,
-        )
-        return share
-
-    @staticmethod
-    @has_resource_permission(SHARE_WORKSHEET)
-    def delete_share_worksheet(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
-        share: WorksheetShare = data['share']
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=share.principalId,
-            resource_uri=uri,
-            resource_type=Worksheet.__name__,
-        )
-        session.delete(share)
-        session.commit()
-        return True
 
     @staticmethod
     @has_resource_permission(DELETE_WORKSHEET)

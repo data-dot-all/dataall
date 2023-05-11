@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, Boolean, DateTime, Integer, Enum, String
+from sqlalchemy import Column, DateTime, Integer, Enum, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
@@ -39,15 +39,3 @@ class WorksheetQueryResult(Base):
     ElapsedTimeInMs = Column(Integer, nullable=True)
     DataScannedInBytes = Column(Integer, nullable=True)
     created = Column(DateTime, default=datetime.datetime.now)
-
-
-class WorksheetShare(Base):
-    __tablename__ = 'worksheet_share'
-    worksheetShareUri = Column(String, primary_key=True, default=utils.uuid('_'))
-    worksheetUri = Column(String, nullable=False)
-    principalId = Column(String, nullable=False)
-    principalType = Column(String, nullable=False)
-    canEdit = Column(Boolean, default=False)
-    owner = Column(String, nullable=False)
-    created = Column(DateTime, default=datetime.datetime.now)
-    updated = Column(DateTime, onupdate=datetime.datetime.now)

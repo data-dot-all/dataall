@@ -50,15 +50,6 @@ WorksheetFilter = gql.InputType(
     ],
 )
 
-WorksheetShareInput = gql.InputType(
-    name='WorksheetShareInput',
-    arguments=[
-        gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='canEdit', type=gql.NonNullableType(gql.Boolean)),
-    ],
-)
-
 
 WorksheetDimensionInput = gql.InputType(
     name='WorksheetDimensionInput',

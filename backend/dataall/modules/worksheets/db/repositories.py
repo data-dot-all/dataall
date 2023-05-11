@@ -1,12 +1,12 @@
 """
 DAO layer that encapsulates the logic and interaction with the database for worksheets
 """
-from sqlalchemy import or_, and_
+from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
 from dataall.core.group.services.group_resource_manager import GroupResource
 from dataall.db import paginate
-from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare, WorksheetQueryResult
+from dataall.modules.worksheets.db.models import Worksheet, WorksheetQueryResult
 
 
 class WorksheetRepository(GroupResource):
@@ -25,9 +25,6 @@ class WorksheetRepository(GroupResource):
 
     def find_worksheet_by_uri(session, uri) -> Worksheet:
         return session.query(Worksheet).get(uri)
-    
-    def find_worksheet_share_by_uri(session, uri) -> WorksheetShare:
-        return session.query(WorksheetShare).get(uri)
     
     def query_user_worksheets(session, username, groups, filter) -> Query:
         query = session.query(Worksheet).filter(
@@ -54,16 +51,3 @@ class WorksheetRepository(GroupResource):
             page=data.get('page', WorksheetRepository._DEFAULT_PAGE),
             page_size=data.get('pageSize', WorksheetRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
-    
-    def get_worksheet_share(session, uri, data) -> WorksheetShare:
-        return (
-            session.query(WorksheetShare)
-            .filter(
-                and_(
-                    WorksheetShare.worksheetUri == uri,
-                    WorksheetShare.principalId == data.get('principalId'),
-                    WorksheetShare.principalType == data.get('principalType'),
-                )
-            )
-            .first()
-        )

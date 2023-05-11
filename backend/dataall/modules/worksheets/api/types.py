@@ -1,5 +1,5 @@
 from dataall.api import gql
-from dataall.modules.worksheets.api.resolvers import resolve_shares, resolve_user_role, WorksheetRole
+from dataall.modules.worksheets.api.resolvers import resolve_user_role, WorksheetRole
 
 
 AthenaResultColumnDescriptor = gql.ObjectType(
@@ -66,12 +66,6 @@ Worksheet = gql.ObjectType(
             type=gql.Ref('AthenaQueryResult'),
         ),
         gql.Field(
-            args=[gql.Argument(name='filter', type=gql.Ref('WorksheetFilter'))],
-            name='shares',
-            resolver=resolve_shares,
-            type=gql.Ref('WorksheetShares'),
-        ),
-        gql.Field(
             name='userRoleForWorksheet',
             type=gql.Ref('WorksheetRole'),
             resolver=resolve_user_role,
@@ -89,30 +83,6 @@ Worksheets = gql.ObjectType(
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
         gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('Worksheet'))),
-    ],
-)
-
-
-WorksheetShare = gql.ObjectType(
-    name='WorksheetShare',
-    fields=[
-        gql.Field(name='worksheetShareUri', type=gql.ID),
-        gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='principalType', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='canEdit', type=gql.Boolean),
-    ],
-)
-
-
-WorksheetShares = gql.ObjectType(
-    name='WorksheetShares',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('WorksheetShare'))),
     ],
 )
 
