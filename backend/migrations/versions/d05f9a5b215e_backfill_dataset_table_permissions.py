@@ -14,7 +14,7 @@ from dataall.db import api, utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
-from dataall.modules.datasets.db.dataset_service import DatasetService
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
@@ -86,7 +86,7 @@ def upgrade():
         print('Back-filling dataset table permissions for owners/stewards...')
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
-            dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = api.Environment.get_environment_by_uri(session, dataset.environmentUri)
 
             groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])

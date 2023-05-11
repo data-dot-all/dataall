@@ -8,7 +8,6 @@ from dataall.modules.dataset_sharing.db.share_object_repository import ShareObje
 from dataall.modules.datasets import DatasetLocationIndexer
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER, MANAGE_DATASETS, \
     CREATE_DATASET_FOLDER, LIST_DATASET_FOLDERS, DELETE_DATASET_FOLDER
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
@@ -105,7 +104,7 @@ class DatasetLocationService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             location = DatasetLocationRepository.get_location_by_uri(session, uri)
-            dataset = DatasetService.get_dataset_by_uri(session, location.datasetUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
             env = Environment.get_environment_by_uri(session, dataset.environmentUri)
             if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
                 raise Exception(

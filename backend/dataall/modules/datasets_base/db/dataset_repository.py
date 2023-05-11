@@ -1,31 +1,23 @@
 import logging
-from datetime import datetime
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import (
     Environment,
     ResourcePolicy,
-    KeyValueTag,
-    Vote,
-    Stack,
-    has_tenant_perm,
-    has_resource_perm,
 )
 from dataall.db.api import Organization
 from dataall.db import models, exceptions, paginate, permissions
+from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 from dataall.modules.datasets.db.enums import ConfidentialityClassification
 from dataall.core.group.services.group_resource_manager import GroupResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
-from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_ALL, \
-    LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
+from dataall.modules.datasets.services.dataset_permissions import DATASET_READ, DATASET_ALL
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.utils.naming_convention import (
     NamingConventionService,
@@ -42,7 +34,7 @@ class DatasetRepository(GroupResource):
     def get_dataset_by_uri(session, dataset_uri) -> Dataset:
         dataset: Dataset = session.query(Dataset).get(dataset_uri)
         if not dataset:
-            raise exceptions.ObjectNotFound('Dataset', dataset_uri)
+            raise ObjectNotFound('Dataset', dataset_uri)
         return dataset
 
     def count_resources(self, session, environment_uri, group_uri) -> int:
@@ -57,8 +49,6 @@ class DatasetRepository(GroupResource):
         )
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DATASETS)
-    @has_resource_perm(CREATE_DATASET)
     def create_dataset(
         session,
         username: str,
@@ -79,15 +69,6 @@ class DatasetRepository(GroupResource):
             raise exceptions.InvalidInput(
                 'Dataset name', data['label'], 'less than 52 characters'
             )
-
-        Environment.check_group_environment_permission(
-            session=session,
-            username=username,
-            groups=groups,
-            uri=uri,
-            group=data['SamlAdminGroupName'],
-            permission_name=CREATE_DATASET,
-        )
 
         environment = Environment.get_environment_by_uri(session, uri)
 
@@ -125,6 +106,7 @@ class DatasetRepository(GroupResource):
         session.commit()
 
         DatasetRepository._set_dataset_aws_resources(dataset, data, environment)
+        DatasetRepository._set_import_data(dataset, data)
 
         activity = models.Activity(
             action='dataset:create',
@@ -135,30 +117,6 @@ class DatasetRepository(GroupResource):
             targetType='dataset',
         )
         session.add(activity)
-
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=data['SamlAdminGroupName'],
-            permissions=DATASET_ALL,
-            resource_uri=dataset.datasetUri,
-            resource_type=Dataset.__name__,
-        )
-        if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=dataset.stewards,
-                permissions=DATASET_READ,
-                resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
-            )
-        if environment.SamlGroupName != dataset.SamlAdminGroupName:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=environment.SamlGroupName,
-                permissions=DATASET_ALL,
-                resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
-            )
         return dataset
 
     @staticmethod
@@ -211,23 +169,6 @@ class DatasetRepository(GroupResource):
         return dataset
 
     @staticmethod
-    def create_dataset_stack(session, dataset: Dataset) -> models.Stack:
-        return Stack.create_stack(
-            session=session,
-            environment_uri=dataset.environmentUri,
-            target_uri=dataset.datasetUri,
-            target_label=dataset.label,
-            target_type='dataset',
-            payload={
-                'bucket_name': dataset.S3BucketName,
-                'database_name': dataset.GlueDatabaseName,
-                'role_name': dataset.S3BucketName,
-                'user_name': dataset.S3BucketName,
-            },
-        )
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(session, uri: str) -> Dataset:
         return DatasetRepository.get_dataset_by_uri(session, uri)
 
@@ -271,7 +212,7 @@ class DatasetRepository(GroupResource):
 
     @staticmethod
     def paginated_user_datasets(
-        session, username, groups, uri, data=None, check_perm=None
+        session, username, groups, data=None
     ) -> dict:
         return paginate(
             query=DatasetRepository.query_user_datasets(session, username, groups, data),
@@ -280,9 +221,7 @@ class DatasetRepository(GroupResource):
         ).to_dict()
 
     @staticmethod
-    def paginated_dataset_tables(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_dataset_tables(session, uri, data=None) -> dict:
         query = (
             session.query(DatasetTable)
             .filter(
@@ -309,8 +248,6 @@ class DatasetRepository(GroupResource):
         ).to_dict()
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET)
     def update_dataset(session, uri, data=None) -> Dataset:
         username = get_context().username
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -487,9 +424,7 @@ class DatasetRepository(GroupResource):
         )
 
     @staticmethod
-    def paginated_dataset_shares(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> [ShareObject]:
+    def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
         query = DatasetRepository.query_dataset_shares(session, uri)
         return paginate(
             query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
@@ -524,53 +459,12 @@ class DatasetRepository(GroupResource):
         )
 
     @staticmethod
-    def delete_dataset(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
-        dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-        DatasetRepository._delete_dataset_shares_with_no_shared_items(session, uri)
-        DatasetRepository._delete_dataset_term_links(session, uri)
-        DatasetRepository._delete_dataset_tables(session, dataset.datasetUri)
-        DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
-        KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
-        Vote.delete_votes(session, dataset.datasetUri, 'dataset')
+    def delete_dataset(session, dataset) -> bool:
         session.delete(dataset)
-        ResourcePolicy.delete_resource_policy(
-            session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
-        )
-        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        if dataset.SamlAdminGroupName != env.SamlGroupName:
-            ResourcePolicy.delete_resource_policy(
-                session=session, resource_uri=uri, group=env.SamlGroupName
-            )
-        if dataset.stewards:
-            ResourcePolicy.delete_resource_policy(
-                session=session, resource_uri=uri, group=dataset.stewards
-            )
         return True
 
     @staticmethod
-    def _delete_dataset_shares_with_no_shared_items(session, dataset_uri):
-        share_objects = (
-            session.query(ShareObject)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObject.existingSharedItems.is_(False),
-                )
-            )
-            .all()
-        )
-        for share in share_objects:
-            (
-                session.query(ShareObjectItem)
-                .filter(ShareObjectItem.shareUri == share.shareUri)
-                .delete()
-            )
-            session.delete(share)
-
-    @staticmethod
-    def _delete_dataset_term_links(session, uri):
+    def delete_dataset_term_links(session, uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
         for tableUri in tables:
             term_links = (
@@ -598,21 +492,6 @@ class DatasetRepository(GroupResource):
         )
         for link in term_links:
             session.delete(link)
-
-    @staticmethod
-    def _delete_dataset_tables(session, dataset_uri) -> bool:
-        tables = (
-            session.query(DatasetTable)
-            .filter(
-                and_(
-                    DatasetTable.datasetUri == dataset_uri,
-                )
-            )
-            .all()
-        )
-        for table in tables:
-            table.deleted = datetime.now()
-        return tables
 
     @staticmethod
     def list_all_datasets(session) -> [Dataset]:
@@ -682,7 +561,6 @@ class DatasetRepository(GroupResource):
         return query
 
     @staticmethod
-    @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
     def paginated_environment_datasets(
             session, uri, data=None,
     ) -> dict:
@@ -718,4 +596,12 @@ class DatasetRepository(GroupResource):
             )
             .all()
         )
+
+    @staticmethod
+    def _set_import_data(dataset, data):
+        dataset.imported = True if data['imported'] else False
+        dataset.importedS3Bucket = True if data['bucketName'] else False
+        dataset.importedGlueDatabase = True if data['glueDatabaseName'] else False
+        dataset.importedKmsKey = True if data['KmsKeyId'] else False
+        dataset.importedAdminRole = True if data['adminRoleName'] else False
 

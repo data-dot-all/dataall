@@ -6,19 +6,20 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db.api import Vote
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Environment, Task
-from dataall.modules.dataset_sharing.api.schema import ShareObject
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets import DatasetIndexer, DatasetTableIndexer
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, CRAWL_DATASET, \
     SUMMARY_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
-    CREATE_DATASET
+    CREATE_DATASET, DATASET_ALL, DATASET_READ
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -40,6 +41,7 @@ class DatasetService:
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
     @has_resource_permission(CREATE_DATASET)
+    @has_group_permission(CREATE_DATASET)
     def create_dataset(uri, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -55,7 +57,31 @@ class DatasetService:
                 check_perm=True,
             )
 
-            DatasetRepository.create_dataset_stack(session, dataset)
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=data['SamlAdminGroupName'],
+                permissions=DATASET_ALL,
+                resource_uri=dataset.datasetUri,
+                resource_type=Dataset.__name__,
+            )
+            if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    permissions=DATASET_READ,
+                    resource_uri=dataset.datasetUri,
+                    resource_type=Dataset.__name__,
+                )
+            if environment.SamlGroupName != dataset.SamlAdminGroupName:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=environment.SamlGroupName,
+                    permissions=DATASET_ALL,
+                    resource_uri=dataset.datasetUri,
+                    resource_type=Dataset.__name__,
+                )
+
+            DatasetService._create_dataset_stack(session, dataset)
 
             DatasetIndexer.upsert(
                 session=session, dataset_uri=dataset.datasetUri
@@ -68,39 +94,9 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET)
     def import_dataset(uri, data):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            environment = Environment.get_environment_by_uri(session, uri)
-            DatasetService.check_dataset_account(environment=environment)
-
-            dataset = DatasetRepository.create_dataset(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                uri=uri,
-                data=data,
-                check_perm=True,
-            )
-            dataset.imported = True
-            dataset.importedS3Bucket = True if data['bucketName'] else False
-            dataset.importedGlueDatabase = True if data['glueDatabaseName'] else False
-            dataset.importedKmsKey = True if data['KmsKeyId'] else False
-            dataset.importedAdminRole = True if data['adminRoleName'] else False
-
-            DatasetRepository.create_dataset_stack(session, dataset)
-
-            DatasetIndexer.upsert(
-                session=session, dataset_uri=dataset.datasetUri
-            )
-
-        DatasetService._deploy_dataset_stack(dataset)
-
-        dataset.userRoleForDataset = DatasetRole.Creator.value
-
-        return dataset
+        data['imported'] = True
+        return DatasetService.create_dataset(uri=uri, data=data)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
@@ -199,7 +195,7 @@ class DatasetService:
         with context.db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName not in context.groups:
-                share = ShareObject.get_share_by_dataset_attributes(
+                share = ShareObjectRepository.get_share_by_dataset_attributes(
                     session=session,
                     dataset_uri=uri,
                     dataset_owner=context.username
@@ -431,14 +427,28 @@ class DatasetService:
 
             DatasetIndexer.delete_doc(doc_id=uri)
 
-            DatasetService.delete_dataset(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                uri=uri,
-                data=None,
-                check_perm=True,
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            DatasetRepository.delete_dataset_term_links(session, uri)
+            DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
+            DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
+            KeyValueTag.delete_key_value_tags(session, dataset.datasetUri, 'dataset')
+            Vote.delete_votes(session, dataset.datasetUri, 'dataset')
+
+            ResourcePolicy.delete_resource_policy(
+                session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
             )
+            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            if dataset.SamlAdminGroupName != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session, resource_uri=uri, group=env.SamlGroupName
+                )
+            if dataset.stewards:
+                ResourcePolicy.delete_resource_policy(
+                    session=session, resource_uri=uri, group=dataset.stewards
+                )
+
+            DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:
             stack_helper.delete_stack(
@@ -484,6 +494,22 @@ class DatasetService:
         """
         stack_helper.deploy_stack(dataset.datasetUri)
         stack_helper.deploy_stack(dataset.environmentUri)
+
+    @staticmethod
+    def _create_dataset_stack(session, dataset: Dataset) -> Stack:
+        return Stack.create_stack(
+            session=session,
+            environment_uri=dataset.environmentUri,
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            target_type='dataset',
+            payload={
+                'bucket_name': dataset.S3BucketName,
+                'database_name': dataset.GlueDatabaseName,
+                'role_name': dataset.S3BucketName,
+                'user_name': dataset.S3BucketName,
+            },
+        )
 
     @staticmethod
     @has_resource_permission(LIST_ENVIRONMENT_DATASETS)
