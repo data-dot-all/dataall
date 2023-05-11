@@ -130,12 +130,6 @@ class PrincipalType(GraphQLEnumMapper):
     ConsumptionRole = 'ConsumptionRole'
 
 
-class ConfidentialityClassification(GraphQLEnumMapper):
-    Unclassified = 'Unclassified'
-    Official = 'Official'
-    Secret = 'Secret'
-
-
 class Language(GraphQLEnumMapper):
     English = 'English'
     French = 'French'

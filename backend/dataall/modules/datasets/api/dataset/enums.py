@@ -9,3 +9,10 @@ class DatasetRole(GraphQLEnumMapper):
     Admin = '900'
     Shared = '300'
     NoPermission = '000'
+
+
+class ConfidentialityClassification(GraphQLEnumMapper):
+    Unclassified = 'Unclassified'
+    Official = 'Official'
+    Secret = 'Secret'
+

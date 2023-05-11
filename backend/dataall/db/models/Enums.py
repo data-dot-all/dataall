@@ -93,12 +93,6 @@ class PrincipalType(Enum):
     ConsumptionRole = 'ConsumptionRole'
 
 
-class ConfidentialityClassification(Enum):
-    Unclassified = 'Unclassified'
-    Official = 'Official'
-    Secret = 'Secret'
-
-
 class Language(Enum):
     English = 'English'
     French = 'French'

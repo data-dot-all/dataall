@@ -4,6 +4,7 @@ from dataall.modules.datasets.api.dataset import (
     queries,
     resolvers,
     schema,
+    enums
 )
 
-__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations']
+__all__ = ['resolvers', 'schema', 'input_types', 'queries', 'mutations', 'enums']

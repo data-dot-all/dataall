@@ -12,6 +12,7 @@ from dataall.modules.datasets import DatasetTableIndexer
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, CREATE_DATASET_TABLE
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -115,8 +116,7 @@ class DatasetTableService:
             )
             dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
             if (
-                    dataset.confidentiality
-                    != models.ConfidentialityClassification.Unclassified.value
+                    dataset.confidentiality != ConfidentialityClassification.Unclassified.value
             ):
                 ResourcePolicy.check_user_resource_permission(
                     session=session,

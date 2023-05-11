@@ -17,9 +17,10 @@ from dataall.db.api import (
 )
 from dataall.db.api import Organization
 from dataall.db import models, exceptions, paginate, permissions
-from dataall.db.models.Enums import Language, ConfidentialityClassification
+from dataall.db.models.Enums import Language
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+from dataall.modules.datasets.db.enums import ConfidentialityClassification
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
