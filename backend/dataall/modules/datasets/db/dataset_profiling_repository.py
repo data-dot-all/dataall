@@ -139,7 +139,7 @@ class DatasetProfilingRepository:
         )
 
     @staticmethod
-    def get_table_last_profiling_run_with_results(session, tableUri):
+    def get_table_last_profiling_run_with_results(session, table_uri):
         return (
             session.query(DatasetProfilingRun)
             .join(
