@@ -3,8 +3,8 @@ import os
 import sys
 import time
 
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from .. import db
 from ..db import models
 from ..aws.handlers.ecs import Ecs
@@ -24,7 +24,7 @@ SLEEP_TIME = 30
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
 
-        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(session)
+        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         all_environments: [models.Environment] = db.api.Environment.list_all_active_environments(session)
 
         log.info(f'Found {len(all_environments)} environments, triggering update stack tasks...')

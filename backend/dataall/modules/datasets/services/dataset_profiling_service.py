@@ -3,14 +3,14 @@ import json
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
-from dataall.db.api import Environment, ResourcePolicy
+from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models import Task
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
 
 
@@ -20,9 +20,7 @@ class DatasetProfilingService:
     def start_profiling_run(uri, table_uri, glue_table_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetService.get_dataset_by_uri(session, uri)
-            if not dataset:
-                raise ObjectNotFound('Dataset', uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
             if table_uri and not glue_table_name:
                 table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
@@ -95,7 +93,7 @@ class DatasetProfilingService:
             if run:
                 if not run.results:
                     table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
-                    dataset = DatasetService.get_dataset_by_uri(session, table.datasetUri)
+                    dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
                     environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
                     content = S3ProfilerClient(environment).get_profiling_results_from_s3(dataset, table, run)
                     if content:

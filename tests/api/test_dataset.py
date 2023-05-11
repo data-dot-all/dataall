@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 
 import dataall
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
-from dataall.modules.datasets.db.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -487,7 +487,7 @@ def test_get_dataset_by_prefix(db, env1, org1):
         )
         session.add(dataset)
         session.commit()
-        dataset_found: Dataset = DatasetService.get_dataset_by_bucket_name(
+        dataset_found: Dataset = DatasetRepository.get_dataset_by_bucket_name(
             session,
             bucket='s3a://insite-data-lake-raw-alpha-eu-west-1/booker/volume_constraints/insite_version=1/volume_constraints.delta'.split(
                 '//'

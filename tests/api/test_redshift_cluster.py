@@ -4,9 +4,8 @@ import typing
 import pytest
 import dataall
 from dataall.api.constants import RedshiftClusterRole
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.db.dataset_service import DatasetService
-
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
@@ -40,12 +39,8 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> Dataset:
             stewards=group3.name,
         )
         dataset = DatasetService.create_dataset(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
             uri=env1.environmentUri,
             data=data,
-            check_perm=True,
         )
         yield dataset
 

@@ -52,10 +52,8 @@ class DatasetRepository(GroupResource):
     def create_dataset(
         session,
         username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> Dataset:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')

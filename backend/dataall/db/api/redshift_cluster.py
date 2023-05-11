@@ -10,9 +10,9 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+from ...modules.datasets_base.db.dataset_repository import DatasetRepository
 
 log = logging.getLogger(__name__)
 
@@ -396,7 +396,7 @@ class RedshiftCluster:
                 message=f'Cluster {cluster.name} is not on available state ({cluster.status})',
             )
 
-        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
 
         exists = session.query(models.RedshiftClusterDataset).get(
             (uri, data['datasetUri'])

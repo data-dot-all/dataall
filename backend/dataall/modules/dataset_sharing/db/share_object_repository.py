@@ -1421,3 +1421,24 @@ class ShareObjectRepository:
     def delete_shares(session, item_uri: str):
         session.query(ShareObjectItem).filter(ShareObjectItem.itemUri == item_uri).delete()
 
+    @staticmethod
+    def delete_shares_with_no_shared_items(session, dataset_uri):
+        share_objects = (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.existingSharedItems.is_(False),
+                )
+            )
+            .all()
+        )
+        for share in share_objects:
+            (
+                session.query(ShareObjectItem)
+                .filter(ShareObjectItem.shareUri == share.shareUri)
+                .delete()
+            )
+            session.delete(share)
+
+

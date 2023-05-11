@@ -10,10 +10,10 @@ from dataall.db import get_engine
 from dataall.db import models
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
-from dataall.modules.datasets.db.dataset_service import DatasetService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 def sync_tables(engine):
     with engine.scoped_session() as session:
         processed_tables = []
-        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
+        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(
             session
         )
         log.info(f'Found {len(all_datasets)} datasets for tables sync')

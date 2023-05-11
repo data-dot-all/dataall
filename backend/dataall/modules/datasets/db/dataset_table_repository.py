@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from sqlalchemy.sql import and_
 
@@ -207,3 +208,18 @@ class DatasetTableRepository:
             .filter(DatasetTable.datasetUri == dataset_uri)
             .all()
         )
+
+    @staticmethod
+    def delete_dataset_tables(session, dataset_uri) -> bool:
+        tables = (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                )
+            )
+            .all()
+        )
+        for table in tables:
+            table.deleted = datetime.now()
+        return tables

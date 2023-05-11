@@ -12,7 +12,7 @@ from ...db import models
 # TODO should be migrated in the redshift module
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.db.dataset_service import DatasetService
+from ...modules.datasets_base.db.dataset_repository import DatasetRepository
 
 log = logging.getLogger(__name__)
 
@@ -372,7 +372,7 @@ class Redshift:
             Redshift.set_cluster_secrets(secretsmanager, cluster)
             catalog_databases = []
             for d in cluster_datasets:
-                dataset = DatasetService.get_dataset_by_uri(session, d.datasetUri)
+                dataset = DatasetRepository.get_dataset_by_uri(session, d.datasetUri)
                 if dataset.environmentUri != cluster.environmentUri:
                     catalog_databases.append(f'{dataset.GlueDatabaseName}shared')
                 else:
@@ -446,7 +446,7 @@ class Redshift:
                 task.targetUri
             )
 
-            dataset: Dataset = DatasetService.get_dataset_by_uri(
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(
                 session, task.payload['datasetUri']
             )
 

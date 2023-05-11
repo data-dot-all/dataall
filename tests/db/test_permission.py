@@ -5,7 +5,7 @@ from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.db.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_WRITE
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
@@ -259,11 +259,7 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
         )
         dataset = DatasetService.create_dataset(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
             uri=env_with_perm.environmentUri,
             data=data,
-            check_perm=True,
         )
         assert dataset
