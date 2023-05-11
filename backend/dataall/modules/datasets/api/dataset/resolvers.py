@@ -177,8 +177,6 @@ def list_locations(context, source: Dataset, filter: dict = None):
     with context.engine.scoped_session() as session:
         return DatasetLocationRepository.paginated_dataset_locations(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.datasetUri,
             data=filter,
         )

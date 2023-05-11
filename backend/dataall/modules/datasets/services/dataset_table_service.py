@@ -99,7 +99,7 @@ class DatasetTableService:
                 )
 
             ShareObjectRepository.delete_shares(session, table.tableUri)
-            DatasetTableRepository.delete_dataset_table(session, table)
+            DatasetTableRepository.delete(session, table)
 
             Glossary.delete_glossary_terms_links(
                 session, target_uri=table.tableUri, target_type='DatasetTable'

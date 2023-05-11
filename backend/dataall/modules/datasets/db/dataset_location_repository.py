@@ -8,37 +8,33 @@ from dataall.db import paginate, exceptions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation
+from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 from dataall.modules.datasets.services.dataset_permissions import DELETE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetLocationRepository:
+
     @staticmethod
-    def create_dataset_location(
-        session,
-        uri: str,
-        data: dict = None
-    ) -> DatasetStorageLocation:
-        dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-        exists = (
+    def exists(session, dataset_uri: str, prefix: str):
+        return (
             session.query(DatasetStorageLocation)
             .filter(
                 and_(
-                    DatasetStorageLocation.datasetUri == dataset.datasetUri,
-                    DatasetStorageLocation.S3Prefix == data['prefix'],
+                    DatasetStorageLocation.datasetUri == dataset_uri,
+                    DatasetStorageLocation.S3Prefix == prefix,
                 )
             )
             .count()
         )
 
-        if exists:
-            raise exceptions.ResourceAlreadyExists(
-                action='Create Folder',
-                message=f'Folder: {data["prefix"]} already exist on dataset {uri}',
-            )
-
+    @staticmethod
+    def create_dataset_location(
+        session,
+        dataset: Dataset,
+        data: dict = None
+    ) -> DatasetStorageLocation:
         location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             label=data.get('label'),
@@ -52,16 +48,6 @@ class DatasetLocationRepository:
         )
         session.add(location)
         session.commit()
-
-        if 'terms' in data.keys():
-            Glossary.set_glossary_terms_links(
-                session,
-                get_context().username,
-                location.locationUri,
-                'DatasetStorageLocation',
-                data.get('terms', []),
-            )
-
         return location
 
     @staticmethod
@@ -85,66 +71,8 @@ class DatasetLocationRepository:
         ).to_dict()
 
     @staticmethod
-    def update_dataset_location(
-        session,
-        uri: str,
-        data: dict = None,
-    ) -> DatasetStorageLocation:
-
-        location = data.get(
-            'location',
-            DatasetLocationRepository.get_location_by_uri(session, data['locationUri']),
-        )
-
-        for k in data.keys():
-            setattr(location, k, data.get(k))
-
-        if 'terms' in data.keys():
-            Glossary.set_glossary_terms_links(
-                session,
-                get_context().username,
-                location.locationUri,
-                'DatasetStorageLocation',
-                data.get('terms', []),
-            )
-        return location
-
-    @staticmethod
-    def delete_dataset_location(
-        session,
-        uri: str,
-        data: dict = None,
-    ):
-        location = DatasetLocationRepository.get_location_by_uri(
-            session, data['locationUri']
-        )
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        share_item = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri == location.locationUri,
-                    ShareObjectItem.status.in_(share_item_shared_states)
-                )
-            )
-            .first()
-        )
-        if share_item:
-            raise exceptions.ResourceShared(
-                action=DELETE_DATASET_FOLDER,
-                message='Revoke all folder shares before deletion',
-            )
-        session.query(ShareObjectItem).filter(
-            ShareObjectItem.itemUri == location.locationUri,
-        ).delete()
-
+    def delete(session, location):
         session.delete(location)
-        Glossary.delete_glossary_terms_links(
-            session,
-            target_uri=location.locationUri,
-            target_type='DatasetStorageLocation',
-        )
-        return True
 
     @staticmethod
     def get_location_by_uri(session, location_uri) -> DatasetStorageLocation:
@@ -186,11 +114,7 @@ class DatasetLocationRepository:
     def delete_dataset_locations(session, dataset_uri) -> bool:
         locations = (
             session.query(DatasetStorageLocation)
-            .filter(
-                and_(
-                    DatasetStorageLocation.datasetUri == dataset_uri,
-                )
-            )
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri )
             .all()
         )
         for location in locations:
@@ -207,9 +131,7 @@ class DatasetLocationRepository:
         )
 
     @staticmethod
-    def paginated_dataset_locations(
-            session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_dataset_locations(session, uri, data=None) -> dict:
         query = session.query(DatasetStorageLocation).filter(
             DatasetStorageLocation.datasetUri == uri
         )

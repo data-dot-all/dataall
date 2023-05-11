@@ -85,9 +85,8 @@ class DatasetTableRepository:
         return paginate(query, page=page, page_size=page_size).to_dict()
 
     @staticmethod
-    def delete_dataset_table(session, table: DatasetTable):
+    def delete(session, table: DatasetTable):
         session.delete(table)
-        return True
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
