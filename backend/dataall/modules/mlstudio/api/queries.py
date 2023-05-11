@@ -2,7 +2,6 @@
 from dataall.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     get_sagemaker_studio_user,
-    # get_user_applications,
     list_sagemaker_studio_users,
     get_sagemaker_studio_user_presigned_url,
 )
@@ -17,18 +16,6 @@ getSagemakerStudioUser = gql.QueryField(
     type=gql.Ref('SagemakerStudioUser'),
     resolver=get_sagemaker_studio_user,
 )
-
-# TODO: is this used????
-# getSagemakerStudioUserApps = gql.QueryField(
-#     name='getSagemakerStudioUserApps',
-#     args=[
-#         gql.Argument(
-#             name='sagemakerStudioUserUri', type=gql.NonNullableType(gql.String)
-#         )
-#     ],
-#     type=gql.ArrayType(gql.Ref('SagemakerStudioUserApps')),
-#     resolver=get_user_applications,
-# )
 
 listSagemakerStudioUsers = gql.QueryField(
     name='listSagemakerStudioUsers',
