@@ -90,6 +90,9 @@ def delete_sagemaker_studio_user(
 
 
 def resolve_user_role(context: Context, source: SagemakerStudioUser):
+    """
+    Resolves the role of the current user in reference with the SageMaker Studio User
+    """
     if not source:
         return None
     if source.owner == context.username:
@@ -100,6 +103,9 @@ def resolve_user_role(context: Context, source: SagemakerStudioUser):
 
 
 def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, **kwargs):
+    """
+    Resolves the status of the SageMaker Studio User
+    """
     if not source:
         return None
     return SagemakerStudioService.get_sagemaker_studio_user_status(
@@ -111,6 +117,9 @@ def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, *
 def resolve_sagemaker_studio_user_stack(
     context: Context, source: SagemakerStudioUser, **kwargs
 ):
+    """
+    Resolves the status of the CloudFormation stack of the SageMaker Studio User
+    """
     if not source:
         return None
     return stack_helper.get_stack_with_cfn_resources(
@@ -120,6 +129,9 @@ def resolve_sagemaker_studio_user_stack(
 
 
 def resolve_sagemaker_studio_user_applications(context, source: SagemakerStudioUser):
+    """
+    Resolves the applications created with this SageMaker Studio User
+    """
     if not source:
         return None
     return SagemakerStudioService.get_sagemaker_studio_user_applications(uri=source.sagemakerStudioUserUri)

@@ -15,7 +15,7 @@ from dataall.db.api import (
     Environment, KeyValueTag, Stack,
 )
 from dataall.db import models, exceptions
-from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, SagemakerStudioClient
+from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
 
 from dataall.utils.slugify import slugify
@@ -26,7 +26,7 @@ from dataall.modules.mlstudio.services.permissions import (
     SGMSTUDIO_USER_ALL,
     GET_SGMSTUDIO_USER,
     SGMSTUDIO_USER_URL,
-    DELETE_SGMSTUDIO_NOTEBOOK,
+    DELETE_SGMSTUDIO_USER,
 )
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
@@ -80,7 +80,7 @@ class SagemakerStudioService:
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
             # TODO: check with v1.5 how the checking affects this method
-            response = SagemakerStudioClient.get_sagemaker_studio_domain(
+            response = get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region
             )
@@ -175,9 +175,9 @@ class SagemakerStudioService:
             return SagemakerStudioService(user).get_sagemaker_studio_user_applications()
 
     @staticmethod
-    @has_resource_permission(DELETE_SGMSTUDIO_NOTEBOOK)
+    @has_resource_permission(DELETE_SGMSTUDIO_USER)
     def delete_sagemaker_studio_user(*, uri: str, delete_from_aws: bool):
-        """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
+        """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
             session.delete(user)

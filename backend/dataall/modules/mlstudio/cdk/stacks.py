@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class SagemakerStudioUser(Stack):
     """
     Creation of a sagemaker studio user stack.
-    Having imported the notebook module, the class registers itself using @stack
+    Having imported the mlstudio module, the class registers itself using @stack
     Then it will be reachable by HTTP request / using SQS from GraphQL lambda
     """
     module_name = __file__

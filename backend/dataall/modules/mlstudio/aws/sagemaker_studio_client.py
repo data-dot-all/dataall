@@ -7,44 +7,45 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
+@staticmethod
+def get_client(AwsAccountId, region):
+    session = SessionHelper.remote_session(AwsAccountId)
+    return session.client('sagemaker', region_name=region)
+
+
+@staticmethod
+def get_sagemaker_studio_domain(AwsAccount, region):
+    """
+    Sagemaker studio domain is limited to 5 per account/region
+    RETURN: an existing domain or None if no domain is in the AWS account
+    """
+    client = get_client(AwsAccountId=AwsAccount, region=region)
+    existing_domain = dict()
+    try:
+        domain_id_paginator = client.get_paginator('list_domains')
+        domains = domain_id_paginator.paginate()
+        for _domain in domains:
+            print(_domain)
+            for _domain in _domain.get('Domains'):
+                # Get the domain name created by dataall
+                if 'dataall' in _domain:
+                    return _domain
+                else:
+                    existing_domain = _domain
+        return existing_domain
+    except ClientError as e:
+        print(e)
+        return 'NotFound'
+
 class SagemakerStudioClient:
     """A Sagemaker studio proxy client that is used to send requests to AWS"""
     def __init__(self, sm_user: SagemakerStudioUser):
-        self._client = SagemakerStudioClient.get_client(
+        self._client = get_client(
             AwsAccountId=sm_user.AwsAccountId,
             region=sm_user.region
         )
         self._sagemakerStudioDomainID = sm_user.sagemakerStudioDomainID
         self._sagemakerStudioUserNameSlugify = sm_user.sagemakerStudioUserNameSlugify
-
-    @staticmethod
-    def get_client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
-        return session.client('sagemaker', region_name=region)
-
-    @staticmethod
-    def get_sagemaker_studio_domain(AwsAccount, region):
-        """
-        Sagemaker studio domain is limited to one per account,
-        RETURN: an existing domain or None if no domain is in the AWS account
-        """
-        client = SagemakerStudioClient.get_client(AwsAccountId=AwsAccount, region=region)
-        existing_domain = dict()
-        try:
-            domain_id_paginator = client.get_paginator('list_domains')
-            domains = domain_id_paginator.paginate()
-            for _domain in domains:
-                print(_domain)
-                for _domain in _domain.get('Domains'):
-                    # Get the domain name created by dataall
-                    if 'dataall' in _domain:
-                        return _domain
-                    else:
-                        existing_domain = _domain
-            return existing_domain
-        except ClientError as e:
-            print(e)
-            return 'NotFound'
 
     def get_sagemaker_studio_user_presigned_url(self):
         try:
