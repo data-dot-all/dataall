@@ -6,7 +6,7 @@ from dataall.core.permission_checker import has_tenant_permission, has_resource_
 from dataall.db import exceptions
 from dataall.db import models
 from dataall.db.api import ResourcePolicy
-from dataall.modules.common.athena.athena_client import run_athena_query
+from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetShare
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, UPDATE_WORKSHEET, \
@@ -189,7 +189,7 @@ class WorksheetService:
         base_session = SessionHelper.remote_session(accountid=environment.AwsAccountId)
         boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
         
-        cursor = run_athena_query(
+        cursor = AthenaClient.run_athena_query(
             session=boto3_session,
             work_group=env_group.environmentAthenaWorkGroup,
             s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
