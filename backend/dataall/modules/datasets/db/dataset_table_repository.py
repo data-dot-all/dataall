@@ -3,12 +3,10 @@ import logging
 from sqlalchemy.sql import and_
 
 from dataall.db import exceptions, paginate
-from dataall.db.api import Glossary, ResourcePolicy, Environment
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
-from dataall.utils import json_utils
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
+from dataall.utils import json_utils
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +48,28 @@ class DatasetTableRepository:
             region=dataset.region,
         )
         session.add(table)
+        session.commit()
+        return table
+
+    @staticmethod
+    def create_synced_table(session, dataset: Dataset, table: dict):
+        updated_table = DatasetTable(
+            datasetUri=dataset.datasetUri,
+            label=table['Name'],
+            name=table['Name'],
+            region=dataset.region,
+            owner=dataset.owner,
+            GlueDatabaseName=dataset.GlueDatabaseName,
+            AWSAccountId=dataset.AwsAccountId,
+            S3BucketName=dataset.S3BucketName,
+            S3Prefix=table.get('StorageDescriptor', {}).get('Location'),
+            GlueTableName=table['Name'],
+            LastGlueTableStatus='InSync',
+            GlueTableProperties=json_utils.to_json(
+                table.get('Parameters', {})
+            ),
+        )
+        session.add(updated_table)
         session.commit()
         return table
 
@@ -108,72 +128,6 @@ class DatasetTableRepository:
         return table
 
     @staticmethod
-    def sync_existing_tables(session, datasetUri, glue_tables=None):
-
-        dataset: Dataset = session.query(Dataset).get(datasetUri)
-        if dataset:
-            existing_tables = (
-                session.query(DatasetTable)
-                .filter(DatasetTable.datasetUri == datasetUri)
-                .all()
-            )
-            existing_table_names = [e.GlueTableName for e in existing_tables]
-            existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
-
-            DatasetTableRepository.update_existing_tables_status(existing_tables, glue_tables)
-            logger.info(
-                f'existing_tables={glue_tables}'
-            )
-            for table in glue_tables:
-                if table['Name'] not in existing_table_names:
-                    logger.info(
-                        f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}'
-                    )
-                    updated_table = DatasetTable(
-                        datasetUri=dataset.datasetUri,
-                        label=table['Name'],
-                        name=table['Name'],
-                        region=dataset.region,
-                        owner=dataset.owner,
-                        GlueDatabaseName=dataset.GlueDatabaseName,
-                        AWSAccountId=dataset.AwsAccountId,
-                        S3BucketName=dataset.S3BucketName,
-                        S3Prefix=table.get('StorageDescriptor', {}).get('Location'),
-                        GlueTableName=table['Name'],
-                        LastGlueTableStatus='InSync',
-                        GlueTableProperties=json_utils.to_json(
-                            table.get('Parameters', {})
-                        ),
-                    )
-                    session.add(updated_table)
-                    session.commit()
-                    # ADD DATASET TABLE PERMISSIONS
-                    env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-                    permission_group = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
-                    for group in permission_group:
-                        ResourcePolicy.attach_resource_policy(
-                            session=session,
-                            group=group,
-                            permissions=DATASET_TABLE_READ,
-                            resource_uri=updated_table.tableUri,
-                            resource_type=DatasetTable.__name__,
-                        )
-                else:
-                    logger.info(
-                        f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'
-                    )
-                    updated_table: DatasetTable = (
-                        existing_dataset_tables_map.get(table['Name'])
-                    )
-                    updated_table.GlueTableProperties = json_utils.to_json(
-                        table.get('Parameters', {})
-                    )
-
-                DatasetTableRepository.sync_table_columns(session, updated_table, table)
-
-        return True
-
-    @staticmethod
     def update_existing_tables_status(existing_tables, glue_tables):
         for existing_table in existing_tables:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
@@ -220,8 +174,7 @@ class DatasetTableRepository:
     def delete_all_table_columns(session, dataset_table):
         session.query(DatasetTableColumn).filter(
             and_(
-                DatasetTableColumn.GlueDatabaseName
-                == dataset_table.GlueDatabaseName,
+                DatasetTableColumn.GlueDatabaseName == dataset_table.GlueDatabaseName,
                 DatasetTableColumn.GlueTableName == dataset_table.GlueTableName,
             )
         ).delete()
@@ -247,3 +200,11 @@ class DatasetTableRepository:
                 f'Found table {table.tableUri}|{table.GlueTableName}|{table.S3Prefix}'
             )
             return table
+
+    @staticmethod
+    def find_dataset_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(DatasetTable.datasetUri == dataset_uri)
+            .all()
+        )

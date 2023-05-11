@@ -3,7 +3,7 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 
 
@@ -287,7 +287,7 @@ def test_sync_tables_and_columns(client, table, dataset1, db):
             },
         ]
 
-        assert DatasetTableRepository.sync_existing_tables(session, dataset1.datasetUri, glue_tables)
+        assert DatasetTableService.sync_existing_tables(session, dataset1.datasetUri, glue_tables)
         new_table: DatasetTable = (
             session.query(DatasetTable)
             .filter(DatasetTable.name == 'new_table')

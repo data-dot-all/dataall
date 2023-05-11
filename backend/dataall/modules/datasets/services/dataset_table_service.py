@@ -14,7 +14,7 @@ from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, CREATE_DATASET_TABLE
-from dataall.modules.datasets_base.db.models import DatasetTable
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ
 from dataall.utils import json_utils
 
@@ -49,18 +49,7 @@ class DatasetTableService:
                     session, get_context().username, table.tableUri, 'DatasetTable', table_data['terms']
                 )
 
-            # ADD DATASET TABLE PERMISSIONS
-            environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            permission_group = {dataset.SamlAdminGroupName, environment.SamlGroupName,
-                                dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName}
-            for group in permission_group:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=group,
-                    permissions=DATASET_TABLE_READ,
-                    resource_uri=table.tableUri,
-                    resource_type=DatasetTable.__name__,
-                )
+            DatasetTableService._attach_dataset_table_permission(session, dataset, table.tableUri)
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
         return table
 
@@ -181,3 +170,51 @@ class DatasetTableService:
                 )
             ]
 
+    @staticmethod
+    def sync_existing_tables(session, dataset_uri, glue_tables=None):
+        dataset: Dataset = DatasetService.get_dataset_by_uri(session, dataset_uri)
+        if dataset:
+            existing_tables = DatasetTableRepository.find_dataset_tables(session, dataset_uri)
+            existing_table_names = [e.GlueTableName for e in existing_tables]
+            existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
+
+            DatasetTableRepository.update_existing_tables_status(existing_tables, glue_tables)
+            log.info(
+                f'existing_tables={glue_tables}'
+            )
+            for table in glue_tables:
+                if table['Name'] not in existing_table_names:
+                    log.info(
+                        f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}'
+                    )
+                    updated_table = DatasetTableRepository.create_synced_table(session, dataset, table)
+                    DatasetTableService._attach_dataset_table_permission(session, dataset, updated_table.tableUri)
+                else:
+                    log.info(
+                        f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}'
+                    )
+                    updated_table: DatasetTable = (
+                        existing_dataset_tables_map.get(table['Name'])
+                    )
+                    updated_table.GlueTableProperties = json_utils.to_json(
+                        table.get('Parameters', {})
+                    )
+
+                DatasetTableRepository.sync_table_columns(session, updated_table, table)
+
+        return True
+
+    @staticmethod
+    def _attach_dataset_table_permission(session, dataset: Dataset, table_uri):
+        # ADD DATASET TABLE PERMISSIONS
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        permission_group = {dataset.SamlAdminGroupName, env.SamlGroupName,
+                            dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName}
+        for group in permission_group:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=group,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=table_uri,
+                resource_type=DatasetTable.__name__,
+            )
