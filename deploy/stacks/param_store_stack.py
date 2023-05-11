@@ -17,6 +17,7 @@ class ParamStoreStack(pyNestedClass):
         quicksight_enabled=False,
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
+        pivot_role_name='dataallPivotRole',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -87,4 +88,12 @@ class ParamStoreStack(pyNestedClass):
             f'dataallCreationPivotRole{envname}',
             parameter_name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate",
             string_value=str(enable_pivot_role_auto_create),
+        )
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallPivotRoleName{envname}',
+            parameter_name=f"/dataall/{envname}/pivotRole/pivotRoleName",
+            string_value=str(pivot_role_name),
+            description="Stores dataall pivot role name for environment dev",
         )

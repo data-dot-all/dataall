@@ -78,6 +78,7 @@ class BackendStack(Stack):
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
+            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
@@ -87,7 +88,6 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             enable_cw_canaries=enable_cw_canaries,
-            pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
 
