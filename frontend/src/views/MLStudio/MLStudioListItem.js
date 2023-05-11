@@ -20,20 +20,20 @@ import StackStatus from '../../components/StackStatus';
 import Label from '../../components/Label';
 import useCardStyle from '../../hooks/useCardStyle';
 
-const NotebookListItem = (props) => {
-  const { notebook } = props;
+const MLStudioListItem = (props) => {
+  const { mlstudiouser } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
   return (
     <Grid
       item
-      key={notebook.sagemakerStudioUserProfileUri}
+      key={mlstudiouser.sagemakerStudioUserUri}
       md={3}
       xs={12}
       {...props}
     >
       <Card
-        key={notebook.sagemakerStudioUserProfileUri}
+        key={mlstudiouser.sagemakerStudioUserUri}
         className={classes.card}
         raised
       >
@@ -53,7 +53,7 @@ const NotebookListItem = (props) => {
                 variant="h6"
                 onClick={() => {
                   navigate(
-                    `/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`
+                    `/console/mlstudio/${mlstudiouser.sagemakerStudioUserUri}`
                   );
                 }}
                 sx={{
@@ -66,14 +66,14 @@ const NotebookListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={notebook.label}>
-                  <span>{notebook.label}</span>
+                <Tooltip title={mlstudiouser.label}>
+                  <span>{mlstudiouser.label}</span>
                 </Tooltip>
               </Link>
               <Typography color="textSecondary" variant="body2">
                 by{' '}
                 <Link underline="hover" color="textPrimary" variant="subtitle2">
-                  {notebook.owner}
+                  {mlstudiouser.owner}
                 </Link>
               </Typography>
             </Box>
@@ -97,8 +97,8 @@ const NotebookListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={notebook.description || 'No description provided'}>
-              <span>{notebook.description || 'No description provided'}</span>
+            <Tooltip title={mlstudiouser.description || 'No description provided'}>
+              <span>{mlstudiouser.description || 'No description provided'}</span>
             </Tooltip>
           </Typography>
         </Box>
@@ -117,12 +117,12 @@ const NotebookListItem = (props) => {
             <Grid item md={8} xs={12}>
               <Label
                 color={
-                  notebook.userRoleForSagemakerStudioUserProfile === 'Creator'
+                  mlstudiouser.userRoleForSagemakerStudioUser === 'Creator'
                     ? 'primary'
                     : 'info'
                 }
               >
-                {notebook.userRoleForSagemakerStudioUserProfile || '-'}
+                {mlstudiouser.userRoleForSagemakerStudioUser || '-'}
               </Label>
             </Grid>
           </Grid>
@@ -152,8 +152,8 @@ const NotebookListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={notebook.environment?.SamlGroupName || '-'}>
-                  <span>{notebook.environment?.SamlGroupName || '-'}</span>
+                <Tooltip title={mlstudiouser.environment?.SamlGroupName || '-'}>
+                  <span>{mlstudiouser.environment?.SamlGroupName || '-'}</span>
                 </Tooltip>
               </Typography>
             </Grid>
@@ -173,7 +173,7 @@ const NotebookListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={6}>
               <Typography color="textPrimary" variant="body2">
-                {notebook.environment.AwsAccountId}
+                {mlstudiouser.environment.AwsAccountId}
               </Typography>
             </Grid>
           </Grid>
@@ -192,7 +192,7 @@ const NotebookListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                {notebook.environment.region}
+                {mlstudiouser.environment.region}
               </Typography>
             </Grid>
           </Grid>
@@ -211,7 +211,7 @@ const NotebookListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                <StackStatus status={notebook.stack?.status} />
+                <StackStatus status={mlstudiouser.stack?.status} />
               </Typography>
             </Grid>
           </Grid>
@@ -225,7 +225,7 @@ const NotebookListItem = (props) => {
           <Grid
             alignItems="center"
             container
-            key={notebook.sagemakerStudioUserProfileUri}
+            key={mlstudiouser.sagemakerStudioUserUri}
             justifyContent="space-between"
             spacing={3}
           />
@@ -249,7 +249,7 @@ const NotebookListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={`/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`}
+              to={`/console/mlstudio/${mlstudiouser.sagemakerStudioUserUri}`}
             >
               Learn More
             </Button>
@@ -259,7 +259,7 @@ const NotebookListItem = (props) => {
     </Grid>
   );
 };
-NotebookListItem.propTypes = {
-  notebook: PropTypes.object.isRequired
+MLStudioListItem.propTypes = {
+  mlstudiouser: PropTypes.object.isRequired
 };
-export default NotebookListItem;
+export default MLStudioListItem;

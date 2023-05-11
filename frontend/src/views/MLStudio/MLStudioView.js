@@ -27,10 +27,10 @@ import Stack from '../Stack/Stack';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import DeleteObjectWithFrictionModal from '../../components/DeleteObjectWithFrictionModal';
-import getSagemakerStudioUserProfile from '../../api/SagemakerStudio/getSagemakerStudioUserProfile';
-import deleteSagemakerStudioUserProfile from '../../api/SagemakerStudio/deleteSagemakerStudioUserProfile';
-import NotebookOverview from './NotebookOverview';
-import getSagemakerStudioUserProfilePresignedUrl from '../../api/SagemakerStudio/getSagemakerStudioUserProfilePresignedUrl';
+import getSagemakerStudioUser from '../../api/MLStudio/getSagemakerStudioUser';
+import deleteSagemakerStudioUser from '../../api/MLStudio/deleteSagemakerStudioUser';
+import MLStudioOverview from './MLStudioOverview';
+import getSagemakerStudioUserPresignedUrl from '../../api/MLStudio/getSagemakerStudioUserPresignedUrl';
 import StackStatus from '../Stack/StackStatus';
 
 const tabs = [
@@ -38,7 +38,7 @@ const tabs = [
   { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
 ];
 
-const NotebookView = () => {
+const MLStudioView = () => {
   const dispatch = useDispatch();
   const { settings } = useSettings();
   const { enqueueSnackbar } = useSnackbar();
@@ -48,7 +48,7 @@ const NotebookView = () => {
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const [notebook, setNotebook] = useState(null);
+  const [mlstudio, setMLStudio] = useState(null);
   const [stack, setStack] = useState(null);
   const [isOpeningSagemakerStudio, setIsOpeningSagemakerStudio] =
     useState(false);
@@ -64,31 +64,31 @@ const NotebookView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      getSagemakerStudioUserProfile(params.uri)
+      getSagemakerStudioUser(params.uri)
     );
     if (!response.errors) {
-      setNotebook(response.data.getSagemakerStudioUserProfile);
+      setMLStudio(response.data.getSagemakerStudioUser);
       if (stack) {
-        setStack(response.data.getSagemakerStudioUserProfile.stack);
+        setStack(response.data.getSagemakerStudioUser.stack);
       }
     } else {
       const error = response.errors
         ? response.errors[0].message
-        : 'Notebook not found';
+        : 'ML Studio User not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
   }, [client, dispatch, params.uri, stack]);
 
-  const getNotebookPresignedUrl = async () => {
+  const getMLStudioPresignedUrl = async () => {
     setIsOpeningSagemakerStudio(true);
     const response = await client.query(
-      getSagemakerStudioUserProfilePresignedUrl(
-        notebook.sagemakerStudioUserProfileUri
+      getSagemakerStudioUserPresignedUrl(
+        mlstudio.sagemakerStudioUserUri
       )
     );
     if (!response.errors) {
-      window.open(response.data.getSagemakerStudioUserProfilePresignedUrl);
+      window.open(response.data.getSagemakerStudioUserPresignedUrl);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -104,16 +104,16 @@ const NotebookView = () => {
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
-  const removeNotebook = async (deleteFromAWS = false) => {
+  const removeMLStudio = async (deleteFromAWS = false) => {
     const response = await client.mutate(
-      deleteSagemakerStudioUserProfile(
-        notebook.sagemakerStudioUserProfileUri,
+      deleteSagemakerStudioUser(
+        mlstudio.sagemakerStudioUserUri,
         deleteFromAWS
       )
     );
     if (!response.errors) {
       handleDeleteObjectModalClose();
-      enqueueSnackbar('ML Studio Profile deleted', {
+      enqueueSnackbar('ML Studio User deleted', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -129,19 +129,19 @@ const NotebookView = () => {
   if (loading) {
     return <CircularProgress />;
   }
-  if (!notebook) {
+  if (!mlstudio) {
     return null;
   }
 
   return (
     <>
       <Helmet>
-        <title>ML Studio: Profile Details | DataStudio</title>
+        <title>ML Studio: User Details | DataStudio</title>
       </Helmet>
       <StackStatus
         stack={stack}
         setStack={setStack}
-        environmentUri={notebook.environment?.environmentUri}
+        environmentUri={mlstudio.environment?.environmentUri}
       />
       <Box
         sx={{
@@ -154,7 +154,7 @@ const NotebookView = () => {
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
               <Typography color="textPrimary" variant="h5">
-                Notebook {notebook.label}
+                MLStudio User {mlstudio.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -177,10 +177,10 @@ const NotebookView = () => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`}
+                  to={`/console/mlstudio/${mlstudio.sagemakerStudioUserUri}`}
                   variant="subtitle2"
                 >
-                  {notebook.label}
+                  {mlstudio.label}
                 </Link>
               </Breadcrumbs>
             </Grid>
@@ -191,7 +191,7 @@ const NotebookView = () => {
                   color="primary"
                   startIcon={<SiJupyter size={15} />}
                   sx={{ m: 1 }}
-                  onClick={getNotebookPresignedUrl}
+                  onClick={getMLStudioPresignedUrl}
                   type="button"
                   variant="outlined"
                 >
@@ -233,13 +233,13 @@ const NotebookView = () => {
           <Divider />
           <Box sx={{ mt: 3 }}>
             {currentTab === 'overview' && (
-              <NotebookOverview notebook={notebook} />
+              <MLStudioOverview mlstudiouser={mlstudio} />
             )}
             {currentTab === 'stack' && (
               <Stack
-                environmentUri={notebook.environment.environmentUri}
-                stackUri={notebook.stack.stackUri}
-                targetUri={notebook.sagemakerStudioUserProfileUri}
+                environmentUri={mlstudio.environment.environmentUri}
+                stackUri={mlstudio.stack.stackUri}
+                targetUri={mlstudio.sagemakerStudioUserUri}
                 targetType="mlstudio"
               />
             )}
@@ -247,15 +247,15 @@ const NotebookView = () => {
         </Container>
       </Box>
       <DeleteObjectWithFrictionModal
-        objectName={notebook.label}
+        objectName={mlstudio.label}
         onApply={handleDeleteObjectModalClose}
         onClose={handleDeleteObjectModalClose}
         open={isDeleteObjectModalOpen}
-        deleteFunction={removeNotebook}
+        deleteFunction={removeMLStudio}
         isAWSResource
       />
     </>
   );
 };
 
-export default NotebookView;
+export default MLStudioView;

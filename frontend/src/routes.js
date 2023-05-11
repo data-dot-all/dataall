@@ -82,13 +82,13 @@ const NotebookCreateForm = Loadable(
 );
 
 const MLStudioList = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookList'))
+  lazy(() => import('./views/MLStudio/MLStudioList'))
 );
 const MLStudioView = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookView'))
+  lazy(() => import('./views/MLStudio/MLStudioView'))
 );
 const MLStudioCreateForm = Loadable(
-  lazy(() => import('./views/MLStudio/NotebookCreateForm'))
+  lazy(() => import('./views/MLStudio/MLStudioCreateForm'))
 );
 
 const DashboardList = Loadable(

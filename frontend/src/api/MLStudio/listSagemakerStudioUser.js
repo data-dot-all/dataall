@@ -1,29 +1,29 @@
 import { gql } from 'apollo-boost';
 
-const listSagemakerStudioUserProfiles = (filter) => ({
+const listSagemakerStudioUsers = (filter) => ({
   variables: {
     filter
   },
   query: gql`
-    query listSagemakerStudioUserProfiles(
-      $filter: SagemakerStudioUserProfileFilter
+    query listSagemakerStudioUsers(
+      $filter: SagemakerStudioUserFilter
     ) {
-      listSagemakerStudioUserProfiles(filter: $filter) {
+      listSagemakerStudioUsers(filter: $filter) {
         count
         page
         pages
         hasNext
         hasPrevious
         nodes {
-          sagemakerStudioUserProfileUri
+          sagemakerStudioUserUri
           name
           owner
           description
           label
           created
           tags
-          sagemakerStudioUserProfileStatus
-          userRoleForSagemakerStudioUserProfile
+          sagemakerStudioUserStatus
+          userRoleForSagemakerStudioUser
           environment {
             label
             name
@@ -47,4 +47,4 @@ const listSagemakerStudioUserProfiles = (filter) => ({
   `
 });
 
-export default listSagemakerStudioUserProfiles;
+export default listSagemakerStudioUsers;

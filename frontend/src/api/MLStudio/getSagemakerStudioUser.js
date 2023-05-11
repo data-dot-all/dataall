@@ -1,29 +1,29 @@
 import { gql } from 'apollo-boost';
 
-const getSagemakerStudioUserProfile = (sagemakerStudioUserProfileUri) => ({
+const getSagemakerStudioUser = (sagemakerStudioUserUri) => ({
   variables: {
-    sagemakerStudioUserProfileUri
+    sagemakerStudioUserUri
   },
   query: gql`
-    query getSagemakerStudioUserProfile(
-      $sagemakerStudioUserProfileUri: String!
+    query getSagemakerStudioUser(
+      $sagemakerStudioUserUri: String!
     ) {
-      getSagemakerStudioUserProfile(
-        sagemakerStudioUserProfileUri: $sagemakerStudioUserProfileUri
+      getSagemakerStudioUser(
+        sagemakerStudioUserUri: $sagemakerStudioUserUri
       ) {
-        sagemakerStudioUserProfileUri
+        sagemakerStudioUserUri
         name
         owner
         description
         label
         created
         tags
-        userRoleForSagemakerStudioUserProfile
-        sagemakerStudioUserProfileStatus
+        userRoleForSagemakerStudioUser
+        sagemakerStudioUserStatus
         SamlAdminGroupName
-        sagemakerStudioUserProfileApps {
+        sagemakerStudioUserApps {
           DomainId
-          UserProfileName
+          UserName
           AppType
           AppName
           Status
@@ -58,4 +58,4 @@ const getSagemakerStudioUserProfile = (sagemakerStudioUserProfileUri) => ({
   `
 });
 
-export default getSagemakerStudioUserProfile;
+export default getSagemakerStudioUser;

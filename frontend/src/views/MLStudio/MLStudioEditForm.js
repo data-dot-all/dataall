@@ -27,10 +27,10 @@ import useSettings from '../../hooks/useSettings';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import ChipInput from '../../components/TagsInput';
-import getSagemakerStudioUserProfile from '../../api/SagemakerStudio/getSagemakerStudioUserProfile';
+import getSagemakerStudioUser from '../../api/MLStudio/getSagemakerStudioUser';
 import updateUserProfile from '../../api/UserProfile/updateUserProfile';
 
-const PipelineEditForm = (props) => {
+const MLStudioEditForm = (props) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const params = useParams();
@@ -43,13 +43,13 @@ const PipelineEditForm = (props) => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      getSagemakerStudioUserProfile(params.uri)
+      getSagemakerStudioUser(params.uri)
     );
     if (
       !response.errors &&
-      response.data.getSagemakerStudioUserProfile !== null
+      response.data.getSagemakerStudioUser !== null
     ) {
-      setNotebook(response.data.getSagemakerStudioUserProfile);
+      setNotebook(response.data.getSagemakerStudioUser);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -89,7 +89,7 @@ const PipelineEditForm = (props) => {
           variant: 'success'
         });
         navigate(
-          `/console/mlstudio/${response.data.updateUserProfile.sagemakerStudioUserProfileUri}`
+          `/console/mlstudio/${response.data.updateUserProfile.sagemakerStudioUserUri}`
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -146,7 +146,7 @@ const PipelineEditForm = (props) => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`}
+                  to={`/console/mlstudio/${notebook.sagemakerStudioUserUri}`}
                   variant="subtitle2"
                 >
                   {notebook.label}
@@ -160,7 +160,7 @@ const PipelineEditForm = (props) => {
                   component={RouterLink}
                   startIcon={<ArrowLeftIcon fontSize="small" />}
                   sx={{ mt: 1 }}
-                  to={`/console/mlstudio/${notebook.sagemakerStudioUserProfileUri}`}
+                  to={`/console/mlstudio/${notebook.sagemakerStudioUserUri}`}
                   variant="outlined"
                 >
                   Cancel
@@ -345,4 +345,4 @@ const PipelineEditForm = (props) => {
   );
 };
 
-export default PipelineEditForm;
+export default MLStudioEditForm;

@@ -20,10 +20,10 @@ import SearchInput from '../../components/SearchInput';
 import Pager from '../../components/Pager';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
-import NotebookListItem from './NotebookListItem';
-import listSagemakerStudioUserProfiles from '../../api/SagemakerStudio/listSagemakerStudioUserProfiles';
+import MLStudioListItem from './MLStudioListItem';
+import listSagemakerStudioUser from '../../api/MLStudio/listSagemakerStudioUser';
 
-function NotebookPageHeader() {
+function MLStudioPageHeader() {
   return (
     <Grid
       alignItems="center"
@@ -72,7 +72,7 @@ function NotebookPageHeader() {
   );
 }
 
-const NotebookList = () => {
+const MLStudioList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.PagedResponseDefault);
   const [filter, setFilter] = useState(Defaults.DefaultFilter);
@@ -84,10 +84,10 @@ const NotebookList = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(
-      listSagemakerStudioUserProfiles(filter)
+      listSagemakerStudioUser(filter)
     );
     if (!response.errors) {
-      setItems(response.data.listSagemakerStudioUserProfiles);
+      setItems(response.data.listSagemakerStudioUser);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -135,7 +135,7 @@ const NotebookList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <NotebookPageHeader />
+          <MLStudioPageHeader />
           <Box sx={{ mt: 3 }}>
             <SearchInput
               onChange={handleInputChange}
@@ -156,7 +156,7 @@ const NotebookList = () => {
               <Box>
                 <Grid container spacing={3}>
                   {items.nodes.map((node) => (
-                    <NotebookListItem notebook={node} />
+                    <MLStudioListItem mlstudiouser={node} />
                   ))}
                 </Grid>
 
@@ -170,4 +170,4 @@ const NotebookList = () => {
   );
 };
 
-export default NotebookList;
+export default MLStudioList;

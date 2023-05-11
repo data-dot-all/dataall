@@ -25,7 +25,7 @@ import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import ArrowLeftIcon from '../../icons/ArrowLeft';
 import useSettings from '../../hooks/useSettings';
-import createSagemakerStudioUserProfile from '../../api/SagemakerStudio/createSagemakerStudioUserProfile';
+import createSagemakerStudioUser from '../../api/MLStudio/createSagemakerStudioUser';
 import listEnvironments from '../../api/Environment/listEnvironments';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
@@ -33,7 +33,7 @@ import ChipInput from '../../components/TagsInput';
 import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 
-const NotebookCreateForm = (props) => {
+const MLStudioCreateForm = (props) => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -93,7 +93,7 @@ const NotebookCreateForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        createSagemakerStudioUserProfile({
+        createSagemakerStudioUser({
           label: values.label,
           environmentUri: values.environment.environmentUri,
           description: values.description,
@@ -106,7 +106,7 @@ const NotebookCreateForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('ML Studio user profile creation started', {
+        enqueueSnackbar('ML Studio user creation started', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -114,7 +114,7 @@ const NotebookCreateForm = (props) => {
           variant: 'success'
         });
         navigate(
-          `/console/mlstudio/${response.data.createSagemakerStudioUserProfile.sagemakerStudioUserProfileUri}`
+          `/console/mlstudio/${response.data.createSagemakerStudioUser.sagemakerStudioUserUri}`
         );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -146,7 +146,7 @@ const NotebookCreateForm = (props) => {
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
               <Typography color="textPrimary" variant="h5">
-                Create a new ML Studio profile
+                Create a new ML Studio
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -203,7 +203,7 @@ const NotebookCreateForm = (props) => {
               validationSchema={Yup.object().shape({
                 label: Yup.string()
                   .max(255)
-                  .required('*ML Studio user profile is required'),
+                  .required('*ML Studio user is required'),
                 description: Yup.string().max(5000),
                 SamlAdminGroupName: Yup.string()
                   .max(255)
@@ -238,7 +238,7 @@ const NotebookCreateForm = (props) => {
                             error={Boolean(touched.label && errors.label)}
                             fullWidth
                             helperText={touched.label && errors.label}
-                            label="ML Studio profile name"
+                            label="ML Studio user name"
                             name="label"
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -404,7 +404,7 @@ const NotebookCreateForm = (props) => {
                           type="submit"
                           variant="contained"
                         >
-                          Create ML Studio profile
+                          Create ML Studio user
                         </LoadingButton>
                       </Box>
                     </Grid>
@@ -419,4 +419,4 @@ const NotebookCreateForm = (props) => {
   );
 };
 
-export default NotebookCreateForm;
+export default MLStudioCreateForm;
