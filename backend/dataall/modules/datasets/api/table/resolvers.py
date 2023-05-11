@@ -19,11 +19,11 @@ def list_dataset_tables(context, source, filter: dict = None):
         return None
     if not filter:
         filter = {}
-    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, filter=filter)
+    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, **filter)
 
 
 def get_table(context, source: Dataset, tableUri: str = None):
-    return DatasetTableService.update_table(table_uri=tableUri)
+    return DatasetTableService.get_table(table_uri=tableUri)
 
 
 def update_table(context, source, tableUri: str = None, input: dict = None):
@@ -33,7 +33,7 @@ def update_table(context, source, tableUri: str = None, input: dict = None):
 def delete_table(context, source, tableUri: str = None):
     if not tableUri:
         return False
-    return DatasetTableService.delete_table(table_uri=tableUri)
+    return DatasetTableService.delete_table(uri=tableUri)
 
 
 def preview(context, source, tableUri: str = None):
@@ -70,7 +70,7 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
 
 
 def publish_table_update(context: Context, source, tableUri: str = None):
-    return DatasetTableService.publish_table_update(table_uri=tableUri)
+    return DatasetTableService.publish_table_update(uri=tableUri)
 
 
 def resolve_redshift_copy_schema(context, source: DatasetTable, clusterUri: str):

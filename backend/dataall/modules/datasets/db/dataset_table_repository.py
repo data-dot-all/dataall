@@ -2,15 +2,10 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions, paginate
 from dataall.db.api import Glossary, ResourcePolicy, Environment
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
-from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, CREATE_DATASET_TABLE, DELETE_DATASET_TABLE, \
-    UPDATE_DATASET_TABLE
-from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.utils import json_utils
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
@@ -19,34 +14,28 @@ logger = logging.getLogger(__name__)
 
 
 class DatasetTableRepository:
+
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET_TABLE)
-    def create_dataset_table(
-        session,
-        uri: str,
-        data: dict = None,
-    ) -> DatasetTable:
-        dataset = DatasetService.get_dataset_by_uri(session, uri)
-        exists = (
+    def save(session, table: DatasetTable):
+        session.add(table)
+
+    @staticmethod
+    def exists(session, dataset_uri, glue_table_name):
+        return (
             session.query(DatasetTable)
             .filter(
                 and_(
-                    DatasetTable.datasetUri == uri,
-                    DatasetTable.GlueTableName == data['name'],
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.GlueTableName == glue_table_name,
                 )
             )
             .count()
         )
 
-        if exists:
-            raise exceptions.ResourceAlreadyExists(
-                action='Create Table',
-                message=f'table: {data["name"]} already exist on dataset {uri}',
-            )
-
+    @staticmethod
+    def create_dataset_table(session, dataset: Dataset, data: dict = None) -> DatasetTable:
         table = DatasetTable(
-            datasetUri=uri,
+            datasetUri=dataset.datasetUri,
             label=data['name'],
             name=data['name'],
             description=data.get('description', 'No description provided'),
@@ -61,108 +50,23 @@ class DatasetTableRepository:
             region=dataset.region,
         )
         session.add(table)
-        if data.get('terms') is not None:
-            Glossary.set_glossary_terms_links(
-                session, get_context().username, table.tableUri, 'DatasetTable', data.get('terms', [])
-            )
         session.commit()
-
-        # ADD DATASET TABLE PERMISSIONS
-        environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        permission_group = set([dataset.SamlAdminGroupName, environment.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
-        for group in permission_group:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=group,
-                permissions=DATASET_TABLE_READ,
-                resource_uri=table.tableUri,
-                resource_type=DatasetTable.__name__,
-            )
         return table
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    def list_dataset_tables(
-        session,
-        uri: str,
-        data: dict = None,
-    ) -> dict:
+    def paginate_dataset_tables(session, dataset_uri, term, page, page_size) -> dict:
         query = (
             session.query(DatasetTable)
-            .filter(DatasetTable.datasetUri == uri)
+            .filter(DatasetTable.datasetUri == dataset_uri)
             .order_by(DatasetTable.created.desc())
         )
-        if data.get('term'):
-            term = data.get('term')
+        if term:
             query = query.filter(DatasetTable.label.ilike('%' + term + '%'))
-        return paginate(
-            query, page=data.get('page', 1), page_size=data.get('pageSize', 10)
-        ).to_dict()
+        return paginate(query, page=page, page_size=page_size).to_dict()
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    def get_dataset_table(
-        session,
-        uri: str,
-        data: dict = None,
-    ) -> DatasetTable:
-        return DatasetTableRepository.get_dataset_table_by_uri(session, data['tableUri'])
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(UPDATE_DATASET_TABLE)
-    def update_dataset_table(
-        session,
-        uri: str,
-        data: dict = None,
-    ):
-        table = data.get(
-            'table',
-            DatasetTableRepository.get_dataset_table_by_uri(session, data['tableUri']),
-        )
-
-        for k in [attr for attr in data.keys() if attr != 'term']:
-            setattr(table, k, data.get(k))
-
-        if data.get('terms') is not None:
-            Glossary.set_glossary_terms_links(
-                session, get_context().username, table.tableUri, 'DatasetTable', data.get('terms', [])
-            )
-
-        return table
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(DELETE_DATASET_TABLE)
-    def delete_dataset_table(
-        session,
-        uri: str,
-        data: dict = None,
-    ):
-        table = DatasetTableRepository.get_dataset_table_by_uri(session, data['tableUri'])
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        share_item = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri == table.tableUri,
-                    ShareObjectItem.status.in_(share_item_shared_states)
-                )
-            )
-            .first()
-        )
-        if share_item:
-            raise exceptions.ResourceShared(
-                action=DELETE_DATASET_TABLE,
-                message='Revoke all table shares before deletion',
-            )
-        session.query(ShareObjectItem).filter(
-            ShareObjectItem.itemUri == table.tableUri,
-        ).delete()
+    def delete_dataset_table(session, table: DatasetTable):
         session.delete(table)
-        Glossary.delete_glossary_terms_links(
-            session, target_uri=table.tableUri, target_type='DatasetTable'
-        )
         return True
 
     @staticmethod
@@ -195,17 +99,6 @@ class DatasetTableRepository:
         )
 
         return env_tables_shared
-
-    @staticmethod
-    def get_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str
-    ):
-        return [
-            {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
-            for t in DatasetTableRepository.query_dataset_tables_shared_with_env(
-                session, environment_uri, dataset_uri
-            )
-        ]
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):

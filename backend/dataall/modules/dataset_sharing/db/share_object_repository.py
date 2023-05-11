@@ -1402,3 +1402,22 @@ class ShareObjectRepository:
             .count()
         )
         return {'tables': tables, 'locations': locations, 'sharedItems': shared_items, 'revokedItems': revoked_items, 'failedItems': failed_items, 'pendingItems': pending_items}
+
+    @staticmethod
+    def has_shared_items(session, item_uri: str) -> int:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        return (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.itemUri == item_uri,
+                    ShareObjectItem.status.in_(share_item_shared_states)
+                )
+            )
+            .count()
+        )
+
+    @staticmethod
+    def delete_shares(session, item_uri: str):
+        session.query(ShareObjectItem).filter(ShareObjectItem.itemUri == item_uri).delete()
+
