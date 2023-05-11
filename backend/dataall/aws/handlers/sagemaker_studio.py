@@ -4,7 +4,7 @@ from .parameter_store import ParameterStoreManager
 from .sts import SessionHelper
 from ...db.models import Environment
 
-
+# TODO: cannot be deleted because it is used in environment cdk stack --> there are changes in V1.5 affect this implementation. We need to rebase before continuing
 class SagemakerStudio:
     @staticmethod
     def client(AwsAccountId, region, role=None):
@@ -35,69 +35,3 @@ class SagemakerStudio:
         except ClientError as e:
             print(e)
             return 'NotFound'
-
-    @staticmethod
-    def presigned_url(
-        AwsAccountId,
-        region,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
-        client = SagemakerStudio.client(AwsAccountId, region)
-        try:
-            response_signed_url = client.create_presigned_domain_url(
-                DomainId=sagemakerStudioDomainID,
-                UserProfileName=sagemakerStudioUserProfileNameSlugify,
-            )
-            return response_signed_url['AuthorizedUrl']
-        except ClientError:
-            return ''
-
-    @staticmethod
-    def get_user_profile_status(
-        AwsAccountId,
-        region,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
-        client = SagemakerStudio.client(AwsAccountId, region)
-        try:
-            response = client.describe_user_profile(
-                DomainId=sagemakerStudioDomainID,
-                UserProfileName=sagemakerStudioUserProfileNameSlugify,
-            )
-            return response['Status']
-        except ClientError as e:
-            print(e)
-            return 'NotFound'
-
-    @staticmethod
-    def get_user_profile_applications(
-        AwsAccountId,
-        region,
-        sagemakerStudioDomainID,
-        sagemakerStudioUserProfileNameSlugify,
-    ):
-        client = SagemakerStudio.client(AwsAccountId, region)
-        _running_apps = []
-        try:
-            paginator_app = client.get_paginator('list_apps')
-            response_paginator = paginator_app.paginate(
-                DomainIdEquals=sagemakerStudioDomainID,
-                UserProfileNameEquals=sagemakerStudioUserProfileNameSlugify,
-            )
-            for _response_app in response_paginator:
-                for _app in _response_app['Apps']:
-                    if _app.get('Status') not in ['Deleted']:
-                        _running_apps.append(
-                            dict(
-                                DomainId=_app.get('DomainId'),
-                                UserProfileName=_app.get('UserProfileName'),
-                                AppType=_app.get('AppType'),
-                                AppName=_app.get('AppName'),
-                                Status=_app.get('Status'),
-                            )
-                        )
-            return _running_apps
-        except ClientError as e:
-            raise e
