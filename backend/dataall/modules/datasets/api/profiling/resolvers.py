@@ -64,4 +64,4 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
 
 
 def list_table_profiling_runs(context: Context, source, tableUri=None):
-    return DatasetProfilingService.list_profiling_runs(tableUri)
+    return DatasetProfilingService.list_table_profiling_runs(tableUri)

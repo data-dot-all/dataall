@@ -32,8 +32,8 @@ class DatasetProfilingGlueHandler:
 
             DatasetProfilingRepository.update_run(
                 session,
-                profilingRunUri=profiling.profilingRunUri,
-                GlueJobRunId=run_id,
+                run_uri=profiling.profilingRunUri,
+                glue_job_run_id=run_id,
             )
             return run_id
 

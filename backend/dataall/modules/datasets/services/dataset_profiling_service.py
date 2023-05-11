@@ -4,13 +4,14 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db.api import Environment, ResourcePolicy
+from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models import Task
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.datasets.db.dataset_service import DatasetService
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
-from dataall.modules.datasets_base.db.models import DatasetProfilingRun
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
 
 
 class DatasetProfilingService:
@@ -20,11 +21,24 @@ class DatasetProfilingService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetService.get_dataset_by_uri(session, uri)
-            run = DatasetProfilingRepository.start_profiling(
+            if not dataset:
+                raise ObjectNotFound('Dataset', uri)
+
+            if table_uri and not glue_table_name:
+                table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+                if not table:
+                    raise ObjectNotFound('DatasetTable', table_uri)
+                glue_table_name = table.GlueTableName
+
+            environment: Environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            if not environment:
+                raise ObjectNotFound('Environment', dataset.environmentUri)
+
+            run = DatasetProfilingRepository.save_profiling(
                 session=session,
-                datasetUri=dataset.datasetUri,
-                tableUri=table_uri,
-                GlueTableName=glue_table_name,
+                dataset=dataset,
+                env=environment,
+                glue_table_name=glue_table_name,
             )
 
             task = Task(
@@ -38,6 +52,7 @@ class DatasetProfilingService:
 
     @staticmethod
     def queue_profiling_run(run_uri):
+        # TODO NO PERMISSION CHECK
         context = get_context()
         with context.db_engine.scoped_session() as session:
             task = Task(
@@ -48,19 +63,22 @@ class DatasetProfilingService:
 
     @staticmethod
     def update_profiling_run_results(run_uri, results):
+        # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             run = DatasetProfilingRepository.update_run(
-                session=session, profilingRunUri=run_uri, results=results
+                session=session, run_uri=run_uri, results=results
             )
             return run
 
     @staticmethod
     def list_profiling_runs(dataset_uri):
+        # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, dataset_uri)
 
     @staticmethod
     def get_profiling_run(run_uri):
+        # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.get_profiling_run(
                 session=session, profilingRunUri=run_uri
@@ -68,11 +86,10 @@ class DatasetProfilingService:
 
     @staticmethod
     def get_last_table_profiling_run(table_uri: str):
+        # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             run: DatasetProfilingRun = (
-                DatasetProfilingRepository.get_table_last_profiling_run(
-                    session=session, tableUri=table_uri
-                )
+                DatasetProfilingRepository.get_table_last_profiling_run(session, table_uri)
             )
 
             if run:
@@ -96,7 +113,6 @@ class DatasetProfilingService:
 
     @staticmethod
     def list_table_profiling_runs(table_uri: str):
+        # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
-            return DatasetProfilingRepository.list_table_profiling_runs(
-                session=session, tableUri=table_uri, filter={}
-            )
+            return DatasetProfilingRepository.list_table_profiling_runs(session, table_uri)
