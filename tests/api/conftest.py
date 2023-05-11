@@ -27,7 +27,7 @@ def patch_check_env(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_dataset(module_mocker):
     module_mocker.patch(
-        'dataall.modules.datasets.api.dataset.resolvers.check_dataset_account', return_value=True
+        'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
     )
 
 

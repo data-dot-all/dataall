@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy import and_, or_, func, case
+from sqlalchemy.orm import Query
 
 from dataall.db.api import (
     has_resource_perm,
@@ -1441,4 +1442,86 @@ class ShareObjectRepository:
             )
             session.delete(share)
 
+    @staticmethod
+    def _query_user_datasets(session, username, groups, filter) -> Query:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(Dataset)
+            .outerjoin(
+                ShareObject,
+                ShareObject.datasetUri == Dataset.datasetUri,
+            )
+            .outerjoin(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            )
+            .filter(
+                or_(
+                    Dataset.owner == username,
+                    Dataset.SamlAdminGroupName.in_(groups),
+                    Dataset.stewards.in_(groups),
+                    and_(
+                        ShareObject.principalId.in_(groups),
+                        ShareObjectItem.status.in_(share_item_shared_states),
+                    ),
+                    and_(
+                        ShareObject.owner == username,
+                        ShareObjectItem.status.in_(share_item_shared_states),
+                    ),
+                )
+            )
+        )
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    Dataset.description.ilike(filter.get('term') + '%%'),
+                    Dataset.label.ilike(filter.get('term') + '%%'),
+                )
+            )
+        return query
+
+    @staticmethod
+    def paginated_user_datasets(
+            session, username, groups, data=None
+    ) -> dict:
+        return paginate(
+            query=ShareObjectRepository._query_user_datasets(session, username, groups, data),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def find_dataset_shares(session, dataset_uri):
+        return (
+            session.query(ShareObject)
+            .filter(ShareObject.datasetUri == dataset_uri)
+            .all()
+        )
+
+    @staticmethod
+    def query_dataset_shares(session, dataset_uri) -> Query:
+        return session.query(ShareObject).filter(
+            and_(
+                ShareObject.datasetUri == dataset_uri,
+                ShareObject.deleted.is_(None),
+            )
+        )
+
+    @staticmethod
+    def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
+        query = ShareObjectRepository.query_dataset_shares(session, uri)
+        return paginate(
+            query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
+        ).to_dict()
+
+    @staticmethod
+    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
+        query = session.query(ShareObject).filter(
+            and_(
+                ShareObject.datasetUri == dataset_uri,
+                ShareObject.deleted.is_(None),
+                ShareObject.existingSharedItems.is_(True),
+            )
+        )
+        return query.all()
 

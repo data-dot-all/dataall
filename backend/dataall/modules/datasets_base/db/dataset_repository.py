@@ -3,22 +3,16 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from dataall.core.context import get_context
 from dataall.db.api import (
     Environment,
-    ResourcePolicy,
 )
 from dataall.db.api import Organization
-from dataall.db import models, exceptions, paginate, permissions
+from dataall.db import models, exceptions, paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
-from dataall.modules.datasets.db.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.core.group.services.group_resource_manager import GroupResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets.services.dataset_permissions import DATASET_READ, DATASET_ALL
-from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -171,54 +165,6 @@ class DatasetRepository(GroupResource):
         return DatasetRepository.get_dataset_by_uri(session, uri)
 
     @staticmethod
-    def query_user_datasets(session, username, groups, filter) -> Query:
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        query = (
-            session.query(Dataset)
-            .outerjoin(
-                ShareObject,
-                ShareObject.datasetUri == Dataset.datasetUri,
-            )
-            .outerjoin(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            )
-            .filter(
-                or_(
-                    Dataset.owner == username,
-                    Dataset.SamlAdminGroupName.in_(groups),
-                    Dataset.stewards.in_(groups),
-                    and_(
-                        ShareObject.principalId.in_(groups),
-                        ShareObjectItem.status.in_(share_item_shared_states),
-                    ),
-                    and_(
-                        ShareObject.owner == username,
-                        ShareObjectItem.status.in_(share_item_shared_states),
-                    ),
-                )
-            )
-        )
-        if filter and filter.get('term'):
-            query = query.filter(
-                or_(
-                    Dataset.description.ilike(filter.get('term') + '%%'),
-                    Dataset.label.ilike(filter.get('term') + '%%'),
-                )
-            )
-        return query
-
-    @staticmethod
-    def paginated_user_datasets(
-        session, username, groups, data=None
-    ) -> dict:
-        return paginate(
-            query=DatasetRepository.query_user_datasets(session, username, groups, data),
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
         query = (
             session.query(DatasetTable)
@@ -246,114 +192,17 @@ class DatasetRepository(GroupResource):
         ).to_dict()
 
     @staticmethod
-    def update_dataset(session, uri, data=None) -> Dataset:
-        username = get_context().username
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-        if data and isinstance(data, dict):
-            for k in data.keys():
-                if k != 'stewards':
-                    setattr(dataset, k, data.get(k))
-            if data.get('stewards') and data.get('stewards') != dataset.stewards:
-                if data.get('stewards') != dataset.SamlAdminGroupName:
-                    DatasetRepository.transfer_stewardship_to_new_stewards(
-                        session, dataset, data['stewards']
-                    )
-                    dataset.stewards = data['stewards']
-                else:
-                    DatasetRepository.transfer_stewardship_to_owners(session, dataset)
-                    dataset.stewards = dataset.SamlAdminGroupName
-
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=dataset.SamlAdminGroupName,
-                permissions=DATASET_ALL,
-                resource_uri=dataset.datasetUri,
-                resource_type=Dataset.__name__,
-            )
-            DatasetRepository.update_dataset_glossary_terms(session, username, uri, data)
-            activity = models.Activity(
-                action='dataset:update',
-                label='dataset:update',
-                owner=username,
-                summary=f'{username} updated dataset {dataset.name}',
-                targetUri=dataset.datasetUri,
-                targetType='dataset',
-            )
-            session.add(activity)
-            session.commit()
-        return dataset
-
-    @staticmethod
-    def transfer_stewardship_to_owners(session, dataset):
-        dataset_shares = (
-            session.query(ShareObject)
-            .filter(ShareObject.datasetUri == dataset.datasetUri)
-            .all()
+    def update_dataset_activity(session, dataset, username) :
+        activity = models.Activity(
+            action='dataset:update',
+            label='dataset:update',
+            owner=username,
+            summary=f'{username} updated dataset {dataset.name}',
+            targetUri=dataset.datasetUri,
+            targetType='dataset',
         )
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=permissions.SHARE_OBJECT_APPROVER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
-        return dataset
-
-    @staticmethod
-    def transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
-        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        if dataset.stewards != env.SamlGroupName:
-            ResourcePolicy.delete_resource_policy(
-                session=session,
-                group=dataset.stewards,
-                resource_uri=dataset.datasetUri,
-            )
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=new_stewards,
-            permissions=DATASET_READ,
-            resource_uri=dataset.datasetUri,
-            resource_type=Dataset.__name__,
-        )
-
-        dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
-        for tableUri in dataset_tables:
-            if dataset.stewards != env.SamlGroupName:
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=tableUri,
-                )
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=new_stewards,
-                permissions=DATASET_TABLE_READ,
-                resource_uri=tableUri,
-                resource_type=DatasetTable.__name__,
-            )
-
-        dataset_shares = (
-            session.query(ShareObject)
-            .filter(ShareObject.datasetUri == dataset.datasetUri)
-            .all()
-        )
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=new_stewards,
-                    permissions=permissions.SHARE_OBJECT_APPROVER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
-        return dataset
+        session.add(activity)
+        session.commit()
 
     @staticmethod
     def update_dataset_glossary_terms(session, username, uri, data):
@@ -411,39 +260,6 @@ class DatasetRepository(GroupResource):
             .filter(DatasetTable.datasetUri == dataset_uri)
             .all()
         )
-
-    @staticmethod
-    def query_dataset_shares(session, dataset_uri) -> Query:
-        return session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
-            )
-        )
-
-    @staticmethod
-    def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
-        query = DatasetRepository.query_dataset_shares(session, uri)
-        return paginate(
-            query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)
-        ).to_dict()
-
-    @staticmethod
-    def list_dataset_shares(session, dataset_uri) -> [ShareObject]:
-        """return the dataset shares"""
-        query = DatasetRepository.query_dataset_shares(session, dataset_uri)
-        return query.all()
-
-    @staticmethod
-    def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [ShareObject]:
-        query = session.query(ShareObject).filter(
-            and_(
-                ShareObject.datasetUri == dataset_uri,
-                ShareObject.deleted.is_(None),
-                ShareObject.existingSharedItems.is_(True),
-            )
-        )
-        return query.all()
 
     @staticmethod
     def list_dataset_redshift_clusters(

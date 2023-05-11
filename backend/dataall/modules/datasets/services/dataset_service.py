@@ -10,9 +10,10 @@ from dataall.core.permission_checker import has_resource_permission, has_tenant_
 from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Environment, Task
+from dataall.db.permissions import SHARE_OBJECT_APPROVER
+from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets import DatasetIndexer, DatasetTableIndexer
-from dataall.modules.datasets.api.dataset.enums import DatasetRole
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
@@ -21,7 +22,9 @@ from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DA
     SUMMARY_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import Dataset
+from dataall.modules.datasets_base.db.enums import DatasetRole
+from dataall.modules.datasets_base.db.models import Dataset, DatasetTable
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 log = logging.getLogger(__name__)
 
@@ -51,10 +54,8 @@ class DatasetService:
             dataset = DatasetRepository.create_dataset(
                 session=session,
                 username=context.username,
-                groups=context.groups,
                 uri=uri,
                 data=data,
-                check_perm=True,
             )
 
             ResourcePolicy.attach_resource_policy(
@@ -118,7 +119,7 @@ class DatasetService:
     def list_datasets(data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_user_datasets(
+            return ShareObjectRepository.paginated_user_datasets(
                 session, context.username, context.groups, data=data
             )
 
@@ -149,16 +150,38 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(environment=environment)
-            updated_dataset = DatasetRepository.update_dataset(
-                session=session,
-                uri=uri,
-                data=data,
-            )
+
+            username = get_context().username
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+            if data and isinstance(data, dict):
+                for k in data.keys():
+                    if k != 'stewards':
+                        setattr(dataset, k, data.get(k))
+                if data.get('stewards') and data.get('stewards') != dataset.stewards:
+                    if data.get('stewards') != dataset.SamlAdminGroupName:
+                        DatasetService._transfer_stewardship_to_new_stewards(
+                            session, dataset, data['stewards']
+                        )
+                        dataset.stewards = data['stewards']
+                    else:
+                        DatasetService._transfer_stewardship_to_owners(session, dataset)
+                        dataset.stewards = dataset.SamlAdminGroupName
+
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    permissions=DATASET_ALL,
+                    resource_uri=dataset.datasetUri,
+                    resource_type=Dataset.__name__,
+                )
+                DatasetRepository.update_dataset_glossary_terms(session, username, uri, data)
+                DatasetRepository.update_dataset_activity(session, dataset, username)
+
             DatasetIndexer.upsert(session, dataset_uri=uri)
 
-        DatasetService._deploy_dataset_stack(updated_dataset)
+        DatasetService._deploy_dataset_stack(dataset)
 
-        return updated_dataset
+        return dataset
 
     @staticmethod
     def get_dataset_statistics(dataset: Dataset):
@@ -290,7 +313,7 @@ class DatasetService:
     @staticmethod
     def list_dataset_share_objects(dataset: Dataset, data: dict = None):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_dataset_shares(
+            return ShareObjectRepository.paginated_dataset_shares(
                 session=session,
                 uri=dataset.datasetUri,
                 data=data
@@ -400,7 +423,7 @@ class DatasetService:
             env: Environment = Environment.get_environment_by_uri(
                 session, dataset.environmentUri
             )
-            shares = DatasetRepository.list_dataset_shares_with_existing_shared_items(session, uri)
+            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
             if shares:
                 raise UnauthorizedOperation(
                     action=DELETE_DATASET,
@@ -530,3 +553,67 @@ class DatasetService:
                 groupUri=group_uri,
                 data=data,
             )
+
+    @staticmethod
+    def _transfer_stewardship_to_owners(session, dataset):
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        if dataset_shares:
+            for share in dataset_shares:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
+        return dataset
+
+    @staticmethod
+    def _transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+        ResourcePolicy.attach_resource_policy(
+            session=session,
+            group=new_stewards,
+            permissions=DATASET_READ,
+            resource_uri=dataset.datasetUri,
+            resource_type=Dataset.__name__,
+        )
+
+        dataset_tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if dataset.stewards != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=new_stewards,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=tableUri,
+                resource_type=DatasetTable.__name__,
+            )
+
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        if dataset_shares:
+            for share in dataset_shares:
+                ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=new_stewards,
+                    permissions=SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=ShareObject.__name__,
+                )
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=share.shareUri,
+                )
+        return dataset

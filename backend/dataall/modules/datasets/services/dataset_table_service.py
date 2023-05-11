@@ -11,7 +11,7 @@ from dataall.modules.dataset_sharing.db.share_object_repository import ShareObje
 from dataall.modules.datasets import DatasetTableIndexer
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
-from dataall.modules.datasets.db.enums import ConfidentialityClassification
+from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
     DELETE_DATASET_TABLE, CREATE_DATASET_TABLE
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
