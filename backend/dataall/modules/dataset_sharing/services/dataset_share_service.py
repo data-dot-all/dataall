@@ -8,13 +8,14 @@ from dataall.db.paginator import paginate
 from dataall.modules.dataset_sharing.db.enums import ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+from dataall.modules.dataset_sharing.services.share_permissions import LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 class DatasetShareService:
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
+    @has_resource_perm(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(
             session, username, groups, uri, data=None, check_perm=None
     ) -> dict:

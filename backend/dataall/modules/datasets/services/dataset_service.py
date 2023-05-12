@@ -10,9 +10,9 @@ from dataall.core.permission_checker import has_resource_permission, has_tenant_
 from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack, Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Task
-from dataall.db.permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.datasets import DatasetIndexer, DatasetTableIndexer
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient

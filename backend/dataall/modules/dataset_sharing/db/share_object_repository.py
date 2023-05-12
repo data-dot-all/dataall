@@ -9,11 +9,14 @@ from dataall.db.api import (
     Environment,
 )
 from dataall.db import api, utils
-from dataall.db import models, exceptions, permissions, paginate
+from dataall.db import models, exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER, \
+    CREATE_SHARE_OBJECT, SUBMIT_SHARE_OBJECT, ADD_ITEM, GET_SHARE_OBJECT, APPROVE_SHARE_OBJECT, REMOVE_ITEM, \
+    DELETE_SHARE_OBJECT, LIST_SHARED_ITEMS, REJECT_SHARE_OBJECT
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
@@ -321,7 +324,7 @@ class ShareItemSM:
 
 class ShareObjectRepository:
     @staticmethod
-    @has_resource_perm(permissions.CREATE_SHARE_OBJECT)
+    @has_resource_perm(CREATE_SHARE_OBJECT)
     def create_share_object(
         session,
         username: str,
@@ -355,7 +358,7 @@ class ShareObjectRepository:
 
         if environment.region != dataset.region:
             raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_SHARE_OBJECT,
+                action=CREATE_SHARE_OBJECT,
                 message=f'Requester Team {groupUri} works in region {environment.region} and the requested dataset is stored in region {dataset.region}',
             )
 
@@ -378,7 +381,7 @@ class ShareObjectRepository:
             dataset.stewards == groupUri or dataset.SamlAdminGroupName == groupUri
         ) and environment.environmentUri == dataset.environmentUri and principalType == models.PrincipalType.Group.value:
             raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_SHARE_OBJECT,
+                action=CREATE_SHARE_OBJECT,
                 message=f'Team: {groupUri} is managing the dataset {dataset.name}',
             )
 
@@ -476,14 +479,14 @@ class ShareObjectRepository:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=groupUri,
-            permissions=permissions.SHARE_OBJECT_REQUESTER,
+            permissions=SHARE_OBJECT_REQUESTER,
             resource_uri=share.shareUri,
             resource_type=ShareObject.__name__,
         )
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=dataset.SamlAdminGroupName,
-            permissions=permissions.SHARE_OBJECT_REQUESTER,
+            permissions=SHARE_OBJECT_REQUESTER,
             resource_uri=share.shareUri,
             resource_type=ShareObject.__name__,
         )
@@ -491,7 +494,7 @@ class ShareObjectRepository:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=environment.SamlGroupName,
-                permissions=permissions.SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
@@ -500,7 +503,7 @@ class ShareObjectRepository:
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=dataset.stewards,
-            permissions=permissions.SHARE_OBJECT_APPROVER,
+            permissions=SHARE_OBJECT_APPROVER,
             resource_uri=share.shareUri,
             resource_type=ShareObject.__name__,
         )
@@ -512,7 +515,7 @@ class ShareObjectRepository:
     ):
         if share_object_group and share_object_group not in groups:
             raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_SHARE_OBJECT,
+                action=CREATE_SHARE_OBJECT,
                 message=f'User: {username} is not a member of the team {share_object_group}',
             )
         if share_object_group not in Environment.list_environment_groups(
@@ -524,12 +527,12 @@ class ShareObjectRepository:
             check_perm=True,
         ):
             raise exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_SHARE_OBJECT,
+                action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
 
     @staticmethod
-    @has_resource_perm(permissions.SUBMIT_SHARE_OBJECT)
+    @has_resource_perm(SUBMIT_SHARE_OBJECT)
     def submit_share_object(
         session,
         username: str,
@@ -567,7 +570,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.APPROVE_SHARE_OBJECT)
+    @has_resource_perm(APPROVE_SHARE_OBJECT)
     def approve_share_object(
         session,
         username: str,
@@ -613,7 +616,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
+    @has_resource_perm(REJECT_SHARE_OBJECT)
     def reject_share_object(
         session,
         username: str,
@@ -648,7 +651,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.GET_SHARE_OBJECT)
+    @has_resource_perm(GET_SHARE_OBJECT)
     def revoke_items_share_object(
         session,
         username: str,
@@ -692,7 +695,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.GET_SHARE_OBJECT)
+    @has_resource_perm(GET_SHARE_OBJECT)
     def get_share_object(
         session,
         username: str,
@@ -708,7 +711,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.GET_SHARE_OBJECT)
+    @has_resource_perm(GET_SHARE_OBJECT)
     def get_share_item(
         session,
         username: str,
@@ -744,7 +747,7 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(permissions.ADD_ITEM)
+    @has_resource_perm(ADD_ITEM)
     def add_share_object_item(
         session,
         username: str,
@@ -770,7 +773,7 @@ class ShareObjectRepository:
             item: DatasetTable = session.query(DatasetTable).get(itemUri)
             if item and item.region != target_environment.region:
                 raise exceptions.UnauthorizedOperation(
-                    action=permissions.ADD_ITEM,
+                    action=ADD_ITEM,
                     message=f'Lake Formation cross region sharing is not supported. '
                     f'Table {item.GlueTableName} is in {item.region} and target environment '
                     f'{target_environment.name} is in {target_environment.region} ',
@@ -821,7 +824,7 @@ class ShareObjectRepository:
         return shareItem
 
     @staticmethod
-    @has_resource_perm(permissions.REMOVE_ITEM)
+    @has_resource_perm(REMOVE_ITEM)
     def remove_share_object_item(
         session,
         username: str,
@@ -847,7 +850,7 @@ class ShareObjectRepository:
         return True
 
     @staticmethod
-    @has_resource_perm(permissions.DELETE_SHARE_OBJECT)
+    @has_resource_perm(DELETE_SHARE_OBJECT)
     def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
@@ -924,7 +927,7 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_SHARED_ITEMS)
+    @has_resource_perm(LIST_SHARED_ITEMS)
     def list_shared_items(session, username, groups, uri, data=None, check_perm=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         query = session.query(ShareObjectItem).filter(

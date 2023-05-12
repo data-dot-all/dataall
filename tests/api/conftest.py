@@ -1,6 +1,7 @@
 import dataall.searchproxy.indexers
 from dataall.modules.dataset_sharing.db.enums import ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from .client import *
 from dataall.db import models
 from dataall.api import constants
@@ -476,21 +477,21 @@ def share(db):
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=env_group.groupUri,
-                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                permissions=SHARE_OBJECT_REQUESTER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.stewards,
-                permissions=dataall.db.permissions.SHARE_OBJECT_APPROVER,
+                permissions=SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=ShareObject.__name__,
             )
@@ -498,7 +499,7 @@ def share(db):
                 dataall.db.api.ResourcePolicy.attach_resource_policy(
                     session=session,
                     group=environment.SamlGroupName,
-                    permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                    permissions=SHARE_OBJECT_REQUESTER,
                     resource_uri=share.shareUri,
                     resource_type=ShareObject.__name__,
                 )

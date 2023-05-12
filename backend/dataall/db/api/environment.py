@@ -301,9 +301,6 @@ class Environment:
         if permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
 
-        if permissions.CREATE_SHARE_OBJECT in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-
         if permissions.CREATE_NETWORK in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
 
@@ -312,7 +309,6 @@ class Environment:
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
         g_permissions.append(permissions.CREDENTIALS_ENVIRONMENT)
 
