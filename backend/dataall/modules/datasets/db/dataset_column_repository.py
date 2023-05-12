@@ -19,7 +19,7 @@ class DatasetColumnRepository:
         session.commit()
 
     @staticmethod
-    def paginate_active_columns_for_table(session, table_uri: str, term, page, page_size):
+    def paginate_active_columns_for_table(session, table_uri: str, filter: dict):
         q = (
             session.query(DatasetTableColumn)
             .filter(
@@ -29,7 +29,8 @@ class DatasetColumnRepository:
             .order_by(DatasetTableColumn.columnType.asc())
         )
 
-        if term:
+        if 'term' in filter:
+            term = filter['term']
             q = q.filter(
                 or_(
                     DatasetTableColumn.label.ilike('%' + term + '%'),
@@ -37,6 +38,10 @@ class DatasetColumnRepository:
                 )
             ).order_by(DatasetTableColumn.columnType.asc())
 
-        return paginate(q, page=page, page_size=page_size).to_dict()
+        return paginate(
+            query=q,
+            page=filter.get('page', 1),
+            page_size=filter.get('pageSize', 10)
+        ).to_dict()
 
 

@@ -56,9 +56,9 @@ class DatasetTableService:
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
-    def list_dataset_tables(dataset_uri: str, term=None, page=1, pageSize=10):
+    def list_dataset_tables(dataset_uri: str, filter):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetTableRepository.paginate_dataset_tables(session, dataset_uri, term, page, pageSize)
+            return DatasetTableRepository.paginate_dataset_tables(session, dataset_uri, filter)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)

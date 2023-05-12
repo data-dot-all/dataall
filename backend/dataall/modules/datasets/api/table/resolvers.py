@@ -19,7 +19,7 @@ def list_dataset_tables(context, source, filter: dict = None):
         return None
     if not filter:
         filter = {}
-    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, **filter)
+    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, filter=filter)
 
 
 def get_table(context, source: Dataset, tableUri: str = None):

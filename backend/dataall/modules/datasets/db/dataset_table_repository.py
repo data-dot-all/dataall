@@ -75,15 +75,19 @@ class DatasetTableRepository:
         return updated_table
 
     @staticmethod
-    def paginate_dataset_tables(session, dataset_uri, term, page, page_size) -> dict:
+    def paginate_dataset_tables(session, dataset_uri, filter: dict) -> dict:
         query = (
             session.query(DatasetTable)
             .filter(DatasetTable.datasetUri == dataset_uri)
             .order_by(DatasetTable.created.desc())
         )
-        if term:
-            query = query.filter(DatasetTable.label.ilike('%' + term + '%'))
-        return paginate(query, page=page, page_size=page_size).to_dict()
+        if 'term' in filter:
+            query = query.filter(DatasetTable.label.ilike('%' + filter['term'] + '%'))
+        return paginate(
+            query=query,
+            page=filter.get('page', 1),
+            page_size=filter.get('pageSize', 10)
+        ).to_dict()
 
     @staticmethod
     def delete(session, table: DatasetTable):
