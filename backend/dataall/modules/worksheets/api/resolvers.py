@@ -1,4 +1,5 @@
 from dataall.api.constants import GraphQLEnumMapper
+from dataall.db import exceptions
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_services import WorksheetService
@@ -11,14 +12,19 @@ class WorksheetRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 def create_worksheet(context: Context, source, input: dict = None):
+    if not input:
+        raise exceptions.RequiredParameter(input)
+    if not input.get('SamlAdminGroupName'):
+        raise exceptions.RequiredParameter('groupUri')
+    if not input.get('label'):
+        raise exceptions.RequiredParameter('label')
+
     with context.engine.scoped_session() as session:
         return WorksheetService.create_worksheet(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=None,
             data=input,
-            check_perm=True,
         )
 
 
@@ -29,10 +35,8 @@ def update_worksheet(
         return WorksheetService.update_worksheet(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=worksheetUri,
-            data=input,
-            check_perm=True,
+            data=input
         )
 
 
@@ -40,11 +44,7 @@ def get_worksheet(context: Context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.get_worksheet(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=worksheetUri,
-            data=None,
-            check_perm=True,
         )
 
 
@@ -76,8 +76,6 @@ def run_sql_query(
     with context.engine.scoped_session() as session:
         return WorksheetService.run_sql_query(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             worksheetUri=worksheetUri,
             sqlQuery=sqlQuery
@@ -88,9 +86,5 @@ def delete_worksheet(context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.delete_worksheet(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=worksheetUri,
-            data=None,
-            check_perm=True,
+            uri=worksheetUri
         )

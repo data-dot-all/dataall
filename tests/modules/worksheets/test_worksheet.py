@@ -1,5 +1,7 @@
 import pytest
 from dataall.modules.worksheets.api.resolvers import WorksheetRole
+from tests.api.client import client, app
+from tests.api.conftest import *
 
 
 @pytest.fixture(scope='module', autouse=True)

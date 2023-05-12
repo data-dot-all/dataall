@@ -18,3 +18,27 @@ class AthenaClient:
             cursor.execute(sql)
             
             return cursor
+    
+    @staticmethod
+    def convert_query_output(cursor):
+        columns = []
+        for f in cursor.description:
+            columns.append({'columnName': f[0], 'typeName': 'String'})
+
+        rows = []
+        for row in cursor:
+            record = {'cells': []}
+            for col_position, column in enumerate(columns):
+                cell = {}
+                cell['columnName'] = column['columnName']
+                cell['typeName'] = column['typeName']
+                cell['value'] = str(row[col_position])
+                record['cells'].append(cell)
+            rows.append(record)
+        return {
+            'error': None,
+            'AthenaQueryId': cursor.query_id,
+            'ElapsedTime': cursor.total_execution_time_in_millis,
+            'rows': rows,
+            'columns': columns,
+        }

@@ -135,6 +135,7 @@ def downgrade():
 
         session.add_all(envs)
         op.drop_table("environment_parameters")
+        op.drop_table('worksheet_share')
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")

@@ -30,15 +30,7 @@ class WorksheetService:
     @staticmethod
     @has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> Worksheet:
-        if not data:
-            raise exceptions.RequiredParameter(data)
-        if not data.get('SamlAdminGroupName'):
-            raise exceptions.RequiredParameter('groupUri')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
-
+        session, username, uri, data=None) -> Worksheet:
         worksheet = Worksheet(
             owner=username,
             label=data.get('label'),
@@ -72,7 +64,7 @@ class WorksheetService:
 
     @staticmethod
     @has_resource_permission(UPDATE_WORKSHEET)
-    def update_worksheet(session, username, groups, uri, data=None, check_perm=None):
+    def update_worksheet(session, username, uri, data=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         for field in data.keys():
             setattr(worksheet, field, data.get(field))
@@ -91,15 +83,13 @@ class WorksheetService:
 
     @staticmethod
     @has_resource_permission(GET_WORKSHEET)
-    def get_worksheet(session, username, groups, uri, data=None, check_perm=None):
+    def get_worksheet(session, uri):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         return worksheet
 
     @staticmethod
     @has_resource_permission(DELETE_WORKSHEET)
-    def delete_worksheet(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
+    def delete_worksheet(session, uri) -> bool:
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         session.delete(worksheet)
         ResourcePolicy.delete_resource_policy(
@@ -112,7 +102,7 @@ class WorksheetService:
 
     @staticmethod
     @has_resource_permission(RUN_ATHENA_QUERY)
-    def run_sql_query(session, username, groups, uri, worksheetUri, sqlQuery):
+    def run_sql_query(session, uri, worksheetUri, sqlQuery):
         environment = db.api.Environment.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
@@ -131,24 +121,4 @@ class WorksheetService:
             sql=sqlQuery
         )
 
-        columns = []
-        for f in cursor.description:
-            columns.append({'columnName': f[0], 'typeName': 'String'})
-
-        rows = []
-        for row in cursor:
-            record = {'cells': []}
-            for col_position, column in enumerate(columns):
-                cell = {}
-                cell['columnName'] = column['columnName']
-                cell['typeName'] = column['typeName']
-                cell['value'] = str(row[col_position])
-                record['cells'].append(cell)
-            rows.append(record)
-        return {
-            'error': None,
-            'AthenaQueryId': cursor.query_id,
-            'ElapsedTime': cursor.total_execution_time_in_millis,
-            'rows': rows,
-            'columns': columns,
-        }
+        return AthenaClient.convert_query_output(cursor)

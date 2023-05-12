@@ -23,9 +23,11 @@ class WorksheetRepository(GroupResource):
             .count()
         )
 
+    @staticmethod
     def find_worksheet_by_uri(session, uri) -> Worksheet:
         return session.query(Worksheet).get(uri)
     
+    @staticmethod
     def query_user_worksheets(session, username, groups, filter) -> Query:
         query = session.query(Worksheet).filter(
             or_(
@@ -43,6 +45,7 @@ class WorksheetRepository(GroupResource):
             )
         return query
 
+    @staticmethod
     def paginated_user_worksheets(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
