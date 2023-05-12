@@ -5,6 +5,7 @@ import pytest
 import dataall
 from dataall.api.constants import RedshiftClusterRole
 from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 
 @pytest.fixture(scope='module', autouse=True)
@@ -38,7 +39,9 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> Dataset:
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
             stewards=group3.name,
         )
-        dataset = DatasetService.create_dataset(
+        dataset = DatasetRepository.create_dataset(
+            session=session,
+            username=user.userName,
             uri=env1.environmentUri,
             data=data,
         )

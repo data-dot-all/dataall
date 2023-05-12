@@ -69,7 +69,7 @@ def test_get_dataset(client, dataset1, env1, user, group):
 
 def test_create_location(client, dataset1, env1, user, group, patch_es, module_mocker):
     mock_client = MagicMock()
-    module_mocker.patch("dataall.modules.datasets.api.storage_location.resolvers.S3LocationClient", mock_client)
+    module_mocker.patch("dataall.modules.datasets.services.dataset_location_service.S3LocationClient", mock_client)
     response = client.query(
         """
         mutation createDatasetStorageLocation($datasetUri:String!, $input:NewDatasetStorageLocationInput!){

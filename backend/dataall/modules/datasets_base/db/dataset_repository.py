@@ -413,9 +413,9 @@ class DatasetRepository(GroupResource):
 
     @staticmethod
     def _set_import_data(dataset, data):
-        dataset.imported = True if data['imported'] else False
-        dataset.importedS3Bucket = True if data['bucketName'] else False
-        dataset.importedGlueDatabase = True if data['glueDatabaseName'] else False
-        dataset.importedKmsKey = True if data['KmsKeyId'] else False
-        dataset.importedAdminRole = True if data['adminRoleName'] else False
+        dataset.imported = True if data.get('imported') else False
+        dataset.importedS3Bucket = True if data.get('bucketName') else False
+        dataset.importedGlueDatabase = True if data.get('glueDatabaseName') else False
+        dataset.importedKmsKey = True if data.get('KmsKeyId') else False
+        dataset.importedAdminRole = True if data.get('adminRoleName') else False
 

@@ -7,9 +7,9 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
-from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack
+from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack, Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
-from dataall.db.models import Environment, Task
+from dataall.db.models import Task
 from dataall.db.permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
@@ -45,7 +45,7 @@ class DatasetService:
     @has_tenant_permission(MANAGE_DATASETS)
     @has_resource_permission(CREATE_DATASET)
     @has_group_permission(CREATE_DATASET)
-    def create_dataset(uri, data: dict):
+    def create_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = Environment.get_environment_by_uri(session, uri)
@@ -95,9 +95,9 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def import_dataset(uri, data):
+    def import_dataset(uri, admin_group, data):
         data['imported'] = True
-        return DatasetService.create_dataset(uri=uri, data=data)
+        return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
@@ -420,7 +420,7 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            env: Environment = Environment.get_environment_by_uri(
+            env = Environment.get_environment_by_uri(
                 session, dataset.environmentUri
             )
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)

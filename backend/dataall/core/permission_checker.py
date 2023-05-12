@@ -2,7 +2,6 @@
 Contains decorators that check if user has a permission to access
 and interact with resources or do some actions in the app
 """
-import contextlib
 from typing import Protocol, Callable
 
 from dataall.core.context import RequestContext, get_context

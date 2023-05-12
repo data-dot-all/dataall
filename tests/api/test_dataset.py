@@ -177,7 +177,7 @@ def test_update_dataset(dataset1, client, group, group2):
 
 def test_start_crawler(org1, env1, dataset1, client, group, module_mocker):
     module_mocker.patch(
-        'dataall.modules.datasets.api.dataset.resolvers.DatasetCrawler', MagicMock()
+        'dataall.modules.datasets.services.dataset_service.DatasetCrawler', MagicMock()
     )
     mutation = """
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){

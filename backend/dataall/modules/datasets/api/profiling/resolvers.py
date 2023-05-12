@@ -2,8 +2,8 @@ import json
 import logging
 
 from dataall.api.context import Context
-from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
+from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
@@ -12,17 +12,14 @@ log = logging.getLogger(__name__)
 def resolve_dataset(context, source: DatasetProfilingRun):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return DatasetService.get_dataset_by_uri(
-            session=session, dataset_uri=source.datasetUri
-        )
+    return DatasetService.get_dataset(uri=source.datasetUri)
 
 
 def start_profiling_run(context: Context, source, input: dict = None):
     return DatasetProfilingService.start_profiling_run(
         uri=input['datasetUri'],
-        table_uri=input['table_uri'],
-        glue_table_name=input['GlueTableName']
+        table_uri=input.get('tableUri'),
+        glue_table_name=input.get('GlueTableName')
     )
 
 

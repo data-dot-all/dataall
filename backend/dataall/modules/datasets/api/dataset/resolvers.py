@@ -15,7 +15,9 @@ log = logging.getLogger(__name__)
 
 
 def create_dataset(context: Context, source, input=None):
-    return DatasetService.create_dataset(env_uri=input['environmentUri'], data=input)
+    admin_group = input['SamlAdminGroupName']
+    uri = input['environmentUri']
+    return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=input)
 
 
 def import_dataset(context: Context, source, input=None):
@@ -28,7 +30,9 @@ def import_dataset(context: Context, source, input=None):
     if not input.get('SamlAdminGroupName'):
         raise exceptions.RequiredParameter('group')
 
-    return DatasetService.import_dataset(uri=input['environmentUri'], data=input)
+    admin_group = input['SamlAdminGroupName']
+    uri = input['environmentUri']
+    return DatasetService.import_dataset(uri=uri, admin_group=admin_group, data=input)
 
 
 def get_dataset(context, source, datasetUri=None):
@@ -113,7 +117,7 @@ def get_dataset_stewards_group(context, source: Dataset, **kwargs):
 
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
-    return DatasetService.update_dataset(uri=datasetUri)
+    return DatasetService.update_dataset(uri=datasetUri, data=input)
 
 
 def get_dataset_statistics(context: Context, source: Dataset, **kwargs):

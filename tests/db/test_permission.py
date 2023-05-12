@@ -2,6 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.context import set_context, RequestContext
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
 from dataall.modules.datasets_base.db.models import Dataset
@@ -258,8 +259,11 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
         )
+
+        set_context(RequestContext(db, user.userName, [group.name]))
         dataset = DatasetService.create_dataset(
             uri=env_with_perm.environmentUri,
+            admin_group=group.name,
             data=data,
         )
         assert dataset
