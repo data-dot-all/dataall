@@ -51,7 +51,6 @@ def create_share_object(
             groups=context.groups,
             uri=environment.environmentUri,
             data=input,
-            check_perm=True,
         )
 
 
@@ -60,10 +59,7 @@ def submit_share_object(context: Context, source, shareUri: str = None):
         return ShareObjectRepository.submit_share_object(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=shareUri,
-            data=None,
-            check_perm=True,
         )
 
 
@@ -72,10 +68,7 @@ def approve_share_object(context: Context, source, shareUri: str = None):
         share = ShareObjectRepository.approve_share_object(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=shareUri,
-            data=None,
-            check_perm=True,
         )
 
         approve_share_task: models.Task = models.Task(
@@ -95,10 +88,7 @@ def reject_share_object(context: Context, source, shareUri: str = None):
         return ShareObjectRepository.reject_share_object(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=shareUri,
-            data=None,
-            check_perm=True,
         )
 
 
@@ -107,10 +97,8 @@ def revoke_items_share_object(context: Context, source, input):
         share = ShareObjectRepository.revoke_items_share_object(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=input.get("shareUri"),
             data=input,
-            check_perm=True,
         )
 
         revoke_share_task: models.Task = models.Task(
@@ -131,13 +119,7 @@ def delete_share_object(context: Context, source, shareUri: str = None):
         if not share:
             raise db.exceptions.ObjectNotFound('ShareObject', shareUri)
 
-        ShareObjectRepository.delete_share_object(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=shareUri,
-            check_perm=True,
-        )
+        ShareObjectRepository.delete_share_object(session=session, uri=shareUri)
 
     return True
 
@@ -147,10 +129,8 @@ def add_shared_item(context, source, shareUri: str = None, input: dict = None):
         share_item = ShareObjectRepository.add_share_object_item(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=shareUri,
             data=input,
-            check_perm=True,
         )
     return share_item
 
@@ -165,15 +145,12 @@ def remove_shared_item(context, source, shareItemUri: str = None):
         share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
         ShareObjectRepository.remove_share_object_item(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=share.shareUri,
             data={
                 'shareItemUri': shareItemUri,
                 'share_item': share_item,
                 'share': share,
-            },
-            check_perm=True,
+            }
         )
     return True
 
@@ -189,10 +166,7 @@ def list_shared_items(
         return ShareObjectRepository.list_shared_items(
             session=session,
             username=context.username,
-            groups=context.groups,
-            uri=source.shareUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -202,11 +176,8 @@ def resolve_shared_item(context, source: ShareObjectItem, **kwargs):
     with context.engine.scoped_session() as session:
         return ShareObjectRepository.get_share_item(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.shareUri,
             data={'share_item': source},
-            check_perm=True,
         )
 
 
@@ -214,11 +185,7 @@ def get_share_object(context, source, shareUri: str = None):
     with context.engine.scoped_session() as session:
         return ShareObjectRepository.get_share_object(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=shareUri,
-            data=None,
-            check_perm=True,
         )
 
 

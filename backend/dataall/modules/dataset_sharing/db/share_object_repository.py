@@ -3,8 +3,8 @@ import logging
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
+from dataall.core.permission_checker import has_resource_permission
 from dataall.db.api import (
-    has_resource_perm,
     ResourcePolicy,
     Environment,
 )
@@ -324,14 +324,13 @@ class ShareItemSM:
 
 class ShareObjectRepository:
     @staticmethod
-    @has_resource_perm(CREATE_SHARE_OBJECT)
+    @has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
         session,
         username: str,
         groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObject:
         if not data:
             raise exceptions.RequiredParameter(data)
@@ -532,14 +531,11 @@ class ShareObjectRepository:
             )
 
     @staticmethod
-    @has_resource_perm(SUBMIT_SHARE_OBJECT)
+    @has_resource_permission(SUBMIT_SHARE_OBJECT)
     def submit_share_object(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObject:
         share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
@@ -570,14 +566,11 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(APPROVE_SHARE_OBJECT)
+    @has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObject:
         share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
@@ -616,14 +609,11 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(REJECT_SHARE_OBJECT)
+    @has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObject:
 
         share = ShareObjectRepository.get_share_by_uri(session, uri)
@@ -651,14 +641,12 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(GET_SHARE_OBJECT)
+    @has_resource_permission(GET_SHARE_OBJECT)
     def revoke_items_share_object(
         session,
         username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObject:
 
         share = ShareObjectRepository.get_share_by_uri(session, uri)
@@ -695,15 +683,8 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(GET_SHARE_OBJECT)
-    def get_share_object(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ):
+    @has_resource_permission(GET_SHARE_OBJECT)
+    def get_share_object(session, uri: str):
         share = session.query(ShareObject).get(uri)
         if not share:
             raise exceptions.ObjectNotFound('Share', uri)
@@ -711,14 +692,11 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(GET_SHARE_OBJECT)
+    @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_item(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ):
         share_item: ShareObjectItem = data.get(
             'share_item',
@@ -747,14 +725,12 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    @has_resource_perm(ADD_ITEM)
+    @has_resource_permission(ADD_ITEM)
     def add_share_object_item(
         session,
         username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> ShareObjectItem:
         itemType = data.get('itemType')
         itemUri = data.get('itemUri')
@@ -824,23 +800,16 @@ class ShareObjectRepository:
         return shareItem
 
     @staticmethod
-    @has_resource_perm(REMOVE_ITEM)
+    @has_resource_permission(REMOVE_ITEM)
     def remove_share_object_item(
         session,
-        username: str,
-        groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> bool:
 
         share_item: ShareObjectItem = data.get(
             'share_item',
             ShareObjectRepository.get_share_item_by_uri(session, data['shareItemUri']),
-        )
-        share: ShareObject = data.get(
-            'share',
-            ShareObjectRepository.get_share_by_uri(session, uri),
         )
 
         Item_SM = ShareItemSM(share_item.status)
@@ -850,8 +819,8 @@ class ShareObjectRepository:
         return True
 
     @staticmethod
-    @has_resource_perm(DELETE_SHARE_OBJECT)
-    def delete_share_object(session, username, groups, uri, data=None, check_perm=None):
+    @has_resource_permission(DELETE_SHARE_OBJECT)
+    def delete_share_object(session, uri):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
         shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in share_items_states]
@@ -927,8 +896,8 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
-    @has_resource_perm(LIST_SHARED_ITEMS)
-    def list_shared_items(session, username, groups, uri, data=None, check_perm=None):
+    @has_resource_permission(LIST_SHARED_ITEMS)
+    def list_shared_items(session, uri, data=None):
         share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
         query = session.query(ShareObjectItem).filter(
             ShareObjectItem.shareUri == share.shareUri,
