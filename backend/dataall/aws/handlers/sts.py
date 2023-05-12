@@ -111,7 +111,9 @@ class SessionHelper:
         :return:
         :rtype:
         """
-        return SessionHelper._get_secret(secret_name=f'dataall-externalId-{os.getenv("envname", "local")}')
+        #return SessionHelper._get_secret(secret_name=f'dataall-externalId-{os.getenv("envname", "local")}')
+        return SessionHelper._get_parameter_value(
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId')
 
     @classmethod
     def get_delegation_role_name(cls):
@@ -119,7 +121,8 @@ class SessionHelper:
         Returns:
             string: name of the assumed role
         """
-        return SessionHelper._get_parameter_value(parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
+        return SessionHelper._get_parameter_value(
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/pivotRoleName')
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None, redshiftcluster=None):

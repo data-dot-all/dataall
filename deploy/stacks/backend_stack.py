@@ -88,7 +88,6 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             enable_cw_canaries=enable_cw_canaries,
-            enable_pivot_role_auto_create=enable_pivot_role_auto_create,
             **kwargs,
         )
 

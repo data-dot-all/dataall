@@ -18,7 +18,6 @@ class SecretsManagerStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         enable_cw_canaries=False,
-        enable_pivot_role_auto_create=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -40,11 +39,6 @@ class SecretsManagerStack(pyNestedClass):
             description=f'Stores dataall external id for environment {envname}',
             removal_policy=RemovalPolicy.DESTROY,
         )
-
-        if enable_pivot_role_auto_create:
-            external_id_secret.add_rotation_schedule(
-                f"ExternalIdSecretRotationSchedule{envname}", automatically_after=Duration.days(365)
-            )
 
         self.cognito_default_user = kms.Key(
             self,
