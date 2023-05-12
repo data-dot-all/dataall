@@ -6,6 +6,7 @@ from dataall.api.Objects.Principal.resolvers import get_principal
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
+from dataall.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
@@ -34,6 +35,16 @@ def create_share_object(
     itemType: str = None,
     input: dict = None,
 ):
+    if not input:
+        raise RequiredParameter(input)
+    if 'principalId' not in input:
+        raise RequiredParameter('principalId')
+    if 'datasetUri' not in input:
+        raise RequiredParameter('datasetUri')
+    if 'principalType' not in input:
+        raise RequiredParameter('principalType')
+    if 'groupUri' not in input:
+        raise RequiredParameter('groupUri')
 
     with context.engine.scoped_session() as session:
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)

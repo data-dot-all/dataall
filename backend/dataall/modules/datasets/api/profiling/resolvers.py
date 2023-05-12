@@ -2,6 +2,7 @@ import json
 import logging
 
 from dataall.api.context import Context
+from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.services.dataset_profiling_service import DatasetProfilingService
 from dataall.modules.datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun
@@ -16,6 +17,9 @@ def resolve_dataset(context, source: DatasetProfilingRun):
 
 
 def start_profiling_run(context: Context, source, input: dict = None):
+    if 'datasetUri' not in input:
+        raise RequiredParameter('datasetUri')
+
     return DatasetProfilingService.start_profiling_run(
         uri=input['datasetUri'],
         table_uri=input.get('tableUri'),

@@ -332,13 +332,6 @@ class ShareObjectRepository:
         uri: str,
         data: dict = None,
     ) -> ShareObject:
-        if not data:
-            raise exceptions.RequiredParameter(data)
-        if not data.get('principalId'):
-            raise exceptions.RequiredParameter('principalId')
-        if not data.get('datasetUri'):
-            raise exceptions.RequiredParameter('datasetUri')
-
         principalId = data['principalId']
         principalType = data['principalType']
         datasetUri = data['datasetUri']

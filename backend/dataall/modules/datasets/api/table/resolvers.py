@@ -1,6 +1,7 @@
 import logging
 
 from dataall import db
+from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.db.api import  Glossary
@@ -11,6 +12,9 @@ log = logging.getLogger(__name__)
 
 
 def create_table(context, source, datasetUri: str = None, input: dict = None):
+    if "name" not in input:
+        raise RequiredParameter("name")
+
     return DatasetTableService.create_table(dataset_uri=datasetUri, table_data=input)
 
 

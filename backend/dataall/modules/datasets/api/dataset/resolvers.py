@@ -3,9 +3,10 @@ import logging
 from dataall.api.Objects.Stack import stack_helper
 from dataall import db
 from dataall.api.context import Context
-from dataall.db import paginate, exceptions, models
+from dataall.db import paginate, models
 from dataall.db.api import Environment
 from dataall.db.api.organization import Organization
+from dataall.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset
 from dataall.modules.datasets.api.dataset.enums import DatasetRole
@@ -15,20 +16,15 @@ log = logging.getLogger(__name__)
 
 
 def create_dataset(context: Context, source, input=None):
+    RequestValidator.validate_creation_request(input)
+
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
     return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=input)
 
 
 def import_dataset(context: Context, source, input=None):
-    if not input:
-        raise exceptions.RequiredParameter(input)
-    if not input.get('environmentUri'):
-        raise exceptions.RequiredParameter('environmentUri')
-    if not input.get('bucketName'):
-        raise exceptions.RequiredParameter('bucketName')
-    if not input.get('SamlAdminGroupName'):
-        raise exceptions.RequiredParameter('group')
+    RequestValidator.validate_import_request(input)
 
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
@@ -227,3 +223,26 @@ def list_datasets_owned_by_env_group(
     if not filter:
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
+
+
+class RequestValidator:
+    @staticmethod
+    def validate_creation_request(data):
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('environmentUri'):
+            raise RequiredParameter('environmentUri')
+        if not data.get('SamlAdminGroupName'):
+            raise RequiredParameter('group')
+        if not data.get('label'):
+            raise RequiredParameter('label')
+        if len(data['label']) > 52:
+            raise InvalidInput(
+                'Dataset name', data['label'], 'less than 52 characters'
+            )
+
+    @staticmethod
+    def validate_import_request(data):
+        RequestValidator.validate_creation_request(data)
+        if not data.get('bucketName'):
+            raise RequiredParameter('bucketName')

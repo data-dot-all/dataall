@@ -1,5 +1,6 @@
 from dataall.api.context import Context
 from dataall.db.api import Glossary
+from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
 
@@ -7,6 +8,11 @@ from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Data
 def create_storage_location(
     context, source, datasetUri: str = None, input: dict = None
 ):
+    if 'prefix' not in input:
+        raise RequiredParameter('prefix')
+    if 'label' not in input:
+        raise RequiredParameter('label')
+
     return DatasetLocationService.create_storage_location(uri=datasetUri, data=input)
 
 
