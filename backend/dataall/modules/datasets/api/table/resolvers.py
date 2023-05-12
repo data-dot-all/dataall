@@ -23,11 +23,11 @@ def list_dataset_tables(context, source, filter: dict = None):
 
 
 def get_table(context, source: Dataset, tableUri: str = None):
-    return DatasetTableService.get_table(table_uri=tableUri)
+    return DatasetTableService.get_table(uri=tableUri)
 
 
 def update_table(context, source, tableUri: str = None, input: dict = None):
-    return DatasetTableService.update_table(table_uri=tableUri, input=input)
+    return DatasetTableService.update_table(uri=tableUri, table_data=input)
 
 
 def delete_table(context, source, tableUri: str = None):

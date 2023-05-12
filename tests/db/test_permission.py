@@ -115,6 +115,14 @@ def env(org, db, group):
 
 
 @pytest.fixture(scope='module', autouse=True)
+def patch_methods(module_mocker):
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.DatasetService._deploy_dataset_stack',
+        return_value=True
+    )
+
+
+@pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:
         dataset = Dataset(

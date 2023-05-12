@@ -62,16 +62,16 @@ class DatasetTableService:
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
-    def get_table(table_uri: str):
+    def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+            return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
     @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
-    def update_table(table_uri: str, table_data: dict = None):
+    def update_table(uri: str, table_data: dict = None):
         with get_context().db_engine.scoped_session() as session:
-            table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
 
             for k in [attr for attr in table_data.keys() if attr != 'terms']:
                 setattr(table, k, table_data.get(k))

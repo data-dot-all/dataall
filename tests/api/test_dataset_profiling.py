@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable, Dataset
@@ -20,6 +22,14 @@ def dataset1(env1, org1, dataset, group, user) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
     )
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_methods(module_mocker):
+    mock_client = MagicMock()
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', mock_client
+    )
+    mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
 
 
 def test_add_tables(table, dataset1, db):
@@ -123,10 +133,6 @@ def test_get_profiling_run(client, dataset1, env1, module_mocker, db, group):
 def test_get_table_profiling_run(
     client, dataset1, env1, module_mocker, table, db, group
 ):
-    module_mocker.patch(
-        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
-        return_value='{"results": "yes"}',
-    )
     runs = list_profiling_runs(client, dataset1, group)
     module_mocker.patch(
         'dataall.aws.handlers.service_handlers.Worker.queue',
@@ -163,10 +169,6 @@ def test_get_table_profiling_run(
 def test_list_table_profiling_runs(
     client, dataset1, env1, module_mocker, table, db, group
 ):
-    module_mocker.patch(
-        'dataall.modules.datasets.api.profiling.resolvers.get_profiling_results_from_s3',
-        return_value='{"results": "yes"}',
-    )
     module_mocker.patch('requests.post', return_value=True)
     runs = list_profiling_runs(client, dataset1, group)
     table1000 = table(dataset=dataset1, name='table1000', username=dataset1.owner)

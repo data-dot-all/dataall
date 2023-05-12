@@ -95,7 +95,6 @@ class DatasetProfilingRepository:
                 )
             )
             .order_by(DatasetProfilingRun.created.desc())
-            .all()
         )
         return paginate(
             q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)

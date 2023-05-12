@@ -72,7 +72,7 @@ class DatasetTableRepository:
         )
         session.add(updated_table)
         session.commit()
-        return table
+        return updated_table
 
     @staticmethod
     def paginate_dataset_tables(session, dataset_uri, term, page, page_size) -> dict:
