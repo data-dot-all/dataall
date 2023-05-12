@@ -111,16 +111,9 @@ class WorksheetService:
         return True
 
     @staticmethod
-    def run_sql_query(session, username, groups, environmentUri, worksheetUri, sqlQuery):
-
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=username,
-            groups=groups,
-            resource_uri=environmentUri,
-            permission_name=RUN_ATHENA_QUERY,
-        )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+    @has_resource_permission(RUN_ATHENA_QUERY)
+    def run_sql_query(session, username, groups, uri, worksheetUri, sqlQuery):
+        environment = db.api.Environment.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
         env_group = db.api.Environment.get_environment_group(

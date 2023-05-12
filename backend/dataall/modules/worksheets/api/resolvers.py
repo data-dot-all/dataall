@@ -78,7 +78,7 @@ def run_sql_query(
             session=session,
             username=context.username,
             groups=context.groups,
-            environmentUri=environmentUri,
+            uri=environmentUri,
             worksheetUri=worksheetUri,
             sqlQuery=sqlQuery
         )
