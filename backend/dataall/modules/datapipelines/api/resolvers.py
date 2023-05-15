@@ -1,15 +1,15 @@
 import json
 import logging
 
-from ....aws.handlers import stepfunction as helpers
-from ...Objects.Stack import stack_helper
-from ...constants import DataPipelineRole
-from ...context import Context
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.codecommit import CodeCommit
-from ....db import permissions, models, exceptions
-from ....db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
+from dataall.aws.handlers import stepfunction as helpers
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.codecommit import CodeCommit
+from dataall.api.Objects.Stack import stack_helper
+from dataall.api.constants import DataPipelineRole
+from dataall.api.context import Context
+from dataall.db import permissions, models, exceptions
+from dataall.db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
 
 log = logging.getLogger(__name__)
 
