@@ -119,7 +119,7 @@ def test_import_with_one_dependency(mocker):
 
 
 def test_load_with_cdk_mode(mocker):
-    patch_loading(mocker, [DModule, CModule, BModule], {BModule, CModule})
+    patch_loading(mocker, [DModule, CModule, BModule], {CModule})
     loader.load_modules([ImportMode.CDK])
     assert order == [CModule]
 
