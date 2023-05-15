@@ -70,8 +70,8 @@ class ProcessLFSameAccountShare(LFShareManager):
 
         for table in self.shared_tables:
 
-            share_item = ShareObjectRepository.find_share_item_by_table(
-                self.session, self.share, table
+            share_item = ShareObjectRepository.find_sharable_item(
+                self.session, self.share.shareUri, table.tableUri
             )
 
             if not share_item:
@@ -121,8 +121,8 @@ class ProcessLFSameAccountShare(LFShareManager):
         shared_db_name = self.build_shared_db_name()
         principals = self.get_share_principals()
         for table in self.revoked_tables:
-            share_item = ShareObjectRepository.find_share_item_by_table(
-                self.session, self.share, table
+            share_item = ShareObjectRepository.find_sharable_item(
+                self.session, self.share.shareUri, table.tableUri
             )
             if not share_item:
                 log.info(

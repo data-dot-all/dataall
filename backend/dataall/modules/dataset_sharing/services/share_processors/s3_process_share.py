@@ -64,10 +64,10 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in share_folders:
             log.info(f'sharing folder: {folder}')
-            sharing_item = ShareObjectRepository.find_share_item_by_folder(
+            sharing_item = ShareObjectRepository.find_sharable_item(
                 session,
-                share,
-                folder,
+                share.shareUri,
+                folder.locationUri,
             )
             shared_item_SM = ShareItemSM(ShareItemStatus.Share_Approved.value)
             new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
@@ -129,10 +129,10 @@ class ProcessS3Share(S3ShareManager):
         success = True
         for folder in revoke_folders:
             log.info(f'revoking access to folder: {folder}')
-            removing_item = ShareObjectRepository.find_share_item_by_folder(
+            removing_item = ShareObjectRepository.find_sharable_item(
                 session,
-                share,
-                folder,
+                share.shareUri,
+                folder.locationUri,
             )
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)

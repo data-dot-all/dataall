@@ -39,10 +39,10 @@ class S3ShareManager:
         self.target_folder = target_folder
         self.source_environment = source_environment
         self.target_environment = target_environment
-        self.share_item = ShareObjectRepository.find_share_item_by_folder(
+        self.share_item = ShareObjectRepository.find_sharable_item(
             session,
-            share,
-            target_folder,
+            share.shareUri,
+            target_folder.locationUri,
         )
         self.access_point_name = self.share_item.S3AccessPointName
 

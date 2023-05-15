@@ -1,6 +1,8 @@
 from dataall.api import gql
 from dataall.modules.dataset_sharing.api.enums import ShareableType
-from dataall.modules.dataset_sharing.api.resolvers import *
+from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
+    resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \
+    resolve_group, list_shareable_objects, resolve_user_role
 from dataall.api.Objects.Environment.resolvers import resolve_environment
 
 ShareableObject = gql.Union(

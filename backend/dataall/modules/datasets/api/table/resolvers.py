@@ -55,12 +55,10 @@ def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
 def resolve_dataset(context, source: DatasetTable, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        dataset_with_role = get_dataset(
-            context, source=None, datasetUri=source.datasetUri
-        )
-        if not dataset_with_role:
-            return None
+
+    dataset_with_role = get_dataset(context, source=None, datasetUri=source.datasetUri)
+    if not dataset_with_role:
+        return None
     return dataset_with_role
 
 
@@ -95,5 +93,5 @@ def resolve_redshift_copy_location(
         ).dataLocation
 
 
-def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str, filter: dict = None):
+def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
     return DatasetTableService.list_shared_tables_by_env_dataset(datasetUri, envUri)

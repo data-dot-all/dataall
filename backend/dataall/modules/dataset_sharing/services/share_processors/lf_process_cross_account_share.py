@@ -74,8 +74,8 @@ class ProcessLFCrossAccountShare(LFShareManager):
             for table in self.shared_tables:
                 log.info(f"Sharing table {table.GlueTableName}...")
 
-                share_item = ShareObjectRepository.find_share_item_by_table(
-                    self.session, self.share, table
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share.shareUri, table.tableUri
                 )
 
                 if not share_item:
@@ -140,8 +140,8 @@ class ProcessLFCrossAccountShare(LFShareManager):
         shared_db_name = self.build_shared_db_name()
         principals = self.get_share_principals()
         for table in self.revoked_tables:
-            share_item = ShareObjectRepository.find_share_item_by_table(
-                self.session, self.share, table
+            share_item = ShareObjectRepository.find_sharable_item(
+                self.session, self.share.shareUri, table.tableUri
             )
 
             revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
