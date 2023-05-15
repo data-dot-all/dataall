@@ -8,7 +8,6 @@ from dataall.db import models
 from dataall.db.exceptions import RequiredParameter
 from dataall.modules.dataset_sharing.api.enums import ShareObjectPermission
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
-from dataall.modules.dataset_sharing.services.dataset_share_service import DatasetShareService
 from dataall.modules.dataset_sharing.services.share_item_service import ShareItemService
 from dataall.modules.dataset_sharing.services.share_object_service import ShareObjectService
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
@@ -216,14 +215,11 @@ def list_data_items_shared_with_env_group(
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return DatasetShareService.paginated_shared_with_environment_group_datasets(
+        return ShareItemService.paginated_shared_with_environment_group_datasets(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            envUri=environmentUri,
-            groupUri=groupUri,
+            env_uri=environmentUri,
+            group_uri=groupUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -233,11 +229,8 @@ def list_shared_with_environment_data_items(
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return DatasetShareService.paginated_shared_with_environment_datasets(
+        return ShareItemService.paginated_shared_with_environment_datasets(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environmentUri,
             data=filter,
-            check_perm=True,
         )

@@ -12,7 +12,8 @@ from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, Shareab
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareObjectSM, ShareItemSM
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
-from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE_OBJECT, ADD_ITEM, REMOVE_ITEM
+from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE_OBJECT, ADD_ITEM, REMOVE_ITEM, \
+    LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -162,3 +163,14 @@ class ShareItemService:
 
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.list_shareable_items(session, share, states, filter)
+
+    @staticmethod
+    @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
+    def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
+        return ShareObjectRepository.paginate_shared_datasets(session, uri, None, data)
+
+    @staticmethod
+    def paginated_shared_with_environment_group_datasets(session, env_uri, group_uri, data) -> dict:
+        # TODO THERE WAS NOT PERMISSION
+        return ShareObjectRepository.paginate_shared_datasets(session, env_uri, group_uri, data)
+

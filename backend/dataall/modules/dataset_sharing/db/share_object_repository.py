@@ -916,3 +916,102 @@ class ShareObjectRepository:
         )
         return query.all()
 
+    @staticmethod
+    def paginate_shared_datasets(session, env_uri, group_uri, data):
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        q = (
+            session.query(
+                ShareObjectItem.shareUri.label('shareUri'),
+                Dataset.datasetUri.label('datasetUri'),
+                Dataset.name.label('datasetName'),
+                Dataset.description.label('datasetDescription'),
+                models.Environment.environmentUri.label('environmentUri'),
+                models.Environment.name.label('environmentName'),
+                ShareObject.created.label('created'),
+                ShareObject.principalId.label('principalId'),
+                ShareObject.principalType.label('principalType'),
+                ShareObjectItem.itemType.label('itemType'),
+                ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
+                ShareObjectItem.GlueTableName.label('GlueTableName'),
+                ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
+                models.Organization.organizationUri.label('organizationUri'),
+                models.Organization.name.label('organizationName'),
+                case(
+                    [
+                        (
+                            ShareObjectItem.itemType
+                            == ShareableType.Table.value,
+                            func.concat(
+                                DatasetTable.GlueDatabaseName,
+                                '.',
+                                DatasetTable.GlueTableName,
+                            ),
+                        ),
+                        (
+                            ShareObjectItem.itemType
+                            == ShareableType.StorageLocation.value,
+                            func.concat(DatasetStorageLocation.name),
+                        ),
+                    ],
+                    else_='XXX XXXX',
+                ).label('itemAccess'),
+            )
+            .join(
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .join(
+                Dataset,
+                ShareObject.datasetUri == Dataset.datasetUri,
+            )
+            .join(
+                models.Environment,
+                models.Environment.environmentUri == Dataset.environmentUri,
+            )
+            .join(
+                models.Organization,
+                models.Organization.organizationUri
+                == models.Environment.organizationUri,
+            )
+            .outerjoin(
+                DatasetTable,
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
+            )
+            .outerjoin(
+                DatasetStorageLocation,
+                ShareObjectItem.itemUri
+                == DatasetStorageLocation.locationUri,
+            )
+            .filter(
+                and_(
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.environmentUri == env_uri,
+                    ShareObject.principalId == group_uri if group_uri else True,
+                )
+            )
+        )
+
+        if data.get('datasetUri'):
+            dataset_uri = data.get('datasetUri')
+            q = q.filter(ShareObject.datasetUri == dataset_uri)
+
+        if data.get('itemTypes', None):
+            item_types = data.get('itemTypes')
+            q = q.filter(
+                or_(*[ShareObjectItem.itemType == t for t in item_types])
+            )
+
+        if data.get("uniqueShares", False):
+            q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
+            q = q.distinct(ShareObject.shareUri)
+
+        if data.get('term'):
+            term = data.get('term')
+            q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
+
+        return paginate(
+            query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
+        ).to_dict()
+
+
+
