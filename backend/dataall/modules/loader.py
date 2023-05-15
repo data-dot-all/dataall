@@ -184,6 +184,9 @@ def _check_loading_correct(in_config: Set[str], modes: List[ImportMode]):
             for dependency in module.depends_on():
                 if dependency not in expected_load:
                     expected_load.add(dependency)
+                    if not dependency.is_supported(modes):
+                        raise ImportError(f"Dependency {dependency.name()} doesn't support {modes}")
+
                     new_to_add.append(dependency)
         to_add = new_to_add
 
