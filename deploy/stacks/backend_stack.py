@@ -81,15 +81,14 @@ class BackendStack(Stack):
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
-
-        SecretsManagerStack(
-            self,
-            f'Secrets',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            enable_cw_canaries=enable_cw_canaries,
-            **kwargs,
-        )
+        if enable_cw_canaries:
+            SecretsManagerStack(
+                self,
+                f'Secrets',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                **kwargs,
+            )
 
         s3_resources_stack = S3ResourcesStack(
             self,
