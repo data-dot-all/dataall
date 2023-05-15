@@ -9,14 +9,15 @@ from dataall.api.Objects.Stack import stack_helper
 from dataall.api.constants import DataPipelineRole
 from dataall.api.context import Context
 from dataall.db import permissions, models, exceptions
-from dataall.db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
+from dataall.db.api import Environment, ResourcePolicy, Stack, KeyValueTag
+from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 
 log = logging.getLogger(__name__)
 
 
 def create_pipeline(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
-        pipeline = Pipeline.create_pipeline(
+        pipeline = DataPipelineService.create_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -59,7 +60,7 @@ def create_pipeline(context: Context, source, input=None):
 
 def create_pipeline_environment(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
-        pipeline_env = Pipeline.create_pipeline_environment(
+        pipeline_env = DataPipelineService.create_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -71,7 +72,7 @@ def create_pipeline_environment(context: Context, source, input=None):
 
 def update_pipeline(context: Context, source, DataPipelineUri: str, input: dict = None):
     with context.engine.scoped_session() as session:
-        pipeline = Pipeline.update_pipeline(
+        pipeline = DataPipelineService.update_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -89,7 +90,7 @@ def list_pipelines(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return Pipeline.paginated_user_pipelines(
+        return DataPipelineService.paginated_user_pipelines(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -101,7 +102,7 @@ def list_pipelines(context: Context, source, filter: dict = None):
 
 def get_pipeline(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        return Pipeline.get_pipeline(
+        return DataPipelineService.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -123,7 +124,7 @@ def resolve_user_role(context: Context, source: models.DataPipeline):
 
 def get_pipeline_environment(context: Context, source: models.DataPipelineEnvironment, **kwargs):
     with context.engine.scoped_session() as session:
-        return Pipeline.get_pipeline_environment(
+        return DataPipelineService.get_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -137,7 +138,7 @@ def list_pipeline_environments(context: Context, source: models.DataPipeline, fi
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return Pipeline.paginated_pipeline_environments(
+        return DataPipelineService.paginated_pipeline_environments(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -159,7 +160,7 @@ def get_clone_url_http(context: Context, source: models.DataPipeline, **kwargs):
 
 def cat(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        Pipeline.get_pipeline(
+        DataPipelineService.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -185,7 +186,7 @@ def cat(context: Context, source, input: dict = None):
 
 def ls(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        Pipeline.get_pipeline(
+        DataPipelineService.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -211,7 +212,7 @@ def ls(context: Context, source, input: dict = None):
 
 def list_branches(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        Pipeline.get_pipeline(
+        DataPipelineService.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -274,7 +275,7 @@ def get_creds(context: Context, source, DataPipelineUri: str = None):
             resource_uri=DataPipelineUri,
             permission_name=permissions.CREDENTIALS_PIPELINE,
         )
-        pipeline = Pipeline.get_pipeline_by_uri(session, DataPipelineUri)
+        pipeline = DataPipelineService.get_pipeline_by_uri(session, DataPipelineUri)
         env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
         env_role_arn = env.EnvironmentDefaultIAMRoleArn
@@ -303,7 +304,7 @@ def list_pipeline_state_machine_executions(
     context: Context, source, DataPipelineUri: str = None, stage: str = None
 ):
     with context.engine.scoped_session() as session:
-        pipeline = Pipeline.get_pipeline(
+        pipeline = DataPipelineService.get_pipeline(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -338,7 +339,7 @@ def start_pipeline(context: Context, source, DataPipelineUri: str = None):
             permission_name=permissions.START_PIPELINE,
         )
 
-        pipeline = Pipeline.get_pipeline_by_uri(session, DataPipelineUri)
+        pipeline = DataPipelineService.get_pipeline_by_uri(session, DataPipelineUri)
 
         env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
@@ -359,7 +360,7 @@ def delete_pipeline(
             permission_name=permissions.DELETE_PIPELINE,
         )
 
-        pipeline: models.DataPipeline = Pipeline.get_pipeline_by_uri(
+        pipeline: models.DataPipeline = DataPipelineService.get_pipeline_by_uri(
             session, DataPipelineUri
         )
 
@@ -367,7 +368,7 @@ def delete_pipeline(
             session, pipeline.environmentUri
         )
 
-        Pipeline.delete_pipeline_environments(session, DataPipelineUri)
+        DataPipelineService.delete_pipeline_environments(session, DataPipelineUri)
 
         KeyValueTag.delete_key_value_tags(session, pipeline.DataPipelineUri, 'pipeline')
 
@@ -407,7 +408,7 @@ def delete_pipeline(
 
 def delete_pipeline_environment(context: Context, source, envPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        Pipeline.delete_pipeline_environment(
+        DataPipelineService.delete_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -419,7 +420,7 @@ def delete_pipeline_environment(context: Context, source, envPipelineUri: str = 
 
 def update_pipeline_environment(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
-        pipeline_env = Pipeline.update_pipeline_environment(
+        pipeline_env = DataPipelineService.update_pipeline_environment(
             session=session,
             username=context.username,
             groups=context.groups,

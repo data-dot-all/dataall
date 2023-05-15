@@ -23,8 +23,6 @@ from .ResourcePolicyPermission import ResourcePolicyPermission
 from .SagemakerStudio import SagemakerStudio, SagemakerStudioUserProfile
 from .ShareObject import ShareObject
 from .ShareObjectItem import ShareObjectItem
-from .DataPipeline import DataPipeline
-from .DataPipelineEnvironment import DataPipelineEnvironment
 from .Stack import Stack
 from .Tag import Tag, ItemTags, updateObjectTags
 from .Task import Task
