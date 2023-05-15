@@ -74,8 +74,8 @@ class ShareObjectService:
 
             ShareObjectService._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            has_share = ShareObjectRepository.exists(session, dataset, environment, principal_id, group_uri)
-            if not has_share:
+            share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+            if not share:
                 share = ShareObject(
                     datasetUri=dataset.datasetUri,
                     environmentUri=environment.environmentUri,
@@ -157,7 +157,7 @@ class ShareObjectService:
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
 
-            if valid_share_items_states:
+            if not valid_share_items_states:
                 raise ShareItemsFound(
                     action='Submit Share Object',
                     message='The request is empty of pending items. Add items to share request.',
@@ -167,6 +167,7 @@ class ShareObjectService:
             ShareNotificationService.notify_share_object_submission(
                 session, context.username, dataset, share
             )
+            return share
 
     @staticmethod
     @has_resource_permission(APPROVE_SHARE_OBJECT)
@@ -224,6 +225,7 @@ class ShareObjectService:
             share, dataset, states = ShareObjectService._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in states]
 
+            new_state = ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states:
                 raise ShareItemsFound(
                     action='Delete share object',
@@ -231,7 +233,6 @@ class ShareObjectService:
                             'Revoke access to these items before deleting the request.',
                 )
 
-            new_state = ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Delete)
             if new_state == ShareObjectStatus.Deleted.value:
                 session.delete(share)
 

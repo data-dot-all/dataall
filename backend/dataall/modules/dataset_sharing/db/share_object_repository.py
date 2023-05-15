@@ -318,7 +318,7 @@ class ShareObjectRepository:
         session.commit()
 
     @staticmethod
-    def exists(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
+    def find_share(session, dataset: Dataset, env, principal_id, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)
             .filter(
@@ -329,7 +329,7 @@ class ShareObjectRepository:
                     ShareObject.groupUri == group_uri,
                 )
             )
-            .count()
+            .first()
         )
 
     @staticmethod

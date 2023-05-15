@@ -38,7 +38,7 @@ class ShareItemService:
             revoked_items_states = ShareObjectRepository.get_share_items_states(session, uri, revoked_uris)
             revoked_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in revoked_uris]
 
-            if revoked_items_states:
+            if not revoked_items_states:
                 raise ShareItemsFound(
                     action='Revoke Items from Share Object',
                     message='Nothing to be revoked.',
