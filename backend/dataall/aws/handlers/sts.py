@@ -66,24 +66,6 @@ class SessionHelper:
             return boto3.Session()
 
     @classmethod
-    def _get_secret(cls, secret_name):
-        """
-        Method to get secret_string from secrets manager
-        :return:
-        :rtype:
-        """
-        secret_string = None
-        region = os.getenv('AWS_REGION', 'eu-west-1')
-        try:
-            session = SessionHelper.get_session()
-            client = session.client('secretsmanager', region_name=region)
-            secret_string = client.get_secret_value(SecretId=secret_name).get('SecretString')
-            log.debug(f'Found Secret {secret_name}|{secret_string}')
-        except ClientError as e:
-            log.warning(f'Secret {secret_name} not found: {e}')
-        return secret_string
-
-    @classmethod
     def _get_parameter_value(cls, parameter_path=None):
         """
         Method to get parameter from System Manager Parameter Store
@@ -111,7 +93,6 @@ class SessionHelper:
         :return:
         :rtype:
         """
-        #return SessionHelper._get_secret(secret_name=f'dataall-externalId-{os.getenv("envname", "local")}')
         return SessionHelper._get_parameter_value(
             parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/externalId')
 

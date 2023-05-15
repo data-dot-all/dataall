@@ -114,14 +114,24 @@ class ParamStoreStack(pyNestedClass):
         )
 
 def _get_external_id_value(envname, region):
+    """For first deployments it returns False,
+    for existing deployments it returns the ssm parameter value generated in the first deployment
+    for prior to V1.5.1 upgrades it returns the secret from secrets manager
+    """
     session = boto3.Session()
     secret_id = f"dataall-externalId-{envname}"
+    parameter_path = f"/dataall/{envname}/pivotRole/externalId"
     try:
-        client = session.client('secretsmanager', region_name=region)
-        secret_value = client.get_secret_value(SecretId=secret_id)['SecretString']
-        return secret_value
+        ssm_client = session.client('ssm', region_name=region)
+        parameter_value = ssm_client.get_parameter(Name=parameter_path)['Parameter']['Value']
+        return parameter_value
     except:
-        return False
+        try:
+            secrets_client = session.client('secretsmanager', region_name=region)
+            secret_value = secrets_client.get_secret_value(SecretId=secret_id)['SecretString']
+            return secret_value
+        except:
+            return False
 
 def _generate_external_id():
     allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
