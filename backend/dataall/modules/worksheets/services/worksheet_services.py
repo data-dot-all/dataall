@@ -1,7 +1,6 @@
 import logging
 
 from dataall import db
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions
 from dataall.db import models
@@ -110,12 +109,9 @@ class WorksheetService:
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
 
-        base_session = SessionHelper.remote_session(accountid=environment.AwsAccountId)
-        boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
-        
         cursor = AthenaClient.run_athena_query(
-            session=boto3_session,
-            work_group=env_group.environmentAthenaWorkGroup,
+            aws_account_id=environment.AwsAccountId,
+            env_group=env_group,
             s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
             region=environment.region,
             sql=sqlQuery

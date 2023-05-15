@@ -1,16 +1,19 @@
 from pyathena import connect
+from dataall.aws.handlers.sts import SessionHelper
 
 class AthenaClient:
     """ Makes requests to AWS Athena """
 
     @staticmethod
-    def run_athena_query(session, work_group, s3_staging_dir, region, sql=None):
-            creds = session.get_credentials()
+    def run_athena_query(aws_account_id, env_group, s3_staging_dir, region, sql=None):
+            base_session = SessionHelper.remote_session(accountid=aws_account_id)
+            boto3_session = SessionHelper.get_session(base_session=base_session, role_arn=env_group.environmentIAMRoleArn)
+            creds = boto3_session.get_credentials()
             connection = connect(
                 aws_access_key_id=creds.access_key,
                 aws_secret_access_key=creds.secret_key,
                 aws_session_token=creds.token,
-                work_group=work_group,
+                work_group=env_group.environmentAthenaWorkGroup,
                 s3_staging_dir=s3_staging_dir,
                 region_name=region,
             )
