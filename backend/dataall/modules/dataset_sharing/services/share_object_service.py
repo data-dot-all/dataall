@@ -21,21 +21,16 @@ from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_REA
 
 class ShareObjectService:
     @staticmethod
-    def _get_env_uri(session, uri):
-        dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-        environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        return environment.environmentUri
-
-    @staticmethod
     @has_resource_permission(GET_SHARE_OBJECT)
     def get_share_object(uri):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, uri)
 
     @staticmethod
-    @has_resource_permission(CREATE_SHARE_OBJECT, parent_resource=_get_env_uri)
+    @has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
             uri: str,
+            dataset_uri: str,
             item_uri: str,
             item_type: str,
             group_uri,
@@ -44,8 +39,8 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            environment = Environment.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
@@ -137,7 +132,7 @@ class ShareObjectService:
             # dataset.SamlAdminGroupName
             # environment.SamlGroupName
             ShareObjectService._attach_share_resource_policy(session, share, group_uri)
-            ShareObjectService._attach_share_resource_policy(session, share, dataset.SamlGroupName)
+            ShareObjectService._attach_share_resource_policy(session, share, dataset.SamlAdminGroupName)
             if dataset.SamlAdminGroupName != environment.SamlGroupName:
                 ShareObjectService._attach_share_resource_policy(session, share, environment.SamlGroupName)
 

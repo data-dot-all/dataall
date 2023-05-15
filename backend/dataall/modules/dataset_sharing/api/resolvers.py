@@ -28,15 +28,14 @@ def create_share_object(
         raise RequiredParameter(input)
     if 'principalId' not in input:
         raise RequiredParameter('principalId')
-    if 'datasetUri' not in input:
-        raise RequiredParameter('datasetUri')
     if 'principalType' not in input:
         raise RequiredParameter('principalType')
     if 'groupUri' not in input:
         raise RequiredParameter('groupUri')
 
     return ShareObjectService.create_share_object(
-        uri=datasetUri,
+        uri=input['environmentUri'],
+        dataset_uri=datasetUri,
         item_uri=itemUri,
         item_type=itemType,
         group_uri=input['groupUri'],
