@@ -1,8 +1,6 @@
 import pytest
 
 import dataall
-from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -394,7 +392,7 @@ def test_paging(db, client, org1, env1, user, group):
         first_id = response.data.listEnvironments.nodes[0].environmentUri
 
 
-def test_group_invitation(db, client, env1, org1, group2, user, group3, group, dataset):
+def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
     response = client.query(
         """
         query listResourcePermissions($filter:ResourcePermissionFilter){
@@ -433,7 +431,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
-    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -471,7 +468,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
         environmentUri=env1.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
-    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -574,32 +570,6 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     )
 
     assert response.data.listAllEnvironmentGroups.count == 2
-
-    dataset = dataset(
-        org=org1, env=env1, name='dataset1', owner='bob', group=group2.name
-    )
-    assert dataset.datasetUri
-
-    response = client.query(
-        """
-        mutation removeGroupFromEnvironment($environmentUri: String!, $groupUri: String!){
-            removeGroupFromEnvironment(environmentUri: $environmentUri, groupUri: $groupUri){
-                environmentUri
-            }
-        }
-        """,
-        username='alice',
-        environmentUri=env1.environmentUri,
-        groupUri=group2.name,
-        groups=[group.name, group2.name],
-    )
-    print(response)
-
-    assert 'EnvironmentResourcesFound' in response.errors[0].message
-    with db.scoped_session() as session:
-        dataset = session.query(Dataset).get(dataset.datasetUri)
-        session.delete(dataset)
-        session.commit()
 
     response = client.query(
         """

@@ -1,7 +1,7 @@
 from dataall.db import models
 import pytest
 
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
 
 
@@ -36,7 +36,7 @@ def list_dataset_tags_query(client, dataset):
 
 
 def test_empty_key_value_tags(client, dataset1):
-    response = list_dataset_tags_query(client, dataset1.datasetUri)
+    response = list_dataset_tags_query(client, dataset1)
     print(response)
     assert len(response.data.listKeyValueTags) == 0
 

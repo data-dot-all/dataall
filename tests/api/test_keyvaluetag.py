@@ -3,7 +3,6 @@ from dataall.db import models
 import pytest
 
 from dataall.db import exceptions
-from dataall.modules.datasets_base.db.models import Dataset
 
 
 @pytest.fixture(scope='module')

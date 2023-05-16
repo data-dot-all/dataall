@@ -1,13 +1,15 @@
 import random
 import pytest
 
+from dataall.modules.dataset_sharing.db.enums import ShareableType
+from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from tests.api.client import *
 from tests.api.conftest import *
 
 from dataall.db.api import ResourcePolicy
-from dataall.db.models import ShareableType, ShareObjectItem, ShareObject, Environment, EnvironmentGroup, Organization, \
+from dataall.db.models import Environment, EnvironmentGroup, Organization, \
     PrincipalType
-from dataall.db.permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocation
 
 
