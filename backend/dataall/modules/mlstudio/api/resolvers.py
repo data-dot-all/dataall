@@ -111,8 +111,6 @@ def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, *
     return SagemakerStudioService.get_sagemaker_studio_user_status(
         uri=source.sagemakerStudioUserUri
     )
-    # TODO: check Notebooks because they do not update the status (maybe there is a bug). I verified with the current main and it never updated the db
-
 
 def resolve_sagemaker_studio_user_stack(
     context: Context, source: SagemakerStudioUser, **kwargs

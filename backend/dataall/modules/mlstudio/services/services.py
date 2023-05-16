@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
-from dataall.core.context import get_context as context
+from dataall.core.context import get_context
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.db.api import (
     ResourcePolicy,
@@ -53,7 +53,7 @@ class SagemakerStudioCreationRequest:
 
 
 def _session():
-    return context().db_engine.scoped_session()
+    return get_context().db_engine.scoped_session()
 
 
 class SagemakerStudioService:
@@ -64,7 +64,6 @@ class SagemakerStudioService:
     @has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @has_resource_permission(CREATE_SGMSTUDIO_USER)
     @has_group_permission(CREATE_SGMSTUDIO_USER)
-    # TODO: question, why the * here?
     def create_sagemaker_studio_user(*, uri: str, admin_group: str, request: SagemakerStudioCreationRequest):
         """
         Creates an ML Studio user
@@ -103,7 +102,7 @@ class SagemakerStudioService:
                 AWSAccountId=env.AwsAccountId,
                 region=env.region,
                 RoleArn=env.EnvironmentDefaultIAMRoleArn,
-                owner=context().username,
+                owner=get_context().username,
                 SamlAdminGroupName=admin_group,
                 tags=request.tags,
             )
@@ -142,8 +141,8 @@ class SagemakerStudioService:
     def list_sagemaker_studio_users(*, filter: dict) -> dict:
         with _session() as session:
             return SageMakerStudioRepository(session).paginated_sagemaker_studio_users(
-                username=context.username,
-                groups=context.groups,
+                username=get_context().username,
+                groups=get_context().groups,
                 filter=filter,
             )
 
@@ -166,13 +165,13 @@ class SagemakerStudioService:
     def get_sagemaker_studio_user_presigned_url(*, uri: str):
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
-            return SagemakerStudioService(user).get_sagemaker_studio_user_presigned_url()
+            return sagemaker_studio_client(user).get_sagemaker_studio_user_presigned_url()
 
     @staticmethod
     def get_sagemaker_studio_user_applications(*, uri: str):
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
-            return SagemakerStudioService(user).get_sagemaker_studio_user_applications()
+            return sagemaker_studio_client(user).get_sagemaker_studio_user_applications()
 
     @staticmethod
     @has_resource_permission(DELETE_SGMSTUDIO_USER)

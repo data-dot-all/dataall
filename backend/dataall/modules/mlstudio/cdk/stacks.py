@@ -21,8 +21,8 @@ from dataall.utils.runtime_stacks_tagging import TagsUtil
 logger = logging.getLogger(__name__)
 
 
-@stack(stack='sagemakerstudiouser')
-class SagemakerStudioUser(Stack):
+@stack(stack='sagemakerstudiouserprofile')
+class SagemakerStudioUserProfile(Stack):
     """
     Creation of a sagemaker studio user stack.
     Having imported the mlstudio module, the class registers itself using @stack
