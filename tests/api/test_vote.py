@@ -18,14 +18,6 @@ def env1(
     yield env1
 
 
-@pytest.fixture(scope='module', autouse=True)
-def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
-    with db.scoped_session() as session:
-        yield dataset(
-            org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
-        )
-
-
 @pytest.fixture(scope='module')
 def dashboard(client, env1, org1, group, module_mocker, patch_es):
     module_mocker.patch(
@@ -63,13 +55,9 @@ def dashboard(client, env1, org1, group, module_mocker, patch_es):
     yield response.data.importDashboard
 
 
-def test_count_votes(client, dataset1, dashboard):
+def test_count_votes(client, dashboard, env1):
     response = count_votes_query(
-        client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
-    )
-    assert response.data.countUpVotes == 0
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
     )
     assert response.data.countUpVotes == 0
 
@@ -106,57 +94,34 @@ def get_vote_query(client, target_uri, target_type, group):
     return response
 
 
-def test_upvote(patch_es, client, dataset1, dashboard):
+def test_upvote(patch_es, client, env1, dashboard):
+
     response = upvote_mutation(
-        client, dataset1.datasetUri, 'dataset', True, dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', True, env1.SamlGroupName
     )
     assert response.data.upVote.upvote
     response = count_votes_query(
-        client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
     )
     assert response.data.countUpVotes == 1
     response = get_vote_query(
-        client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
     )
     assert response.data.getVote.upvote
 
     response = upvote_mutation(
-        client, dashboard.dashboardUri, 'dashboard', True, dataset1.SamlAdminGroupName
-    )
-    assert response.data.upVote.upvote
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', dataset1.SamlAdminGroupName
-    )
-    assert response.data.countUpVotes == 1
-    response = get_vote_query(
-        client, dashboard.dashboardUri, 'dashboard', dataset1.SamlAdminGroupName
-    )
-    assert response.data.getVote.upvote
-
-    response = upvote_mutation(
-        client, dataset1.datasetUri, 'dataset', False, dataset1.SamlAdminGroupName
-    )
-    assert not response.data.upVote.upvote
-    response = upvote_mutation(
-        client, dashboard.dashboardUri, 'dashboard', False, dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', False, env1.SamlGroupName
     )
 
     assert not response.data.upVote.upvote
+
     response = get_vote_query(
-        client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
-    )
-    assert not response.data.getVote.upvote
-    response = get_vote_query(
-        client, dashboard.dashboardUri, 'dashboard', dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
     )
     assert not response.data.getVote.upvote
 
     response = count_votes_query(
-        client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
-    )
-    assert response.data.countUpVotes == 0
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', dataset1.SamlAdminGroupName
+        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
     )
     assert response.data.countUpVotes == 0
 

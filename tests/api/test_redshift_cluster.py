@@ -4,7 +4,9 @@ import typing
 import pytest
 import dataall
 from dataall.api.constants import RedshiftClusterRole
-from dataall.modules.datasets.services.dataset_service import DatasetService
+
+from tests.modules.datasets.conftest import dataset, table
+
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 

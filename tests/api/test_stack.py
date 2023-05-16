@@ -4,7 +4,6 @@ def test_update_stack(
     group,
     pipeline,
     env_fixture,
-    dataset_fixture,
     sgm_studio,
     cluster,
 ):
@@ -12,11 +11,6 @@ def test_update_stack(
         client, env_fixture.environmentUri, 'environment', group.name
     )
     assert response.data.updateStack.targetUri == env_fixture.environmentUri
-
-    response = update_stack_query(
-        client, dataset_fixture.datasetUri, 'dataset', group.name
-    )
-    assert response.data.updateStack.targetUri == dataset_fixture.datasetUri
 
     response = update_stack_query(
         client, sgm_studio.sagemakerStudioUserProfileUri, 'mlstudio', group.name

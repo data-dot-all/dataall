@@ -51,6 +51,7 @@ def get_env(client, env1, group):
         groups=[group.name],
     )
 
+
 def test_get_environment(client, org1, env1, group):
     response = get_env(client, env1, group)
     assert (

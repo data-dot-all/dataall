@@ -21,13 +21,6 @@ def env1(env, org1, user, group, tenant):
 
 
 @pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
-    )
-
-
-@pytest.fixture(scope='module')
 def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
     yield org('org2', user2.userName, group2.name)
 
