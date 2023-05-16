@@ -5,6 +5,8 @@ Revises: d05f9a5b215e
 Create Date: 2023-02-20 14:28:13.331670
 
 """
+import sqlalchemy as sa
+
 from typing import List
 
 from alembic import op
@@ -109,6 +111,9 @@ def upgrade():
                 sid=permission.sid,
                 permissionUri=manage_mlstudio.permissionUri,
             ))
+
+        op.drop_table('worksheet_share')
+
         session.commit()
 
         migrate_groups_permissions(session)
@@ -135,7 +140,18 @@ def downgrade():
 
         session.add_all(envs)
         op.drop_table("environment_parameters")
-        op.drop_table('worksheet_share')
+        op.create_table(
+                'worksheet_share',
+                sa.Column('worksheetShareUri', sa.String(), nullable=False),
+                sa.Column('worksheetUri', sa.String(), nullable=False),
+                sa.Column('principalId', sa.String(), nullable=False),
+                sa.Column('principalType', sa.String(), nullable=False),
+                sa.Column('canEdit', sa.Boolean(), nullable=True),
+                sa.Column('owner', sa.String(), nullable=False),
+                sa.Column('created', sa.DateTime(), nullable=True),
+                sa.Column('updated', sa.DateTime(), nullable=True),
+                sa.PrimaryKeyConstraint('worksheetShareUri'),
+            )
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
