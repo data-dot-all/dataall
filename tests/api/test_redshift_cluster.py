@@ -10,6 +10,14 @@ from tests.modules.datasets.conftest import dataset, table
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
 
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+    )
+
+
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
     org1 = org('testorg', user.userName, group.name)

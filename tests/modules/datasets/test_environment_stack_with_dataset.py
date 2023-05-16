@@ -4,6 +4,9 @@ import pytest
 from aws_cdk import App
 
 from dataall.cdkproxy.stacks import EnvironmentSetup
+from dataall.db.models import EnvironmentGroup
+from dataall.modules.datasets_base.db.models import Dataset
+from tests.cdkproxy.conftest import *
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -49,6 +52,41 @@ def patch_methods(mocker, db, env, another_group, permissions):
         'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
         return_value='*****',
     )
+
+
+@pytest.fixture(scope='module', autouse=True)
+def another_group(db, env):
+    with db.scoped_session() as session:
+        env_group: EnvironmentGroup = EnvironmentGroup(
+            environmentUri=env.environmentUri,
+            groupUri='anothergroup',
+            environmentIAMRoleArn='aontherGroupArn',
+            environmentIAMRoleName='anotherGroupRole',
+            environmentAthenaWorkGroup='workgroup',
+        )
+        session.add(env_group)
+        dataset = Dataset(
+            label='thisdataset',
+            environmentUri=env.environmentUri,
+            organizationUri=env.organizationUri,
+            name='anotherdataset',
+            description='test',
+            AwsAccountId=env.AwsAccountId,
+            region=env.region,
+            S3BucketName='bucket',
+            GlueDatabaseName='db',
+            IAMDatasetAdminRoleArn='role',
+            IAMDatasetAdminUserArn='xxx',
+            KmsAlias='xxx',
+            owner='me',
+            confidentiality='C1',
+            businessOwnerEmail='jeff',
+            businessOwnerDelegationEmails=['andy'],
+            SamlAdminGroupName=env_group.groupUri,
+            GlueCrawlerName='dhCrawler',
+        )
+        session.add(dataset)
+        yield env_group
 
 
 @pytest.fixture(scope='function', autouse=True)

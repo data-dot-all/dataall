@@ -14,6 +14,13 @@ from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocati
 
 
 @pytest.fixture(scope='module', autouse=True)
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+    )
+
+
+@pytest.fixture(scope='module', autouse=True)
 def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})

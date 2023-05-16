@@ -1,5 +1,4 @@
 from dataall.db import permissions
-from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS
 
 
 def test_list_tenant_permissions(client, user, group, tenant):
@@ -61,7 +60,7 @@ def test_update_permissions(client, user, group, tenant):
         username='alice',
         input=dict(
             groupUri=group.name,
-            permissions=[permissions.MANAGE_ORGANIZATIONS, MANAGE_DATASETS],
+            permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_GROUPS],
         ),
         groups=[group.name, 'DAAdministrators'],
     )
@@ -93,7 +92,7 @@ def test_update_permissions(client, user, group, tenant):
         username='alice',
         input=dict(
             groupUri=group.name,
-            permissions=[permissions.MANAGE_ORGANIZATIONS, MANAGE_DATASETS],
+            permissions=[permissions.MANAGE_ORGANIZATIONS, permissions.MANAGE_GROUPS],
         ),
         groups=[group.name, 'DAAdministrators'],
     )

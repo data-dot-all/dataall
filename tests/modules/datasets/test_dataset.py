@@ -6,6 +6,7 @@ import pytest
 import dataall
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from tests.api.test_stack import update_stack_query
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -533,3 +534,9 @@ def test_stewardship(client, dataset, env1, org1, db, group2, group, user, patch
         },
     )
     assert response.data.createDataset.stewards == group2.name
+
+
+def test_dataset_stack(client, dataset_fixture, group):
+    dataset = dataset_fixture
+    response = update_stack_query(client, dataset.datasetUri, 'dataset', dataset.SamlAdminGroupName)
+    assert response.data.updateStack.targetUri == dataset.datasetUri
