@@ -22,7 +22,7 @@ RETRIES = 30
 SLEEP_TIME = 30
 
 
-load_modules([ImportMode.STACK_UPDATER_TASK])
+load_modules({ImportMode.STACK_UPDATER_TASK})
 
 
 class StackFinder(ABC):
@@ -52,6 +52,8 @@ def update_stacks(engine, envname):
 
         for stack_uri in additional_stacks:
             update_stack(session=session, envname=envname, target_uri=stack_uri, wait=False)
+
+        return len(all_environments), len(additional_stacks)
 
 
 def update_stack(session, envname, target_uri, wait=False):

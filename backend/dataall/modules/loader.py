@@ -13,6 +13,9 @@ log = logging.getLogger(__name__)
 
 _MODULE_PREFIX = "dataall.modules"
 
+# This needed not to load the same module twice. Should happen only in tests
+_ACTIVE_MODES = set()
+
 
 class ImportMode(Enum):
     """Defines importing mode
@@ -27,6 +30,10 @@ class ImportMode(Enum):
     STACK_UPDATER_TASK = auto()
     CATALOG_INDEXER_TASK = auto()
 
+    @staticmethod
+    def all():
+        return {mode for mode in ImportMode}
+
 
 class ModuleInterface(ABC):
     """
@@ -35,7 +42,7 @@ class ModuleInterface(ABC):
     """
     @staticmethod
     @abstractmethod
-    def is_supported(modes: List[ImportMode]) -> bool:
+    def is_supported(modes: Set[ImportMode]) -> bool:
         """
         Return True if the module interface supports any of the ImportMode and should be loaded
         """
@@ -60,17 +67,33 @@ class ModuleInterface(ABC):
         return []
 
 
-def load_modules(modes: List[ImportMode]) -> None:
+def load_modules(modes: Set[ImportMode]) -> None:
     """
     Loads all modules from the config
     Loads only requested functionality (submodules) using the mode parameter
     """
+
+    to_load = _new_modules(modes)
+    if not to_load:
+        return
+
     in_config, inactive = _load_modules()
-    _check_loading_correct(in_config, modes)
-    _initialize_modules(modes)
+    _check_loading_correct(in_config, to_load)
+    _initialize_modules(to_load)
     _describe_loading(in_config, inactive)
 
     log.info("All modules have been imported")
+
+
+def _new_modules(modes: Set[ImportMode]):
+    """
+    Extracts only new modules to load. It's needed to avoid multiply loading
+    """
+    all_modes = _ACTIVE_MODES
+
+    to_load = modes - all_modes  # complement of set
+    all_modes |= modes
+    return to_load
 
 
 def _load_modules():
@@ -121,7 +144,7 @@ def _load_module(name: str):
         return False
 
 
-def _initialize_modules(modes: List[ImportMode]):
+def _initialize_modules(modes: Set[ImportMode]):
     """
     Initialize all modules for supported modes. This method is using topological sorting for a graph of module
     dependencies. It's needed to load module in a specific order: first modules to load are without dependencies.
@@ -165,7 +188,7 @@ def _initialize_module(module):
     module()  # call a constructor for initialization
 
 
-def _check_loading_correct(in_config: Set[str], modes: List[ImportMode]):
+def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
     """
     To avoid unintentional loading (without ModuleInterface) we can check all loaded modules.
     Unintentional/incorrect loading might happen if module A has a direct reference to module B without declaring it

@@ -21,7 +21,7 @@ logger.warning(
     f"Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get('DH_DOCKER_VERSION')}"
 )
 
-load_modules(modes=[ImportMode.CDK])
+load_modules(modes={ImportMode.CDK})
 StackManager.registered_stacks()
 
 

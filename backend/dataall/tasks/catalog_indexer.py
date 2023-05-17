@@ -15,7 +15,7 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
-load_modules([ImportMode.CATALOG_INDEXER_TASK])
+load_modules({ImportMode.CATALOG_INDEXER_TASK})
 
 
 class CatalogIndexer(ABC):

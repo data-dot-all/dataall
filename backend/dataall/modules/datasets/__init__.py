@@ -1,6 +1,6 @@
 """Contains the code related to datasets"""
 import logging
-from typing import List, Type
+from typing import List, Type, Set
 
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
@@ -76,7 +76,7 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     """Implements ModuleInterface for dataset async lambda"""
 
     @staticmethod
-    def is_supported(modes: List[ImportMode]):
+    def is_supported(modes: Set[ImportMode]):
         return ImportMode.HANDLERS in modes
 
     def __init__(self):
@@ -94,7 +94,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks """
 
     @staticmethod
-    def is_supported(modes: List[ImportMode]):
+    def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
 
     def __init__(self):
@@ -114,7 +114,7 @@ class DatasetCdkModuleInterface(ModuleInterface):
 class DatasetStackUpdaterModuleInterface(ModuleInterface):
 
     @staticmethod
-    def is_supported(modes: List[ImportMode]) -> bool:
+    def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
 
     def __init__(self):
@@ -133,7 +133,7 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
 class DatasetCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
-    def is_supported(modes: List[ImportMode]) -> bool:
+    def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CATALOG_INDEXER_TASK in modes
 
     def __init__(self):

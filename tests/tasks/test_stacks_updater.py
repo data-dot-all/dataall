@@ -72,5 +72,5 @@ def test_stacks_update(db, org, env, sync_dataset, mocker):
     envs, datasets = dataall.tasks.stacks_updater.update_stacks(
         engine=db, envname='local'
     )
-    assert len(envs) == 1
-    assert len(datasets) == 1
+    assert envs == 1
+    assert datasets == 1

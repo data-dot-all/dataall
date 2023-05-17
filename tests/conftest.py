@@ -3,7 +3,7 @@ import pytest
 import dataall
 from dataall.modules.loader import load_modules, ImportMode
 
-load_modules(modes=[ImportMode.HANDLERS, ImportMode.API, ImportMode.CDK])
+load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
 
 
