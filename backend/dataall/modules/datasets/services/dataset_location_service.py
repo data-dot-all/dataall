@@ -5,9 +5,9 @@ from dataall.db.api import Environment, Glossary
 from dataall.db.exceptions import ResourceShared, ResourceAlreadyExists
 from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
-from dataall.modules.datasets import DatasetLocationIndexer
 from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_FOLDER, MANAGE_DATASETS, \
     CREATE_DATASET_FOLDER, LIST_DATASET_FOLDERS, DELETE_DATASET_FOLDER
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
