@@ -6,7 +6,7 @@ import time
 from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.glue import Glue
-from dataall.aws.handlers.lakeformation import LakeFormation
+from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.ram import Ram
@@ -146,7 +146,7 @@ class LFShareManager:
         """
         Grants 'ALL' database Lake Formation permissions to data.all PivotRole
         """
-        LakeFormation.grant_pivot_role_all_database_permissions(
+        LakeFormationClient.grant_pivot_role_all_database_permissions(
             self.source_environment.AwsAccountId,
             self.source_environment.region,
             self.dataset.GlueDatabaseName,
@@ -191,11 +191,11 @@ class LFShareManager:
             f's3://{dataset.S3BucketName}',
         )
 
-        LakeFormation.grant_pivot_role_all_database_permissions(
+        LakeFormationClient.grant_pivot_role_all_database_permissions(
             target_environment.AwsAccountId, target_environment.region, shared_db_name
         )
 
-        LakeFormation.grant_permissions_to_database(
+        LakeFormationClient.grant_permissions_to_database(
             client=SessionHelper.remote_session(
                 accountid=target_environment.AwsAccountId
             ).client('lakeformation', region_name=target_environment.region),
@@ -258,11 +258,11 @@ class LFShareManager:
                 resource_link_input=resource_link_input,
             )
 
-            LakeFormation.grant_resource_link_permission(
+            LakeFormationClient.grant_resource_link_permission(
                 lakeformation_client, source, target, target_database
             )
 
-            LakeFormation.grant_resource_link_permission_on_target(
+            LakeFormationClient.grant_resource_link_permission_on_target(
                 lakeformation_client, source, target
             )
 
@@ -306,7 +306,7 @@ class LFShareManager:
                 f'for principal {principal}'
 
             )
-            LakeFormation.batch_revoke_permissions(
+            LakeFormationClient.batch_revoke_permissions(
                 SessionHelper.remote_session(self.target_environment.AwsAccountId).client(
                     'lakeformation', region_name=self.target_environment.region
                 ),
@@ -359,7 +359,7 @@ class LFShareManager:
             f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
             f'for principals {principals}'
         )
-        LakeFormation.revoke_source_table_access(
+        LakeFormationClient.revoke_source_table_access(
             target_accountid=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
             source_database=self.dataset.GlueDatabaseName,
@@ -407,7 +407,7 @@ class LFShareManager:
         )
         try:
 
-            LakeFormation.revoke_iamallowedgroups_super_permission_from_table(
+            LakeFormationClient.revoke_iamallowedgroups_super_permission_from_table(
                 source_lf_client,
                 source_accountid,
                 data['source']['database'],
@@ -415,7 +415,7 @@ class LFShareManager:
             )
             time.sleep(1)
 
-            LakeFormation.grant_permissions_to_table(
+            LakeFormationClient.grant_permissions_to_table(
                 source_lf_client,
                 target_accountid,
                 data['source']['database'],
@@ -479,7 +479,7 @@ class LFShareManager:
                     'PermissionsWithGrantOption': ['DESCRIBE', 'SELECT'],
                 }
             )
-            LakeFormation.batch_revoke_permissions(
+            LakeFormationClient.batch_revoke_permissions(
                 client, self.source_environment.AwsAccountId, revoke_entries
             )
         return revoke_entries

@@ -3,18 +3,18 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from .sts import SessionHelper
+from dataall.aws.handlers.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
 
 
-class LakeFormation:
+class LakeFormationClient:
     def __init__(self):
         pass
 
     @staticmethod
     def grant_pivot_role_all_database_permissions(accountid, region, database):
-        LakeFormation.grant_permissions_to_database(
+        LakeFormationClient.grant_permissions_to_database(
             client=SessionHelper.remote_session(accountid=accountid).client(
                 'lakeformation', region_name=region
             ),
@@ -106,7 +106,7 @@ class LakeFormation:
                 f'Revoking IAMAllowedGroups Super '
                 f'permission for table {database}|{table}'
             )
-            LakeFormation.batch_revoke_permissions(
+            LakeFormationClient.batch_revoke_permissions(
                 client,
                 accountid,
                 entries=[
@@ -164,11 +164,11 @@ class LakeFormation:
                     raise ClientError(
                         error_response={
                             'Error': {
-                                'Code': 'LakeFormation.batch_revoke_permissions',
+                                'Code': 'LakeFormationClient.batch_revoke_permissions',
                                 'Message': f'Operation ended with failures: {failures}',
                             }
                         },
-                        operation_name='LakeFormation.batch_revoke_permissions',
+                        operation_name='LakeFormationClient.batch_revoke_permissions',
                     )
 
         except ClientError as e:

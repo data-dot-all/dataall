@@ -3,6 +3,8 @@ Testing LF manager class methods invoked in same account and cross account LF sh
 Remarks
 
 """
+from unittest.mock import MagicMock
+
 import boto3
 import pytest
 
@@ -24,6 +26,8 @@ SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
 
 TARGET_ACCOUNT_ENV = "2" * 12
 TARGET_ACCOUNT_ENV_ROLE_NAME = "dataall-ConsumersEnvironment-r71ucp4m"
+
+LF_CLIENT = "dataall.modules.dataset_sharing.aws.lakeformation_client.LakeFormationClient"
 
 
 @pytest.fixture(scope="module")
@@ -253,7 +257,7 @@ def test_create_shared_database(
         return_value=True,
     )
     lf_mock_pr = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.grant_pivot_role_all_database_permissions",
+        f"{LF_CLIENT}.grant_pivot_role_all_database_permissions",
         return_value=True,
     )
     mocker.patch(
@@ -261,7 +265,7 @@ def test_create_shared_database(
         return_value=boto3.Session(),
     )
     lf_mock = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.grant_permissions_to_database",
+        f"{LF_CLIENT}.grant_permissions_to_database",
         return_value=True,
     )
     # When
@@ -397,11 +401,11 @@ def test_create_resource_link(
         return_value=True,
     )
     lf_mock_1 = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.grant_resource_link_permission",
+        f"{LF_CLIENT}.grant_resource_link_permission",
         return_value=True,
     )
     lf_mock_2 = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.grant_resource_link_permission_on_target",
+        f"{LF_CLIENT}.grant_resource_link_permission_on_target",
         return_value=True,
     )
 
@@ -459,6 +463,7 @@ def test_create_resource_link(
 
     pass
 
+
 def test_revoke_table_resource_link_access(
         db,
         processor_same_account: ProcessLFSameAccountShare,
@@ -482,7 +487,7 @@ def test_revoke_table_resource_link_access(
     )
 
     lf_mock = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.batch_revoke_permissions",
+        f"{LF_CLIENT}.batch_revoke_permissions",
         return_value=True,
     )
 
@@ -525,7 +530,7 @@ def test_revoke_source_table_access(
     )
 
     lf_mock = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.revoke_source_table_access",
+        f"{LF_CLIENT}.revoke_source_table_access",
         return_value=True,
     )
 
@@ -634,10 +639,7 @@ def test_revoke_external_account_access_on_source_account(
         table2: DatasetTable,
         mocker,
 ):
-    lf_mock = mocker.patch(
-        "dataall.aws.handlers.lakeformation.LakeFormation.batch_revoke_permissions",
-        return_value=True,
-    )
+    lf_mock = mocker.patch(f"{LF_CLIENT}.batch_revoke_permissions", return_value=True)
 
     mocker.patch(
         "dataall.aws.handlers.sts.SessionHelper.remote_session",

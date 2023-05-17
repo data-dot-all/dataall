@@ -20,7 +20,6 @@ from aws_cdk.aws_glue import CfnCrawler
 from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
 from dataall.aws.handlers.quicksight import Quicksight
-from dataall.aws.handlers.lakeformation import LakeFormation
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.db.api import Environment
