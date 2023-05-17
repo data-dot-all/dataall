@@ -79,7 +79,7 @@ def _load_modules():
     inactive = set()
     in_config = set()
     for name, props in modules.items():
-        in_config.add(name)
+
         if "active" not in props:
             raise ValueError(f"Status is not defined for {name} module")
 
@@ -90,6 +90,7 @@ def _load_modules():
             inactive.add(name)
             continue
 
+        in_config.add(name)
         if not _load_module(name):
             raise ValueError(f"Couldn't find module {name} under modules directory")
 
@@ -170,23 +171,37 @@ def _check_loading_correct(in_config: Set[str], modes: List[ImportMode]):
     initialization. But since ModuleInterface is not initializing properly (using depends_on)
     some functionality may work wrongly.
     """
-
-    expected_load = set(in_config)
+    expected_load = set()
     for module in _all_modules():
-        for dependency in module.depends_on():
-            expected_load.add(dependency.name())
+        if module.name() in in_config:
+            expected_load.add(module)
+
+    to_add = list(expected_load)
+    while to_add:
+        new_to_add = []
+        while to_add:
+            module = to_add.pop()
+            for dependency in module.depends_on():
+                if dependency not in expected_load:
+                    expected_load.add(dependency)
+                    if not dependency.is_supported(modes):
+                        raise ImportError(f"Dependency {dependency.name()} doesn't support {modes}")
+
+                    new_to_add.append(dependency)
+        to_add = new_to_add
 
     for module in _all_modules():
-        if module.is_supported(modes) and module.name() not in expected_load:
+        if module.is_supported(modes) and module not in expected_load:
             raise ImportError(
                 f"ModuleInterface has not been initialized for module {module.name()}. "
                 "Declare the module in depends_on"
             )
 
+    loaded_module_names = {module.name() for module in expected_load}
     for module in sys.modules.keys():
         if module.startswith(_MODULE_PREFIX) and module != __name__:  # skip loader
             name = _get_module_name(module)
-            if name and name not in expected_load:
+            if name and name not in loaded_module_names:
                 raise ImportError(f"The package {module} has been imported, but it doesn't contain ModuleInterface")
 
 
