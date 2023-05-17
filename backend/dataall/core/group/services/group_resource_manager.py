@@ -3,7 +3,7 @@ from typing import List
 
 
 class GroupResource(ABC):
-    def count_resources(self, session, environment_uri, group_uri) -> int:
+    def count_resources(self, session, environment, group_uri) -> int:
         raise NotImplementedError()
 
 
@@ -18,8 +18,8 @@ class GroupResourceManager:
         GroupResourceManager._resources.append(resource)
 
     @staticmethod
-    def count_group_resources(session, environment_uri, group_uri) -> int:
+    def count_group_resources(session, environment, group_uri) -> int:
         counter = 0
         for resource in GroupResourceManager._resources:
-            counter += resource.count_resources(session, environment_uri, group_uri)
+            counter += resource.count_resources(session, environment, group_uri)
         return counter

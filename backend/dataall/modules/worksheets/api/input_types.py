@@ -1,4 +1,4 @@
-from ... import gql
+from dataall.api import gql
 
 NewWorksheetInput = gql.InputType(
     name='NewWorksheetInput',
@@ -47,15 +47,6 @@ WorksheetFilter = gql.InputType(
         gql.Argument(name='term', type=gql.String),
         gql.Argument(name='page', type=gql.Integer),
         gql.Argument(name='pageSize', type=gql.Integer),
-    ],
-)
-
-WorksheetShareInput = gql.InputType(
-    name='WorksheetShareInput',
-    arguments=[
-        gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='canEdit', type=gql.NonNullableType(gql.Boolean)),
     ],
 )
 

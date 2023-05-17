@@ -304,7 +304,6 @@ class Environment:
         if permissions.CREATE_NETWORK in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
 
-        g_permissions.append(permissions.RUN_ATHENA_QUERY)
         g_permissions.append(permissions.GET_ENVIRONMENT)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
@@ -368,11 +367,6 @@ class Environment:
                 models.Dashboard,
                 models.Dashboard.environmentUri == models.Environment.environmentUri,
             )
-            .outerjoin(
-                models.WorksheetQueryResult,
-                models.WorksheetQueryResult.AwsAccountId
-                == models.Environment.AwsAccountId,
-            )
             .filter(
                 and_(
                     models.Environment.environmentUri == environment.environmentUri,
@@ -389,7 +383,7 @@ class Environment:
 
         group_env_objects_count += GroupResourceManager.count_group_resources(
             session=session,
-            environment_uri=environment.environmentUri,
+            environment=environment,
             group_uri=group
         )
 
