@@ -731,6 +731,6 @@ def get_pivot_role_name(context: Context, source, organizationUri=None):
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
                 action='GET_PIVOT_ROLE_NAME',
-                message='Pivot role name could not be found on AWS Secretsmanager',
+                message='Pivot role name could not be found on AWS Systems Manager - Parameter Store',
             )
         return pivot_role_name
