@@ -209,6 +209,16 @@ def processor_same_account(db, dataset1, share_same_account, table1, source_envi
     yield processor
 
 
+@pytest.fixture(scope="function")
+def mock_glue_client(mocker):
+    mock_client = MagicMock()
+    mocker.patch(
+        "dataall.modules.dataset_sharing.services.share_managers.lf_share_manager.GlueClient",
+        mock_client
+    )
+    yield mock_client
+
+
 def test_init(processor_same_account, processor_cross_account):
     assert processor_same_account.dataset
     assert processor_same_account.share
@@ -251,11 +261,10 @@ def test_create_shared_database(
         target_environment: models.Environment,
         dataset1: Dataset,
         mocker,
+        mock_glue_client
 ):
-    create_db_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.create_database",
-        return_value=True,
-    )
+    mock_glue_client().create_database.return_value = True
+
     lf_mock_pr = mocker.patch(
         f"{LF_CLIENT}.grant_pivot_role_all_database_permissions",
         return_value=True,
@@ -277,12 +286,12 @@ def test_create_shared_database(
     )
 
     # Then
-    create_db_mock.assert_called_once()
+    mock_glue_client().create_database.assert_called_once()
     lf_mock_pr.assert_called_once()
     lf_mock.assert_called_once()
 
     # Reset mocks
-    create_db_mock.reset_mock()
+    mock_glue_client().create_database.reset_mock()
     lf_mock_pr.reset_mock()
     lf_mock.reset_mock()
 
@@ -295,9 +304,10 @@ def test_create_shared_database(
     )
 
     # Then
-    create_db_mock.assert_called_once()
+    mock_glue_client().create_database.assert_called_once()
     lf_mock_pr.assert_called_once()
     lf_mock.assert_called_once()
+
 
 def test_check_share_item_exists_on_glue_catalog(
         db,
@@ -307,20 +317,19 @@ def test_check_share_item_exists_on_glue_catalog(
         share_item_same_account: ShareObjectItem,
         share_item_cross_account: ShareObjectItem,
         mocker,
+        mock_glue_client,
 ):
 
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.table_exists",
-        return_value=True,
-    )
+    mock_glue_client().table_exists.return_value = True
+
     # When
     processor_same_account.check_share_item_exists_on_glue_catalog(
         share_item=share_item_same_account,
         table=table1
     )
     # Then
-    glue_mock.assert_called_once()
-    glue_mock.reset_mock()
+    mock_glue_client().table_exists.assert_called_once()
+    mock_glue_client().table_exists.reset_mock()
 
     # When
     processor_cross_account.check_share_item_exists_on_glue_catalog(
@@ -328,8 +337,7 @@ def test_check_share_item_exists_on_glue_catalog(
         table=table1
     )
     # Then
-    glue_mock.assert_called_once()
-
+    mock_glue_client().table_exists.assert_called_once()
 
 
 def test_build_share_data(
@@ -391,15 +399,15 @@ def test_create_resource_link(
         dataset1: Dataset,
         table1: DatasetTable,
         mocker,
+        mock_glue_client,
 ):
     sts_mock = mocker.patch(
         "dataall.aws.handlers.sts.SessionHelper.remote_session",
         return_value=boto3.Session(),
     )
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.create_resource_link",
-        return_value=True,
-    )
+    glue_mock = mock_glue_client().create_resource_link
+    glue_mock.return_value = True
+
     lf_mock_1 = mocker.patch(
         f"{LF_CLIENT}.grant_resource_link_permission",
         return_value=True,
@@ -475,11 +483,11 @@ def test_revoke_table_resource_link_access(
         dataset1: Dataset,
         table2: DatasetTable,
         mocker,
+        mock_glue_client
 ):
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.table_exists",
-        return_value=True,
-    )
+
+    glue_mock = mock_glue_client().table_exists
+    glue_mock.return_value = True
 
     mocker.patch(
         "dataall.aws.handlers.sts.SessionHelper.remote_session",
@@ -523,11 +531,10 @@ def test_revoke_source_table_access(
         dataset1: Dataset,
         table2: DatasetTable,
         mocker,
+        mock_glue_client
 ):
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.table_exists",
-        return_value=True,
-    )
+    glue_mock = mock_glue_client().table_exists
+    glue_mock.return_value = True
 
     lf_mock = mocker.patch(
         f"{LF_CLIENT}.revoke_source_table_access",
@@ -565,17 +572,13 @@ def test_delete_resource_link_table(
         target_environment: models.Environment,
         dataset1: Dataset,
         table2: DatasetTable,
-        mocker,
+        mock_glue_client
 ):
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.table_exists",
-        return_value=True,
-    )
+    glue_mock = mock_glue_client().table_exists
+    glue_mock.return_value = True,
 
-    glue_mock2 = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.delete_table",
-        return_value=True,
-    )
+    glue_mock2 = mock_glue_client().delete_table
+    glue_mock2.return_value = True,
 
 
     processor_same_account.delete_resource_link_table(
@@ -607,12 +610,10 @@ def test_delete_shared_database(
         target_environment: models.Environment,
         dataset1: Dataset,
         table1: DatasetTable,
-        mocker,
+        mock_glue_client
 ):
-    glue_mock = mocker.patch(
-        "dataall.aws.handlers.glue.Glue.delete_database",
-        return_value=True,
-    )
+    glue_mock = mock_glue_client().delete_database
+    glue_mock.return_value = True
 
     processor_same_account.delete_shared_database()
     # Then

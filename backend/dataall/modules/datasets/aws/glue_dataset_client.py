@@ -1,7 +1,6 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -74,9 +73,7 @@ class DatasetCrawler:
         try:
             log.debug(f'Looking for {database} tables')
 
-            if not Glue.database_exists(
-                    accountid=account_id, database=database, region=dataset.region
-            ):
+            if not self.database_exists():
                 return found_tables
 
             paginator = self._client.get_paginator('get_tables')
@@ -97,4 +94,12 @@ class DatasetCrawler:
             )
         return found_tables
 
+    def database_exists(self):
+        dataset = self._dataset
+        try:
+            self._client.get_database(CatalogId=dataset.AwsAccountId, Name=dataset.GlueDatabaseName)
+            return True
+        except ClientError:
+            log.info(f'Database {dataset.GlueDatabaseName} does not exist on account {dataset.AwsAccountId}...')
+            return False
 

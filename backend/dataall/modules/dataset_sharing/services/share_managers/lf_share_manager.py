@@ -5,7 +5,7 @@ import time
 
 from botocore.exceptions import ClientError
 
-from dataall.aws.handlers.glue import Glue
+from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.sts import SessionHelper
@@ -128,12 +128,7 @@ class LFShareManager:
         -------
         exceptions.AWSResourceNotFound
         """
-        if not Glue.table_exists(
-            accountid=self.source_environment.AwsAccountId,
-            region=self.source_environment.region,
-            database=table.GlueDatabaseName,
-            tablename=table.GlueTableName,
-        ):
+        if not self._create_glue_client().table_exists(table.GlueTableName):
             raise exceptions.AWSResourceNotFound(
                 action='ProcessShare',
                 message=(
@@ -184,12 +179,11 @@ class LFShareManager:
             f'{target_environment.AwsAccountId}://{shared_db_name}'
         )
 
-        database = Glue.create_database(
+        database = GlueClient(
             target_environment.AwsAccountId,
             shared_db_name,
-            target_environment.region,
-            f's3://{dataset.S3BucketName}',
-        )
+            target_environment.region
+        ).create_database(f's3://{dataset.S3BucketName}')
 
         LakeFormationClient.grant_pivot_role_all_database_permissions(
             target_environment.AwsAccountId, target_environment.region, shared_db_name
@@ -215,11 +209,7 @@ class LFShareManager:
         bool
         """
         logger.info(f'Deleting shared database {self.shared_db_name}')
-        return Glue.delete_database(
-            accountid=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-        )
+        return self._create_glue_client().delete_database()
 
     @classmethod
     def create_resource_link(cls, **data) -> dict:
@@ -250,10 +240,8 @@ class LFShareManager:
         }
 
         try:
-            resource_link = Glue.create_resource_link(
-                accountid=target['accountid'],
-                region=target['region'],
-                database=target_database,
+            glue_client = GlueClient(target['accountid'], target['region'], target_database)
+            resource_link = glue_client.create_resource_link(
                 resource_link_name=source['tablename'],
                 resource_link_input=resource_link_input,
             )
@@ -286,12 +274,8 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        if not Glue.table_exists(
-            accountid=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-            tablename=table.GlueTableName,
-        ):
+        glue_client = self._create_glue_client()
+        if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Resource link could not be found '
                 f'on {self.target_environment.AwsAccountId}/{self.shared_db_name}/{table.GlueTableName} '
@@ -341,12 +325,8 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        if not Glue.table_exists(
-            accountid=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-            tablename=table.GlueTableName,
-        ):
+        glue_client = self._create_glue_client()
+        if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Source table could not be found '
                 f'on {self.source_environment.AwsAccountId}/{self.dataset.GlueDatabaseName}/{table.GlueTableName} '
@@ -371,20 +351,12 @@ class LFShareManager:
 
     def delete_resource_link_table(self, table: DatasetTable):
         logger.info(f'Deleting shared table {table.GlueTableName}')
+        glue_client = self._create_glue_client()
 
-        if not Glue.table_exists(
-                accountid=self.target_environment.AwsAccountId,
-                region=self.target_environment.region,
-                database=self.shared_db_name,
-                tablename=table.GlueTableName,
-        ):
+        if not glue_client.table_exists(table.GlueTableName):
             return True
-        Glue.delete_table(
-            accountid=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-            tablename=table.GlueTableName
-        )
+
+        glue_client.delete_table(table.GlueTableName)
         return True
 
     @classmethod
@@ -555,3 +527,10 @@ class LFShareManager:
             table, self.share, self.target_environment
         )
         return True
+
+    def _create_glue_client(self):
+        return GlueClient(
+            self.target_environment.AwsAccountId,
+            self.target_environment.region,
+            self.shared_db_name,
+        )
