@@ -4,6 +4,7 @@ from .parameter_store import ParameterStoreManager
 from .sts import SessionHelper
 from ...db.models import Environment
 
+
 # TODO: cannot be deleted because it is used in environment cdk stack --> there are changes in V1.5 affect this implementation. We need to rebase before continuing
 class SagemakerStudio:
     @staticmethod

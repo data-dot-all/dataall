@@ -1,7 +1,7 @@
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.notebooks.db.models import SagemakerStudioUser
+from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def get_sagemaker_studio_domain(AwsAccount, region):
     except ClientError as e:
         print(e)
         return 'NotFound'
+
 
 class SagemakerStudioClient:
     """A Sagemaker studio proxy client that is used to send requests to AWS"""

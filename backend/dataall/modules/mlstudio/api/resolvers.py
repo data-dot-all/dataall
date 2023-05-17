@@ -112,6 +112,7 @@ def resolve_sagemaker_studio_user_status(context, source: SagemakerStudioUser, *
         uri=source.sagemakerStudioUserUri
     )
 
+
 def resolve_sagemaker_studio_user_stack(
     context: Context, source: SagemakerStudioUser, **kwargs
 ):

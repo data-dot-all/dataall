@@ -8,6 +8,9 @@
         },
         "worksheets": {
             "active": true
+        },
+        "mlstudio": {
+            "active": true
         }
     }
 }
