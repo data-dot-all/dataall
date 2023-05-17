@@ -3,13 +3,13 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.cdkproxy.stacks import EnvironmentSetup, SagemakerStudioUserProfile
+from dataall.modules.mlstudio.cdk.stacks import SagemakerStudioUserProfile
 
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, sgm_studio, env, org):
     mocker.patch(
-        'dataall.cdkproxy.stacks.sagemakerstudio.SagemakerStudioUserProfile.get_engine',
+        'dataall.modules.mlstudio.cdk.stacks.SagemakerStudioUserProfile.get_engine',
         return_value=db,
     )
     mocker.patch(
@@ -17,7 +17,7 @@ def patch_methods(mocker, db, sgm_studio, env, org):
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.sagemakerstudio.SagemakerStudioUserProfile.get_target',
+        'dataall.modules.mlstudio.cdk.stacks.SagemakerStudioUserProfile.get_target',
         return_value=sgm_studio,
     )
     mocker.patch(
@@ -41,7 +41,7 @@ def patch_methods(mocker, db, sgm_studio, env, org):
 def template(sgm_studio):
     app = App()
     SagemakerStudioUserProfile(
-        app, 'Studio', target_uri=sgm_studio.sagemakerStudioUserProfileUri
+        app, 'Studio', target_uri=sgm_studio.sagemakerStudioUserUri
     )
     return json.dumps(app.synth().get_stack_by_name('Studio').template)
 
