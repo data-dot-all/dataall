@@ -17,7 +17,7 @@ class MLStudioApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.mlstudio.api
-        from dataall.modules.mlstudio.services.permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
+        from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
         TargetType("mlstudio", GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
 
         log.info("API of sagemaker mlstudio has been imported")

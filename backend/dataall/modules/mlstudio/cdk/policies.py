@@ -1,8 +1,6 @@
 from aws_cdk import aws_iam as iam
 from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
-
-from dataall.modules.mlstudio.services.permissions import CREATE_SGMSTUDIO_USER
-from dataall.modules.common.sagemaker.cdk.statements import create_sagemaker_statements
+from dataall.modules.mlstudio.services.mlstudio_permissions import CREATE_SGMSTUDIO_USER
 
 
 class SagemakerStudioPolicy(ServicePolicy):

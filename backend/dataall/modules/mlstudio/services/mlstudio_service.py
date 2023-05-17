@@ -20,7 +20,7 @@ from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
 
 from dataall.utils.slugify import slugify
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.modules.mlstudio.services.permissions import (
+from dataall.modules.mlstudio.services.mlstudio_permissions import (
     MANAGE_SGMSTUDIO_USERS,
     CREATE_SGMSTUDIO_USER,
     SGMSTUDIO_USER_ALL,

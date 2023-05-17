@@ -3,7 +3,7 @@ from dataall.api.context import Context
 from dataall.db import exceptions
 from dataall.api.Objects.Stack import stack_helper
 from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
-from dataall.modules.mlstudio.services.services import SagemakerStudioService, SagemakerStudioCreationRequest
+from dataall.modules.mlstudio.services.mlstudio_service import SagemakerStudioService, SagemakerStudioCreationRequest
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
 
 log = logging.getLogger(__name__)
