@@ -13,6 +13,10 @@ class TestModule(ModuleInterface, ABC):
     def __init__(self):
         order.append(self.__class__)
 
+    @classmethod
+    def name(cls) -> str:
+        return cls.__name__
+
 
 class TestApiModule(TestModule):
     @staticmethod
@@ -98,7 +102,7 @@ def patch_loading(mocker, all_modules, in_config):
     )
     mocker.patch(
         'dataall.modules.loader._load_modules',
-        return_value=(in_config, {})
+        return_value=({module.name() for module in in_config}, {})
     )
 
 
@@ -115,7 +119,7 @@ def test_import_with_one_dependency(mocker):
 
 
 def test_load_with_cdk_mode(mocker):
-    patch_loading(mocker, [DModule, CModule, BModule], {BModule, CModule})
+    patch_loading(mocker, [DModule, CModule, BModule], {CModule})
     loader.load_modules([ImportMode.CDK])
     assert order == [CModule]
 
@@ -131,7 +135,7 @@ def test_many_nested_layers(mocker):
 def test_complex_loading(mocker):
     patch_loading(mocker, [
         AModule, BModule, CModule, DModule, EModule, FModule, GModule, IModule, JModule, KModule
-    ], {AModule, CModule, JModule})
+    ], {CModule, FModule, GModule, IModule, KModule})
 
     loader.load_modules([ImportMode.API])
     assert order == [AModule, JModule, BModule, DModule, EModule, GModule, FModule, IModule, KModule]
@@ -142,4 +146,7 @@ def test_incorrect_loading(mocker):
     with pytest.raises(ImportError):
         loader.load_modules([ImportMode.API])
 
+    patch_loading(mocker, [AModule, BModule], {AModule})
+    with pytest.raises(ImportError):
+        loader.load_modules([ImportMode.API])
 
