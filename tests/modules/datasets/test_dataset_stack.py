@@ -1,4 +1,5 @@
 import json
+from unittest.mock import MagicMock
 
 import pytest
 from aws_cdk import App
@@ -47,10 +48,12 @@ def patch_methods(mocker, db, dataset, env, org):
         'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
         return_value="dataall-pivot-role-name-pytest",
     )
+    lf_client = MagicMock()
     mocker.patch(
-        'dataall.aws.handlers.lakeformation.LakeFormation.check_existing_lf_registered_location',
-        return_value=False,
+        'dataall.modules.datasets.cdk.dataset_stack.LakeFormationDatasetClient',
+        return_value=lf_client,
     )
+    lf_client.return_value.check_existing_lf_registered_location = False
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=dataset,

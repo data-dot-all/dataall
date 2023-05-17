@@ -6,33 +6,11 @@ from botocore.exceptions import ClientError
 from .sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
-PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
 
 
 class LakeFormation:
     def __init__(self):
         pass
-
-    @staticmethod
-    def check_existing_lf_registered_location(resource_arn, accountid, region):
-        """
-        Checks if there is a non-dataall-created registered location for the Dataset
-        Returns False is already existing location else return the resource info
-        """
-        try:
-            session = SessionHelper.remote_session(accountid)
-            lf_client = session.client('lakeformation', region_name=region)
-            response = lf_client.describe_resource(ResourceArn=resource_arn)
-            registered_role_name = response['ResourceInfo']['RoleArn'].lstrip(f"arn:aws:iam::{accountid}:role/")
-            log.info(f'LF data location already registered: {response}, registered with role {registered_role_name}')
-            if registered_role_name.startswith(PIVOT_ROLE_NAME_PREFIX):
-                log.info('The existing data location was created as part of the dataset stack. There was no pre-existing data location.')
-                return False
-            return response['ResourceInfo']
-
-        except ClientError as e:
-            log.info(f'LF data location for resource {resource_arn} not found due to {e}')
-            return False
 
     @staticmethod
     def grant_pivot_role_all_database_permissions(accountid, region, database):

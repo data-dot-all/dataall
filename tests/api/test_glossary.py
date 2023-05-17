@@ -397,38 +397,6 @@ def test_delete_subcategory(client, subcategory, group):
     print(r)
 
 
-def test_get_term_associations(t1, db, client):
-    r = client.query(
-        """
-        query GetTerm($nodeUri:String!){
-            getTerm(nodeUri:$nodeUri){
-                nodeUri
-                label
-                readme
-                associations{
-                    count
-                    nodes{
-                        linkUri
-                        target{
-                            ... on DatasetTableColumn{
-                                label
-                                columnUri
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-        """,
-        nodeUri=t1.nodeUri,
-        username='alice',
-    )
-    assert r.data.getTerm.nodeUri == t1.nodeUri
-    assert r.data.getTerm.label == t1.label
-    assert r.data.getTerm.readme == t1.readme
-
-
 def test_delete_category(client, db, c1, group):
     now = datetime.now()
     r = client.query(
