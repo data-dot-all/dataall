@@ -1,12 +1,11 @@
 import logging
 import os
 import sys
+from abc import ABC
+from typing import List
 
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import Dataset
-from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
-from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.db import get_engine, models
+from dataall.modules.loader import load_modules, ImportMode
 from dataall.searchproxy.indexers import DashboardIndexer
 from dataall.utils.alarm_service import AlarmService
 
@@ -16,23 +15,27 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
+load_modules([ImportMode.CATALOG_INDEXER_TASK])
+
+
+class CatalogIndexer(ABC):
+    def index(self, session) -> int:
+        raise NotImplementedError("index is not implemented")
+
+
+_indexers: List[CatalogIndexer] = []
+
+
+def register_catalog_indexer(indexer: CatalogIndexer):
+    _indexers.append(indexer)
+
 
 def index_objects(engine):
     try:
         indexed_objects_counter = 0
         with engine.scoped_session() as session:
-
-            all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(
-                session
-            )
-            log.info(f'Found {len(all_datasets)} datasets')
-            dataset: Dataset
-            for dataset in all_datasets:
-                tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
-                folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
-                indexed_objects_counter = (
-                    indexed_objects_counter + len(tables) + len(folders) + 1
-                )
+            for indexer in _indexers:
+                indexed_objects_counter += indexer.index(session)
 
             all_dashboards: [models.Dashboard] = session.query(models.Dashboard).all()
             log.info(f'Found {len(all_dashboards)} dashboards')

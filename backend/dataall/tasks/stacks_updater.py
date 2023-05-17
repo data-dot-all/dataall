@@ -2,14 +2,15 @@ import logging
 import os
 import sys
 import time
+from abc import ABC
+from typing import List
 
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets_base.db.models import Dataset
-from .. import db
-from ..db import models
-from ..aws.handlers.ecs import Ecs
-from ..db import get_engine
-from ..utils import Parameter
+from dataall.modules.loader import ImportMode, load_modules
+from dataall import db
+from dataall.db import models
+from dataall.aws.handlers.ecs import Ecs
+from dataall.db import get_engine
+from dataall.utils import Parameter
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -21,23 +22,36 @@ RETRIES = 30
 SLEEP_TIME = 30
 
 
+load_modules([ImportMode.STACK_UPDATER_TASK])
+
+
+class StackFinder(ABC):
+    def find_stack_uris(self, session) -> List[str]:
+        """Finds stacks to update"""
+        raise NotImplementedError("retrieve_stack_uris is not implemented")
+
+
+_finders: List[StackFinder] = []
+
+
+def register_stack_finder(finder: StackFinder):
+    _finders.append(finder)
+
+
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
-
-        all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
         all_environments: [models.Environment] = db.api.Environment.list_all_active_environments(session)
+        additional_stacks = []
+        for finder in _finders:
+            additional_stacks.extend(finder.find_stack_uris(session))
 
         log.info(f'Found {len(all_environments)} environments, triggering update stack tasks...')
         environment: models.Environment
         for environment in all_environments:
             update_stack(session=session, envname=envname, target_uri=environment.environmentUri, wait=True)
 
-        log.info(f'Found {len(all_datasets)} datasets')
-        dataset: Dataset
-        for dataset in all_datasets:
-            update_stack(session=session, envname=envname, target_uri=dataset.datasetUri, wait=False)
-
-        return all_environments, all_datasets
+        for stack_uri in additional_stacks:
+            update_stack(session=session, envname=envname, target_uri=stack_uri, wait=False)
 
 
 def update_stack(session, envname, target_uri, wait=False):

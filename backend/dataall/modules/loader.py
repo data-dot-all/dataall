@@ -24,6 +24,8 @@ class ImportMode(Enum):
     API = auto()
     CDK = auto()
     HANDLERS = auto()
+    STACK_UPDATER_TASK = auto()
+    CATALOG_INDEXER_TASK = auto()
 
 
 class ModuleInterface(ABC):
