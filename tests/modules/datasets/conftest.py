@@ -21,23 +21,6 @@ def patch_check_dataset(module_mocker):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def patch_es(module_mocker):
-    module_mocker.patch('dataall.searchproxy.connect', return_value={})
-    module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch(
-        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
-        return_value={}
-    )
-    module_mocker.patch('dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value={})
-    module_mocker.patch('dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert', return_value={})
-    module_mocker.patch(
-        'dataall.modules.datasets.indexers.location_indexer.DatasetLocationIndexer.upsert',
-        return_value={}
-    )
-    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
-
-
-@pytest.fixture(scope='module', autouse=True)
 def dataset(client, patch_es):
     cache = {}
 

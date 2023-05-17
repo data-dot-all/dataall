@@ -1,6 +1,6 @@
 import pytest
 
-import dataall
+from dataall.db.models import Organization, Environment
 from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
@@ -10,7 +10,7 @@ from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],
@@ -25,7 +25,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',

@@ -162,3 +162,35 @@ def test_dataset_term_link_approval(db, client, t1, _dataset, user, group):
     assert r
     link: models.TermLink = session.query(models.TermLink).get(link.linkUri)
     assert not link.approvedBySteward
+
+
+def test_get_column_term_associations(t1, db, client):
+    r = client.query(
+        """
+        query GetTerm($nodeUri:String!){
+            getTerm(nodeUri:$nodeUri){
+                nodeUri
+                label
+                readme
+                associations{
+                    count
+                    nodes{
+                        linkUri
+                        target{
+                            ... on DatasetTableColumn{
+                                label
+                                columnUri
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+        """,
+        nodeUri=t1.nodeUri,
+        username='alice',
+    )
+    assert r.data.getTerm.nodeUri == t1.nodeUri
+    assert r.data.getTerm.label == t1.label
+    assert r.data.getTerm.readme == t1.readme
