@@ -214,12 +214,4 @@ class Topic(GraphQLEnumMapper):
     Misc = 'Misc'
 
 
-class WorksheetRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    SharedWithWritePermission = '500'
-    SharedWithReadPermission = '400'
-    NoPermission = '000'
-
-
 GLUEBUSINESSPROPERTIES = ['EXAMPLE_GLUE_PROPERTY_TO_BE_ADDED_ON_ES']

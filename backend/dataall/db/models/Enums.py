@@ -175,11 +175,3 @@ class Topic(Enum):
     Energy = 'Energy'
     Customers = 'Customers'
     Misc = 'Misc'
-
-
-class WorksheetRole(Enum):
-    Creator = '950'
-    Admin = '900'
-    SharedWithWritePermission = '500'
-    SharedWithReadPermission = '400'
-    NoPermission = '000'
