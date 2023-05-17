@@ -27,9 +27,7 @@ from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.group.services.group_resource_manager import GroupResourceManager
-# TODO get rid of it
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
+from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
 
 log = logging.getLogger(__name__)
 
@@ -381,7 +379,7 @@ class Environment:
             .count()
         )
 
-        group_env_objects_count += GroupResourceManager.count_group_resources(
+        group_env_objects_count += EnvironmentResourceManager.count_group_resources(
             session=session,
             environment=environment,
             group_uri=group
@@ -979,19 +977,7 @@ class Environment:
             session, environment.environmentUri, 'environment'
         )
 
-        env_shared_with_objects = (
-            session.query(ShareObject)
-            .filter(ShareObject.environmentUri == environment.environmentUri)
-            .all()
-        )
-        for share in env_shared_with_objects:
-            (
-                session.query(ShareObjectItem)
-                .filter(ShareObjectItem.shareUri == share.shareUri)
-                .delete()
-            )
-            session.delete(share)
-
+        EnvironmentResourceManager.delete_env(session, environment)
         EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
         return session.delete(environment)

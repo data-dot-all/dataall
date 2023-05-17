@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
+from dataall.core.group.services.group_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
@@ -309,6 +310,16 @@ class ShareItemSM:
             ShareItemStatus.Share_Succeeded.value,
             ShareItemStatus.Revoke_Failed.value,
         ]
+
+
+class ShareEnvironmentResource(EnvironmentResource):
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
+        return 0
+
+    @staticmethod
+    def delete_env(session, environment):
+        ShareObjectRepository.delete_all_share_items(session, environment.environmentUri)
 
 
 class ShareObjectRepository:
@@ -915,6 +926,21 @@ class ShareObjectRepository:
             )
         )
         return query.all()
+
+    @staticmethod
+    def delete_all_share_items(session, env_uri):
+        env_shared_with_objects = (
+            session.query(ShareObject)
+            .filter(ShareObject.environmentUri == env_uri)
+            .all()
+        )
+        for share in env_shared_with_objects:
+            (
+                session.query(ShareObjectItem)
+                .filter(ShareObjectItem.shareUri == share.shareUri)
+                .delete()
+            )
+            session.delete(share)
 
     @staticmethod
     def paginate_shared_datasets(session, env_uri, group_uri, data):

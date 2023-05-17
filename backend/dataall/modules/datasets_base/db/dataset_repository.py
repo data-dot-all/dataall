@@ -11,7 +11,7 @@ from dataall.db import models, exceptions, paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.group.services.group_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
@@ -21,7 +21,7 @@ from dataall.utils.naming_convention import (
 logger = logging.getLogger(__name__)
 
 
-class DatasetRepository(GroupResource):
+class DatasetRepository(EnvironmentResource):
     """DAO layer for Datasets"""
 
     @staticmethod
@@ -31,7 +31,8 @@ class DatasetRepository(GroupResource):
             raise ObjectNotFound('Dataset', dataset_uri)
         return dataset
 
-    def count_resources(self, session, environment, group_uri) -> int:
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(Dataset)
             .filter(

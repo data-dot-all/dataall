@@ -2,7 +2,7 @@
 import logging
 from typing import List, Type
 
-from dataall.core.group.services.group_resource_manager import GroupResourceManager
+from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
@@ -67,7 +67,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         TargetType("dataset", GET_DATASET, UPDATE_DATASET)
 
-        GroupResourceManager.register(DatasetRepository())
+        EnvironmentResourceManager.register(DatasetRepository())
 
         log.info("API of datasets has been imported")
 
