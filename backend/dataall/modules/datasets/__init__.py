@@ -1,7 +1,8 @@
 """Contains the code related to datasets"""
 import logging
-from typing import List
+from typing import List, Type
 
+from dataall.modules.dataset_sharing import SharingApiModuleInterface
 from dataall.core.group.services.group_resource_manager import GroupResourceManager
 from dataall.modules.datasets.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
@@ -17,13 +18,18 @@ log = logging.getLogger(__name__)
 class DatasetApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for dataset GraphQl lambda"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.API in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [SharingApiModuleInterface]
+
     def __init__(self):
-        from dataall.api.Objects.Vote.resolvers import add_vote_type
+        # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.db.api import TargetType
+        from dataall.api.Objects.Vote.resolvers import add_vote_type
         from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
 
@@ -67,8 +73,8 @@ class DatasetApiModuleInterface(ModuleInterface):
 class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     """Implements ModuleInterface for dataset async lambda"""
 
-    @classmethod
-    def is_supported(cls, modes: List[ImportMode]):
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
         return ImportMode.HANDLERS in modes
 
     def __init__(self):
@@ -79,8 +85,8 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
 class DatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks """
 
-    @classmethod
-    def is_supported(cls, modes: List[ImportMode]):
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
         return ImportMode.CDK in modes
 
     def __init__(self):

@@ -1,9 +1,11 @@
 """Contains the code related to SageMaker notebooks"""
 import logging
+from typing import List, Type
 
 from dataall.db.api import TargetType
 from dataall.modules.loader import ImportMode, ModuleInterface
 from dataall.modules.notebooks.db.repositories import NotebookRepository
+from dataall.modules.sagemaker_base import SagemakerCdkModuleInterface
 
 log = logging.getLogger(__name__)
 
@@ -11,8 +13,8 @@ log = logging.getLogger(__name__)
 class NotebookApiModuleInterface(ModuleInterface):
     """Implements ModuleInterface for notebook GraphQl lambda"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.API in modes
 
     def __init__(self):
@@ -27,9 +29,13 @@ class NotebookApiModuleInterface(ModuleInterface):
 class NotebookCdkModuleInterface(ModuleInterface):
     """Implements ModuleInterface for notebook ecs tasks"""
 
-    @classmethod
-    def is_supported(cls, modes):
+    @staticmethod
+    def is_supported(modes):
         return ImportMode.CDK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [SagemakerCdkModuleInterface]
 
     def __init__(self):
         import dataall.modules.notebooks.cdk
