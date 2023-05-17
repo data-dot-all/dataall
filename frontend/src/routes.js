@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { AuthGuard, GuestGuard } from './authentication';
 import { DefaultLayout, LoadingScreen } from './design';
+import config from './generated/config.json';
 
 const Loadable = (Component) => (props) =>
   (
@@ -317,7 +318,7 @@ const routes = [
           }
         ]
       },
-      {
+      config.modules.notebooks.active && {
         children: [
           {
             path: 'notebooks',

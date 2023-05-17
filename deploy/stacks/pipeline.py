@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import List
 
-from aws_cdk import SecretValue, Stack, Tags, RemovalPolicy
+from aws_cdk import RemovalPolicy, SecretValue, Stack, Tags
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
@@ -401,7 +401,8 @@ class PipelineStack(Stack):
                         'make lint',
                         'cd frontend',
                         'npm install',
-                        'npm run lint',
+                        'npm run copy-config',
+                        'npm run lint -- --quiet',
                     ],
                     role_policy_statements=self.codebuild_policy,
                     vpc=self.vpc,
@@ -814,7 +815,6 @@ class PipelineStack(Stack):
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',
-                        'cd frontend',
                         f'docker build -f docker/prod/Dockerfile --build-arg REACT_APP_STAGE={target_env["envname"]} --build-arg DOMAIN={target_env.get("custom_domain", {}).get("name")} -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',

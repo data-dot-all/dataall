@@ -6,6 +6,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "copy-config": "mkdir -p ./src/generated; cp ../config.json ./src/generated/",
+    "postinstall": "yarn copy-config",
+    "prestart": "yarn copy-config",
+    "prebuild": "yarn copy-config",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint --ext js src",
