@@ -5,12 +5,13 @@ from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db import utils
 from dataall.db.api import Environment, ResourcePolicy
-from dataall.db.exceptions import ObjectNotFound, ShareItemsFound, UnauthorizedOperation
+from dataall.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository, ShareObjectSM, ShareItemSM
+from dataall.modules.dataset_sharing.services.share_exceptions import ShareItemsFound
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE_OBJECT, ADD_ITEM, REMOVE_ITEM, \
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
