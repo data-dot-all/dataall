@@ -103,9 +103,9 @@ def permissions(db):
 
 
 def test_tables_sync(db, org, env, sync_dataset, table, mocker):
-    mocker.patch(
-        'dataall.aws.handlers.glue.Glue.list_glue_database_tables',
-        return_value=[
+    mock_crawler = MagicMock()
+    mocker.patch('dataall.modules.datasets.tasks.tables_syncer.DatasetCrawler', mock_crawler)
+    mock_crawler().list_glue_database_tables.return_value = [
             {
                 'Name': 'new_table',
                 'DatabaseName': sync_dataset.GlueDatabaseName,
@@ -154,8 +154,8 @@ def test_tables_sync(db, org, env, sync_dataset, table, mocker):
                     },
                 ],
             },
-        ],
-    )
+        ]
+
     mocker.patch(
         'dataall.modules.datasets.tasks.tables_syncer.is_assumable_pivot_role', return_value=True
     )

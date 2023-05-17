@@ -66,37 +66,6 @@ class Glue:
             return False
 
     @staticmethod
-    def list_glue_database_tables(accountid, database, region):
-        aws_session = SessionHelper.remote_session(accountid=accountid)
-        glue = aws_session.client('glue', region_name=region)
-        found_tables = []
-        try:
-            log.debug(f'Looking for {database} tables')
-
-            if not Glue.database_exists(
-                accountid=accountid, database=database, region=region
-            ):
-                return found_tables
-
-            paginator = glue.get_paginator('get_tables')
-
-            pages = paginator.paginate(
-                DatabaseName=database,
-                CatalogId=accountid,
-            )
-            for page in pages:
-                found_tables.extend(page['TableList'])
-
-            log.debug(f'Retrieved all database {database} tables: {found_tables}')
-
-        except ClientError as e:
-            log.error(
-                f'Failed to retrieve tables for database {accountid}|{database}: {e}',
-                exc_info=True,
-            )
-        return found_tables
-
-    @staticmethod
     def table_exists(**data):
         accountid = data['accountid']
         region = data.get('region', 'eu-west-1')

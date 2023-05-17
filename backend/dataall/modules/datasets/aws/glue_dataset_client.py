@@ -1,6 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
+from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.datasets_base.db.models import Dataset
 
@@ -64,5 +65,36 @@ class DatasetCrawler:
                 log.error('Failed to update crawler %s', e)
             else:
                 raise e
+
+    def list_glue_database_tables(self):
+        dataset = self._dataset
+        database = dataset.GlueDatabaseName
+        account_id = dataset.AwsAccountId
+        found_tables = []
+        try:
+            log.debug(f'Looking for {database} tables')
+
+            if not Glue.database_exists(
+                    accountid=account_id, database=database, region=dataset.region
+            ):
+                return found_tables
+
+            paginator = self._client.get_paginator('get_tables')
+
+            pages = paginator.paginate(
+                DatabaseName=database,
+                CatalogId=account_id,
+            )
+            for page in pages:
+                found_tables.extend(page['TableList'])
+
+            log.debug(f'Retrieved all database {database} tables: {found_tables}')
+
+        except ClientError as e:
+            log.error(
+                f'Failed to retrieve tables for database {account_id}|{database}: {e}',
+                exc_info=True,
+            )
+        return found_tables
 
 

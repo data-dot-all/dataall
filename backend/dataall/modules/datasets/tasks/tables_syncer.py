@@ -4,10 +4,10 @@ import sys
 from operator import and_
 
 from dataall import db
-from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
 from dataall.db import models
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.aws.lf_table_client import LakeFormationTableClient
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
@@ -56,9 +56,7 @@ def sync_tables(engine):
                     )
                 else:
 
-                    tables = Glue.list_glue_database_tables(
-                        dataset.AwsAccountId, dataset.GlueDatabaseName, dataset.region
-                    )
+                    tables = DatasetCrawler(dataset).list_glue_database_tables()
 
                     log.info(
                         f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}'

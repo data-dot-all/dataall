@@ -3,6 +3,7 @@ import logging
 from dataall.aws.handlers.glue import Glue
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import models
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
@@ -20,10 +21,6 @@ class DatasetTableSyncHandler:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(
                 session, task.targetUri
             )
-            account_id = dataset.AwsAccountId
-            region = dataset.region
-            tables = Glue.list_glue_database_tables(
-                account_id, dataset.GlueDatabaseName, region
-            )
+            tables = DatasetCrawler(dataset).list_glue_database_tables()
             DatasetTableService.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
             return tables
