@@ -31,12 +31,12 @@ class DatasetRepository(GroupResource):
             raise ObjectNotFound('Dataset', dataset_uri)
         return dataset
 
-    def count_resources(self, session, environment_uri, group_uri) -> int:
+    def count_resources(self, session, environment, group_uri) -> int:
         return (
             session.query(Dataset)
             .filter(
                 and_(
-                    Dataset.environmentUri == environment_uri,
+                    Dataset.environmentUri == environment.environmentUri,
                     Dataset.SamlAdminGroupName == group_uri
                 ))
             .count()
