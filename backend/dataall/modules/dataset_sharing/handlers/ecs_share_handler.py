@@ -37,11 +37,10 @@ class EcsShareHandler:
     @staticmethod
     def _run_share_management_ecs_task(share_uri, handler):
         return Ecs.run_ecs_task(
-                task_definition_param='ecs/task_def_arn/share_management',
-                container_name_param='ecs/container/share_management',
-                context=[
-                    {'name': 'shareUri', 'value': share_uri},
-                    {'name': 'handler', 'value': handler},
-                ],
-            )
-
+            task_definition_param='ecs/task_def_arn/share_management',
+            container_name_param='ecs/container/share_management',
+            context=[
+                {'name': 'shareUri', 'value': share_uri},
+                {'name': 'handler', 'value': handler},
+            ],
+        )

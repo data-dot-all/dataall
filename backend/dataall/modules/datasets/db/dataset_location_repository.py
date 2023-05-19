@@ -114,7 +114,7 @@ class DatasetLocationRepository:
     def delete_dataset_locations(session, dataset_uri) -> bool:
         locations = (
             session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri )
+            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
             .all()
         )
         for location in locations:
@@ -151,4 +151,3 @@ class DatasetLocationRepository:
         return paginate(
             query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)
         ).to_dict()
-

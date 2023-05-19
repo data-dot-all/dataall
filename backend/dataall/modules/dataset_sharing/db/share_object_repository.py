@@ -1038,6 +1038,3 @@ class ShareObjectRepository:
         return paginate(
             query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
         ).to_dict()
-
-
-

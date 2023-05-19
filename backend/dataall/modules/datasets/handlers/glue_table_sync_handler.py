@@ -67,4 +67,3 @@ class DatasetColumnGlueHandler:
                     )
 
                     glue_client.update_table_for_column(column.name, updated_table)
-

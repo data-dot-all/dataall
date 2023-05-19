@@ -15,4 +15,3 @@ class DatasetRole(Enum):
     Admin = '900'
     Shared = '300'
     NoPermission = '000'
-

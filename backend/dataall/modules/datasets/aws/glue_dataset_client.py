@@ -102,4 +102,3 @@ class DatasetCrawler:
         except ClientError:
             log.info(f'Database {dataset.GlueDatabaseName} does not exist on account {dataset.AwsAccountId}...')
             return False
-

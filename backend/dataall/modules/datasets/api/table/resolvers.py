@@ -4,7 +4,7 @@ from dataall import db
 from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
-from dataall.db.api import  Glossary
+from dataall.db.api import Glossary
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 

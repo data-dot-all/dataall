@@ -15,4 +15,3 @@ class ConfidentialityClassification(GraphQLEnumMapper):
     Unclassified = 'Unclassified'
     Official = 'Official'
     Secret = 'Secret'
-

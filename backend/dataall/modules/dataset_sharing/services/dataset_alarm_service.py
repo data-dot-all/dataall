@@ -149,5 +149,3 @@ Alarm Details:
     - Region:                            {target_environment.region}
 """
         return self.publish_message_to_alarms_topic(subject, message)
-
-

@@ -5,7 +5,8 @@ from dataall.core.permission_checker import has_resource_permission
 from dataall.db import utils
 from dataall.db.api import ResourcePolicy, Environment
 from dataall.db.exceptions import UnauthorizedOperation
-from dataall.db.models import Activity, PrincipalType, EnvironmentGroup, ConsumptionRole
+from dataall.db.models import Activity, PrincipalType, EnvironmentGroup, ConsumptionRole, Task
+from dataall.aws.handlers.service_handlers import Worker
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
@@ -46,7 +47,7 @@ class ShareObjectService:
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
                     action=CREATE_SHARE_OBJECT,
-                    message=f'Requester Team {group_uri} works in region {environment.region} ' +
+                    message=f'Requester Team {group_uri} works in region {environment.region} '
                             f'and the requested dataset is stored in region {dataset.region}',
                 )
 
@@ -230,7 +231,7 @@ class ShareObjectService:
             if shared_share_items_states:
                 raise ShareItemsFound(
                     action='Delete share object',
-                    message='There are shared items in this request. ' +
+                    message='There are shared items in this request. '
                             'Revoke access to these items before deleting the request.',
                 )
 

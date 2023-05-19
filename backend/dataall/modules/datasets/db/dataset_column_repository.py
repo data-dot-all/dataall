@@ -43,5 +43,3 @@ class DatasetColumnRepository:
             page=filter.get('page', 1),
             page_size=filter.get('pageSize', 10)
         ).to_dict()
-
-

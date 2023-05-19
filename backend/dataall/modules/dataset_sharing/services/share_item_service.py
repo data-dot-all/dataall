@@ -174,4 +174,3 @@ class ShareItemService:
     def paginated_shared_with_environment_group_datasets(session, env_uri, group_uri, data) -> dict:
         # TODO THERE WAS NOT PERMISSION
         return ShareObjectRepository.paginate_shared_datasets(session, env_uri, group_uri, data)
-

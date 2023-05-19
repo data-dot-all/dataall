@@ -33,4 +33,3 @@ class EnvironmentResourceManager:
     def delete_env(session, environment):
         for resource in EnvironmentResourceManager._resources:
             resource.delete_env(session, environment)
-

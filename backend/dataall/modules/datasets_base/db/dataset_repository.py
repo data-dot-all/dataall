@@ -406,4 +406,3 @@ class DatasetRepository(EnvironmentResource):
         dataset.importedGlueDatabase = True if data.get('glueDatabaseName') else False
         dataset.importedKmsKey = True if data.get('KmsKeyId') else False
         dataset.importedAdminRole = True if data.get('adminRoleName') else False
-

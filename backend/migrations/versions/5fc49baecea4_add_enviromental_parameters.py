@@ -141,17 +141,17 @@ def downgrade():
         session.add_all(envs)
         op.drop_table("environment_parameters")
         op.create_table(
-                'worksheet_share',
-                sa.Column('worksheetShareUri', sa.String(), nullable=False),
-                sa.Column('worksheetUri', sa.String(), nullable=False),
-                sa.Column('principalId', sa.String(), nullable=False),
-                sa.Column('principalType', sa.String(), nullable=False),
-                sa.Column('canEdit', sa.Boolean(), nullable=True),
-                sa.Column('owner', sa.String(), nullable=False),
-                sa.Column('created', sa.DateTime(), nullable=True),
-                sa.Column('updated', sa.DateTime(), nullable=True),
-                sa.PrimaryKeyConstraint('worksheetShareUri'),
-            )
+            'worksheet_share',
+            sa.Column('worksheetShareUri', sa.String(), nullable=False),
+            sa.Column('worksheetUri', sa.String(), nullable=False),
+            sa.Column('principalId', sa.String(), nullable=False),
+            sa.Column('principalType', sa.String(), nullable=False),
+            sa.Column('canEdit', sa.Boolean(), nullable=True),
+            sa.Column('owner', sa.String(), nullable=False),
+            sa.Column('created', sa.DateTime(), nullable=True),
+            sa.Column('updated', sa.DateTime(), nullable=True),
+            sa.PrimaryKeyConstraint('worksheetShareUri'),
+        )
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")

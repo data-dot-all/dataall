@@ -73,6 +73,7 @@ def add_shared_item(context, source, shareUri: str = None, input: dict = None):
 def remove_shared_item(context, source, shareItemUri: str = None):
     return ShareItemService.remove_shared_item(uri=shareItemUri)
 
+
 def resolve_shared_item(context, source: ShareObjectItem, **kwargs):
     if not source:
         return None

@@ -71,4 +71,3 @@ class BaseIndexer(ABC):
             )
         )
         return [t.path for t in q]
-
