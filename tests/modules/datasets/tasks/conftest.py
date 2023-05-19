@@ -216,6 +216,7 @@ def share_item_folder(db):
 
     yield factory
 
+
 @pytest.fixture(scope="module")
 def share_item_table(db):
     def factory(
