@@ -1106,8 +1106,7 @@ class ShareObjectRepository:
             .join(
                 ShareObjectItem,
                 and_(
-                    ShareObjectItem.itemUri
-                    == DatasetStorageLocation.locationUri()
+                    ShareObjectItem.itemUri == DatasetStorageLocation.locationUri
                 ),
             )
             .join(
