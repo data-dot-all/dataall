@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
@@ -1056,4 +1057,73 @@ class ShareObjectRepository:
             .first()
         )
         return share_object
+
+    @staticmethod
+    def get_shared_tables(session, dataset) -> List[ShareObjectItem]:
+        return (
+            session.query(
+                DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
+                DatasetTable.GlueTableName.label('GlueTableName'),
+                DatasetTable.S3Prefix.label('S3Prefix'),
+                DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
+                DatasetTable.region.label('SourceRegion'),
+                models.Environment.AwsAccountId.label('TargetAwsAccountId'),
+                models.Environment.region.label('TargetRegion'),
+            )
+            .join(
+                ShareObjectItem,
+                and_(
+                    ShareObjectItem.itemUri == DatasetTable.tableUri
+                ),
+            )
+            .join(
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .join(
+                models.Environment,
+                models.Environment.environmentUri == ShareObject.environmentUri,
+            )
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset.datasetUri,
+                    DatasetTable.deleted.is_(None),
+                    ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                )
+            )
+        ).all()
+
+    @staticmethod
+    def get_shared_folders(session, dataset) -> List[DatasetStorageLocation]:
+        return (
+            session.query(
+                DatasetStorageLocation.locationUri.label('locationUri'),
+                DatasetStorageLocation.S3BucketName.label('S3BucketName'),
+                DatasetStorageLocation.S3Prefix.label('S3Prefix'),
+                models.Environment.AwsAccountId.label('AwsAccountId'),
+                models.Environment.region.label('region'),
+            )
+            .join(
+                ShareObjectItem,
+                and_(
+                    ShareObjectItem.itemUri
+                    == DatasetStorageLocation.locationUri()
+                ),
+            )
+            .join(
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .join(
+                models.Environment,
+                models.Environment.environmentUri == ShareObject.environmentUri,
+            )
+            .filter(
+                and_(
+                    DatasetStorageLocation.datasetUri == dataset.datasetUri,
+                    DatasetStorageLocation.deleted.is_(None),
+                    ShareObjectItem.status == ShareObjectStatus.Approved.value,
+                )
+            )
+        ).all()
 
