@@ -660,9 +660,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def get_share_data(session, share_uri):
-        share: ShareObject = session.query(ShareObject).get(share_uri)
-        if not share:
-            raise exceptions.ObjectNotFound('Share', share_uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
@@ -721,9 +719,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def get_share_data_items(session, share_uri, status):
-        share: ShareObject = session.query(ShareObject).get(share_uri)
-        if not share:
-            raise exceptions.ObjectNotFound('Share', share_uri)
+        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
 
         tables = ShareObjectRepository._find_all_share_item(
             session, share, status, DatasetTable, DatasetTable.tableUri
@@ -1038,3 +1034,26 @@ class ShareObjectRepository:
         return paginate(
             query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)
         ).to_dict()
+
+    @staticmethod
+    def find_share_items_by_item_uri(session, item_uri):
+        return (
+            session.query(ShareObjectItem)
+            .filter(ShareObjectItem.itemUri == item_uri)
+            .all()
+        )
+
+    @staticmethod
+    def get_approved_share_object(session, item):
+        share_object: ShareObject = (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.shareUri == item.shareUri,
+                    ShareObject.status == ShareObjectStatus.Approved.value,
+                )
+            )
+            .first()
+        )
+        return share_object
+
