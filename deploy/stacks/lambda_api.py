@@ -248,7 +248,7 @@ class LambdaApiStack(pyNestedClass):
                         'aoss:APIAccessAll',
                     ],
                     resources=[
-                        f'arn:aws:aoss:{self.region}:{self.account}:collection/{resource_prefix}-{envname}-collection',
+                        f'arn:aws:aoss:{self.region}:{self.account}:collection/*',
                     ],
                 ),
             ],
