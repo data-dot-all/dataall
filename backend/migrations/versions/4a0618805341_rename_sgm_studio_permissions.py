@@ -6,7 +6,6 @@ Create Date: 2023-05-17 13:39:00.974409
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, String, orm, and_, or_
 
 from dataall.db.api.permission import Permission as PermissionService
@@ -83,27 +82,27 @@ def upgrade():
         print("Creating new permission MANAGE_SGMSTUDIO_USERS to distinguish from MANAGE_NOTEBOOKS...")
         #todo: right now this migration fails
 
-        # PermissionService.init_permissions(session)
-        #
-        # manage_notebooks = PermissionService.get_permission_by_name(
-        #     session, MANAGE_NOTEBOOKS, PermissionType.TENANT.name
-        # )
-        # manage_mlstudio = PermissionService.get_permission_by_name(
-        #     session, MANAGE_SGMSTUDIO_USERS, PermissionType.TENANT.name
-        # )
-        #
-        # tenant_permissions = (
-        #     session.query(TenantPolicyPermission)
-        #     .filter(TenantPolicyPermission.permission == manage_notebooks.permissionUri)
-        #     .all()
-        # )
-        #
-        # for permission in tenant_permissions:
-        #     session.add(TenantPolicyPermission(
-        #         sid=permission.sid,
-        #         permissionUri=manage_mlstudio.permissionUri,
-        #     ))
-        # session.commit()
+        PermissionService.init_permissions(session)
+
+        manage_notebooks = PermissionService.get_permission_by_name(
+            session, MANAGE_NOTEBOOKS, PermissionType.TENANT.name
+        )
+        manage_mlstudio = PermissionService.get_permission_by_name(
+            session, MANAGE_SGMSTUDIO_USERS, PermissionType.TENANT.name
+        )
+
+        tenant_permissions = (
+            session.query(TenantPolicyPermission)
+            .filter(TenantPolicyPermission.permission == manage_notebooks.permissionUri)
+            .all()
+        )
+
+        for permission in tenant_permissions:
+            session.add(TenantPolicyPermission(
+                sid=permission.sid,
+                permissionUri=manage_mlstudio.permissionUri,
+            ))
+        session.commit()
 
         print("Renaming SageMaker Studio permissions from SGMSTUDIO_NOTEBOOK to SGMSTUDIO_USER...")
 

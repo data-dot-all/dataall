@@ -3,7 +3,7 @@ import logging
 
 from dataall.db.api import TargetType
 from dataall.modules.loader import ImportMode, ModuleInterface
-from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
+from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 
 log = logging.getLogger(__name__)
 

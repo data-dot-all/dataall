@@ -16,7 +16,7 @@ from dataall.db.api import (
 )
 from dataall.db import models, exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
-from dataall.modules.mlstudio.db.repositories import SageMakerStudioRepository
+from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 
 from dataall.utils.slugify import slugify
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
