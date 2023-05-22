@@ -266,7 +266,6 @@ class ShareObjectService:
 
     @staticmethod
     def list_shares_in_my_inbox(filter: dict):
-        # TODO THERE WAS NO PERMISSION CHECK
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return ShareObjectRepository.list_user_received_share_requests(
@@ -278,7 +277,6 @@ class ShareObjectService:
 
     @staticmethod
     def list_shares_in_my_outbox(filter):
-        # TODO THERE WAS NO PERMISSION CHECK
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return ShareObjectRepository.list_user_sent_share_requests(
