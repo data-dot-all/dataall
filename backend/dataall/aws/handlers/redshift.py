@@ -9,8 +9,6 @@ from .service_handlers import Worker
 from .sts import SessionHelper
 from ... import db
 from ...db import models
-# TODO should be migrated in the redshift module
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from ...modules.datasets_base.db.dataset_repository import DatasetRepository
 
@@ -440,6 +438,9 @@ class Redshift:
     @staticmethod
     @Worker.handler(path='redshift.subscriptions.copy')
     def copy_data(engine, task: models.Task):
+        # TODO should be migrated in the redshift module
+        from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+
         with engine.scoped_session() as session:
 
             environment: models.Environment = session.query(models.Environment).get(

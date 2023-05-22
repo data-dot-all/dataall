@@ -197,10 +197,12 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
     some functionality may work wrongly.
     """
     expected_load = set()
+    # 1) Adds all modules to load
     for module in _all_modules():
         if module.is_supported(modes) and module.name() in in_config:
             expected_load.add(module)
 
+    # 2) Add all dependencies
     to_add = list(expected_load)
     while to_add:
         new_to_add = []
@@ -215,6 +217,7 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
                     new_to_add.append(dependency)
         to_add = new_to_add
 
+    # 3) Checks all found ModuleInterfaces
     for module in _all_modules():
         if module.is_supported(modes) and module not in expected_load:
             raise ImportError(
@@ -222,11 +225,12 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
                 "Declare the module in depends_on"
             )
 
-    loaded_module_names = {module.name() for module in expected_load}
+    # 4) Checks all references for modules (when ModuleInterfaces don't exist or not supported)
+    checked_module_names = {module.name() for module in expected_load} | in_config
     for module in sys.modules.keys():
         if module.startswith(_MODULE_PREFIX) and module != __name__:  # skip loader
             name = _get_module_name(module)
-            if name and name not in loaded_module_names:
+            if name and name not in checked_module_names:
                 raise ImportError(f"The package {module} has been imported, but it doesn't contain ModuleInterface")
 
 

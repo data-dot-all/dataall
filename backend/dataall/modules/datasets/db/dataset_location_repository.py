@@ -2,14 +2,8 @@ import logging
 
 from sqlalchemy import and_, or_
 
-from dataall.core.context import get_context
-from dataall.db.api import Glossary
 from dataall.db import paginate, exceptions
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
-from dataall.modules.datasets.services.dataset_permissions import DELETE_DATASET_FOLDER
 
 logger = logging.getLogger(__name__)
 

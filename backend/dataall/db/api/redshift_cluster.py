@@ -10,8 +10,6 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
-from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
 
 log = logging.getLogger(__name__)
 
@@ -183,6 +181,11 @@ class RedshiftCluster:
     def list_available_datasets(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
+
+        # TODO deal with it in redshift module
+        from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+        from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
@@ -298,9 +301,15 @@ class RedshiftCluster:
     def list_available_cluster_tables(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
+
+        # TODO deal with it in redshift module
+        from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+        from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
+
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
