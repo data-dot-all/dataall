@@ -198,7 +198,7 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
     """
     expected_load = set()
     for module in _all_modules():
-        if module.name() in in_config:
+        if module.is_supported(modes) and module.name() in in_config:
             expected_load.add(module)
 
     to_add = list(expected_load)

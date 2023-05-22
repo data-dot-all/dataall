@@ -8,8 +8,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from dataall import db
-
-sts = boto3.client('sts', region_name='eu-west-1')
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
@@ -23,6 +21,8 @@ import logging
 logger = logging.getLogger('graphql')
 logger.propagate = False
 logger.setLevel(logging.INFO)
+
+sts = boto3.client('sts', region_name='eu-west-1')
 Worker.queue = Worker.process
 ENVNAME = os.getenv('envname', 'local')
 logger.warning(f'Connecting to database `{ENVNAME}`')
