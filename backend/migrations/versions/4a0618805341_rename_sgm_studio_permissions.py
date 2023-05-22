@@ -6,7 +6,7 @@ Create Date: 2023-05-17 13:39:00.974409
 
 """
 from alembic import op
-from sqlalchemy import Boolean, Column, String, orm, and_, or_
+from sqlalchemy import String, orm, and_
 
 from dataall.db.api.permission import Permission as PermissionService
 from dataall.db.models import (
@@ -80,27 +80,32 @@ def upgrade():
         session = orm.Session(bind=bind)
 
         print("Creating new permission MANAGE_SGMSTUDIO_USERS to distinguish from MANAGE_NOTEBOOKS...")
-        #todo: right now this migration fails
 
-        PermissionService.init_permissions(session)
-
-        manage_notebooks = PermissionService.get_permission_by_name(
-            session, MANAGE_NOTEBOOKS, PermissionType.TENANT.name
+        manage_mlstudio_permission = PermissionService.save_permission(
+            session=session, name=MANAGE_SGMSTUDIO_USERS, description= f"Allow MANAGE_SGMSTUDIO_USERS", permission_type=PermissionType.TENANT.name
         )
-        manage_mlstudio = PermissionService.get_permission_by_name(
-            session, MANAGE_SGMSTUDIO_USERS, PermissionType.TENANT.name
+        session.commit()
+        print(f"manage_mlstudio_permission_uri = {manage_mlstudio_permission.permissionUri}")
+        manage_notebooks_permission = (
+            session.query(Permission)
+            .filter(and_(
+                Permission.name==MANAGE_NOTEBOOKS,
+                Permission.type==PermissionType.TENANT.name
+            ))
+            .first()
         )
-
+        print(f"manage_notebooks_permission_uri = {manage_notebooks_permission.permissionUri}")
         tenant_permissions = (
             session.query(TenantPolicyPermission)
-            .filter(TenantPolicyPermission.permission == manage_notebooks.permissionUri)
+            .filter(TenantPolicyPermission.permissionUri == manage_notebooks_permission.permissionUri)
             .all()
         )
 
         for permission in tenant_permissions:
+            print(permission.permissionUri)
             session.add(TenantPolicyPermission(
                 sid=permission.sid,
-                permissionUri=manage_mlstudio.permissionUri,
+                permissionUri=manage_mlstudio_permission.permissionUri,
             ))
         session.commit()
 
@@ -130,7 +135,30 @@ def downgrade():
         session = orm.Session(bind=bind)
 
         print("Dropping new permission added to MANAGE_SGMSTUDIO_USERS to distinguish from MANAGE_NOTEBOOKS...")
-        # todo: right now this migration fails
+        manage_mlstudio_permission = (
+            session.query(Permission)
+            .filter(and_(
+                Permission.name == MANAGE_SGMSTUDIO_USERS,
+                Permission.type == PermissionType.TENANT.name
+            ))
+            .first()
+        )
+        print(f"manage_mlstudio_permission_uri = {manage_mlstudio_permission.permissionUri}")
+        tenant_permissions = (
+            session.query(TenantPolicyPermission)
+            .filter(TenantPolicyPermission.permissionUri == manage_mlstudio_permission.permissionUri)
+            .delete()
+        )
+
+        manage_mlstudio_permission = (
+            session.query(Permission)
+            .filter(and_(
+                Permission.name == MANAGE_SGMSTUDIO_USERS,
+                Permission.type == PermissionType.TENANT.name
+            ))
+            .delete()
+        )
+        session.commit()
 
         print("Renaming SageMaker Studio permissions from SGMSTUDIO_USER to SGMSTUDIO_NOTEBOOK...")
         for old, new in zip(list(old_permissions.items()), list(new_permissions.items())):

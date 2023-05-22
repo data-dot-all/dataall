@@ -1,15 +1,15 @@
 {
     "modules": {
-        "notebooks": {
+        "mlstudio": {
             "active": true
+        },
+        "notebooks": {
+            "active": false
         },
         "datasets": {
             "active": true
         },
         "worksheets": {
-            "active": true
-        },
-        "mlstudio": {
             "active": true
         }
     }
