@@ -117,13 +117,13 @@ class CDKPipelineStack:
     def initialize_repo_template(self, template):
         venv_name = ".venv"
         cmd_init = [
-            f"git clone {template} {self.pipeline.repo}",
             f"cd {self.pipeline.repo}",
             "rm -rf .git",
             "git init --initial-branch main",
             f"python3 -m venv {venv_name} && source {venv_name}/bin/activate",
             "pip install -r requirements.txt",
             f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
+            f"ddk init --template {template} --generate-only"
         ]
 
         logger.info(f"Running Commands: {'; '.join(cmd_init)}")
