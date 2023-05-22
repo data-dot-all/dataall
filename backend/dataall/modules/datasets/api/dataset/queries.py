@@ -5,7 +5,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     list_datasets,
     get_dataset_assume_role_url,
     get_dataset_etl_credentials,
-    get_dataset_summary,
     get_file_upload_presigned_url,
     list_dataset_share_objects,
     list_datasets_owned_by_env_group,
@@ -45,15 +44,6 @@ getDatasetETLCredentials = gql.QueryField(
     args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=get_dataset_etl_credentials,
-    test_scope='Dataset',
-)
-
-
-getDatasetSummary = gql.QueryField(
-    name='getDatasetSummary',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.String,
-    resolver=get_dataset_summary,
     test_scope='Dataset',
 )
 

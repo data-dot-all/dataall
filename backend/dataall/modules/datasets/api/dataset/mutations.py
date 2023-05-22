@@ -9,7 +9,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     update_dataset,
     sync_tables,
     generate_dataset_access_token,
-    save_dataset_summary,
     delete_dataset,
     import_dataset,
     publish_dataset_update,
@@ -48,17 +47,6 @@ generateDatasetAccessToken = gql.MutationField(
     args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=generate_dataset_access_token,
-)
-
-
-saveDatasetSummary = gql.MutationField(
-    name='saveDatasetSummary',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='content', type=gql.String),
-    ],
-    type=gql.Boolean,
-    resolver=save_dataset_summary,
 )
 
 

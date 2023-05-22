@@ -340,60 +340,6 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
-    def get_dataset_summary(uri: str):
-        # TODO THERE WAS NO PERMISSION CHECK!!!
-        with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            environment = Environment.get_environment_by_uri(
-                session, dataset.environmentUri
-            )
-
-            pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
-            env_admin_session = SessionHelper.get_session(
-                base_session=pivot_session,
-                role_arn=environment.EnvironmentDefaultIAMRoleArn,
-            )
-            s3 = env_admin_session.client('s3', region_name=dataset.region)
-
-            try:
-                s3.head_object(
-                    Bucket=environment.EnvironmentDefaultBucketName,
-                    Key=f'summary/{uri}/summary.md',
-                )
-                response = s3.get_object(
-                    Bucket=environment.EnvironmentDefaultBucketName,
-                    Key=f'summary/{uri}/summary.md',
-                )
-                content = str(response['Body'].read().decode('utf-8'))
-                return content
-            except Exception as e:
-                raise e
-
-    @staticmethod
-    @has_resource_permission(SUMMARY_DATASET)
-    def save_dataset_summary(uri: str, content: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            environment = Environment.get_environment_by_uri(
-                session, dataset.environmentUri
-            )
-
-            pivot_session = SessionHelper.remote_session(dataset.AwsAccountId)
-            env_admin_session = SessionHelper.get_session(
-                base_session=pivot_session,
-                role_arn=environment.EnvironmentDefaultIAMRoleArn,
-            )
-            s3 = env_admin_session.client('s3', region_name=dataset.region)
-
-            s3.put_object(
-                Bucket=environment.EnvironmentDefaultBucketName,
-                Key=f'summary/{uri}/summary.md',
-                Body=content,
-            )
-        return True
-
-    @staticmethod
     def get_dataset_stack(dataset: Dataset):
         return stack_helper.get_stack_with_cfn_resources(
             targetUri=dataset.datasetUri,

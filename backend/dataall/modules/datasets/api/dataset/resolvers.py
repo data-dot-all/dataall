@@ -150,16 +150,6 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
     return DatasetService.generate_dataset_access_token(uri=datasetUri)
 
 
-def get_dataset_summary(context, source, datasetUri: str = None):
-    return DatasetService.get_dataset_summary(uri=datasetUri)
-
-
-def save_dataset_summary(
-    context: Context, source, datasetUri: str = None, content: str = None
-):
-    return DatasetService.save_dataset_summary(uri=datasetUri, content=content)
-
-
 def get_dataset_stack(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
