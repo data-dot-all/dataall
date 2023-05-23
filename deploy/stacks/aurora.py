@@ -120,7 +120,7 @@ class AuroraServerlessStack(pyNestedClass):
             self,
             f'AuroraDatabase{envname}',
             engine=rds.DatabaseClusterEngine.aurora_postgres(
-                version=rds.AuroraPostgresEngineVersion.VER_10_18
+                version=rds.AuroraPostgresEngineVersion.VER_11_15
             ),
             deletion_protection=True,
             cluster_identifier=f'{resource_prefix}-{envname}-db',
