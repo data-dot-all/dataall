@@ -40,7 +40,6 @@ def pipeline(client, tenant, group, env1):
             'tags': [group.name],
             'environmentUri': env1.environmentUri,
             'devStrategy': 'trunk',
-            'template': ''
         },
         username='alice',
         groups=[group.name],
