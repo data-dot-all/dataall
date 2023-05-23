@@ -7,7 +7,6 @@ from ...constants import DataPipelineRole
 from ...context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.codecommit import CodeCommit
 from ....db import permissions, models, exceptions
 from ....db.api import Pipeline, Environment, ResourcePolicy, Stack, KeyValueTag
 
@@ -29,15 +28,6 @@ def create_pipeline(context: Context, source, input=None):
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='cdkpipeline',
-                target_uri=pipeline.DataPipelineUri,
-                target_label=pipeline.label,
-                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-            )
-        elif input['devStrategy'] == 'template':
-            Stack.create_stack(
-                session=session,
-                environment_uri=pipeline.environmentUri,
-                target_type='template',
                 target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
