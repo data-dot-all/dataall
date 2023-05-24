@@ -296,7 +296,7 @@ class Dataset(Stack):
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
                 iam.ServicePrincipal('ec2.amazonaws.com'),
-                iam.AccountPrincipal(os.environ.get('CURRENT_AWS_ACCOUNT')),
+                iam.AccountPrincipal(str(os.environ.get('CURRENT_AWS_ACCOUNT'))),
                 iam.AccountPrincipal(dataset.AwsAccountId),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
