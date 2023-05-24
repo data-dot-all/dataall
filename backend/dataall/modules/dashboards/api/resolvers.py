@@ -1,13 +1,12 @@
 import os
-from .... import db
-from ....api.constants import DashboardRole
-from ....api.context import Context
-from ....aws.handlers.quicksight import Quicksight
-from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....db import permissions, models
-from ....db.api import ResourcePolicy, Glossary, Vote
-from ....searchproxy import indexers
-from ....utils import Parameter
+from dataall import db
+from dataall.api.constants import DashboardRole
+from dataall.api.context import Context
+from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.db import permissions, models
+from dataall.db.api import ResourcePolicy, Glossary, Vote
+from dataall.utils import Parameter
 from dataall.searchproxy.indexers import DashboardIndexer
 
 param_store = Parameter()

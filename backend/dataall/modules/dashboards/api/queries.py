@@ -1,5 +1,5 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.dashboards.api.resolvers import *
 
 searchDashboards = gql.QueryField(
     name='searchDashboards',

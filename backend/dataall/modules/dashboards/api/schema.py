@@ -1,6 +1,6 @@
-from ... import gql
-from .resolvers import *
-from ...constants import DashboardRole
+from dataall.api import gql
+from dataall.modules.dashboards.api.resolvers import *
+from dataall.api.constants import DashboardRole
 
 from dataall.api.Objects.Environment.resolvers import resolve_environment
 
