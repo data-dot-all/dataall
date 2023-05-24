@@ -3,8 +3,8 @@ import logging
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
-from .. import models, exceptions, permissions, paginate
-from . import (
+from dataall.db import models, exceptions, permissions, paginate
+from dataall.db.api import (
     Environment,
     has_tenant_perm,
     has_resource_perm,
@@ -16,7 +16,7 @@ from . import (
 logger = logging.getLogger(__name__)
 
 
-class Dashboard:
+class DashboardRepository:
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DASHBOARDS)
     @has_resource_perm(permissions.CREATE_DASHBOARD)
@@ -76,7 +76,7 @@ class Dashboard:
         )
         session.add(activity)
 
-        Dashboard.set_dashboard_resource_policy(
+        DashboardRepository.set_dashboard_resource_policy(
             session, env, dashboard, data['SamlGroupName']
         )
 
@@ -119,7 +119,7 @@ class Dashboard:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.Dashboard:
-        return Dashboard.get_dashboard_by_uri(session, uri)
+        return DashboardRepository.get_dashboard_by_uri(session, uri)
 
     @staticmethod
     def get_dashboard_by_uri(session, uri) -> models.Dashboard:
@@ -162,7 +162,7 @@ class Dashboard:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Dashboard.query_user_dashboards(session, username, groups, data),
+            query=DashboardRepository.query_user_dashboards(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -220,7 +220,7 @@ class Dashboard:
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
         return paginate(
-            query=Dashboard.query_dashboard_shares(
+            query=DashboardRepository.query_dashboard_shares(
                 session, username, groups, uri, data
             ),
             page=data.get('page', 1),
@@ -241,7 +241,7 @@ class Dashboard:
 
         dashboard = data.get(
             'dashboard',
-            Dashboard.get_dashboard_by_uri(session, data['dashboardUri']),
+            DashboardRepository.get_dashboard_by_uri(session, data['dashboardUri']),
         )
 
         for k in data.keys():
@@ -258,7 +258,7 @@ class Dashboard:
         environment: models.Environment = Environment.get_environment_by_uri(
             session, dashboard.environmentUri
         )
-        Dashboard.set_dashboard_resource_policy(
+        DashboardRepository.set_dashboard_resource_policy(
             session, environment, dashboard, dashboard.SamlGroupName
         )
         return dashboard
@@ -267,7 +267,7 @@ class Dashboard:
     def delete_dashboard(
         session, username, groups, uri, data=None, check_perm=None
     ) -> bool:
-        dashboard = Dashboard.get_dashboard_by_uri(session, uri)
+        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         session.delete(dashboard)
         ResourcePolicy.delete_resource_policy(
             session=session, resource_uri=uri, group=dashboard.SamlGroupName
@@ -289,7 +289,7 @@ class Dashboard:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.DashboardShare:
-        dashboard = Dashboard.get_dashboard_by_uri(session, uri)
+        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         if dashboard.SamlGroupName == data['principalId']:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
@@ -408,7 +408,7 @@ class Dashboard:
         check_perm: bool = False,
     ) -> models.DashboardShare:
 
-        dashboard = Dashboard.get_dashboard_by_uri(session, uri)
+        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         share = models.DashboardShare(
             owner=username,
             dashboardUri=dashboard.dashboardUri,

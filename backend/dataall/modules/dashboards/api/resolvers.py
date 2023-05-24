@@ -6,6 +6,7 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
+from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.utils import Parameter
 from dataall.searchproxy.indexers import DashboardIndexer
 
@@ -42,7 +43,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
                 domain_name=DOMAIN_URL,
             )
         else:
-            shared_groups = db.api.Dashboard.query_all_user_groups_shareddashboard(
+            shared_groups = DashboardRepository.query_all_user_groups_shareddashboard(
                 session=session,
                 username=context.username,
                 groups=context.groups,
@@ -137,7 +138,7 @@ def import_dashboard(context: Context, source, input: dict = None):
             )
 
         input['environment'] = env
-        dashboard = db.api.Dashboard.import_dashboard(
+        dashboard = DashboardRepository.import_dashboard(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -153,11 +154,11 @@ def import_dashboard(context: Context, source, input: dict = None):
 
 def update_dashboard(context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        dashboard = db.api.Dashboard.get_dashboard_by_uri(
+        dashboard = DashboardRepository.get_dashboard_by_uri(
             session, input['dashboardUri']
         )
         input['dashboard'] = dashboard
-        db.api.Dashboard.update_dashboard(
+        DashboardRepository.update_dashboard(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -175,7 +176,7 @@ def list_dashboards(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Dashboard.paginated_user_dashboards(
+        return DashboardRepository.paginated_user_dashboards(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -187,7 +188,7 @@ def list_dashboards(context: Context, source, filter: dict = None):
 
 def get_dashboard(context: Context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Dashboard.get_dashboard(
+        return DashboardRepository.get_dashboard(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -218,7 +219,7 @@ def request_dashboard_share(
     dashboardUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Dashboard.request_dashboard_share(
+        return DashboardRepository.request_dashboard_share(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -234,9 +235,9 @@ def approve_dashboard_share(
     shareUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        share = db.api.Dashboard.get_dashboard_share_by_uri(session, shareUri)
-        dashboard = db.api.Dashboard.get_dashboard_by_uri(session, share.dashboardUri)
-        return db.api.Dashboard.approve_dashboard_share(
+        share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
+        dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
+        return DashboardRepository.approve_dashboard_share(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -252,9 +253,9 @@ def reject_dashboard_share(
     shareUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        share = db.api.Dashboard.get_dashboard_share_by_uri(session, shareUri)
-        dashboard = db.api.Dashboard.get_dashboard_by_uri(session, share.dashboardUri)
-        return db.api.Dashboard.reject_dashboard_share(
+        share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
+        dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
+        return DashboardRepository.reject_dashboard_share(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -273,7 +274,7 @@ def list_dashboard_shares(
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Dashboard.paginated_dashboard_shares(
+        return DashboardRepository.paginated_dashboard_shares(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -290,7 +291,7 @@ def share_dashboard(
     dashboardUri: str = None,
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Dashboard.share_dashboard(
+        return DashboardRepository.share_dashboard(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -302,7 +303,7 @@ def share_dashboard(
 
 def delete_dashboard(context: Context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
-        db.api.Dashboard.delete_dashboard(
+        DashboardRepository.delete_dashboard(
             session=session,
             username=context.username,
             groups=context.groups,
