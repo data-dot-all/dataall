@@ -1,6 +1,7 @@
 import json
 import logging
 
+from .... import db
 from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
@@ -89,6 +90,21 @@ def get_profiling_run(context: Context, source, profilingRunUri=None):
 
 def get_last_table_profiling_run(context: Context, source, tableUri=None):
     with context.engine.scoped_session() as session:
+        table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+            session, tableUri
+        )
+        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        if (
+                dataset.confidentiality
+                != models.ConfidentialityClassification.Unclassified.value
+        ):
+            ResourcePolicy.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=table.tableUri,
+                permission_name=permissions.PREVIEW_DATASET_TABLE,
+            )
         run: models.DatasetProfilingRun = (
             api.DatasetProfilingRun.get_table_last_profiling_run(
                 session=session, tableUri=tableUri
