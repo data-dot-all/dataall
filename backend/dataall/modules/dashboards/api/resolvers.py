@@ -7,6 +7,7 @@ from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.db import permissions, models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
+from dataall.modules.dashboards.db.models import Dashboard
 from dataall.utils import Parameter
 from dataall.searchproxy.indexers import DashboardIndexer
 
@@ -18,7 +19,7 @@ DOMAIN_URL = f"https://{DOMAIN_NAME}" if DOMAIN_NAME else "http://localhost:8080
 
 def get_quicksight_reader_url(context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
-        dash: models.Dashboard = session.query(models.Dashboard).get(dashboardUri)
+        dash: Dashboard = session.query(Dashboard).get(dashboardUri)
         env: models.Environment = session.query(models.Environment).get(
             dash.environmentUri
         )
@@ -198,7 +199,7 @@ def get_dashboard(context: Context, source, dashboardUri: str = None):
         )
 
 
-def resolve_user_role(context: Context, source: models.Dashboard):
+def resolve_user_role(context: Context, source: Dashboard):
     if context.username and source.owner == context.username:
         return DashboardRole.Creator.value
     elif context.groups and source.SamlGroupName in context.groups:
@@ -206,7 +207,7 @@ def resolve_user_role(context: Context, source: models.Dashboard):
     return DashboardRole.Shared.value
 
 
-def get_dashboard_organization(context: Context, source: models.Dashboard, **kwargs):
+def get_dashboard_organization(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
         org = session.query(models.Organization).get(source.organizationUri)
     return org
@@ -214,7 +215,7 @@ def get_dashboard_organization(context: Context, source: models.Dashboard, **kwa
 
 def request_dashboard_share(
     context: Context,
-    source: models.Dashboard,
+    source: Dashboard,
     principalId: str = None,
     dashboardUri: str = None,
 ):
@@ -231,7 +232,7 @@ def request_dashboard_share(
 
 def approve_dashboard_share(
     context: Context,
-    source: models.Dashboard,
+    source: Dashboard,
     shareUri: str = None,
 ):
     with context.engine.scoped_session() as session:
@@ -249,7 +250,7 @@ def approve_dashboard_share(
 
 def reject_dashboard_share(
     context: Context,
-    source: models.Dashboard,
+    source: Dashboard,
     shareUri: str = None,
 ):
     with context.engine.scoped_session() as session:
@@ -267,7 +268,7 @@ def reject_dashboard_share(
 
 def list_dashboard_shares(
     context: Context,
-    source: models.Dashboard,
+    source: Dashboard,
     dashboardUri: str = None,
     filter: dict = None,
 ):
@@ -286,7 +287,7 @@ def list_dashboard_shares(
 
 def share_dashboard(
     context: Context,
-    source: models.Dashboard,
+    source: Dashboard,
     principalId: str = None,
     dashboardUri: str = None,
 ):
@@ -315,14 +316,14 @@ def delete_dashboard(context: Context, source, dashboardUri: str = None):
         return True
 
 
-def resolve_glossary_terms(context: Context, source: models.Dashboard, **kwargs):
+def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
         return Glossary.get_glossary_terms_links(
             session, source.dashboardUri, 'Dashboard'
         )
 
 
-def resolve_upvotes(context: Context, source: models.Dashboard, **kwargs):
+def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
         return Vote.count_upvotes(
             session, None, None, source.dashboardUri, data={'targetType': 'dashboard'}

@@ -12,6 +12,7 @@ from dataall.db.api import (
     Glossary,
     Vote,
 )
+from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareStatus, Dashboard
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.Dashboard:
+    ) -> Dashboard:
         if not data:
             raise exceptions.RequiredParameter(data)
         if not data.get('environmentUri'):
@@ -51,7 +52,7 @@ class DashboardRepository:
         env: models.Environment = data.get(
             'environment', Environment.get_environment_by_uri(session, uri)
         )
-        dashboard: models.Dashboard = models.Dashboard(
+        dashboard: Dashboard = Dashboard(
             label=data.get('label', 'untitled'),
             environmentUri=data.get('environmentUri'),
             organizationUri=env.organizationUri,
@@ -97,7 +98,7 @@ class DashboardRepository:
             group=group,
             permissions=permissions.DASHBOARD_ALL,
             resource_uri=dashboard.dashboardUri,
-            resource_type=models.Dashboard.__name__,
+            resource_type=Dashboard.__name__,
         )
         if environment.SamlGroupName != dashboard.SamlGroupName:
             ResourcePolicy.attach_resource_policy(
@@ -105,7 +106,7 @@ class DashboardRepository:
                 group=environment.SamlGroupName,
                 permissions=permissions.DASHBOARD_ALL,
                 resource_uri=dashboard.dashboardUri,
-                resource_type=models.Dashboard.__name__,
+                resource_type=Dashboard.__name__,
             )
 
     @staticmethod
@@ -118,12 +119,12 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.Dashboard:
+    ) -> Dashboard:
         return DashboardRepository.get_dashboard_by_uri(session, uri)
 
     @staticmethod
-    def get_dashboard_by_uri(session, uri) -> models.Dashboard:
-        dashboard: models.Dashboard = session.query(models.Dashboard).get(uri)
+    def get_dashboard_by_uri(session, uri) -> Dashboard:
+        dashboard: Dashboard = session.query(Dashboard).get(uri)
         if not dashboard:
             raise exceptions.ObjectNotFound('Dashboard', uri)
         return dashboard
@@ -131,19 +132,19 @@ class DashboardRepository:
     @staticmethod
     def query_user_dashboards(session, username, groups, filter) -> Query:
         query = (
-            session.query(models.Dashboard)
+            session.query(Dashboard)
             .outerjoin(
-                models.DashboardShare,
-                models.Dashboard.dashboardUri == models.DashboardShare.dashboardUri,
+                DashboardShare,
+                Dashboard.dashboardUri == DashboardShare.dashboardUri,
             )
             .filter(
                 or_(
-                    models.Dashboard.owner == username,
-                    models.Dashboard.SamlGroupName.in_(groups),
+                    Dashboard.owner == username,
+                    Dashboard.SamlGroupName.in_(groups),
                     and_(
-                        models.DashboardShare.SamlGroupName.in_(groups),
-                        models.DashboardShare.status
-                        == models.DashboardShareStatus.APPROVED.value,
+                        DashboardShare.SamlGroupName.in_(groups),
+                        DashboardShare.status
+                        == DashboardShareStatus.APPROVED.value,
                     ),
                 )
             )
@@ -151,8 +152,8 @@ class DashboardRepository:
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.Dashboard.description.ilike(filter.get('term') + '%%'),
-                    models.Dashboard.label.ilike(filter.get('term') + '%%'),
+                    Dashboard.description.ilike(filter.get('term') + '%%'),
+                    Dashboard.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -170,17 +171,17 @@ class DashboardRepository:
     @staticmethod
     def query_dashboard_shares(session, username, groups, uri, filter) -> Query:
         query = (
-            session.query(models.DashboardShare)
+            session.query(DashboardShare)
             .join(
-                models.Dashboard,
-                models.Dashboard.dashboardUri == models.DashboardShare.dashboardUri,
+                Dashboard,
+                Dashboard.dashboardUri == DashboardShare.dashboardUri,
             )
             .filter(
                 and_(
-                    models.DashboardShare.dashboardUri == uri,
+                    DashboardShare.dashboardUri == uri,
                     or_(
-                        models.Dashboard.owner == username,
-                        models.Dashboard.SamlGroupName.in_(groups),
+                        Dashboard.owner == username,
+                        Dashboard.SamlGroupName.in_(groups),
                     ),
                 )
             )
@@ -188,10 +189,10 @@ class DashboardRepository:
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.DashboardShare.SamlGroupName.ilike(
+                    DashboardShare.SamlGroupName.ilike(
                         filter.get('term') + '%%'
                     ),
-                    models.Dashboard.label.ilike(filter.get('term') + '%%'),
+                    Dashboard.label.ilike(filter.get('term') + '%%'),
                 )
             )
         return query
@@ -199,11 +200,11 @@ class DashboardRepository:
     @staticmethod
     def query_all_user_groups_shareddashboard(session, username, groups, uri) -> Query:
         query = (
-            session.query(models.DashboardShare)
+            session.query(DashboardShare)
             .filter(
                 and_(
-                    models.DashboardShare.dashboardUri == uri,
-                    models.DashboardShare.SamlGroupName.in_(groups),
+                    DashboardShare.dashboardUri == uri,
+                    DashboardShare.SamlGroupName.in_(groups),
                 )
             )
         )
@@ -237,7 +238,7 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.Dashboard:
+    ) -> Dashboard:
 
         dashboard = data.get(
             'dashboard',
@@ -288,35 +289,35 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DashboardShare:
+    ) -> DashboardShare:
         dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         if dashboard.SamlGroupName == data['principalId']:
             raise exceptions.UnauthorizedOperation(
                 action=permissions.CREATE_DASHBOARD,
                 message=f'Team {dashboard.SamlGroupName} is the owner of the dashboard {dashboard.label}',
             )
-        share: models.DashboardShare = (
-            session.query(models.DashboardShare)
+        share: DashboardShare = (
+            session.query(DashboardShare)
             .filter(
-                models.DashboardShare.dashboardUri == uri,
-                models.DashboardShare.SamlGroupName == data['principalId'],
+                DashboardShare.dashboardUri == uri,
+                DashboardShare.SamlGroupName == data['principalId'],
             )
             .first()
         )
         if not share:
-            share = models.DashboardShare(
+            share = DashboardShare(
                 owner=username,
                 dashboardUri=dashboard.dashboardUri,
                 SamlGroupName=data['principalId'],
-                status=models.DashboardShareStatus.REQUESTED.value,
+                status=DashboardShareStatus.REQUESTED.value,
             )
             session.add(share)
         else:
-            if share.status not in models.DashboardShareStatus.__members__:
+            if share.status not in DashboardShareStatus.__members__:
                 raise exceptions.InvalidInput(
                     'Share status',
                     share.status,
-                    str(models.DashboardShareStatus.__members__),
+                    str(DashboardShareStatus.__members__),
                 )
             if share.status == 'REJECTED':
                 share.status = 'REQUESTED'
@@ -333,29 +334,29 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DashboardShare:
+    ) -> DashboardShare:
 
-        share: models.DashboardShare = data.get(
-            'share', session.query(models.DashboardShare).get(data['shareUri'])
+        share: DashboardShare = data.get(
+            'share', session.query(DashboardShare).get(data['shareUri'])
         )
 
-        if share.status not in models.DashboardShareStatus.__members__:
+        if share.status not in DashboardShareStatus.__members__:
             raise exceptions.InvalidInput(
                 'Share status',
                 share.status,
-                str(models.DashboardShareStatus.__members__),
+                str(DashboardShareStatus.__members__),
             )
-        if share.status == models.DashboardShareStatus.APPROVED.value:
+        if share.status == DashboardShareStatus.APPROVED.value:
             return share
 
-        share.status = models.DashboardShareStatus.APPROVED.value
+        share.status = DashboardShareStatus.APPROVED.value
 
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=share.SamlGroupName,
             permissions=[permissions.GET_DASHBOARD],
             resource_uri=share.dashboardUri,
-            resource_type=models.Dashboard.__name__,
+            resource_type=Dashboard.__name__,
         )
 
         return share
@@ -370,28 +371,28 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DashboardShare:
+    ) -> DashboardShare:
 
-        share: models.DashboardShare = data.get(
-            'share', session.query(models.DashboardShare).get(data['shareUri'])
+        share: DashboardShare = data.get(
+            'share', session.query(DashboardShare).get(data['shareUri'])
         )
 
-        if share.status not in models.DashboardShareStatus.__members__:
+        if share.status not in DashboardShareStatus.__members__:
             raise exceptions.InvalidInput(
                 'Share status',
                 share.status,
-                str(models.DashboardShareStatus.__members__),
+                str(DashboardShareStatus.__members__),
             )
-        if share.status == models.DashboardShareStatus.REJECTED.value:
+        if share.status == DashboardShareStatus.REJECTED.value:
             return share
 
-        share.status = models.DashboardShareStatus.REJECTED.value
+        share.status = DashboardShareStatus.REJECTED.value
 
         ResourcePolicy.delete_resource_policy(
             session=session,
             group=share.SamlGroupName,
             resource_uri=share.dashboardUri,
-            resource_type=models.Dashboard.__name__,
+            resource_type=Dashboard.__name__,
         )
 
         return share
@@ -406,14 +407,14 @@ class DashboardRepository:
         uri: str,
         data: dict = None,
         check_perm: bool = False,
-    ) -> models.DashboardShare:
+    ) -> DashboardShare:
 
         dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-        share = models.DashboardShare(
+        share = DashboardShare(
             owner=username,
             dashboardUri=dashboard.dashboardUri,
             SamlGroupName=data['principalId'],
-            status=models.DashboardShareStatus.APPROVED.value,
+            status=DashboardShareStatus.APPROVED.value,
         )
         session.add(share)
         ResourcePolicy.attach_resource_policy(
@@ -421,13 +422,13 @@ class DashboardRepository:
             group=data['principalId'],
             permissions=[permissions.GET_DASHBOARD],
             resource_uri=dashboard.dashboardUri,
-            resource_type=models.Dashboard.__name__,
+            resource_type=Dashboard.__name__,
         )
         return share
 
     @staticmethod
-    def get_dashboard_share_by_uri(session, uri) -> models.DashboardShare:
-        share: models.DashboardShare = session.query(models.DashboardShare).get(uri)
+    def get_dashboard_share_by_uri(session, uri) -> DashboardShare:
+        share: DashboardShare = session.query(DashboardShare).get(uri)
         if not share:
             raise exceptions.ObjectNotFound('DashboardShare', uri)
         return share
