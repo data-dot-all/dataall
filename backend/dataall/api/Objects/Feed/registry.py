@@ -37,4 +37,3 @@ class FeedRegistry(UnionTypeRegistry):
 
 
 FeedRegistry.register(FeedDefinition("DataPipeline", models.DataPipeline))
-FeedRegistry.register(FeedDefinition("Dashboard", models.Dashboard))
