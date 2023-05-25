@@ -42,7 +42,6 @@ data.all pipelines are created from the UI, under Pipelines. We need to fill the
     1. [**CDK Pipelines - Trunk-based**](#CDK-Pipelines-Overview) : A CICD pipeline based on [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.pipelines/README.html). It defines a DDK Core construct which deploys Continuous Integration and Delivery for your app. Specifically, it provisions a stack containing a self-mutating CDK code pipeline to deploy one or more copies of your CDK applications using CloudFormation with a minimal amount of effort on your part.
     2. [**CodePipeline - Trunk-based**](#CodePipeline-pipelines---Trunk-based-or-GitFlow-Overview) : A CICD pipeline similar to CDK Pipelines and with a trunk-based approach but is not self-mutating.
     3. [**CodePipeline - Gitflow**](#CodePipeline-pipelines---Trunk-based-or-GitFlow-Overview): A Gitflow branching strategy where each branch of the source repository has a corresponding CICD Pipeline that deploys resources for that branches environment.
-    4. [**GitHub Template**](#Github-Template-Pipelines-Overview) : This is a Bring-Your-Own-Template approach where users can specify they git clone path and deploy their own pipelines and IaC rather than using one of the previous 3 strategies. 
 
 Finally, we need to add **Development environments**. These are the AWS accounts and regions where the infrastructure defined in the CICD pipeline
 is deployed. 
@@ -168,17 +167,7 @@ The `dev` pipeline reads from the `dev` branch of the repository:
 
 ![created_pipeline](pictures/pipelines/pip_cp_gitflow2.png#zoom#shadow)
 
---- 
-### Github Template Pipelines Overview
-
-This pipeline strategy takes a pre-defined IaC CDK Application that exists in a github repository and deploys the pipeline to be managed by data all. An AWS CodeCommit repository with the code of the github repository is created in the CICD environment AWS account.
-
-**NOTE: You may have to specify a access token in the HTTPS Clone Path of the Github Repository if the repository is private**
-
-data.all performs the inital deployment of this pipeline by running `cdk deploy` for the code now existing in AWS CodeCommit in the CICD environment. Adding development environments here is on the responsibility of the pipeline creator to align with the deployment environments specified in the cloned repository.
-
-![created_pipeline](pictures/pipelines/github_template_create.png#zoom#shadow)
-
+---
 ## Editing a Data All Pipeline
 
 For users who would like to promote their pipeline deployments to new environments managed by data all, you can do so by first bootstrapping the new environment(s) to be deployed to (as mentioned in the [Pre-requisites](#Pre-requisites)) and then adding and/or editing the development environments.
@@ -189,7 +178,6 @@ Based on pipeline use case, editing a data all pipeline's development environmen
 - **CDK Pipelines**: On update, the `ddk.json` and `app.py` will be edited to update the new development environment information. The self-mutating, CICD Pipeline will trigger and deploy to the new environments based on the source CodeCommit repository changes.
 - **CodePipelines - Trunk-based**: On update the `ddk.json` will be edited. A new `cdk deploy` will run to update the CICD CloudFormation Stack for the AWS CodePipeline to add the new stages required for the additional environment deployment(s) (as well as manual approval steps between stages in the code pipeline). You will see these updates to the CICD stack in CloudFormaiton of the CICD environment.
 - **CodePipelines - Gitflow**: On update the `ddk.json` will be edited. A new `cdk deploy` will run to update the CICD CloudFormation Stack to add the new AWS CodePipelines required for the additional environment deployment(s). You will see these updates to the CICD stack in CloudFormaiton of the CICD environment.
-- **Github Template Pipelines**: Editing development environments **will NOT** re-deploy the application or update the CodeCommit repository. Editing of template pipeline's development environment(s) is the responsibility of the pipeline creator for proper data all pipeline management.
 
 ## Which development strategy should I choose?
 
@@ -203,11 +191,6 @@ Based on pipeline use case, editing a data all pipeline's development environmen
 1. The `aws-codepipelines` construct uses AWS CodePipelines directly. We are able to define any type of CICD architecture, such as in this case Trunk-based and GitFlow.
 2. Developers working on the pipeline cannot modify the CICD pipeline
 3. Cross-account deployments require specific definition of the environment in the code.
-
-**Github Template Pipelines**
-
-1. The aforementioned pipeline strategies do not align with your desired pipeline architecture
-2. You already have pipelines IaC written in AWS CDK and ready to be deployed rather than creating pipeline(s) and developing from scratch
 
 
 **Summary**

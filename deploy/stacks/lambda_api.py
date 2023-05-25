@@ -243,6 +243,14 @@ class LambdaApiStack(pyNestedClass):
                     ],
                     resources=['*'],
                 ),
+                iam.PolicyStatement(
+                    actions=[
+                        'aoss:APIAccessAll',
+                    ],
+                    resources=[
+                        f'arn:aws:aoss:{self.region}:{self.account}:collection/*',
+                    ],
+                ),
             ],
         )
         role = iam.Role(

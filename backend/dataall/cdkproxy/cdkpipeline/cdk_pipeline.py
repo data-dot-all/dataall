@@ -45,7 +45,6 @@ class CDKPipelineStack:
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
 
         self.code_dir_path = os.path.dirname(os.path.abspath(__file__))
-        template = self.pipeline.template
 
         try:
             codecommit_client = aws.client('codecommit', region_name=self.pipeline_environment.region)
@@ -82,12 +81,9 @@ class CDKPipelineStack:
             else:
                 raise Exception
         except Exception as e:
-            if len(template):
-                self.venv_name = self.initialize_repo_template(template)
-            else:
-                self.venv_name = self.initialize_repo()
-                CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
-                CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments)
+            self.venv_name = self.initialize_repo()
+            CDKPipelineStack.write_ddk_app_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="app.py", pipeline=self.pipeline, development_environments=self.development_environments)
+            CDKPipelineStack.write_ddk_json_multienvironment(path=os.path.join(self.code_dir_path, self.pipeline.repo), output_file="ddk.json", pipeline_environment=self.pipeline_environment, development_environments=self.development_environments)
             self.git_push_repo()
 
     def initialize_repo(self):
@@ -96,33 +92,6 @@ class CDKPipelineStack:
             f"ddk init {self.pipeline.repo} --generate-only",
             f"cd {self.pipeline.repo}",
             "git init --initial-branch main",
-            f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
-        ]
-
-        logger.info(f"Running Commands: {'; '.join(cmd_init)}")
-
-        process = subprocess.run(
-            '; '.join(cmd_init),
-            text=True,
-            shell=True,  # nosec
-            encoding='utf-8',
-            cwd=self.code_dir_path,
-            env=self.env
-        )
-        if process.returncode == 0:
-            logger.info("Successfully Initialized New CDK/DDK App")
-
-            return venv_name
-
-    def initialize_repo_template(self, template):
-        venv_name = ".venv"
-        cmd_init = [
-            f"git clone {template} {self.pipeline.repo}",
-            f"cd {self.pipeline.repo}",
-            "rm -rf .git",
-            "git init --initial-branch main",
-            f"python3 -m venv {venv_name} && source {venv_name}/bin/activate",
-            "pip install -r requirements.txt",
             f"ddk create-repository {self.pipeline.repo} -t application dataall -t team {self.pipeline.SamlGroupName}"
         ]
 
