@@ -190,8 +190,6 @@ class Environment:
             environment.tags = data.get('tags')
         if 'dashboardsEnabled' in data.keys():
             environment.dashboardsEnabled = data.get('dashboardsEnabled')
-        if 'mlStudiosEnabled' in data.keys():
-            environment.mlStudiosEnabled = data.get('mlStudiosEnabled')
         if 'pipelinesEnabled' in data.keys():
             environment.pipelinesEnabled = data.get('pipelinesEnabled')
         if 'warehousesEnabled' in data.keys():
