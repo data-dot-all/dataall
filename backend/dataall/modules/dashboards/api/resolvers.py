@@ -4,10 +4,11 @@ from dataall.api.constants import DashboardRole
 from dataall.api.context import Context
 from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.db import permissions, models
+from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
+from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
 from dataall.utils import Parameter
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
@@ -28,11 +29,11 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
             username=context.username,
             groups=context.groups,
             resource_uri=dash.dashboardUri,
-            permission_name=permissions.GET_DASHBOARD,
+            permission_name=GET_DASHBOARD,
         )
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
-                action=permissions.GET_DASHBOARD,
+                action=GET_DASHBOARD,
                 message=f'Dashboards feature is disabled for the environment {env.label}',
             )
         if dash.SamlGroupName in context.groups:
@@ -52,7 +53,7 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
             )
             if not shared_groups:
                 raise db.exceptions.UnauthorizedOperation(
-                    action=permissions.GET_DASHBOARD,
+                    action=GET_DASHBOARD,
                     message='Dashboard has not been shared with your Teams',
                 )
 
@@ -87,12 +88,12 @@ def get_quicksight_designer_url(
             username=context.username,
             groups=context.groups,
             resource_uri=environmentUri,
-            permission_name=permissions.CREATE_DASHBOARD,
+            permission_name=CREATE_DASHBOARD,
         )
         env: models.Environment = session.query(models.Environment).get(environmentUri)
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_DASHBOARD,
+                action=CREATE_DASHBOARD,
                 message=f'Dashboards feature is disabled for the environment {env.label}',
             )
 
@@ -113,7 +114,7 @@ def import_dashboard(context: Context, source, input: dict = None):
             username=context.username,
             groups=context.groups,
             resource_uri=input['environmentUri'],
-            permission_name=permissions.CREATE_DASHBOARD,
+            permission_name=CREATE_DASHBOARD,
         )
         env: models.Environment = db.api.Environment.get_environment_by_uri(
             session, input['environmentUri']
@@ -121,7 +122,7 @@ def import_dashboard(context: Context, source, input: dict = None):
 
         if not env.dashboardsEnabled:
             raise db.exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_DASHBOARD,
+                action=CREATE_DASHBOARD,
                 message=f'Dashboards feature is disabled for the environment {env.label}',
             )
 
@@ -134,7 +135,7 @@ def import_dashboard(context: Context, source, input: dict = None):
 
         if not can_import:
             raise db.exceptions.UnauthorizedOperation(
-                action=permissions.CREATE_DASHBOARD,
+                action=CREATE_DASHBOARD,
                 message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
             )
 
