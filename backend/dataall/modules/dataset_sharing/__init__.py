@@ -1,6 +1,8 @@
 import logging
 from typing import List, Type, Set
 
+from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareEnvironmentResource
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.loader import ModuleInterface, ImportMode
 
@@ -19,6 +21,8 @@ class SharingApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.modules.dataset_sharing import api
+
+        EnvironmentResourceManager.register(ShareEnvironmentResource())
         log.info("API of dataset sharing has been imported")
 
 

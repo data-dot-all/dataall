@@ -402,7 +402,6 @@ def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
             'tags': [group.name],
             'environmentUri': env_fixture.environmentUri,
             'devStrategy': 'trunk',
-            'template': '',
         },
         username='alice',
         groups=[group.name],
