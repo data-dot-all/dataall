@@ -69,7 +69,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             stack.status = 'PENDING'
             session.commit()
 
-            if stack.stack == 'cdkpipeline' or stack.stack == 'template':
+            if stack.stack == 'cdkpipeline':
                 cdkpipeline = CDKPipelineStack(stack.targetUri)
                 venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
                 pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
@@ -106,18 +106,6 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                         'AWS_SESSION_TOKEN': creds.get('Token'),
                     }
                 )
-            if stack.stack == 'template':
-                resp = subprocess.run(
-                    ['. ~/.nvm/nvm.sh && cdk ls'],
-                    cwd=cwd,
-                    text=True,
-                    shell=True,  # nosec
-                    encoding='utf-8',
-                    stdout=subprocess.PIPE,
-                    env=env,
-                )
-                logger.info(f'CDK Apps: {resp.stdout}')
-                stack.name = resp.stdout.split('\n')[0]
 
             app_path = app_path or './app.py'
 
@@ -150,9 +138,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 '--verbose',
             ]
 
-            if stack.stack == 'template' or stack.stack == 'cdkpipeline':
-                if stack.stack == 'template':
-                    cmd.insert(0, f'source {venv_name}/bin/activate;')
+            if stack.stack == 'cdkpipeline':
                 aws = SessionHelper.remote_session(stack.accountid)
                 creds = aws.get_credentials()
                 env.update(
@@ -177,7 +163,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 env=env,
                 cwd=cwd,
             )
-            if stack.stack == 'cdkpipeline' or stack.stack == 'template':
+            if stack.stack == 'cdkpipeline':
                 CDKPipelineStack.clean_up_repo(path=f'./{pipeline.repo}')
 
             if process.returncode == 0:
