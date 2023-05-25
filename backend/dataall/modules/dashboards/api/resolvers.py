@@ -9,7 +9,7 @@ from dataall.db.api import ResourcePolicy, Glossary, Vote
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
 from dataall.utils import Parameter
-from dataall.searchproxy.indexers import DashboardIndexer
+from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
 param_store = Parameter()
 ENVNAME = os.getenv("envname", "local")

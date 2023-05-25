@@ -1,43 +1,43 @@
 import logging
 
-from .. import db
-from ..db import models
+from dataall import db
+from dataall.db import models
 from dataall.searchproxy.base_indexer import BaseIndexer
+from dataall.modules.dashboards.db.models import Dashboard
 
 log = logging.getLogger(__name__)
 
 
-# TODO Should be moved to dashboard module
 class DashboardIndexer(BaseIndexer):
     @classmethod
     def upsert(cls, session, dashboard_uri: str):
         dashboard = (
             session.query(
-                models.Dashboard.dashboardUri.label('uri'),
-                models.Dashboard.name.label('name'),
-                models.Dashboard.owner.label('owner'),
-                models.Dashboard.label.label('label'),
-                models.Dashboard.description.label('description'),
-                models.Dashboard.tags.label('tags'),
-                models.Dashboard.region.label('region'),
+                Dashboard.dashboardUri.label('uri'),
+                Dashboard.name.label('name'),
+                Dashboard.owner.label('owner'),
+                Dashboard.label.label('label'),
+                Dashboard.description.label('description'),
+                Dashboard.tags.label('tags'),
+                Dashboard.region.label('region'),
                 models.Organization.organizationUri.label('orgUri'),
                 models.Organization.name.label('orgName'),
                 models.Environment.environmentUri.label('envUri'),
                 models.Environment.name.label('envName'),
-                models.Dashboard.SamlGroupName.label('admins'),
-                models.Dashboard.created,
-                models.Dashboard.updated,
-                models.Dashboard.deleted,
+                Dashboard.SamlGroupName.label('admins'),
+                Dashboard.created,
+                Dashboard.updated,
+                Dashboard.deleted,
             )
             .join(
                 models.Organization,
-                models.Dashboard.organizationUri == models.Dashboard.organizationUri,
+                Dashboard.organizationUri == Dashboard.organizationUri,
             )
             .join(
                 models.Environment,
-                models.Dashboard.environmentUri == models.Environment.environmentUri,
+                Dashboard.environmentUri == models.Environment.environmentUri,
             )
-            .filter(models.Dashboard.dashboardUri == dashboard_uri)
+            .filter(Dashboard.dashboardUri == dashboard_uri)
             .first()
         )
         if dashboard:
