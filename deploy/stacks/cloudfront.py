@@ -226,6 +226,7 @@ class CloudfrontDistro(pyNestedClass):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             versioned=True,
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
         frontend_alternate_domain = None
@@ -240,6 +241,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
         origin_access_identity = cloudfront.OriginAccessIdentity(
@@ -545,6 +547,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
         origin_access_identity = cloudfront.OriginAccessIdentity(
