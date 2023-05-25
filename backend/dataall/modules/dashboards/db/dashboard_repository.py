@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
+from dataall.core.group.services.group_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, permissions, paginate
 from dataall.db.api import (
     Environment,
@@ -17,7 +18,20 @@ from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareS
 logger = logging.getLogger(__name__)
 
 
-class DashboardRepository:
+class DashboardRepository(EnvironmentResource):
+
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
+        return (
+            session.query(Dashboard)
+            .filter(
+                and_(
+                    Dashboard.environmentUri == environment.environmentUri,
+                    Dashboard.SamlGroupName == group_uri
+                ))
+            .count()
+        )
+
     @staticmethod
     @has_tenant_perm(permissions.MANAGE_DASHBOARDS)
     @has_resource_perm(permissions.CREATE_DASHBOARD)
