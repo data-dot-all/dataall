@@ -83,7 +83,7 @@ class Pipeline:
             action='PIPELINE:CREATE',
             label='PIPELINE:CREATE',
             owner=username,
-            summary=f'{username} created dashboard {pipeline.label} in {environment.label}',
+            summary=f'{username} created pipeline {pipeline.label} in {environment.label}',
             targetUri=pipeline.DataPipelineUri,
             targetType='pipeline',
         )
