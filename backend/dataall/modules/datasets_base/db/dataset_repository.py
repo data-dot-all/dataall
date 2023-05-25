@@ -149,10 +149,6 @@ class DatasetRepository(EnvironmentResource):
         return dataset
 
     @staticmethod
-    def get_dataset(session, uri: str) -> Dataset:
-        return DatasetRepository.get_dataset_by_uri(session, uri)
-
-    @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
         query = (
             session.query(DatasetTable)
