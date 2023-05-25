@@ -17,7 +17,6 @@ from aws_cdk import (
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
-from sqlalchemy import and_, or_
 
 from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
@@ -28,13 +27,21 @@ from dataall.db import models
 from dataall.db.api import Environment
 from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 
 
 @stack(stack='dataset')
 class DatasetStack(Stack):
+    """Deploy common dataset resources:
+            - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
+            - dataset IAM role
+            - custom resource to create glue database and grant permissions
+            - custom resource to register S3 location in LF
+            - Glue crawler
+            - Glue profiling job
+    """
     module_name = __file__
 
     def get_engine(self) -> db.Engine:
@@ -72,84 +79,6 @@ class DatasetStack(Stack):
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_shared_tables(self) -> typing.List[models.ShareObjectItem]:
-        engine = self.get_engine()
-        with engine.scoped_session() as session:
-            tables = (
-                session.query(
-                    DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
-                    DatasetTable.GlueTableName.label('GlueTableName'),
-                    DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
-                    DatasetTable.region.label('SourceRegion'),
-                    models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                    models.Environment.region.label('TargetRegion'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri == DatasetTable.tableUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        DatasetTable.datasetUri == self.target_uri,
-                        DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status.in_(self.shared_states)
-                    )
-                )
-                .all()
-            )
-            logger.info(f'found {len(tables)} shared tables')
-        return tables
-
-    def get_shared_folders(self) -> typing.List[DatasetStorageLocation]:
-        engine = self.get_engine()
-        with engine.scoped_session() as session:
-            locations = (
-                session.query(
-                    DatasetStorageLocation.locationUri.label('locationUri'),
-                    DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                    models.Environment.AwsAccountId.label('AwsAccountId'),
-                    models.Environment.region.label('region'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri
-                        == DatasetStorageLocation.locationUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        DatasetStorageLocation.datasetUri == self.target_uri,
-                        DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status.in_(self.shared_states)
-                    )
-                )
-                .all()
-            )
-            logger.info(f'found {len(locations)} shared folders')
-        return locations
-
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(
             scope,
@@ -161,31 +90,19 @@ class DatasetStack(Stack):
             )[:1024],
             **kwargs)
 
-        # Required for dynamic stack tagging
+        # Read input
         self.target_uri = target_uri
-
-        self.shared_states = [
-            models.Enums.ShareItemStatus.Share_Succeeded.value,
-            models.Enums.ShareItemStatus.Revoke_Approved.value,
-            models.Enums.ShareItemStatus.Revoke_In_Progress.value,
-            models.Enums.ShareItemStatus.Revoke_Failed.value
-        ]
-
-        pivot_role_name = SessionHelper.get_delegation_role_name()
-
+        self.pivot_role_name = SessionHelper.get_delegation_role_name()
         dataset = self.get_target()
-
         env = self.get_env(dataset)
-
         env_group = self.get_env_group(dataset)
 
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
-            quicksight_default_group = Quicksight.create_quicksight_group(
-                dataset.AwsAccountId, 'dataall'
-            )
+            quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
+        # Dataset S3 Bucket and KMS key
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
@@ -205,7 +122,7 @@ class DatasetStack(Stack):
                             principals=[
                                 iam.AccountPrincipal(account_id=dataset.AwsAccountId),
                                 iam.ArnPrincipal(
-                                    f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}'
+                                    f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
                                 ),
                             ],
                             actions=['kms:*'],
@@ -246,14 +163,6 @@ class DatasetStack(Stack):
                 bucket_key_enabled=True,
             )
 
-            # dataset_bucket.add_to_resource_policy(
-            #     permission=iam.PolicyStatement(
-            #         actions=['s3:*'],
-            #         resources=[dataset_bucket.bucket_arn],
-            #         principals=[iam.AccountPrincipal(account_id=dataset.AwsAccountId)],
-            #     )
-            # )
-
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
                 noncurrent_version_transitions=[
@@ -279,7 +188,7 @@ class DatasetStack(Stack):
                 enabled=True,
             )
 
-        # Dataset Admin and ETL User
+        # Dataset IAM role - ETL policies
         dataset_admin_policy = iam.Policy(
             self,
             'DatasetAdminPolicy',
@@ -388,15 +297,45 @@ class DatasetStack(Stack):
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
                 iam.ServicePrincipal('ec2.amazonaws.com'),
-                iam.AccountPrincipal(os.environ.get('CURRENT_AWS_ACCOUNT')),
+                iam.AccountPrincipal(str(os.environ.get('CURRENT_AWS_ACCOUNT'))),
                 iam.AccountPrincipal(dataset.AwsAccountId),
                 iam.ArnPrincipal(
-                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{pivot_role_name}'
+                    f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
+        # Datalake location custom resource: registers the S3 location in LakeFormation
+        registered_location = LakeFormation.check_existing_lf_registered_location(
+            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            accountid=env.AwsAccountId,
+            region=env.region
+        )
+
+        if not registered_location:
+            storage_location = CfnResource(
+                self,
+                'DatasetStorageLocation',
+                type='AWS::LakeFormation::Resource',
+                properties={
+                    'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
+                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+                    'UseServiceLinkedRole': False,
+                },
+            )
+
+        # Define dataset admin groups (those with data access grant)
+        dataset_admins = [
+            dataset_admin_role.role_arn,
+            f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+            env_group.environmentIAMRoleArn,
+        ]
+        if quicksight_default_group_arn:
+            dataset_admins.append(quicksight_default_group_arn)
+
+        # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
+        # Old provider, to be deleted in future release
         glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
             self,
             'GlueDbCRArnParameter',
@@ -415,33 +354,7 @@ class DatasetStack(Stack):
             f'{env.resourcePrefix}GlueDbCustomResourceProvider',
             on_event_handler=glue_db_handler,
         )
-
-        existing_location = LakeFormation.describe_resource(
-            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
-            accountid=env.AwsAccountId,
-            region=env.region
-        )
-
-        if not existing_location:
-            storage_location = CfnResource(
-                self,
-                'DatasetStorageLocation',
-                type='AWS::LakeFormation::Resource',
-                properties={
-                    'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
-                    'UseServiceLinkedRole': False,
-                },
-            )
-        dataset_admins = [
-            dataset_admin_role.role_arn,
-            f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}',
-            env_group.environmentIAMRoleArn,
-        ]
-        if quicksight_default_group_arn:
-            dataset_admins.append(quicksight_default_group_arn)
-
-        glue_db = CustomResource(
+        old_glue_db = CustomResource(
             self,
             f'{env.resourcePrefix}DatasetDatabase',
             service_token=GlueDatabase.service_token,
@@ -460,6 +373,33 @@ class DatasetStack(Stack):
             },
         )
 
+        # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
+        glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
+            self,
+            'GlueDatabaseProviderServiceToken',
+            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
+        )
+
+        glue_db = CustomResource(
+            self,
+            f'{env.resourcePrefix}GlueDatabaseCustomResource',
+            service_token=glue_db_provider_service_token.string_value,
+            resource_type='Custom::GlueDatabase',
+            properties={
+                'CatalogId': dataset.AwsAccountId,
+                'DatabaseInput': {
+                    'Description': 'dataall database {} '.format(
+                        dataset.GlueDatabaseName
+                    ),
+                    'LocationUri': f's3://{dataset.S3BucketName}/',
+                    'Name': f'{dataset.GlueDatabaseName}',
+                    'CreateTableDefaultPermissions': [],
+                },
+                'DatabaseAdministrators': dataset_admins
+            },
+        )
+
+        # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
         crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
@@ -503,7 +443,7 @@ class DatasetStack(Stack):
             'DatasetGlueProfilingJob',
             name=dataset.GlueProfilingJobName,
             role=iam.ArnPrincipal(
-                f'arn:aws:iam::{env.AwsAccountId}:role/{pivot_role_name}'
+                f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
             ).arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(

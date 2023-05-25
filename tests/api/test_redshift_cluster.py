@@ -15,11 +15,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
@@ -88,8 +84,7 @@ def table2(table, dataset2):
 
 
 @pytest.fixture(scope='module')
-def cluster(env1, org1, client, module_mocker, group):
-    module_mocker.patch('requests.post', return_value=True)
+def cluster(env1, org1, client, group):
     ouri = org1.organizationUri
     euri = env1.environmentUri
     group_name = group.name

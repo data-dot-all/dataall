@@ -22,6 +22,7 @@ class VpcStack(pyNestedClass):
         vpc_endpoints_sg=None,
         cidr=None,
         resource_prefix=None,
+        restricted_nacl=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -29,7 +30,7 @@ class VpcStack(pyNestedClass):
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
-            self.create_new_vpc(cidr, envname, resource_prefix)
+            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
@@ -107,7 +108,7 @@ class VpcStack(pyNestedClass):
                 description=f'{resource_prefix}-{envname}-cidrBlock',
             )
 
-    def create_new_vpc(self, cidr, envname, resource_prefix):
+    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl):
         self.vpc = ec2.Vpc(
             self,
             'VPC',
@@ -125,6 +126,55 @@ class VpcStack(pyNestedClass):
             ],
             nat_gateways=1,
         )
+        if restricted_nacl:
+            nacl = ec2.NetworkAcl(
+                self, "RestrictedNACL",
+                vpc=self.vpc,
+                network_acl_name=f'{resource_prefix}-{envname}-restrictedNACL',
+                subnet_selection=ec2.SubnetSelection(subnets=self.vpc.private_subnets + self.vpc.public_subnets),
+            )
+            nacl.add_entry(
+                "entryOutbound",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.all_traffic(),
+                rule_number=100,
+                direction=ec2.TrafficDirection.EGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundHTTPS",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port(443),
+                rule_number=100,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundHTTP",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port(80),
+                rule_number=101,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundCustomTCP",
+                cidr=ec2.AclCidr.any_ipv4(),
+                traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+                rule_number=102,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+            nacl.add_entry(
+                "entryInboundAllInVPC",
+                cidr=ec2.AclCidr.ipv4(self.vpc.vpc_cidr_block),
+                traffic=ec2.AclTraffic.all_traffic(),
+                rule_number=103,
+                direction=ec2.TrafficDirection.INGRESS,
+                rule_action=ec2.Action.ALLOW
+            )
+
+
         flowlog_log_group = logs.LogGroup(
             self,
             f'{resource_prefix}/{envname}/flowlogs',
@@ -209,7 +259,6 @@ class VpcStack(pyNestedClass):
                 private_dns_enabled=True,
                 security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
             )
-
         self.vpc.add_interface_endpoint(
             id='code_artifact_repo_endpoint',
             service=cast(
@@ -217,7 +266,7 @@ class VpcStack(pyNestedClass):
                 ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
             ),
             subnets=ec2.SubnetSelection(subnets=self.vpc.private_subnets),
-            private_dns_enabled=False,
+            private_dns_enabled=True,
             security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
         )
         self.vpc.add_interface_endpoint(
@@ -227,6 +276,6 @@ class VpcStack(pyNestedClass):
                 ec2.InterfaceVpcEndpointAwsService('codeartifact.api'),
             ),
             subnets=ec2.SubnetSelection(subnets=self.vpc.private_subnets),
-            private_dns_enabled=False,
+            private_dns_enabled=True,
             security_groups=[cast(ec2.ISecurityGroup, self.vpce_security_group)],
         )

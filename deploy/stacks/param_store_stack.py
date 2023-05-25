@@ -16,6 +16,7 @@ class ParamStoreStack(pyNestedClass):
         enable_cw_canaries=False,
         quicksight_enabled=False,
         shared_dashboard_sessions='anonymous',
+        enable_pivot_role_auto_create=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -79,4 +80,11 @@ class ParamStoreStack(pyNestedClass):
             f'dataallQuicksightConfiguration{envname}',
             parameter_name=f"/dataall/{envname}/quicksight/sharedDashboardsSessions",
             string_value=shared_dashboard_sessions,
+        )
+
+        aws_ssm.StringParameter(
+            self,
+            f'dataallCreationPivotRole{envname}',
+            parameter_name=f"/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate",
+            string_value=str(enable_pivot_role_auto_create),
         )
