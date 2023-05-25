@@ -6,7 +6,7 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
-from dataall.db.exceptions import InvalidInput
+from dataall.db.exceptions import InvalidInput, RequiredParameter
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard, DashboardShareStatus
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
@@ -108,6 +108,17 @@ def get_quicksight_designer_url(
 
 
 def import_dashboard(context: Context, source, input: dict = None):
+    if not input:
+        raise RequiredParameter(input)
+    if not input.get('environmentUri'):
+        raise RequiredParameter('environmentUri')
+    if not input.get('SamlGroupName'):
+        raise RequiredParameter('group')
+    if not input.get('dashboardId'):
+        raise RequiredParameter('dashboardId')
+    if not input.get('label'):
+        raise RequiredParameter('label')
+
     with context.engine.scoped_session() as session:
         ResourcePolicy.check_user_resource_permission(
             session=session,

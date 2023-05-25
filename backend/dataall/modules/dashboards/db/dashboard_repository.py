@@ -43,17 +43,6 @@ class DashboardRepository(EnvironmentResource):
         uri: str,
         data: dict = None,
     ) -> Dashboard:
-        if not data:
-            raise exceptions.RequiredParameter(data)
-        if not data.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('SamlGroupName'):
-            raise exceptions.RequiredParameter('group')
-        if not data.get('dashboardId'):
-            raise exceptions.RequiredParameter('dashboardId')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
-
         Environment.check_group_environment_permission(
             session=session,
             username=username,
