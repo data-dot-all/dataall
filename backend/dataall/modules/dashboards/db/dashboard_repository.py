@@ -4,11 +4,10 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.group.services.group_resource_manager import EnvironmentResource
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import models, exceptions, paginate
 from dataall.db.api import (
     Environment,
-    has_tenant_perm,
-    has_resource_perm,
     ResourcePolicy,
     Glossary,
     Vote,
@@ -35,8 +34,8 @@ class DashboardRepository(EnvironmentResource):
         )
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(CREATE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(CREATE_DASHBOARD)
     def import_dashboard(
         session,
         username: str,
@@ -126,8 +125,8 @@ class DashboardRepository(EnvironmentResource):
             )
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(GET_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(GET_DASHBOARD)
     def get_dashboard(
         session,
         username: str,
@@ -231,8 +230,8 @@ class DashboardRepository(EnvironmentResource):
         ]
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(SHARE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(SHARE_DASHBOARD)
     def paginated_dashboard_shares(
         session, username, groups, uri, data=None, check_perm=None
     ) -> dict:
@@ -245,8 +244,8 @@ class DashboardRepository(EnvironmentResource):
         ).to_dict()
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(UPDATE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(UPDATE_DASHBOARD)
     def update_dashboard(
         session,
         username: str,
@@ -297,7 +296,7 @@ class DashboardRepository(EnvironmentResource):
         return True
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
     def request_dashboard_share(
         session,
         username: str,
@@ -341,8 +340,8 @@ class DashboardRepository(EnvironmentResource):
         return share
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(SHARE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(SHARE_DASHBOARD)
     def approve_dashboard_share(
         session,
         username: str,
@@ -378,8 +377,8 @@ class DashboardRepository(EnvironmentResource):
         return share
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(SHARE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(SHARE_DASHBOARD)
     def reject_dashboard_share(
         session,
         username: str,
@@ -414,8 +413,8 @@ class DashboardRepository(EnvironmentResource):
         return share
 
     @staticmethod
-    @has_tenant_perm(MANAGE_DASHBOARDS)
-    @has_resource_perm(SHARE_DASHBOARD)
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(SHARE_DASHBOARD)
     def share_dashboard(
         session,
         username: str,
