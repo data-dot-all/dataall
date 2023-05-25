@@ -63,7 +63,7 @@ class Pipeline:
             region=environment.region,
             repo=slugify(data['label']),
             devStrategy=data['devStrategy'],
-            template=data['template'] if data['devStrategy'] == 'template' else "",
+            template="",
         )
 
         session.add(pipeline)

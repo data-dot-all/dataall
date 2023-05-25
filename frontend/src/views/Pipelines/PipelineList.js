@@ -86,7 +86,7 @@ const PipelineList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const client = useClient();
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"},{value:"template", label:"GitHub Template"}];/*DBT Pipelines*/
+  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
   const [filterItems] = useState([{title:'DevStrategy', options: devOptions},{title:'Tags'},{title: 'Region', options: AwsRegions}]);
 
   const fetchItems = useCallback(async () => {

@@ -44,7 +44,7 @@ const PipelineCrateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"},{value:"template", label:"GitHub Template"}];/*DBT Pipelines*/
+  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
@@ -116,8 +116,7 @@ const PipelineCrateForm = (props) => {
                 description: values.description,
                 SamlGroupName: values.SamlGroupName,
                 tags: values.tags,
-                devStrategy: values.devStrategy,
-                template: values.template
+                devStrategy: values.devStrategy
               }
             })
           );
@@ -226,7 +225,6 @@ const PipelineCrateForm = (props) => {
                 environment: '',
                 tags: [],
                 devStrategy: 'cdk-trunk',
-                template: '',
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -238,7 +236,6 @@ const PipelineCrateForm = (props) => {
                 environment: Yup.object(),
                 devStrategy: Yup.string().required('*A CICD strategy is required'),
                 tags: Yup.array().nullable(),
-                template: Yup.string().nullable(),
               })}
               onSubmit={async (
                 values,
@@ -433,21 +430,6 @@ const PipelineCrateForm = (props) => {
                               </MenuItem>
                             ))}
                           </TextField>
-                        </CardContent>
-                        <CardContent>
-                          {values.devStrategy === "template" && (
-                            <TextField
-                              error={Boolean(touched.template && errors.template)}
-                              fullWidth
-                              helperText={touched.template && errors.template}
-                              label="GitHub Template Clone Path"
-                              name="template"
-                              onBlur={handleBlur}
-                              onChange={handleChange}
-                              value={values.template}
-                              variant="outlined"
-                            />
-                          )}
                         </CardContent>
                       </Card>
                     </Grid>
