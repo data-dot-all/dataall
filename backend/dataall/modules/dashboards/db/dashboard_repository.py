@@ -42,7 +42,6 @@ class DashboardRepository(EnvironmentResource):
         groups: [str],
         uri: str,
         data: dict = None,
-        check_perm: bool = False,
     ) -> Dashboard:
         if not data:
             raise exceptions.RequiredParameter(data)
@@ -127,14 +126,7 @@ class DashboardRepository(EnvironmentResource):
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(GET_DASHBOARD)
-    def get_dashboard(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> Dashboard:
+    def get_dashboard(session, uri: str) -> Dashboard:
         return DashboardRepository.get_dashboard_by_uri(session, uri)
 
     @staticmethod
@@ -175,7 +167,7 @@ class DashboardRepository(EnvironmentResource):
 
     @staticmethod
     def paginated_user_dashboards(
-        session, username, groups, uri, data=None, check_perm=None
+        session, username, groups, data=None
     ) -> dict:
         return paginate(
             query=DashboardRepository.query_user_dashboards(session, username, groups, data),
@@ -213,7 +205,7 @@ class DashboardRepository(EnvironmentResource):
         return query
 
     @staticmethod
-    def query_all_user_groups_shareddashboard(session, username, groups, uri) -> Query:
+    def query_all_user_groups_shareddashboard(session, groups, uri) -> [str]:
         query = (
             session.query(DashboardShare)
             .filter(
@@ -224,16 +216,13 @@ class DashboardRepository(EnvironmentResource):
             )
         )
 
-        return [
-            share.SamlGroupName
-            for share in query.all()
-        ]
+        return [share.SamlGroupName for share in query.all()]
 
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(SHARE_DASHBOARD)
     def paginated_dashboard_shares(
-        session, username, groups, uri, data=None, check_perm=None
+        session, username, groups, uri, data=None
     ) -> dict:
         return paginate(
             query=DashboardRepository.query_dashboard_shares(
@@ -249,17 +238,10 @@ class DashboardRepository(EnvironmentResource):
     def update_dashboard(
         session,
         username: str,
-        groups: [str],
         uri: str,
+        dashboard: Dashboard,
         data: dict = None,
-        check_perm: bool = False,
     ) -> Dashboard:
-
-        dashboard = data.get(
-            'dashboard',
-            DashboardRepository.get_dashboard_by_uri(session, data['dashboardUri']),
-        )
-
         for k in data.keys():
             setattr(dashboard, k, data.get(k))
 
@@ -280,9 +262,8 @@ class DashboardRepository(EnvironmentResource):
         return dashboard
 
     @staticmethod
-    def delete_dashboard(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> bool:
+    def delete_dashboard(session, uri) -> bool:
+        # TODO THERE WAS NO PERMISSION CHECK
         dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         session.delete(dashboard)
         ResourcePolicy.delete_resource_policy(
@@ -300,13 +281,11 @@ class DashboardRepository(EnvironmentResource):
     def request_dashboard_share(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
+        principal_id: str
     ) -> DashboardShare:
         dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-        if dashboard.SamlGroupName == data['principalId']:
+        if dashboard.SamlGroupName == principal_id:
             raise exceptions.UnauthorizedOperation(
                 action=CREATE_DASHBOARD,
                 message=f'Team {dashboard.SamlGroupName} is the owner of the dashboard {dashboard.label}',
@@ -315,7 +294,7 @@ class DashboardRepository(EnvironmentResource):
             session.query(DashboardShare)
             .filter(
                 DashboardShare.dashboardUri == uri,
-                DashboardShare.SamlGroupName == data['principalId'],
+                DashboardShare.SamlGroupName == principal_id,
             )
             .first()
         )
@@ -323,7 +302,7 @@ class DashboardRepository(EnvironmentResource):
             share = DashboardShare(
                 owner=username,
                 dashboardUri=dashboard.dashboardUri,
-                SamlGroupName=data['principalId'],
+                SamlGroupName=principal_id,
                 status=DashboardShareStatus.REQUESTED.value,
             )
             session.add(share)
@@ -342,25 +321,7 @@ class DashboardRepository(EnvironmentResource):
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(SHARE_DASHBOARD)
-    def approve_dashboard_share(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> DashboardShare:
-
-        share: DashboardShare = data.get(
-            'share', session.query(DashboardShare).get(data['shareUri'])
-        )
-
-        if share.status not in DashboardShareStatus.__members__:
-            raise exceptions.InvalidInput(
-                'Share status',
-                share.status,
-                str(DashboardShareStatus.__members__),
-            )
+    def approve_dashboard_share(session, uri: str, share) -> DashboardShare:
         if share.status == DashboardShareStatus.APPROVED.value:
             return share
 
@@ -379,25 +340,7 @@ class DashboardRepository(EnvironmentResource):
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(SHARE_DASHBOARD)
-    def reject_dashboard_share(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> DashboardShare:
-
-        share: DashboardShare = data.get(
-            'share', session.query(DashboardShare).get(data['shareUri'])
-        )
-
-        if share.status not in DashboardShareStatus.__members__:
-            raise exceptions.InvalidInput(
-                'Share status',
-                share.status,
-                str(DashboardShareStatus.__members__),
-            )
+    def reject_dashboard_share( session, uri: str, share) -> DashboardShare:
         if share.status == DashboardShareStatus.REJECTED.value:
             return share
 
@@ -418,23 +361,21 @@ class DashboardRepository(EnvironmentResource):
     def share_dashboard(
         session,
         username: str,
-        groups: [str],
         uri: str,
-        data: dict = None,
-        check_perm: bool = False,
+        principal_id: str
     ) -> DashboardShare:
 
         dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         share = DashboardShare(
             owner=username,
             dashboardUri=dashboard.dashboardUri,
-            SamlGroupName=data['principalId'],
+            SamlGroupName=principal_id,
             status=DashboardShareStatus.APPROVED.value,
         )
         session.add(share)
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=data['principalId'],
+            group=principal_id,
             permissions=[GET_DASHBOARD],
             resource_uri=dashboard.dashboardUri,
             resource_type=Dashboard.__name__,

@@ -6,8 +6,9 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
+from dataall.db.exceptions import InvalidInput
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
-from dataall.modules.dashboards.db.models import Dashboard
+from dataall.modules.dashboards.db.models import Dashboard, DashboardShareStatus
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
 from dataall.utils import Parameter
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
@@ -47,7 +48,6 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
         else:
             shared_groups = DashboardRepository.query_all_user_groups_shareddashboard(
                 session=session,
-                username=context.username,
                 groups=context.groups,
                 uri=dashboardUri
             )
@@ -146,7 +146,6 @@ def import_dashboard(context: Context, source, input: dict = None):
             groups=context.groups,
             uri=env.environmentUri,
             data=input,
-            check_perm=True,
         )
 
         DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
@@ -159,14 +158,12 @@ def update_dashboard(context, source, input: dict = None):
         dashboard = DashboardRepository.get_dashboard_by_uri(
             session, input['dashboardUri']
         )
-        input['dashboard'] = dashboard
         DashboardRepository.update_dashboard(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=dashboard.dashboardUri,
-            data=input,
-            check_perm=True,
+            dashboard=dashboard,
+            data=input
         )
 
         DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
@@ -182,22 +179,13 @@ def list_dashboards(context: Context, source, filter: dict = None):
             session=session,
             username=context.username,
             groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 
 def get_dashboard(context: Context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
-        return DashboardRepository.get_dashboard(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=dashboardUri,
-            data=None,
-            check_perm=True,
-        )
+        return DashboardRepository.get_dashboard(session=session, uri=dashboardUri)
 
 
 def resolve_user_role(context: Context, source: Dashboard):
@@ -224,10 +212,8 @@ def request_dashboard_share(
         return DashboardRepository.request_dashboard_share(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=dashboardUri,
-            data={'principalId': principalId},
-            check_perm=True,
+            principal_id=principalId,
         )
 
 
@@ -238,14 +224,18 @@ def approve_dashboard_share(
 ):
     with context.engine.scoped_session() as session:
         share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
+        if share.status not in DashboardShareStatus.__members__:
+            raise InvalidInput(
+                'Share status',
+                share.status,
+                str(DashboardShareStatus.__members__),
+            )
+
         dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
         return DashboardRepository.approve_dashboard_share(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=dashboard.dashboardUri,
-            data={'share': share, 'shareUri': shareUri},
-            check_perm=True,
+            share=share
         )
 
 
@@ -256,14 +246,18 @@ def reject_dashboard_share(
 ):
     with context.engine.scoped_session() as session:
         share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
+        if share.status not in DashboardShareStatus.__members__:
+            raise InvalidInput(
+                'Share status',
+                share.status,
+                str(DashboardShareStatus.__members__),
+            )
+
         dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
         return DashboardRepository.reject_dashboard_share(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=dashboard.dashboardUri,
-            data={'share': share, 'shareUri': shareUri},
-            check_perm=True,
+            share=share
         )
 
 
@@ -282,7 +276,6 @@ def list_dashboard_shares(
             groups=context.groups,
             uri=dashboardUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -296,23 +289,14 @@ def share_dashboard(
         return DashboardRepository.share_dashboard(
             session=session,
             username=context.username,
-            groups=context.groups,
             uri=dashboardUri,
-            data={'principalId': principalId},
-            check_perm=True,
+            principal_id=principalId,
         )
 
 
 def delete_dashboard(context: Context, source, dashboardUri: str = None):
     with context.engine.scoped_session() as session:
-        DashboardRepository.delete_dashboard(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=dashboardUri,
-            data=None,
-            check_perm=True,
-        )
+        DashboardRepository.delete_dashboard(session=session, uri=dashboardUri)
         DashboardIndexer.delete_doc(doc_id=dashboardUri)
         return True
 
