@@ -138,6 +138,6 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.tasks.catalog_indexer import register_catalog_indexer
-        from dataall.modules.datasets.indexers.catalog_indexer import DatasetCatalogIndexer
+        from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer
 
         register_catalog_indexer(DatasetCatalogIndexer())
