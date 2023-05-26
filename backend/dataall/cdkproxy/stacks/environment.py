@@ -1,14 +1,13 @@
-import json
 import logging
 import os
 import pathlib
-import shutil
+from abc import abstractmethod
+from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
     aws_ec2 as ec2,
     aws_s3 as s3,
-    aws_s3_deployment,
     aws_iam as iam,
     aws_lambda as _lambda,
     aws_lambda_destinations as lambda_destination,
@@ -30,7 +29,7 @@ from constructs import DependencyGroup
 from .manager import stack
 from .pivot_role import PivotRole
 from .sagemakerstudio import SageMakerDomain
-from .policies.data_policy import DataPolicy
+from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
 from ...aws.handlers.parameter_store import ParameterStoreManager
@@ -42,20 +41,35 @@ from ...utils.runtime_stacks_tagging import TagsUtil
 logger = logging.getLogger(__name__)
 
 
+class EnvironmentStackExtension:
+    @staticmethod
+    @abstractmethod
+    def extent(setup: 'EnvironmentSetup'):
+        raise NotImplementedError
+
+
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     """Deploy common environment resources:
-        - default environment S3 Bucket
-        - Lambda + Provider for dataset Glue Databases custom resource
-        - Lambda + Provider for dataset Data Lake location custom resource
-        - SSM parameters for the Lambdas and Providers
-        - pivotRole (if configured)
-        - SNS topic (if subscriptions are enabled)
-        - SM Studio domain (if ML studio is enabled)
-    - Deploy team specific resources: teams IAM roles, Athena workgroups
-    - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
-    """
+            - default environment S3 Bucket
+            - Lambda + Provider for dataset Glue Databases custom resource
+            - Lambda + Provider for dataset Data Lake location custom resource
+            - SSM parameters for the Lambdas and Providers
+            - pivotRole (if configured)
+            - SNS topic (if subscriptions are enabled)
+            - SM Studio domain (if ML studio is enabled)
+        - Deploy team specific resources: teams IAM roles, Athena workgroups
+        - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
+        """
     module_name = __file__
+    _EXTENSIONS: List[Type[EnvironmentStackExtension]] = []
+
+    @staticmethod
+    def register(extension: Type[EnvironmentStackExtension]):
+        EnvironmentSetup._EXTENSIONS.append(extension)
+
+    def environment(self) -> models.Environment:
+        return self._environment
 
     @staticmethod
     def get_env_name():
@@ -108,29 +122,6 @@ class EnvironmentSetup(Stack):
                 group_uri=environment.SamlGroupName,
             )
 
-    @staticmethod
-    def get_environment_group_datasets(engine, environment: models.Environment, group: str) -> [models.Dataset]:
-        with engine.scoped_session() as session:
-            return db.api.Environment.list_group_datasets(
-                session,
-                username='cdk',
-                groups=[],
-                uri=environment.environmentUri,
-                data={'groupUri': group},
-                check_perm=False,
-            )
-
-    @staticmethod
-    def get_all_environment_datasets(engine, environment: models.Environment) -> [models.Dataset]:
-        with engine.scoped_session() as session:
-            return (
-                session.query(models.Dataset)
-                .filter(
-                    models.Dataset.environmentUri == environment.environmentUri,
-                )
-                .all()
-            )
-
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(
             scope,
@@ -164,8 +155,6 @@ class EnvironmentSetup(Stack):
             self.engine, self._environment
         )
 
-        self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
-
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
@@ -177,6 +166,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        self.default_environment_bucket = default_environment_bucket
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
                 sid='RedshiftLogging',
@@ -222,18 +212,6 @@ class EnvironmentSetup(Stack):
                 ),
             ],
             enabled=True,
-        )
-
-        profiling_assetspath = self.zip_code(
-            os.path.realpath(os.path.abspath(os.path.join(__file__, '..', '..', 'assets', 'glueprofilingjob')))
-        )
-
-        aws_s3_deployment.BucketDeployment(
-            self,
-            f'{self._environment.resourcePrefix}GlueProflingJobDeployment',
-            sources=[aws_s3_deployment.Source.asset(profiling_assetspath)],
-            destination_bucket=default_environment_bucket,
-            destination_key_prefix='profiling/code',
         )
 
         # Create or import team IAM roles
@@ -367,36 +345,11 @@ class EnvironmentSetup(Stack):
             string_value=gluedb_custom_resource.function_name,
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
         )
-        # Glue database custom resource - New
-        # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
-        entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
-        )
 
-        gluedb_lf_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}')
-        gluedb_lf_custom_resource = _lambda.Function(
+        LakeformationDefaultSettingsProvider = cr.Provider(
             self,
-            'GlueDatabaseLFCustomResourceHandler',
-            function_name=f'{self._environment.resourcePrefix}-gluedb-lf-handler-{self._environment.environmentUri}',
-            role=self.pivot_role,
-            handler='index.on_event',
-            code=_lambda.Code.from_asset(entry_point),
-            memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Glue database '
-            'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
-            timeout=Duration.seconds(5 * 60),
-            environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
-            },
-            dead_letter_queue_enabled=True,
-            dead_letter_queue=gluedb_lf_cr_dlq,
-            on_failure=lambda_destination.SqsDestination(gluedb_lf_cr_dlq),
-            tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            f'{self._environment.resourcePrefix}LakeformationDefaultSettingsProvider',
+            on_event_handler=lf_default_settings_custom_resource,
         )
 
         glue_db_provider = cr.Provider(
@@ -539,7 +492,7 @@ class EnvironmentSetup(Stack):
             else:
                 topic = self.create_topic(
                     self._environment.subscriptionsProducersTopicName,
-                    self.dataall_central_account,
+                    central_account,
                     self._environment,
                 )
 
@@ -553,7 +506,7 @@ class EnvironmentSetup(Stack):
 
             policy.document.add_statements(
                 iam.PolicyStatement(
-                    principals=[iam.AccountPrincipal(self.dataall_central_account)],
+                    principals=[iam.AccountPrincipal(central_account)],
                     effect=iam.Effect.ALLOW,
                     actions=[
                         'sqs:ReceiveMessage',
@@ -590,25 +543,13 @@ class EnvironmentSetup(Stack):
 
             self.create_topic(
                 self._environment.subscriptionsConsumersTopicName,
-                self.dataall_central_account,
+                central_account,
                 self._environment,
             )
 
-        # Create or import SageMaker Studio domain if ML Studio enabled
-        domain = SageMakerDomain(
-            stack=self,
-            id='SageMakerDomain',
-            environment=self._environment
-        )
-        self.existing_sagemaker_domain = domain.check_existing_sagemaker_studio_domain()
-        if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
-            # Create dependency group - Sagemaker depends on group IAM roles
-            sagemaker_dependency_group = DependencyGroup()
-            sagemaker_dependency_group.add(default_role)
-            for group_role in group_roles:
-                sagemaker_dependency_group.add(group_role)
+        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
 
-            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
+        if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
 
             sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
@@ -620,7 +561,11 @@ class EnvironmentSetup(Stack):
             value=self.pivot_role_name,
             description='pivotRoleName',
         )
-        TagsUtil.add_tags(self)
+
+        for extension in EnvironmentSetup._EXTENSIONS:
+            extension.extent(self)
+
+        TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")
 
         CDKNagUtil.check_rules(self)
 
@@ -637,8 +582,8 @@ class EnvironmentSetup(Stack):
                 tag_key='Team',
                 tag_value=self._environment.SamlGroupName,
                 resource_prefix=self._environment.resourcePrefix,
-                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-{self._environment.environmentUri}-default-services-policy',
-                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-{self._environment.environmentUri}-default-services-policy',
+                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy',
+                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-services-policy',
                 account=self._environment.AwsAccountId,
                 region=self._environment.region,
                 role_name=self._environment.EnvironmentDefaultIAMRoleName,
@@ -696,7 +641,7 @@ class EnvironmentSetup(Stack):
                 iam.Role.from_role_arn(
                     self,
                     f'{group.groupUri + group.environmentIAMRoleName}',
-                    role_arn=f'arn:aws:iam::{self._environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
+                    role_arn=f'arn:aws:iam::{self.environment.AwsAccountId}:role/{group.environmentIAMRoleName}',
                 )
         return group_roles
 
@@ -710,27 +655,27 @@ class EnvironmentSetup(Stack):
             tag_key='Team',
             tag_value=group.groupUri,
             resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-{self._environment.environmentUri}-services-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-{self._environment.environmentUri}-services-policy',
+            name=f'{self._environment.resourcePrefix}-{group.groupUri}-services-policy',
+            id=f'{self._environment.resourcePrefix}-{group.groupUri}-services-policy',
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
             region=self._environment.region,
             permissions=group_permissions,
         ).generate_policies()
 
-        data_policy = DataPolicy(
-            stack=self,
-            tag_key='Team',
-            tag_value=group.groupUri,
-            resource_prefix=self._environment.resourcePrefix,
-            name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
-            account=self._environment.AwsAccountId,
-            region=self._environment.region,
-            environment=self._environment,
-            team=group,
-            datasets=self.get_environment_group_datasets(self.engine, self._environment, group.groupUri),
-        ).generate_data_access_policy()
+        with self.engine.scoped_session() as session:
+            data_policy = S3Policy(
+                stack=self,
+                tag_key='Team',
+                tag_value=group.groupUri,
+                resource_prefix=self._environment.resourcePrefix,
+                name=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                id=f'{self._environment.resourcePrefix}-{group.groupUri}-data-policy',
+                account=self._environment.AwsAccountId,
+                region=self._environment.region,
+                environment=self._environment,
+                team=group,
+            ).generate_data_access_policy(session=session)
 
         group_role = iam.Role(
             self,
@@ -807,7 +752,9 @@ class EnvironmentSetup(Stack):
             alias=f'{construct_id}-topic-key',
             enable_key_rotation=True,
         )
-        topic = sns.Topic(self, f'{construct_id}', topic_name=f'{construct_id}', master_key=topic_key)
+        topic = sns.Topic(
+            self, f'{construct_id}', topic_name=f'{construct_id}', master_key=topic_key
+        )
         topic.add_to_resource_policy(
             iam.PolicyStatement(
                 principals=[iam.AccountPrincipal(central_account)],
@@ -825,12 +772,6 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
-
-    @staticmethod
-    def zip_code(assetspath, s3_key='profiler'):
-        logger.info('Zipping code')
-        shutil.make_archive(base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}')
-        return assetspath
 
     def set_dlq(self, queue_name) -> sqs.Queue:
         queue_key = kms.Key(

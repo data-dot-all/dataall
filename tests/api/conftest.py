@@ -2,7 +2,7 @@ import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 from dataall.api import constants
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -25,7 +25,7 @@ def patch_check_env(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_dataset(module_mocker):
     module_mocker.patch(
-        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
+        'dataall.modules.datasets.api.dataset.resolvers.check_dataset_account', return_value=True
     )
 
 
@@ -33,7 +33,6 @@ def patch_check_dataset(module_mocker):
 def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.searchproxy.upsert', return_value={})
     module_mocker.patch(
         'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
         return_value={}
@@ -195,7 +194,7 @@ def dataset(client, patch_es):
         name: str,
         owner: str,
         group: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
             print('found in cache ', cache[key])
@@ -395,9 +394,9 @@ def dataset_model(db):
         organization: models.Organization,
         environment: models.Environment,
         label: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         with db.scoped_session() as session:
-            dataset = models.Dataset(
+            dataset = Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -453,7 +452,7 @@ def environment_group(db):
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
-            dataset: models.Dataset,
+            dataset: Dataset,
             environment: models.Environment,
             env_group: models.EnvironmentGroup,
             owner: str,
@@ -534,7 +533,7 @@ def share_item(db):
 def location(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> DatasetStorageLocation:
+    def factory(dataset: Dataset, name, username) -> DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -559,7 +558,7 @@ def location(db):
 def table(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> DatasetTable:
+    def factory(dataset: Dataset, name, username) -> DatasetTable:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
@@ -634,10 +633,7 @@ def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(env_fixture, org_fixture, dataset, group, module_mocker) -> dataall.db.models.Dataset:
-    module_mocker.patch(
-        'dataall.api.Objects.Dataset.resolvers.check_dataset_account', return_value=True
-    )
+def dataset_fixture(env_fixture, org_fixture, dataset, group, module_mocker) -> Dataset:
     yield dataset(
         org=org_fixture,
         env=env_fixture,
@@ -725,3 +721,35 @@ def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
         groups=[group.name],
     )
     yield response.data.createDataPipeline
+
+
+@pytest.fixture(scope='module')
+def sgm_studio(client, tenant, group, env_fixture, module_mocker) -> models.SagemakerStudioUserProfile:
+    module_mocker.patch(
+        'dataall.aws.handlers.sagemaker_studio.SagemakerStudio.get_sagemaker_studio_domain',
+        return_value={'DomainId': 'test'},
+    )
+    response = client.query(
+        """
+            mutation createSagemakerStudioUserProfile($input:NewSagemakerStudioUserProfileInput){
+            createSagemakerStudioUserProfile(input:$input){
+                sagemakerStudioUserProfileUri
+                name
+                label
+                created
+                description
+                SamlAdminGroupName
+                environmentUri
+                tags
+            }
+        }
+            """,
+        input={
+            'label': f'test1',
+            'SamlAdminGroupName': group.name,
+            'environmentUri': env_fixture.environmentUri,
+        },
+        username='alice',
+        groups=[group.name],
+    )
+    yield response.data.createSagemakerStudioUserProfile

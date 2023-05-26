@@ -10,12 +10,10 @@ from .organization import Organization
 from .environment import Environment
 from .glossary import Glossary
 from .vote import Vote
-from .dataset import Dataset
+from .share_object import ShareObject, ShareObjectSM, ShareItemSM
 from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
-from .share_object import ShareObject, ShareObjectSM, ShareItemSM
-from .notebook import Notebook
 from .sgm_studio_notebook import SgmStudioNotebook
 from .dashboard import Dashboard
 from .pipeline import Pipeline

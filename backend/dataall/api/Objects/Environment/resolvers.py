@@ -402,7 +402,6 @@ def list_environment_group_permissions(
             check_perm=True,
         )
 
-
 def list_shared_with_environment_data_items(
     context: Context, source, environmentUri: str = None, filter: dict = None
 ):
@@ -523,6 +522,7 @@ def generate_environment_access_token(
 
 def get_environment_stack(context: Context, source: models.Environment, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
+        context=context,
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
     )

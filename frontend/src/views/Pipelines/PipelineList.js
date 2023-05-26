@@ -28,7 +28,6 @@ import listDataPipelines from '../../api/DataPipeline/listDataPipelines';
 import ChipInput from '../../components/TagsInput';
 import { AwsRegions } from '../../constants';
 
-
 function PipelinesPageHeader() {
   return (
     <Grid
@@ -107,7 +106,7 @@ const PipelineList = () => {
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      setFilter({...filter, page: 1, term: event.target.value});
+      setFilter({ ...filter, page: 1, term: event.target.value });
     }
   };
 
@@ -118,14 +117,14 @@ const PipelineList = () => {
   };
 
   const handleFilterChange = (filterLabel, values) => {
-    if (filterLabel === "Region"){
-      const selectedRegions = values.map((region) => region.value)
-      setFilter({ ...filter, region: selectedRegions});
-    } else if (filterLabel === "Tags"){
+    if (filterLabel === 'Region') {
+      const selectedRegions = values.map((region) => region.value);
+      setFilter({ ...filter, region: selectedRegions });
+    } else if (filterLabel === 'Tags') {
       setFilter({ ...filter, tags: values });
-    } else if (filterLabel === "DevStrategy"){
-      const selectedTypes = values.map((type) => type.value)
-      setFilter({ ...filter, type: selectedTypes })
+    } else if (filterLabel === 'DevStrategy') {
+      const selectedTypes = values.map((type) => type.value);
+      setFilter({ ...filter, type: selectedTypes });
     }
   };
 
@@ -166,14 +165,16 @@ const PipelineList = () => {
             <Grid container spacing={2} xs={8}>
               {filterItems.map((item) => (
                 <Grid item md={4} xs={12}>
-                  {item.title != 'Tags' 
-                    ? <Autocomplete
+                  {item.title !== 'Tags' ? (
+                    <Autocomplete
                       id={item.title}
                       multiple
                       fullWidth
-                      options ={item.options}
+                      options={item.options}
                       getOptionLabel={(option) => option.label}
-                      onChange={(event, value) => handleFilterChange(item.title, value)}
+                      onChange={(event, value) =>
+                        handleFilterChange(item.title, value)
+                      }
                       renderInput={(regionParams) => (
                         <TextField
                           {...regionParams}
@@ -183,14 +184,15 @@ const PipelineList = () => {
                         />
                       )}
                     />
-                    : <ChipInput
+                  ) : (
+                    <ChipInput
                       fullWidth
                       variant="outlined"
-                      label= {item.title}
+                      label={item.title}
                       placeholder="Hit enter after typing value"
                       onChange={(e) => handleFilterChange(item.title, e)}
                     />
-                  }
+                  )}
                 </Grid>
               ))}
             </Grid>
