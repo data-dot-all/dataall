@@ -215,8 +215,8 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        default_role = self.create_or_import_environment_default_role()
-        group_roles = self.create_or_import_environment_groups_roles()
+        self.default_role = self.create_or_import_environment_default_role()
+        self.group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -547,11 +547,6 @@ class EnvironmentSetup(Stack):
                 self._environment,
             )
 
-        self.sagemaker_domain_exists = self.check_sagemaker_studio(engine=self.engine, environment=self._environment)
-
-        if self._environment.mlStudiosEnabled and not (self.sagemaker_domain_exists):
-
-            sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
         # print the IAM role arn for this service account
         CfnOutput(
