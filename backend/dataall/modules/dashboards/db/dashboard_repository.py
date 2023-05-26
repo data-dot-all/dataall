@@ -126,7 +126,7 @@ class DashboardRepository(EnvironmentResource):
         return dashboard
 
     @staticmethod
-    def query_user_dashboards(session, username, groups, filter) -> Query:
+    def _query_user_dashboards(session, username, groups, filter) -> Query:
         query = (
             session.query(Dashboard)
             .outerjoin(
@@ -159,13 +159,13 @@ class DashboardRepository(EnvironmentResource):
         session, username, groups, data=None
     ) -> dict:
         return paginate(
-            query=DashboardRepository.query_user_dashboards(session, username, groups, data),
+            query=DashboardRepository._query_user_dashboards(session, username, groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    def query_dashboard_shares(session, username, groups, uri, filter) -> Query:
+    def _query_dashboard_shares(session, username, groups, uri, filter) -> Query:
         query = (
             session.query(DashboardShare)
             .join(
@@ -208,13 +208,11 @@ class DashboardRepository(EnvironmentResource):
         return [share.SamlGroupName for share in query.all()]
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD)
     def paginated_dashboard_shares(
         session, username, groups, uri, data=None
     ) -> dict:
         return paginate(
-            query=DashboardRepository.query_dashboard_shares(
+            query=DashboardRepository._query_dashboard_shares(
                 session, username, groups, uri, data
             ),
             page=data.get('page', 1),
@@ -266,109 +264,20 @@ class DashboardRepository(EnvironmentResource):
         return True
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    def request_dashboard_share(
+    def create_share(
         session,
         username: str,
-        uri: str,
-        principal_id: str
+        dashboard: Dashboard,
+        principal_id: str,
+        init_status: DashboardShareStatus = DashboardShareStatus.REQUESTED
     ) -> DashboardShare:
-        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-        if dashboard.SamlGroupName == principal_id:
-            raise exceptions.UnauthorizedOperation(
-                action=CREATE_DASHBOARD,
-                message=f'Team {dashboard.SamlGroupName} is the owner of the dashboard {dashboard.label}',
-            )
-        share: DashboardShare = (
-            session.query(DashboardShare)
-            .filter(
-                DashboardShare.dashboardUri == uri,
-                DashboardShare.SamlGroupName == principal_id,
-            )
-            .first()
-        )
-        if not share:
-            share = DashboardShare(
-                owner=username,
-                dashboardUri=dashboard.dashboardUri,
-                SamlGroupName=principal_id,
-                status=DashboardShareStatus.REQUESTED.value,
-            )
-            session.add(share)
-        else:
-            if share.status not in DashboardShareStatus.__members__:
-                raise exceptions.InvalidInput(
-                    'Share status',
-                    share.status,
-                    str(DashboardShareStatus.__members__),
-                )
-            if share.status == 'REJECTED':
-                share.status = 'REQUESTED'
-
-        return share
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD)
-    def approve_dashboard_share(session, uri: str, share) -> DashboardShare:
-        if share.status == DashboardShareStatus.APPROVED.value:
-            return share
-
-        share.status = DashboardShareStatus.APPROVED.value
-
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=share.SamlGroupName,
-            permissions=[GET_DASHBOARD],
-            resource_uri=share.dashboardUri,
-            resource_type=Dashboard.__name__,
-        )
-
-        return share
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD)
-    def reject_dashboard_share( session, uri: str, share) -> DashboardShare:
-        if share.status == DashboardShareStatus.REJECTED.value:
-            return share
-
-        share.status = DashboardShareStatus.REJECTED.value
-
-        ResourcePolicy.delete_resource_policy(
-            session=session,
-            group=share.SamlGroupName,
-            resource_uri=share.dashboardUri,
-            resource_type=Dashboard.__name__,
-        )
-
-        return share
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(SHARE_DASHBOARD)
-    def share_dashboard(
-        session,
-        username: str,
-        uri: str,
-        principal_id: str
-    ) -> DashboardShare:
-
-        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         share = DashboardShare(
             owner=username,
             dashboardUri=dashboard.dashboardUri,
             SamlGroupName=principal_id,
-            status=DashboardShareStatus.APPROVED.value,
+            status=init_status.value,
         )
         session.add(share)
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=principal_id,
-            permissions=[GET_DASHBOARD],
-            resource_uri=dashboard.dashboardUri,
-            resource_type=Dashboard.__name__,
-        )
         return share
 
     @staticmethod
@@ -377,3 +286,14 @@ class DashboardRepository(EnvironmentResource):
         if not share:
             raise exceptions.ObjectNotFound('DashboardShare', uri)
         return share
+
+    @staticmethod
+    def find_share_for_group(session, dashboard_uri, group) -> DashboardShare:
+        return (
+            session.query(DashboardShare)
+            .filter(
+                DashboardShare.dashboardUri == dashboard_uri,
+                DashboardShare.SamlGroupName == group,
+            )
+            .first()
+        )

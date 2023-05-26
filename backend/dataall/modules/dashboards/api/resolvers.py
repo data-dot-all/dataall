@@ -6,10 +6,11 @@ from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.db import models
 from dataall.db.api import ResourcePolicy, Glossary, Vote
-from dataall.db.exceptions import InvalidInput, RequiredParameter
+from dataall.db.exceptions import RequiredParameter
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
-from dataall.modules.dashboards.db.models import Dashboard, DashboardShareStatus
+from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_share_service import DashboardShareService
 from dataall.utils import Parameter
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
@@ -219,57 +220,15 @@ def request_dashboard_share(
     principalId: str = None,
     dashboardUri: str = None,
 ):
-    with context.engine.scoped_session() as session:
-        return DashboardRepository.request_dashboard_share(
-            session=session,
-            username=context.username,
-            uri=dashboardUri,
-            principal_id=principalId,
-        )
+    return DashboardShareService.request_dashboard_share(uri=dashboardUri, principal_id=principalId)
 
 
-def approve_dashboard_share(
-    context: Context,
-    source: Dashboard,
-    shareUri: str = None,
-):
-    with context.engine.scoped_session() as session:
-        share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
-        if share.status not in DashboardShareStatus.__members__:
-            raise InvalidInput(
-                'Share status',
-                share.status,
-                str(DashboardShareStatus.__members__),
-            )
-
-        dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
-        return DashboardRepository.approve_dashboard_share(
-            session=session,
-            uri=dashboard.dashboardUri,
-            share=share
-        )
+def approve_dashboard_share(context: Context, source: Dashboard, shareUri: str = None):
+    return DashboardShareService.approve_dashboard_share(uri=shareUri)
 
 
-def reject_dashboard_share(
-    context: Context,
-    source: Dashboard,
-    shareUri: str = None,
-):
-    with context.engine.scoped_session() as session:
-        share = DashboardRepository.get_dashboard_share_by_uri(session, shareUri)
-        if share.status not in DashboardShareStatus.__members__:
-            raise InvalidInput(
-                'Share status',
-                share.status,
-                str(DashboardShareStatus.__members__),
-            )
-
-        dashboard = DashboardRepository.get_dashboard_by_uri(session, share.dashboardUri)
-        return DashboardRepository.reject_dashboard_share(
-            session=session,
-            uri=dashboard.dashboardUri,
-            share=share
-        )
+def reject_dashboard_share(context: Context,source: Dashboard, shareUri: str = None):
+    return DashboardShareService.reject_dashboard_share(uri=shareUri)
 
 
 def list_dashboard_shares(
@@ -280,14 +239,7 @@ def list_dashboard_shares(
 ):
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return DashboardRepository.paginated_dashboard_shares(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=dashboardUri,
-            data=filter,
-        )
+    return DashboardShareService.list_dashboard_shares(uri=dashboardUri, data=filter)
 
 
 def share_dashboard(
@@ -296,13 +248,7 @@ def share_dashboard(
     principalId: str = None,
     dashboardUri: str = None,
 ):
-    with context.engine.scoped_session() as session:
-        return DashboardRepository.share_dashboard(
-            session=session,
-            username=context.username,
-            uri=dashboardUri,
-            principal_id=principalId,
-        )
+    return DashboardShareService.share_dashboard(uri=dashboardUri, principal_id=principalId)
 
 
 def delete_dashboard(context: Context, source, dashboardUri: str = None):
