@@ -9,7 +9,6 @@ NewDataPipelineInput = gql.InputType(
         gql.Argument(name='SamlGroupName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='tags', type=gql.ArrayType(gql.String)),
         gql.Argument(name='devStrategy', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='template', type=gql.String)
     ],
 )
 

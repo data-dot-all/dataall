@@ -58,8 +58,8 @@ def setup_cognito(
             f'https://{user_guide_link}/parseauth',
         ]
         existing_callbacks = user_pool['UserPoolClient'].get('CallbackURLs', [])
-        if 'example.com' in existing_callbacks:
-            existing_callbacks.remove('example.com')
+        if 'https://example.com' in existing_callbacks:
+            existing_callbacks.remove('https://example.com')
         updated_callbacks = existing_callbacks + list(
             set(config_callbacks) - set(existing_callbacks)
         )
