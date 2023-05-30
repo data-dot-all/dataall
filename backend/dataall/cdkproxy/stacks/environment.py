@@ -6,7 +6,6 @@ from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
-    aws_ec2 as ec2,
     aws_s3 as s3,
     aws_iam as iam,
     aws_lambda as _lambda,
@@ -24,11 +23,9 @@ from aws_cdk import (
     CustomResource,
     Tags,
 )
-from constructs import DependencyGroup
 
 from .manager import stack
 from .pivot_role import PivotRole
-from .sagemakerstudio import SageMakerDomain
 from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
@@ -57,7 +54,7 @@ class EnvironmentSetup(Stack):
             - SSM parameters for the Lambdas and Providers
             - pivotRole (if configured)
             - SNS topic (if subscriptions are enabled)
-            - SM Studio domain (if ML studio is enabled)
+            - Module extension stacks (if module is enabled and has an associated extension stack)
         - Deploy team specific resources: teams IAM roles, Athena workgroups
         - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
         """
