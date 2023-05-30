@@ -38,7 +38,17 @@ class DashboardApiModuleInterface(ModuleInterface):
         EnvironmentResourceManager.register(DashboardRepository())
 
 
-class DatasetCatalogIndexerModuleInterface(ModuleInterface):
+class DashboardCdkModuleInterface(ModuleInterface):
+
+    @staticmethod
+    def is_supported(modes: Set[ImportMode]) -> bool:
+        return ImportMode.CDK in modes
+
+    def __init__(self):
+        import dataall.modules.dashboards.cdk
+
+
+class DashboardCatalogIndexerModuleInterface(ModuleInterface):
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
