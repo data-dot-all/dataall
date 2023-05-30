@@ -392,6 +392,23 @@ class Environment:
                 message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
             )
 
+        shares_count = (
+            session.query(models.ShareObject)
+            .filter(
+                and_(
+                    models.ShareObject.principalId == group,
+                    models.ShareObject.principalType == PrincipalType.Group.value
+                )
+            )
+            .count()
+        )
+
+        if shares_count > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Team',
+                message=f'Consumption role: {group} has created {shares_count} share requests on this environment.',
+            )
+
         group_membership = Environment.find_environment_group(
             session, group, environment.environmentUri
         )
