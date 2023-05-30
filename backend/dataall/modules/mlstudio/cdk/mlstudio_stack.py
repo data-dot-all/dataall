@@ -38,15 +38,14 @@ from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
 
 logger = logging.getLogger(__name__)
 
+
 class SageMakerDomain(EnvironmentStackExtension):
 
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
-        #def create_sagemaker_domain_resources(self, sagemaker_principals):
         sagemaker_principals = [setup.default_role] + setup.group_roles
-        print(f"sagemaker_principals = {sagemaker_principals}")
 
-        logger.info('Creating SageMaker base resources..')
+        logger.info(f'Creating SageMaker base resources for sagemaker principals = {sagemaker_principals}..')
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
             accountid=_environment.AwsAccountId, region=_environment.region
         )
@@ -149,7 +148,7 @@ class SageMakerDomain(EnvironmentStackExtension):
                 ],
             ),
         )
-        #TODO: this line might not be needed
+        # TODO: this line might not be needed, test locally
         sagemaker_domain_key.node.add_dependency(sagemaker_principals)
 
         sagemaker_domain = sagemaker.CfnDomain(

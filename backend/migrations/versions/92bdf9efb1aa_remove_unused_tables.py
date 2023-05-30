@@ -28,7 +28,6 @@ def upgrade():
         print(f"Failed to execute the migration script due to: {e}")
 
 
-
 def downgrade():
     try:
         bind = op.get_bind()
