@@ -1,6 +1,6 @@
 from dataall.aws.handlers.quicksight import Quicksight
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission, has_group_permission
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import ResourcePolicy, Glossary, Vote, Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.db.models import Activity
@@ -11,6 +11,7 @@ from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DAS
 
 
 class DashboardService:
+    """Service that serves request related to dashboard"""
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(GET_DASHBOARD)
