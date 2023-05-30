@@ -348,11 +348,6 @@ class Environment:
         group_env_objects_count = (
             session.query(models.Environment)
             .outerjoin(
-                models.SagemakerStudioUserProfile,
-                models.SagemakerStudioUserProfile.environmentUri
-                == models.Environment.environmentUri,
-            )
-            .outerjoin(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
                 == models.Environment.environmentUri,
@@ -370,7 +365,6 @@ class Environment:
                     models.Environment.environmentUri == environment.environmentUri,
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
-                        models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
                         models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
                     ),
