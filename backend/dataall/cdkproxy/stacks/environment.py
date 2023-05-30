@@ -29,7 +29,6 @@ from constructs import DependencyGroup
 
 from .manager import stack
 from .pivot_role import PivotRole
-from .sagemakerstudio import SageMakerDomain
 from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
@@ -58,7 +57,7 @@ class EnvironmentSetup(Stack):
         - SSM parameters for the Lambdas and Providers
         - pivotRole (if configured)
         - SNS topic (if subscriptions are enabled)
-        - SM Studio domain (if ML studio is enabled)
+        - Module extension stacks (if module is enabled and has an associated extension stack)
     - Deploy team specific resources: teams IAM roles, Athena workgroups
     - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
     """
@@ -220,8 +219,8 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        default_role = self.create_or_import_environment_default_role()
-        group_roles = self.create_or_import_environment_groups_roles()
+        self.default_role = self.create_or_import_environment_default_role()
+        self.group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -576,24 +575,6 @@ class EnvironmentSetup(Stack):
                 self.dataall_central_account,
                 self._environment,
             )
-
-        # Create or import SageMaker Studio domain if ML Studio enabled
-        domain = SageMakerDomain(
-            stack=self,
-            id='SageMakerDomain',
-            environment=self._environment
-        )
-        self.existing_sagemaker_domain = domain.check_existing_sagemaker_studio_domain()
-        if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
-            # Create dependency group - Sagemaker depends on group IAM roles
-            sagemaker_dependency_group = DependencyGroup()
-            sagemaker_dependency_group.add(default_role)
-            for group_role in group_roles:
-                sagemaker_dependency_group.add(group_role)
-
-            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
-
-            sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
         # print the IAM role arn for this service account
         CfnOutput(
