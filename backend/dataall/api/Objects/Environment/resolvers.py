@@ -402,7 +402,6 @@ def list_environment_group_permissions(
             check_perm=True,
         )
 
-
 def list_shared_with_environment_data_items(
     context: Context, source, environmentUri: str = None, filter: dict = None
 ):

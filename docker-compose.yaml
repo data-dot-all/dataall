@@ -16,11 +16,13 @@ services:
       - db
     environment:
       envname: 'dkrcompose'
+      config_location: "/config.json"
       AWS_REGION: "${AWS_REGION:-eu-west-1}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - ./config.json:/config.json
     restart:
       on-failure:60
     platform:
@@ -30,18 +32,20 @@ services:
     build:
       context: ./backend
       dockerfile: docker/dev/Dockerfile
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 local.graphql.server.py"
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.8 local_graphql_server.py"
     expose:
       - 5000
     ports:
       - 5000:5000
     environment:
       envname: 'dkrcompose'
+      config_location: "/config.json"
       AWS_REGION: "${AWS_REGION:-eu-west-1}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
+      - ./config.json:/config.json
     depends_on:
       - db
       - elasticsearch

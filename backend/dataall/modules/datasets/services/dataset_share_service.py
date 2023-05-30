@@ -4,7 +4,7 @@ import re
 from sqlalchemy import or_, case, func
 from sqlalchemy.sql import and_
 
-from dataall.api.constants import ShareableType
+from dataall.api.constants import ShareableType, PrincipalType
 from dataall.db import models, permissions
 from dataall.db.api import has_resource_perm, ShareItemSM
 from dataall.db.paginator import paginate
@@ -29,6 +29,7 @@ class DatasetShareService:
                 models.Environment.name.label('environmentName'),
                 models.ShareObject.created.label('created'),
                 models.ShareObject.principalId.label('principalId'),
+                models.ShareObject.principalType.label('principalType'),
                 models.ShareObjectItem.itemType.label('itemType'),
                 models.ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 models.ShareObjectItem.GlueTableName.label('GlueTableName'),
@@ -99,8 +100,9 @@ class DatasetShareService:
                 or_(*[models.ShareObjectItem.itemType == t for t in itemTypes])
             )
 
-        if data.get("uniqueDatasets", False):
-            q = q.distinct(models.ShareObject.datasetUri)
+        if data.get("uniqueShares", False):
+            q = q.filter(models.ShareObject.principalType != PrincipalType.ConsumptionRole.value)
+            q = q.distinct(models.ShareObject.shareUri)
 
         if data.get('term'):
             term = data.get('term')

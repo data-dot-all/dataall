@@ -18,21 +18,22 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from .manager import stack
-from ... import db
-from ...aws.handlers.lakeformation import LakeFormation
-from ...aws.handlers.quicksight import Quicksight
-from ...aws.handlers.sts import SessionHelper
-from ...db import models
-from ...db.api import Environment
-from ...utils.cdk_nag_utils import CDKNagUtil
-from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.cdkproxy.stacks.manager import stack
+from dataall import db
+from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.lakeformation import LakeFormation
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db import models
+from dataall.db.api import Environment
+from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.utils.runtime_stacks_tagging import TagsUtil
+from dataall.modules.datasets.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 
 
 @stack(stack='dataset')
-class Dataset(Stack):
+class DatasetStack(Stack):
     """Deploy common dataset resources:
             - dataset S3 Bucket + KMS key (If S3 Bucket not imported)
             - dataset IAM role
@@ -62,18 +63,18 @@ class Dataset(Stack):
             )
         return env
 
-    def get_target_with_uri(self, target_uri) -> models.Dataset:
+    def get_target_with_uri(self, target_uri) -> Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(models.Dataset).get(target_uri)
+            dataset = session.query(Dataset).get(target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
 
-    def get_target(self) -> models.Dataset:
+    def get_target(self) -> Dataset:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            dataset = session.query(models.Dataset).get(self.target_uri)
+            dataset = session.query(Dataset).get(self.target_uri)
             if not dataset:
                 raise Exception('ObjectNotFound')
         return dataset
@@ -478,6 +479,6 @@ class Dataset(Stack):
 
         Tags.of(self).add('Classification', dataset.confidentiality)
 
-        TagsUtil.add_tags(stack=self, model=models.Dataset, target_type="dataset")
+        TagsUtil.add_tags(stack=self, model=Dataset, target_type="dataset")
 
         CDKNagUtil.check_rules(self)
