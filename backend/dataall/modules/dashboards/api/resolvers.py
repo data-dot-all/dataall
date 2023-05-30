@@ -1,8 +1,8 @@
-from dataall.api.constants import DashboardRole
 from dataall.api.context import Context
 from dataall.db import models
 from dataall.db.api import  Glossary, Vote
 from dataall.db.exceptions import RequiredParameter
+from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.dashboards.services.dashboard_quicksight_service import DashboardQuicksightService

@@ -67,13 +67,6 @@ class ProjectMemberRole(GraphQLEnumMapper):
     NotContributor = '000'
 
 
-class DashboardRole(GraphQLEnumMapper):
-    Creator = '999'
-    Admin = '900'
-    Shared = '800'
-    NoPermission = '000'
-
-
 class DataPipelineRole(GraphQLEnumMapper):
     Creator = '999'
     Admin = '900'
