@@ -207,12 +207,10 @@ class SagemakerStudioUserProfile(Stack):
     """
     module_name = __file__
 
-
     def get_engine(self) -> Engine:
         envname = os.environ.get('envname', 'local')
         engine = get_engine(envname=envname)
         return engine
-
 
     def get_target(self, target_uri) -> SagemakerStudioUser:
         engine = self.get_engine()
@@ -221,7 +219,6 @@ class SagemakerStudioUserProfile(Stack):
                 target_uri
             )
         return sm_user
-
 
     def get_env_group(
             self, sm_user: SagemakerStudioUser
@@ -232,7 +229,6 @@ class SagemakerStudioUserProfile(Stack):
                 session, sm_user.SamlAdminGroupName, sm_user.environmentUri,
             )
         return env_group
-
 
     def __init__(self, scope, id: str, target_uri: str = None, **kwargs) -> None:
         super().__init__(scope,

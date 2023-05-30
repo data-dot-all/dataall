@@ -75,10 +75,6 @@ class EnvironmentSetup(Stack):
     def get_env_name():
         return os.environ.get('envname', 'local')
 
-    @staticmethod
-    def get_env_name():
-        return os.environ.get('envname', 'local')
-
     def get_engine(self):
         engine = db.get_engine(envname=self.get_env_name())
         return engine

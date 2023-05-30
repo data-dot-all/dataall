@@ -82,15 +82,15 @@ def upgrade():
         print("Creating new permission MANAGE_SGMSTUDIO_USERS to distinguish from MANAGE_NOTEBOOKS...")
 
         manage_mlstudio_permission = PermissionService.save_permission(
-            session=session, name=MANAGE_SGMSTUDIO_USERS, description= f"Allow MANAGE_SGMSTUDIO_USERS", permission_type=PermissionType.TENANT.name
+            session=session, name=MANAGE_SGMSTUDIO_USERS, description="Allow MANAGE_SGMSTUDIO_USERS", permission_type=PermissionType.TENANT.name
         )
         session.commit()
         print(f"manage_mlstudio_permission_uri = {manage_mlstudio_permission.permissionUri}")
         manage_notebooks_permission = (
             session.query(Permission)
             .filter(and_(
-                Permission.name==MANAGE_NOTEBOOKS,
-                Permission.type==PermissionType.TENANT.name
+                Permission.name == MANAGE_NOTEBOOKS,
+                Permission.type == PermissionType.TENANT.name
             ))
             .first()
         )
@@ -113,7 +113,7 @@ def upgrade():
 
         for old, new in zip(list(old_permissions.items()), list(new_permissions.items())):
             print(f"Updating permission table {old[0]} to {new[0]}, description:{new[1]}")
-            session.query(Permission).filter(Permission.name==old[0]).update({Permission.name:new[0], Permission.description:new[1]}, synchronize_session=False)
+            session.query(Permission).filter(Permission.name == old[0]).update({Permission.name: new[0], Permission.description: new[1]}, synchronize_session=False)
             session.commit()
 
         print("Renaming columns of sagemaker_studio_user_profile...")
@@ -179,4 +179,3 @@ def downgrade():
 
     except Exception as e:
         print(f"Failed to execute the migration script due to: {e}")
-
