@@ -7,9 +7,10 @@ from sqlalchemy.orm import Query
 
 from dataall.db import paginate, exceptions
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.core.group.services.group_resource_manager import GroupResource
 
 
-class SageMakerStudioRepository:
+class SageMakerStudioRepository(GroupResource):
     """DAO layer for ML Studio"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
@@ -54,7 +55,7 @@ class SageMakerStudioRepository:
         """Finds a sagemaker studio user. Returns None if it doesn't exist"""
         return self._session.query(SagemakerStudioUser).get(uri)
 
-    def count_sagemaker_studio_user(self, environment_uri):
+    def count_resources(self, environment_uri):
         return (
             self._session.query(SagemakerStudioUser)
             .filter(SagemakerStudioUser.environmentUri == environment_uri)
