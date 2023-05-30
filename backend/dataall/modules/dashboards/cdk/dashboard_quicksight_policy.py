@@ -4,7 +4,7 @@ from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
 from dataall.modules.dashboards.services.dashboard_permissions import CREATE_DASHBOARD
 
 
-class QuickSight(ServicePolicy):
+class QuickSightPolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
         if CREATE_DASHBOARD not in group_permissions:
             return []
