@@ -529,6 +529,23 @@ class Environment:
 
         consumption_role = Environment.get_environment_consumption_role(session, uri, data.get('environmentUri'))
 
+        shares_count = (
+            session.query(models.ShareObject)
+            .filter(
+                and_(
+                    models.ShareObject.principalId == uri,
+                    models.ShareObject.principalType == PrincipalType.ConsumptionRole.value
+                )
+            )
+            .count()
+        )
+
+        if shares_count > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Consumption Role',
+                message=f'Consumption role: {consumption_role} has created {shares_count} share requests on this environment.',
+            )
+
         if consumption_role:
             session.delete(consumption_role)
             session.commit()
