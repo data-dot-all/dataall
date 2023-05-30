@@ -11,6 +11,7 @@ from dataall.db.exceptions import RequiredParameter, AWSResourceNotFound, Tenant
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_service import DashboardService
 from dataall.modules.dashboards.services.dashboard_share_service import DashboardShareService
 from dataall.utils import Parameter
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
@@ -121,68 +122,11 @@ def import_dashboard(context: Context, source, input: dict = None):
     if not input.get('label'):
         raise RequiredParameter('label')
 
-    with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=input['environmentUri'],
-            permission_name=CREATE_DASHBOARD,
-        )
-        env: models.Environment = db.api.Environment.get_environment_by_uri(
-            session, input['environmentUri']
-        )
-
-        if not env.dashboardsEnabled:
-            raise db.exceptions.UnauthorizedOperation(
-                action=CREATE_DASHBOARD,
-                message=f'Dashboards feature is disabled for the environment {env.label}',
-            )
-
-        can_import = Quicksight.can_import_dashboard(
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
-            UserName=context.username,
-            DashboardId=input.get('dashboardId'),
-        )
-
-        if not can_import:
-            raise db.exceptions.UnauthorizedOperation(
-                action=CREATE_DASHBOARD,
-                message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
-            )
-
-        input['environment'] = env
-        dashboard = DashboardRepository.import_dashboard(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=env.environmentUri,
-            data=input,
-        )
-
-        DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
-
-    return dashboard
+    return DashboardService.import_dashboard(uri=input['environmentUri'], data=input)
 
 
 def update_dashboard(context, source, input: dict = None):
-    with context.engine.scoped_session() as session:
-        dashboard = DashboardRepository.get_dashboard_by_uri(
-            session, input['dashboardUri']
-        )
-        DashboardRepository.update_dashboard(
-            session=session,
-            username=context.username,
-            uri=dashboard.dashboardUri,
-            dashboard=dashboard,
-            data=input
-        )
-
-        DashboardIndexer.upsert(session, dashboard_uri=dashboard.dashboardUri)
-
-        return dashboard
-
+    return DashboardService.update_dashboard(uri=input['dashboardUri'], data=input)
 
 def list_dashboards(context: Context, source, filter: dict = None):
     if not filter:
@@ -197,8 +141,7 @@ def list_dashboards(context: Context, source, filter: dict = None):
 
 
 def get_dashboard(context: Context, source, dashboardUri: str = None):
-    with context.engine.scoped_session() as session:
-        return DashboardRepository.get_dashboard(session=session, uri=dashboardUri)
+    return DashboardService.get_dashboard(uri=dashboardUri)
 
 
 def resolve_user_role(context: Context, source: Dashboard):
@@ -253,10 +196,7 @@ def share_dashboard(
 
 
 def delete_dashboard(context: Context, source, dashboardUri: str = None):
-    with context.engine.scoped_session() as session:
-        DashboardRepository.delete_dashboard(session=session, uri=dashboardUri)
-        DashboardIndexer.delete_doc(doc_id=dashboardUri)
-        return True
+    return DashboardService.delete_dashboard(uri=dashboardUri)
 
 
 def resolve_glossary_terms(context: Context, source: Dashboard, **kwargs):
@@ -347,7 +287,7 @@ def get_quicksight_author_session(context, source, awsAccount: str = None):
 
 def get_quicksight_reader_session(context, source, dashboardId: str = None):
     with context.engine.scoped_session() as session:
-        admin = db.api.TenantPolicy.is_tenant_admin(context.groups)
+        admin = TenantPolicy.is_tenant_admin(context.groups)
 
         if not admin:
             raise TenantUnauthorized(

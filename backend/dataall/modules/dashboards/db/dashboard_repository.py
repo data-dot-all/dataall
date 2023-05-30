@@ -4,17 +4,9 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.group.services.group_resource_manager import EnvironmentResource
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.db import models, exceptions, paginate
-from dataall.db.api import (
-    Environment,
-    ResourcePolicy,
-    Glossary,
-    Vote,
-)
+from dataall.db import exceptions, paginate
+from dataall.db.models import Environment
 from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareStatus, Dashboard
-from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, CREATE_DASHBOARD, \
-    DASHBOARD_ALL, GET_DASHBOARD, SHARE_DASHBOARD, UPDATE_DASHBOARD
 
 logger = logging.getLogger(__name__)
 
@@ -34,27 +26,7 @@ class DashboardRepository(EnvironmentResource):
         )
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(CREATE_DASHBOARD)
-    def import_dashboard(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-    ) -> Dashboard:
-        Environment.check_group_environment_permission(
-            session=session,
-            username=username,
-            groups=groups,
-            uri=uri,
-            group=data['SamlGroupName'],
-            permission_name=CREATE_DASHBOARD,
-        )
-
-        env: models.Environment = data.get(
-            'environment', Environment.get_environment_by_uri(session, uri)
-        )
+    def create_dashboard(session, env: Environment, username: str, data: dict = None) -> Dashboard:
         dashboard: Dashboard = Dashboard(
             label=data.get('label', 'untitled'),
             environmentUri=data.get('environmentUri'),
@@ -69,54 +41,7 @@ class DashboardRepository(EnvironmentResource):
         )
         session.add(dashboard)
         session.commit()
-
-        activity = models.Activity(
-            action='DASHBOARD:CREATE',
-            label='DASHBOARD:CREATE',
-            owner=username,
-            summary=f'{username} created dashboard {dashboard.label} in {env.label}',
-            targetUri=dashboard.dashboardUri,
-            targetType='dashboard',
-        )
-        session.add(activity)
-
-        DashboardRepository.set_dashboard_resource_policy(
-            session, env, dashboard, data['SamlGroupName']
-        )
-
-        if 'terms' in data.keys():
-            Glossary.set_glossary_terms_links(
-                session,
-                username,
-                dashboard.dashboardUri,
-                'Dashboard',
-                data.get('terms', []),
-            )
         return dashboard
-
-    @staticmethod
-    def set_dashboard_resource_policy(session, environment, dashboard, group):
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=group,
-            permissions=DASHBOARD_ALL,
-            resource_uri=dashboard.dashboardUri,
-            resource_type=Dashboard.__name__,
-        )
-        if environment.SamlGroupName != dashboard.SamlGroupName:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=environment.SamlGroupName,
-                permissions=DASHBOARD_ALL,
-                resource_uri=dashboard.dashboardUri,
-                resource_type=Dashboard.__name__,
-            )
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(GET_DASHBOARD)
-    def get_dashboard(session, uri: str) -> Dashboard:
-        return DashboardRepository.get_dashboard_by_uri(session, uri)
 
     @staticmethod
     def get_dashboard_by_uri(session, uri) -> Dashboard:
@@ -220,47 +145,8 @@ class DashboardRepository(EnvironmentResource):
         ).to_dict()
 
     @staticmethod
-    @has_tenant_permission(MANAGE_DASHBOARDS)
-    @has_resource_permission(UPDATE_DASHBOARD)
-    def update_dashboard(
-        session,
-        username: str,
-        uri: str,
-        dashboard: Dashboard,
-        data: dict = None,
-    ) -> Dashboard:
-        for k in data.keys():
-            setattr(dashboard, k, data.get(k))
-
-        if 'terms' in data.keys():
-            Glossary.set_glossary_terms_links(
-                session,
-                username,
-                dashboard.dashboardUri,
-                'Dashboard',
-                data.get('terms', []),
-            )
-        environment: models.Environment = Environment.get_environment_by_uri(
-            session, dashboard.environmentUri
-        )
-        DashboardRepository.set_dashboard_resource_policy(
-            session, environment, dashboard, dashboard.SamlGroupName
-        )
-        return dashboard
-
-    @staticmethod
-    def delete_dashboard(session, uri) -> bool:
-        # TODO THERE WAS NO PERMISSION CHECK
-        dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-        session.delete(dashboard)
-        ResourcePolicy.delete_resource_policy(
-            session=session, resource_uri=uri, group=dashboard.SamlGroupName
-        )
-        Glossary.delete_glossary_terms_links(
-            session, target_uri=dashboard.dashboardUri, target_type='Dashboard'
-        )
-        Vote.delete_votes(session, dashboard.dashboardUri, 'dashboard')
-        session.commit()
+    def delete_dashboard(session, dashboard_uri) -> bool:
+        session.delete(dashboard_uri)
         return True
 
     @staticmethod
