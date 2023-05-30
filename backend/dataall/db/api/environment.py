@@ -406,7 +406,7 @@ class Environment:
         if shares_count > 0:
             raise exceptions.EnvironmentResourcesFound(
                 action='Remove Team',
-                message=f'Consumption role: {group} has created {shares_count} share requests on this environment.',
+                message=f'Team: {group} has created {shares_count} share requests on this environment.',
             )
 
         group_membership = Environment.find_environment_group(
@@ -560,7 +560,7 @@ class Environment:
         if shares_count > 0:
             raise exceptions.EnvironmentResourcesFound(
                 action='Remove Consumption Role',
-                message=f'Consumption role: {consumption_role} has created {shares_count} share requests on this environment.',
+                message=f'Consumption role: {consumption_role.consumptionRoleName} has created {shares_count} share requests on this environment.',
             )
 
         if consumption_role:
