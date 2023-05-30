@@ -15,6 +15,35 @@ getDashboard = gql.QueryField(
     resolver=get_dashboard,
 )
 
+getMonitoringDashboardId = gql.QueryField(
+    name='getMonitoringDashboardId',
+    type=gql.String,
+    resolver=get_monitoring_dashboard_id,
+)
+
+getMonitoringVpcConnectionId = gql.QueryField(
+    name='getMonitoringVPCConnectionId',
+    type=gql.String,
+    resolver=get_monitoring_vpc_connection_id,
+)
+
+getPlatformAuthorSession = gql.QueryField(
+    name='getPlatformAuthorSession',
+    args=[
+        gql.Argument(name='awsAccount', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.String,
+    resolver=get_quicksight_author_session,
+)
+
+getPlatformReaderSession = gql.QueryField(
+    name='getPlatformReaderSession',
+    args=[
+        gql.Argument(name='dashboardId', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.String,
+    resolver=get_quicksight_reader_session,
+)
 
 getAuthorSession = gql.QueryField(
     name='getAuthorSession',

@@ -13,15 +13,6 @@ updateGroupPermission = gql.MutationField(
     resolver=update_group_permissions,
 )
 
-createQuicksightDataSourceSet = gql.MutationField(
-    name='createQuicksightDataSourceSet',
-    args=[
-        gql.Argument(name='vpcConnectionId', type=gql.NonNullableType(gql.String))
-    ],
-    type=gql.String,
-    resolver=create_quicksight_data_source_set,
-)
-
 updateSSMParameter = gql.MutationField(
     name='updateSSMParameter',
     args=[

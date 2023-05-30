@@ -4,9 +4,10 @@ from dataall.api.constants import DashboardRole
 from dataall.api.context import Context
 from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
-from dataall.db.api import ResourcePolicy, Glossary, Vote
-from dataall.db.exceptions import RequiredParameter
+from dataall.db.api import ResourcePolicy, Glossary, Vote, TenantPolicy
+from dataall.db.exceptions import RequiredParameter, AWSResourceNotFound, TenantUnauthorized
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
@@ -270,3 +271,100 @@ def resolve_upvotes(context: Context, source: Dashboard, **kwargs):
         return Vote.count_upvotes(
             session, None, None, source.dashboardUri, data={'targetType': 'dashboard'}
         )
+
+
+def get_monitoring_dashboard_id(context, source):
+    current_account = SessionHelper.get_account()
+    region = os.getenv('AWS_REGION', 'eu-west-1')
+    dashboard_id = ParameterStoreManager.get_parameter_value(
+        AwsAccountId=current_account,
+        region=region,
+        parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/DashboardId'
+    )
+
+    if not dashboard_id:
+        raise AWSResourceNotFound(
+            action='GET_DASHBOARD_ID',
+            message='Dashboard Id could not be found on AWS Parameter Store',
+        )
+    return dashboard_id
+
+
+def get_monitoring_vpc_connection_id(context, source):
+    current_account = SessionHelper.get_account()
+    region = os.getenv('AWS_REGION', 'eu-west-1')
+    vpc_connection_id = ParameterStoreManager.get_parameter_value(
+        AwsAccountId=current_account,
+        region=region,
+        parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/VPCConnectionId'
+    )
+
+    if not vpc_connection_id:
+        raise AWSResourceNotFound(
+            action='GET_VPC_CONNECTION_ID',
+            message='VPC Connection Id could not be found on AWS Parameter Store',
+        )
+    return vpc_connection_id
+
+
+def create_quicksight_data_source_set(context, source, vpcConnectionId: str = None):
+    current_account = SessionHelper.get_account()
+    region = os.getenv('AWS_REGION', 'eu-west-1')
+    user = Quicksight.register_user_in_group(
+        AwsAccountId=current_account,
+        UserName=context.username,
+        GroupName='dataall',
+        UserRole='AUTHOR')
+
+    datasourceId = Quicksight.create_data_source_vpc(AwsAccountId=current_account, region=region, UserName=context.username, vpcConnectionId=vpcConnectionId)
+    # Data sets are not created programmatically. Too much overhead for the value added. However, an example API is provided:
+    # datasets = Quicksight.create_data_set_from_source(AwsAccountId=current_account, region=region, UserName='dataallTenantUser', dataSourceId=datasourceId, tablesToImport=['organization', 'environment', 'dataset', 'datapipeline', 'dashboard', 'share_object'])
+
+    return datasourceId
+
+
+def get_quicksight_author_session(context, source, awsAccount: str = None):
+    with context.engine.scoped_session() as session:
+        admin = TenantPolicy.is_tenant_admin(context.groups)
+
+        if not admin:
+            raise TenantUnauthorized(
+                username=context.username,
+                action=db.permissions.TENANT_ALL,
+                tenant_name=context.username,
+            )
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+
+        url = Quicksight.get_author_session(
+            AwsAccountId=awsAccount,
+            region=region,
+            UserName=context.username,
+            UserRole='AUTHOR',
+        )
+
+    return url
+
+
+def get_quicksight_reader_session(context, source, dashboardId: str = None):
+    with context.engine.scoped_session() as session:
+        admin = db.api.TenantPolicy.is_tenant_admin(context.groups)
+
+        if not admin:
+            raise TenantUnauthorized(
+                username=context.username,
+                action=db.permissions.TENANT_ALL,
+                tenant_name=context.username,
+            )
+
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        current_account = SessionHelper.get_account()
+
+        url = Quicksight.get_reader_session(
+            AwsAccountId=current_account,
+            region=region,
+            UserName=context.username,
+            UserRole='READER',
+            DashboardId=dashboardId
+        )
+
+    return url
