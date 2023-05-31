@@ -3,6 +3,22 @@ import pytest
 from dataall.modules.datasets import Dataset
 from tests.api.test_vote import *
 
+from dataall.db import models
+
+
+@pytest.fixture(scope='module')
+def org1(db, org, tenant, user, group) -> models.Organization:
+    org = org('testorg', user.userName, group.name)
+    yield org
+
+
+@pytest.fixture(scope='module')
+def env1(
+    db, org1: models.Organization, user, group, env
+) -> models.Environment:
+    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
+    yield env1
+
 
 @pytest.fixture(scope='module', autouse=True)
 def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
@@ -11,7 +27,7 @@ def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
     )
 
 
-def test_count_votes(client, dataset1, dashboard):
+def test_count_votes(client, dataset1):
     response = count_votes_query(
         client, dataset1.datasetUri, 'dataset', dataset1.SamlAdminGroupName
     )
