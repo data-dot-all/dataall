@@ -73,7 +73,6 @@ const EnvironmentEditForm = (props) => {
             label: values.label,
             tags: values.tags,
             description: values.description,
-            dashboardsEnabled: values.dashboardsEnabled,
             mlStudiosEnabled: values.mlStudiosEnabled,
             pipelinesEnabled: values.pipelinesEnabled,
             warehousesEnabled: values.warehousesEnabled,
@@ -82,6 +81,10 @@ const EnvironmentEditForm = (props) => {
               {
                 key: "notebooksEnabled",
                 value: String(values.notebooksEnabled)
+              },
+              {
+                key: "dashboardsEnabled",
+                value: String(values.dashboardsEnabled)
               }
             ]
           }
@@ -198,8 +201,8 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                dashboardsEnabled: env.dashboardsEnabled,
-                notebooksEnabled: env.parameters["notebooksEnabled"] === 'true',
+                dashboardsEnabled: env.parameters['dashboardsEnabled'] === 'true',
+                notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.mlStudiosEnabled,
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,

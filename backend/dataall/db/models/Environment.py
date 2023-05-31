@@ -24,7 +24,6 @@ class Environment(Resource, Base):
     EnvironmentDefaultAthenaWorkGroup = Column(String)
     roleCreated = Column(Boolean, nullable=False, default=False)
 
-    dashboardsEnabled = Column(Boolean, default=False)
     mlStudiosEnabled = Column(Boolean, default=True)
     pipelinesEnabled = Column(Boolean, default=True)
     warehousesEnabled = Column(Boolean, default=True)

@@ -73,9 +73,9 @@ class NotebookService:
 
         with _session() as session:
             env = Environment.get_environment_by_uri(session, uri)
-            enabled = EnvironmentParameterRepository(session).get_param(uri, "notebooksEnabled")
+            enabled = Environment.get_boolean_env_param(session, env, "notebooksEnabled")
 
-            if not enabled and enabled.lower() != "true":
+            if not enabled:
                 raise exceptions.UnauthorizedOperation(
                     action=CREATE_NOTEBOOK,
                     message=f'Notebooks feature is disabled for the environment {env.label}',

@@ -50,7 +50,6 @@ def environment(db):
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-        dashboardsEnabled: bool = False,
     ) -> models.Environment:
         with db.scoped_session() as session:
             env = models.Environment(
@@ -65,7 +64,6 @@ def environment(db):
                 EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleName,
                 EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{awsAccountId}:role/{environmentDefaultIAMRoleName}",
                 CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
-                dashboardsEnabled=dashboardsEnabled,
             )
             session.add(env)
             session.commit()

@@ -57,7 +57,6 @@ class Environment:
             ),
             EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
-            dashboardsEnabled=data.get('dashboardsEnabled', False),
             mlStudiosEnabled=data.get('mlStudiosEnabled', True),
             pipelinesEnabled=data.get('pipelinesEnabled', True),
             warehousesEnabled=data.get('warehousesEnabled', True),
@@ -187,8 +186,6 @@ class Environment:
             environment.description = data.get('description', 'No description provided')
         if data.get('tags'):
             environment.tags = data.get('tags')
-        if 'dashboardsEnabled' in data.keys():
-            environment.dashboardsEnabled = data.get('dashboardsEnabled')
         if 'mlStudiosEnabled' in data.keys():
             environment.mlStudiosEnabled = data.get('mlStudiosEnabled')
         if 'pipelinesEnabled' in data.keys():
@@ -1024,3 +1021,8 @@ class Environment:
     @staticmethod
     def get_environment_parameters(session, env_uri):
         return EnvironmentParameterRepository(session).get_params(env_uri)
+
+    @staticmethod
+    def get_boolean_env_param(session, env: models.Environment, param: str) -> bool:
+        param = EnvironmentParameterRepository(session).get_param(env.environmentUri, param)
+        return param and param.value.lower() == "true"

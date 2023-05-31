@@ -5,6 +5,7 @@ import time
 
 from botocore.exceptions import ClientError
 
+from dataall.db.api import Environment
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import Quicksight
@@ -61,7 +62,9 @@ class LFShareManager:
         List of principals
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
-        if self.target_environment.dashboardsEnabled:
+        dashboard_enabled = Environment.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
+
+        if dashboard_enabled:
             group = Quicksight.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
             if group and group.get('Group'):
                 group_arn = group.get('Group').get('Arn')

@@ -29,11 +29,7 @@ class DashboardQuicksightService:
         with context.db_engine.scoped_session() as session:
             dash: Dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
             env = Environment.get_environment_by_uri(session, dash.environmentUri)
-            if not env.dashboardsEnabled:
-                raise UnauthorizedOperation(
-                    action=GET_DASHBOARD,
-                    message=f'Dashboards feature is disabled for the environment {env.label}',
-                )
+            DashboardQuicksightService._check_dashboards_enabled(session, env, GET_DASHBOARD)
 
             if dash.SamlGroupName in context.groups:
                 url = Quicksight.get_reader_session(
@@ -83,11 +79,7 @@ class DashboardQuicksightService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = Environment.get_environment_by_uri(session, uri)
-            if not env.dashboardsEnabled:
-                raise UnauthorizedOperation(
-                    action=CREATE_DASHBOARD,
-                    message=f'Dashboards feature is disabled for the environment {env.label}',
-                )
+            DashboardQuicksightService._check_dashboards_enabled(session, env, CREATE_DASHBOARD)
 
             url = Quicksight.get_author_session(
                 AwsAccountId=env.AwsAccountId,
@@ -203,4 +195,13 @@ class DashboardQuicksightService:
         )
 
         return f"https://{domain_name}"
+
+    @staticmethod
+    def _check_dashboards_enabled(session, env, action):
+        enabled = Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
+        if not enabled:
+            raise UnauthorizedOperation(
+                action=action,
+                message=f'Dashboards feature is disabled for the environment {env.label}',
+            )
 

@@ -32,10 +32,8 @@ const EnvironmentFeatures = (props) => {
               Dashboards
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label
-                color={environment.dashboardsEnabled ? 'success' : 'error'}
-              >
-                {environment.dashboardsEnabled ? 'Enabled' : 'Disabled'}
+              <Label color={environment.parameters['dashboardsEnabled'] === 'true' ? 'success' : 'error'}>
+                {environment.parameters['dashboardsEnabled'] === 'true' ? 'Enabled' : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>
@@ -51,8 +49,8 @@ const EnvironmentFeatures = (props) => {
               Notebooks
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.parameters["notebooksEnabled"] === 'true' ? 'success' : 'error'}>
-                {environment.parameters["notebooksEnabled"] === 'true' ? 'Enabled' : 'Disabled'}
+              <Label color={environment.parameters['notebooksEnabled'] === 'true' ? 'success' : 'error'}>
+                {environment.parameters['notebooksEnabled'] === 'true' ? 'Enabled' : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

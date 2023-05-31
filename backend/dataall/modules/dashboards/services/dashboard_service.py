@@ -26,8 +26,9 @@ class DashboardService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = Environment.get_environment_by_uri(session, data['environmentUri'])
+            enabled = Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
 
-            if not env.dashboardsEnabled:
+            if not enabled:
                 raise UnauthorizedOperation(
                     action=CREATE_DASHBOARD,
                     message=f'Dashboards feature is disabled for the environment {env.label}',
@@ -41,14 +42,14 @@ class DashboardService:
             )
 
             if not can_import:
-                raise db.exceptions.UnauthorizedOperation(
+                raise UnauthorizedOperation(
                     action=CREATE_DASHBOARD,
                     message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
                 )
             Environment.check_group_environment_permission(
                 session=session,
-                username=username,
-                groups=groups,
+                username=context.username,
+                groups=context.groups,
                 uri=uri,
                 group=data['SamlGroupName'],
                 permission_name=CREATE_DASHBOARD,
@@ -63,8 +64,8 @@ class DashboardService:
             activity = Activity(
                 action='DASHBOARD:CREATE',
                 label='DASHBOARD:CREATE',
-                owner=username,
-                summary=f'{username} created dashboard {dashboard.label} in {env.label}',
+                owner=context.username,
+                summary=f'{context.username} created dashboard {dashboard.label} in {env.label}',
                 targetUri=dashboard.dashboardUri,
                 targetType='dashboard',
             )
@@ -101,7 +102,7 @@ class DashboardService:
         # TODO THERE WAS NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-            DashboardRepository.delete_dashboard(session, dashboard.dashboardUri)
+            DashboardRepository.delete_dashboard(session, dashboard)
 
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dashboard.SamlGroupName

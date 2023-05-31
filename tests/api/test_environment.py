@@ -29,7 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                dashboardsEnabled
                 mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
@@ -56,12 +55,15 @@ def test_get_environment(client, org1, env1, group):
         response.data.getEnvironment.organization.organizationUri
         == org1.organizationUri
     )
-    assert response.data.getEnvironment.owner == 'alice'
-    assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
-    assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.mlStudiosEnabled
-    assert response.data.getEnvironment.pipelinesEnabled
-    assert response.data.getEnvironment.warehousesEnabled
+    body = response.data.getEnvironment
+    assert body.owner == 'alice'
+    assert body.AwsAccountId == env1.AwsAccountId
+    assert body.mlStudiosEnabled
+    assert body.pipelinesEnabled
+    assert body.warehousesEnabled
+
+    params = {p.key: p.value for p in body.parameters}
+    assert params["dashboardsEnabled"] == "true"
 
 
 def test_get_environment_object_not_found(client, org1, env1, group):
@@ -102,7 +104,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                dashboardsEnabled
                 mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
@@ -120,7 +121,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
             'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
@@ -128,6 +128,10 @@ def test_update_env(client, org1, env1, group):
                 {
                     'key': 'notebooksEnabled',
                     'value': 'True'
+                },
+                {
+                    'key': 'dashboardsEnabled',
+                    'value': 'False'
                 }
             ],
             'resourcePrefix': 'customer-prefix_AZ390 ',
@@ -142,38 +146,40 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
             'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
                     'key': 'notebooksEnabled',
-                    'value': 'True'
-                }
+                    'value': 'true'
+                },
+                {
+                    'key': 'dashboardsEnabled',
+                    'value': 'false'
+                },
             ],
             'resourcePrefix': 'customer-prefix',
         },
         groups=[group.name],
     )
     print(response)
-    assert (
-        response.data.updateEnvironment.organization.organizationUri
-        == org1.organizationUri
-    )
-    assert response.data.updateEnvironment.owner == 'alice'
-    assert response.data.updateEnvironment.AwsAccountId == env1.AwsAccountId
-    assert response.data.updateEnvironment.label == 'DEV'
-    assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
-    assert not response.data.updateEnvironment.dashboardsEnabled
-    assert not response.data.updateEnvironment.notebooksEnabled
-    assert not response.data.updateEnvironment.mlStudiosEnabled
-    assert not response.data.updateEnvironment.pipelinesEnabled
-    assert not response.data.updateEnvironment.warehousesEnabled
-    assert response.data.updateEnvironment.parameters
-    assert response.data.updateEnvironment.parameters[0]["key"] == "notebooksEnabled"
-    assert response.data.updateEnvironment.parameters[0]["value"] == "True"
-    assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
+
+    body = response.data.updateEnvironment
+    assert body.organization.organizationUri == org1.organizationUri
+    assert body.owner == 'alice'
+    assert body.AwsAccountId == env1.AwsAccountId
+    assert body.label == 'DEV'
+    assert str(body.tags) == str(['test', 'env'])
+    assert not body.mlStudiosEnabled
+    assert not body.pipelinesEnabled
+    assert not body.warehousesEnabled
+
+    params = {p.key: p.value for p in body.parameters}
+    assert params["notebooksEnabled"] == "true"
+    assert params["dashboardsEnabled"] == "false"
+
+    assert body.resourcePrefix == 'customer-prefix'
 
 
 def test_update_params(client, org1, env1, group):
@@ -701,7 +707,6 @@ def test_create_environment(db, client, org1, env1, user, group):
                 owner
                 EnvironmentDefaultIAMRoleName
                 EnvironmentDefaultIAMRoleImported
-                dashboardsEnabled
                 resourcePrefix
                 networks{
                  VpcId
@@ -726,18 +731,17 @@ def test_create_environment(db, client, org1, env1, user, group):
             'vpcId': 'vpc-1234567',
             'privateSubnetIds': 'subnet-1',
             'publicSubnetIds': 'subnet-21',
-            'dashboardsEnabled': True,
             'resourcePrefix': 'customer-prefix',
         },
     )
-    assert response.data.createEnvironment.dashboardsEnabled
-    assert response.data.createEnvironment.networks
-    assert (
-        response.data.createEnvironment.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
-    )
-    assert response.data.createEnvironment.EnvironmentDefaultIAMRoleImported
-    assert response.data.createEnvironment.resourcePrefix == 'customer-prefix'
-    for vpc in response.data.createEnvironment.networks:
+
+    body = response.data.createEnvironment
+
+    assert body.networks
+    assert body.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
+    assert body.EnvironmentDefaultIAMRoleImported
+    assert body.resourcePrefix == 'customer-prefix'
+    for vpc in body.networks:
         assert vpc.privateSubnetIds
         assert vpc.publicSubnetIds
         assert vpc.default

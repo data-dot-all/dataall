@@ -145,8 +145,8 @@ class DashboardRepository(EnvironmentResource):
         ).to_dict()
 
     @staticmethod
-    def delete_dashboard(session, dashboard_uri) -> bool:
-        session.delete(dashboard_uri)
+    def delete_dashboard(session, dashboard) -> bool:
+        session.delete(dashboard)
         return True
 
     @staticmethod

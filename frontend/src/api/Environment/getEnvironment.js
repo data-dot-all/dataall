@@ -14,7 +14,6 @@ const getEnvironment = ({ environmentUri }) => ({
         name
         label
         AwsAccountId
-        dashboardsEnabled
         mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
@@ -49,7 +48,6 @@ const getEnvironment = ({ environmentUri }) => ({
           outputs
           resources
         }
-        dashboardsEnabled
         mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled

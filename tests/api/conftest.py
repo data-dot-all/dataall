@@ -1,4 +1,3 @@
-import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 
@@ -24,7 +23,6 @@ def patch_check_env(module_mocker):
 def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
     module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
 
 
@@ -170,8 +168,8 @@ def env(client):
     cache = {}
 
     def factory(org, envname, owner, group, account, region, desc='test', parameters=None):
-        if parameters == None:
-            parameters = {}
+        if not parameters:
+            parameters = {"dashboardsEnabled": "true"}
 
         key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
         if cache.get(key):
@@ -205,7 +203,6 @@ def env(client):
                 'tags': ['a', 'b', 'c'],
                 'region': f'{region}',
                 'SamlGroupName': f'{group}',
-                'dashboardsEnabled': True,
                 'vpcId': 'vpc-123456',
                 'parameters': [{'key': k, 'value': v} for k, v in parameters.items()]
             },
@@ -225,7 +222,6 @@ def environment(db):
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-        dashboardsEnabled: bool = False,
     ) -> models.Environment:
         with db.scoped_session() as session:
             env = models.Environment(
@@ -240,7 +236,6 @@ def environment(db):
                 EnvironmentDefaultIAMRoleName=environmentDefaultIAMRoleName,
                 EnvironmentDefaultIAMRoleArn=f"arn:aws:iam::{awsAccountId}:role/{environmentDefaultIAMRoleName}",
                 CDKRoleArn=f"arn:aws::{awsAccountId}:role/EnvRole",
-                dashboardsEnabled=dashboardsEnabled,
             )
             session.add(env)
             session.commit()

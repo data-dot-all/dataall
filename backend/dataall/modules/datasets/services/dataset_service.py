@@ -33,8 +33,9 @@ log = logging.getLogger(__name__)
 class DatasetService:
 
     @staticmethod
-    def check_dataset_account(environment):
-        if environment.dashboardsEnabled:
+    def check_dataset_account(session, environment):
+        dashboards_enabled = Environment.get_boolean_env_param(session, environment, "dashboardsEnabled")
+        if dashboards_enabled:
             quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(
                 AwsAccountId=environment.AwsAccountId)
             if quicksight_subscription:
@@ -50,7 +51,7 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = Environment.get_environment_by_uri(session, uri)
-            DatasetService.check_dataset_account(environment=environment)
+            DatasetService.check_dataset_account(session=session, environment=environment)
 
             dataset = DatasetRepository.create_dataset(
                 session=session,
@@ -150,7 +151,7 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            DatasetService.check_dataset_account(environment=environment)
+            DatasetService.check_dataset_account(session=session, environment=environment)
 
             username = get_context().username
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)

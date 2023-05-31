@@ -153,7 +153,6 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          dashboardsEnabled: values.dashboardsEnabled,
           mlStudiosEnabled: values.mlStudiosEnabled,
           pipelinesEnabled: values.pipelinesEnabled,
           warehousesEnabled: values.warehousesEnabled,
@@ -161,8 +160,11 @@ const EnvironmentCreateForm = (props) => {
           resourcePrefix: values.resourcePrefix,
           parameters: [
             {
-              key: "notebooksEnabled",
+              key: 'notebooksEnabled',
               value: String(values.notebooksEnabled)
+            }, {
+              key: 'dashboardsEnabled',
+              value: String(values.dashboardsEnabled)
             }
           ]
         })

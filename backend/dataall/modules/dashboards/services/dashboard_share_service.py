@@ -29,7 +29,7 @@ class DashboardShareService:
 
             share = DashboardRepository.find_share_for_group(session, dashboard.dashboardUri, principal_id)
             if not share:
-                DashboardRepository.create_share(session, context.username, dashboard, principal_id)
+                share = DashboardRepository.create_share(session, context.username, dashboard, principal_id)
             else:
                 DashboardShareService._check_stare_status(share)
 

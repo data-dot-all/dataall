@@ -40,7 +40,6 @@ def env1(environment: typing.Callable, org1: dataall.db.models.Organization, use
         owner=user.userName,
         samlGroupName=group.name,
         environmentDefaultIAMRoleName=f"source-{group.name}",
-        dashboardsEnabled=False,
     )
 
 
@@ -96,7 +95,6 @@ def env2(
         owner=user2.userName,
         samlGroupName=group2.name,
         environmentDefaultIAMRoleName=f"source-{group2.name}",
-        dashboardsEnabled=False,
     )
 
 
