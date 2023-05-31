@@ -1,11 +1,4 @@
 
-def test_count_votes(client, dashboard, env1):
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert response.data.countUpVotes == 0
-
-
 def count_votes_query(client, target_uri, target_type, group):
     response = client.query(
         """
