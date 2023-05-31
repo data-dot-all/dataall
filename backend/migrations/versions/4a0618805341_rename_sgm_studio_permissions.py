@@ -103,10 +103,14 @@ def upgrade():
 
         for permission in tenant_permissions:
             print(permission.permissionUri)
-            session.add(TenantPolicyPermission(
-                sid=permission.sid,
-                permissionUri=manage_mlstudio_permission.permissionUri,
-            ))
+            try:
+                session.add(TenantPolicyPermission(
+                    sid=permission.sid,
+                    permissionUri=manage_mlstudio_permission.permissionUri,
+                ))
+            except Exception as e:
+                print(f"Permission already exists = {e}")
+
         session.commit()
 
         print("Renaming SageMaker Studio permissions from SGMSTUDIO_NOTEBOOK to SGMSTUDIO_USER...")
