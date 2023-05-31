@@ -5,9 +5,7 @@ const listSagemakerStudioUsers = (filter) => ({
     filter
   },
   query: gql`
-    query listSagemakerStudioUsers(
-      $filter: SagemakerStudioUserFilter
-    ) {
+    query listSagemakerStudioUsers($filter: SagemakerStudioUserFilter) {
       listSagemakerStudioUsers(filter: $filter) {
         count
         page

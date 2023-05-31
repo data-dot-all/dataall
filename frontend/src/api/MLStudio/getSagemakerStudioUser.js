@@ -5,12 +5,8 @@ const getSagemakerStudioUser = (sagemakerStudioUserUri) => ({
     sagemakerStudioUserUri
   },
   query: gql`
-    query getSagemakerStudioUser(
-      $sagemakerStudioUserUri: String!
-    ) {
-      getSagemakerStudioUser(
-        sagemakerStudioUserUri: $sagemakerStudioUserUri
-      ) {
+    query getSagemakerStudioUser($sagemakerStudioUserUri: String!) {
+      getSagemakerStudioUser(sagemakerStudioUserUri: $sagemakerStudioUserUri) {
         sagemakerStudioUserUri
         name
         owner

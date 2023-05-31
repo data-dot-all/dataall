@@ -5,9 +5,7 @@ const createSagemakerStudioUser = (input) => ({
     input
   },
   mutation: gql`
-    mutation createSagemakerStudioUser(
-      $input: NewSagemakerStudioUserInput
-    ) {
+    mutation createSagemakerStudioUser($input: NewSagemakerStudioUserInput) {
       createSagemakerStudioUser(input: $input) {
         sagemakerStudioUserUri
         name

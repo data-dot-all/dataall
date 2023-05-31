@@ -16,7 +16,9 @@ const MLStudioOverview = (props) => {
             name={mlstudiouser.label || '-'}
             description={mlstudiouser.description || 'No description provided'}
             tags={
-              mlstudiouser.tags && mlstudiouser.tags.length > 0 ? mlstudiouser.tags : ['-']
+              mlstudiouser.tags && mlstudiouser.tags.length > 0
+                ? mlstudiouser.tags
+                : ['-']
             }
           />
         </Box>

@@ -83,9 +83,7 @@ const MLStudioList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      listSagemakerStudioUser(filter)
-    );
+    const response = await client.query(listSagemakerStudioUser(filter));
     if (!response.errors) {
       setItems(response.data.listSagemakerStudioUser);
     } else {

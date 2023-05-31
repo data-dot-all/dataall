@@ -1,15 +1,11 @@
 import { gql } from 'apollo-boost';
 
-const getSagemakerStudioUserPresignedUrl = (
-  sagemakerStudioUserUri
-) => ({
+const getSagemakerStudioUserPresignedUrl = (sagemakerStudioUserUri) => ({
   variables: {
     sagemakerStudioUserUri
   },
   query: gql`
-    query getSagemakerStudioUserPresignedUrl(
-      $sagemakerStudioUserUri: String!
-    ) {
+    query getSagemakerStudioUserPresignedUrl($sagemakerStudioUserUri: String!) {
       getSagemakerStudioUserPresignedUrl(
         sagemakerStudioUserUri: $sagemakerStudioUserUri
       )

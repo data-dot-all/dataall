@@ -43,7 +43,11 @@ const PipelineCrateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
+  const devOptions = [
+    { value: 'cdk-trunk', label: 'CDK Pipelines - Trunk-based' },
+    { value: 'trunk', label: 'CodePipeline - Trunk-based' },
+    { value: 'gitflow', label: 'CodePipeline - Gitflow' }
+  ]; /*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
@@ -119,37 +123,37 @@ const PipelineCrateForm = (props) => {
               SamlGroupName: values.SamlGroupName,
               tags: values.tags,
               devStrategy: values.devStrategy
-              }
-            })
-          );
-          if (!response.errors) {
-            setStatus({ success: true });
-            setTriggerEnvSubmit(true);
-            setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
-            setSubmitting(false);
-            enqueueSnackbar('Pipeline creation started', {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'success'
-            });
-            navigate(
-              `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
-            );
-          } else {
-            setTriggerEnvSubmit(false);
-            dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          }
-        } catch (err) {
-          console.error(err);
-          setStatus({ success: false });
-          setTriggerEnvSubmit(false);
-          setErrors({ submit: err.message });
+            }
+          })
+        );
+        if (!response.errors) {
+          setStatus({ success: true });
+          setTriggerEnvSubmit(true);
+          setPipelineUri(response.data.createDataPipeline.DataPipelineUri);
           setSubmitting(false);
-          dispatch({ type: SET_ERROR, error: err.message });
+          enqueueSnackbar('Pipeline creation started', {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+          navigate(
+            `/console/pipelines/${response.data.createDataPipeline.DataPipelineUri}`
+          );
+        } else {
+          setTriggerEnvSubmit(false);
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
         }
+      } catch (err) {
+        console.error(err);
+        setStatus({ success: false });
+        setTriggerEnvSubmit(false);
+        setErrors({ submit: err.message });
+        setSubmitting(false);
+        dispatch({ type: SET_ERROR, error: err.message });
       }
+    }
   }
 
   if (loading) {
@@ -225,7 +229,7 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: '',
                 environment: '',
                 tags: [],
-                devStrategy: 'cdk-trunk',
+                devStrategy: 'cdk-trunk'
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -237,7 +241,7 @@ const PipelineCrateForm = (props) => {
                 devStrategy: Yup.string().required(
                   '*A CICD strategy is required'
                 ),
-                tags: Yup.array().nullable(),
+                tags: Yup.array().nullable()
               })}
               onSubmit={async (
                 values,

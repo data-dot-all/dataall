@@ -1,9 +1,6 @@
 import { gql } from 'apollo-boost';
 
-const deleteSagemakerStudioUser = (
-  sagemakerStudioUserUri,
-  deleteFromAWS
-) => ({
+const deleteSagemakerStudioUser = (sagemakerStudioUserUri, deleteFromAWS) => ({
   variables: {
     sagemakerStudioUserUri,
     deleteFromAWS

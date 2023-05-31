@@ -42,13 +42,8 @@ const MLStudioEditForm = (props) => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      getSagemakerStudioUser(params.uri)
-    );
-    if (
-      !response.errors &&
-      response.data.getSagemakerStudioUser !== null
-    ) {
+    const response = await client.query(getSagemakerStudioUser(params.uri));
+    if (!response.errors && response.data.getSagemakerStudioUser !== null) {
       setNotebook(response.data.getSagemakerStudioUser);
     } else {
       const error = response.errors

@@ -63,9 +63,7 @@ const MLStudioView = () => {
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(
-      getSagemakerStudioUser(params.uri)
-    );
+    const response = await client.query(getSagemakerStudioUser(params.uri));
     if (!response.errors) {
       setMLStudio(response.data.getSagemakerStudioUser);
       if (stack) {
@@ -83,9 +81,7 @@ const MLStudioView = () => {
   const getMLStudioPresignedUrl = async () => {
     setIsOpeningSagemakerStudio(true);
     const response = await client.query(
-      getSagemakerStudioUserPresignedUrl(
-        mlstudio.sagemakerStudioUserUri
-      )
+      getSagemakerStudioUserPresignedUrl(mlstudio.sagemakerStudioUserUri)
     );
     if (!response.errors) {
       window.open(response.data.getSagemakerStudioUserPresignedUrl);
@@ -106,10 +102,7 @@ const MLStudioView = () => {
   };
   const removeMLStudio = async (deleteFromAWS = false) => {
     const response = await client.mutate(
-      deleteSagemakerStudioUser(
-        mlstudio.sagemakerStudioUserUri,
-        deleteFromAWS
-      )
+      deleteSagemakerStudioUser(mlstudio.sagemakerStudioUserUri, deleteFromAWS)
     );
     if (!response.errors) {
       handleDeleteObjectModalClose();

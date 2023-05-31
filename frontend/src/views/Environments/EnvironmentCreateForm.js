@@ -160,11 +160,11 @@ const EnvironmentCreateForm = (props) => {
           resourcePrefix: values.resourcePrefix,
           parameters: [
             {
-              key: "notebooksEnabled",
+              key: 'notebooksEnabled',
               value: String(values.notebooksEnabled)
             },
             {
-              key: "mlStudiosEnabled",
+              key: 'mlStudiosEnabled',
               value: String(values.mlStudiosEnabled)
             }
           ]
@@ -294,67 +294,70 @@ const EnvironmentCreateForm = (props) => {
                 </Typography>
               </Box>
               {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE == 'True' ? (
-                   <Box>
-                      <Typography color="textSecondary" variant="subtitle2">
-                        As part of the environment CloudFormation stack data.all will create an IAM role (Pivot Role) to manage AWS operations in the environment AWS Account.
-                      </Typography>
-                    </Box>
-                ): (
-                    <Box>
-                      <Box>
-                        <Typography color="textSecondary" variant="subtitle2">
-                          Create an IAM role named <b>{pivotRoleName}</b> using the AWS
-                          CloudFormation stack below
-                        </Typography>
-                      </Box>
-                      <Grid container justifyContent="space-between" spacing={3}>
-                        <Grid item lg={6} xl={6} xs={6}>
-                          <Button
-                            color="primary"
-                            startIcon={<CloudDownloadOutlined fontSize="small" />}
-                            sx={{ mt: 1, mb: 2, ml: 2 }}
-                            variant="outlined"
-                            onClick={() => {
-                              getPivotRoleUrl().catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                            }}
-                          >
-                            CloudFormation stack
-                          </Button>
-                          <Button
-                            color="primary"
-                            startIcon={<CopyAllOutlined fontSize="small" />}
-                            sx={{ mt: 1, mb: 2, ml: 2 }}
-                            variant="outlined"
-                            onClick={() => {
-                              copyPivotRoleName().catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                            }}
-                          >
-                            Pivot role name
-                          </Button>
-                          <Button
-                            color="primary"
-                            startIcon={<CopyAllOutlined fontSize="small" />}
-                            sx={{ mt: 1, mb: 2, ml: 2 }}
-                            variant="outlined"
-                            onClick={() => {
-                              getExternalId().catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                            }}
-                          >
-                            External Id
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
+                <Box>
+                  <Typography color="textSecondary" variant="subtitle2">
+                    As part of the environment CloudFormation stack data.all
+                    will create an IAM role (Pivot Role) to manage AWS
+                    operations in the environment AWS Account.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  <Box>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      Create an IAM role named <b>{pivotRoleName}</b> using the
+                      AWS CloudFormation stack below
+                    </Typography>
+                  </Box>
+                  <Grid container justifyContent="space-between" spacing={3}>
+                    <Grid item lg={6} xl={6} xs={6}>
+                      <Button
+                        color="primary"
+                        startIcon={<CloudDownloadOutlined fontSize="small" />}
+                        sx={{ mt: 1, mb: 2, ml: 2 }}
+                        variant="outlined"
+                        onClick={() => {
+                          getPivotRoleUrl().catch((e) =>
+                            dispatch({ type: SET_ERROR, error: e.message })
+                          );
+                        }}
+                      >
+                        CloudFormation stack
+                      </Button>
+                      <Button
+                        color="primary"
+                        startIcon={<CopyAllOutlined fontSize="small" />}
+                        sx={{ mt: 1, mb: 2, ml: 2 }}
+                        variant="outlined"
+                        onClick={() => {
+                          copyPivotRoleName().catch((e) =>
+                            dispatch({ type: SET_ERROR, error: e.message })
+                          );
+                        }}
+                      >
+                        Pivot role name
+                      </Button>
+                      <Button
+                        color="primary"
+                        startIcon={<CopyAllOutlined fontSize="small" />}
+                        sx={{ mt: 1, mb: 2, ml: 2 }}
+                        variant="outlined"
+                        onClick={() => {
+                          getExternalId().catch((e) =>
+                            dispatch({ type: SET_ERROR, error: e.message })
+                          );
+                        }}
+                      >
+                        External Id
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                  Make sure that the services needed for the selected environment features are available in your AWS Account.
+                  Make sure that the services needed for the selected
+                  environment features are available in your AWS Account.
                 </Typography>
               </Box>
             </CardContent>

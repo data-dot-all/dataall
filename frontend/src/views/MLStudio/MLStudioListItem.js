@@ -97,8 +97,12 @@ const MLStudioListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={mlstudiouser.description || 'No description provided'}>
-              <span>{mlstudiouser.description || 'No description provided'}</span>
+            <Tooltip
+              title={mlstudiouser.description || 'No description provided'}
+            >
+              <span>
+                {mlstudiouser.description || 'No description provided'}
+              </span>
             </Tooltip>
           </Typography>
         </Box>

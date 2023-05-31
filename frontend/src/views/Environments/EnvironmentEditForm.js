@@ -48,8 +48,10 @@ const EnvironmentEditForm = (props) => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
     } else {
       const error = response.errors
@@ -80,11 +82,11 @@ const EnvironmentEditForm = (props) => {
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
-                key: "notebooksEnabled",
+                key: 'notebooksEnabled',
                 value: String(values.notebooksEnabled)
               },
               {
-                key: "mlStudiosEnabled",
+                key: 'mlStudiosEnabled',
                 value: String(values.mlStudiosEnabled)
               }
             ]
@@ -203,8 +205,8 @@ const EnvironmentEditForm = (props) => {
                 description: env.description,
                 tags: env.tags || [],
                 dashboardsEnabled: env.dashboardsEnabled,
-                notebooksEnabled: env.parameters["notebooksEnabled"] === 'true',
-                mlStudiosEnabled: env.parameters["mlStudiosEnabled"] === 'true',
+                notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
+                mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
