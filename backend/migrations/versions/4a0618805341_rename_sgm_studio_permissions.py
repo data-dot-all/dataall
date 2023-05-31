@@ -100,16 +100,25 @@ def upgrade():
             .filter(TenantPolicyPermission.permissionUri == manage_notebooks_permission.permissionUri)
             .all()
         )
-
         for permission in tenant_permissions:
             print(permission.permissionUri)
-            try:
+            existing_tenant_permissions = (
+                session.query(TenantPolicyPermission)
+                .filter(and_(
+                    TenantPolicyPermission.permissionUri == manage_mlstudio_permission.permissionUri,
+                    TenantPolicyPermission.sid == permission.sid
+                ))
+                .first()
+            )
+
+            if existing_tenant_permissions.permissionUri:
+                print(f"Permission already exists {existing_tenant_permissions.permissionUri}, skipping...")
+            else:
+                print("Permission does not exist, adding it...")
                 session.add(TenantPolicyPermission(
                     sid=permission.sid,
                     permissionUri=manage_mlstudio_permission.permissionUri,
                 ))
-            except Exception as e:
-                print(f"Permission already exists = {e}")
 
         session.commit()
 
