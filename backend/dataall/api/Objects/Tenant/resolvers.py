@@ -3,8 +3,6 @@ import os
 from .... import db
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....aws.handlers.quicksight import Quicksight
-from ....db import exceptions
 
 
 def update_group_permissions(context, source, input=None):

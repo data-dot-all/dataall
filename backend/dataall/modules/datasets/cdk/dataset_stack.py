@@ -19,7 +19,7 @@ from aws_cdk.aws_glue import CfnCrawler
 
 from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
-from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.db.api import Environment
@@ -102,7 +102,7 @@ class DatasetStack(Stack):
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
-            quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
+            quicksight_default_group = QuicksightClient.create_quicksight_group(AwsAccountId=env.AwsAccountId)
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key

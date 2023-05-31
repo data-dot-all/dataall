@@ -1,7 +1,6 @@
 import os
 
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.aws.handlers.quicksight import Quicksight
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
@@ -9,6 +8,7 @@ from dataall.db.api import Environment, TenantPolicy
 from dataall.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
 from dataall.db.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard
+from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
 from dataall.utils import Parameter
 
@@ -22,21 +22,19 @@ class DashboardQuicksightService:
         dashboard: Dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
         return dashboard.environmentUri
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(GET_DASHBOARD, parent_resource=_get_env_uri)
-    def get_quicksight_reader_url(uri):
+    def get_quicksight_reader_url(cls, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dash: Dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
             env = Environment.get_environment_by_uri(session, dash.environmentUri)
-            DashboardQuicksightService._check_dashboards_enabled(session, env, GET_DASHBOARD)
+            cls._check_dashboards_enabled(session, env, GET_DASHBOARD)
+            client = cls._client(env.AwsAccountId, env.region)
 
             if dash.SamlGroupName in context.groups:
-                url = Quicksight.get_reader_session(
-                    AwsAccountId=env.AwsAccountId,
-                    region=env.region,
-                    UserName=context.username,
-                    DashboardId=dash.DashboardId,
+                return client.get_reader_session(
+                    dashboard_id=dash.DashboardId,
                     domain_name=DashboardQuicksightService._get_domain_url(),
                 )
 
@@ -57,38 +55,22 @@ class DashboardQuicksightService:
                 )
 
                 if session_type == 'reader':
-                    url = Quicksight.get_shared_reader_session(
-                        AwsAccountId=env.AwsAccountId,
-                        region=env.region,
-                        UserName=context.username,
-                        GroupName=shared_groups[0],
-                        DashboardId=dash.DashboardId,
+                    return client.get_shared_reader_session(
+                        group_name=shared_groups[0],
+                        dashboard_id=dash.DashboardId,
                     )
                 else:
-                    url = Quicksight.get_anonymous_session(
-                        AwsAccountId=env.AwsAccountId,
-                        region=env.region,
-                        UserName=context.username,
-                        DashboardId=dash.DashboardId,
-                    )
-        return url
+                    return client.get_anonymous_session(dashboard_id=dash.DashboardId)
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(CREATE_DASHBOARD)
-    def get_quicksight_designer_url(uri: str):
+    def get_quicksight_designer_url(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = Environment.get_environment_by_uri(session, uri)
-            DashboardQuicksightService._check_dashboards_enabled(session, env, CREATE_DASHBOARD)
+            cls._check_dashboards_enabled(session, env, CREATE_DASHBOARD)
 
-            url = Quicksight.get_author_session(
-                AwsAccountId=env.AwsAccountId,
-                region=env.region,
-                UserName=context.username,
-                UserRole='AUTHOR',
-            )
-
-        return url
+            return cls._client(env.AwsAccountId, env.region).get_author_session()
 
     @staticmethod
     def get_monitoring_dashboard_id():
@@ -122,22 +104,12 @@ class DashboardQuicksightService:
             )
         return vpc_connection_id
 
-    @staticmethod
-    def create_quicksight_data_source_set(vpc_connection_id):
-        context = get_context()
-        current_account = SessionHelper.get_account()
-        Quicksight.register_user_in_group(
-            AwsAccountId=current_account,
-            UserName=context.username,
-            GroupName='dataall',
-            UserRole='AUTHOR')
+    @classmethod
+    def create_quicksight_data_source_set(cls, vpc_connection_id):
+        client = cls._client()
+        client.register_user_in_group(group_name='dataall', user_role='AUTHOR')
 
-        datasource_id = Quicksight.create_data_source_vpc(
-            AwsAccountId=current_account,
-            region=DashboardQuicksightService._REGION,
-            UserName=context.username,
-            vpcConnectionId=vpc_connection_id
-        )
+        datasource_id = client.create_data_source_vpc(vpc_connection_id=vpc_connection_id)
         # Data sets are not created programmatically. Too much overhead for the value added.
         # However, an example API is provided: datasets = Quicksight.create_data_set_from_source(
         #   AwsAccountId=current_account, region=region, UserName='dataallTenantUser',
@@ -147,29 +119,16 @@ class DashboardQuicksightService:
 
         return datasource_id
 
-    @staticmethod
-    def get_quicksight_author_session(aws_account):
+    @classmethod
+    def get_quicksight_author_session(cls, aws_account):
         DashboardQuicksightService._check_user_must_be_admin()
+        return cls._client(aws_account).get_author_session()
 
-        return Quicksight.get_author_session(
-            AwsAccountId=aws_account,
-            region=DashboardQuicksightService._REGION,
-            UserName=get_context().username,
-            UserRole='AUTHOR',
-        )
-
-    @staticmethod
-    def get_quicksight_reader_session(dashboard_uri):
-        DashboardQuicksightService._check_user_must_be_admin()
-        current_account = SessionHelper.get_account()
-
-        return Quicksight.get_reader_session(
-            AwsAccountId=current_account,
-            region=DashboardQuicksightService._REGION,
-            UserName=get_context().username,
-            UserRole='READER',
-            DashboardId=dashboard_uri
-        )
+    @classmethod
+    def get_quicksight_reader_session(cls, dashboard_uri):
+        cls._check_user_must_be_admin()
+        client = cls._client()
+        return client.get_reader_session(user_role='READER', dashboard_id=dashboard_uri)
 
     @staticmethod
     def _check_user_must_be_admin():
@@ -204,4 +163,13 @@ class DashboardQuicksightService:
                 action=action,
                 message=f'Dashboards feature is disabled for the environment {env.label}',
             )
+
+    @classmethod
+    def _client(cls, account_id: str = None, region: str = None):
+        if not account_id:
+            account_id = SessionHelper.get_account()
+
+        if not region:
+            region = cls._REGION
+        return DashboardQuicksightClient(get_context().username, account_id, cls._REGION)
 

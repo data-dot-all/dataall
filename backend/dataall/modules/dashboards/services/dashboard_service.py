@@ -1,10 +1,10 @@
-from dataall.aws.handlers.quicksight import Quicksight
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.api import ResourcePolicy, Glossary, Vote, Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.db.models import Activity
 from dataall.modules.dashboards import DashboardRepository, Dashboard
+from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, GET_DASHBOARD, \
     UPDATE_DASHBOARD, CREATE_DASHBOARD, DASHBOARD_ALL
@@ -34,12 +34,8 @@ class DashboardService:
                     message=f'Dashboards feature is disabled for the environment {env.label}',
                 )
 
-            can_import = Quicksight.can_import_dashboard(
-                AwsAccountId=env.AwsAccountId,
-                region=env.region,
-                UserName=context.username,
-                DashboardId=data.get('dashboardId'),
-            )
+            aws_client = DashboardQuicksightClient(context.username, env.AwsAccountId, env.region)
+            can_import = aws_client.can_import_dashboard(data.get('dashboardId'))
 
             if not can_import:
                 raise UnauthorizedOperation(

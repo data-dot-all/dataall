@@ -2,7 +2,7 @@ import json
 import logging
 
 from dataall.api.Objects.Stack import stack_helper
-from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
@@ -36,10 +36,10 @@ class DatasetService:
     def check_dataset_account(session, environment):
         dashboards_enabled = Environment.get_boolean_env_param(session, environment, "dashboardsEnabled")
         if dashboards_enabled:
-            quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(
+            quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
                 AwsAccountId=environment.AwsAccountId)
             if quicksight_subscription:
-                group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
+                group = QuicksightClient.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
                 return True if group else False
         return True
 
