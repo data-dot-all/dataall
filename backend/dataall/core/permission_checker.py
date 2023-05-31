@@ -84,7 +84,11 @@ def has_resource_permission(permission: str, resource_name: str = None, parent_r
 
             with get_context().db_engine.scoped_session() as session:
                 if parent_resource:
-                    uri = parent_resource(session, uri)
+                    try:
+                        uri = parent_resource(session, uri)
+                    except TypeError:
+                        uri = parent_resource.__func__(session, uri)
+
                 _check_resource_permission(session, uri, permission)
 
             return fn(*args, **kwargs)
