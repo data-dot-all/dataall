@@ -31,7 +31,7 @@ class DatasetProfilingRepository:
     @staticmethod
     def update_run(session, run_uri, glue_job_run_id):
         run = DatasetProfilingRepository.get_profiling_run(
-            session, profilingRunUri=run_uri, GlueJobRunId=glue_job_run_id
+            session, profiling_run_uri=run_uri, glue_job_run_id=glue_job_run_id
         )
         if glue_job_run_id:
             run.GlueJobRunId = glue_job_run_id
@@ -40,17 +40,17 @@ class DatasetProfilingRepository:
 
     @staticmethod
     def get_profiling_run(
-        session, profilingRunUri=None, GlueJobRunId=None, GlueTableName=None
+        session, profiling_run_uri=None, glue_job_run_id=None, glue_table_name=None
     ):
-        if profilingRunUri:
+        if profiling_run_uri:
             run: DatasetProfilingRun = session.query(
                 DatasetProfilingRun
-            ).get(profilingRunUri)
+            ).get(profiling_run_uri)
         else:
             run: DatasetProfilingRun = (
                 session.query(DatasetProfilingRun)
-                .filter(DatasetProfilingRun.GlueJobRunId == GlueJobRunId)
-                .filter(DatasetProfilingRun.GlueTableName == GlueTableName)
+                .filter(DatasetProfilingRun.GlueJobRunId == glue_job_run_id)
+                .filter(DatasetProfilingRun.GlueTableName == glue_table_name)
                 .first()
             )
         return run

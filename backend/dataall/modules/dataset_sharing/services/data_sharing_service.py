@@ -44,9 +44,9 @@ class DataSharingService:
                 target_environment,
             ) = ShareObjectRepository.get_share_data(session, share_uri)
 
-            Share_SM = ShareObjectSM(share.status)
-            new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
-            Share_SM.update_state(session, share, new_share_state)
+            share_sm = ShareObjectSM(share.status)
+            new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+            share_sm.update_state(session, share, new_share_state)
 
             (
                 shared_tables,
@@ -94,8 +94,8 @@ class DataSharingService:
         approved_tables_succeed = processor.process_approved_shares()
         log.info(f'sharing tables succeeded = {approved_tables_succeed}')
 
-        new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
-        Share_SM.update_state(session, share, new_share_state)
+        new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
+        share_sm.update_state(session, share, new_share_state)
 
         return approved_tables_succeed if approved_folders_succeed else False
 
@@ -131,19 +131,19 @@ class DataSharingService:
                 target_environment,
             ) = ShareObjectRepository.get_share_data(session, share_uri)
 
-            Share_SM = ShareObjectSM(share.status)
-            new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
-            Share_SM.update_state(session, share, new_share_state)
+            share_sm = ShareObjectSM(share.status)
+            new_share_state = share_sm.run_transition(ShareObjectActions.Start.value)
+            share_sm.update_state(session, share, new_share_state)
 
-            revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+            revoked_item_sm = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
 
             (
                 revoked_tables,
                 revoked_folders
             ) = ShareObjectRepository.get_share_data_items(session, share_uri, ShareItemStatus.Revoke_Approved.value)
 
-            new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
-            revoked_item_SM.update_state(session, share_uri, new_state)
+            new_state = revoked_item_sm.run_transition(ShareObjectActions.Start.value)
+            revoked_item_sm.update_state(session, share_uri, new_state)
 
             log.info(f'Revoking permissions to folders: {revoked_folders}')
 
@@ -212,9 +212,9 @@ class DataSharingService:
 
             existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
             if existing_pending_items:
-                new_share_state = Share_SM.run_transition(ShareObjectActions.FinishPending.value)
+                new_share_state = share_sm.run_transition(ShareObjectActions.FinishPending.value)
             else:
-                new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
-            Share_SM.update_state(session, share, new_share_state)
+                new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
+            share_sm.update_state(session, share, new_share_state)
 
             return revoked_tables_succeed and revoked_folders_succeed

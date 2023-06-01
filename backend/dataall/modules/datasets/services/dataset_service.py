@@ -496,8 +496,8 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_group_datasets(
                 session=session,
-                envUri=env_uri,
-                groupUri=group_uri,
+                env_uri=env_uri,
+                group_uri=group_uri,
                 data=data,
             )
 

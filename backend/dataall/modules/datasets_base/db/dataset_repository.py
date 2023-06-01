@@ -318,11 +318,11 @@ class DatasetRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def query_environment_group_datasets(session, envUri, groupUri, filter) -> Query:
+    def query_environment_group_datasets(session, env_uri, group_uri, filter) -> Query:
         query = session.query(Dataset).filter(
             and_(
-                Dataset.environmentUri == envUri,
-                Dataset.SamlAdminGroupName == groupUri,
+                Dataset.environmentUri == env_uri,
+                Dataset.SamlAdminGroupName == group_uri,
                 Dataset.deleted.is_(None),
             )
         )
@@ -372,11 +372,11 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def paginated_environment_group_datasets(
-            session, envUri, groupUri, data=None
+            session, env_uri, group_uri, data=None
     ) -> dict:
         return paginate(
             query=DatasetRepository.query_environment_group_datasets(
-                session, envUri, groupUri, data
+                session, env_uri, group_uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),

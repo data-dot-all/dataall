@@ -41,7 +41,7 @@ class DatasetProfilingGlueHandler:
     def _get_job_data(session, task):
         profiling: DatasetProfilingRun = (
             DatasetProfilingRepository.get_profiling_run(
-                session, profilingRunUri=task.targetUri
+                session, profiling_run_uri=task.targetUri
             )
         )
         dataset: Dataset = session.query(Dataset).get(

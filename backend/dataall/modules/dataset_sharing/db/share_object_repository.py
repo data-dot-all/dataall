@@ -30,7 +30,8 @@ class Transition:
         elif prev_state not in self._all_source_states:
             raise exceptions.UnauthorizedOperation(
                 action=self._name,
-                message=f'This transition is not possible, {prev_state} cannot go to {self._all_target_states}. If there is a sharing or revoking in progress wait until it is complete and try again.',
+                message=f'This transition is not possible, {prev_state} cannot go to {self._all_target_states}. '
+                        f'If there is a sharing or revoking in progress wait until it is complete and try again.',
             )
         else:
             return True
@@ -146,7 +147,7 @@ class ShareObjectSM:
         logger.info(f"Updating share object {share.shareUri} in DB from {self._state} to state {new_state}")
         ShareObjectRepository.update_share_object_status(
             session=session,
-            shareUri=share.shareUri,
+            share_uri=share.shareUri,
             status=new_state
         )
         self._state = new_state
@@ -532,8 +533,8 @@ class ShareObjectRepository:
                     )
                 )
             if 'isShared' in data.keys():
-                isShared = data.get('isShared')
-                query = query.filter(shareable_objects.c.isShared == isShared)
+                is_shared = data.get('isShared')
+                query = query.filter(shareable_objects.c.isShared == is_shared)
 
         return paginate(query, data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
@@ -595,13 +596,8 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    def update_share_object_status(
-            session,
-            shareUri: str,
-            status: str,
-    ) -> ShareObject:
-
-        share = ShareObjectRepository.get_share_by_uri(session, shareUri)
+    def update_share_object_status(session, share_uri: str, status: str) -> ShareObject:
+        share = ShareObjectRepository.get_share_by_uri(session, share_uri)
         share.status = status
         session.commit()
         return share
