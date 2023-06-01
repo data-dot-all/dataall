@@ -58,18 +58,6 @@ getDatasetPresignedUrl = gql.QueryField(
     resolver=get_file_upload_presigned_url,
 )
 
-
-getGlueCrawlerStatus = gql.MutationField(
-    name='getGlueCrawlerStatus',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='name', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=lambda *_, **__: None,
-    type=gql.Ref('GlueCrawler'),
-)
-
-
 listShareObjects = gql.QueryField(
     name='listDatasetShareObjects',
     resolver=list_dataset_share_objects,
