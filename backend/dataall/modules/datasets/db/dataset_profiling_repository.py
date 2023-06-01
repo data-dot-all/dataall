@@ -29,22 +29,12 @@ class DatasetProfilingRepository:
         return run
 
     @staticmethod
-    def update_run(
-        session,
-        run_uri=None,
-        glue_job_run_id=None,
-        glue_job_state=None,
-        results=None,
-    ):
+    def update_run(session, run_uri, glue_job_run_id):
         run = DatasetProfilingRepository.get_profiling_run(
             session, profilingRunUri=run_uri, GlueJobRunId=glue_job_run_id
         )
         if glue_job_run_id:
             run.GlueJobRunId = glue_job_run_id
-        if glue_job_state:
-            run.status = glue_job_state
-        if results:
-            run.results = results
         session.commit()
         return run
 

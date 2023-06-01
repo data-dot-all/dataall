@@ -105,31 +105,6 @@ def list_profiling_runs(client, dataset1, group):
     return response.data.listDatasetProfilingRuns['nodes']
 
 
-def test_get_profiling_run(client, dataset1, env1, module_mocker, db, group):
-    runs = list_profiling_runs(client, dataset1, group)
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
-        return_value=update_runs(db, runs),
-    )
-    response = client.query(
-        """
-        query getDatasetProfilingRun($profilingRunUri:String!){
-            getDatasetProfilingRun(profilingRunUri:$profilingRunUri){
-                profilingRunUri
-                status
-            }
-        }
-        """,
-        profilingRunUri=runs[0]['profilingRunUri'],
-        groups=[group.name],
-    )
-    assert (
-        response.data.getDatasetProfilingRun['profilingRunUri']
-        == runs[0]['profilingRunUri']
-    )
-    assert response.data.getDatasetProfilingRun['status'] == 'SUCCEEDED'
-
-
 def test_get_table_profiling_run(
     client, dataset1, env1, module_mocker, table, db, group
 ):

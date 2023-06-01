@@ -60,27 +60,10 @@ class DatasetProfilingService:
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
     @staticmethod
-    def update_profiling_run_results(run_uri, results):
-        # TODO NO PERMISSION CHECK
-        with get_context().db_engine.scoped_session() as session:
-            run = DatasetProfilingRepository.update_run(
-                session=session, run_uri=run_uri, results=results
-            )
-            return run
-
-    @staticmethod
     def list_profiling_runs(dataset_uri):
         # TODO NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, dataset_uri)
-
-    @staticmethod
-    def get_profiling_run(run_uri):
-        # TODO NO PERMISSION CHECK
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetProfilingRepository.get_profiling_run(
-                session=session, profilingRunUri=run_uri
-            )
 
     @staticmethod
     def get_last_table_profiling_run(table_uri: str):
