@@ -19,8 +19,9 @@ class DatasetTableColumn(Resource, Base):
         String, default='column'
     )  # can be either "column" or "partition"
 
-    def uri(self):
-        return self.columnUri
+    @classmethod
+    def uri(cls):
+        return cls.columnUri
 
 
 class DatasetProfilingRun(Resource, Base):
@@ -53,8 +54,9 @@ class DatasetStorageLocation(Resource, Base):
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
 
-    def uri(self):
-        return self.locationUri
+    @classmethod
+    def uri(cls):
+        return cls.locationUri
 
 
 class DatasetTable(Resource, Base):
@@ -79,8 +81,9 @@ class DatasetTable(Resource, Base):
     topics = Column(ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
 
-    def uri(self):
-        return self.tableUri
+    @classmethod
+    def uri(cls):
+        return cls.tableUri
 
 
 class Dataset(Resource, Base):
@@ -138,5 +141,6 @@ class Dataset(Resource, Base):
     importedAdminRole = Column(Boolean, default=False)
     imported = Column(Boolean, default=False)
 
-    def uri(self):
-        return self.datasetUri
+    @classmethod
+    def uri(cls):
+        return cls.datasetUri
