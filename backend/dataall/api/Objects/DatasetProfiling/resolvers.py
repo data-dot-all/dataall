@@ -79,21 +79,7 @@ def get_dataset_table_profiling_run(context: Context, source, tableUri=None):
     For datasets "Secret" or "Official", only users with PREVIEW_DATASET_TABLE permissions can perform this action.
     """
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
-            session, tableUri
-        )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
-        if (
-                dataset.confidentiality
-                != models.ConfidentialityClassification.Unclassified.value
-        ):
-            ResourcePolicy.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=table.tableUri,
-                permission_name=permissions.PREVIEW_DATASET_TABLE,
-            )
+        _check_preview_permissions_if_needed(context=context, session=session, tableUri=tableUri)
         run: models.DatasetProfilingRun = (
             api.DatasetProfilingRun.get_table_last_profiling_run(
                 session=session, tableUri=tableUri
@@ -152,21 +138,26 @@ def list_table_profiling_runs(context: Context, source, tableUri=None):
     For datasets "Secret" or "Official", only users with PREVIEW_DATASET_TABLE permissions can perform this action.
     """
     with context.engine.scoped_session() as session:
-        table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
-            session, tableUri
-        )
-        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
-        if (
-                dataset.confidentiality
-                != models.ConfidentialityClassification.Unclassified.value
-        ):
-            ResourcePolicy.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=table.tableUri,
-                permission_name=permissions.PREVIEW_DATASET_TABLE,
-            )
+        _check_preview_permissions_if_needed(context=context, session=session, tableUri=tableUri)
         return api.DatasetProfilingRun.list_table_profiling_runs(
             session=session, tableUri=tableUri, filter={}
         )
+
+
+def _check_preview_permissions_if_needed(context, session, tableUri):
+    table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+        session, tableUri
+    )
+    dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+    if (
+            dataset.confidentiality
+            != models.ConfidentialityClassification.Unclassified.value
+    ):
+        ResourcePolicy.check_user_resource_permission(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            resource_uri=table.tableUri,
+            permission_name=permissions.PREVIEW_DATASET_TABLE,
+        )
+    return True
