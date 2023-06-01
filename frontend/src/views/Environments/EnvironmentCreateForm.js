@@ -293,8 +293,8 @@ const EnvironmentCreateForm = (props) => {
                   {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
                 </Typography>
               </Box>
-              {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE == 'True' ? (
-                <Box>
+              {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE ===
+              'True' ? (
                   <Typography color="textSecondary" variant="subtitle2">
                     As part of the environment CloudFormation stack data.all
                     will create an IAM role (Pivot Role) to manage AWS
