@@ -197,12 +197,6 @@ class Dataset(Stack):
                     actions=['s3:List*'], resources=['*'], effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
-                    actions=['logs:*'], resources=['*'], effect=iam.Effect.ALLOW
-                ),
-                iam.PolicyStatement(
-                    actions=['tag:*'], resources=['*'], effect=iam.Effect.ALLOW
-                ),
-                iam.PolicyStatement(
                     actions=['s3:List*', 's3:Get*'],
                     resources=[dataset_bucket.bucket_arn],
                     effect=iam.Effect.ALLOW,
@@ -217,26 +211,22 @@ class Dataset(Stack):
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
                         's3:ListAccessPoints',
-                        's3:CreateAccessPoint',
-                        's3:DeleteAccessPoint',
                         's3:GetAccessPointPolicyStatus',
-                        's3:DeleteAccessPointPolicy',
-                        's3:PutAccessPointPolicy',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
-                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/*',
+                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*',
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:List*', 's3:Get*'],
+                    actions=['s3:List*'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:*'],
+                    actions=['s3:List*', 's3:Get*'],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
                     effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/*'],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -268,19 +258,6 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=['arn:aws:logs:*:*:/aws-glue/*'],
                 ),
-                iam.PolicyStatement(
-                    actions=['kms:*'], effect=iam.Effect.ALLOW, resources=['*']
-                ),
-                iam.PolicyStatement(
-                    actions=['glue:*', 'athena:*', 'lakeformation:*'],
-                    resources=['*'],
-                    effect=iam.Effect.ALLOW,
-                ),
-                iam.PolicyStatement(
-                    actions=['cloudformation:*'],
-                    resources=['*'],
-                    effect=iam.Effect.ALLOW,
-                ),
             ],
         )
         dataset_admin_policy.node.add_dependency(dataset_bucket)
@@ -291,13 +268,6 @@ class Dataset(Stack):
             role_name=dataset.IAMDatasetAdminRoleArn.split('/')[-1],
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('glue.amazonaws.com'),
-                iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                iam.ServicePrincipal('athena.amazonaws.com'),
-                iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.ServicePrincipal('lambda.amazonaws.com'),
-                iam.ServicePrincipal('ec2.amazonaws.com'),
-                iam.AccountPrincipal(os.environ.get('CURRENT_AWS_ACCOUNT')),
-                iam.AccountPrincipal(dataset.AwsAccountId),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
