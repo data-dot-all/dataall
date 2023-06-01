@@ -228,36 +228,6 @@ class Dataset(Stack):
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
                     effect=iam.Effect.ALLOW,
                 ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    resources=['arn:aws:s3:::aws-glue-*'],
-                    actions=['s3:CreateBucket'],
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-                    effect=iam.Effect.ALLOW,
-                    resources=[
-                        'arn:aws:s3:::aws-glue-*/*',
-                        'arn:aws:s3:::*/*aws-glue-*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:GetObject'],
-                    effect=iam.Effect.ALLOW,
-                    resources=[
-                        'arn:aws:s3:::crawler-public*',
-                        'arn:aws:s3:::aws-glue-*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=['arn:aws:logs:*:*:/aws-glue/*'],
-                ),
             ],
         )
         dataset_admin_policy.node.add_dependency(dataset_bucket)
@@ -267,7 +237,6 @@ class Dataset(Stack):
             'DatasetAdminRole',
             role_name=dataset.IAMDatasetAdminRoleArn.split('/')[-1],
             assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
