@@ -50,7 +50,6 @@ class DatasetProfilingService:
 
     @staticmethod
     def queue_profiling_run(run_uri):
-        # TODO NO PERMISSION CHECK
         context = get_context()
         with context.db_engine.scoped_session() as session:
             task = Task(
