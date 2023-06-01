@@ -1,5 +1,3 @@
-from sqlalchemy import and_
-
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db import utils

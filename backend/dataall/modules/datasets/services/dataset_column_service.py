@@ -14,7 +14,7 @@ class DatasetColumnService:
     def paginate_active_columns_for_table(table_uri: str, filter=None):
         # TODO THERE WAS NO PERMISSION CHECK!!!
         with get_context().db_engine.scoped_session() as session:
-            DatasetColumnRepository.paginate_active_columns_for_table(session, table_uri, filter)
+            return DatasetColumnRepository.paginate_active_columns_for_table(session, table_uri, filter)
 
     @staticmethod
     def sync_table_columns(table_uri: str):
