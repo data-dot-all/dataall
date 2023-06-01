@@ -24,7 +24,7 @@ class DatasetColumnService:
             task = models.Task(action='glue.table.columns', targetUri=table_uri)
             session.add(task)
         Worker.process(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
-        return DatasetColumnService.paginate_active_columns_for_table(table_uri)
+        return DatasetColumnService.paginate_active_columns_for_table(table_uri, {})
 
     @staticmethod
     def update_table_column_description(column_uri: str, description) -> DatasetTableColumn:
