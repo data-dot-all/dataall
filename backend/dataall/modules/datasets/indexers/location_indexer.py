@@ -1,7 +1,7 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset
-
-from dataall.db import models
+from dataall.db.api import Environment, Organization
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.searchproxy.base_indexer import BaseIndexer
 
@@ -10,64 +10,33 @@ class DatasetLocationIndexer(BaseIndexer):
 
     @classmethod
     def upsert(cls, session, folder_uri: str):
-        folder = (
-            session.query(
-                DatasetStorageLocation.datasetUri.label('datasetUri'),
-                DatasetStorageLocation.locationUri.label('uri'),
-                DatasetStorageLocation.name.label('name'),
-                DatasetStorageLocation.owner.label('owner'),
-                DatasetStorageLocation.label.label('label'),
-                DatasetStorageLocation.description.label('description'),
-                DatasetStorageLocation.tags.label('tags'),
-                DatasetStorageLocation.region.label('region'),
-                models.Organization.organizationUri.label('orgUri'),
-                models.Organization.name.label('orgName'),
-                models.Environment.environmentUri.label('envUri'),
-                models.Environment.name.label('envName'),
-                Dataset.SamlAdminGroupName.label('admins'),
-                Dataset.S3BucketName.label('source'),
-                Dataset.topics.label('topics'),
-                Dataset.confidentiality.label('classification'),
-                DatasetStorageLocation.created,
-                DatasetStorageLocation.updated,
-                DatasetStorageLocation.deleted,
-            )
-            .join(
-                Dataset,
-                Dataset.datasetUri == DatasetStorageLocation.datasetUri,
-            )
-            .join(
-                models.Organization,
-                Dataset.organizationUri == models.Organization.organizationUri,
-            )
-            .join(
-                models.Environment,
-                Dataset.environmentUri == models.Environment.environmentUri,
-            )
-            .filter(DatasetStorageLocation.locationUri == folder_uri)
-            .first()
-        )
+        folder = DatasetLocationRepository.get_location_by_uri(session, folder_uri)
+
         if folder:
+            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            org = Organization.get_organization_by_uri(session, dataset.environmentUri)
             glossary = BaseIndexer._get_target_glossary_terms(session, folder_uri)
+
             BaseIndexer._index(
                 doc_id=folder_uri,
                 doc={
                     'name': folder.name,
-                    'admins': folder.admins,
+                    'admins': dataset.SamlAdminGroupName,
                     'owner': folder.owner,
                     'label': folder.label,
                     'resourceKind': 'folder',
                     'description': folder.description,
-                    'source': folder.source,
-                    'classification': folder.classification,
+                    'source': dataset.S3BucketName,
+                    'classification': dataset.confidentiality,
                     'tags': [f.replace('-', '') for f in folder.tags or []],
-                    'topics': folder.topics,
+                    'topics': dataset.topics,
                     'region': folder.region.replace('-', ''),
                     'datasetUri': folder.datasetUri,
-                    'environmentUri': folder.envUri,
-                    'environmentName': folder.envName,
-                    'organizationUri': folder.orgUri,
-                    'organizationName': folder.orgName,
+                    'environmentUri': env.environmentUri,
+                    'environmentName': env.name,
+                    'organizationUri': org.organizationUri,
+                    'organizationName': org.name,
                     'created': folder.created,
                     'updated': folder.updated,
                     'deleted': folder.deleted,
@@ -79,11 +48,7 @@ class DatasetLocationIndexer(BaseIndexer):
 
     @classmethod
     def upsert_all(cls, session, dataset_uri: str):
-        folders = (
-            session.query(DatasetStorageLocation)
-            .filter(DatasetStorageLocation.datasetUri == dataset_uri)
-            .all()
-        )
+        folders = DatasetLocationRepository.get_dataset_folders(session, dataset_uri)
         for folder in folders:
             DatasetLocationIndexer.upsert(session=session, folder_uri=folder.locationUri)
         return folders

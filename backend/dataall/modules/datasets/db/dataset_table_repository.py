@@ -141,6 +141,32 @@ class DatasetTableRepository:
                 )
 
     @staticmethod
+    def find_all_active_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus != 'Deleted',
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
+    def find_all_deleted_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
     def sync_table_columns(session, dataset_table, glue_table):
 
         DatasetTableRepository.delete_all_table_columns(session, dataset_table)
