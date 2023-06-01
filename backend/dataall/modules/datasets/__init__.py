@@ -97,6 +97,10 @@ class DatasetCdkModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         import dataall.modules.datasets.cdk
         from dataall.cdkproxy.stacks.environment import EnvironmentSetup
@@ -117,6 +121,10 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         from dataall.tasks.stacks_updater import StackFinder
         from dataall.tasks.stacks_updater import register_stack_finder
@@ -135,6 +143,10 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CATALOG_INDEXER_TASK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
 
     def __init__(self):
         from dataall.tasks.catalog_indexer import register_catalog_indexer

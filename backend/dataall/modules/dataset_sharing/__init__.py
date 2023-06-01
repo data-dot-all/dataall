@@ -33,6 +33,10 @@ class SharingAsyncHandlersModuleInterface(ModuleInterface):
     def is_supported(modes: List[ImportMode]):
         return ImportMode.HANDLERS in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         import dataall.modules.dataset_sharing.handlers
         log.info("Sharing handlers have been imported")
