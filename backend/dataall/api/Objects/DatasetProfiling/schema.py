@@ -16,11 +16,11 @@ DatasetProfilingRun = gql.ObjectType(
         gql.Field(name='GlueTriggerName', type=gql.String),
         gql.Field(name='GlueTableName', type=gql.String),
         gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='results', type=gql.String, resolver=get_profiling_results),
+        gql.Field(name='results', type=gql.String, resolver=resolve_profiling_results),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='owner', type=gql.String),
-        gql.Field('status', type=gql.String, resolver=get_profiling_run_status),
+        gql.Field('status', type=gql.String, resolver=resolve_profiling_run_status),
         gql.Field(name='dataset', type=gql.Ref('Dataset'), resolver=resolve_dataset),
     ],
 )

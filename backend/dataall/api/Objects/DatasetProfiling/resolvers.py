@@ -20,7 +20,30 @@ def resolve_dataset(context, source: models.DatasetProfilingRun):
         )
 
 
+def resolve_profiling_run_status(context: Context, source: models.DatasetProfilingRun):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        task = models.Task(
+            targetUri=source.profilingRunUri, action='glue.job.profiling_run_status'
+        )
+        session.add(task)
+    Worker.queue(engine=context.engine, task_ids=[task.taskUri])
+    return source.status
+
+
+def resolve_profiling_results(context: Context, source: models.DatasetProfilingRun):
+    if not source or source.results == {}:
+        return None
+    else:
+        return json.dumps(source.results)
+
+
 def start_profiling_run(context: Context, source, input: dict = None):
+    """
+    Triggers profiling jobs on a Table.
+    Only Dataset owners with PROFILE_DATASET_TABLE can perform this action
+    """
     with context.engine.scoped_session() as session:
 
         ResourcePolicy.check_user_resource_permission(
@@ -49,46 +72,12 @@ def start_profiling_run(context: Context, source, input: dict = None):
     return run
 
 
-def get_profiling_run_status(context: Context, source: models.DatasetProfilingRun):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=source.profilingRunUri, action='glue.job.profiling_run_status'
-        )
-        session.add(task)
-    Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-    return source.status
-
-
-def get_profiling_results(context: Context, source: models.DatasetProfilingRun):
-    if not source or source.results == {}:
-        return None
-    else:
-        return json.dumps(source.results)
-
-
-def update_profiling_run_results(context: Context, source, profilingRunUri, results):
-    with context.engine.scoped_session() as session:
-        run = api.DatasetProfilingRun.update_run(
-            session=session, profilingRunUri=profilingRunUri, results=results
-        )
-        return run
-
-
-def list_profiling_runs(context: Context, source, datasetUri=None):
-    with context.engine.scoped_session() as session:
-        return api.DatasetProfilingRun.list_profiling_runs(session, datasetUri)
-
-
-def get_profiling_run(context: Context, source, profilingRunUri=None):
-    with context.engine.scoped_session() as session:
-        return api.DatasetProfilingRun.get_profiling_run(
-            session=session, profilingRunUri=profilingRunUri
-        )
-
-
 def get_last_table_profiling_run(context: Context, source, tableUri=None):
+    """
+    Shows the results of the last profiling job on a Table.
+    For datasets "Unclassified" all users can perform this action.
+    For datasets "Secret" or "Official", only users with PREVIEW_DATASET_TABLE permissions can perform this action.
+    """
     with context.engine.scoped_session() as session:
         table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
             session, tableUri
@@ -118,7 +107,7 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
                 environment = api.Environment.get_environment_by_uri(
                     session, dataset.environmentUri
                 )
-                content = get_profiling_results_from_s3(
+                content = _get_profiling_results_from_s3(
                     environment, dataset, table, run
                 )
                 if content:
@@ -137,7 +126,7 @@ def get_last_table_profiling_run(context: Context, source, tableUri=None):
         return run
 
 
-def get_profiling_results_from_s3(environment, dataset, table, run):
+def _get_profiling_results_from_s3(environment, dataset, table, run):
     s3 = SessionHelper.remote_session(environment.AwsAccountId).client(
         's3', region_name=environment.region
     )
@@ -157,7 +146,27 @@ def get_profiling_results_from_s3(environment, dataset, table, run):
 
 
 def list_table_profiling_runs(context: Context, source, tableUri=None):
+    """
+    Lists the runs of a profiling job on a Table.
+    For datasets "Unclassified" all users can perform this action.
+    For datasets "Secret" or "Official", only users with PREVIEW_DATASET_TABLE permissions can perform this action.
+    """
     with context.engine.scoped_session() as session:
+        table: models.DatasetTable = db.api.DatasetTable.get_dataset_table_by_uri(
+            session, tableUri
+        )
+        dataset = db.api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+        if (
+                dataset.confidentiality
+                != models.ConfidentialityClassification.Unclassified.value
+        ):
+            ResourcePolicy.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=table.tableUri,
+                permission_name=permissions.PREVIEW_DATASET_TABLE,
+            )
         return api.DatasetProfilingRun.list_table_profiling_runs(
             session=session, tableUri=tableUri, filter={}
         )
