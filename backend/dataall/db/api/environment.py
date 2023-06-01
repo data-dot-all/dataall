@@ -392,6 +392,23 @@ class Environment:
                 message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
             )
 
+        shares_count = (
+            session.query(models.ShareObject)
+            .filter(
+                and_(
+                    models.ShareObject.principalId == group,
+                    models.ShareObject.principalType == PrincipalType.Group.value
+                )
+            )
+            .count()
+        )
+
+        if shares_count > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Team',
+                message=f'Team: {group} has created {shares_count} share requests on this environment.',
+            )
+
         group_membership = Environment.find_environment_group(
             session, group, environment.environmentUri
         )
@@ -528,6 +545,23 @@ class Environment:
             raise exceptions.RequiredParameter('consumptionRoleUri')
 
         consumption_role = Environment.get_environment_consumption_role(session, uri, data.get('environmentUri'))
+
+        shares_count = (
+            session.query(models.ShareObject)
+            .filter(
+                and_(
+                    models.ShareObject.principalId == uri,
+                    models.ShareObject.principalType == PrincipalType.ConsumptionRole.value
+                )
+            )
+            .count()
+        )
+
+        if shares_count > 0:
+            raise exceptions.EnvironmentResourcesFound(
+                action='Remove Consumption Role',
+                message=f'Consumption role: {consumption_role.consumptionRoleName} has created {shares_count} share requests on this environment.',
+            )
 
         if consumption_role:
             session.delete(consumption_role)
