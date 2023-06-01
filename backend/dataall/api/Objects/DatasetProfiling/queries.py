@@ -13,5 +13,5 @@ getDatasetTableLastProfilingRun = gql.QueryField(
     name='getDatasetTableProfilingRun',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('DatasetProfilingRun'),
-    resolver=get_last_table_profiling_run,
+    resolver=get_dataset_table_profiling_run,
 )

@@ -72,7 +72,7 @@ def start_profiling_run(context: Context, source, input: dict = None):
     return run
 
 
-def get_last_table_profiling_run(context: Context, source, tableUri=None):
+def get_dataset_table_profiling_run(context: Context, source, tableUri=None):
     """
     Shows the results of the last profiling job on a Table.
     For datasets "Unclassified" all users can perform this action.
