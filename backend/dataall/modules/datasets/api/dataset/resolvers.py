@@ -155,10 +155,6 @@ def get_dataset_stack(context: Context, source: Dataset, **kwargs):
     )
 
 
-def get_crawler(context, source, datasetUri: str = None, name: str = None):
-    return DatasetService.get_crawler(uri=datasetUri, name=name)
-
-
 def delete_dataset(
     context: Context, source, datasetUri: str = None, deleteFromAWS: bool = False
 ):

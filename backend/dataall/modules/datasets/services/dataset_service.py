@@ -335,21 +335,6 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_resource_permission(CRAWL_DATASET)
-    def get_crawler(uri: str, name: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-        response = DatasetCrawler(dataset).get_crawler(crawler_name=name)
-        return {
-            'Name': name,
-            'AwsAccountId': dataset.AwsAccountId,
-            'region': dataset.region,
-            'status': response.get('LastCrawl', {}).get('Status', 'N/A'),
-        }
-
-    @staticmethod
     @has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
