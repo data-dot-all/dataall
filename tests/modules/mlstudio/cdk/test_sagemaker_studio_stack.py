@@ -3,7 +3,7 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.modules.mlstudio.cdk.stacks import SagemakerStudioUserProfile
+from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile
 
 
 @pytest.fixture(scope='function', autouse=True)

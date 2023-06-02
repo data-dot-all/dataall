@@ -187,7 +187,6 @@ const EnvironmentCreateForm = (props) => {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (err) {
-      console.error(err);
       setStatus({ success: false });
       setErrors({ submit: err.message });
       setSubmitting(false);
@@ -295,6 +294,7 @@ const EnvironmentCreateForm = (props) => {
               </Box>
               {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE ===
               'True' ? (
+                <Box>
                   <Typography color="textSecondary" variant="subtitle2">
                     As part of the environment CloudFormation stack data.all
                     will create an IAM role (Pivot Role) to manage AWS
