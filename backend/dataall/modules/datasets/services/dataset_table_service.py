@@ -104,30 +104,6 @@ class DatasetTableService:
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
     @staticmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
-    def publish_table_update(uri: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
-                raise Exception(
-                    'Subscriptions are disabled. '
-                    "First enable subscriptions for this dataset's environment then retry."
-                )
-
-            task = models.Task(
-                targetUri=table.datasetUri,
-                action='sns.dataset.publish_update',
-                payload={'s3Prefix': table.S3Prefix},
-            )
-            session.add(task)
-
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
-        return True
-
-    @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         # TODO THERE WAS NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:

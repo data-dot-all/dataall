@@ -55,10 +55,6 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         )
 
 
-def publish_table_update(context: Context, source, tableUri: str = None):
-    return DatasetTableService.publish_table_update(uri=tableUri)
-
-
 def resolve_redshift_copy_schema(context, source: DatasetTable, clusterUri: str):
     if not source:
         return None

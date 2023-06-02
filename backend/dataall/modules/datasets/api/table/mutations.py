@@ -3,7 +3,6 @@ from dataall.modules.datasets.api.table.input_types import ModifyDatasetTableInp
 from dataall.modules.datasets.api.table.resolvers import (
     update_table,
     delete_table,
-    publish_table_update
 )
 
 updateDatasetTable = gql.MutationField(
@@ -21,13 +20,4 @@ deleteDatasetTable = gql.MutationField(
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     type=gql.Boolean,
     resolver=delete_table,
-)
-
-publishDatasetTableUpdate = gql.MutationField(
-    name='publishDatasetTableUpdate',
-    args=[
-        gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=publish_table_update,
-    type=gql.Boolean,
 )
