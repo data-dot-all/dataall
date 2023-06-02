@@ -110,10 +110,6 @@ class DatasetCdkModuleInterface(ModuleInterface):
 
         log.info("Dataset stacks have been imported")
 
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        return [DatasetBaseModuleInterface]
-
 
 class DatasetStackUpdaterModuleInterface(ModuleInterface):
 

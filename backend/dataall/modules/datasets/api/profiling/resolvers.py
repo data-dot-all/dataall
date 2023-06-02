@@ -40,6 +40,7 @@ def get_profiling_results(context: Context, source: DatasetProfilingRun):
     else:
         return json.dumps(source.results)
 
+
 def list_profiling_runs(context: Context, source, datasetUri=None):
     return DatasetProfilingService.list_profiling_runs(datasetUri)
 
