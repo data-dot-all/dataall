@@ -132,6 +132,7 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
                 return [dataset.datasetUri for dataset in all_datasets]
 
         register_stack_finder(DatasetStackFinder())
+        log.info("Dataset stack updater task has been loaded")
 
 
 class DatasetCatalogIndexerModuleInterface(ModuleInterface):
@@ -149,3 +150,4 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
         from dataall.modules.datasets.indexers.catalog_indexer import DatasetCatalogIndexer
 
         register_catalog_indexer(DatasetCatalogIndexer())
+        log.info("Dataset catalog indexer task has been loaded")
