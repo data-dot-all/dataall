@@ -32,4 +32,8 @@ class MLStudioCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.mlstudio.cdk
+        from dataall.cdkproxy.stacks.environment import EnvironmentSetup
+        from dataall.modules.mlstudio.cdk.mlstudio_stack import SageMakerDomainExtension
+
+        EnvironmentSetup.register(SageMakerDomainExtension)
         log.info("API of sagemaker mlstudio has been imported")

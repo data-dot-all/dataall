@@ -76,8 +76,16 @@ const EnvironmentFeatures = (props) => {
               ML Studio
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.mlStudiosEnabled ? 'success' : 'error'}>
-                {environment.mlStudiosEnabled ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['mlStudiosEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['mlStudiosEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

@@ -76,7 +76,6 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             dashboardsEnabled: values.dashboardsEnabled,
-            mlStudiosEnabled: values.mlStudiosEnabled,
             pipelinesEnabled: values.pipelinesEnabled,
             warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
@@ -471,6 +470,7 @@ const EnvironmentEditForm = (props) => {
                                     </Typography>
                                   }
                                   labelPlacement="end"
+                                  value={values.mlStudiosEnabled}
                                 />
                               </FormGroup>
                             </Box>

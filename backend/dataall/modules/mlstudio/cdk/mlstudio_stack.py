@@ -39,7 +39,7 @@ from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
 logger = logging.getLogger(__name__)
 
 
-class SageMakerDomain(EnvironmentStackExtension):
+class SageMakerDomainExtension(EnvironmentStackExtension):
 
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
@@ -147,8 +147,6 @@ class SageMakerDomain(EnvironmentStackExtension):
                 ],
             ),
         )
-        # TODO: this line might not be needed
-        sagemaker_domain_key.node.add_dependency(sagemaker_principals)
 
         sagemaker_domain = sagemaker.CfnDomain(
             setup,

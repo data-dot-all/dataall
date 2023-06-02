@@ -21,7 +21,7 @@ import Pager from '../../components/Pager';
 import { useDispatch } from '../../store';
 import { SET_ERROR } from '../../store/errorReducer';
 import MLStudioListItem from './MLStudioListItem';
-import listSagemakerStudioUser from '../../api/MLStudio/listSagemakerStudioUser';
+import listSagemakerStudioUsers from '../../api/MLStudio/listSagemakerStudioUsers';
 
 function MLStudioPageHeader() {
   return (
@@ -83,9 +83,9 @@ const MLStudioList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listSagemakerStudioUser(filter));
+    const response = await client.query(listSagemakerStudioUsers(filter));
     if (!response.errors) {
-      setItems(response.data.listSagemakerStudioUser);
+      setItems(response.data.listSagemakerStudioUsers);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

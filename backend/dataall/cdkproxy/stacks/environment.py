@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import pathlib
@@ -7,7 +6,6 @@ from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
-    aws_ec2 as ec2,
     aws_s3 as s3,
     aws_iam as iam,
     aws_lambda as _lambda,
@@ -25,7 +23,6 @@ from aws_cdk import (
     CustomResource,
     Tags,
 )
-from constructs import DependencyGroup
 
 from .manager import stack
 from .pivot_role import PivotRole
@@ -582,6 +579,7 @@ class EnvironmentSetup(Stack):
         )
 
         for extension in EnvironmentSetup._EXTENSIONS:
+            logger.info(f"Adding extension stack{extension.__name__}")
             extension.extent(self)
 
         TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")

@@ -68,27 +68,29 @@ class SagemakerStudioService:
         """
         Creates an ML Studio user
         Throws an exception if ML Studio is not enabled for the environment
+        Throws an exception if a SageMaker domain is not found
         """
         with _session() as session:
             env = Environment.get_environment_by_uri(session, uri)
-            enabled = EnvironmentParameterRepository(session).get_param(uri, "mlstudioEnabled")
+            enabled = EnvironmentParameterRepository(session).get_param(uri, "mlStudiosEnabled")
 
             if not enabled and enabled.lower() != "true":
                 raise exceptions.UnauthorizedOperation(
                     action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
-            # TODO: check with v1.5 how the checking affects this method
+            print("until here")
             response = get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region
             )
             existing_domain = response.get('DomainId', False)
+            print("until here2")
 
             if not existing_domain:
                 raise exceptions.AWSResourceNotAvailable(
                     action='Sagemaker Studio domain',
-                    message='Add a VPC to your environment and update the environment stack '
+                    message='Update the environment stack '
                             'or create a Sagemaker studio domain on your AWS account.',
                 )
 
