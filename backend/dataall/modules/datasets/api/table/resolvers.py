@@ -10,14 +10,6 @@ from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 log = logging.getLogger(__name__)
 
 
-def list_dataset_tables(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {}
-    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, filter=filter)
-
-
 def get_table(context, source: Dataset, tableUri: str = None):
     return DatasetTableService.get_table(uri=tableUri)
 
