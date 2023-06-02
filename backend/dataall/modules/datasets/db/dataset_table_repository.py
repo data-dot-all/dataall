@@ -19,40 +19,6 @@ class DatasetTableRepository:
         session.add(table)
 
     @staticmethod
-    def exists(session, dataset_uri, glue_table_name):
-        return (
-            session.query(DatasetTable)
-            .filter(
-                and_(
-                    DatasetTable.datasetUri == dataset_uri,
-                    DatasetTable.GlueTableName == glue_table_name,
-                )
-            )
-            .count()
-        )
-
-    @staticmethod
-    def create_dataset_table(session, dataset: Dataset, data: dict = None) -> DatasetTable:
-        table = DatasetTable(
-            datasetUri=dataset.datasetUri,
-            label=data['name'],
-            name=data['name'],
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
-            S3BucketName=dataset.S3BucketName,
-            S3Prefix=data.get('S3Prefix', 'unknown'),
-            AWSAccountId=dataset.AwsAccountId,
-            GlueDatabaseName=dataset.GlueDatabaseName,
-            GlueTableConfig=data.get('config'),
-            GlueTableName=data['name'],
-            owner=dataset.owner,
-            region=dataset.region,
-        )
-        session.add(table)
-        session.commit()
-        return table
-
-    @staticmethod
     def create_synced_table(session, dataset: Dataset, table: dict):
         updated_table = DatasetTable(
             datasetUri=dataset.datasetUri,
