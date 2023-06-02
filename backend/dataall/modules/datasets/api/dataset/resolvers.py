@@ -21,12 +21,25 @@ from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, SUMMARY_DATASET, \
     CRAWL_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET
+from dataall.aws.handlers.quicksight import Quicksight
 
 log = logging.getLogger(__name__)
 
 
+def check_dataset_account(environment):
+    if environment.dashboardsEnabled:
+        quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
+        if quicksight_subscription:
+            group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
+            return True if group else False
+    return True
+
+
 def create_dataset(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = DatasetService.create_dataset(
             session=session,
             username=context.username,
@@ -59,6 +72,9 @@ def import_dataset(context: Context, source, input=None):
         raise exceptions.RequiredParameter('group')
 
     with context.engine.scoped_session() as session:
+        environment = Environment.get_environment_by_uri(session, input.get('environmentUri'))
+        check_dataset_account(environment=environment)
+
         dataset = DatasetService.create_dataset(
             session=session,
             username=context.username,
@@ -210,6 +226,9 @@ def get_dataset_stewards_group(context, source: Dataset, **kwargs):
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     with context.engine.scoped_session() as session:
+        dataset = DatasetService.get_dataset_by_uri(session, datasetUri)
+        environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        check_dataset_account(environment=environment)
         updated_dataset = DatasetService.update_dataset(
             session=session,
             uri=datasetUri,

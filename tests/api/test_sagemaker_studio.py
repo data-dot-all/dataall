@@ -12,10 +12,6 @@ def org1(org, user, group, tenant):
 
 @pytest.fixture(scope='module', autouse=True)
 def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
     env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 

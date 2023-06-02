@@ -29,17 +29,8 @@ def aws_configure(profile_name='default'):
     print('        Running configure                     ')
     print('..............................................')
     print(f"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: {os.getenv('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI')}")
-    cmd = [
-        'curl',
-        '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI'
-    ]
-    process = subprocess.run(
-        ' '.join(cmd),
-        text=True,
-        shell=True,  # nosec
-        encoding='utf-8',
-        capture_output=True
-    )
+    cmd = ['curl', '169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
+    process = subprocess.run(' '.join(cmd), text=True, shell=True, encoding='utf-8', capture_output=True)  # nosec
     creds = None
     if process.returncode == 0:
         creds = ast.literal_eval(process.stdout)
@@ -55,9 +46,7 @@ def update_stack_output(session, stack):
     try:
         stack_outputs = cfn.Stack(f'{stack.name}').outputs
     except ClientError as e:
-        logger.warning(
-            f'Failed to retrieve stack output for stack {stack.name} due to: {e}'
-        )
+        logger.warning(f'Failed to retrieve stack output for stack {stack.name} due to: {e}')
     if stack_outputs:
         for output in stack_outputs:
             outputs[output['OutputKey']] = output['OutputValue']
@@ -76,25 +65,29 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
     with engine.scoped_session() as session:
         try:
             stack: models.Stack = session.query(models.Stack).get(stackid)
-            logger.warning(f"stackuri = {stack.stackUri}, stackId = {stack.stackid}")
+            logger.warning(f'stackuri = {stack.stackUri}, stackId = {stack.stackid}')
             stack.status = 'PENDING'
             session.commit()
 
-            if stack.stack == "cdkpipeline" or stack.stack == "template":
+            if stack.stack == 'cdkpipeline':
                 cdkpipeline = CDKPipelineStack(stack.targetUri)
                 venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
                 pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
-                path = f"./cdkpipeline/{pipeline.repo}/"
+                path = f'./cdkpipeline/{pipeline.repo}/'
                 app_path = './app.py'
                 if not venv_name:
-                    logger.info("Successfully Updated CDK Pipeline")
+                    logger.info('Successfully Updated CDK Pipeline')
                     meta = describe_stack(stack)
                     stack.stackid = meta['StackId']
                     stack.status = meta['StackStatus']
                     update_stack_output(session, stack)
                     return
 
-            cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), path) if path else os.path.dirname(os.path.abspath(__file__))
+            cwd = (
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+                if path
+                else os.path.dirname(os.path.abspath(__file__))
+            )
             python_path = '/:'.join(sys.path)[1:] + ':/code'
             logger.info(f'python path = {python_path}')
 
@@ -114,26 +107,12 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                         'AWS_SESSION_TOKEN': creds.get('Token'),
                     }
                 )
-            if stack.stack == "template":
-                resp = subprocess.run(
-                    ['. ~/.nvm/nvm.sh && cdk ls'],
-                    cwd=cwd,
-                    text=True,
-                    shell=True,  # nosec
-                    encoding='utf-8',
-                    stdout=subprocess.PIPE,
-                    env=env
-                )
-                logger.info(f"CDK Apps: {resp.stdout}")
-                stack.name = resp.stdout.split('\n')[0]
 
             app_path = app_path or './app.py'
 
             logger.info(f'app_path: {app_path}')
-
             cmd = [
-                ''
-                '. ~/.nvm/nvm.sh &&',
+                '' '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy --all',
                 '--require-approval',
@@ -160,9 +139,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 '--verbose',
             ]
 
-            if stack.stack == "template" or stack.stack == "cdkpipeline":
-                if stack.stack == "template":
-                    cmd.insert(0, f"source {venv_name}/bin/activate;")
+            if stack.stack == 'cdkpipeline':
                 aws = SessionHelper.remote_session(stack.accountid)
                 creds = aws.get_credentials()
                 env.update(
@@ -173,7 +150,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                         'CDK_DEFAULT_ACCOUNT': stack.accountid,
                         'AWS_ACCESS_KEY_ID': creds.access_key,
                         'AWS_SECRET_ACCESS_KEY': creds.secret_key,
-                        'AWS_SESSION_TOKEN': creds.token
+                        'AWS_SESSION_TOKEN': creds.token,
                     }
                 )
 
@@ -187,8 +164,8 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 env=env,
                 cwd=cwd,
             )
-            if stack.stack == "cdkpipeline" or stack.stack == "template":
-                CDKPipelineStack.clean_up_repo(path=f"./{pipeline.repo}")
+            if stack.stack == 'cdkpipeline':
+                CDKPipelineStack.clean_up_repo(path=f'./{pipeline.repo}')
 
             if process.returncode == 0:
                 meta = describe_stack(stack)
@@ -197,9 +174,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 update_stack_output(session, stack)
             else:
                 stack.status = 'CREATE_FAILED'
-                logger.error(
-                    f'Failed to deploy stack {stackid} due to {str(process.stderr)}'
-                )
+                logger.error(f'Failed to deploy stack {stackid} due to {str(process.stderr)}')
                 AlarmService().trigger_stack_deployment_failure_alarm(stack=stack)
 
         except Exception as e:
@@ -220,9 +195,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
         meta = resource.Stack(f'{stack.name}')
         return {'StackId': meta.stack_id, 'StackStatus': meta.stack_status}
     except ClientError as e:
-        logger.warning(
-            f'Failed to retrieve stack output for stack {stack.name} due to: {e}'
-        )
+        logger.warning(f'Failed to retrieve stack output for stack {stack.name} due to: {e}')
         meta = resource.Stack(stack.stackid)
         return {'StackId': meta.stack_id, 'StackStatus': meta.stack_status}
 

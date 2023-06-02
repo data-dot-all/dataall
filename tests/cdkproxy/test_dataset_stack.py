@@ -17,7 +17,7 @@ def patch_methods(mocker, db, dataset, env, org):
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.aws.handlers.lakeformation.LakeFormation.describe_resource',
+        'dataall.aws.handlers.lakeformation.LakeFormation.check_existing_lf_registered_location',
         return_value=False,
     )
     mocker.patch(
@@ -49,7 +49,6 @@ def test_resources_created(template):
     assert 'AWS::S3::Bucket' in template
     assert 'AWS::KMS::Key' in template
     assert 'AWS::IAM::Role' in template
-    assert 'AWS::Lambda::Function' in template
     assert 'AWS::IAM::Policy' in template
     assert 'AWS::S3::BucketPolicy' in template
     assert 'AWS::Glue::Job' in template

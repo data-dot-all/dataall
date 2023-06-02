@@ -3,7 +3,6 @@ import logging
 
 from dataall.aws.handlers import stepfunction as helpers
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.codecommit import CodeCommit
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.constants import DataPipelineRole
 from dataall.api.context import Context
@@ -32,15 +31,6 @@ def create_pipeline(context: Context, source, input=None):
                 session=session,
                 environment_uri=pipeline.environmentUri,
                 target_type='cdkpipeline',
-                target_uri=pipeline.DataPipelineUri,
-                target_label=pipeline.label,
-                payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},
-            )
-        elif input['devStrategy'] == 'template':
-            Stack.create_stack(
-                session=session,
-                environment_uri=pipeline.environmentUri,
-                target_type='template',
                 target_uri=pipeline.DataPipelineUri,
                 target_label=pipeline.label,
                 payload={'account': pipeline.AwsAccountId, 'region': pipeline.region},

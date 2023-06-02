@@ -16,4 +16,3 @@ from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
 from .sgm_studio_notebook import SgmStudioNotebook
 from .dashboard import Dashboard
-from .worksheet import Worksheet

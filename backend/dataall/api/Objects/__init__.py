@@ -26,8 +26,6 @@ from . import (
     SagemakerStudio,
     RedshiftCluster,
     Glossary,
-    AthenaQueryResult,
-    Worksheet,
     Feed,
     Notification,
     Vpc,

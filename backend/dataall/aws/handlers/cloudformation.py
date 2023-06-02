@@ -16,21 +16,18 @@ class CloudFormation:
         pass
 
     @staticmethod
-    def client(AwsAccountId, region):
-        session = SessionHelper.remote_session(AwsAccountId)
+    def client(AwsAccountId, region, role=None):
+        session = SessionHelper.remote_session(accountid=AwsAccountId, role=role)
         return session.client('cloudformation', region_name=region)
 
     @staticmethod
     def check_existing_cdk_toolkit_stack(AwsAccountId, region):
-        cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region)
+        role = SessionHelper.get_cdk_look_up_role_arn(accountid=AwsAccountId, region=region)
         try:
+            cfn = CloudFormation.client(AwsAccountId=AwsAccountId, region=region, role=role)
             response = cfn.describe_stacks(StackName='CDKToolkit')
-        except cfn.exceptions.ClientError as e:
-            print(e)
-            raise Exception('CDKToolkitNotFound')
-
-        stacks = response['Stacks']
-        if not len(stacks):
+        except ClientError as e:
+            log.exception(f'CDKToolkitNotFound: {e}')
             raise Exception('CDKToolkitNotFound')
 
         try:
@@ -39,8 +36,9 @@ class CloudFormation:
             )
             cdk_role_name = response['StackResourceDetail']['PhysicalResourceId']
             return cdk_role_name
-        except cfn.exceptions.ClientError as e:
-            raise Exception('CDKToolkitDeploymentActionRoleNotFound')
+        except ClientError as e:
+            log.exception(f'CDKToolkitDeploymentActionRoleNotFound: {e}')
+            raise Exception(f'CDKToolkitDeploymentActionRoleNotFound: {e}')
 
     @staticmethod
     @Worker.handler(path='cloudformation.stack.delete')

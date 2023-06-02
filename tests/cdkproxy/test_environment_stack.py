@@ -14,7 +14,11 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_delegation_role_name',
-        return_value="dataall-pivot-role-name-pytest",
+        return_value='dataall-pivot-role-name-pytest',
+    )
+    mocker.patch(
+        'dataall.aws.handlers.parameter_store.ParameterStoreManager.get_parameter_value',
+        return_value='False',
     )
     mocker.patch(
         'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_target',
@@ -25,16 +29,14 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=[another_group],
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.check_sagemaker_studio',
+        'dataall.cdkproxy.stacks.sagemakerstudio.SageMakerDomain.check_existing_sagemaker_studio_domain',
         return_value=True,
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
-    mocker.patch(
-        'dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db
-    )
+    mocker.patch('dataall.utils.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.utils.runtime_stacks_tagging.TagsUtil.get_target',
         return_value=env,
@@ -42,6 +44,10 @@ def patch_methods(mocker, db, env, another_group, permissions):
     mocker.patch(
         'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_group_permissions',
         return_value=[permission.name for permission in permissions],
+    )
+    mocker.patch(
+        'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
+        return_value='*****',
     )
 
 
