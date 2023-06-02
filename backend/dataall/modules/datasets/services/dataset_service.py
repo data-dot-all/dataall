@@ -20,7 +20,7 @@ from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRep
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, CRAWL_DATASET, \
-    DELETE_DATASET, SUBSCRIPTIONS_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
+    DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.enums import DatasetRole

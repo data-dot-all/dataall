@@ -104,6 +104,11 @@ def folder(org, env, db, dataset):
     yield location
 
 
+@pytest.fixture(scope='function', autouse=True)
+def patch_methods(mocker):
+    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+
+
 def test_es_request():
     body = '{"preference":"SearchResult"}\n{"query":{"match_all":{}},"size":8,"_source":{"includes":["*"],"excludes":[]},"from":0}\n'
     body = body.split('\n')
@@ -121,8 +126,7 @@ def test_es_request():
     }
 
 
-def test_upsert_dataset(db, dataset, env, mocker):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+def test_upsert_dataset(db, dataset, env):
     with db.scoped_session() as session:
         dataset_indexed = DatasetIndexer.upsert(
             session, dataset_uri=dataset.datasetUri
@@ -130,24 +134,21 @@ def test_upsert_dataset(db, dataset, env, mocker):
         assert dataset_indexed.datasetUri == dataset.datasetUri
 
 
-def test_upsert_table(db, dataset, env, mocker, table):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+def test_upsert_table(db, dataset, env, table):
     with db.scoped_session() as session:
         table_indexed = DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
-        assert table_indexed.uri == table.tableUri
+        assert table_indexed.tableUri == table.tableUri
 
 
-def test_upsert_folder(db, dataset, env, mocker, folder):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+def test_upsert_folder(db, dataset, env, folder):
     with db.scoped_session() as session:
         folder_indexed = DatasetLocationIndexer.upsert(
             session=session, folder_uri=folder.locationUri
         )
-        assert folder_indexed.uri == folder.locationUri
+        assert folder_indexed.locationUri == folder.locationUri
 
 
-def test_upsert_tables(db, dataset, env, mocker, folder):
-    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
+def test_upsert_tables(db, dataset, env, folder):
     with db.scoped_session() as session:
         tables = DatasetTableIndexer.upsert_all(
             session, dataset_uri=dataset.datasetUri
