@@ -99,29 +99,6 @@ class DatasetLocationService:
         return True
 
     @staticmethod
-    @has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
-    def publish_location_update(uri: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            location = DatasetLocationRepository.get_location_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, location.datasetUri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
-                raise Exception(
-                    'Subscriptions are disabled. '
-                    "First enable subscriptions for this dataset's environment then retry."
-                )
-            task = Task(
-                targetUri=location.datasetUri,
-                action='sns.dataset.publish_update',
-                payload={'s3Prefix': location.S3Prefix},
-            )
-            session.add(task)
-
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
-        return True
-
-    @staticmethod
     def _create_glossary_links(session, location, terms):
         Glossary.set_glossary_terms_links(
             session,

@@ -122,10 +122,6 @@ def get_dataset_statistics(context: Context, source: Dataset, **kwargs):
     return DatasetService.get_dataset_statistics(source)
 
 
-def get_dataset_etl_credentials(context: Context, source, datasetUri: str = None):
-    return DatasetService.get_dataset_etl_credentials(uri=datasetUri)
-
-
 def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
@@ -182,12 +178,6 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
         )
 
     return paginate(terms, page_size=100, page=1).to_dict()
-
-
-def publish_dataset_update(
-    context: Context, source, datasetUri: str = None, s3Prefix: str = None
-):
-    return DatasetService.publish_dataset_update(uri=datasetUri, s3_prefix=s3Prefix)
 
 
 def resolve_redshift_copy_enabled(context, source: Dataset, clusterUri: str):

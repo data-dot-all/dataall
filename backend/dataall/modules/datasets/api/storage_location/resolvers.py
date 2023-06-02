@@ -46,10 +46,6 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     return d
 
 
-def publish_location_update(context: Context, source, locationUri: str = None):
-    return DatasetLocationService.publish_location_update(uri=locationUri)
-
-
 def resolve_glossary_terms(
     context: Context, source: DatasetStorageLocation, **kwargs
 ):

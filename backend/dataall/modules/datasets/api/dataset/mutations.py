@@ -11,7 +11,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     generate_dataset_access_token,
     delete_dataset,
     import_dataset,
-    publish_dataset_update,
     start_crawler
 )
 
@@ -67,16 +66,6 @@ importDataset = gql.MutationField(
     type=gql.Ref('Dataset'),
     resolver=import_dataset,
     test_scope='Dataset',
-)
-
-publishDatasetUpdate = gql.MutationField(
-    name='publishDatasetUpdate',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='s3Prefix', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=publish_dataset_update,
-    type=gql.Boolean,
 )
 
 StartGlueCrawler = gql.MutationField(

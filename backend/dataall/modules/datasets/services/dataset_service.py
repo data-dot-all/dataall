@@ -202,18 +202,6 @@ class DatasetService:
 
     @staticmethod
     @has_resource_permission(CREDENTIALS_DATASET)
-    def get_dataset_etl_credentials(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            task = Task(targetUri=uri, action='iam.dataset.user.credentials')
-            session.add(task)
-        response = Worker.process(
-            engine=context.db_engine, task_ids=[task.taskUri], save_response=False
-        )[0]
-        return json.dumps(response['response'])
-
-    @staticmethod
-    @has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -428,32 +416,6 @@ class DatasetService:
                 region=env.region,
             )
             stack_helper.deploy_stack(dataset.environmentUri)
-        return True
-
-    @staticmethod
-    @has_resource_permission(SUBSCRIPTIONS_DATASET)
-    def publish_dataset_update(uri: str, s3_prefix: str):
-        engine = get_context().db_engine
-        with engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
-                raise Exception(
-                    'Subscriptions are disabled. '
-                    "First enable subscriptions for this dataset's environment then retry."
-                )
-
-            task = Task(
-                targetUri=uri,
-                action='sns.dataset.publish_update',
-                payload={'s3Prefix': s3_prefix},
-            )
-            session.add(task)
-
-        response = Worker.process(
-            engine=engine, task_ids=[task.taskUri], save_response=False
-        )[0]
-        log.info(f'Dataset update publish response: {response}')
         return True
 
     @staticmethod
