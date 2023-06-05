@@ -33,6 +33,24 @@ class DatapipelinesRepository(GroupResource):
         return pipeline_env
     
     @staticmethod
+    def get_pipeline_and_environment_by_uri(session, uri):
+        pipeline: DataPipeline = session.query(DataPipeline).get(uri)
+        env: models.Environment = session.query(models.Environment).get(pipeline.environmentUri)
+        return (pipeline, env)
+    
+    @staticmethod
+    def get_pipeline_stack_by_uri(session, uri):
+        return (session.query(models.Stack)
+            .filter(
+                and_(
+                    models.Stack.targetUri == uri,
+                    models.Stack.stack == 'PipelineStack',
+                )
+            )
+            .first()
+        )
+    
+    @staticmethod
     def query_user_pipelines(session, username, groups, filter) -> Query:
         query = session.query(DataPipeline).filter(
             or_(

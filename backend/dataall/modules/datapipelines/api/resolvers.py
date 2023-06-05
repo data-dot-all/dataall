@@ -6,6 +6,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.constants import DataPipelineRole
 from dataall.api.context import Context
+from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db import models
 from dataall.db.api import Environment, Stack
@@ -278,6 +279,26 @@ def start_pipeline(context: Context, source, uri: str = None):
     return execution_arn
 
 
+def _delete_repository(
+    target_uri, accountid, cdk_role_arn, region, repo_name
+):
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
+        task = models.Task(
+            targetUri=target_uri,
+            action='repo.datapipeline.delete',
+            payload={
+                'accountid': accountid,
+                'region': region,
+                'cdk_role_arn': cdk_role_arn,
+                'repo_name': repo_name,
+            },
+        )
+        session.add(task)
+    Worker.queue(context.db_engine, [task.taskUri])
+    return True
+
+
 def delete_pipeline(
     context: Context, source, DataPipelineUri: str = None, deleteFromAWS: bool = None
 ):
@@ -296,27 +317,19 @@ def delete_pipeline(
         )
 
     if deleteFromAWS:
-        stack_helper.delete_repository(
+        _delete_repository(
             target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
             cdk_role_arn=env.CDKRoleArn,
             region=env.region,
             repo_name=pipeline.repo,
         )
-        if pipeline.devStrategy == "cdk-trunk":
-            stack_helper.delete_stack(
-                target_uri=DataPipelineUri,
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region,
-            )
-        else:
-            stack_helper.delete_stack(
-                target_uri=DataPipelineUri,
-                accountid=env.AwsAccountId,
-                cdk_role_arn=env.CDKRoleArn,
-                region=env.region,
-            )
+        stack_helper.delete_stack(
+            target_uri=DataPipelineUri,
+            accountid=env.AwsAccountId,
+            cdk_role_arn=env.CDKRoleArn,
+            region=env.region,
+        )
 
     return True
 
