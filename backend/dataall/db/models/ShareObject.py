@@ -33,5 +33,7 @@ class ShareObject(Base):
     updated = Column(DateTime, onupdate=datetime.now)
     deleted = Column(DateTime)
     confirmed = Column(Boolean, default=False)
+    requestPurpose = Column(String, nullable=True)
+    rejectPurpose = Column(String, nullable=True)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()

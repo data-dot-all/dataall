@@ -56,7 +56,10 @@ approveShareObject = gql.MutationField(
 
 rejectShareObject = gql.MutationField(
     name='rejectShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='rejectPurpose', type=gql.String),
+    ],
     type=gql.Ref('ShareObject'),
     resolver=reject_share_object,
 )

@@ -103,7 +103,8 @@ class SessionHelper:
         Returns:
             string: name of the assumed role
         """
-        return SessionHelper.get_secret(secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}')
+        # return SessionHelper.get_secret(secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}')
+        return "dataallPivotRole"
 
     @classmethod
     def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None, redshiftcluster=None):

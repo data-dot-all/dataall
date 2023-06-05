@@ -85,13 +85,14 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return share
 
 
-def reject_share_object(context: Context, source, shareUri: str = None):
+def reject_share_object(context: Context, source, shareUri: str = None, rejectPurpose: str = None,):
     with context.engine.scoped_session() as session:
         return db.api.ShareObject.reject_share_object(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=shareUri,
+            rejectPurpose = rejectPurpose,
             data=None,
             check_perm=True,
         )

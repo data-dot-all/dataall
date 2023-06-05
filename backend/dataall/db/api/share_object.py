@@ -343,7 +343,8 @@ class ShareObject:
         groupUri = data['groupUri']
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
-
+        requestPurpose = data.get('requestPurpose')
+        print(requestPurpose)
         dataset: models.Dataset = data.get(
             'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
         )
@@ -411,6 +412,7 @@ class ShareObject:
                 principalType=principalType,
                 principalIAMRoleName=principalIAMRoleName,
                 status=ShareObjectStatus.Draft.value,
+                requestPurpose=requestPurpose
             )
             session.add(share)
             session.commit()
@@ -617,6 +619,7 @@ class ShareObject:
         username: str,
         groups: [str],
         uri: str,
+        rejectPurpose: str = None,
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
@@ -624,7 +627,7 @@ class ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
-
+        # share.rejectPurpose = reject_share_object
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
 
@@ -640,6 +643,11 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
+
+        # Update Reject Purpose
+        share.rejectPurpose = rejectPurpose
+        session.commit()
+
         api.Notification.notify_share_object_rejection(session, username, dataset, share)
         return share
 

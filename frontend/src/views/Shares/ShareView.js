@@ -59,6 +59,7 @@ import rejectShareObject from '../../api/ShareObject/rejectShareObject';
 import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import submitApproval from '../../api/ShareObject/submitApproval';
 import removeSharedItem from '../../api/ShareObject/removeSharedItem';
+import ShareRejectModal from './ShareRejectModal';
 
 
 function ShareViewHeader(props) {
@@ -76,6 +77,7 @@ function ShareViewHeader(props) {
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -118,6 +120,15 @@ function ShareViewHeader(props) {
     }
     setRemoving(false);
   };
+
+  const handleRejectShareModalOpen = () => {
+    setIsRejectShareModalOpen(true);
+  };
+
+  const handleRejectShareModalClose = () => {
+    setIsRejectShareModalOpen(false);
+  };
+
   const accept = async () => {
     setAccepting(true);
     const response = await client.mutate(
@@ -140,14 +151,16 @@ function ShareViewHeader(props) {
     }
     setAccepting(false);
   };
-  const reject = async () => {
+  const reject = async (rejectPurpose) => {
     setRejecting(true);
     const response = await client.mutate(
       rejectShareObject({
-        shareUri: share.shareUri
+        shareUri: share.shareUri,
+        rejectPurpose: rejectPurpose
       })
     );
     if (!response.errors) {
+      handleRejectShareModalClose()
       enqueueSnackbar('Share request rejected', {
         anchorOrigin: {
           horizontal: 'right',
@@ -163,6 +176,7 @@ function ShareViewHeader(props) {
     setRejecting(false);
   };
   return (
+    <>
     <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
         <Typography color="textPrimary" variant="h5">
@@ -236,7 +250,7 @@ function ShareViewHeader(props) {
                       color="error"
                       sx={{ m: 1 }}
                       startIcon={<BlockOutlined />}
-                      onClick={reject}
+                      onClick={handleRejectShareModalOpen}
                       type="button"
                       variant="outlined"
                     >
@@ -275,6 +289,16 @@ function ShareViewHeader(props) {
         )}
       </Grid>
     </Grid>
+    {isRejectShareModalOpen && (
+      <ShareRejectModal
+        share={share}
+        onApply={handleRejectShareModalClose}
+        onClose={handleRejectShareModalClose}
+        open={isRejectShareModalOpen}
+        rejectFunction={reject}
+      />
+    )}
+    </>
   );
 }
 
@@ -553,6 +577,38 @@ const ShareView = () => {
                                 variant="subtitle2"
                               >
                                 {share.userRoleForShareObject}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ mt: 3 }}>
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Request Purpose
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              <Typography
+                                color="textPrimary"
+                                variant="subtitle2"
+                              >
+                                {share.requestPurpose || '-'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ mt: 3 }}>
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Reject Purpose
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              <Typography
+                                color="textPrimary"
+                                variant="subtitle2"
+                              >
+                                {share.rejectPurpose || '-'}
                               </Typography>
                             </Box>
                           </Box>
