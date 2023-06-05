@@ -1,19 +1,16 @@
 import json
 import logging
 
-from dataall.aws.handlers import stepfunction as helpers
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.constants import DataPipelineRole
 from dataall.api.context import Context
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
 from dataall.db import models
 from dataall.db.api import Environment, Stack
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
-from dataall.modules.datapipelines.services.datapipelines_permissions import START_PIPELINE
 
 log = logging.getLogger(__name__)
 
@@ -238,45 +235,6 @@ def get_creds(context: Context, source, DataPipelineUri: str = None):
             session=session,
             uri=DataPipelineUri
         )
-
-
-def list_pipeline_state_machine_executions(
-    context: Context, source, DataPipelineUri: str = None, stage: str = None
-):
-    with context.engine.scoped_session() as session:
-        pipeline = DataPipelineService.get_pipeline(
-            session=session,
-            uri=DataPipelineUri,
-        )
-
-        env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-
-        executions = helpers.list_executions(
-            state_machine_name=pipeline.name, env=env, stage='Prod'
-        )
-
-    return {
-        'count': len(executions),
-        'page': 1,
-        'pages': 4,
-        'hasNext': False,
-        'hasPrevious': False,
-        'nodes': executions,
-    }
-
-# TODO: double-check, but seems to be dead code
-# also helpers.run_pipeline only used here
-# also START_PIPELINE permission only used here
-@has_resource_permission(START_PIPELINE)
-def start_pipeline(context: Context, source, uri: str = None):
-    with context.engine.scoped_session() as session:
-        pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
-
-        env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-
-        execution_arn = helpers.run_pipeline(state_machine_name=pipeline.name, env=env)
-
-    return execution_arn
 
 
 def _delete_repository(
