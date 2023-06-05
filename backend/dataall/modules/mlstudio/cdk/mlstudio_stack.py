@@ -240,13 +240,15 @@ class SagemakerStudioUserProfile(Stack):
         # Required for dynamic stack tagging
         self.target_uri = target_uri
         sm_user: SagemakerStudioUser = self.get_target(target_uri=self.target_uri)
+        print(f"sm_user= {sm_user}")
         env_group = self.get_env_group(sm_user)
         cfn_template_user = os.path.join(
-            os.path.dirname(__file__), '.', 'cfnstacks', 'sagemaker-user-template.yaml'
+            os.path.dirname(__file__), 'cfnstacks', 'sagemaker-user-template.yaml'
         )
+        print(f"path:{cfn_template_user}")
         user_parameters = dict(
             sagemaker_domain_id=sm_user.sagemakerStudioDomainID,
-            user_name=sm_user.sagemakerStudioUserNameSlugify,
+            user_profile_name=sm_user.sagemakerStudioUserNameSlugify,
             execution_role=env_group.environmentIAMRoleArn,
         )
         logger.info(f'Creating the SageMaker Studio user {user_parameters}')

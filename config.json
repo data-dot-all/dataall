@@ -4,10 +4,10 @@
             "active": true
         },
         "notebooks": {
-            "active": false
+            "active": true
         },
         "datasets": {
-            "active": false
+            "active": true
         },
         "worksheets": {
             "active": true

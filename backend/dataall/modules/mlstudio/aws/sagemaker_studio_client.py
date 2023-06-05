@@ -43,7 +43,7 @@ class SagemakerStudioClient:
     """A Sagemaker studio proxy client that is used to send requests to AWS"""
     def __init__(self, sm_user: SagemakerStudioUser):
         self._client = get_client(
-            AwsAccountId=sm_user.AwsAccountId,
+            AwsAccountId=sm_user.AWSAccountId,
             region=sm_user.region
         )
         self._sagemakerStudioDomainID = sm_user.sagemakerStudioDomainID

@@ -98,8 +98,8 @@ class SagemakerStudioService:
                 label=request.label,
                 environmentUri=env.environmentUri,
                 description=request.description,
-                sagemakerStudioUserProfileName=slugify(request.label, separator=''),
-                sagemakerStudioUserProfileStatus='PENDING',
+                sagemakerStudioUserName=slugify(request.label, separator=''),
+                sagemakerStudioUserStatus='PENDING',
                 sagemakerStudioDomainID=existing_domain,
                 AWSAccountId=env.AwsAccountId,
                 region=env.region,
@@ -108,14 +108,14 @@ class SagemakerStudioService:
                 SamlAdminGroupName=admin_group,
                 tags=request.tags,
             )
-            SageMakerStudioRepository(session).save_sm_user(user=sagemaker_studio_user)
+            SageMakerStudioRepository(session).save_sagemaker_studio_user(user=sagemaker_studio_user)
 
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=request.SamlAdminGroupName,
                 permissions=SGMSTUDIO_USER_ALL,
-                resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
-                resource_type=models.SagemakerStudioUserProfile.__name__,
+                resource_uri=sagemaker_studio_user.sagemakerStudioUserUri,
+                resource_type=SagemakerStudioUser.__name__,
             )
 
             if env.SamlGroupName != sagemaker_studio_user.SamlAdminGroupName:
@@ -123,19 +123,19 @@ class SagemakerStudioService:
                     session=session,
                     group=env.SamlGroupName,
                     permissions=SGMSTUDIO_USER_ALL,
-                    resource_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
-                    resource_type=models.SagemakerStudioUserProfile.__name__,
+                    resource_uri=sagemaker_studio_user.sagemakerStudioUserUri,
+                    resource_type=SagemakerStudioUser.__name__,
                 )
 
             Stack.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
                 target_type='sagemakerstudiouserprofile',
-                target_uri=sagemaker_studio_user.sagemakerStudioUserProfileUri,
+                target_uri=sagemaker_studio_user.sagemakerStudioUserUri,
                 target_label=sagemaker_studio_user.label,
             )
 
-        stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserProfileUri)
+        stack_helper.deploy_stack(targetUri=sagemaker_studio_user.sagemakerStudioUserUri)
 
         return sagemaker_studio_user
 
