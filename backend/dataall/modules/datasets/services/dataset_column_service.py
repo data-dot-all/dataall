@@ -23,7 +23,7 @@ class DatasetColumnService:
             DatasetColumnService._check_resource_permission(session, table_uri, UPDATE_DATASET_TABLE)
             task = models.Task(action='glue.table.columns', targetUri=table_uri)
             session.add(task)
-        Worker.queue(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
+        Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
         return DatasetColumnService.paginate_active_columns_for_table(table_uri, {})
 
     @staticmethod
