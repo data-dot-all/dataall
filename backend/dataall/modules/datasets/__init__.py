@@ -41,6 +41,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
+        FeedRegistry.register(FeedDefinition("Dataset", Dataset))
 
         GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         GlossaryRegistry.register(GlossaryDefinition(
