@@ -1,9 +1,8 @@
 import logging
 import os
 import sys
-from abc import ABC
-from typing import List
 
+from dataall.core.catalog.catalog_indexer import CatalogIndexer
 from dataall.db import get_engine, models
 from dataall.modules.loader import load_modules, ImportMode
 from dataall.searchproxy.indexers import DashboardIndexer
@@ -15,26 +14,12 @@ if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
-load_modules({ImportMode.CATALOG_INDEXER_TASK})
-
-
-class CatalogIndexer(ABC):
-    def index(self, session) -> int:
-        raise NotImplementedError("index is not implemented")
-
-
-_indexers: List[CatalogIndexer] = []
-
-
-def register_catalog_indexer(indexer: CatalogIndexer):
-    _indexers.append(indexer)
-
 
 def index_objects(engine):
     try:
         indexed_objects_counter = 0
         with engine.scoped_session() as session:
-            for indexer in _indexers:
+            for indexer in CatalogIndexer.all():
                 indexed_objects_counter += indexer.index(session)
 
             all_dashboards: [models.Dashboard] = session.query(models.Dashboard).all()
@@ -54,4 +39,6 @@ def index_objects(engine):
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
+
+    load_modules({ImportMode.CATALOG_INDEXER_TASK})
     index_objects(engine=ENGINE)

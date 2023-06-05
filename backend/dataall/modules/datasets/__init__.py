@@ -2,6 +2,7 @@
 import logging
 from typing import List, Type, Set
 
+from dataall.core.catalog.catalog_indexer import CatalogIndexer
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
@@ -122,16 +123,9 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
         return [DatasetBaseModuleInterface]
 
     def __init__(self):
-        from dataall.tasks.stacks_updater import StackFinder
-        from dataall.tasks.stacks_updater import register_stack_finder
+        from dataall.modules.datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
-        class DatasetStackFinder(StackFinder):
-            def find_stack_uris(self, session) -> List[str]:
-                all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
-                log.info(f'Found {len(all_datasets)} datasets')
-                return [dataset.datasetUri for dataset in all_datasets]
-
-        register_stack_finder(DatasetStackFinder())
+        DatasetStackFinder()
         log.info("Dataset stack updater task has been loaded")
 
 
@@ -146,8 +140,7 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
         return [DatasetBaseModuleInterface]
 
     def __init__(self):
-        from dataall.tasks.catalog_indexer import register_catalog_indexer
-        from dataall.modules.datasets.indexers.catalog_indexer import DatasetCatalogIndexer
+        from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer
 
-        register_catalog_indexer(DatasetCatalogIndexer())
+        DatasetCatalogIndexer()
         log.info("Dataset catalog indexer task has been loaded")
