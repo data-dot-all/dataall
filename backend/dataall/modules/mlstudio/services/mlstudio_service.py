@@ -79,13 +79,11 @@ class SagemakerStudioService:
                     action=CREATE_SGMSTUDIO_USER,
                     message=f'ML Studio feature is disabled for the environment {env.label}',
                 )
-            print("until here")
             response = get_sagemaker_studio_domain(
                 AwsAccountId=env.AwsAccountId,
                 region=env.region
             )
             existing_domain = response.get('DomainId', False)
-            print("until here2")
 
             if not existing_domain:
                 raise exceptions.AWSResourceNotAvailable(
@@ -181,6 +179,7 @@ class SagemakerStudioService:
         """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
+            env = Environment.get_environment_by_uri(session, user.environmentUri)
             session.delete(user)
 
             ResourcePolicy.delete_resource_policy(
@@ -188,8 +187,6 @@ class SagemakerStudioService:
                 resource_uri=user.sagemakerStudioUserUri,
                 group=user.SamlAdminGroupName,
             )
-
-            env = Environment.get_environment_by_uri(session, uri)
 
             if delete_from_aws:
                 stack_helper.delete_stack(

@@ -91,15 +91,15 @@ services:
     restart:
       on-failure:60
 
-#  frontend:
-#    build:
-#      context: ./frontend
-#      dockerfile: docker/dev/Dockerfile
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 1024M
-#        reservations:
-#          memory: 128M
-#    ports:
-#      - "8080:80"
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/dev/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 128M
+    ports:
+      - "8080:80"

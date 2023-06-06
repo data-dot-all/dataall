@@ -3,7 +3,7 @@ import json
 import pytest
 from aws_cdk import App
 
-from dataall.modules.notebooks.cdk.stacks import NotebookStack
+from dataall.modules.notebooks.cdk.notebook_stack import NotebookStack
 
 
 @pytest.fixture(scope='function', autouse=True)

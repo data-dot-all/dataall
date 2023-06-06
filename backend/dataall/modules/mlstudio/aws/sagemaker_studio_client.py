@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-
 def get_client(AwsAccountId, region):
     session = SessionHelper.remote_session(AwsAccountId)
     return session.client('sagemaker', region_name=region)
@@ -18,9 +17,7 @@ def get_sagemaker_studio_domain(AwsAccountId, region):
     Sagemaker studio domain is limited to 5 per account/region
     RETURN: an existing domain or None if no domain is in the AWS account
     """
-    print("1")
     client = get_client(AwsAccountId=AwsAccountId, region=region)
-    print("2")
     existing_domain = dict()
     try:
         domain_id_paginator = client.get_paginator('list_domains')
