@@ -344,7 +344,7 @@ class ShareObject:
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
         requestPurpose = data.get('requestPurpose')
-        print(requestPurpose)
+
         dataset: models.Dataset = data.get(
             'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
         )
