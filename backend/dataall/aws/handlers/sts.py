@@ -48,9 +48,12 @@ class SessionHelper:
                     RoleSessionName=role_arn.split('/')[1],
                 )
             try:
+                region = os.getenv('AWS_REGION', 'eu-west-1')
                 sts = base_session.client(
                     'sts',
                     config=Config(user_agent_extra=f'{__pkg_name__}/{__version__}'),
+                    region_name=region,
+                    endpoint_url=f"https://sts.{region}.amazonaws.com"
                 )
                 response = sts.assume_role(**assume_role_dict)
                 return boto3.Session(
