@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from .sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
-PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
+PIVOT_ROLE_NAME_PREFIX = "dataallPivotRole"
 
 
 class LakeFormation:
