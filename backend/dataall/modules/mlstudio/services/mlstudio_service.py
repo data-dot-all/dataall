@@ -128,7 +128,7 @@ class SagemakerStudioService:
             Stack.create_stack(
                 session=session,
                 environment_uri=sagemaker_studio_user.environmentUri,
-                target_type='sagemakerstudiouserprofile',
+                target_type='mlstudio',
                 target_uri=sagemaker_studio_user.sagemakerStudioUserUri,
                 target_label=sagemaker_studio_user.label,
             )

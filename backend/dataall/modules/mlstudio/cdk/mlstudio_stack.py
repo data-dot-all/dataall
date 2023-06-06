@@ -29,8 +29,8 @@ from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.ec2 import EC2
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.modules.mlstudio.aws.ec2_client import EC2
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
 
 from dataall.cdkproxy.stacks import EnvironmentSetup
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class SageMakerDomainExtension(EnvironmentStackExtension):
 
+    @staticmethod
     def extent(setup: EnvironmentSetup):
         _environment = setup.environment()
         sagemaker_principals = [setup.default_role] + setup.group_roles

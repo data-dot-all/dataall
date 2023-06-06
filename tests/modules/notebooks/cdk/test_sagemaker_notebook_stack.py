@@ -9,7 +9,7 @@ from dataall.modules.notebooks.cdk.notebook_stack import NotebookStack
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, notebook, env, org):
     mocker.patch(
-        'dataall.modules.notebooks.cdk.stacks.NotebookStack.get_engine',
+        'dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_engine',
         return_value=db
     )
     mocker.patch(
@@ -17,7 +17,7 @@ def patch_methods(mocker, db, notebook, env, org):
         return_value="dataall-pivot-role-name-pytest",
     )
     mocker.patch(
-        'dataall.modules.notebooks.cdk.stacks.NotebookStack.get_target',
+        'dataall.modules.notebooks.cdk.notebook_stack.NotebookStack.get_target',
         return_value=notebook,
     )
     mocker.patch(

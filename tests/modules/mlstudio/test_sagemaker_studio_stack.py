@@ -11,7 +11,7 @@ def test_sagemaker_studio_update_stack(client, sagemaker_studio_user, group):
         }
         """,
         targetUri=sagemaker_studio_user.sagemakerStudioUserUri,
-        targetType="sagemakerstudiouserprofile",
+        targetType="mlstudio",
         username="alice",
         groups=[group.name],
     )

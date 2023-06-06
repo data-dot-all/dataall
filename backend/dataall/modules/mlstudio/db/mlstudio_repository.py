@@ -55,9 +55,9 @@ class SageMakerStudioRepository(GroupResource):
         """Finds a sagemaker studio user. Returns None if it doesn't exist"""
         return self._session.query(SagemakerStudioUser).get(uri)
 
-    def count_resources(self, environment_uri):
+    def count_resources(self, environment, group_uri):
         return (
             self._session.query(SagemakerStudioUser)
-            .filter(SagemakerStudioUser.environmentUri == environment_uri)
+            .filter(SagemakerStudioUser.environmentUri == environment.environmentUri)
             .count()
         )
