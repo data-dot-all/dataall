@@ -197,7 +197,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
             return existing_domain.get('DomainId', False)
 
 
-@stack(stack='sagemakerstudiouserprofile')
+@stack(stack='mlstudio')
 class SagemakerStudioUserProfile(Stack):
     """
     Creation of a sagemaker studio user stack.
