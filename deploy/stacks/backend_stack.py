@@ -61,6 +61,7 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
+            backend_vpc=True,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc

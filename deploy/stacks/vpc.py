@@ -23,6 +23,7 @@ class VpcStack(pyNestedClass):
         cidr=None,
         resource_prefix=None,
         restricted_nacl=False,
+        backend_vpc=False,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -30,7 +31,7 @@ class VpcStack(pyNestedClass):
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
-            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl)
+            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl, backend_vpc)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
@@ -108,7 +109,7 @@ class VpcStack(pyNestedClass):
                 description=f'{resource_prefix}-{envname}-cidrBlock',
             )
 
-    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl):
+    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl, backend_vpc):
         self.vpc = ec2.Vpc(
             self,
             'VPC',
@@ -126,7 +127,51 @@ class VpcStack(pyNestedClass):
             ],
             nat_gateways=1,
         )
-        if restricted_nacl:
+        if backend_vpc:
+            backend_private_subnets = self.vpc.private_subnets
+            nacl = ec2.NetworkAcl(
+                self, "BackendRestrictedNACL",
+                vpc=self.vpc,
+                network_acl_name=f'{resource_prefix}-{envname}-backendRestrictedNACL',
+                subnet_selection=ec2.SubnetSelection(subnets=backend_private_subnets),
+            )
+
+            for index, subnet in enumerate(backend_private_subnets):
+                ## Inbound NACL Rule
+                nacl.add_entry(
+                    f"entryInboundHTTPS{index+1}",
+                    cidr=subnet.ipv4_cidr_block,
+                    traffic=ec2.AclTraffic.tcp_port(443),
+                    rule_number=(100 + index),
+                    direction=ec2.TrafficDirection.INGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )
+                nacl.add_entry(
+                    f"entryInboundTCP{index+1}",
+                    cidr=subnet.ipv4_cidr_block,
+                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+                    rule_number=(110 + index),
+                    direction=ec2.TrafficDirection.INGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )
+                ## Outbound NACL Rule
+                nacl.add_entry(
+                    f"entryOutboundHTTPS{index+1}",
+                    cidr=subnet.ipv4_cidr_block,
+                    traffic=ec2.AclTraffic.tcp_port(443),
+                    rule_number=(100 + index),
+                    direction=ec2.TrafficDirection.EGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )
+                nacl.add_entry(
+                    f"entryOutboundTCP{index+1}",
+                    cidr=subnet.ipv4_cidr_block,
+                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+                    rule_number=(110 + index),
+                    direction=ec2.TrafficDirection.EGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )            
+        elif restricted_nacl:
             nacl = ec2.NetworkAcl(
                 self, "RestrictedNACL",
                 vpc=self.vpc,
