@@ -561,6 +561,8 @@ class ShareObject:
             Item_SM.update_state(session, share.shareUri, new_state)
 
         Share_SM.update_state(session, share, new_share_state)
+        share.rejectPurpose = ""
+        session.commit()
 
         api.Notification.notify_share_object_submission(
             session, username, dataset, share
@@ -619,7 +621,6 @@ class ShareObject:
         username: str,
         groups: [str],
         uri: str,
-        rejectPurpose: str = None,
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
@@ -627,7 +628,6 @@ class ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
         dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
-        # share.rejectPurpose = reject_share_object
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Reject.value)
 
@@ -645,7 +645,7 @@ class ShareObject:
         )
 
         # Update Reject Purpose
-        share.rejectPurpose = rejectPurpose
+        share.rejectPurpose = data.get("rejectPurpose")
         session.commit()
 
         api.Notification.notify_share_object_rejection(session, username, dataset, share)

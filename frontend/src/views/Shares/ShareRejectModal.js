@@ -54,9 +54,7 @@ const ShareRejectModal = (props) => {
               color="error"
               type="submit"
               variant="contained"
-              onClick={() => {
-                rejectFunction(rejectPurpose);
-              }}
+              onClick={() => rejectFunction(rejectPurpose)}
             >
               Reject Share
             </Button>

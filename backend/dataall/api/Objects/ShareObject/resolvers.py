@@ -92,8 +92,7 @@ def reject_share_object(context: Context, source, shareUri: str = None, rejectPu
             username=context.username,
             groups=context.groups,
             uri=shareUri,
-            rejectPurpose = rejectPurpose,
-            data=None,
+            data={"rejectPurpose": rejectPurpose},
             check_perm=True,
         )
 
