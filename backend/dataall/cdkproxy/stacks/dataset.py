@@ -194,15 +194,29 @@ class Dataset(Stack):
             policy_name=dataset.S3BucketName,
             statements=[
                 iam.PolicyStatement(
-                    actions=['s3:List*'], resources=['*'], effect=iam.Effect.ALLOW
+                    actions=[
+                        "s3:ListAllMyBuckets",
+                        "s3:ListAccessPoints",
+                    ],
+                    resources=["*"],
+                    effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:List*', 's3:Get*'],
+                    actions=[
+                        "s3:ListBucket",
+                        "s3:GetBucketLocation"
+                    ],
                     resources=[dataset_bucket.bucket_arn],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:*'],
+                    actions=[
+                        "s3:PutObject",
+                        "s3:PutObjectAcl",
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:DeleteObject"
+                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
@@ -210,7 +224,6 @@ class Dataset(Stack):
                     actions=[
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
-                        's3:ListAccessPoints',
                         's3:GetAccessPointPolicyStatus',
                     ],
                     effect=iam.Effect.ALLOW,
@@ -219,7 +232,7 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:List*'],
+                    actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,
                 ),
@@ -240,6 +253,7 @@ class Dataset(Stack):
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
+                iam.ServicePrincipal('glue.amazonaws.com'),
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
