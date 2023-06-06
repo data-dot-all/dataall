@@ -11,6 +11,7 @@ class WorksheetRole(GraphQLEnumMapper):
     Admin = '900'
     NoPermission = '000'
 
+
 def create_worksheet(context: Context, source, input: dict = None):
     if not input:
         raise exceptions.RequiredParameter(input)

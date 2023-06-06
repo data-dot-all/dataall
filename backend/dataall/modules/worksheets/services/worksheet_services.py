@@ -25,11 +25,9 @@ class WorksheetService:
             raise exceptions.ObjectNotFound('Worksheet', uri)
         return worksheet
 
-
     @staticmethod
     @has_tenant_permission(MANAGE_WORKSHEETS)
-    def create_worksheet(
-        session, username, uri, data=None) -> Worksheet:
+    def create_worksheet(session, username, uri, data=None) -> Worksheet:
         worksheet = Worksheet(
             owner=username,
             label=data.get('label'),
