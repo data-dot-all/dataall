@@ -140,7 +140,7 @@ class VpcStack(pyNestedClass):
                 ## Inbound NACL Rule
                 nacl.add_entry(
                     f"entryInboundHTTPS{index+1}",
-                    cidr=subnet.ipv4_cidr_block,
+                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
                     traffic=ec2.AclTraffic.tcp_port(443),
                     rule_number=(100 + index),
                     direction=ec2.TrafficDirection.INGRESS,
@@ -148,7 +148,7 @@ class VpcStack(pyNestedClass):
                 )
                 nacl.add_entry(
                     f"entryInboundTCP{index+1}",
-                    cidr=subnet.ipv4_cidr_block,
+                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
                     traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
                     rule_number=(110 + index),
                     direction=ec2.TrafficDirection.INGRESS,
@@ -157,7 +157,7 @@ class VpcStack(pyNestedClass):
                 ## Outbound NACL Rule
                 nacl.add_entry(
                     f"entryOutboundHTTPS{index+1}",
-                    cidr=subnet.ipv4_cidr_block,
+                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
                     traffic=ec2.AclTraffic.tcp_port(443),
                     rule_number=(100 + index),
                     direction=ec2.TrafficDirection.EGRESS,
@@ -165,7 +165,7 @@ class VpcStack(pyNestedClass):
                 )
                 nacl.add_entry(
                     f"entryOutboundTCP{index+1}",
-                    cidr=subnet.ipv4_cidr_block,
+                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
                     traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
                     rule_number=(110 + index),
                     direction=ec2.TrafficDirection.EGRESS,
