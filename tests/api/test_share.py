@@ -395,6 +395,8 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
           created
           status
           userRoleForShareObject
+          requestPurpose
+          rejectPurpose
         }
       }
     """
@@ -411,6 +413,7 @@ def create_share_object(client, userName, group, groupUri, environmentUri, datas
             'groupUri': groupUri,
             'principalId': groupUri,
             'principalType': dataall.api.constants.PrincipalType.Group.value,
+            'requestPurpose': 'testShare'
         },
     )
 
@@ -683,10 +686,11 @@ def approve_share_object(client, user, group, shareUri):
 
 def reject_share_object(client, user, group, shareUri):
     q = """
-    mutation RejectShareObject($shareUri: String!) {
-      rejectShareObject(shareUri: $shareUri) {
+    mutation RejectShareObject($shareUri: String!, $rejectPurpose: String!) {
+      rejectShareObject(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
         shareUri
         status
+        rejectPurpose
       }
     }
     """
@@ -696,6 +700,7 @@ def reject_share_object(client, user, group, shareUri):
         username=user.userName,
         groups=[group.name],
         shareUri=shareUri,
+        rejectPurpose="testRejectShare"
     )
 
     print('Response from rejectShareObject: ', response)
@@ -811,7 +816,8 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
-
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+    assert create_share_object_response.data.createShareObject.requestPurpose == ''
 
 def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
     # Given
@@ -831,6 +837,8 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
+    assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
+    assert create_share_object_response.data.createShareObject.requestPurpose == ''
 
     # And item has been added to the share request
     get_share_object_response = get_share_object(
@@ -1182,7 +1190,7 @@ def test_reject_share_request(
     # Then share object status is changed to Rejected
     assert reject_share_object_response.data.rejectShareObject.status == \
            dataall.api.constants.ShareObjectStatus.Rejected.name
-
+    assert reject_share_object_response.data.rejectShareObject.rejectPurpose == "testRejectShare"
     # and share item status is changed to Share_Rejected
     get_share_object_response = get_share_object(
         client=client,
