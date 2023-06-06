@@ -817,7 +817,6 @@ def test_create_share_object_authorized(client, user2, group2, env2group, env2, 
     assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
-    assert create_share_object_response.data.createShareObject.requestPurpose == ''
 
 def test_create_share_object_with_item_authorized(client, user2, group2, env2group, env2, dataset1, table1):
     # Given
@@ -838,7 +837,6 @@ def test_create_share_object_with_item_authorized(client, user2, group2, env2gro
     assert create_share_object_response.data.createShareObject.status == dataall.api.constants.ShareObjectStatus.Draft.value
     assert create_share_object_response.data.createShareObject.userRoleForShareObject == 'Requesters'
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
-    assert create_share_object_response.data.createShareObject.requestPurpose == ''
 
     # And item has been added to the share request
     get_share_object_response = get_share_object(
