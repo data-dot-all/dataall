@@ -37,30 +37,7 @@ const ShareRejectModal = (props) => {
             (Optional) Provide a reason for rejecting this share in the text
             input field below:
           </Typography>
-          {/* <CardContent>
-            <TextField
-              fullWidth
-              label="reject purpose"
-              name="reject"
-              onChange={handleChange}
-              value={rejectPurpose}
-              variant="outlined"
-            />
-          </CardContent>
-          <CardContent>
-            <Button
-              fullWidth
-              startIcon={<FaTrash size={15} />}
-              color="error"
-              type="submit"
-              variant="contained"
-              onClick={() => rejectFunction(rejectPurpose)}
-            >
-              Reject Share
-            </Button>
-          </CardContent> */}
         </Box>
-
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
