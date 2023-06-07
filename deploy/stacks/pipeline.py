@@ -112,19 +112,6 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
-        self.pipeline_iam_role = iam.Role(
-            self,
-            id=f'CDKPipelinesRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.ServicePrincipal('codepipeline.amazonaws.com'),
-                iam.AccountPrincipal(self.account),
-            ),
-        )
-        for policy in self.codebuild_policy:
-            self.pipeline_iam_role.add_to_policy(policy)
-
         if self.source == 'github':
             source = CodePipelineSource.git_hub(
                 repo_string='awslabs/aws-dataall',
@@ -221,10 +208,29 @@ class PipelineStack(Stack):
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
     def set_codebuild_iam_roles(self):
-        self.pipeline_iam_policy = iam.ManagedPolicy(
+        # IAM Role Creation
+        self.pipeline_iam_role = iam.Role(
+            self,
+            id=f'CDKPipelinesRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-role',
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal('codebuild.amazonaws.com'),
+                iam.ServicePrincipal('codepipeline.amazonaws.com'),
+                iam.AccountPrincipal(self.account),
+            ),
+        )
+        self.codebuild_role = iam.Role(
+            self,
+            id=f'CobdeBuildRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-role',
+            assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
+        )
+
+        self.pipeline_iam_policy = iam.Policy(
             self,
             'CDKPipelinePolicy',
-            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-policy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-policy',
+            roles=[self.pipeline_iam_role, self.codebuild_role],
             statements= [
                 iam.PolicyStatement(
                     actions=[
@@ -303,10 +309,11 @@ class PipelineStack(Stack):
                 ),
             ],
         )
-        self.codebuild_policy = iam.ManagedPolicy(
+        self.codebuild_policy = iam.Policy(
             self,
             'CodeBuildPolicy',
-            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-policy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-policy',
+            roles=[self.codebuild_role],
             statements= [
                 iam.PolicyStatement(
                     actions=[
@@ -330,30 +337,24 @@ class PipelineStack(Stack):
                 )
             ],
         )
-
-        self.pipeline_iam_role = iam.Role(
-            self,
-            id=f'CDKPipelinesRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.ServicePrincipal('codepipeline.amazonaws.com'),
-                iam.AccountPrincipal(self.account),
-            ),
-            managed_policies=[self.pipeline_iam_policy]
-        )
-        self.codebuild_role = iam.Role(
-            self,
-            id=f'CobdeBuildRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-role',
-            assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
-            managed_policies=[self.pipeline_iam_policy, self.codebuild_policy]
-        )
         if self.node.try_get_context('git_release'):
-            self.git_release_policy = iam.ManagedPolicy(
+            self.git_project_role = iam.Role(
+                self,
+                id=f'GitReleaseCBRole{self.git_branch}',
+                role_name=f'{self.resource_prefix}-{self.git_branch}-git-release-role',
+                assumed_by=iam.CompositePrincipal(
+                    iam.ServicePrincipal('codebuild.amazonaws.com'),
+                    iam.AccountPrincipal(self.account),
+                ),
+                managed_policies=[self.pipeline_iam_policy, self.git_release_policy, self.codebuild_policy]
+            )
+            self.codebuild_policy.attach_to_role(self.git_project_role)
+            self.pipeline_iam_policy.attach_to_role(self.git_project_role)
+            self.git_release_policy = iam.Policy(
                 self,
                 'GitReleasePolicy',
-                managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-git-release-policy',
+                policy_name=f'{self.resource_prefix}-{self.git_branch}-git-release-policy',
+                roles=[self.git_project_role],
                 statements= [
                     iam.PolicyStatement(
                         actions=[
@@ -371,17 +372,7 @@ class PipelineStack(Stack):
                         resources=[f'arn:aws:codecommit:{self.region}:{self.account}:dataall'],
                     )
                 ],
-            )
-            self.git_project_role = iam.Role(
-                self,
-                id=f'GitReleaseCBRole{self.git_branch}',
-                role_name=f'{self.resource_prefix}-{self.git_branch}-git-release-role',
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('codebuild.amazonaws.com'),
-                    iam.AccountPrincipal(self.account),
-                ),
-                managed_policies=[self.pipeline_iam_policy, self.git_release_policy, self.codebuild_policy]
-            )
+            )   
 
     def validate_deployment_params(self, git_branch, resource_prefix, target_envs):
         if not bool(re.match(r'^[a-zA-Z0-9-_]+$', git_branch)):
