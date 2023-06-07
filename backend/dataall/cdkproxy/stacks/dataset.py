@@ -220,7 +220,7 @@ class Dataset(Stack):
                         "s3:GetObjectAcl",
                         "s3:GetObjectVersion",
                         "s3:DeleteObject"
-                     ],
+                    ],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
