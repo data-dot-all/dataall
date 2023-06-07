@@ -94,3 +94,7 @@ class CodeArtifactStack(NestedStack):
     @property
     def codeartifact_pip_repo_name(self) -> str:
         return self.pip_repo.repository_name
+    
+    @property
+    def codeartifact_npm_repo_name(self) -> str:
+        return self.npm_repo.repository_name

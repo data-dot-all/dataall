@@ -226,9 +226,9 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
-                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'pip install -r deploy/requirements.txt',
                     'cdk synth',
                     'echo ${CODEBUILD_SOURCE_VERSION}'
@@ -380,7 +380,7 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
                         f'export schema_name=validation',
                         'python -m venv env',
@@ -399,7 +399,7 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
@@ -415,13 +415,13 @@ class PipelineStack(Stack):
                         build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
                         'python -m venv env',
                         '. env/bin/activate',
                         'make lint',
                         'cd frontend',
-                        f'aws codeartifact login --tool npm --repository {self.codeartifact.npm_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'npm install',
                         'npm run lint',
                     ],
@@ -443,7 +443,7 @@ class PipelineStack(Stack):
                                 'build': {
                                     'commands': [
                                         'set -eu',
-                                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                         f'export envname={self.git_branch}',
                                         'python -m venv env',
                                         '. env/bin/activate',
@@ -745,7 +745,7 @@ class PipelineStack(Stack):
                     build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
                 ),
                 commands=[
-                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
                     '. ./.env.assumed_role',
                     'aws sts get-caller-identity',
@@ -846,7 +846,7 @@ class PipelineStack(Stack):
                         },
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export REACT_APP_STAGE={target_env["envname"]}',
                         f'export envname={target_env["envname"]}',
                         f'export internet_facing={target_env.get("internet_facing", False)}',
@@ -887,7 +887,7 @@ class PipelineStack(Stack):
                         },
                     ),
                     commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'cd documentation/userguide',
                         'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
                         f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
@@ -960,7 +960,7 @@ class PipelineStack(Stack):
                             'build': {
                                 'commands': [
                                     'set -eu',
-                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.pip_repo.attr_name} --domain {self.codeartifact.domain.attr_name} --domain-owner {self.codeartifact.domain.attr_owner}',
+                                    f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                     'python -m venv env',
                                     '. env/bin/activate',
                                     'pip install git-remote-codecommit',
