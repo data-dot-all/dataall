@@ -1,12 +1,12 @@
 from aws_cdk import aws_iam as iam
 
-from dataall.db import permissions
-from .service_policy import ServicePolicy
+from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.modules.datapipelines.services.datapipelines_permissions import CREATE_PIPELINE
 
 
 class StepFunctions(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
-        if permissions.CREATE_PIPELINE not in group_permissions:
+        if CREATE_PIPELINE not in group_permissions:
             return []
 
         return [

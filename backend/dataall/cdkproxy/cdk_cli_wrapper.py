@@ -10,18 +10,35 @@ import sys
 import ast
 
 import boto3
+from abc import abstractmethod
 from botocore.exceptions import ClientError
+from typing import Dict, Type
 
 from ..aws.handlers.sts import SessionHelper
 from ..db import Engine
 from ..db import models
-from ..db.api import Pipeline, Environment, Stack
+from ..db.api import Environment, Stack
 from ..utils.alarm_service import AlarmService
-from dataall.cdkproxy.cdkpipeline.cdk_pipeline import CDKPipelineStack
 
 logger = logging.getLogger('cdksass')
 
 ENVNAME = os.getenv('envname', 'local')
+
+
+class CDKCliWrapperExtension:
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def extend_deployment(self, stack, session, env):
+        raise NotImplementedError("Method extend_deployment is not implemented")
+
+    @abstractmethod
+    def cleanup(self):
+        raise NotImplementedError("Method cleanup is not implemented")
+
+
+_CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, Type[CDKCliWrapperExtension]] = {}
 
 
 def aws_configure(profile_name='default'):
@@ -68,26 +85,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.warning(f'stackuri = {stack.stackUri}, stackId = {stack.stackid}')
             stack.status = 'PENDING'
             session.commit()
-
-            if stack.stack == 'cdkpipeline':
-                cdkpipeline = CDKPipelineStack(stack.targetUri)
-                venv_name = cdkpipeline.venv_name if cdkpipeline.venv_name else None
-                pipeline = Pipeline.get_pipeline_by_uri(session, stack.targetUri)
-                path = f'./cdkpipeline/{pipeline.repo}/'
-                app_path = './app.py'
-                if not venv_name:
-                    logger.info('Successfully Updated CDK Pipeline')
-                    meta = describe_stack(stack)
-                    stack.stackid = meta['StackId']
-                    stack.status = meta['StackStatus']
-                    update_stack_output(session, stack)
-                    return
-
-            cwd = (
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
-                if path
-                else os.path.dirname(os.path.abspath(__file__))
-            )
+            
             python_path = '/:'.join(sys.path)[1:] + ':/code'
             logger.info(f'python path = {python_path}')
 
@@ -107,6 +105,24 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                         'AWS_SESSION_TOKEN': creds.get('Token'),
                     }
                 )
+
+            if stack.stack == 'cdkpipeline':
+                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
+                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
+
+                finish_deployment, path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
+                    stack=stack,
+                    session=session,
+                    env=env
+                )
+                if finish_deployment:
+                    return
+
+            cwd = (
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+                if path
+                else os.path.dirname(os.path.abspath(__file__))
+            )
 
             app_path = app_path or './app.py'
 
@@ -139,21 +155,6 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 '--verbose',
             ]
 
-            if stack.stack == 'cdkpipeline':
-                aws = SessionHelper.remote_session(stack.accountid)
-                creds = aws.get_credentials()
-                env.update(
-                    {
-                        'CDK_DEFAULT_REGION': stack.region,
-                        'AWS_REGION': stack.region,
-                        'AWS_DEFAULT_REGION': stack.region,
-                        'CDK_DEFAULT_ACCOUNT': stack.accountid,
-                        'AWS_ACCESS_KEY_ID': creds.access_key,
-                        'AWS_SECRET_ACCESS_KEY': creds.secret_key,
-                        'AWS_SESSION_TOKEN': creds.token,
-                    }
-                )
-
             logger.info(f"Running command : \n {' '.join(cmd)}")
 
             process = subprocess.run(
@@ -164,9 +165,13 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 env=env,
                 cwd=cwd,
             )
+  
             if stack.stack == 'cdkpipeline':
-                CDKPipelineStack.clean_up_repo(path=f'./{pipeline.repo}')
+                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
+                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
 
+                _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].cleanup()
+            
             if process.returncode == 0:
                 meta = describe_stack(stack)
                 stack.stackid = meta['StackId']
