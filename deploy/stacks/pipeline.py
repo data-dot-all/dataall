@@ -108,7 +108,8 @@ class PipelineStack(Stack):
             iam.PolicyStatement(
                 actions=[
                     'ecr:GetAuthorizationToken',
-                    'ec2:DescribePrefixLists'
+                    'ec2:DescribePrefixLists',
+                    'ec2:DescribeManagedPrefixLists'
                 ],
                 resources=['*'],
             ),
@@ -141,6 +142,7 @@ class PipelineStack(Stack):
                     'codebuild:UpdateReport',
                     'codebuild:BatchPutTestCases',
                     'codebuild:BatchPutCodeCoverages',
+                    'ec2:GetManagedPrefixListEntries'
                 ],
                 resources=[
                     f'arn:aws:s3:::{self.resource_prefix}*',
@@ -154,6 +156,7 @@ class PipelineStack(Stack):
                     f'arn:aws:ecr:{self.region}:{self.account}:repository/{resource_prefix}*',
                     f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{resource_prefix}*',
                     f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{resource_prefix}*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
                 ],
             ),
         ]
