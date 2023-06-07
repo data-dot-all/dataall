@@ -194,6 +194,7 @@ class Dataset(Stack):
             policy_name=dataset.S3BucketName,
             statements=[
                 iam.PolicyStatement(
+                    sid="ListAll",
                     actions=[
                         "s3:ListAllMyBuckets",
                         "s3:ListAccessPoints",
@@ -202,6 +203,7 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
+                    sid="ListDatasetBucket",
                     actions=[
                         "s3:ListBucket",
                         "s3:GetBucketLocation"
@@ -210,17 +212,30 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
+                    sid="ReadWriteDatasetBucket",
                     actions=[
                         "s3:PutObject",
                         "s3:PutObjectAcl",
                         "s3:GetObject",
                         "s3:GetObjectAcl",
+                        "s3:GetObjectVersion",
                         "s3:DeleteObject"
                      ],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
                 iam.PolicyStatement(
+                    sid="KMSAccess",
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[dataset_key.key_arn],
+                ),
+                iam.PolicyStatement(
+                    sid="ReadAccessPointsDatasetBucket",
                     actions=[
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
@@ -232,13 +247,31 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:ListBucket'],
+                    actions=['s3:ListEnvironmentBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:List*', 's3:Get*'],
+                    sid="ReadEnvironmentBucketProfiling",
+                    actions=[
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:GetObjectVersion"
+                    ],
+                    effect=iam.Effect.ALLOW,
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
+                ),
+                iam.PolicyStatement(
+                    sid="ReadWriteEnvironmentBucketProfiling",
+                    actions=[
+                        "s3:PutObject",
+                        "s3:PutObjectAcl",
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:GetObjectVersion",
+                        "s3:DeleteObject"
+                    ],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/results/{dataset.datasetUri}/*'],
                     effect=iam.Effect.ALLOW,
                 ),
             ],
@@ -394,9 +427,7 @@ class Dataset(Stack):
             self,
             'DatasetGlueProfilingJob',
             name=dataset.GlueProfilingJobName,
-            role=iam.ArnPrincipal(
-                f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
-            ).arn,
+            role=dataset_admin_role.role_arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(
                 max_concurrent_runs=100

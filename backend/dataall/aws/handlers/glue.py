@@ -473,7 +473,7 @@ class Glue:
             glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
             if data.get('location'):
                 Glue._update_existing_crawler(
-                    glue, accountid, crawler_name, targets, database
+                    glue, crawler_name, targets, database
                 )
             crawler = Glue._get_crawler(glue, crawler_name)
             glue.start_crawler(Name=crawler_name)
@@ -496,7 +496,7 @@ class Glue:
         return crawler.get('Crawler') if crawler else None
 
     @staticmethod
-    def _update_existing_crawler(glue, accountid, crawler_name, targets, database):
+    def _update_existing_crawler(glue, crawler_name, targets, database):
         try:
             glue.stop_crawler(Name=crawler_name)
         except ClientError as e:
@@ -508,7 +508,6 @@ class Glue:
         try:
             glue.update_crawler(
                 Name=crawler_name,
-                Role=SessionHelper.get_delegation_role_arn(accountid=accountid),
                 DatabaseName=database,
                 Targets=targets,
             )
