@@ -247,6 +247,36 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
+                    sid="GlueAccessCrawler",
+                    actions=[
+                        "glue:GetDatabase",
+                        "glue:GetTableVersion",
+                        "glue:CreateTable",
+                        "glue:GetTables",
+                        "glue:GetTableVersions",
+                        "glue:UpdateTable",
+                        "glue:DeleteTableVersion",
+                        "glue:DeleteTable",
+                        "glue:GetTable"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.S3BucketName}",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.S3BucketName}/*"
+                    ]
+                ),
+                iam.PolicyStatement(
+                    sid="LoggingGlueCrawler",
+                    actions=[
+                        'logs:PutLogEvents',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
+                    ],
+                ),
+                iam.PolicyStatement(
                     actions=['s3:ListEnvironmentBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,
