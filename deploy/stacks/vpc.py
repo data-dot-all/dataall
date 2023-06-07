@@ -11,6 +11,7 @@ from aws_cdk import (
 
 from .pyNestedStack import pyNestedClass
 
+import boto3
 
 class VpcStack(pyNestedClass):
     def __init__(
@@ -24,6 +25,7 @@ class VpcStack(pyNestedClass):
         resource_prefix=None,
         restricted_nacl=False,
         backend_vpc=False,
+        tooling_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -31,7 +33,7 @@ class VpcStack(pyNestedClass):
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
-            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl, backend_vpc)
+            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl, backend_vpc, tooling_region)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
@@ -109,7 +111,7 @@ class VpcStack(pyNestedClass):
                 description=f'{resource_prefix}-{envname}-cidrBlock',
             )
 
-    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl, backend_vpc):
+    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl, backend_vpc, tooling_region):
         self.vpc = ec2.Vpc(
             self,
             'VPC',
@@ -170,7 +172,36 @@ class VpcStack(pyNestedClass):
                     rule_number=(110 + index),
                     direction=ec2.TrafficDirection.EGRESS,
                     rule_action=ec2.Action.ALLOW
-                )            
+                ) 
+            ec2_client = boto3.client("ec2", region_name=tooling_region)
+            response = ec2_client.describe_prefix_lists(
+                Filters=[
+                    {
+                        'Name': 'prefix-list-name',
+                        'Values': [f'com.amazonaws.{tooling_region}.s3']
+                    },
+                ]
+            )
+            s3_cidrs = response['PrefixLists'][0].get('Cidrs')
+            for index, s3_cidr in enumerate(s3_cidrs):
+                ## Inbound S3 NACL Rule
+                nacl.add_entry(
+                    f"entryS3InboundTCP{index+1}",
+                    cidr=ec2.AclCidr.ipv4(s3_cidr),
+                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+                    rule_number=(200 + index),
+                    direction=ec2.TrafficDirection.INGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )
+                ## Outbound S3 NACL Rule
+                nacl.add_entry(
+                    f"entryS3OutboundHTTPS{index+1}",
+                    cidr=ec2.AclCidr.ipv4(s3_cidr),
+                    traffic=ec2.AclTraffic.tcp_port(443),
+                    rule_number=(200 + index),
+                    direction=ec2.TrafficDirection.EGRESS,
+                    rule_action=ec2.Action.ALLOW
+                )
         elif restricted_nacl:
             nacl = ec2.NetworkAcl(
                 self, "RestrictedNACL",

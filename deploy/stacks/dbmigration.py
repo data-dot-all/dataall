@@ -15,6 +15,8 @@ class DBMigrationStack(pyNestedClass):
         resource_prefix='dataall',
         pipeline_bucket: str = None,
         tooling_account_id=None,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -82,6 +84,28 @@ class DBMigrationStack(pyNestedClass):
                 ],
             ),
         )
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "codeartifact:GetAuthorizationToken",
+                    "codeartifact:ReadFromRepository",
+                    "codeartifact:GetRepositoryEndpoint",
+                    "codeartifact:GetRepositoryPermissionsPolicy"
+                ],
+                resources=[
+                    f"arn:aws:codeartifact:*:{tooling_account_id}:repository/{codeartifact_domain_name}/{codeartifact_pip_repo_name}",
+                    f"arn:aws:codeartifact:*:{tooling_account_id}:domain/{codeartifact_domain_name}",
+                ],
+            ),
+        )
+        self.build_project_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'sts:GetServiceBearerToken'
+                ],
+                resources=['*'],
+            ),
+        )
         self.codebuild_sg = ec2.SecurityGroup(
             self,
             f'DBMigrationCBSG{envname}',
@@ -107,6 +131,7 @@ class DBMigrationStack(pyNestedClass):
                                 'unzip source_build.zip',
                                 'python -m venv env',
                                 '. env/bin/activate',
+                                f'aws codeartifact login --tool pip --domain {codeartifact_domain_name} --domain-owner {tooling_account_id} --repository {codeartifact_pip_repo_name}',
                                 'pip install -r backend/requirements.txt',
                                 'pip install alembic',
                                 'export PYTHONPATH=backend',

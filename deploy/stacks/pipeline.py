@@ -562,6 +562,7 @@ class PipelineStack(Stack):
                 },
                 envname=target_env['envname'],
                 resource_prefix=self.resource_prefix,
+                tooling_region=self.region,
                 tooling_account_id=self.account,
                 pipeline_bucket=self.pipeline_bucket_name,
                 ecr_repository=f'arn:aws:ecr:{target_env.get("region", self.region)}:{self.account}:repository/{repository_name}',
@@ -579,6 +580,8 @@ class PipelineStack(Stack):
                 shared_dashboard_sessions=target_env.get('shared_dashboard_sessions', 'anonymous'),
                 enable_opensearch_serverless=target_env.get('enable_opensearch_serverless', False),
                 enable_pivot_role_auto_create=target_env.get('enable_pivot_role_auto_create', False),
+                codeartifact_domain_name=self.codeartifact.codeartifact_domain_name,
+                codeartifact_pip_repo_name=self.codeartifact.codeartifact_pip_repo_name,
             )
         )
         return backend_stage

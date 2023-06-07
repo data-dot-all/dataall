@@ -36,6 +36,27 @@ class CodeArtifactStack(NestedStack):
             )
             domain_dict['permissions_policy_document'] = domain_policy
 
+            pip_repo_policy = iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "codeartifact:DescribePackageVersion",
+                            "codeartifact:DescribeRepository",
+                            "codeartifact:GetPackageVersionReadme",
+                            "codeartifact:GetRepositoryEndpoint",
+                            "codeartifact:ListPackageVersionAssets",
+                            "codeartifact:ListPackageVersionDependencies",
+                            "codeartifact:ListPackageVersions",
+                            "codeartifact:ListPackages",
+                            "codeartifact:ReadFromRepository"
+                        ],
+                        principals=principals,
+                        resources=['*'],
+                    )
+                ]
+            )
+
         domain = codeartifact.CfnDomain(self, 'CodeArtifactDomain', **domain_dict)
         npm_repo = codeartifact.CfnRepository(
             self,
@@ -57,6 +78,7 @@ class CodeArtifactStack(NestedStack):
             external_connections=[
                 'public:pypi',
             ],
+            permissions_policy_document=pip_repo_policy
         )
         pip_repo.add_override('Properties.DomainName', domain.domain_name)
         pip_repo.add_depends_on(domain)
@@ -64,3 +86,11 @@ class CodeArtifactStack(NestedStack):
         self.domain = domain
         self.npm_repo = npm_repo
         self.pip_repo = pip_repo
+
+    @property
+    def codeartifact_domain_name(self) -> str:
+        return self.domain.domain_name
+
+    @property
+    def codeartifact_pip_repo_name(self) -> str:
+        return self.pip_repo.repository_name

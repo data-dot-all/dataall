@@ -29,6 +29,7 @@ class BackendStack(Stack):
         id,
         envname: str = 'dev',
         resource_prefix='dataall',
+        tooling_region=None,
         tooling_account_id=None,
         ecr_repository=None,
         image_tag=None,
@@ -46,6 +47,8 @@ class BackendStack(Stack):
         shared_dashboard_sessions='anonymous',
         enable_pivot_role_auto_create=False,
         enable_opensearch_serverless=False,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -62,6 +65,7 @@ class BackendStack(Stack):
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
             backend_vpc=True,
+            tooling_region=tooling_region,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
@@ -164,6 +168,8 @@ class BackendStack(Stack):
             vpc=vpc,
             tooling_account_id=tooling_account_id,
             pipeline_bucket=pipeline_bucket,
+            codeartifact_domain_name=codeartifact_domain_name,
+            codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             **kwargs,
         )
 
