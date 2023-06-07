@@ -104,6 +104,9 @@ class DBMigrationStack(pyNestedClass):
                     'sts:GetServiceBearerToken'
                 ],
                 resources=['*'],
+                conditions={
+                    'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}
+                },
             ),
         )
         self.codebuild_sg = ec2.SecurityGroup(
