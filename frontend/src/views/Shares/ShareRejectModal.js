@@ -1,17 +1,17 @@
 import PropTypes from 'prop-types';
+import * as Yup from 'yup';
+import { Formik } from 'formik';
 import {
   Box,
-  Button,
   CardContent,
   Dialog,
-  FormControlLabel,
-  FormGroup,
-  Switch,
   TextField,
+  FormHelperText,
   Typography
 } from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
-import { FaTrash } from 'react-icons/fa';
 
 const ShareRejectModal = (props) => {
   const { share, onApply, onClose, open, rejectFunction, ...other } = props;
@@ -37,7 +37,7 @@ const ShareRejectModal = (props) => {
             (Optional) Provide a reason for rejecting this share in the text
             input field below:
           </Typography>
-          <CardContent>
+          {/* <CardContent>
             <TextField
               fullWidth
               label="reject purpose"
@@ -58,7 +58,78 @@ const ShareRejectModal = (props) => {
             >
               Reject Share
             </Button>
-          </CardContent>
+          </CardContent> */}
+        </Box>
+
+        <Box sx={{ p: 3 }}>
+          <Formik
+            initialValues={{
+              comment: ''
+            }}
+            validationSchema={Yup.object().shape({
+              comment: Yup.string().max(5000)
+            })}
+            onSubmit={async (
+              values
+            ) => {
+              await rejectFunction(values.comment);
+            }}
+          >
+            {({
+              errors,
+              handleBlur,
+              handleChange,
+              handleSubmit,
+              isSubmitting,
+              setFieldValue,
+              touched,
+              values
+            }) => (
+              <form onSubmit={handleSubmit}>
+                <Box>
+                  <CardContent>
+                    <TextField
+                      FormHelperTextProps={{
+                        sx: {
+                          textAlign: 'right',
+                          mr: 0
+                        }
+                      }}
+                      fullWidth
+                      helperText={`${
+                        200 - values.comment.length
+                      } characters left`}
+                      label="Reject purpose"
+                      name="comment"
+                      multiline
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      rows={5}
+                      value={values.comment}
+                      variant="outlined"
+                    />
+                    {touched.comment && errors.comment && (
+                      <Box sx={{ mt: 2 }}>
+                        <FormHelperText error>{errors.comment}</FormHelperText>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Box>
+                <CardContent>
+                  <LoadingButton
+                    fullWidth
+                    startIcon={<SendIcon fontSize="small" />}
+                    color="primary"
+                    disabled={isSubmitting}
+                    type="submit"
+                    variant="contained"
+                  >
+                    Reject Share
+                  </LoadingButton>
+                </CardContent>
+              </form>
+            )}
+          </Formik>
         </Box>
       </Box>
     </Dialog>
