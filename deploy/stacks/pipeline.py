@@ -83,6 +83,19 @@ class PipelineStack(Stack):
         )
 
         self.codebuild_policy = [
+            ## The Default Policy Attached to CodeBuild Steps
+            iam.PolicyStatement(
+                actions=[
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DeleteNetworkInterface",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeDhcpOptions",
+                    "ec2:DescribeVpcs"
+                ],
+                resources=['*'],
+            ),
             iam.PolicyStatement(
                 actions=[
                     'sts:GetServiceBearerToken',
@@ -217,7 +230,8 @@ class PipelineStack(Stack):
                     'cdk synth',
                     'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
-                role_policy_statements=self.codebuild_policy,
+                role=self.pipeline_iam_role,
+                # role_policy_statements=self.codebuild_policy,
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
@@ -371,7 +385,8 @@ class PipelineStack(Stack):
                         'make drop-tables',
                         'make upgrade-db',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    # role_policy_statements=self.codebuild_policy,
+                    role=it_project_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -387,7 +402,8 @@ class PipelineStack(Stack):
                         '. env/bin/activate',
                         'make check-security',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    # role_policy_statements=self.codebuild_policy,
+                    role=it_project_role,
                     vpc=self.vpc,
                 ),
                 pipelines.CodeBuildStep(
@@ -406,7 +422,8 @@ class PipelineStack(Stack):
                         'npm install',
                         'npm run lint',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    # role_policy_statements=self.codebuild_policy,
+                    role=it_project_role,
                     vpc=self.vpc,
                 ),
             )
@@ -456,7 +473,8 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    # role_policy_statements=self.codebuild_policy,
+                    role=it_project_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -487,7 +505,8 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role_policy_statements=self.codebuild_policy,
+                    # role_policy_statements=self.codebuild_policy,
+                    role=it_project_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -528,7 +547,8 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                # role_policy_statements=self.codebuild_policy,
+                role=self.pipeline_iam_role,
                 vpc=self.vpc,
             ),
             pipelines.CodeBuildStep(
@@ -546,7 +566,8 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role_policy_statements=self.codebuild_policy,
+                # role_policy_statements=self.codebuild_policy,
+                role=self.pipeline_iam_role,
                 vpc=self.vpc,
             ),
         )
