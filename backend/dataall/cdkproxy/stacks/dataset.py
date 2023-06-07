@@ -262,8 +262,8 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.S3BucketName}",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.S3BucketName}/*"
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
                     ]
                 ),
                 iam.PolicyStatement(
