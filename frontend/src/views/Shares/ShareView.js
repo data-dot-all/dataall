@@ -60,6 +60,8 @@ import deleteShareObject from '../../api/ShareObject/deleteShareObject.js';
 import submitApproval from '../../api/ShareObject/submitApproval';
 import removeSharedItem from '../../api/ShareObject/removeSharedItem';
 import ShareRejectModal from './ShareRejectModal';
+import UpdateRejectReason from './ShareUpdateReject';
+import UpdateRequestReason from './ShareUpdateRequest';
 
 
 function ShareViewHeader(props) {
@@ -586,6 +588,15 @@ const ShareView = () => {
                               variant="subtitle2"
                             >
                               Request Purpose
+                              {share.userRoleForShareObject === 'Requesters' && (
+                                  <UpdateRequestReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                              )}
                             </Typography>
                             <Box sx={{ mt: 1 }}>
                               <Typography
@@ -602,6 +613,15 @@ const ShareView = () => {
                               variant="subtitle2"
                             >
                               Reject Purpose
+                              {share.userRoleForShareObject === 'Approvers' && (
+                                  <UpdateRejectReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                              )}
                             </Typography>
                             <Box sx={{ mt: 1 }}>
                               <Typography

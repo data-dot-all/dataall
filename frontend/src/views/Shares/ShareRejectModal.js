@@ -16,11 +16,6 @@ import React, { useState } from 'react';
 const ShareRejectModal = (props) => {
   const { share, onApply, onClose, open, rejectFunction, ...other } = props;
 
-  const [rejectPurpose, setRejectPurpose] = useState(null);
-
-  const handleChange = (event) => {
-    setRejectPurpose(event.target.value);
-  };
   return (
     <Dialog maxWidth="sm" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>

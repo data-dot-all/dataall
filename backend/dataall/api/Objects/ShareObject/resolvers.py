@@ -375,3 +375,25 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
             data=filter,
             check_perm=None,
         )
+    
+def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
+  with context.engine.scoped_session() as session:
+      return db.api.ShareObject.update_share_request_purpose(
+          session=session,
+          username=context.username,
+          groups=context.groups,
+          uri=shareUri,
+          data={"requestPurpose": requestPurpose},
+          check_perm=True,
+      )
+
+def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
+  with context.engine.scoped_session() as session:
+      return db.api.ShareObject.update_share_reject_purpose(
+          session=session,
+          username=context.username,
+          groups=context.groups,
+          uri=shareUri,
+          data={"rejectPurpose": rejectPurpose},
+          check_perm=True,
+      )
