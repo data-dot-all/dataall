@@ -216,7 +216,7 @@ class SessionHelper:
             session = cls.get_session()
         region = os.getenv('AWS_REGION', 'eu-west-1')
         client = session.client(
-            'sts', 
+            'sts',
             region_name=region,
             endpoint_url=f"https://sts.{region}.amazonaws.com"
         )

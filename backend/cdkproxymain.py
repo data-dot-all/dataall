@@ -52,9 +52,9 @@ def up(response: Response):
 def check_creds(response: Response):
     logger.info('GET /awscreds')
     try:
-        region =os.getenv('AWS_REGION', 'eu-west-1')
+        region = os.getenv('AWS_REGION', 'eu-west-1')
         sts = boto3.client(
-            'sts', 
+            'sts',
             region_name=region,
             endpoint_url=f"https://sts.{region}.amazonaws.com"
         )
