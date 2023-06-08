@@ -214,7 +214,12 @@ class SessionHelper:
         """
         if not session:
             session = cls.get_session()
-        client = session.client('sts')
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        client = session.client(
+            'sts', 
+            region_name=region,
+            endpoint_url=f"https://sts.{region}.amazonaws.com"
+        )
         response = client.get_caller_identity()
         return response['Account']
 
