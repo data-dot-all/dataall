@@ -623,10 +623,10 @@ class ShareObject:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
-      share = ShareObject.get_share_by_uri(session, uri)
-      share.requestPurpose = data.get("requestPurpose")
-      session.commit()
-      return True
+        share = ShareObject.get_share_by_uri(session, uri)
+        share.requestPurpose = data.get("requestPurpose")
+        session.commit()
+        return True
 
     @staticmethod
     def update_share_reject_purpose(
@@ -637,10 +637,10 @@ class ShareObject:
         data: dict = None,
         check_perm: bool = False,
     ) -> models.ShareObject:
-      share = ShareObject.get_share_by_uri(session, uri)
-      share.rejectPurpose = data.get("rejectPurpose")
-      session.commit()
-      return True
+        share = ShareObject.get_share_by_uri(session, uri)
+        share.rejectPurpose = data.get("rejectPurpose")
+        session.commit()
+        return True
 
     @staticmethod
     @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
