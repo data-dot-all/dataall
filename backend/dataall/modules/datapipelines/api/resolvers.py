@@ -3,11 +3,11 @@ import logging
 
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
-from dataall.api.constants import DataPipelineRole
 from dataall.api.context import Context
 from dataall.core.context import get_context
 from dataall.db import models
 from dataall.db.api import Environment, Stack
+from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
