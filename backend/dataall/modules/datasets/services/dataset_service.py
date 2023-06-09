@@ -250,7 +250,7 @@ class DatasetService:
                 targetUri=dataset.datasetUri,
             )
             session.add(task)
-        Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
+        Worker.process(engine=context.db_engine, task_ids=[task.taskUri])
         with context.db_engine.scoped_session() as session:
             DatasetTableIndexer.upsert_all(
                 session=session, dataset_uri=dataset.datasetUri

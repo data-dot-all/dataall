@@ -44,7 +44,7 @@ class DatasetProfilingService:
             )
             session.add(task)
 
-        Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
+        Worker.process(engine=context.db_engine, task_ids=[task.taskUri])
 
         return run
 
