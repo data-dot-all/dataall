@@ -146,6 +146,7 @@ def share1_draft(
         owner=user2.userName,
         status=dataall.api.constants.ShareObjectStatus.Draft.value
     )
+    
     yield share1
 
     # Cleanup share
@@ -430,6 +431,8 @@ def get_share_object(client, user, group, shareUri, filter):
         created
         owner
         status
+        requestPurpose
+        rejectPurpose
         userRoleForShareObject
         principal {
           principalId
@@ -485,10 +488,7 @@ def get_share_object(client, user, group, shareUri, filter):
 def update_share_request_purpose(client, user, group, shareUri, requestPurpose):
     q = """
     mutation updateShareRequestReason($shareUri: String!,$requestPurpose: String!) {
-      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose) {
-        shareUri
-        requestPurpose
-      }
+      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose)
     }
     """
 
@@ -507,10 +507,7 @@ def update_share_request_purpose(client, user, group, shareUri, requestPurpose):
 def update_share_reject_purpose(client, user, group, shareUri, rejectPurpose):
     q = """
         mutation updateShareRejectReason($shareUri: String!, $rejectPurpose: String!) {
-          updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
-            shareUri
-            rejectPurpose
-          }
+          updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose)
         }
     """
 
@@ -940,7 +937,7 @@ def test_update_share_request_purpose(client, share1_draft, user2, group2):
     assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Requesters'
 
 
-def test_update_share_request_purpose(client, share1_draft, user, group):
+def test_update_share_request_purpose_unauthorized(client, share1_draft, user, group):
     # Given
     # Existing share object in status Draft (->fixture share1_draft)
     # When a user from the approvers group attempts to update the request purpose 
@@ -1184,7 +1181,7 @@ def test_update_share_reject_purpose(client, share2_submitted, user, group):
         user=user,
         group=group,
         shareUri=share2_submitted.shareUri,
-        requestPurpose="NewRejectPurpose"
+        rejectPurpose="NewRejectPurpose"
     )
 
     # Then the rejectPurpose of the Share is Updated
@@ -1209,7 +1206,7 @@ def test_update_share_reject_purpose_unauthorized(client, share2_submitted, user
         user=user2,
         group=group2,
         shareUri=share2_submitted.shareUri,
-        requestPurpose="NewRejectPurpose"
+        rejectPurpose="NewRejectPurpose"
     )
 
     # Then we get an error of the type

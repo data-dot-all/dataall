@@ -6,14 +6,8 @@ const updateShareRequestReason = ({ shareUri, requestPurpose }) => ({
     requestPurpose
   },
   mutation: gql`
-    mutation updateShareRequestReason(
-      $shareUri: String!
-      $requestPurpose: String!
-    ) {
-      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose) {
-        shareUri
-        requestPurpose
-      }
+    mutation updateShareRequestReason($shareUri: String!, $requestPurpose: String!) {
+      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose)
     }
   `
 });
