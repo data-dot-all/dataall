@@ -177,17 +177,6 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
-        default_environment_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid='RedshiftLogging',
-                actions=['s3:PutObject', 's3:GetBucketAcl'],
-                resources=[
-                    f'{default_environment_bucket.bucket_arn}/*',
-                    default_environment_bucket.bucket_arn,
-                ],
-                principals=[iam.ServicePrincipal('redshift.amazonaws.com')],
-            )
-        )
 
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
@@ -697,7 +686,6 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('athena.amazonaws.com'),
                 iam.ServicePrincipal('states.amazonaws.com'),
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.ServicePrincipal('redshift.amazonaws.com'),
                 iam.AccountPrincipal(self._environment.AwsAccountId),
             ),
         )

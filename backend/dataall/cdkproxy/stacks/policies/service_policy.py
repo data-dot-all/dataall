@@ -37,7 +37,6 @@ class ServicePolicy(object):
         """
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
-        from .redshift import Redshift
         from .databrew import Databrew
         from .lakeformation import LakeFormation
         from .sagemaker import Sagemaker
@@ -107,8 +106,6 @@ class ServicePolicy(object):
 
         services = ServicePolicy.__subclasses__()
 
-        if permissions.CREATE_REDSHIFT_CLUSTER not in self.permissions:
-            services.remove(Redshift)
         if permissions.CREATE_DATASET not in self.permissions:
             services.remove(Databrew)
             services.remove(LakeFormation)
