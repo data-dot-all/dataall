@@ -15,21 +15,6 @@ class DatasetColumnGlueHandler:
     """A handler for dataset table columns"""
 
     @staticmethod
-    @Worker.handler('glue.table.columns')
-    def get_table_columns(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            dataset_table: DatasetTable = session.query(DatasetTable).get(
-                task.targetUri
-            )
-            aws = SessionHelper.remote_session(dataset_table.AWSAccountId)
-            glue_table = GlueTableClient(aws, dataset_table).get_table()
-
-            DatasetTableRepository.sync_table_columns(
-                session, dataset_table, glue_table['Table']
-            )
-        return True
-
-    @staticmethod
     @Worker.handler('glue.table.update_column')
     def update_table_columns(engine, task: models.Task):
         with engine.scoped_session() as session:
