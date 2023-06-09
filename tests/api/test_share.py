@@ -482,6 +482,49 @@ def get_share_object(client, user, group, shareUri, filter):
     return response
 
 
+def update_share_request_purpose(client, user, group, shareUri, requestPurpose):
+    q = """
+    mutation updateShareRequestReason($shareUri: String!,$requestPurpose: String!) {
+      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose) {
+        shareUri
+        requestPurpose
+      }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[group.name],
+        shareUri=shareUri,
+        requestPurpose=requestPurpose,
+    )
+    # Print response
+    print('Update share request purpose response: ', response)
+    return response
+
+
+def update_share_reject_purpose(client, user, group, shareUri, rejectPurpose):
+    q = """
+        mutation updateShareRejectReason($shareUri: String!, $rejectPurpose: String!) {
+          updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose) {
+            shareUri
+            rejectPurpose
+          }
+        }
+    """
+
+    response = client.query(
+        q,
+        username=user.userName,
+        groups=[group.name],
+        shareUri=shareUri,
+        rejectPurpose=rejectPurpose,
+    )
+    # Print response
+    print('Update share reject purpose response: ', response)
+    return response
+
 def list_dataset_share_objects(client, user, group, datasetUri):
     q = """
         query ListDatasetShareObjects(
@@ -872,6 +915,47 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').region
 
 
+def test_update_share_request_purpose(client, share1_draft, user2, group2):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the requesters group updates 
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then the requestPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share1_draft.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.requestPurpose == "NewRequestPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Requesters'
+
+
+def test_update_share_request_purpose(client, share1_draft, user, group):
+    # Given
+    # Existing share object in status Draft (->fixture share1_draft)
+    # When a user from the approvers group attempts to update the request purpose 
+    update_share_request_purpose_response = update_share_request_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share1_draft.shareUri,
+        requestPurpose="NewRequestPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_request_purpose_response.errors[0].message
+
+
 def test_list_dataset_share_objects_approvers(
         client, user, group, share1_draft, dataset1
 ):
@@ -1089,6 +1173,47 @@ def test_submit_share_request(
     shareItem = get_share_object_response.data.getShareObject.get("items").nodes[0]
     status = shareItem['status']
     assert status == dataall.api.constants.ShareItemStatus.PendingApproval.name
+
+
+def test_update_share_reject_purpose(client, share2_submitted, user, group):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the approvers group updates the reject purpose 
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        requestPurpose="NewRejectPurpose"
+    )
+
+    # Then the rejectPurpose of the Share is Updated
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user,
+        group=group,
+        shareUri=share2_submitted.shareUri,
+        filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.rejectPurpose == "NewRejectPurpose"
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Approvers'
+
+
+def test_update_share_reject_purpose_unauthorized(client, share2_submitted, user2, group2):
+    # Given
+    # Existing share object in status Submitted (-> fixture share2_submitted)
+    # When a user from the requester group attempts to update the reject purpose 
+    update_share_reject_purpose_response = update_share_reject_purpose(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share2_submitted.shareUri,
+        requestPurpose="NewRejectPurpose"
+    )
+
+    # Then we get an error of the type
+    assert 'UnauthorizedOperation' in update_share_reject_purpose_response.errors[0].message
 
 
 def test_approve_share_request(

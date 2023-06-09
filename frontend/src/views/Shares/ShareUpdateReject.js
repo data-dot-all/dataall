@@ -79,10 +79,10 @@ const UpdateRejectReason = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                comment: share.rejectPurpose
+                comment: share.rejectPurpose ? share.rejectPurpose: ''
               }}
               validationSchema={Yup.object().shape({
-                comment: Yup.string().max(5000)
+                comment: Yup.string().max(200)
               })}
               onSubmit={async (
                 values

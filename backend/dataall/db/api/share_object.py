@@ -629,6 +629,7 @@ class ShareObject:
         return True
 
     @staticmethod
+    @has_resource_perm(permissions.REJECT_SHARE_OBJECT)
     def update_share_reject_purpose(
         session,
         username: str,
