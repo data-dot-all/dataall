@@ -6,6 +6,7 @@ from dataall.core.permission_checker import has_resource_permission
 from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models import Task
+from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
@@ -39,12 +40,13 @@ class DatasetProfilingService:
                 glue_table_name=glue_table_name,
             )
 
-            task = Task(
-                targetUri=run.profilingRunUri, action='glue.job.start_profiling_run'
-            )
-            session.add(task)
+            run_id = GlueDatasetProfilerClient(dataset).run_job(run)
 
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri])
+            DatasetProfilingRepository.update_run(
+                session,
+                run_uri=run.profilingRunUri,
+                glue_job_run_id=run_id,
+            )
 
         return run
 
