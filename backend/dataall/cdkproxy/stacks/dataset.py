@@ -267,6 +267,17 @@ class Dataset(Stack):
                     ]
                 ),
                 iam.PolicyStatement(
+                    sid="CreateLoggingGlueCrawler",
+                    actions=[
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers*',
+                    ],
+                ),
+                iam.PolicyStatement(
                     sid="LoggingGlueCrawler",
                     actions=[
                         'logs:PutLogEvents',
