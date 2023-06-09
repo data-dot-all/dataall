@@ -59,6 +59,7 @@ class ServicePolicy(object):
                 managed_policy_name=f'{self.id}-0',
                 statements=[
                     aws_iam.PolicyStatement(
+                        sid="ListActions",
                         actions=[
                             'athena:ListEngineVersions',
                             'athena:ListDataCatalogs',
@@ -72,12 +73,8 @@ class ServicePolicy(object):
                             'kms:ReEncrypt*',
                             'kms:GenerateDataKey*',
                             'kms:CreateGrant',
-                            'secretsmanager:GetSecretValue',
-                            'secretsmanager:DescribeSecret',
                             'secretsmanager:ListSecrets',
-                            'ssm:GetParametersByPath',
-                            'ssm:GetParameters',
-                            'ssm:GetParameter',
+                            "ssm:DescribeParameters",
                             'ec2:Describe*',
                             'logs:Describe*',
                             'logs:Get*',
@@ -91,6 +88,35 @@ class ServicePolicy(object):
                             'tag:GetTagKeys',
                         ],
                         resources=['*'],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid='ManageTeamParameters',
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            'ssm:PutParameter',
+                            'ssm:DeleteParameter',
+                            'ssm:GetParameterHistory',
+                            'ssm:GetParametersByPath',
+                            'ssm:GetParameters',
+                            'ssm:GetParameter',
+                            'ssm:DeleteParameters'
+                            'ssm:AddTagsToResource',
+                        ],
+                        resources=['*'],
+                        conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': self.tag_value}},
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid='ManageTeamSecrets',
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            'secretsmanager:DescribeSecret',
+                            'secretsmanager:GetSecretValue',
+                            'secretsmanager:CreateSecret',
+                            'secretsmanager:DeleteSecret',
+                            'secretsmanager:TagResource',
+                        ],
+                        resources=['*'],
+                        conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': self.tag_value}},
                     ),
                     aws_iam.PolicyStatement(
                         actions=[

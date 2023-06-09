@@ -686,7 +686,9 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('athena.amazonaws.com'),
                 iam.ServicePrincipal('states.amazonaws.com'),
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.AccountPrincipal(self._environment.AwsAccountId),
+                iam.ArnPrincipal(
+                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
+                ),
             ),
         )
         Tags.of(group_role).add('group', group.groupUri)
