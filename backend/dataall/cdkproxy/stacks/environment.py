@@ -621,7 +621,7 @@ class EnvironmentSetup(Stack):
                 self._environment.EnvironmentDefaultIAMRoleArn,
             )
         else:
-            environment_admin_group_role = self.create_group_environment_role(self.environment_admins_group)
+            environment_admin_group_role = self.create_group_environment_role(group=self.environment_admins_group, id='DefaultEnvironmentRole')
         return environment_admin_group_role
 
     def create_or_import_environment_groups_roles(self):
@@ -629,7 +629,7 @@ class EnvironmentSetup(Stack):
         group_roles = []
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
-                group_role = self.create_group_environment_role(group)
+                group_role = self.create_group_environment_role(group=group, id=f'{group.environmentIAMRoleName}')
                 group_roles.append(group_role)
             else:
                 iam.Role.from_role_arn(
@@ -639,7 +639,7 @@ class EnvironmentSetup(Stack):
                 )
         return group_roles
 
-    def create_group_environment_role(self, group):
+    def create_group_environment_role(self, group: models.EnvironmentGroup, id: str):
 
         group_permissions = self.get_environment_group_permissions(
             self.engine, self._environment.environmentUri, group.groupUri
@@ -673,7 +673,7 @@ class EnvironmentSetup(Stack):
 
         group_role = iam.Role(
             self,
-            f'{group.environmentIAMRoleName}',
+            id,
             role_name=group.environmentIAMRoleName,
             inline_policies={
                 f'{group.environmentIAMRoleName}DataPolicy': data_policy.document,
@@ -682,9 +682,6 @@ class EnvironmentSetup(Stack):
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
-                iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                iam.ServicePrincipal('athena.amazonaws.com'),
-                iam.ServicePrincipal('states.amazonaws.com'),
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
