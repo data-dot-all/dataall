@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 from aws_cdk import aws_iam as iam
+from ....aws.handlers.kms import KMS
 
 from ....db import models
 
@@ -65,89 +66,91 @@ class DataPolicy:
         ]
 
         self.set_allowed_s3_buckets_statements(statements)
-
-        self.set_athena_statements(statements)
+        self.set_allowed_kms_keys_statements(statements)
+        self.set_allowed_athena_workgroup_statements(statements)
 
         return statements
 
     def set_allowed_s3_buckets_statements(self, statements):
         allowed_buckets = []
-        allowed_buckets_content = []
-        allowed_buckets_kms_aliases = []
         allowed_access_points = []
         if self.datasets:
             dataset: models.Dataset
             for dataset in self.datasets:
                 allowed_buckets.append(f'arn:aws:s3:::{dataset.S3BucketName}')
-                allowed_buckets_content.append(f'arn:aws:s3:::{dataset.S3BucketName}/*')
-                allowed_buckets_kms_aliases.append(dataset.KmsAlias)
                 allowed_access_points.append(f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*')
-        statements.extend(
-            [
-                iam.PolicyStatement(
-                    sid="ListDatasetsBuckets",
-                    actions=[
-                        "s3:ListBucket",
-                        "s3:GetBucketLocation"
-                    ],
-                    resources=allowed_buckets,
-                    effect=iam.Effect.ALLOW,
-                ),
-                iam.PolicyStatement(
-                    sid="ReadWriteDatasetsBuckets",
-                    actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl",
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion",
-                        "s3:DeleteObject"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=allowed_buckets_content,
-                ),
-                iam.PolicyStatement(
-                    sid="KMSAccess",
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:Encrypt",
-                        "kms:GenerateDataKey"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=["*"],
-                    condition=("StringEquals", {"kms:RequestAlias": allowed_buckets_kms_aliases})
-                ),
-                iam.PolicyStatement(
-                    sid="ReadAccessPointsDatasetBucket",
-                    actions=[
-                        's3:GetAccessPoint',
-                        's3:GetAccessPointPolicy',
-                        's3:GetAccessPointPolicyStatus',
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=allowed_access_points,
-                )
-            ]
-        )
+            allowed_buckets_content = [f"{bucket}/*" for bucket in allowed_buckets]
+            statements.extend(
+                [
+                    iam.PolicyStatement(
+                        sid="ListDatasetsBuckets",
+                        actions=[
+                            "s3:ListBucket",
+                            "s3:GetBucketLocation"
+                        ],
+                        resources=allowed_buckets,
+                        effect=iam.Effect.ALLOW,
+                    ),
+                    iam.PolicyStatement(
+                        sid="ReadWriteDatasetsBuckets",
+                        actions=[
+                            "s3:PutObject",
+                            "s3:PutObjectAcl",
+                            "s3:GetObject",
+                            "s3:GetObjectAcl",
+                            "s3:GetObjectVersion",
+                            "s3:DeleteObject"
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        resources=allowed_buckets_content,
+                    ),
+                    iam.PolicyStatement(
+                        sid="ReadAccessPointsDatasetBucket",
+                        actions=[
+                            's3:GetAccessPoint',
+                            's3:GetAccessPointPolicy',
+                            's3:GetAccessPointPolicyStatus',
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        resources=allowed_access_points,
+                    )
+                ]
+            )
 
-    def set_athena_statements(self, statements):
+    def set_allowed_kms_keys_statements(self, statements):
+        allowed_buckets_kms_keys = []
+        if self.datasets:
+            dataset: models.Dataset
+            for dataset in self.datasets:
+                key_id = KMS.get_key_id(
+                    account_id=dataset.AwsAccountId,
+                    region=dataset.region,
+                    key_alias=f"alias/{dataset.KmsAlias}"
+                )
+                allowed_buckets_kms_keys.append(f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
+
+            statements.extend(
+                [
+                    iam.PolicyStatement(
+                        sid="KMSDatasetAccess",
+                        actions=[
+                            "kms:Decrypt",
+                            "kms:Encrypt",
+                            "kms:ReEncrypt*",
+                            "kms:DescribeKey",
+                            "kms:GenerateDataKey"
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        resources=allowed_buckets_kms_keys
+                    )
+                ]
+            )
+
+    def set_allowed_athena_workgroup_statements(self, statements):
         statements.extend(
             [
                 iam.PolicyStatement(
-                    sid="AthenaReadAll",
-                    actions=[
-                        "athena:ListEngineVersions",
-                        "athena:ListWorkGroups",
-                        "athena:ListDataCatalogs",
-                        "athena:ListDatabases",
-                        "athena:GetDatabase",
-                        "athena:ListTableMetadata",
-                        "athena:GetTableMetadata"
-                    ],
-                    resources=["*"],
-                ),
-                iam.PolicyStatement(
-                    sid="AthenaReadAll",
+                    sid="AthenaWorkgroup",
                     actions=[
                         "athena:GetWorkGroup",
                         "athena:BatchGetQueryExecution",
@@ -171,6 +174,15 @@ class DataPolicy:
                     resources=[f'arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}'],
                 ),
                 iam.PolicyStatement(
+                    sid="ListBucket",
+                    actions=[
+                        "s3:ListBucket",
+                        "s3:GetBucketLocation"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}'],
+                ),
+                iam.PolicyStatement(
                     sid="ReadEnvironmentBucketAthenaQueries",
                     actions=[
                         "s3:GetObject",
@@ -191,7 +203,7 @@ class DataPolicy:
                         "s3:DeleteObject"
                     ],
                     resources=[
-                        f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/athenaqueries/{self.team.groupUri}/*'],
+                        f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/athenaqueries/{self.team.environmentIAMRoleName}/*'],
                     effect=iam.Effect.ALLOW,
                 ),
             ]
