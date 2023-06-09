@@ -14,9 +14,9 @@ from dataall.modules.datasets_base.db.models import DatasetTable, DatasetTableCo
 class DatasetColumnService:
 
     @staticmethod
-    def _get_table_uri(session, column_uri):
+    def _get_dataset_uri_for_column(session, column_uri):
         column: DatasetTableColumn = DatasetColumnRepository.get_column(session, column_uri)
-        return column.tableUri
+        return DatasetColumnService._get_dataset_uri(session, column.tableUri)
 
     @staticmethod
     def _get_dataset_uri(session, table_uri):
@@ -30,7 +30,7 @@ class DatasetColumnService:
             return DatasetColumnRepository.paginate_active_columns_for_table(session, table_uri, filter)
 
     @classmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
+    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri, param_name="table_uri")
     def sync_table_columns(cls, table_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -44,7 +44,7 @@ class DatasetColumnService:
         return cls.paginate_active_columns_for_table(table_uri, {})
 
     @staticmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_table_uri)
+    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri_for_column, param_name="column_uri")
     def update_table_column_description(column_uri: str, description) -> DatasetTableColumn:
         with get_context().db_engine.scoped_session() as session:
             column: DatasetTableColumn = DatasetColumnRepository.get_column(session, column_uri)

@@ -90,7 +90,7 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
-    indexed_objects_counter = dataall.tasks.catalog_indexer.index_objects(
+    indexed_objects_counter = dataall.tasks.catalog_indexer_task.index_objects(
         engine=db
     )
     assert indexed_objects_counter == 2

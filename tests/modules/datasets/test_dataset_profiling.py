@@ -23,13 +23,19 @@ def dataset1(env1, org1, dataset, group, user) -> Dataset:
         org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
     )
 
+
 @pytest.fixture(scope='module', autouse=True)
 def patch_methods(module_mocker):
-    mock_client = MagicMock()
+    s3_mock_client = MagicMock()
+    glue_mock_client = MagicMock()
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', mock_client
+        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
     )
-    mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
+    )
+    s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
+    glue_mock_client().run_job.return_value = True
 
 
 def test_add_tables(table, dataset1, db):
