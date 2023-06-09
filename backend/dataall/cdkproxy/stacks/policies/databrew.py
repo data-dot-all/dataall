@@ -5,8 +5,13 @@ from aws_cdk import aws_iam as iam
 class Databrew(ServicePolicy):
     def get_statements(self):
         statements = [
-            iam.PolicyStatement(actions=['databrew:List*'], resources=['*']),
             iam.PolicyStatement(
+                sid="DataBrewListAll",
+                actions=['databrew:List*'],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
+                sid="DataBrewManageTeamResources",
                 actions=[
                     'databrew:Delete*',
                     'databrew:Describe*',
@@ -28,6 +33,7 @@ class Databrew(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="DataBrewCreateTeamResources",
                 actions=['databrew:Create*'],
                 resources=['*'],
                 conditions={

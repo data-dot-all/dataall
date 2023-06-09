@@ -38,7 +38,6 @@ class ServicePolicy(object):
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
         from .databrew import Databrew
-        from .lakeformation import LakeFormation
         from .sagemaker import Sagemaker
         from ._lambda import Lambda
         from .codestar import CodeStar
@@ -59,22 +58,60 @@ class ServicePolicy(object):
                 managed_policy_name=f'{self.id}-0',
                 statements=[
                     aws_iam.PolicyStatement(
-                        sid="ListActions",
+                        sid="AthenaReadAll",
+                        effect=aws_iam.Effect.ALLOW,
                         actions=[
-                            'athena:ListEngineVersions',
-                            'athena:ListDataCatalogs',
-                            'athena:ListWorkGroups',
-                            'glue:GetTable',
-                            'glue:GetPartitions',
-                            'lakeformation:GetDataAccess',
-                            'kms:Decrypt',
-                            'kms:DescribeKey',
-                            'kms:Encrypt',
-                            'kms:ReEncrypt*',
-                            'kms:GenerateDataKey*',
-                            'kms:CreateGrant',
-                            'secretsmanager:ListSecrets',
+                            "athena:ListEngineVersions",
+                            "athena:ListWorkGroups",
+                            "athena:ListDataCatalogs",
+                            "athena:ListDatabases",
+                            "athena:GetDatabase",
+                            "athena:ListTableMetadata",
+                            "athena:GetTableMetadata"
+                        ],
+                        resources=["*"],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid="SSMSecretsReadAll",
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            "secretsmanager:ListSecrets",
                             "ssm:DescribeParameters",
+                        ],
+                        resources=["*"],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid="GlueLFReadData",
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            "lakeformation:GetDataAccess",
+                            "glue:GetTable",
+                            "glue:GetTables",
+                            "glue:SearchTables",
+                            "glue:GetDatabase",
+                            "glue:GetDatabases",
+                            "glue:GetPartitions",
+                            "lakeformation:GetResourceLFTags",
+                            "lakeformation:ListLFTags",
+                            "lakeformation:GetLFTag",
+                            "lakeformation:SearchTablesByLFTags",
+                            "lakeformation:SearchDatabasesByLFTags"
+                        ],
+                        resources=["*"],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid="KMSList",
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            'kms:ListAliases',
+                            'kms:ListKeys'
+                        ],
+                        resources=['*'],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid="ListActions",
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
                             'ec2:Describe*',
                             'logs:Describe*',
                             'logs:Get*',
@@ -82,8 +119,6 @@ class ServicePolicy(object):
                             'iam:list*',
                             'iam:Get*',
                             'tag:GetResources',
-                            'tag:TagResources',
-                            'tag:UntagResources',
                             'tag:GetTagValues',
                             'tag:GetTagKeys',
                         ],
@@ -99,11 +134,15 @@ class ServicePolicy(object):
                             'ssm:GetParametersByPath',
                             'ssm:GetParameters',
                             'ssm:GetParameter',
-                            'ssm:DeleteParameters'
+                            'ssm:DeleteParameters',
                             'ssm:AddTagsToResource',
                         ],
                         resources=['*'],
-                        conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': self.tag_value}},
+                        conditions={
+                            'StringEquals': {
+                                f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                            }
+                        },
                     ),
                     aws_iam.PolicyStatement(
                         sid='ManageTeamSecrets',
@@ -116,15 +155,29 @@ class ServicePolicy(object):
                             'secretsmanager:TagResource',
                         ],
                         resources=['*'],
-                        conditions={'StringEquals': {f'aws:RequestTag/{self.tag_key}': self.tag_value}},
+                        conditions={
+                            'StringEquals': {
+                                f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                            }
+                        },
                     ),
                     aws_iam.PolicyStatement(
+                        sid="PassRole",
                         actions=[
                             'iam:PassRole',
                         ],
                         resources=[
                             f'arn:aws:iam::{self.account}:role/{self.role_name}'
                         ],
+                        conditions={
+                            "StringEquals": {
+                                "iam:PassedToService": [
+                                    "glue.amazonaws.com",
+                                    "lambda.amazonaws.com",
+                                    "sagemaker.amazonaws.com"
+                                ]
+                            }
+                        }
                     ),
                 ],
             )
@@ -134,7 +187,6 @@ class ServicePolicy(object):
 
         if permissions.CREATE_DATASET not in self.permissions:
             services.remove(Databrew)
-            services.remove(LakeFormation)
             services.remove(Glue)
         if (
             permissions.CREATE_NOTEBOOK not in self.permissions
