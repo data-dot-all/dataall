@@ -239,30 +239,6 @@ class DatasetService:
         return url
 
     @staticmethod
-    @has_resource_permission(SYNC_DATASET)
-    def sync_tables(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-            task = Task(
-                action='glue.dataset.database.tables',
-                targetUri=dataset.datasetUri,
-            )
-            session.add(task)
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri])
-        with context.db_engine.scoped_session() as session:
-            DatasetTableIndexer.upsert_all(
-                session=session, dataset_uri=dataset.datasetUri
-            )
-            DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
-            return DatasetRepository.paginated_dataset_tables(
-                session=session,
-                uri=uri,
-                data={'page': 1, 'pageSize': 10},
-            )
-
-    @staticmethod
     @has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine

@@ -1,8 +1,7 @@
 from dataall.api import gql
 from dataall.modules.datasets.api.table.input_types import ModifyDatasetTableInput
 from dataall.modules.datasets.api.table.resolvers import (
-    update_table,
-    delete_table,
+    update_table, delete_table, sync_tables,
 )
 
 updateDatasetTable = gql.MutationField(
@@ -21,3 +20,11 @@ deleteDatasetTable = gql.MutationField(
     type=gql.Boolean,
     resolver=delete_table,
 )
+
+syncTables = gql.MutationField(
+    name='syncTables',
+    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('DatasetTableSearchResult'),
+    resolver=sync_tables,
+)
+

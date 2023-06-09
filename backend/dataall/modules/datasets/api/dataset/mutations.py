@@ -7,7 +7,6 @@ from dataall.modules.datasets.api.dataset.input_types import (
 from dataall.modules.datasets.api.dataset.resolvers import (
     create_dataset,
     update_dataset,
-    sync_tables,
     generate_dataset_access_token,
     delete_dataset,
     import_dataset,
@@ -32,14 +31,6 @@ updateDataset = gql.MutationField(
     resolver=update_dataset,
     test_scope='Dataset',
 )
-
-syncTables = gql.MutationField(
-    name='syncTables',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('DatasetTableSearchResult'),
-    resolver=sync_tables,
-)
-
 
 generateDatasetAccessToken = gql.MutationField(
     name='generateDatasetAccessToken',

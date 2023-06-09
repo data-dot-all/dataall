@@ -126,10 +126,6 @@ def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
 
 
-def sync_tables(context: Context, source, datasetUri: str = None):
-    return DatasetService.sync_tables(uri=datasetUri)
-
-
 def start_crawler(context: Context, source, datasetUri: str, input: dict = None):
     return DatasetService.start_crawler(uri=datasetUri, data=input)
 

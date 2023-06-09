@@ -1,19 +1,18 @@
 import logging
 
 
-from dataall.aws.handlers.service_handlers import Worker
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db import models
 from dataall.db.api import ResourcePolicy, Environment, Glossary
 from dataall.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
-    DELETE_DATASET_TABLE
+    DELETE_DATASET_TABLE, SYNC_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ
@@ -113,6 +112,25 @@ class DatasetTableService:
                     session, env_uri, dataset_uri
                 )
             ]
+
+    @classmethod
+    @has_resource_permission(SYNC_DATASET)
+    def sync_tables_for_dataset(cls, uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+
+            tables = DatasetCrawler(dataset).list_glue_database_tables()
+            cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+            DatasetTableIndexer.upsert_all(
+                session=session, dataset_uri=dataset.datasetUri
+            )
+            DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
+            return DatasetRepository.paginated_dataset_tables(
+                session=session,
+                uri=uri,
+                data={'page': 1, 'pageSize': 10},
+            )
 
     @staticmethod
     def sync_existing_tables(session, dataset_uri, glue_tables=None):

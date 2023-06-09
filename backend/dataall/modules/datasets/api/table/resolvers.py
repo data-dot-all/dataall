@@ -36,6 +36,10 @@ def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
     return DatasetTableService.get_glue_table_properties(source.tableUri)
 
 
+def sync_tables(context: Context, source, datasetUri: str = None):
+    return DatasetTableService.sync_tables_for_dataset(uri=datasetUri)
+
+
 def resolve_dataset(context, source: DatasetTable, **kwargs):
     if not source:
         return None
