@@ -362,10 +362,6 @@ class Environment:
                 == models.Environment.environmentUri,
             )
             .outerjoin(
-                models.DataPipeline,
-                models.DataPipeline.environmentUri == models.Environment.environmentUri,
-            )
-            .outerjoin(
                 models.Dashboard,
                 models.Dashboard.environmentUri == models.Environment.environmentUri,
             )
@@ -375,7 +371,6 @@ class Environment:
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
                         models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
-                        models.DataPipeline.SamlGroupName == group,
                         models.Dashboard.SamlGroupName == group,
                     ),
                 )

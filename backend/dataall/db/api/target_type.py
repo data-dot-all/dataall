@@ -38,5 +38,4 @@ class TargetType:
 
 TargetType("environment", permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)
 TargetType("mlstudio", permissions.GET_SGMSTUDIO_NOTEBOOK, permissions.UPDATE_SGMSTUDIO_NOTEBOOK)
-TargetType("pipeline", permissions.GET_PIPELINE, permissions.UPDATE_PIPELINE)
 TargetType("redshift", permissions.GET_REDSHIFT_CLUSTER, permissions.GET_REDSHIFT_CLUSTER)

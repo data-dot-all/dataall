@@ -45,6 +45,3 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
     
     def cleanup(self):
         CDKPipelineStack.clean_up_repo(path=f'./{self.pipeline.repo}')
-
-
-_CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension

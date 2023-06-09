@@ -10,6 +10,18 @@ class DatapipelinesRepository(GroupResource):
     """DAO layer for datapipelines"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
+
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
+        return (
+            session.query(DataPipeline)
+            .filter(
+                and_(
+                    DataPipeline.environmentUri == environment.environmentUri,
+                    DataPipeline.SamlGroupName == group_uri
+                ))
+            .count()
+        )
     
     @staticmethod
     def get_clone_url_http(session, environmentUri, repo):
