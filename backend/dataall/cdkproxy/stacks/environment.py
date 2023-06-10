@@ -654,6 +654,8 @@ class EnvironmentSetup(Stack):
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
             region=self._environment.region,
+            environment=self._environment,
+            team=group,
             permissions=group_permissions,
         ).generate_policies()
 

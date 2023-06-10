@@ -67,7 +67,6 @@ class DataPolicy:
 
         self.set_allowed_s3_buckets_statements(statements)
         self.set_allowed_kms_keys_statements(statements)
-        self.set_allowed_athena_workgroup_statements(statements)
 
         return statements
 
@@ -132,6 +131,15 @@ class DataPolicy:
             statements.extend(
                 [
                     iam.PolicyStatement(
+                        sid="KMSList",
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            'kms:ListAliases',
+                            'kms:ListKeys'
+                        ],
+                        resources=['*'],
+                    ),
+                    iam.PolicyStatement(
                         sid="KMSDatasetAccess",
                         actions=[
                             "kms:Decrypt",
@@ -145,66 +153,3 @@ class DataPolicy:
                     )
                 ]
             )
-
-    def set_allowed_athena_workgroup_statements(self, statements):
-        statements.extend(
-            [
-                iam.PolicyStatement(
-                    sid="AthenaWorkgroup",
-                    actions=[
-                        "athena:GetWorkGroup",
-                        "athena:BatchGetQueryExecution",
-                        "athena:GetQueryExecution",
-                        "athena:ListQueryExecutions",
-                        "athena:StartQueryExecution",
-                        "athena:StopQueryExecution",
-                        "athena:GetQueryResults",
-                        "athena:GetQueryResultsStream",
-                        "athena:CreateNamedQuery",
-                        "athena:GetNamedQuery",
-                        "athena:BatchGetNamedQuery",
-                        "athena:ListNamedQueries",
-                        "athena:DeleteNamedQuery",
-                        "athena:CreatePreparedStatement",
-                        "athena:GetPreparedStatement",
-                        "athena:ListPreparedStatements",
-                        "athena:UpdatePreparedStatement",
-                        "athena:DeletePreparedStatement"
-                    ],
-                    resources=[f'arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}'],
-                ),
-                iam.PolicyStatement(
-                    sid="ListBucket",
-                    actions=[
-                        "s3:ListBucket",
-                        "s3:GetBucketLocation"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}'],
-                ),
-                iam.PolicyStatement(
-                    sid="ReadEnvironmentBucketAthenaQueries",
-                    actions=[
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/athenaqueries*'],
-                ),
-                iam.PolicyStatement(
-                    sid="ReadWriteEnvironmentBucketAthenaQueries",
-                    actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl",
-                        "s3:GetObject",
-                        "s3:GetObjectAcl",
-                        "s3:GetObjectVersion",
-                        "s3:DeleteObject"
-                    ],
-                    resources=[
-                        f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/athenaqueries/{self.team.environmentIAMRoleName}/*'],
-                    effect=iam.Effect.ALLOW,
-                ),
-            ]
-        )

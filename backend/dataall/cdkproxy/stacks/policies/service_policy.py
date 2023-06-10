@@ -4,6 +4,7 @@ from typing import List
 from aws_cdk import aws_iam
 
 from ....db import permissions
+from ....db import models
 
 logger = logging.getLogger()
 
@@ -20,6 +21,8 @@ class ServicePolicy(object):
         tag_key,
         tag_value,
         resource_prefix,
+        environment: models.Environment,
+        team: models.EnvironmentGroup,
         permissions,
     ):
         self.stack = stack
@@ -27,9 +30,12 @@ class ServicePolicy(object):
         self.name = name
         self.account = account
         self.region = region
+        self.environment = environment
         self.tag_key = tag_key
         self.tag_value = tag_value
         self.resource_prefix = resource_prefix
+        self.environment = environment
+        self.team = team
         self.permissions = permissions
         self.role_name = role_name
 
@@ -37,14 +43,19 @@ class ServicePolicy(object):
         """
         Creates aws_iam.Policy based on declared subclasses of Policy object
         """
-        from .databrew import Databrew
-        from .sagemaker import Sagemaker
         from ._lambda import Lambda
-        from .codestar import CodeStar
-        from .glue import Glue
-        from .stepfunctions import StepFunctions
-        from .quicksight import QuickSight
+        from .athena import Athena
         from .cloudformation import Cloudformation
+        from .codestar import CodeStar
+        from .databrew import Databrew
+        from .glue import Glue, GlueCatalog
+        from .quicksight import QuickSight
+        from .sagemaker import Sagemaker
+        from .secretsmanager import SecretsManager
+        from .ssm import SSM
+        from .stepfunctions import StepFunctions
+
+
 
         policies: [aws_iam.ManagedPolicy] = [
             # This policy covers the minumum actions required independent
@@ -57,57 +68,6 @@ class ServicePolicy(object):
                 self.id,
                 managed_policy_name=f'{self.id}-0',
                 statements=[
-                    aws_iam.PolicyStatement(
-                        sid="AthenaReadAll",
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            "athena:ListEngineVersions",
-                            "athena:ListWorkGroups",
-                            "athena:ListDataCatalogs",
-                            "athena:ListDatabases",
-                            "athena:GetDatabase",
-                            "athena:ListTableMetadata",
-                            "athena:GetTableMetadata"
-                        ],
-                        resources=["*"],
-                    ),
-                    aws_iam.PolicyStatement(
-                        sid="SSMSecretsReadAll",
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            "secretsmanager:ListSecrets",
-                            "ssm:DescribeParameters",
-                        ],
-                        resources=["*"],
-                    ),
-                    aws_iam.PolicyStatement(
-                        sid="GlueLFReadData",
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            "lakeformation:GetDataAccess",
-                            "glue:GetTable",
-                            "glue:GetTables",
-                            "glue:SearchTables",
-                            "glue:GetDatabase",
-                            "glue:GetDatabases",
-                            "glue:GetPartitions",
-                            "lakeformation:GetResourceLFTags",
-                            "lakeformation:ListLFTags",
-                            "lakeformation:GetLFTag",
-                            "lakeformation:SearchTablesByLFTags",
-                            "lakeformation:SearchDatabasesByLFTags"
-                        ],
-                        resources=["*"],
-                    ),
-                    aws_iam.PolicyStatement(
-                        sid="KMSList",
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            'kms:ListAliases',
-                            'kms:ListKeys'
-                        ],
-                        resources=['*'],
-                    ),
                     aws_iam.PolicyStatement(
                         sid="ListActions",
                         effect=aws_iam.Effect.ALLOW,
@@ -123,43 +83,6 @@ class ServicePolicy(object):
                             'tag:GetTagKeys',
                         ],
                         resources=['*'],
-                    ),
-                    aws_iam.PolicyStatement(
-                        sid='ManageTeamParameters',
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            'ssm:PutParameter',
-                            'ssm:DeleteParameter',
-                            'ssm:GetParameterHistory',
-                            'ssm:GetParametersByPath',
-                            'ssm:GetParameters',
-                            'ssm:GetParameter',
-                            'ssm:DeleteParameters',
-                            'ssm:AddTagsToResource',
-                        ],
-                        resources=['*'],
-                        conditions={
-                            'StringEquals': {
-                                f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                            }
-                        },
-                    ),
-                    aws_iam.PolicyStatement(
-                        sid='ManageTeamSecrets',
-                        effect=aws_iam.Effect.ALLOW,
-                        actions=[
-                            'secretsmanager:DescribeSecret',
-                            'secretsmanager:GetSecretValue',
-                            'secretsmanager:CreateSecret',
-                            'secretsmanager:DeleteSecret',
-                            'secretsmanager:TagResource',
-                        ],
-                        resources=['*'],
-                        conditions={
-                            'StringEquals': {
-                                f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                            }
-                        },
                     ),
                     aws_iam.PolicyStatement(
                         sid="PassRole",
