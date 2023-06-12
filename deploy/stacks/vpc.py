@@ -316,6 +316,7 @@ class VpcStack(pyNestedClass):
             'cloudwatch_logs_endpoint': ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             'rds_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS,
             'rds_data_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS_DATA,
+            'sagemaker_api': ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
