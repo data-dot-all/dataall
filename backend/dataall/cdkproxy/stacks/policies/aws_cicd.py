@@ -2,10 +2,11 @@ from .service_policy import ServicePolicy
 from aws_cdk import aws_iam as iam
 
 
-class CodeStar(ServicePolicy):
+class AwsCICD(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="GenericCodeCommit",
                 actions=[
                     'codecommit:ListRepositoriesForApprovalRuleTemplate',
                     'codecommit:CreateApprovalRuleTemplate',
@@ -20,9 +21,8 @@ class CodeStar(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                actions=[
-                    'codecommit:*',
-                ],
+                sid="AllCodecommitTeamRepo",
+                actions=['codecommit:*'],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
                 ],
@@ -33,6 +33,7 @@ class CodeStar(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="GenericCodePipeline",
                 actions=[
                     'codepipeline:PutThirdPartyJobSuccessResult',
                     'codepipeline:PutThirdPartyJobFailureResult',
@@ -50,6 +51,7 @@ class CodeStar(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
+                sid="AllCodepipelineTeamRepo",
                 actions=['codepipeline:*'],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*/*',
@@ -65,6 +67,7 @@ class CodeStar(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="AllCodebuildTeamRepo",
                 actions=['codebuild:*'],
                 resources=[
                     f'arn:aws:codebuild:{self.region}:{self.account}:project/{self.resource_prefix}*',
@@ -77,6 +80,7 @@ class CodeStar(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="GenericCodeBuild",
                 actions=[
                     'codebuild:ListCuratedEnvironmentImages',
                     'codebuild:ListReportGroups',

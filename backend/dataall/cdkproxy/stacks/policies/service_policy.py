@@ -46,7 +46,7 @@ class ServicePolicy(object):
         from ._lambda import Lambda
         from .athena import Athena
         from .cloudformation import Cloudformation
-        from .codestar import CodeStar
+        from .aws_cicd import AwsCICD
         from .databrew import Databrew
         from .glue import Glue, GlueCatalog
         from .quicksight import QuickSight
@@ -118,7 +118,7 @@ class ServicePolicy(object):
             services.remove(Sagemaker)
         if permissions.CREATE_PIPELINE not in self.permissions:
             services.remove(Lambda)
-            services.remove(CodeStar)
+            services.remove(AwsCICD)
             services.remove(StepFunctions)
         if permissions.CREATE_DASHBOARD not in self.permissions:
             services.remove(QuickSight)

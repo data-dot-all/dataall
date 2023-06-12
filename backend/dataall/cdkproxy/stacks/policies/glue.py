@@ -24,9 +24,8 @@ class GlueCatalog(ServicePolicy):
                 ],
                 resources=["*"],
             ),
-
-            ###
             iam.PolicyStatement(
+                sid="GlueManageCatalog",
                 actions=[
                     'glue:CreateConnection',
                     'glue:CreateDatabase',

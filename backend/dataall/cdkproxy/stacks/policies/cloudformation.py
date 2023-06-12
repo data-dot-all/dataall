@@ -6,6 +6,7 @@ class Cloudformation(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="GenericCloudFormation",
                 actions=[
                     'cloudformation:EstimateTemplateCost',
                     'cloudformation:ListStacks',
@@ -27,6 +28,7 @@ class Cloudformation(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
+                sid="CreateTeamCloudFormation",
                 actions=[
                     'cloudformation:CreateStack',
                 ],
@@ -38,6 +40,7 @@ class Cloudformation(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="ManagedTeamCloudFormation",
                 actions=[
                     'cloudformation:UpdateStack',
                     'cloudformation:DeleteStack',
