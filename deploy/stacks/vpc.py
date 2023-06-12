@@ -317,6 +317,9 @@ class VpcStack(pyNestedClass):
             'rds_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS,
             'rds_data_endpoint': ec2.InterfaceVpcEndpointAwsService.RDS_DATA,
             'sagemaker_api': ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
+            'glue': ec2.InterfaceVpcEndpointAwsService.GLUE,
+            'lakeformation': ec2.InterfaceVpcEndpointAwsService.LAKE_FORMATION,
+            'athena': ec2.InterfaceVpcEndpointAwsService.ATHENA,
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
