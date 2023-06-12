@@ -12,7 +12,7 @@ from ....aws.handlers.sts import SessionHelper
 from ....db import permissions, models
 from ....db.api import ResourcePolicy, Glossary
 from ....searchproxy import indexers
-from ....utils import json_utils
+from ....utils import json_utils, sql_utils
 
 log = logging.getLogger(__name__)
 
@@ -141,7 +141,9 @@ def preview(context, source, tableUri: str = None):
         )
         cursor = connection.cursor()
 
-        SQL = f'select * from "{table.GlueDatabaseName}"."{table.GlueTableName}" limit 50'  # nosec
+        SQL = 'select * from {table} limit 50'.format(
+            table=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
+        )  # nosec
         cursor.execute(SQL)
         fields = []
         for f in cursor.description:
