@@ -6,6 +6,8 @@ class Sagemaker(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="SageMakerRead",
+                effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:List*',
                     'sagemaker:Describe*',
@@ -14,14 +16,47 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:Search',
                     'sagemaker:RenderUiTemplate',
                     'sagemaker:GetSearchSuggestions',
-                    'sagemaker:QueryLineage',
-                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
-                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
-                    'sagemaker:CreatePresignedDomainUrl'
+                    'sagemaker:QueryLineage'
                 ],
                 resources=['*'],
             ),
             iam.PolicyStatement(
+                sid="SageMakerCreateGeneric",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
+                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
+                    'sagemaker:CreatePresignedDomainUrl'
+                ],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerCreateResources",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:Create*'],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-bias-job-definition/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-quality-job-definition/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*'
+                ],
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerTagResources",
+                effect=iam.Effect.ALLOW,
                 actions=['sagemaker:AddTags'],
                 resources=['*'],
                 conditions={
@@ -31,6 +66,8 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="SageMakerDeleteTeamResources",
+                effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Delete*'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
@@ -57,15 +94,12 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                actions=['sagemaker:CreateApp'],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
-                actions=['sagemaker:Create*'],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
-                actions=['sagemaker:Start*', 'sagemaker:Stop*'],
+                sid="SageMakerStartStopTeamResources",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:Start*',
+                    'sagemaker:Stop*'
+                ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
@@ -83,6 +117,8 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="SageMakerUpdateTeamResources",
+                effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Update*'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
@@ -106,7 +142,12 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                actions=['sagemaker:InvokeEndpoint', 'sagemaker:InvokeEndpointAsync'],
+                sid="SageMakerTeamEndpoints",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:InvokeEndpoint',
+                    'sagemaker:InvokeEndpointAsync'
+                ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*'
                 ],
@@ -117,6 +158,8 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
+                sid="SageMakerLogging",
+                effect=iam.Effect.ALLOW,
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
@@ -127,6 +170,8 @@ class Sagemaker(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
+                sid="SageMakerReadECR",
+                effect=iam.Effect.ALLOW,
                 actions=[
                     'ecr:GetAuthorizationToken',
                     'ecr:BatchCheckLayerAvailability',
