@@ -59,9 +59,33 @@ class GlueCatalog(ServicePolicy):
             )
         ]
         return statements
+
+
 class Glue(ServicePolicy):
     def get_statements(self):
         statements = [
+            iam.PolicyStatement(
+                sid="ListBucketProfilingGlue",
+                actions=[
+                    "s3:ListBucket",
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}'],
+                conditions={"StringEquals": {
+                    "s3:prefix": ["", "profiling/", "profiling/code/"],
+                    "s3:delimiter": ["/"]}}
+            ),
+            iam.PolicyStatement(
+                sid="ReadEnvironmentBucketProfilingGlue",
+                actions=[
+                    "s3:GetObject",
+                    "s3:GetObjectAcl",
+                    "s3:GetObjectVersion",
+                ],
+                resources=[
+                    f'arn:aws:s3:::{self.environment.EnvironmentDefaultBucketName}/profiling/code/*'],
+                effect=iam.Effect.ALLOW,
+            ),
             iam.PolicyStatement(
                 sid="GlueList",
                 effect=iam.Effect.ALLOW,
@@ -71,6 +95,28 @@ class Glue(ServicePolicy):
                     'glue:BatchGet*',
                 ],
                 resources=["*"],
+            ),
+            iam.PolicyStatement(
+                sid="GlueCreateS3Bucket",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:CreateBucket',
+                    's3:ListBucket',
+                    's3:PutBucketPublicAccessBlock'
+                ],
+                resources=["arn:aws:s3:::aws-glue-*"],
+            ),
+            iam.PolicyStatement(
+                sid="GlueReadWriteS3Bucket",
+                actions=[
+                    's3:GetObject',
+                    's3:PutObject',
+                    's3:DeleteObject'
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    'arn:aws:s3:::aws-glue-*/*',
+                ],
             ),
             iam.PolicyStatement(
                 sid="GlueCreate",
@@ -102,10 +148,10 @@ class Glue(ServicePolicy):
                     'glue:DeleteCrawler',
                     'glue:StartCrawler',
                     'glue:StopCrawler',
-                    'glue:UpdateCrawler'
-                    'glue:StartCrawlerSchedule'
-                    'glue:UpdateCrawlerSchedule'
-                    'glue:StopCrawlerSchedule'
+                    'glue:UpdateCrawler',
+                    'glue:StartCrawlerSchedule',
+                    'glue:UpdateCrawlerSchedule',
+                    'glue:StopCrawlerSchedule',
                 ],
                 resources=[
                     f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*'
@@ -187,6 +233,27 @@ class Glue(ServicePolicy):
                     'glue:DeleteSecurityConfiguration',
                 ],
                 resources=['*'],
-            )
+            ),
+            iam.PolicyStatement(
+                sid="CreateLoggingGlue",
+                actions=[
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                sid="LoggingGlue",
+                actions=[
+                    'logs:PutLogEvents',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*:log-stream:*',
+                ],
+            ),
         ]
         return statements

@@ -59,6 +59,7 @@ class DataPolicy:
                 actions=[
                     "s3:ListAllMyBuckets",
                     "s3:ListAccessPoints",
+                    "s3:GetBucketLocation",
                 ],
                 resources=["*"],
                 effect=iam.Effect.ALLOW

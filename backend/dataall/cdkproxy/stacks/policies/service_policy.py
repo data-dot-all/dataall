@@ -55,10 +55,8 @@ class ServicePolicy(object):
         from .ssm import SSM
         from .stepfunctions import StepFunctions
 
-
-
         policies: [aws_iam.ManagedPolicy] = [
-            # This policy covers the minumum actions required independent
+            # This policy covers the minimum actions required independent
             # of the service permissions given to the group.
             aws_iam.ManagedPolicy(
                 self.stack,
@@ -73,6 +71,7 @@ class ServicePolicy(object):
                             'logs:Describe*',
                             'logs:Get*',
                             'logs:List*',
+                            'cloudwatch:GetMetricData',
                             'iam:list*',
                             'iam:Get*',
                             'iam:CreateServiceLinkedRole',
