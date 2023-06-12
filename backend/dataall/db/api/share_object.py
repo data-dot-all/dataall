@@ -561,8 +561,6 @@ class ShareObject:
             Item_SM.update_state(session, share.shareUri, new_state)
 
         Share_SM.update_state(session, share, new_share_state)
-        share.rejectPurpose = ""
-        session.commit()
 
         api.Notification.notify_share_object_submission(
             session, username, dataset, share
@@ -610,6 +608,9 @@ class ShareObject:
                 resource_uri=table.itemUri,
                 resource_type=models.DatasetTable.__name__,
             )
+
+        share.rejectPurpose = ""
+        session.commit()
 
         api.Notification.notify_share_object_approval(session, username, dataset, share)
         return share
