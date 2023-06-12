@@ -141,8 +141,8 @@ def preview(context, source, tableUri: str = None):
         )
         cursor = connection.cursor()
 
-        SQL = 'select * from {table} limit 50'.format(
-            table=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
+        SQL = 'select * from {table_identifier} limit 50'.format(
+            table_identifier=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
         )  # nosec
         cursor.execute(SQL)
         fields = []
