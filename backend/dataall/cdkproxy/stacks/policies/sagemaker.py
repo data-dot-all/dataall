@@ -16,7 +16,8 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:Search',
                     'sagemaker:RenderUiTemplate',
                     'sagemaker:GetSearchSuggestions',
-                    'sagemaker:QueryLineage'
+                    'sagemaker:QueryLineage',
+                    'sagemaker:GetSagemakerServicecatalogPortfolioStatus'
                 ],
                 resources=['*'],
             ),
@@ -35,24 +36,26 @@ class Sagemaker(ServicePolicy):
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Create*'],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-bias-job-definition/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-quality-job-definition/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/{self.resource_prefix}*',
+
                 ],
+                conditions={
+                    'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}
+                }
             ),
             iam.PolicyStatement(
                 sid="SageMakerTagResources",
@@ -70,22 +73,21 @@ class Sagemaker(ServicePolicy):
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Delete*'],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-bias-job-definition/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-quality-job-definition/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/{self.resource_prefix}*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -101,14 +103,14 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:Stop*'
                 ],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:processing-job/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:hyper-parameter-tuning-job/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:transform-job/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:automl-job/*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:processing-job/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:hyper-parameter-tuning-job/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:transform-job/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:automl-job/{self.resource_prefix}*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -121,19 +123,21 @@ class Sagemaker(ServicePolicy):
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Update*'],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance-lifecycle-config/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:studio-lifecycle-config/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline-execution/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial-component/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance-lifecycle-config/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:studio-lifecycle-config/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*/execution/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial-component/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -149,7 +153,7 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:InvokeEndpointAsync'
                 ],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -176,7 +180,8 @@ class Sagemaker(ServicePolicy):
                     'ecr:GetAuthorizationToken',
                     'ecr:BatchCheckLayerAvailability',
                     'ecr:GetDownloadUrlForLayer',
-                    'ecr:BatchGetImage'],
+                    'ecr:BatchGetImage'
+                ],
                 resources=[
                     '*'
                 ]
