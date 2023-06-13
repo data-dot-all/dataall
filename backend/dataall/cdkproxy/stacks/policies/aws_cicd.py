@@ -8,13 +8,12 @@ class AwsCICD(ServicePolicy):
             iam.PolicyStatement(
                 sid="GenericCodeCommit",
                 actions=[
-                    'codecommit:ListRepositoriesForApprovalRuleTemplate',
+                    'codecommit:List*',
                     'codecommit:CreateApprovalRuleTemplate',
                     'codecommit:UpdateApprovalRuleTemplateName',
                     'codecommit:GetApprovalRuleTemplate',
                     'codecommit:ListApprovalRuleTemplates',
                     'codecommit:DeleteApprovalRuleTemplate',
-                    'codecommit:ListRepositories',
                     'codecommit:UpdateApprovalRuleTemplateContent',
                     'codecommit:UpdateApprovalRuleTemplateDescription',
                 ],
@@ -22,7 +21,9 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 sid="AllCodecommitTeamRepo",
-                actions=['codecommit:*'],
+                actions=[
+                    "codecommit:*"
+                ],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
                 ],

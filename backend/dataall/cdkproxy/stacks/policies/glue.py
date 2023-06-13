@@ -235,25 +235,17 @@ class Glue(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="CreateLoggingGlue",
+                sid="LoggingGlue",
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
-                ],
-                effect=iam.Effect.ALLOW,
-                resources=[
-                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*',
-                ],
-            ),
-            iam.PolicyStatement(
-                sid="LoggingGlue",
-                actions=[
                     'logs:PutLogEvents',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*',
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws-glue/*:log-stream:*',
                 ],
-            ),
+            )
         ]
         return statements

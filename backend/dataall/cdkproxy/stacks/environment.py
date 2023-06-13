@@ -685,6 +685,9 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
+                iam.ServicePrincipal('states.amazonaws.com'),
+                iam.ServicePrincipal('sagemaker.amazonaws.com'),
+                iam.ServicePrincipal('databrew.amazonaws.com'),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
                 ),

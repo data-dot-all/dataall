@@ -30,5 +30,18 @@ class Lambda(ServicePolicy):
                     f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*:*',
                 ],
             ),
+            iam.PolicyStatement(
+                sid="LoggingLambda",
+                actions=[
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                    'logs:PutLogEvents',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/lambda/*',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/lambda/*:log-stream:*',
+                ],
+            )
         ]
         return statements

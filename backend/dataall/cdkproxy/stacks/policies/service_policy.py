@@ -82,6 +82,15 @@ class ServicePolicy(object):
                         resources=['*'],
                     ),
                     aws_iam.PolicyStatement(
+                        sid="CreateServiceRole",
+                        actions=[
+                            'iam:CreateRole',
+                        ],
+                        resources=[
+                            f'arn:aws:iam::{self.account}:role/service-role/*'
+                        ]
+                    ),
+                    aws_iam.PolicyStatement(
                         sid="PassRole",
                         actions=[
                             'iam:PassRole',
@@ -94,7 +103,10 @@ class ServicePolicy(object):
                                 "iam:PassedToService": [
                                     "glue.amazonaws.com",
                                     "lambda.amazonaws.com",
-                                    "sagemaker.amazonaws.com"
+                                    "sagemaker.amazonaws.com",
+                                    "states.amazonaws.com",
+                                    'sagemaker.amazonaws.com',
+                                    'databrew.amazonaws.com'
                                 ]
                             }
                         }
