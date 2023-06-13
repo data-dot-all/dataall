@@ -15,13 +15,14 @@ class Databrew(ServicePolicy):
                 actions=[
                     'databrew:Delete*',
                     'databrew:Describe*',
-                    'databrew:PublishRecipe',
-                    'databrew:SendProjectSessionAction',
+                    'databrew:Update*',
                     'databrew:Start*',
                     'databrew:Stop*',
+                    'databrew:PublishRecipe',
+                    'databrew:SendProjectSessionAction',
+                    'databrew:BatchDeleteRecipeVersion',
                     'databrew:TagResource',
                     'databrew:UntagResource',
-                    'databrew:Update*',
                 ],
                 resources=[
                     f'arn:aws:databrew:{self.region}:{self.account}:*/{self.resource_prefix}*'
@@ -35,7 +36,9 @@ class Databrew(ServicePolicy):
             iam.PolicyStatement(
                 sid="DataBrewCreateTeamResources",
                 actions=['databrew:Create*'],
-                resources=['*'],
+                resources=[
+                    f'arn:aws:databrew:{self.region}:{self.account}:*/{self.resource_prefix}*'
+                ],
                 conditions={
                     'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}
                 },

@@ -9,9 +9,7 @@ class SecretsManager(ServicePolicy):
             aws_iam.PolicyStatement(
                 sid="SecretsReadAll",
                 effect=aws_iam.Effect.ALLOW,
-                actions=[
-                    "secretsmanager:ListSecrets",
-                ],
+                actions=["secretsmanager:ListSecrets"],
                 resources=["*"],
             ),
             aws_iam.PolicyStatement(
@@ -25,7 +23,7 @@ class SecretsManager(ServicePolicy):
                     "secretsmanager:UpdateSecret",
                     "secretsmanager:TagResource",
                 ],
-                resources=[f"arn:aws:secretsmanager:*:{self.account}:secret:{self.resource_prefix}*",],
+                resources=[f"arn:aws:secretsmanager:*:{self.account}:secret:{self.resource_prefix}*"],
                 conditions={
                     'StringEquals': {
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
