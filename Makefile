@@ -35,7 +35,7 @@ install-tests:
 
 lint:
 	pip install flake8
-	python -m flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
+	flake8 --exclude cdk.out,blueprints --ignore E402,E501,F841,W503,F405,F403,F401,E712,E203 backend/
 
 bandit:
 	pip install bandit
@@ -49,7 +49,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
-	python -m pytest -v -ra tests/
+	pytest -v -ra tests/
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \

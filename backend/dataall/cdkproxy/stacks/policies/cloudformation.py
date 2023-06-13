@@ -24,8 +24,30 @@ class Cloudformation(ServicePolicy):
                     'cloudformation:Get*',
                     'cloudformation:Describe*',
                     'cloudformation:List*',
+                    'cloudformation:CreateUploadBucket',
                 ],
                 resources=['*'],
+            ),
+            iam.PolicyStatement(
+                sid="CloudFormationCreateS3Bucket",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:ListBucket',
+                    's3:PutBucketPublicAccessBlock'
+                ],
+                resources=["arn:aws:s3:::cf-templates-*"],
+            ),
+            iam.PolicyStatement(
+                sid="CloudFormationReadWriteS3Bucket",
+                actions=[
+                    's3:GetObject',
+                    's3:PutObject',
+                    's3:DeleteObject'
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    'arn:aws:s3:::cf-templates-*/*',
+                ],
             ),
             iam.PolicyStatement(
                 sid="CreateTeamCloudFormation",
