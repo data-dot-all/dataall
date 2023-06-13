@@ -695,35 +695,6 @@ def cluster(env_fixture, org_fixture, client, group):
 
 
 @pytest.fixture(scope='module')
-def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
-    response = client.query(
-        """
-        mutation createDataPipeline ($input:NewDataPipelineInput){
-            createDataPipeline(input:$input){
-                DataPipelineUri
-                label
-                description
-                tags
-                owner
-                repo
-                userRoleForPipeline
-            }
-        }
-        """,
-        input={
-            'label': 'my pipeline',
-            'SamlGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env_fixture.environmentUri,
-            'devStrategy': 'trunk',
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createDataPipeline
-
-
-@pytest.fixture(scope='module')
 def sgm_studio(client, tenant, group, env_fixture, module_mocker) -> models.SagemakerStudioUserProfile:
     module_mocker.patch(
         'dataall.aws.handlers.sagemaker_studio.SagemakerStudio.get_sagemaker_studio_domain',

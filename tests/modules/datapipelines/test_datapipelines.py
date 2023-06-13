@@ -1,5 +1,8 @@
 import pytest
 
+from tests.api.client import *
+from tests.api.conftest import *
+
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
@@ -160,7 +163,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         return_value=[{'response': 'return value'}],
     )
     module_mocker.patch(
-        'dataall.api.Objects.DataPipeline.resolvers._get_creds_from_aws',
+        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_creds_from_aws',
         return_value=True,
     )
     response = client.query(

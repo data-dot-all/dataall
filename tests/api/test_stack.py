@@ -2,7 +2,6 @@ def test_update_stack(
     client,
     tenant,
     group,
-    pipeline,
     env_fixture,
     dataset_fixture,
     sgm_studio,
@@ -27,11 +26,6 @@ def test_update_stack(
 
     response = update_stack_query(client, cluster.clusterUri, 'redshift', group.name)
     assert response.data.updateStack.targetUri == cluster.clusterUri
-
-    response = update_stack_query(
-        client, pipeline.DataPipelineUri, 'pipeline', group.name
-    )
-    assert response.data.updateStack.targetUri == pipeline.DataPipelineUri
 
 
 def update_stack_query(client, target_uri, target_type, group):

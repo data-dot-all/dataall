@@ -1,4 +1,4 @@
-"""Contains the code related to datasets"""
+"""Contains the code related to datapipelines"""
 import logging
 from typing import List, Type
 
