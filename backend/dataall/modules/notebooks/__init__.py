@@ -4,7 +4,7 @@ from typing import List, Type
 
 from dataall.db.api import TargetType
 from dataall.modules.loader import ImportMode, ModuleInterface
-from dataall.modules.notebooks.db.repositories import NotebookRepository
+from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
 
 log = logging.getLogger(__name__)
 

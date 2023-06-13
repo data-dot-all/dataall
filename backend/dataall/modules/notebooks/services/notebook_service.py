@@ -17,7 +17,7 @@ from dataall.db.api import (
 )
 from dataall.db import models, exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
-from dataall.modules.notebooks.db.repositories import NotebookRepository
+from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

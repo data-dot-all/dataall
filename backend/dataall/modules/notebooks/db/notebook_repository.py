@@ -3,13 +3,15 @@ DAO layer that encapsulates the logic and interaction with the database for note
 Provides the API to retrieve / update / delete notebooks
 """
 from sqlalchemy import or_
+from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.db import paginate
 from dataall.modules.notebooks.db.models import SagemakerNotebook
+from dataall.core.group.services.group_resource_manager import GroupResource
 
 
-class NotebookRepository:
+class NotebookRepository(GroupResource):
     """DAO layer for notebooks"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
@@ -52,9 +54,14 @@ class NotebookRepository:
             )
         return query
 
-    def count_notebooks(self, environment_uri):
+    def count_resources(self, environment_uri, group_uri):
         return (
             self._session.query(SagemakerNotebook)
-            .filter(SagemakerNotebook.environmentUri == environment_uri)
+            .filter(
+                and_(
+                    SagemakerNotebook.environmentUri == environment_uri,
+                    SagemakerNotebook.SamlAdminGroupName == group_uri
+                )
+            )
             .count()
         )

@@ -3,6 +3,7 @@ DAO layer that encapsulates the logic and interaction with the database for ML S
 Provides the API to retrieve / update / delete ml studio
 """
 from sqlalchemy import or_
+from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
 from dataall.db import paginate, exceptions
@@ -58,6 +59,11 @@ class SageMakerStudioRepository(GroupResource):
     def count_resources(self, environment, group_uri):
         return (
             self._session.query(SagemakerStudioUser)
-            .filter(SagemakerStudioUser.environmentUri == environment.environmentUri)
+            .filter(
+                and_(
+                    SagemakerStudioUser.environmentUri == environment.environmentUri,
+                    SagemakerStudioUser.SamlAdminGroupName == group_uri
+                )
+            )
             .count()
         )
