@@ -18,13 +18,14 @@ class SecretsManager(ServicePolicy):
                 sid='ManageTeamSecrets',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
-                    'secretsmanager:DescribeSecret',
-                    'secretsmanager:GetSecretValue',
-                    'secretsmanager:CreateSecret',
-                    'secretsmanager:DeleteSecret',
-                    'secretsmanager:TagResource',
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:DescribeSecret",
+                    "secretsmanager:CreateSecret",
+                    "secretsmanager:DeleteSecret",
+                    "secretsmanager:UpdateSecret",
+                    "secretsmanager:TagResource",
                 ],
-                resources=['*'],
+                resources=[f"arn:aws:secretsmanager:*:{self.account}:secret:{self.resource_prefix}*",],
                 conditions={
                     'StringEquals': {
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value]

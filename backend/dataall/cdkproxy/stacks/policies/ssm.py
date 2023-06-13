@@ -26,8 +26,9 @@ class SSM(ServicePolicy):
                     'ssm:GetParameter',
                     'ssm:DeleteParameters',
                     'ssm:AddTagsToResource',
+                    'ssm:ListTagsForResource',
                 ],
-                resources=['*'],
+                resources=[f"arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*"],
                 conditions={
                     'StringEquals': {
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
