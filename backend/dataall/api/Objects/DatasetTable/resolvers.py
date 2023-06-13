@@ -143,7 +143,7 @@ def preview(context, source, tableUri: str = None):
 
         SQL = 'select * from {table_identifier} limit 50'.format(
             table_identifier=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
-        )  # nosec
+        )
         cursor.execute(SQL)
         fields = []
         for f in cursor.description:
