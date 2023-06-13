@@ -194,91 +194,125 @@ class Dataset(Stack):
             policy_name=dataset.S3BucketName,
             statements=[
                 iam.PolicyStatement(
-                    actions=['s3:List*'], resources=['*'], effect=iam.Effect.ALLOW
+                    sid="ListAll",
+                    actions=[
+                        "s3:ListAllMyBuckets",
+                        "s3:ListAccessPoints",
+                    ],
+                    resources=["*"],
+                    effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
-                    actions=['logs:*'], resources=['*'], effect=iam.Effect.ALLOW
-                ),
-                iam.PolicyStatement(
-                    actions=['tag:*'], resources=['*'], effect=iam.Effect.ALLOW
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:List*', 's3:Get*'],
+                    sid="ListDatasetBucket",
+                    actions=[
+                        "s3:ListBucket",
+                        "s3:GetBucketLocation"
+                    ],
                     resources=[dataset_bucket.bucket_arn],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:*'],
+                    sid="ReadWriteDatasetBucket",
+                    actions=[
+                        "s3:PutObject",
+                        "s3:PutObjectAcl",
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:GetObjectVersion",
+                        "s3:DeleteObject"
+                    ],
                     effect=iam.Effect.ALLOW,
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
                 iam.PolicyStatement(
+                    sid="KMSAccess",
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[dataset_key.key_arn],
+                ),
+                iam.PolicyStatement(
+                    sid="ReadAccessPointsDatasetBucket",
                     actions=[
                         's3:GetAccessPoint',
                         's3:GetAccessPointPolicy',
-                        's3:ListAccessPoints',
-                        's3:CreateAccessPoint',
-                        's3:DeleteAccessPoint',
                         's3:GetAccessPointPolicyStatus',
-                        's3:DeleteAccessPointPolicy',
-                        's3:PutAccessPointPolicy',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
-                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/*',
+                        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{dataset.datasetUri}*',
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:List*', 's3:Get*'],
+                    sid="GlueAccessCrawler",
+                    actions=[
+                        "glue:GetDatabase",
+                        "glue:GetTableVersion",
+                        "glue:CreateTable",
+                        "glue:GetTables",
+                        "glue:GetTableVersions",
+                        "glue:UpdateTable",
+                        "glue:DeleteTableVersion",
+                        "glue:DeleteTable",
+                        "glue:GetTable"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
+                    ]
+                ),
+                iam.PolicyStatement(
+                    sid="CreateLoggingGlueCrawler",
+                    actions=[
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    sid="LoggingGlueCrawler",
+                    actions=[
+                        'logs:PutLogEvents',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=['s3:ListEnvironmentBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:*'],
-                    effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/*'],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    resources=['arn:aws:s3:::aws-glue-*'],
-                    actions=['s3:CreateBucket'],
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-                    effect=iam.Effect.ALLOW,
-                    resources=[
-                        'arn:aws:s3:::aws-glue-*/*',
-                        'arn:aws:s3:::*/*aws-glue-*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=['s3:GetObject'],
-                    effect=iam.Effect.ALLOW,
-                    resources=[
-                        'arn:aws:s3:::crawler-public*',
-                        'arn:aws:s3:::aws-glue-*',
-                    ],
-                ),
-                iam.PolicyStatement(
+                    sid="ReadEnvironmentBucketProfiling",
                     actions=[
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:GetObjectVersion"
                     ],
                     effect=iam.Effect.ALLOW,
-                    resources=['arn:aws:logs:*:*:/aws-glue/*'],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
                 ),
                 iam.PolicyStatement(
-                    actions=['kms:*'], effect=iam.Effect.ALLOW, resources=['*']
-                ),
-                iam.PolicyStatement(
-                    actions=['glue:*', 'athena:*', 'lakeformation:*'],
-                    resources=['*'],
-                    effect=iam.Effect.ALLOW,
-                ),
-                iam.PolicyStatement(
-                    actions=['cloudformation:*'],
-                    resources=['*'],
+                    sid="ReadWriteEnvironmentBucketProfiling",
+                    actions=[
+                        "s3:PutObject",
+                        "s3:PutObjectAcl",
+                        "s3:GetObject",
+                        "s3:GetObjectAcl",
+                        "s3:GetObjectVersion",
+                        "s3:DeleteObject"
+                    ],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/results/{dataset.datasetUri}/*'],
                     effect=iam.Effect.ALLOW,
                 ),
             ],
@@ -290,17 +324,10 @@ class Dataset(Stack):
             'DatasetAdminRole',
             role_name=dataset.IAMDatasetAdminRoleArn.split('/')[-1],
             assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('glue.amazonaws.com'),
-                iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                iam.ServicePrincipal('athena.amazonaws.com'),
-                iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.ServicePrincipal('lambda.amazonaws.com'),
-                iam.ServicePrincipal('ec2.amazonaws.com'),
-                iam.AccountPrincipal(str(os.environ.get('CURRENT_AWS_ACCOUNT'))),
-                iam.AccountPrincipal(dataset.AwsAccountId),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{dataset.AwsAccountId}:role/{self.pivot_role_name}'
                 ),
+                iam.ServicePrincipal('glue.amazonaws.com'),
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
@@ -441,9 +468,7 @@ class Dataset(Stack):
             self,
             'DatasetGlueProfilingJob',
             name=dataset.GlueProfilingJobName,
-            role=iam.ArnPrincipal(
-                f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
-            ).arn,
+            role=dataset_admin_role.role_arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(
                 max_concurrent_runs=100
