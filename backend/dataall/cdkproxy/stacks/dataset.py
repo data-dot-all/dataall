@@ -445,7 +445,7 @@ class Dataset(Stack):
         crawler.node.add_dependency(dataset_bucket)
 
         job_args = {
-            '--additional-python-modules': 'pydeequ,great_expectations,requests',
+            '--additional-python-modules': 'urllib3<2,pydeequ',
             '--datasetUri': dataset.datasetUri,
             '--database': dataset.GlueDatabaseName,
             '--datasetRegion': dataset.region,
