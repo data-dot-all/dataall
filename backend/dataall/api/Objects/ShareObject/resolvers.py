@@ -381,7 +381,6 @@ def update_share_request_purpose(context: Context, source, shareUri: str = None,
     with context.engine.scoped_session() as session:
         share = db.api.ShareObject.get_share_by_uri(session, shareUri)
         userRoleForShareObject = resolve_user_role(context, source=share)
-        print(userRoleForShareObject)
         if userRoleForShareObject != ShareObjectPermission.Requesters.value:
             raise db.exceptions.ResourceUnauthorized(
                 username=context.username,
