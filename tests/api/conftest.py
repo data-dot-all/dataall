@@ -34,8 +34,10 @@ def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
     module_mocker.patch(
+
         'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
         return_value={}
+
     )
     module_mocker.patch('dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value={})
     module_mocker.patch('dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert', return_value={})
@@ -692,35 +694,3 @@ def cluster(env_fixture, org_fixture, client, group):
     )
     print(res)
     yield res.data.createRedshiftCluster
-
-
-@pytest.fixture(scope='module')
-def sgm_studio(client, tenant, group, env_fixture, module_mocker) -> models.SagemakerStudioUserProfile:
-    module_mocker.patch(
-        'dataall.aws.handlers.sagemaker_studio.SagemakerStudio.get_sagemaker_studio_domain',
-        return_value={'DomainId': 'test'},
-    )
-    response = client.query(
-        """
-            mutation createSagemakerStudioUserProfile($input:NewSagemakerStudioUserProfileInput){
-            createSagemakerStudioUserProfile(input:$input){
-                sagemakerStudioUserProfileUri
-                name
-                label
-                created
-                description
-                SamlAdminGroupName
-                environmentUri
-                tags
-            }
-        }
-            """,
-        input={
-            'label': f'test1',
-            'SamlAdminGroupName': group.name,
-            'environmentUri': env_fixture.environmentUri,
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createSagemakerStudioUserProfile

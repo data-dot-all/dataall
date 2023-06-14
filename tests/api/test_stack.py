@@ -4,7 +4,6 @@ def test_update_stack(
     group,
     env_fixture,
     dataset_fixture,
-    sgm_studio,
     cluster,
 ):
     response = update_stack_query(
@@ -16,13 +15,6 @@ def test_update_stack(
         client, dataset_fixture.datasetUri, 'dataset', group.name
     )
     assert response.data.updateStack.targetUri == dataset_fixture.datasetUri
-
-    response = update_stack_query(
-        client, sgm_studio.sagemakerStudioUserProfileUri, 'mlstudio', group.name
-    )
-    assert (
-        response.data.updateStack.targetUri == sgm_studio.sagemakerStudioUserProfileUri
-    )
 
     response = update_stack_query(client, cluster.clusterUri, 'redshift', group.name)
     assert response.data.updateStack.targetUri == cluster.clusterUri

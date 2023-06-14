@@ -5,4 +5,4 @@ from dataall.cdkproxy.stacks.policies import (
 )
 
 __all__ = ["cloudformation", "quicksight",
-           "redshift", "data_policy", "service_policy", "mlstudio"]
+           "redshift", "data_policy", "service_policy"]

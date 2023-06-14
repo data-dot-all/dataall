@@ -211,11 +211,9 @@ def _describe_loading(in_config: Set[str], inactive: Set[str]):
         name = module.name()
         log.debug(f"The {name} module was loaded")
         if name in inactive:
-            log.info(f"There is a module that depends on {module.name()}. " +
-                     "The module has been loaded despite it's inactive.")
+            log.info(f"There is a module that depends on {module.name()}. " + "The module has been loaded despite it's inactive.")
         elif name not in in_config:
-            log.info(f"There is a module that depends on {module.name()}. " +
-                     "The module has been loaded despite it's not specified in the configuration file.")
+            log.info(f"There is a module that depends on {module.name()}. " + "The module has been loaded despite it's not specified in the configuration file.")
 
 
 def _remove_module_prefix(module: str):

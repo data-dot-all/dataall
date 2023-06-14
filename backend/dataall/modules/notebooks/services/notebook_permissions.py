@@ -44,6 +44,6 @@ RESOURCES_ALL.append(LIST_ENVIRONMENT_NOTEBOOKS)
 
 RESOURCES_ALL_WITH_DESC[CREATE_NOTEBOOK] = "Create notebooks on this environment"
 RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_NOTEBOOKS] = "List notebooks on this environment"
-RESOURCES_ALL_WITH_DESC[GET_NOTEBOOK] = "General permission to list notebooks"
-RESOURCES_ALL_WITH_DESC[DELETE_NOTEBOOK] = "Permission to delete notebooks"
-RESOURCES_ALL_WITH_DESC[UPDATE_NOTEBOOK] = "Permission to edit notebooks"
+RESOURCES_ALL_WITH_DESC[GET_NOTEBOOK] = "General permission to get a notebook"
+RESOURCES_ALL_WITH_DESC[DELETE_NOTEBOOK] = "Permission to delete a notebook"
+RESOURCES_ALL_WITH_DESC[UPDATE_NOTEBOOK] = "Permission to edit a notebook"

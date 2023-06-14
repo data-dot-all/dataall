@@ -33,7 +33,6 @@ const listOrganizationEnvironments = ({ organizationUri, filter }) => ({
             environmentType
             AwsAccountId
             dashboardsEnabled
-            mlStudiosEnabled
             pipelinesEnabled
             warehousesEnabled
             userRoleInEnvironment

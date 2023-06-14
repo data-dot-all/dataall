@@ -14,9 +14,7 @@ from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import Resource, models
 from dataall.db.api import ResourcePolicy
-from dataall.db.api.permission import Permission
 from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType, EnvironmentGroup
-from dataall.db.permissions import MANAGE_SGMSTUDIO_NOTEBOOKS
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
 
@@ -35,7 +33,7 @@ class Environment(Resource, Base):
     notebooksEnabled = Column(Boolean)
 
 
-class EnvironmentParameter(Resource, Base):
+class EnvironmentParameter(Base):
     __tablename__ = "environment_parameters"
     environmentUri = Column(String, primary_key=True)
     paramKey = Column(String, primary_key=True),
@@ -54,13 +52,12 @@ def upgrade():
         1) creation of the environment_parameters and environment_resources tables
         2) Migration xxxEnabled to the environment_parameters table
         3) Dropping the xxxEnabled columns from the environment_parameters
-        4) Migrate permissions
     """
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
-        print("Creating of environment_parameters table...")
+        print("Creating environment_parameters table...")
         op.create_table(
             "environment_parameters",
             Column("environmentUri", String, primary_key=True),
@@ -69,18 +66,22 @@ def upgrade():
         )
         print("Creation of environment_parameters is done")
 
-        print("Migrating the environmental parameters...")
+        print("Migrating the environmental parameters from environment table to environment_parameters table...")
         envs: List[Environment] = session.query(Environment).all()
         params: List[EnvironmentParameter] = []
         for env in envs:
             _add_param_if_exists(
                 params, env, "notebooksEnabled", str(env.notebooksEnabled).lower()  # for frontend
             )
+            _add_param_if_exists(
+                params, env, "mlStudiosEnabled", str(env.mlStudiosEnabled).lower()  # for frontend
+            )
 
         session.add_all(params)
         print("Migration of the environmental parameters has been complete")
 
         op.drop_column("environment", "notebooksEnabled")
+        op.drop_column("environment", "mlStudiosEnabled")
         print("Dropped the columns from the environment table ")
 
         create_foreign_key_to_env(op, 'sagemaker_notebook')
@@ -89,30 +90,6 @@ def upgrade():
         create_foreign_key_to_env(op, 'redshiftcluster')
         create_foreign_key_to_env(op, 'datapipeline')
         create_foreign_key_to_env(op, 'dashboard')
-
-        print("Saving new MANAGE_SGMSTUDIO_NOTEBOOKS permission")
-        Permission.init_permissions(session)
-
-        manage_notebooks = Permission.get_permission_by_name(
-            session, MANAGE_NOTEBOOKS, PermissionType.TENANT.name
-        )
-        manage_mlstudio = Permission.get_permission_by_name(
-            session, MANAGE_SGMSTUDIO_NOTEBOOKS, PermissionType.TENANT.name
-        )
-
-        permissions = (
-            session.query(TenantPolicyPermission)
-            .filter(TenantPolicyPermission.permission == manage_notebooks.permissionUri)
-            .all()
-        )
-
-        for permission in permissions:
-            session.add(TenantPolicyPermission(
-                sid=permission.sid,
-                permissionUri=manage_mlstudio.permissionUri,
-            ))
-
-        op.drop_table('worksheet_share')
 
         session.commit()
 
@@ -127,31 +104,31 @@ def downgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
 
-        op.drop_constraint("fk_notebook_env_uri", "sagemaker_notebook")
-        op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
+        print("dropping foreign keys and adding columns to environment table...")
 
+        op.drop_constraint("fk_sagemaker_notebook_env_uri", "sagemaker_notebook")
+        op.drop_constraint("fk_dataset_env_uri", "dataset")
+        op.drop_constraint("fk_sagemaker_studio_user_profile_env_uri", "sagemaker_studio_user_profile")
+        op.drop_constraint("fk_redshiftcluster_env_uri", "redshiftcluster")
+        op.drop_constraint("fk_datapipeline_env_uri", "datapipeline")
+        op.drop_constraint("fk_dashboard_env_uri", "dashboard")
+        op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
+        op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
+
+        print("Filling environment table with parameters rows...")
         params = session.query(EnvironmentParameter).all()
         envs = []
         for param in params:
+            print(param)
             envs.append(Environment(
                 environmentUri=param.environmentUri,
-                notebooksEnabled=params["notebooksEnabled"] == "true"
+                notebooksEnabled=params["notebooksEnabled"] == "true",
+                mlStudiosEnabled=params["mlStudiosEnabled"] == "true"
             ))
 
         session.add_all(envs)
+        print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
-        op.create_table(
-                'worksheet_share',
-                sa.Column('worksheetShareUri', sa.String(), nullable=False),
-                sa.Column('worksheetUri', sa.String(), nullable=False),
-                sa.Column('principalId', sa.String(), nullable=False),
-                sa.Column('principalType', sa.String(), nullable=False),
-                sa.Column('canEdit', sa.Boolean(), nullable=True),
-                sa.Column('owner', sa.String(), nullable=False),
-                sa.Column('created', sa.DateTime(), nullable=True),
-                sa.Column('updated', sa.DateTime(), nullable=True),
-                sa.PrimaryKeyConstraint('worksheetShareUri'),
-            )
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
