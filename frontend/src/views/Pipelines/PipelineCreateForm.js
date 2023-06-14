@@ -43,7 +43,11 @@ const PipelineCrateForm = (props) => {
   const [loading, setLoading] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const devOptions =[{value:"cdk-trunk", label:"CDK Pipelines - Trunk-based"},{value:"trunk", label:"CodePipeline - Trunk-based"},{value:"gitflow", label:"CodePipeline - Gitflow"}];/*DBT Pipelines*/
+  const devOptions = [
+    { value: 'cdk-trunk', label: 'CDK Pipelines - Trunk-based' },
+    { value: 'trunk', label: 'CodePipeline - Trunk-based' },
+    { value: 'gitflow', label: 'CodePipeline - Gitflow' }
+  ]; /*DBT Pipelines*/
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
   const [pipelineUri, setPipelineUri] = useState('');
@@ -119,7 +123,6 @@ const PipelineCrateForm = (props) => {
               SamlGroupName: values.SamlGroupName,
               tags: values.tags,
               devStrategy: values.devStrategy
-
             }
           })
         );
@@ -226,7 +229,7 @@ const PipelineCrateForm = (props) => {
                 SamlGroupName: '',
                 environment: '',
                 tags: [],
-                devStrategy: 'cdk-trunk',
+                devStrategy: 'cdk-trunk'
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -238,7 +241,7 @@ const PipelineCrateForm = (props) => {
                 devStrategy: Yup.string().required(
                   '*A CICD strategy is required'
                 ),
-                tags: Yup.array().nullable(),
+                tags: Yup.array().nullable()
               })}
               onSubmit={async (
                 values,

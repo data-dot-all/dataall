@@ -26,7 +26,7 @@ class WorksheetRepository(GroupResource):
     @staticmethod
     def find_worksheet_by_uri(session, uri) -> Worksheet:
         return session.query(Worksheet).get(uri)
-    
+
     @staticmethod
     def query_user_worksheets(session, username, groups, filter) -> Query:
         query = session.query(Worksheet).filter(

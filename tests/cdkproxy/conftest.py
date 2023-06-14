@@ -141,26 +141,6 @@ def table(db, dataset: Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def sgm_studio(db, env: models.Environment) -> models.SagemakerStudioUserProfile:
-    with db.scoped_session() as session:
-        notebook = models.SagemakerStudioUserProfile(
-            label='thistable',
-            owner='me',
-            AWSAccountId=env.AwsAccountId,
-            region=env.region,
-            sagemakerStudioUserProfileStatus='UP',
-            sagemakerStudioUserProfileName='Profile',
-            sagemakerStudioUserProfileNameSlugify='Profile',
-            sagemakerStudioDomainID='domain',
-            environmentUri=env.environmentUri,
-            RoleArn=env.EnvironmentDefaultIAMRoleArn,
-            SamlAdminGroupName='admins',
-        )
-        session.add(notebook)
-    yield notebook
-
-
-@pytest.fixture(scope='module', autouse=True)
 def pipeline1(db, env: models.Environment) -> models.DataPipeline:
     with db.scoped_session() as session:
         pipeline = models.DataPipeline(
