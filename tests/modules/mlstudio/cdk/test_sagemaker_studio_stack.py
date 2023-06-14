@@ -4,8 +4,8 @@ import pytest
 from aws_cdk.assertions import Template
 from aws_cdk import App, Stack, aws_iam
 
-
 from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile, SageMakerDomainExtension
+
 
 class MockEnvironmentSageMakerExtension(Stack):
     def environment(self):
@@ -86,6 +86,7 @@ def test_resources_sgmstudio_stack_created(sgm_studio):
     template = Template.from_stack(stack)
 
     # Assert that we have created a SageMaker user profile
+    # TODO: Add more assertions
     template.resource_count_is("AWS::SageMaker::UserProfile", 1)
 
 
@@ -101,4 +102,5 @@ def test_resources_sgmstudio_extension_stack_created(env):
     template = Template.from_stack(stack)
 
     # Assert that we have created a SageMaker domain
+    # TODO: Add more assertions
     template.resource_count_is("AWS::SageMaker::Domain", 1)
