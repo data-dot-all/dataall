@@ -113,7 +113,8 @@ const DatasetImportForm = (props) => {
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
-          bucketName: values.bucketName,
+          bucketName: values.bucketName, 
+          KmsKeyId: values.KmsKeyId,
           glueDatabaseName: values.glueDatabaseName,
           stewards: values.stewards,
           confidentiality: values.confidentiality
@@ -215,6 +216,7 @@ const DatasetImportForm = (props) => {
                 topics: [],
                 glueDatabaseName: '',
                 bucketName: '',
+                KmsKeyId: '',
                 confidentiality: ''
               }}
               validationSchema={Yup.object().shape({
@@ -232,6 +234,9 @@ const DatasetImportForm = (props) => {
                 bucketName: Yup.string()
                   .max(255)
                   .required('*S3 bucket name is required'),
+                KmsKeyId: Yup.string()
+                  .max(255)
+                  .required('*KMS key Alias is required'),
                 confidentiality: Yup.string()
                   .max(255)
                   .required('*Confidentiality is required')
@@ -451,6 +456,21 @@ const DatasetImportForm = (props) => {
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.bucketName}
+                            variant="outlined"
+                          />
+                        </CardContent>
+                        <CardContent>
+                          <TextField
+                            error={Boolean(
+                              touched.KmsKeyId && errors.KmsKeyId
+                            )}
+                            fullWidth
+                            helperText={touched.KmsKeyId && errors.KmsKeyId}
+                            label="Amazon KMS key Alias"
+                            name="KmsKeyId"
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.KmsKeyId}
                             variant="outlined"
                           />
                         </CardContent>

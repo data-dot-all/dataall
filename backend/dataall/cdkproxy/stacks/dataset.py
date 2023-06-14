@@ -101,10 +101,13 @@ class Dataset(Stack):
             quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
-        # Dataset S3 Bucket and KMS key
-        if dataset.imported and dataset.importedS3Bucket:
+        # Dataset S3 Bucket and KMS key (in imported datasets dataset.KmsAlias = kms key id)
+        if dataset.imported and dataset.importedS3Bucket and dataset.importedKmsKey:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
+            )
+            dataset_key = kms.Key.from_key_arn(
+                self, f'ImportedKey{dataset.datasetUri}', f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{dataset.KmsAlias}",
             )
         else:
             dataset_key = kms.Key(
