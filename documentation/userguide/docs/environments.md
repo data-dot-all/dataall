@@ -308,6 +308,44 @@ to invited groups and this created an IAM role? (If not, check the "Manage teams
 the environment we can assume our team's IAM role to get access to the AWS Console or copy the credentials to the
 clipboard. Both options are under the "Actions" column in the Teams table.
 
+#### Environment teams IAM roles
+For the environment admin team and for each team invited to the environment <span style="color:grey">*data.all*</span> 
+creates an IAM role with the following permissions and usage.
+
+
+**IAM Permissions**
+
+Default permissions
+- read permissions to profiling/code folder in the Environment S3 Bucket
+- Athena permissions to use Team workgroup
+- CloudFormation permissions to resources tagged with team tag and prefixed with environment `resource_prefix`
+- SSM Parameter Store permissions to resources tagged with team tag and prefixed with environment `resource_prefix`
+- Secrets Manager permissions to resources tagged with team tag and prefixed with environment `resource_prefix`
+
+
+Data permissions
+- read and write permissions to the Team-owned Dataset S3 Buckets
+- encrypt/decrypt data with the Team-owned Dataset KMS keys
+- read and write permissions Dataset Glue databases - governed with Lake Formation
+
+Feature permissions
+
+Depending on the features enabled in the environment and granted to the Team, additional AWS permissions
+are given to the role. Permissions for any AWS service need to be defined to allow access onlt to resources tagged 
+with team tag and prefixed with environment `resource_prefix`
+
+
+**Data Governance with Lake Formation** 
+
+We use AWS Lake Formation to govern Glue databases and tables. Using Lake Formation, we grant permissions to the 
+Environment teams IAM roles to read and write the Glue databases and tables that the Team owns.
+In other words, each environment team IAM role can only access the Glue databases and tables of the Datasets
+that the team owns.
+
+**Usage**
+- Assumed by Team members from <span style="color:grey">*data.all*</span> UI to explore and work with data
+- Assumed by <span style="color:grey">*data.all*</span> Worksheets to query data using Athena
+
 ## :material-account-plus-outline: **Manage Consumption Roles**
 Data.all creates or imports one IAM role per Cognito/IdP group that we invite to the environment. With these IAM roles data producers and consumers
 can ingest and consume data, but sometimes we want to consume data from an application such as SageMaker pipelines,

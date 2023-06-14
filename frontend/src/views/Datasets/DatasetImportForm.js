@@ -466,7 +466,7 @@ const DatasetImportForm = (props) => {
                             )}
                             fullWidth
                             helperText={touched.KmsKeyId && errors.KmsKeyId}
-                            label="Amazon KMS key Alias"
+                            label="Amazon KMS key ID"
                             name="KmsKeyId"
                             onBlur={handleBlur}
                             onChange={handleChange}
