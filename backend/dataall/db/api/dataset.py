@@ -358,6 +358,26 @@ class Dataset:
 
     @staticmethod
     def transfer_stewardship_to_owners(session, dataset):
+        # Remove Steward Resource Policy on Dataset
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+        
+        # Remove Steward Resource Policy on Dataset Tables
+        dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
+        for tableUri in dataset_tables:
+            if dataset.stewards != env.SamlGroupName:
+                ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=tableUri,
+                )
+
+        # Remove Steward Resource Policy on Dataset Share Objects
         dataset_shares = (
             session.query(models.ShareObject)
             .filter(models.ShareObject.datasetUri == dataset.datasetUri)
@@ -365,12 +385,10 @@ class Dataset:
         )
         if dataset_shares:
             for share in dataset_shares:
-                ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.delete_resource_policy(
                     session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=permissions.SHARE_OBJECT_APPROVER,
+                    group=dataset.stewards,
                     resource_uri=share.shareUri,
-                    resource_type=models.ShareObject.__name__,
                 )
         return dataset
 

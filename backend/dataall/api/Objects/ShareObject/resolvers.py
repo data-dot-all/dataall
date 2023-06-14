@@ -379,22 +379,13 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
 
 def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):
     with context.engine.scoped_session() as session:
-        share = db.api.ShareObject.get_share_by_uri(session, shareUri)
-        userRoleForShareObject = resolve_user_role(context, source=share)
-        if userRoleForShareObject != ShareObjectPermission.Requesters.value:
-            raise db.exceptions.ResourceUnauthorized(
-                username=context.username,
-                action="UPDATE_SHARE_REQUEST_REASON",
-                resource_uri=share.shareUri,
-            )
-
         return db.api.ShareObject.update_share_request_purpose(
             session=session,
             username=context.username,
             groups=context.groups,
             uri=shareUri,
             data={"requestPurpose": requestPurpose},
-            check_perm=None,
+            check_perm=True,
         )
 
 

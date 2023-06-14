@@ -466,7 +466,7 @@ def share(db):
             dataall.db.api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+                permissions=dataall.db.permissions.SHARE_OBJECT_APPROVER,
                 resource_uri=share.shareUri,
                 resource_type=dataall.db.models.ShareObject.__name__,
             )
@@ -477,14 +477,14 @@ def share(db):
                 resource_uri=share.shareUri,
                 resource_type=dataall.db.models.ShareObject.__name__,
             )
-            if dataset.SamlAdminGroupName != environment.SamlGroupName:
-                dataall.db.api.ResourcePolicy.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
-                    resource_uri=share.shareUri,
-                    resource_type=dataall.db.models.ShareObject.__name__,
-                )
+            # if dataset.SamlAdminGroupName != environment.SamlGroupName:
+            #     dataall.db.api.ResourcePolicy.attach_resource_policy(
+            #         session=session,
+            #         group=environment.SamlGroupName,
+            #         permissions=dataall.db.permissions.SHARE_OBJECT_REQUESTER,
+            #         resource_uri=share.shareUri,
+            #         resource_type=dataall.db.models.ShareObject.__name__,
+            #     )
             session.commit()
             return share
 

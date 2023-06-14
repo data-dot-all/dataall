@@ -472,8 +472,7 @@ class ShareObject:
 
         # Attaching REQUESTER permissions to:
         # requester group (groupUri)
-        # dataset.SamlAdminGroupName
-        # environment.SamlGroupName
+        # environment.SamlGroupName (if not dataset admins)
         ResourcePolicy.attach_resource_policy(
             session=session,
             group=groupUri,
@@ -481,30 +480,32 @@ class ShareObject:
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
-        ResourcePolicy.attach_resource_policy(
-            session=session,
-            group=dataset.SamlAdminGroupName,
-            permissions=permissions.SHARE_OBJECT_REQUESTER,
-            resource_uri=share.shareUri,
-            resource_type=models.ShareObject.__name__,
-        )
-        if dataset.SamlAdminGroupName != environment.SamlGroupName:
-            ResourcePolicy.attach_resource_policy(
-                session=session,
-                group=environment.SamlGroupName,
-                permissions=permissions.SHARE_OBJECT_REQUESTER,
-                resource_uri=share.shareUri,
-                resource_type=models.ShareObject.__name__,
-            )
-        # Attaching REQUESTER permissions to:
+        # if dataset.SamlAdminGroupName != environment.SamlGroupName:
+        #     ResourcePolicy.attach_resource_policy(
+        #         session=session,
+        #         group=environment.SamlGroupName,
+        #         permissions=permissions.SHARE_OBJECT_REQUESTER,
+        #         resource_uri=share.shareUri,
+        #         resource_type=models.ShareObject.__name__,
+        #     )
+
+        # Attaching APPROVER permissions to:
         # dataset.stewards (includes the dataset Admins)
         ResourcePolicy.attach_resource_policy(
             session=session,
-            group=dataset.stewards,
+            group=dataset.SamlAdminGroupName,
             permissions=permissions.SHARE_OBJECT_APPROVER,
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
+        if dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=permissions.SHARE_OBJECT_APPROVER,
+                resource_uri=share.shareUri,
+                resource_type=models.ShareObject.__name__,
+            )
         return share
 
     @staticmethod
@@ -616,6 +617,7 @@ class ShareObject:
         return share
 
     @staticmethod
+    @has_resource_perm(permissions.SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(
         session,
         username: str,
