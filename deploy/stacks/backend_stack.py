@@ -78,18 +78,17 @@ class BackendStack(Stack):
             quicksight_enabled=quicksight_enabled,
             shared_dashboard_sessions=shared_dashboard_sessions,
             enable_pivot_role_auto_create=enable_pivot_role_auto_create,
-            **kwargs,
-        )
-
-        SecretsManagerStack(
-            self,
-            f'Secrets',
-            envname=envname,
-            resource_prefix=resource_prefix,
-            enable_cw_canaries=enable_cw_canaries,
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
+        if enable_cw_canaries:
+            SecretsManagerStack(
+                self,
+                f'Secrets',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                **kwargs,
+            )
 
         s3_resources_stack = S3ResourcesStack(
             self,
