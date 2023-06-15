@@ -6,12 +6,12 @@ from sqlalchemy import or_
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import Query
 
-from dataall.db import paginate, exceptions
+from dataall.db import paginate
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.group.services.group_resource_manager import EnvironmentResource
 
 
-class SageMakerStudioRepository(GroupResource):
+class SageMakerStudioRepository(EnvironmentResource):
     """DAO layer for ML Studio"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
