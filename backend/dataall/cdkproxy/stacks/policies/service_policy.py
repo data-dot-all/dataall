@@ -30,7 +30,6 @@ class ServicePolicy(object):
         self.name = name
         self.account = account
         self.region = region
-        self.environment = environment
         self.tag_key = tag_key
         self.tag_value = tag_value
         self.resource_prefix = resource_prefix
