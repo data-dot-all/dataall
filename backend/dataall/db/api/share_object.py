@@ -480,14 +480,6 @@ class ShareObject:
             resource_uri=share.shareUri,
             resource_type=models.ShareObject.__name__,
         )
-        # if dataset.SamlAdminGroupName != environment.SamlGroupName:
-        #     ResourcePolicy.attach_resource_policy(
-        #         session=session,
-        #         group=environment.SamlGroupName,
-        #         permissions=permissions.SHARE_OBJECT_REQUESTER,
-        #         resource_uri=share.shareUri,
-        #         resource_type=models.ShareObject.__name__,
-        #     )
 
         # Attaching APPROVER permissions to:
         # dataset.stewards (includes the dataset Admins)
