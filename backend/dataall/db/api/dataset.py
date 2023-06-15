@@ -366,7 +366,7 @@ class Dataset:
                 group=dataset.stewards,
                 resource_uri=dataset.datasetUri,
             )
-        
+
         # Remove Steward Resource Policy on Dataset Tables
         dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:

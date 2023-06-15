@@ -34,7 +34,7 @@ def upgrade():
         #     session, "SUBMIT_SHARE_OBJECT", "RESOURCE"
         # )
         print('Getting all Share Objects...')
-        shares: [modelsShareObject] = session.query(models.ShareObject).all()
+        shares: [models.ShareObject] = session.query(models.ShareObject).all()
         for share in shares:
             dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
 
@@ -70,7 +70,7 @@ def upgrade():
                     resource_type=models.ShareObject.__name__,
                 )
                 print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Steward {dataset.stewards} on Share {share.shareUri}")
-            
+
     except Exception as e:
         print(e)
         print(f'Failed to update share object approver permissions due to: {e}')
