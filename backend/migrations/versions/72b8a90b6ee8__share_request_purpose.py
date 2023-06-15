@@ -9,7 +9,7 @@ from alembic import op
 from sqlalchemy import orm, Column, String, and_
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.db import api, models
+from dataall.db import api, models, permissions
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'
@@ -29,40 +29,48 @@ def upgrade():
     try:
         bind = op.get_bind()
         session = orm.Session(bind=bind)
-        print('Getting SUBMIT_SHARE_OBJECT Permission...')
-        permission: models.Permission = api.Permission.find_permission_by_name(
-            session, "SUBMIT_SHARE_OBJECT", "RESOURCE"
-        )
+        # print('Getting SUBMIT_SHARE_OBJECT Permission...')
+        # permission: models.Permission = api.Permission.find_permission_by_name(
+        #     session, "SUBMIT_SHARE_OBJECT", "RESOURCE"
+        # )
         print('Getting all Share Objects...')
         shares: [modelsShareObject] = session.query(models.ShareObject).all()
         for share in shares:
-            share_uri = share.shareUri
             dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
-            dataset_steward = dataset.stewards
 
-            # Check if Owner is different then Steward and Env Admin
-            # IF different add Approver remove Requestor permissions
-            # IF ENv Admin unique then 
-            policy = api.ResourcePolicy.has_group_resource_permission(
-                session,
-                group_uri=dataset_steward,
-                permission_name="SUBMIT_SHARE_OBJECT",
-                resource_uri=share_uri,
+            # Dataset Admins
+            # Delete and Recreate Dataset Share Object Permissions to be Share Object Approver Permission Set
+            api.ResourcePolicy.delete_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                resource_uri=share.shareUri,
             )
-            if policy:
-                resource_policy_perm = (
-                    session.query(models.ResourcePolicyPermission)
-                    .filter(
-                        and_(
-                            models.ResourcePolicyPermission.sid == policy.sid,
-                            models.ResourcePolicyPermission.permissionUri == permission.permissionUri
-                        )
-                    )
-                    .first()
+            api.ResourcePolicy.attach_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                permissions=permissions.SHARE_OBJECT_APPROVER,
+                resource_uri=share.shareUri,
+                resource_type=models.ShareObject.__name__,
+            )
+            print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Owner {dataset.SamlAdminGroupName} on Share {share.shareUri}")
+
+            # Dataset Stewards
+            # Remove SUBMIT_SHARE_OBJECT Permissions From Dataset Stewards If Exist
+            if dataset.SamlAdminGroupName != dataset.stewards:
+                api.ResourcePolicy.delete_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=share.shareUri,
                 )
-                session.delete(resource_policy_perm)
-                session.commit()
-                print(f"Removed SUBMIT_SHARE_OBJECT Permission from: {dataset_steward}")
+                api.ResourcePolicy.attach_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    permissions=permissions.SHARE_OBJECT_APPROVER,
+                    resource_uri=share.shareUri,
+                    resource_type=models.ShareObject.__name__,
+                )
+                print(f"Recreated SHARE_OBJECT_APPROVER Permissions for Dataset Steward {dataset.stewards} on Share {share.shareUri}")
+            
     except Exception as e:
         print(e)
         print(f'Failed to update share object approver permissions due to: {e}')

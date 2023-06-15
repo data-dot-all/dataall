@@ -1063,6 +1063,7 @@ class ShareObject:
                         f'{{{username}}}'
                     ),
                     models.Dataset.stewards.in_(groups),
+                    models.Dataset.SamlAdminGroupName.in_(groups),
                 )
             )
         )
