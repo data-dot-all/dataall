@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
-    "@appbaseio/reactivesearch": "^3.29.1",
+    "@appbaseio/reactivesearch": "^3.43.10",
     "@emotion/react": "^11.8.2",
     "@emotion/styled": "^11.8.1",
     "@monaco-editor/react": "^4.3.1",
@@ -53,7 +53,7 @@
     "react-redux": "^7.2.6",
     "react-router": "6.0.0",
     "react-router-dom": "6.0.0",
-    "react-scripts": "^5.0.0",
+    "react-scripts": "^5.0.1",
     "simplebar": "^5.3.6",
     "simplebar-react": "^2.3.6",
     "web-vitals": "^2.1.4",
