@@ -190,7 +190,6 @@ class ShareObjectService:
                 )
 
             ShareNotificationService.notify_share_object_approval(session, context.username, dataset, share)
-            return share
 
             approve_share_task: Task = Task(
                 action='ecs.share.approve',
