@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
-    "@appbaseio/reactivesearch": "^4.0.0-rc.19",
+    "@appbaseio/reactivesearch": "^3.43.10",
     "@emotion/react": "^11.8.2",
     "@emotion/styled": "^11.8.1",
     "@monaco-editor/react": "^4.3.1",
