@@ -12980,18 +12980,6 @@
     "whatwg-fetch" "^3.0.0"
     "ws" "^6.2.2"
 
-"react-redux@^6.0.1":
-  "integrity" "sha512-T52I52Kxhbqy/6TEfBv85rQSDz6+Y28V/pf52vDWs1YRXG19mcFOGfHnY2HsNFHyhP+ST34Aih98fvt6tqwVcQ=="
-  "resolved" "https://registry.npmjs.org/react-redux/-/react-redux-6.0.1.tgz"
-  "version" "6.0.1"
-  dependencies:
-    "@babel/runtime" "^7.3.1"
-    "hoist-non-react-statics" "^3.3.0"
-    "invariant" "^2.2.4"
-    "loose-envify" "^1.4.0"
-    "prop-types" "^15.7.2"
-    "react-is" "^16.8.2"
-
 "react-redux@^7.2.1 || ^8.0.2", "react-redux@^7.2.6":
   "integrity" "sha512-Gx4L3uM182jEEayZfRbI/G11ZpYdNAnBs70lFVMNdHJI76XYtR+7m0MN+eAs7UHBPhWXcnFPaS+9owSCJQHNpQ=="
   "resolved" "https://registry.npmjs.org/react-redux/-/react-redux-7.2.9.tgz"
