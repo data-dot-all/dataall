@@ -23,7 +23,6 @@ from . import (
     Organization,
     Stack,
     Test,
-    SagemakerStudio,
     RedshiftCluster,
     Glossary,
     Feed,

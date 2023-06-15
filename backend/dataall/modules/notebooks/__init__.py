@@ -4,7 +4,6 @@ from typing import List, Type
 
 from dataall.db.api import TargetType
 from dataall.modules.loader import ImportMode, ModuleInterface
-from dataall.modules.notebooks.db.repositories import NotebookRepository
 
 log = logging.getLogger(__name__)
 
@@ -31,12 +30,6 @@ class NotebookCdkModuleInterface(ModuleInterface):
     @staticmethod
     def is_supported(modes):
         return ImportMode.CDK in modes
-
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.sagemaker_base import SagemakerCdkModuleInterface
-
-        return [SagemakerCdkModuleInterface]
 
     def __init__(self):
         import dataall.modules.notebooks.cdk

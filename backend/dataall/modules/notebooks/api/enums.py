@@ -7,5 +7,4 @@ class SagemakerNotebookRole(GraphQLEnumMapper):
 
     CREATOR = "950"
     ADMIN = "900"
-    SHARED = "300"
     NO_PERMISSION = "000"

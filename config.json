@@ -1,5 +1,8 @@
 {
     "modules": {
+        "mlstudio": {
+            "active": true
+        },
         "notebooks": {
             "active": true
         },

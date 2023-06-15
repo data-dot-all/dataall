@@ -20,7 +20,6 @@ from .RedshiftClusterDataset import RedshiftClusterDataset
 from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
-from .SagemakerStudio import SagemakerStudio, SagemakerStudioUserProfile
 from .DataPipeline import DataPipeline
 from .DataPipelineEnvironment import DataPipelineEnvironment
 from .Stack import Stack

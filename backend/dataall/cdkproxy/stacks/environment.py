@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import pathlib
@@ -7,7 +6,6 @@ from typing import List, Type
 
 from aws_cdk import (
     custom_resources as cr,
-    aws_ec2 as ec2,
     aws_s3 as s3,
     aws_iam as iam,
     aws_lambda as _lambda,
@@ -25,11 +23,9 @@ from aws_cdk import (
     CustomResource,
     Tags,
 )
-from constructs import DependencyGroup
 
 from .manager import stack
 from .pivot_role import PivotRole
-from .sagemakerstudio import SageMakerDomain
 from .policies.data_policy import S3Policy
 from .policies.service_policy import ServicePolicy
 from ... import db
@@ -52,16 +48,16 @@ class EnvironmentStackExtension:
 @stack(stack='environment')
 class EnvironmentSetup(Stack):
     """Deploy common environment resources:
-            - default environment S3 Bucket
-            - Lambda + Provider for dataset Glue Databases custom resource
-            - Lambda + Provider for dataset Data Lake location custom resource
-            - SSM parameters for the Lambdas and Providers
-            - pivotRole (if configured)
-            - SNS topic (if subscriptions are enabled)
-            - SM Studio domain (if ML studio is enabled)
-        - Deploy team specific resources: teams IAM roles, Athena workgroups
-        - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
-        """
+        - default environment S3 Bucket
+        - Lambda + Provider for dataset Glue Databases custom resource
+        - Lambda + Provider for dataset Data Lake location custom resource
+        - SSM parameters for the Lambdas and Providers
+        - pivotRole (if configured)
+        - SNS topic (if subscriptions are enabled)
+        - Module extension stacks (if module is enabled and has an associated extension stack)
+    - Deploy team specific resources: teams IAM roles, Athena workgroups
+    - Set PivotRole as Lake formation data lake Admin - lakeformationdefaultsettings custom resource
+    """
     module_name = __file__
     _EXTENSIONS: List[Type[EnvironmentStackExtension]] = []
 
@@ -216,8 +212,8 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        default_role = self.create_or_import_environment_default_role()
-        group_roles = self.create_or_import_environment_groups_roles()
+        self.default_role = self.create_or_import_environment_default_role()
+        self.group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
             default_environment_bucket,
@@ -573,24 +569,6 @@ class EnvironmentSetup(Stack):
                 self._environment,
             )
 
-        # Create or import SageMaker Studio domain if ML Studio enabled
-        domain = SageMakerDomain(
-            stack=self,
-            id='SageMakerDomain',
-            environment=self._environment
-        )
-        self.existing_sagemaker_domain = domain.check_existing_sagemaker_studio_domain()
-        if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
-            # Create dependency group - Sagemaker depends on group IAM roles
-            sagemaker_dependency_group = DependencyGroup()
-            sagemaker_dependency_group.add(default_role)
-            for group_role in group_roles:
-                sagemaker_dependency_group.add(group_role)
-
-            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
-
-            sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
-
         # print the IAM role arn for this service account
         CfnOutput(
             self,
@@ -601,6 +579,7 @@ class EnvironmentSetup(Stack):
         )
 
         for extension in EnvironmentSetup._EXTENSIONS:
+            logger.info(f"Adding extension stack{extension.__name__}")
             extension.extent(self)
 
         TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")

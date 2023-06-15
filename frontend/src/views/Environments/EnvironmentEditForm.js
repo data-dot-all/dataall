@@ -48,8 +48,10 @@ const EnvironmentEditForm = (props) => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
     } else {
       const error = response.errors
@@ -74,14 +76,17 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             dashboardsEnabled: values.dashboardsEnabled,
-            mlStudiosEnabled: values.mlStudiosEnabled,
             pipelinesEnabled: values.pipelinesEnabled,
             warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
-                key: "notebooksEnabled",
+                key: 'notebooksEnabled',
                 value: String(values.notebooksEnabled)
+              },
+              {
+                key: 'mlStudiosEnabled',
+                value: String(values.mlStudiosEnabled)
               }
             ]
           }
@@ -199,8 +204,8 @@ const EnvironmentEditForm = (props) => {
                 description: env.description,
                 tags: env.tags || [],
                 dashboardsEnabled: env.dashboardsEnabled,
-                notebooksEnabled: env.parameters["notebooksEnabled"] === 'true',
-                mlStudiosEnabled: env.mlStudiosEnabled,
+                notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
+                mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
@@ -465,6 +470,7 @@ const EnvironmentEditForm = (props) => {
                                     </Typography>
                                   }
                                   labelPlacement="end"
+                                  value={values.mlStudiosEnabled}
                                 />
                               </FormGroup>
                             </Box>
