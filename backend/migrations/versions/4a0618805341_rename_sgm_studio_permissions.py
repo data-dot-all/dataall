@@ -111,7 +111,7 @@ def upgrade():
                 .first()
             )
 
-            if existing_tenant_permissions.permissionUri:
+            if existing_tenant_permissions:
                 print(f"Permission already exists {existing_tenant_permissions.permissionUri}, skipping...")
             else:
                 print("Permission does not exist, adding it...")
