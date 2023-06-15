@@ -13,7 +13,14 @@ deployed on the selected environment and its linked AWS account:
 
 ### Dataset IAM role
 
+**Usage**
+
+- Assumed by Dataset owners from <span style="color:grey">*data.all*</span> UI to quickly ingest or access Dataset data
+- Assumed by Dataset Glue crawler
+- Assumed by the Dataset Glue profiling job
+
 **IAM Permissions**
+
 - read and write permissions to the Dataset S3 Bucket (ONLY this bucket)
 - encrypt/decrypt data with the Dataset KMS key (ONLY this key)
 - read and write permissions to the Dataset Glue database and tables (ONLY this database)
@@ -26,12 +33,6 @@ deployed on the selected environment and its linked AWS account:
 In addition to restricting the access via IAM policies, Dataset Glue database and tables are 
 protected using AWS Lake Formation. With Lake Formation, the Dataset IAM role gets granted
 access to the Dataset Glue database only.
-
-
-**Usage**
-- Assumed by Dataset owners from <span style="color:grey">*data.all*</span> UI to quickly ingest or access Dataset data
-- Assumed by Dataset Glue crawler
-- Assumed by the Dataset Glue profiling job
 
 
 ### Tables and Folders
