@@ -39,6 +39,10 @@ def upgrade():
             share_uri = share.shareUri
             dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
             dataset_steward = dataset.stewards
+
+            # Check if Owner is different then Steward and Env Admin
+            # IF different add Approver remove Requestor permissions
+            # IF ENv Admin unique then 
             policy = api.ResourcePolicy.has_group_resource_permission(
                 session,
                 group_uri=dataset_steward,

@@ -395,7 +395,7 @@ class Dataset:
     @staticmethod
     def transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
         env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-        if dataset.stewards != env.SamlGroupName:
+        if dataset.stewards != dataset.SamlAdminGroupName:
             ResourcePolicy.delete_resource_policy(
                 session=session,
                 group=dataset.stewards,
@@ -411,7 +411,7 @@ class Dataset:
 
         dataset_tables = [t.tableUri for t in Dataset.get_dataset_tables(session, dataset.datasetUri)]
         for tableUri in dataset_tables:
-            if dataset.stewards != env.SamlGroupName:
+            if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session,
                     group=dataset.stewards,
@@ -439,11 +439,12 @@ class Dataset:
                     resource_uri=share.shareUri,
                     resource_type=models.ShareObject.__name__,
                 )
-                ResourcePolicy.delete_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    resource_uri=share.shareUri,
-                )
+                if dataset.stewards != dataset.SamlAdminGroupName:
+                    ResourcePolicy.delete_resource_policy(
+                        session=session,
+                        group=dataset.stewards,
+                        resource_uri=share.shareUri,
+                    )
         return dataset
 
     @staticmethod
