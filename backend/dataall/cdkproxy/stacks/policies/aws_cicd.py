@@ -82,6 +82,7 @@ class AwsCICD(ServicePolicy):
                 ],
                 resources=['*'],
             ),
+            #TODO: it is not possible to tag the pipeline when we create it from the console
             iam.PolicyStatement(
                 sid="TagCodepipelineTeamRepo",
                 actions=['codepipeline:TagResource'],
