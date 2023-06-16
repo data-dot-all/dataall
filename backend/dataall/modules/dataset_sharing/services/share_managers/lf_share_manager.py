@@ -180,9 +180,9 @@ class LFShareManager:
         )
 
         database = GlueClient(
-            target_environment.AwsAccountId,
-            shared_db_name,
-            target_environment.region
+            account_id=target_environment.AwsAccountId,
+            database=shared_db_name,
+            region=target_environment.region
         ).create_database(f's3://{dataset.S3BucketName}')
 
         LakeFormationClient.grant_pivot_role_all_database_permissions(
@@ -530,7 +530,7 @@ class LFShareManager:
 
     def _create_glue_client(self):
         return GlueClient(
-            self.target_environment.AwsAccountId,
-            self.target_environment.region,
-            self.shared_db_name,
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
         )
