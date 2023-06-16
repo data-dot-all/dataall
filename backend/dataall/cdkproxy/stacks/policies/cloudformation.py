@@ -62,9 +62,8 @@ class Cloudformation(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="ManagedTeamCloudFormation",
+                sid="DeleteTeamCloudFormation",
                 actions=[
-                    'cloudformation:UpdateStack',
                     'cloudformation:DeleteStack',
                 ],
                 resources=[
