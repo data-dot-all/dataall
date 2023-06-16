@@ -77,6 +77,7 @@ class ContainerStack(pyNestedClass):
                     envname, resource_prefix, log_group_name='cdkproxy'
                 ),
             ),
+            readonly_root_filesystem=True,
         )
 
         ssm.StringParameter(
@@ -258,6 +259,7 @@ class ContainerStack(pyNestedClass):
                     envname, resource_prefix, log_group_name='share-manager'
                 ),
             ),
+            readonly_root_filesystem=True,
         )
 
         ssm.StringParameter(
@@ -544,6 +546,7 @@ class ContainerStack(pyNestedClass):
             environment=environment,
             command=command,
             logging=ecs.LogDriver.aws_logs(stream_prefix='task', log_group=log_group),
+            readonly_root_filesystem=True,
         )
         scheduled_task = ecs_patterns.ScheduledFargateTask(
             self,
