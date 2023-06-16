@@ -15,6 +15,19 @@ class SSM(ServicePolicy):
                 resources=["*"],
             ),
             aws_iam.PolicyStatement(
+                sid='CreateTeamParameters',
+                effect=aws_iam.Effect.ALLOW,
+                actions=[
+                    'ssm:AddTagsToResource'
+                ],
+                resources=[f"arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*"],
+                conditions={
+                    'StringEquals': {
+                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
+                    }
+                },
+            ),
+            aws_iam.PolicyStatement(
                 sid='ManageTeamParameters',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
@@ -25,7 +38,6 @@ class SSM(ServicePolicy):
                     'ssm:GetParameters',
                     'ssm:GetParameter',
                     'ssm:DeleteParameters',
-                    'ssm:AddTagsToResource',
                     'ssm:ListTagsForResource',
                 ],
                 resources=[f"arn:aws:ssm:*:{self.account}:parameter/{self.resource_prefix}*"],

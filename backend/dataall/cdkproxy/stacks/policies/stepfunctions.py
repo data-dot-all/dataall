@@ -23,8 +23,9 @@ class StepFunctions(ServicePolicy):
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'states:CreateStateMachine',
-                    'states:TagResource',
-                    'states:UntagResource',
+                    'states:UpdateStateMachine',
+                    'states:CreateActivity',
+                    'states:TagResource'
                 ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*',
@@ -38,7 +39,14 @@ class StepFunctions(ServicePolicy):
             aws_iam.PolicyStatement(
                 sid='ManageTeamStepFunctions',
                 effect=aws_iam.Effect.ALLOW,
-                actions=['states:*'],
+                actions=[
+                    'states:Delete*',
+                    'states:Describe*',
+                    'states:Get*',
+                    'states:List*',
+                    'states:Start*',
+                    'states:StopExecution'
+                ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:execution:{self.resource_prefix}*:*',
                     f'arn:aws:states:{self.region}:{self.account}:activity:*',

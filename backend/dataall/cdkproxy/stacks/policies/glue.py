@@ -126,8 +126,7 @@ class Glue(ServicePolicy):
                     'glue:CreateCrawler',
                     'glue:CreateJob',
                     'glue:CreateTrigger',
-                    'glue:TagResource',
-                    'glue:UntagResource',
+                    'glue:TagResource'
                 ],
                 resources=[
                     f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*',

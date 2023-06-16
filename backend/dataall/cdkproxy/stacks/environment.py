@@ -537,10 +537,10 @@ class EnvironmentSetup(Stack):
         # print the IAM role arn for this service account
         CfnOutput(
             self,
-            'pivotRoleName',
-            export_name='pivotRoleName',
+            f'pivotRoleName-{self._environment.environmentUri}',
+            export_name=f'pivotRoleName-{self._environment.environmentUri}',
             value=self.pivot_role_name,
-            description='pivotRoleName',
+            description='pivotRole name, helps us to distinguish between auto-created pivot roles (dataallPivotRole-cdk) and manually created pivot roles (dataallPivotRole)',
         )
         TagsUtil.add_tags(self)
 
@@ -620,6 +620,8 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
                 iam.ServicePrincipal('states.amazonaws.com'),
                 iam.ServicePrincipal('databrew.amazonaws.com'),
+                iam.ServicePrincipal('codebuild.amazonaws.com'),
+                iam.ServicePrincipal('codepipeline.amazonaws.com'),
                 iam.ArnPrincipal(
                     f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
                 ),

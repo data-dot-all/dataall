@@ -10,6 +10,7 @@ class Athena(ServicePolicy):
                 sid="ListAthena",
                 actions=[
                     "athena:ListWorkGroups",
+                    "athena:ListTagsForResource",
                     "athena:GetWorkgroup"
                 ],
                 effect=iam.Effect.ALLOW,

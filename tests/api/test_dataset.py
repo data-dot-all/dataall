@@ -443,7 +443,7 @@ def test_import_dataset(org1, env1, dataset1, client, group):
             'bucketName': 'dhimportedbucket',
             'glueDatabaseName': 'dhimportedGlueDB',
             'adminRoleName': 'dhimportedRole',
-            'KmsKeyId': '1234-YYEY',
+            'KmsKeyAlias': '1234-YYEY',
             'owner': dataset1.owner,
             'SamlAdminGroupName': group.name,
         },

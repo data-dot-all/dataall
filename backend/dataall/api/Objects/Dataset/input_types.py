@@ -94,7 +94,7 @@ ImportDatasetInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('bucketName', gql.NonNullableType(gql.String)),
         gql.Argument('glueDatabaseName', gql.String),
-        gql.Argument('KmsKeyId', gql.NonNullableType(gql.String)),
+        gql.Argument('KmsKeyAlias', gql.NonNullableType(gql.String)),
         gql.Argument('adminRoleName', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('owner', gql.NonNullableType(gql.String)),

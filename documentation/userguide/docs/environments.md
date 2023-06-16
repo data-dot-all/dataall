@@ -315,8 +315,9 @@ clipboard. Both options are under the "Actions" column in the Teams table.
 **Usage**
 
 - Assumed by Team members from <span style="color:grey">*data.all*</span> UI to explore and work with data
+- Credentials can be copied in <span style="color:grey">*data.all*</span> UI to explore and work with data
 - Assumed by <span style="color:grey">*data.all*</span> Worksheets to query data using Athena
-
+- Credentials can be copied in <span style="color:grey">*data.all*</span> Pipelines to develop the pipeline
 
 **IAM Permissions**
 
