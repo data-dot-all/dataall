@@ -1,16 +1,38 @@
 import json
 
 import pytest
-from aws_cdk import App
+from aws_cdk.assertions import Template
+from aws_cdk import App, Stack, aws_iam
 
-from dataall.cdkproxy.stacks import EnvironmentSetup
-from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
+from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile, SageMakerDomainExtension
 
-from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile
+
+class MockEnvironmentSageMakerExtension(Stack):
+    def environment(self):
+        return self._environment
+
+    def __init__(self, scope, id, env, **kwargs):
+        super().__init__(
+            scope,
+            id,
+            description='Cloud formation stack of ENVIRONMENT: {}; URI: {}; DESCRIPTION: {}'.format(
+                env.label,
+                env.environmentUri,
+                env.description,
+            )[:1024],
+            **kwargs,
+        )
+        self._environment = env
+        self.default_role = aws_iam.Role(self, "DefaultRole",
+            assumed_by=aws_iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Example role..."
+        )
+        self.group_roles = []
+        SageMakerDomainExtension.extent(self)
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, sgm_studio, env, org):
+def patch_methods_sagemaker_studio(mocker, db, sgm_studio, env, org):
     mocker.patch(
         'dataall.modules.mlstudio.cdk.mlstudio_stack.SagemakerStudioUserProfile.get_engine',
         return_value=db,
@@ -41,19 +63,6 @@ def patch_methods(mocker, db, sgm_studio, env, org):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def template(sgm_studio):
-    app = App()
-    SagemakerStudioUserProfile(
-        app, 'Studio', target_uri=sgm_studio.sagemakerStudioUserUri
-    )
-    return json.dumps(app.synth().get_stack_by_name('Studio').template)
-
-
-def test_resources_created(template):
-    assert 'AWS::SageMaker::UserProfile' in template
-
-
-@pytest.fixture(scope='function', autouse=True)
 def patch_methods_sagemaker_studio_extension(mocker):
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_cdk_look_up_role_arn',
@@ -63,4 +72,35 @@ def patch_methods_sagemaker_studio_extension(mocker):
         'dataall.modules.mlstudio.aws.ec2_client.EC2.check_default_vpc_exists',
         return_value=False,
     )
-    #TODO = WAYS OF TESTING EXTENSIONS
+
+
+def test_resources_sgmstudio_stack_created(sgm_studio):
+    app = App()
+
+    # Create the Stack
+    stack = SagemakerStudioUserProfile(
+        app, 'Domain', target_uri=sgm_studio.sagemakerStudioUserUri
+    )
+
+    # Prepare the stack for assertions.
+    template = Template.from_stack(stack)
+
+    # Assert that we have created a SageMaker user profile
+    # TODO: Add more assertions
+    template.resource_count_is("AWS::SageMaker::UserProfile", 1)
+
+
+def test_resources_sgmstudio_extension_stack_created(env):
+    app = App()
+
+    # Create the Stack
+    stack = MockEnvironmentSageMakerExtension(
+        app, 'SagemakerExtension', env=env
+    )
+
+    # Prepare the stack for assertions.
+    template = Template.from_stack(stack)
+
+    # Assert that we have created a SageMaker domain
+    # TODO: Add more assertions
+    template.resource_count_is("AWS::SageMaker::Domain", 1)
