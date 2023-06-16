@@ -169,6 +169,17 @@ class SessionHelper:
         return 'arn:aws:iam::{}:role/cdk-hnb659fds-lookup-role-{}-{}'.format(accountid, accountid, region)
 
     @classmethod
+    def get_cdk_exec_role_arn(cls, accountid, region):
+        """Returns the name that will be assumed to perform IAM actions on a given AWS accountid using CDK Toolkit role
+        Args:
+            accountid(string) : aws account id
+        Returns:
+                string : arn of the CDKToolkit role on the target aws account id
+        """
+        log.info(f"Getting CDK exec role: arn:aws:iam::{accountid}:role/cdk-hnb659fds-lookup-role-{accountid}-{region}")
+        return 'arn:aws:iam::{}:role/cdk-hnb659fds-cfn-exec-role-{}-{}'.format(accountid, accountid, region)
+
+    @classmethod
     def get_delegation_role_id(cls, accountid):
         """Returns the name that will be assumed to perform IAM actions on a given AWS accountid
         Args:

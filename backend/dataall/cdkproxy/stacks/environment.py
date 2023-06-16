@@ -147,6 +147,7 @@ class EnvironmentSetup(Stack):
         self.pivot_role_name = SessionHelper.get_delegation_role_name()
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
+
         pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
             parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate"
@@ -155,6 +156,7 @@ class EnvironmentSetup(Stack):
         self.engine = self.get_engine()
 
         self._environment = self.get_target(target_uri=target_uri)
+        self.cdk_exec_role = SessionHelper.get_cdk_exec_role_arn(self._environment.AwsAccountId, self._environment.region)
 
         self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(
             self.engine, environment=self._environment
@@ -226,7 +228,7 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        default_role = self.create_or_import_environment_admin_group_role()
+        self.default_role = self.create_or_import_environment_admin_group_role()
         group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
@@ -251,6 +253,7 @@ class EnvironmentSetup(Stack):
                 f'PivotRole{self._environment.environmentUri}',
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
+        kms_key = self.set_cr_kms_key()
 
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
@@ -259,7 +262,8 @@ class EnvironmentSetup(Stack):
         )
 
         lakeformation_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-lfcr-{self._environment.environmentUri}'
+            f'{self._environment.resourcePrefix}-lfcr-{self._environment.environmentUri}',
+            kms_key
         )
         lf_default_settings_custom_resource = _lambda.Function(
             self,
@@ -314,55 +318,17 @@ class EnvironmentSetup(Stack):
             string_value=lf_default_settings_custom_resource.function_name,
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/lf/defaultsettings/lambda/name',
         )
-        # Glue database custom resource - Old, to be deleted in future release
-        entry_point = str(
-            pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource_nodelete').resolve()
-        )
-        gluedb_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedbcr-{self._environment.environmentUri}')
-        gluedb_custom_resource = _lambda.Function(
-            self,
-            'GlueDatabaseCustomResourceHandler',
-            function_name=f'{self._environment.resourcePrefix}-gluedb-handler-{self._environment.environmentUri}',
-            role=self.pivot_role,
-            handler='index.on_event',
-            code=_lambda.Code.from_asset(entry_point),
-            memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for Glue database '
-            'as Cfn currently does not support the CreateTableDefaultPermissions parameter',
-            timeout=Duration.seconds(5 * 60),
-            environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
-            },
-            dead_letter_queue_enabled=True,
-            dead_letter_queue=gluedb_cr_dlq,
-            on_failure=lambda_destination.SqsDestination(gluedb_cr_dlq),
-            tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
-        )
-        ssm.StringParameter(
-            self,
-            'GlueCustomResourceFunctionArn',
-            string_value=gluedb_custom_resource.function_arn,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/arn',
-        )
 
-        ssm.StringParameter(
-            self,
-            'GlueCustomResourceFunctionName',
-            string_value=gluedb_custom_resource.function_name,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/lambda/name',
-        )
         # Glue database custom resource - New
         # This Lambda is triggered with the creation of each dataset, it is not executed when the environment is created
         entry_point = str(
             pathlib.PosixPath(os.path.dirname(__file__), '../assets/gluedatabasecustomresource').resolve()
         )
 
-        gluedb_lf_cr_dlq = self.set_dlq(f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}')
+        gluedb_lf_cr_dlq = self.set_dlq(
+            f'{self._environment.resourcePrefix}-gluedb-lf-cr-{self._environment.environmentUri}',
+            kms_key
+        )
         gluedb_lf_custom_resource = _lambda.Function(
             self,
             'GlueDatabaseLFCustomResourceHandler',
@@ -414,84 +380,49 @@ class EnvironmentSetup(Stack):
             parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/gluehandler/provider/servicetoken',
         )
 
-        # Data lake location custom resource
-        entry_point = str(
-            pathlib.PosixPath(
-                os.path.dirname(__file__), "../assets/datalakelocationcustomresource"
-            ).resolve()
-        )
-
-        datalakelocation_cr_dlq = self.set_dlq(
-            f'{self._environment.resourcePrefix}-datalakelocationcr-{self._environment.environmentUri}'
-        )
-        datalake_location_custom_resource = _lambda.Function(
-            self,
-            "DatalakeLocationCustomResourceHandler",
-            function_name=f'{self._environment.resourcePrefix}-datalakelocation-handler-{self._environment.environmentUri}',
-            role=self.pivot_role,
-            handler="index.on_event",
-            code=_lambda.Code.from_asset(entry_point),
-            memory_size=1664,
-            description='This Lambda function is a cloudformation custom resource provider for LakeFormation Storage Locations '
-                        'as the Cfn resource cannot handle pivotRole updates',
-            timeout=Duration.seconds(5 * 60),
-            environment={
-                'envname': self._environment.name,
-                'LOG_LEVEL': 'DEBUG',
-                'AWS_ACCOUNT': self._environment.AwsAccountId,
-                'DEFAULT_ENV_ROLE_ARN': self._environment.EnvironmentDefaultIAMRoleArn,
-                'DEFAULT_CDK_ROLE_ARN': self._environment.CDKRoleArn,
-            },
-            dead_letter_queue_enabled=True,
-            dead_letter_queue=datalakelocation_cr_dlq,
-            on_failure=lambda_destination.SqsDestination(datalakelocation_cr_dlq),
-            tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
-        )
-
-        datalake_location_provider = cr.Provider(
-            self,
-            f"{self._environment.resourcePrefix}DatalakeLocationProvider",
-            on_event_handler=datalake_location_custom_resource
-        )
-
-        ssm.StringParameter(
-            self,
-            "DatalakeLocationCustomResourceFunctionArn",
-            string_value=datalake_location_custom_resource.function_arn,
-            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/lambda/arn",
-        )
-
-        ssm.StringParameter(
-            self,
-            "DatalakeLocationCustomResourceFunctionName",
-            string_value=datalake_location_custom_resource.function_name,
-            parameter_name=f"/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/lambda/name",
-        )
-
-        ssm.StringParameter(
-            self,
-            'DataLocationCustomResourceProviderServiceToken',
-            string_value=datalake_location_provider.service_token,
-            parameter_name=f'/dataall/{self._environment.environmentUri}/cfn/custom-resources/datalocationhandler/provider/servicetoken',
-        )
-
         # Create SNS topics for subscriptions
         if self._environment.subscriptionsEnabled:
-            queue_key = kms.Key(
-                self,
-                f'{self._environment.resourcePrefix}-producers-queue-key',
-                removal_policy=RemovalPolicy.DESTROY,
-                alias=f'{self._environment.resourcePrefix}-producers-queue-key',
-                enable_key_rotation=True,
+            subscription_key_policy = iam.PolicyDocument(
+                assign_sids = True,
+                statements=[
+                    iam.PolicyStatement(
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:DescribeKey"
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        principals = [
+                            iam.ServicePrincipal('sqs.amazonaws.com'),
+                            iam.ServicePrincipal('sns.amazonaws.com'),
+                            iam.ArnPrincipal(self.default_role.role_arn)
+                        ],
+                        resources=["*"],
+                    )
+                ]
             )
+            subscription_key = kms.Key(
+                self,
+                'dataall-env-subscription-key',
+                removal_policy=RemovalPolicy.DESTROY,
+                alias='dataall-env-subscription-key',
+                enable_key_rotation=True,
+                admins=[
+                    iam.ArnPrincipal(self.cdk_exec_role),
+                    iam.ArnPrincipal(self.default_role.role_arn)
+                ],
+                policy=subscription_key_policy
+            )
+
             dlq_queue = sqs.Queue(
                 self,
                 f'ProducersSubscriptionsQueue-{self._environment.environmentUri}-dlq',
                 queue_name=f'{self._environment.resourcePrefix}-producers-dlq-{self._environment.environmentUri}',
                 retention_period=Duration.days(14),
                 encryption=sqs.QueueEncryption.KMS,
-                encryption_master_key=queue_key,
+                encryption_master_key=subscription_key,
             )
             dlq_queue.add_to_resource_policy(
                 iam.PolicyStatement(
@@ -516,7 +447,7 @@ class EnvironmentSetup(Stack):
                 queue_name=f'{self._environment.resourcePrefix}-producers-queue-{self._environment.environmentUri}',
                 dead_letter_queue=self.dlq,
                 encryption=sqs.QueueEncryption.KMS,
-                encryption_master_key=queue_key,
+                encryption_master_key=subscription_key,
             )
 
             if self._environment.subscriptionsProducersTopicImported:
@@ -530,6 +461,7 @@ class EnvironmentSetup(Stack):
                     self._environment.subscriptionsProducersTopicName,
                     self.dataall_central_account,
                     self._environment,
+                    subscription_key
                 )
 
             topic.add_subscription(sns_subs.SqsSubscription(queue))
@@ -581,6 +513,7 @@ class EnvironmentSetup(Stack):
                 self._environment.subscriptionsConsumersTopicName,
                 self.dataall_central_account,
                 self._environment,
+                subscription_key
             )
 
         # Create or import SageMaker Studio domain if ML Studio enabled
@@ -593,11 +526,11 @@ class EnvironmentSetup(Stack):
         if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
             # Create dependency group - Sagemaker depends on group IAM roles
             sagemaker_dependency_group = DependencyGroup()
-            sagemaker_dependency_group.add(default_role)
+            sagemaker_dependency_group.add(self.default_role)
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
 
-            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
+            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[self.default_role] + group_roles)
 
             sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
@@ -729,7 +662,7 @@ class EnvironmentSetup(Stack):
         )
         return athena_workgroup
 
-    def create_topic(self, construct_id, central_account, environment):
+    def create_topic(self, construct_id, central_account, environment, kms_key):
         actions = [
             'SNS:GetTopicAttributes',
             'SNS:SetTopicAttributes',
@@ -741,14 +674,13 @@ class EnvironmentSetup(Stack):
             'SNS:Publish',
             'SNS:Receive',
         ]
-        topic_key = kms.Key(
-            self,
-            f'{construct_id}-topic-key',
-            removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{construct_id}-topic-key',
-            enable_key_rotation=True,
+        topic = sns.Topic(
+            self, 
+            f'{construct_id}', 
+            topic_name=f'{construct_id}', 
+            master_key=kms_key
         )
-        topic = sns.Topic(self, f'{construct_id}', topic_name=f'{construct_id}', master_key=topic_key)
+
         topic.add_to_resource_policy(
             iam.PolicyStatement(
                 principals=[iam.AccountPrincipal(central_account)],
@@ -773,22 +705,50 @@ class EnvironmentSetup(Stack):
         shutil.make_archive(base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}')
         return assetspath
 
-    def set_dlq(self, queue_name) -> sqs.Queue:
-        queue_key = kms.Key(
-            self,
-            f'{queue_name}-key',
-            removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{queue_name}-key',
-            enable_key_rotation=True,
+    def set_cr_kms_key(self) -> kms.Key:
+        key_policy = iam.PolicyDocument(
+          assign_sids = True,
+          statements=[
+              iam.PolicyStatement(
+                  actions=[
+                      "kms:Encrypt",
+                      "kms:Decrypt",
+                      "kms:ReEncrypt*",
+                      "kms:GenerateDataKey*",
+                      "kms:DescribeKey"
+                  ],
+                  effect=iam.Effect.ALLOW,
+                  principals = [
+                      iam.ArnPrincipal(self.pivot_role.role_arn),
+                      iam.ArnPrincipal(self.default_role.role_arn),
+                  ],
+                  resources=["*"],
+              )
+          ]
         )
 
+        kms_key = kms.Key(
+            self,
+            'dataall-env-cr-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias='dataall-env-cr-key',
+            enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(self.cdk_exec_role),
+                iam.ArnPrincipal(self.default_role.role_arn)
+            ],
+            policy = key_policy
+        )
+        return kms_key
+
+    def set_dlq(self, queue_name, kms_key) -> sqs.Queue:
         dlq = sqs.Queue(
             self,
             f'{queue_name}-queue',
             queue_name=f'{queue_name}',
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS,
-            encryption_master_key=queue_key,
+            encryption_master_key=kms_key,
             data_key_reuse=Duration.days(1),
             removal_policy=RemovalPolicy.DESTROY,
         )

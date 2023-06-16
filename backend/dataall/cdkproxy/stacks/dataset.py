@@ -95,6 +95,7 @@ class Dataset(Stack):
         dataset = self.get_target()
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
+        cdk_exec_role = SessionHelper.get_cdk_exec_role_arn(dataset.AwsAccountId, dataset.region)
 
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
@@ -115,22 +116,11 @@ class Dataset(Stack):
                 'DatasetKmsKey',
                 alias=dataset.KmsAlias,
                 enable_key_rotation=True,
-                policy=iam.PolicyDocument(
-                    assign_sids=True,
-                    statements=[
-                        iam.PolicyStatement(
-                            resources=['*'],
-                            effect=iam.Effect.ALLOW,
-                            principals=[
-                                iam.AccountPrincipal(account_id=dataset.AwsAccountId),
-                                iam.ArnPrincipal(
-                                    f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
-                                ),
-                            ],
-                            actions=['kms:*'],
-                        )
-                    ],
-                ),
+                admins = [
+                    iam.ArnPrincipal(cdk_exec_role),
+                    iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'),
+                    iam.ArnPrincipal(env_group.environmentIAMRoleArn)
+                ]
             )
 
             dataset_bucket = s3.Bucket(
@@ -334,6 +324,28 @@ class Dataset(Stack):
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
+        
+        # Add Key Policy For Users
+        if not dataset.imported:
+            dataset_key.add_to_resource_policy(
+                iam.PolicyStatement(
+                    sid="EnableDatasetOwnerKeyUsage",
+                    resources=['*'],
+                    effect=iam.Effect.ALLOW,
+                    principals = [
+                        iam.ArnPrincipal(env_group.environmentIAMRoleArn),
+                        iam.ArnPrincipal(dataset_admin_role.role_arn)
+                    ],
+                    actions=[
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*",
+                        "kms:DescribeKey"
+                    ],
+                )
+            )
+
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
         registered_location = LakeFormation.check_existing_lf_registered_location(
@@ -349,7 +361,7 @@ class Dataset(Stack):
                 type='AWS::LakeFormation::Resource',
                 properties={
                     'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
+                    'RoleArn': dataset.IAMDatasetAdminRoleArn,
                     'UseServiceLinkedRole': False,
                 },
             )
@@ -362,45 +374,6 @@ class Dataset(Stack):
         ]
         if quicksight_default_group_arn:
             dataset_admins.append(quicksight_default_group_arn)
-
-        # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
-        # Old provider, to be deleted in future release
-        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
-            self,
-            'GlueDbCRArnParameter',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
-        )
-
-        glue_db_handler = _lambda.Function.from_function_attributes(
-            self,
-            'CustomGlueDatabaseHandler',
-            function_arn=glue_db_handler_arn.string_value,
-            same_environment=True,
-        )
-
-        GlueDatabase = cr.Provider(
-            self,
-            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=glue_db_handler,
-        )
-        old_glue_db = CustomResource(
-            self,
-            f'{env.resourcePrefix}DatasetDatabase',
-            service_token=GlueDatabase.service_token,
-            resource_type='Custom::GlueDatabase',
-            properties={
-                'CatalogId': dataset.AwsAccountId,
-                'DatabaseInput': {
-                    'Description': 'dataall database {} '.format(
-                        dataset.GlueDatabaseName
-                    ),
-                    'LocationUri': f's3://{dataset.S3BucketName}/',
-                    'Name': f'{dataset.GlueDatabaseName}',
-                    'CreateTableDefaultPermissions': [],
-                },
-                'DatabaseAdministrators': dataset_admins,
-            },
-        )
 
         # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
