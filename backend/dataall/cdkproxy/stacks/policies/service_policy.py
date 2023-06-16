@@ -71,8 +71,10 @@ class ServicePolicy(object):
                             'logs:Get*',
                             'logs:List*',
                             'cloudwatch:GetMetricData',
+                            'events:ListRuleNamesByTarget',
                             'iam:list*',
                             'iam:Get*',
+                            'iam:CreatePolicy',
                             'iam:CreateServiceLinkedRole',
                             'tag:GetResources',
                             'tag:GetTagValues',
@@ -104,8 +106,10 @@ class ServicePolicy(object):
                                     "lambda.amazonaws.com",
                                     "sagemaker.amazonaws.com",
                                     "states.amazonaws.com",
-                                    'sagemaker.amazonaws.com',
-                                    'databrew.amazonaws.com'
+                                    "sagemaker.amazonaws.com",
+                                    "databrew.amazonaws.com",
+                                    "codebuild.amazonaws.com",
+                                    "codepipeline.amazonaws.com"
                                 ]
                             }
                         }
