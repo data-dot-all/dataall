@@ -1,6 +1,5 @@
 import logging
 import os
-import typing
 
 from aws_cdk import (
     custom_resources as cr,
@@ -106,8 +105,8 @@ class Dataset(Stack):
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
             )
-            dataset_key = kms.Key.from_key_arn(
-                self, f'ImportedKey{dataset.datasetUri}', f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{dataset.KmsAlias}",
+            dataset_key = kms.Key.from_lookup(
+                self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
             )
         else:
             dataset_key = kms.Key(

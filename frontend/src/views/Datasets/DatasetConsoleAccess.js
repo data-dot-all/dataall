@@ -47,25 +47,14 @@ const DatasetConsoleAccess = (props) => {
           {dataset.IAMDatasetAdminRoleArn}
         </Typography>
       </CardContent>
-      {dataset.imported ?
-          <CardContent>
-              <Typography color="textSecondary" variant="subtitle2">
-                KMS key
-              </Typography>
-              <Typography color="textPrimary" variant="body2">
-                {`arn:aws:kms:${dataset.region}:${dataset.AwsAccountId}/key:${dataset.KmsAlias}`}
-              </Typography>
-          </CardContent>
-          : (
-              <CardContent>
-                  <Typography color="textSecondary" variant="subtitle2">
-                    KMS alias
-                  </Typography>
-                  <Typography color="textPrimary" variant="body2">
-                    {`arn:aws:kms:${dataset.region}:${dataset.AwsAccountId}/alias:${dataset.KmsAlias}`}
-                  </Typography>
-              </CardContent>
-      )}
+      <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            KMS alias
+          </Typography>
+          <Typography color="textPrimary" variant="body2">
+            {`arn:aws:kms:${dataset.region}:${dataset.AwsAccountId}/alias:${dataset.KmsAlias}`}
+          </Typography>
+      </CardContent>
     </Card>
   );
 };
