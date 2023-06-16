@@ -80,7 +80,6 @@ def sync_tables(engine, es=None):
                             table,
                             principals=[
                                 SessionHelper.get_delegation_role_arn(env.AwsAccountId),
-                                env.EnvironmentDefaultIAMRoleArn,
                                 env_group.environmentIAMRoleArn,
                             ],
                         )

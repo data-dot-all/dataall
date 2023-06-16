@@ -259,7 +259,9 @@ class Dataset(Stack):
                         "glue:UpdateTable",
                         "glue:DeleteTableVersion",
                         "glue:DeleteTable",
-                        "glue:GetTable"
+                        "glue:GetTable",
+                        "glue:BatchGetPartition",
+                        "glue:BatchCreatePartition"
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
