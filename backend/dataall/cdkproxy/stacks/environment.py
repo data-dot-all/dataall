@@ -604,10 +604,10 @@ class EnvironmentSetup(Stack):
         # print the IAM role arn for this service account
         CfnOutput(
             self,
-            'pivotRoleName',
-            export_name='pivotRoleName',
+            f'pivotRoleName-{self._environment.environmentUri}',
+            export_name=f'pivotRoleName-{self._environment.environmentUri}',
             value=self.pivot_role_name,
-            description='pivotRoleName',
+            description='pivotRole name, helps us to distinguish between auto-created pivot roles (dataallPivotRole-cdk) and manually created pivot roles (dataallPivotRole)',
         )
         TagsUtil.add_tags(self)
 

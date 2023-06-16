@@ -6,6 +6,7 @@ class Lambda(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="ListLambda",
                 actions=[
                     'lambda:ListFunctions',
                     'lambda:ListEventSourceMappings',
@@ -18,17 +19,36 @@ class Lambda(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
+                sid="GenericLambdaFunctions",
                 actions=[
                     'lambda:*',
                 ],
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:code-signing-config:*',
                     f'arn:aws:lambda:{self.region}:{self.account}:event-source-mapping:*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                    }
+                },
+            ),
+            iam.PolicyStatement(
+                sid="ManageTeamLambda",
+                actions=[
+                    'lambda:*',
+                ],
+                resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*',
                     f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:layer:{self.resource_prefix}*:*',
                 ],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                    }
+                },
             ),
             iam.PolicyStatement(
                 sid="LoggingLambda",
