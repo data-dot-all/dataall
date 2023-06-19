@@ -18,7 +18,7 @@ def ignore_module_tests_if_not_active():
     modules = config.get_property('modules', {})
     for name, props in modules.items():
         if not props["active"]:
-            collect_ignore_glob.append(os.path.join('modules', f'{name}*'))
+            collect_ignore_glob.append(os.path.join('modules', f'{name}', '*'))
 
 
 ignore_module_tests_if_not_active()
