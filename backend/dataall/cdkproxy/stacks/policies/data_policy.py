@@ -122,14 +122,11 @@ class DataPolicy:
         if self.datasets:
             dataset: models.Dataset
             for dataset in self.datasets:
-                if dataset.importedKmsKey:
-                    key_id = dataset.KmsAlias
-                else:
-                    key_id = KMS.get_key_id(
-                        account_id=dataset.AwsAccountId,
-                        region=dataset.region,
-                        key_alias=f"alias/{dataset.KmsAlias}"
-                    )
+                key_id = KMS.get_key_id(
+                    account_id=dataset.AwsAccountId,
+                    region=dataset.region,
+                    key_alias=f"alias/{dataset.KmsAlias}"
+                )
                 allowed_buckets_kms_keys.append(f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
 
             statements.extend(
