@@ -3,6 +3,13 @@ from aws_cdk import aws_iam as iam
 
 
 class AwsCICD(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS CICD services: CodeCommit, CodePipeline and CodeBuild.
+    It allows data.all users to:
+    - Create and manage CodeBuild, CodeCommit and CodePipeline resources for the team
+    - Create an S3 Bucket for codepipeline prefixed by "codepipeline-"
+    - Read/Write to and from S3 Buckets prefixed by "codepipeline-"
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -82,7 +89,6 @@ class AwsCICD(ServicePolicy):
                 ],
                 resources=['*'],
             ),
-            #TODO: it is not possible to tag the pipeline when we create it from the console
             iam.PolicyStatement(
                 sid="TagCodepipelineTeamRepo",
                 actions=['codepipeline:TagResource'],
@@ -127,6 +133,28 @@ class AwsCICD(ServicePolicy):
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
+            ),
+            iam.PolicyStatement(
+                sid="CodePipelineCreateS3Bucket",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    's3:CreateBucket',
+                    's3:ListBucket',
+                    's3:PutBucketPublicAccessBlock'
+                ],
+                resources=["arn:aws:s3:::codepipeline-*"],
+            ),
+            iam.PolicyStatement(
+                sid="CodePipelineReadWriteS3Bucket",
+                actions=[
+                    's3:GetObject',
+                    's3:PutObject',
+                    's3:DeleteObject'
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    'arn:aws:s3:::codepipeline-*/*',
+                ],
             ),
             iam.PolicyStatement(
                 sid="GenericCodeBuild",
