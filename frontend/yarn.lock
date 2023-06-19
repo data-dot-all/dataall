@@ -219,13 +219,13 @@
     "lodash" "^4.17.21"
     "uuid" "^3.2.1"
 
-"@aws-amplify/predictions@5.3.0":
-  "integrity" "sha512-szXmqdSRZtRNqCUKwpexq+vxvpaI0fJXME6yKAxxWwRLFgN5CfnTdkZA07jUX05hewPhX0qgfjuAsTTbkB2Nlg=="
-  "resolved" "https://registry.npmjs.org/@aws-amplify/predictions/-/predictions-5.3.0.tgz"
-  "version" "5.3.0"
+"@aws-amplify/predictions@5.2.3":
+  "integrity" "sha512-nbPHIxrA1LKXY9EJf1P+Nn3a8SLk+ooyZBnWtnI8h0o5Pw4F89xZNZ3P6Z1NJKWZ6xynJS6W078RwlxDHKDwrw=="
+  "resolved" "https://registry.npmjs.org/@aws-amplify/predictions/-/predictions-5.2.3.tgz"
+  "version" "5.2.3"
   dependencies:
     "@aws-amplify/core" "5.4.0"
-    "@aws-amplify/storage" "5.5.0"
+    "@aws-amplify/storage" "5.4.1"
     "@aws-sdk/client-comprehend" "3.6.1"
     "@aws-sdk/client-polly" "3.6.1"
     "@aws-sdk/client-rekognition" "3.6.1"
@@ -256,10 +256,10 @@
   "resolved" "https://registry.npmjs.org/@aws-amplify/rtn-push-notification/-/rtn-push-notification-1.1.1.tgz"
   "version" "1.1.1"
 
-"@aws-amplify/storage@5.5.0":
-  "integrity" "sha512-nRzhRsyU/2Y86QrxNlHvaUw0exGubkKp9hEF6xwywBBd1m3PWlSwThDU7wtIp9uKuoF6UWuOQUjcJOe6S6NDuQ=="
-  "resolved" "https://registry.npmjs.org/@aws-amplify/storage/-/storage-5.5.0.tgz"
-  "version" "5.5.0"
+"@aws-amplify/storage@5.4.1":
+  "integrity" "sha512-b116Hp+nUmbev19ojN34mBQyJ50xW6hnUlnKjBrAFVAooaXzZzYbKoCHthF87YS2CblBlLWcGAzcZiD//KoL1Q=="
+  "resolved" "https://registry.npmjs.org/@aws-amplify/storage/-/storage-5.4.1.tgz"
+  "version" "5.4.1"
   dependencies:
     "@aws-amplify/core" "5.4.0"
     "@aws-sdk/client-s3" "3.6.3"
@@ -5458,9 +5458,9 @@
   "version" "1.0.5"
 
 "aws-amplify@^5.2.6":
-  "integrity" "sha512-d6olqMAmX+kRv7ibUSy/4Rvx9JtifDZz+sTuQtYFJjGkmUezJqWMux2ZinI6bezcWdcZsO2u1k/8zI117SJIzA=="
-  "resolved" "https://registry.npmjs.org/aws-amplify/-/aws-amplify-5.2.7.tgz"
-  "version" "5.2.7"
+  "integrity" "sha512-Xz3IpvCYrnVbp4AdPOhUuqibDPcZWRrHfuKrbhOme4VjEiUVeEyIZbj/4MEZwteeLFZ1MNYSaEMpyzi+9dwSQQ=="
+  "resolved" "https://registry.npmjs.org/aws-amplify/-/aws-amplify-5.2.6.tgz"
+  "version" "5.2.6"
   dependencies:
     "@aws-amplify/analytics" "6.2.0"
     "@aws-amplify/api" "5.2.1"
@@ -5471,9 +5471,9 @@
     "@aws-amplify/geo" "2.0.35"
     "@aws-amplify/interactions" "5.1.1"
     "@aws-amplify/notifications" "1.2.0"
-    "@aws-amplify/predictions" "5.3.0"
+    "@aws-amplify/predictions" "5.2.3"
     "@aws-amplify/pubsub" "5.2.1"
-    "@aws-amplify/storage" "5.5.0"
+    "@aws-amplify/storage" "5.4.1"
     "tslib" "^2.0.0"
 
 "axe-core@^4.4.3":
