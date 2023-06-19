@@ -28,11 +28,7 @@ class GlueDatasetProfilerClient:
 
     def run_job(self, profiling: DatasetProfilingRun):
         """Run glue job. Returns id of the job"""
-        args = {
-            {'--table': profiling.GlueTableName}
-            if profiling.GlueTableName
-            else {}
-        },
+        args = {'--table': profiling.GlueTableName} if profiling.GlueTableName else {}
         try:
             response = self._client.start_job_run(
                 JobName=self._name, Arguments=args
