@@ -3,6 +3,9 @@ from aws_cdk import aws_iam as iam
 
 
 class Sagemaker(ServicePolicy):
+    """
+    Class including all permissions needed to work with Amazon SageMaker.
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -32,11 +35,12 @@ class Sagemaker(ServicePolicy):
                 resources=['*']
             ),
             iam.PolicyStatement(
-                sid="SageMakerCreateResources",
+                sid="SageMakerCreateTaggedResources",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Create*'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/{self.resource_prefix}*/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:model/{self.resource_prefix}*',
@@ -54,8 +58,30 @@ class Sagemaker(ServicePolicy):
 
                 ],
                 conditions={
-                    'StringEquals': {f'aws:RequestTag/{self.tag_key}': [self.tag_value]}
-                }
+                    'StringEquals': {
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                    'StringEquals': {
+                        f'aws:RequestTag/{self.tag_key}': [self.tag_value],
+                    },
+                },
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerCreateResourcesWithoutTagging",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:CreatePresignedDomainUrl',
+                    'sagemaker:CreatePresignedNotebookInstanceUrl',
+                ],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/{self.resource_prefix}*/*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                },
             ),
             iam.PolicyStatement(
                 sid="SageMakerTagResources",
@@ -64,8 +90,11 @@ class Sagemaker(ServicePolicy):
                 resources=['*'],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                    'StringEquals': {
+                        f'aws:RequestTag/{self.tag_key}': [self.tag_value],
+                    },
                 },
             ),
             iam.PolicyStatement(
@@ -91,7 +120,7 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
@@ -114,7 +143,7 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
@@ -141,7 +170,7 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
@@ -157,7 +186,7 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
