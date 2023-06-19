@@ -3,6 +3,13 @@ from aws_cdk import aws_iam as iam
 
 
 class Lambda(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS Lambda.
+    It allows data.all users to:
+    - List Lambda resources
+    - Create and manage team Lambda resources
+    - Log Lambda executions
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

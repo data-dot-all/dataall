@@ -3,6 +3,11 @@ from aws_cdk import aws_iam
 
 
 class SecretsManager(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS Secrets Manager.
+    It allows data.all users to:
+    -
+    """
 
     def get_statements(self):
         statements = [

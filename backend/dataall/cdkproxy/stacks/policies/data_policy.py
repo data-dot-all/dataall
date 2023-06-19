@@ -10,6 +10,11 @@ logger = logging.getLogger()
 
 
 class DataPolicy:
+    """
+    Class including all permissions needed to work with AWS Lambda.
+    It allows data.all users to:
+    -
+    """
     def __init__(
         self,
         stack,

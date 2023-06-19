@@ -3,7 +3,12 @@ from aws_cdk import aws_iam as iam
 
 
 class Athena(ServicePolicy):
-
+    """
+    Class including all permissions needed to work with Amazon Athena.
+    It allows data.all users to:
+    - Work with team workgroup
+    - Store query results in environment S3 Bucket location for the team workgroup (access to other S3 locations is restricted)
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

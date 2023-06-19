@@ -4,6 +4,9 @@ from .service_policy import ServicePolicy
 
 
 class StepFunctions(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS Step Functions.
+    """
     def get_statements(self):
         return [
             aws_iam.PolicyStatement(

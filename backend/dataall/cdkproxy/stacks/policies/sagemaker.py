@@ -9,6 +9,20 @@ class Sagemaker(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid="SageMakerTagResources",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:AddTags'],
+                resources=['*'],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                    'StringEquals': {
+                        f'aws:RequestTag/{self.tag_key}': [self.tag_value],
+                    },
+                },
+            ),
+            iam.PolicyStatement(
                 sid="SageMakerRead",
                 effect=iam.Effect.ALLOW,
                 actions=[
@@ -24,42 +38,18 @@ class Sagemaker(ServicePolicy):
                 ],
                 resources=['*'],
             ),
+            # SageMaker Notebooks permissions
             iam.PolicyStatement(
-                sid="SageMakerCreateGeneric",
+                sid="SageMakerCreateTaggedResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
-                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
-                    'sagemaker:CreatePresignedDomainUrl'
-                ],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
-                sid="SageMakerCreateTaggedResources",
-                effect=iam.Effect.ALLOW,
-                actions=['sagemaker:Create*'],
+                actions=['sagemaker:CreateNotebookInstance'],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/{self.resource_prefix}*/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/{self.resource_prefix}*',
 
                 ],
                 conditions={
                     'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     },
                     'StringEquals': {
                         f'aws:RequestTag/{self.tag_key}': [self.tag_value],
@@ -67,15 +57,20 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerCreateResourcesWithoutTagging",
+                sid="SageMakerNotebookInstanceLifecycleConfig",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'sagemaker:CreatePresignedDomainUrl',
-                    'sagemaker:CreatePresignedNotebookInstanceUrl',
+                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
+                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
                 ],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerCreatePresignedNotebookInstanceUrl",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:CreatePresignedNotebookInstanceUrl'],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/{self.resource_prefix}*/*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -84,43 +79,101 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerTagResources",
+                sid="SageMakerManageResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
-                actions=['sagemaker:AddTags'],
-                resources=['*'],
+                actions=[
+                    'sagemaker:DeleteNotebookInstance',
+                    'sagemaker:UpdateNotebookInstance',
+                    'sagemaker:StartNotebookInstance',
+                    'sagemaker:StopNotebookInstance'
+                ],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                },
+            ),
+            # SageMaker Studio permissions
+            iam.PolicyStatement(
+                sid="SageMakerApps",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:CreateApp',
+                    'sagemaker:DeleteApp'
+                ],
+                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*']
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerCreatePresignedDomainUrl",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:CreatePresignedDomainUrl'],
+                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*'],
                 conditions={
                     'StringEquals': {
                         f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
+                },
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerManageTeamResourcesMLStudio",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'sagemaker:DeleteDomain',
+                    'sagemaker:DeleteUserProfile',
+                    'sagemaker:UpdateDomain',
+                    'sagemaker:UpdateUserProfile',
+                ],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
+                    }
+                },
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerCreateTaggedGenericResources",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:Create*'],
+                not_resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
+                ],
+                conditions={
+                    'StringEquals': {
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     },
                     'StringEquals': {
                         f'aws:RequestTag/{self.tag_key}': [self.tag_value],
                     },
                 },
             ),
+            #processing job
+            # model registry
+            # use one of the project templates
             iam.PolicyStatement(
-                sid="SageMakerDeleteTeamResources",
+                sid="SageMakerManageTeamResources",
                 effect=iam.Effect.ALLOW,
-                actions=['sagemaker:Delete*'],
-                resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package-group/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint-config/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-group/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:algorithm/{self.resource_prefix}*',
+                actions=[
+                    'sagemaker:Delete*',
+                    'sagemaker:Update*'
+                ],
+                not_resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
                 ],
                 conditions={
                     'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
@@ -132,7 +185,6 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:Stop*'
                 ],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/{self.resource_prefix}*',
@@ -143,34 +195,7 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                sid="SageMakerUpdateTeamResources",
-                effect=iam.Effect.ALLOW,
-                actions=['sagemaker:Update*'],
-                resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/{self.resource_prefix}*/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:model-package/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance-lifecycle-config/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:studio-lifecycle-config/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*/execution/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:experiment-trial-component/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:project/{self.resource_prefix}*',
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
@@ -186,17 +211,28 @@ class Sagemaker(ServicePolicy):
                 ],
                 conditions={
                     'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
                     }
                 },
             ),
+            iam.PolicyStatement(
+                sid="SageMakerReadServiceCatalog",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'servicecatalog:ListAcceptedPortfolioShares',
+                    'servicecatalog:ListPrincipalsForPortfolio',
+                ],
+                resources=['*']
+            ),
+            # Logging and ECR support permissions
             iam.PolicyStatement(
                 sid="SageMakerLogging",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
-                    'logs:PutLogEvents'],
+                    'logs:PutLogEvents'
+                ],
                 resources=[
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/sagemaker/*',
                     f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/sagemaker/*:log-stream:*',
@@ -211,9 +247,7 @@ class Sagemaker(ServicePolicy):
                     'ecr:GetDownloadUrlForLayer',
                     'ecr:BatchGetImage'
                 ],
-                resources=[
-                    '*'
-                ]
+                resources=['*']
             )
         ]
         return statements
