@@ -94,7 +94,6 @@ class Dataset(Stack):
         dataset = self.get_target()
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
-        cdk_exec_role = SessionHelper.get_cdk_exec_role_arn(dataset.AwsAccountId, dataset.region)
 
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
@@ -115,8 +114,29 @@ class Dataset(Stack):
                 'DatasetKmsKey',
                 alias=dataset.KmsAlias,
                 enable_key_rotation=True,
-                admins = [
-                    iam.ArnPrincipal(cdk_exec_role),
+                policy=iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            sid="EnableDatasetOwnerKeyUsage",
+                            resources=['*'],
+                            effect=iam.Effect.ALLOW,
+                            principals=[
+                                iam.ArnPrincipal(env_group.environmentIAMRoleArn),
+                                iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}')
+                            ],
+                            actions=[
+                                "kms:Encrypt",
+                                "kms:Decrypt",
+                                "kms:ReEncrypt*",
+                                "kms:GenerateDataKey*",
+                                "kms:DescribeKey"
+                            ],
+                        )
+                    ]
+                ),
+                admins=[
+                    iam.ArnPrincipal(f"arn:aws:iam::{env.AwsAccountId}:role/admin"),
+                    iam.ArnPrincipal(env.CDKRoleArn),
                     iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'),
                     iam.ArnPrincipal(env_group.environmentIAMRoleArn)
                 ]
@@ -242,6 +262,7 @@ class Dataset(Stack):
                     sid="GlueAccessCrawler",
                     actions=[
                         "glue:GetDatabase",
+                        "glue:GetUserDefinedFunctions",
                         "glue:GetTableVersion",
                         "glue:CreateTable",
                         "glue:GetTables",
@@ -258,6 +279,16 @@ class Dataset(Stack):
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
+                    ]
+                ),
+                iam.PolicyStatement(
+                    sid="GlueAccessDefault",
+                    actions=[
+                        "glue:GetDatabase",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                     ]
                 ),
                 iam.PolicyStatement(
@@ -330,13 +361,10 @@ class Dataset(Stack):
         if not dataset.imported:
             dataset_key.add_to_resource_policy(
                 iam.PolicyStatement(
-                    sid="EnableDatasetOwnerKeyUsage",
+                    sid="EnableDatasetIAMRoleKeyUsage",
                     resources=['*'],
                     effect=iam.Effect.ALLOW,
-                    principals = [
-                        iam.ArnPrincipal(env_group.environmentIAMRoleArn),
-                        iam.ArnPrincipal(dataset_admin_role.role_arn)
-                    ],
+                    principals=[dataset_admin_role],
                     actions=[
                         "kms:Encrypt",
                         "kms:Decrypt",
@@ -346,7 +374,6 @@ class Dataset(Stack):
                     ],
                 )
             )
-
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
         registered_location = LakeFormation.check_existing_lf_registered_location(

@@ -15,6 +15,7 @@ from ... import db
 from ...db import models
 from ...db.api import Environment
 from ...utils.cdk_nag_utils import CDKNagUtil
+from ...aws.handlers.sts import SessionHelper
 from ...utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
@@ -62,11 +63,18 @@ class SagemakerNotebook(Stack):
 
         env_group = self.get_env_group(notebook)
 
+        cdk_exec_role = SessionHelper.get_cdk_exec_role_arn(notebook.AWSAccountId, notebook.region)
+
         notebook_key = kms.Key(
             self,
             'NotebookKmsKey',
             alias=notebook.NotebookInstanceName,
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(f"arn:aws:iam::{notebook.AWSAccountId}:role/admin"),
+                iam.ArnPrincipal(cdk_exec_role),
+                iam.ArnPrincipal(env_group.environmentIAMRoleArn),
+            ],
             policy=iam.PolicyDocument(
                 assign_sids=True,
                 statements=[
@@ -74,14 +82,20 @@ class SagemakerNotebook(Stack):
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.AccountPrincipal(account_id=notebook.AWSAccountId),
                             iam.Role.from_role_arn(
                                 self,
                                 'NotebookRole',
                                 role_arn=notebook.RoleArn,
                             ),
+                            iam.ServicePrincipal(service="sagemaker.amazonaws.com"),
                         ],
-                        actions=['kms:*'],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:DescribeKey"
+                        ],
                     )
                 ],
             ),
@@ -116,7 +130,7 @@ class SagemakerNotebook(Stack):
                 self,
                 f'Notebook{target_uri}',
                 instance_type=notebook.InstanceType,
-                role_arn=env_group.environmentIAMRoleArn,
+                role_arn=notebook.RoleArn,
                 direct_internet_access='Disabled',
                 subnet_id=notebook.SubnetId,
                 security_group_ids=[security_group.security_group_id],

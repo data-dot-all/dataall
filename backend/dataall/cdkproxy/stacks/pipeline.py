@@ -141,15 +141,27 @@ class PipelineStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             alias=f"{pipeline.name}-codebuild-key",
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(f"arn:aws:iam::{self.account}:role/admin"),
+                iam.ArnPrincipal(pipeline_environment.CDKRoleArn),
+                iam.iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn)
+            ],
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
                         resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.AccountPrincipal(account_id=self.account),
+                            iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
+                            build_project_role
                         ],
-                        actions=["kms:*"],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:DescribeKey"
+                        ],
                     ),
                     iam.PolicyStatement(
                         resources=["*"],

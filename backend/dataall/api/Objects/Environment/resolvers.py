@@ -32,6 +32,7 @@ def get_trust_account(context: Context, source, **kwargs):
 
 
 def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
+    return False
     ssm_param = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate")
     return True if ssm_param == "True" else False
 

@@ -148,15 +148,15 @@ class EnvironmentSetup(Stack):
         self.external_id = SessionHelper.get_external_id_secret()
         self.dataall_central_account = SessionHelper.get_account()
 
-        pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate"
-        )
+        pivot_role_as_part_of_environment_stack = False 
+        # ParameterStoreManager.get_parameter_value(
+        #     region=os.getenv('AWS_REGION', 'eu-west-1'),
+        #     parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate"
+        # )
         self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == "True" else False
         self.engine = self.get_engine()
 
         self._environment = self.get_target(target_uri=target_uri)
-        self.cdk_exec_role = SessionHelper.get_cdk_exec_role_arn(self._environment.AwsAccountId, self._environment.region)
 
         self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(
             self.engine, environment=self._environment
@@ -394,10 +394,10 @@ class EnvironmentSetup(Stack):
                             "kms:DescribeKey"
                         ],
                         effect=iam.Effect.ALLOW,
-                        principals = [
+                        principals=[
                             iam.ServicePrincipal('sqs.amazonaws.com'),
                             iam.ServicePrincipal('sns.amazonaws.com'),
-                            iam.ArnPrincipal(self.default_role.role_arn)
+                            self.default_role
                         ],
                         resources=["*"],
                     )
@@ -410,7 +410,8 @@ class EnvironmentSetup(Stack):
                 alias='dataall-env-subscription-key',
                 enable_key_rotation=True,
                 admins=[
-                    iam.ArnPrincipal(self.cdk_exec_role),
+                    iam.ArnPrincipal(f"arn:aws:iam::{self._environment.AwsAccountId}:role/admin"),
+                    iam.ArnPrincipal(self._environment.CDKRoleArn),
                     iam.ArnPrincipal(self.default_role.role_arn)
                 ],
                 policy=subscription_key_policy
@@ -720,9 +721,9 @@ class EnvironmentSetup(Stack):
                       "kms:DescribeKey"
                   ],
                   effect=iam.Effect.ALLOW,
-                  principals = [
-                      iam.ArnPrincipal(self.pivot_role.role_arn),
-                      iam.ArnPrincipal(self.default_role.role_arn),
+                  principals=[
+                      self.pivot_role,
+                      self.default_role,
                   ],
                   resources=["*"],
               )
@@ -736,7 +737,8 @@ class EnvironmentSetup(Stack):
             alias='dataall-env-cr-key',
             enable_key_rotation=True,
             admins=[
-                iam.ArnPrincipal(self.cdk_exec_role),
+                iam.ArnPrincipal(f"arn:aws:iam::{self._environment.AwsAccountId}:role/admin"),
+                iam.ArnPrincipal(self._environment.CDKRoleArn),
                 iam.ArnPrincipal(self.default_role.role_arn)
             ],
             policy = key_policy

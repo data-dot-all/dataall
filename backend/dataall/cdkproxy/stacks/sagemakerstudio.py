@@ -31,7 +31,7 @@ class SageMakerDomain:
         self,
         stack,
         id,
-        environment: models.Environment
+        environment: models.Environment,
     ):
         self.stack = stack
         self.id = id
@@ -146,14 +146,33 @@ class SageMakerDomain:
             'SagemakerDomainKmsKey',
             alias='SagemakerStudioDomain',
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(f"arn:aws:iam::{self.environment.AwsAccountId}:role/admin"),
+                iam.ArnPrincipal(self.environment.CDKRoleArn),
+                iam.ArnPrincipal(self.environment.EnvironmentDefaultIAMRoleArn),
+                sagemaker_domain_role
+            ],
             policy=iam.PolicyDocument(
                 assign_sids=True,
                 statements=[
                     iam.PolicyStatement(
-                        resources=['*'],
+                        actions=[
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:DescribeKey"
+                        ],
                         effect=iam.Effect.ALLOW,
-                        principals=[iam.AccountPrincipal(account_id=self.environment.AwsAccountId), sagemaker_domain_role] + sagemaker_principals,
-                        actions=['kms:*'],
+                        principals=[
+                            iam.ServicePrincipal('sagemaker.amazonaws.com'),
+                            iam.ServicePrincipal('elasticfilesystem.amazonaws.com'),
+                            iam.ServicePrincipal('ebs.amazonaws.com'),
+                            iam.ServicePrincipal('s3.amazonaws.com'),
+                            sagemaker_domain_role,
+                            iam.ArnPrincipal(self.environment.CDKRoleArn)
+                        ] + sagemaker_principals,
+                        resources=["*"],
                     )
                 ],
             ),
@@ -265,6 +284,25 @@ class SagemakerStudioUserProfile(Stack):
             .get_att('UserProfileArn')
             .to_string()
         )
+
+        # sm_domain_key = kms.Key.from_lookup(
+        #     self, f'SagemakerStudioDomain', alias_name=f"alias/SagemakerStudioDomain"
+        # )
+        # sm_domain_key.add_to_resource_policy(
+        #       iam.PolicyStatement(
+        #           sid=f"EnableKeyUsage{env_group.groupUri}",
+        #           resources=['*'],
+        #           effect=iam.Effect.ALLOW,
+        #           principals=[env_group.environmentIAMRoleArn],
+        #           actions=[
+        #               "kms:Encrypt",
+        #               "kms:Decrypt",
+        #               "kms:ReEncrypt*",
+        #               "kms:GenerateDataKey*",
+        #               "kms:DescribeKey"
+        #           ],
+        #       )
+        #   )
 
         TagsUtil.add_tags(self)
 
