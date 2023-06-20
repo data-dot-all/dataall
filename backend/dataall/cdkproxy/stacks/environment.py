@@ -253,7 +253,7 @@ class EnvironmentSetup(Stack):
                 f'PivotRole{self._environment.environmentUri}',
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
-        kms_key = self.set_cr_kms_key()
+        kms_key = self.set_cr_kms_key(group_roles)
 
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
@@ -391,27 +391,39 @@ class EnvironmentSetup(Stack):
                             "kms:Decrypt",
                             "kms:ReEncrypt*",
                             "kms:GenerateDataKey*",
-                            "kms:DescribeKey"
+                        ],
+                        effect=iam.Effect.ALLOW,
+                        principals=[self.default_role] + group_roles,
+                        resources=["*"],
+                        conditions={
+                            "StringEquals": {
+                                "kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com",
+                                "kms:ViaService": f"sns.{self._environment.region}.amazonaws.com",
+                            }
+                        }
+                    ),
+                    iam.PolicyStatement(
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
                         ],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal('sqs.amazonaws.com'),
-                            iam.ServicePrincipal('sns.amazonaws.com'),
-                            self.default_role
-                        ],
+                            self.default_role,
+                        ] + group_roles,
                         resources=["*"],
                     )
                 ]
             )
             subscription_key = kms.Key(
                 self,
-                'dataall-env-subscription-key',
+                f'dataall-env-{self._environment.environmentUri}-subscription-key',
                 removal_policy=RemovalPolicy.DESTROY,
-                alias='dataall-env-subscription-key',
+                alias=f'dataall-env-{self._environment.environmentUri}-subscription-key',
                 enable_key_rotation=True,
                 admins=[
                     iam.ArnPrincipal(self._environment.CDKRoleArn),
-                    iam.ArnPrincipal(self.default_role.role_arn)
                 ],
                 policy=subscription_key_policy
             )
@@ -707,7 +719,7 @@ class EnvironmentSetup(Stack):
         shutil.make_archive(base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}')
         return assetspath
 
-    def set_cr_kms_key(self) -> kms.Key:
+    def set_cr_kms_key(self, group_roles) -> kms.Key:
         key_policy = iam.PolicyDocument(
           assign_sids = True,
           statements=[
@@ -717,13 +729,27 @@ class EnvironmentSetup(Stack):
                       "kms:Decrypt",
                       "kms:ReEncrypt*",
                       "kms:GenerateDataKey*",
-                      "kms:DescribeKey"
                   ],
                   effect=iam.Effect.ALLOW,
                   principals=[
                       self.pivot_role,
                       self.default_role,
+                  ] + group_roles,
+                  resources=["*"],
+                  conditions={
+                      "StringEquals": {"kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com"}
+                  }
+              ),
+              iam.PolicyStatement(
+                  actions=[
+                      "kms:DescribeKey",
+                      "kms:List*",
+                      "kms:GetKeyPolicy",
                   ],
+                  effect=iam.Effect.ALLOW,
+                  principals=[
+                      self.default_role,
+                  ] + group_roles,
                   resources=["*"],
               )
           ]
@@ -731,13 +757,12 @@ class EnvironmentSetup(Stack):
 
         kms_key = kms.Key(
             self,
-            'dataall-env-cr-key',
+            f'dataall-environment-{self._environment.environmentUri}-cr-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias='dataall-env-cr-key',
+            alias=f'dataall-environment-{self._environment.environmentUri}-cr-key',
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(self._environment.CDKRoleArn),
-                iam.ArnPrincipal(self.default_role.role_arn)
             ],
             policy = key_policy
         )

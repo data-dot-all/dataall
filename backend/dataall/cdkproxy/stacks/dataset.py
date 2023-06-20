@@ -122,22 +122,42 @@ class Dataset(Stack):
                             effect=iam.Effect.ALLOW,
                             principals=[
                                 iam.ArnPrincipal(env_group.environmentIAMRoleArn),
-                                iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}')
                             ],
                             actions=[
                                 "kms:Encrypt",
                                 "kms:Decrypt",
                                 "kms:ReEncrypt*",
                                 "kms:GenerateDataKey*",
-                                "kms:DescribeKey"
+                                "kms:DescribeKey",
+                                "kms:List*",
+                                "kms:GetKeyPolicy",
+                            ],
+                        ),
+                        iam.PolicyStatement(
+                            sid='KMSPivotRolePermissions',
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                'kms:Decrypt',
+                                'kms:Encrypt',
+                                'kms:GenerateDataKey*',
+                                'kms:PutKeyPolicy',
+                                'kms:ReEncrypt*',
+                                'kms:TagResource',
+                                'kms:UntagResource',
+                                'kms:DeleteAlias',
+                                'kms:DescribeKey',
+                                'kms:CreateAlias',
+                                'kms:List*',
+                            ],
+                            resources=['*'],
+                            principals=[
+                                iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}')
                             ],
                         )
                     ]
                 ),
                 admins=[
                     iam.ArnPrincipal(env.CDKRoleArn),
-                    iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'),
-                    iam.ArnPrincipal(env_group.environmentIAMRoleArn)
                 ]
             )
 

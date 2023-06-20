@@ -159,17 +159,32 @@ class PipelineStack(Stack):
                             "kms:Decrypt",
                             "kms:ReEncrypt*",
                             "kms:GenerateDataKey*",
-                            "kms:DescribeKey"
                         ],
+                        conditions={
+                            "StringEquals": {"kms:ViaService": f"codebuild.{pipeline_environment.region}.amazonaws.com"}
+                        }
                     ),
                     iam.PolicyStatement(
                         resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ServicePrincipal(service="codebuild.amazonaws.com"),
+                            iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
+                            build_project_role
                         ],
-                        actions=["kms:GenerateDataKey*", "kms:Decrypt"],
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
+                        ],
                     ),
+                    # iam.PolicyStatement(
+                    #     resources=["*"],
+                    #     effect=iam.Effect.ALLOW,
+                    #     principals=[
+                    #         iam.ServicePrincipal(service="codebuild.amazonaws.com"),
+                    #     ],
+                    #     actions=["kms:GenerateDataKey*", "kms:Decrypt"],
+                    # ),
                 ],
             ),
         )

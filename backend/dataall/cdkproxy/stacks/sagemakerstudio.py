@@ -160,7 +160,9 @@ class SageMakerDomain:
                             "kms:Decrypt",
                             "kms:ReEncrypt*",
                             "kms:GenerateDataKey*",
-                            "kms:DescribeKey"
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
                         ],
                         effect=iam.Effect.ALLOW,
                         principals=[

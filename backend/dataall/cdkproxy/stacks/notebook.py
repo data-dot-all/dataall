@@ -72,7 +72,6 @@ class SagemakerNotebook(Stack):
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(cdk_exec_role),
-                iam.ArnPrincipal(env_group.environmentIAMRoleArn),
             ],
             policy=iam.PolicyDocument(
                 assign_sids=True,
@@ -86,7 +85,6 @@ class SagemakerNotebook(Stack):
                                 'NotebookRole',
                                 role_arn=notebook.RoleArn,
                             ),
-                            iam.ServicePrincipal(service="sagemaker.amazonaws.com"),
                         ],
                         actions=[
                             "kms:Encrypt",
@@ -95,6 +93,25 @@ class SagemakerNotebook(Stack):
                             "kms:GenerateDataKey*",
                             "kms:DescribeKey"
                         ],
+                        conditions={
+                            "StringEquals": {"kms:ViaService": f"sagemaker.{notebook.region}.amazonaws.com"}
+                        }
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.Role.from_role_arn(
+                                self,
+                                'NotebookRole',
+                                role_arn=notebook.RoleArn,
+                            ),
+                        ],
+                        actions=[
+                            "kms:DescribeKey",
+                            "kms:List*",
+                            "kms:GetKeyPolicy",
+                        ]
                     )
                 ],
             ),
