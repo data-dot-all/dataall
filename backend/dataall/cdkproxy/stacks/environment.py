@@ -382,7 +382,7 @@ class EnvironmentSetup(Stack):
         # Create SNS topics for subscriptions
         if self._environment.subscriptionsEnabled:
             subscription_key_policy = iam.PolicyDocument(
-                assign_sids = True,
+                assign_sids=True,
                 statements=[
                     iam.PolicyStatement(
                         actions=[
@@ -396,8 +396,10 @@ class EnvironmentSetup(Stack):
                         resources=["*"],
                         conditions={
                             "StringEquals": {
-                                "kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com",
-                                "kms:ViaService": f"sns.{self._environment.region}.amazonaws.com",
+                                "kms:ViaService": [
+                                    f"sqs.{self._environment.region}.amazonaws.com",
+                                    f"sns.{self._environment.region}.amazonaws.com",
+                                ]
                             }
                         }
                     ),
@@ -686,9 +688,9 @@ class EnvironmentSetup(Stack):
             'SNS:Receive',
         ]
         topic = sns.Topic(
-            self, 
-            f'{construct_id}', 
-            topic_name=f'{construct_id}', 
+            self,
+            f'{construct_id}',
+            topic_name=f'{construct_id}',
             master_key=kms_key
         )
 
@@ -718,38 +720,38 @@ class EnvironmentSetup(Stack):
 
     def set_cr_kms_key(self, group_roles) -> kms.Key:
         key_policy = iam.PolicyDocument(
-          assign_sids = True,
-          statements=[
-              iam.PolicyStatement(
-                  actions=[
-                      "kms:Encrypt",
-                      "kms:Decrypt",
-                      "kms:ReEncrypt*",
-                      "kms:GenerateDataKey*",
-                  ],
-                  effect=iam.Effect.ALLOW,
-                  principals=[
-                      self.pivot_role,
-                      self.default_role,
-                  ] + group_roles,
-                  resources=["*"],
-                  conditions={
-                      "StringEquals": {"kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com"}
-                  }
-              ),
-              iam.PolicyStatement(
-                  actions=[
-                      "kms:DescribeKey",
-                      "kms:List*",
-                      "kms:GetKeyPolicy",
-                  ],
-                  effect=iam.Effect.ALLOW,
-                  principals=[
-                      self.default_role,
-                  ] + group_roles,
-                  resources=["*"],
-              )
-          ]
+            assign_sids=True,
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    principals=[
+                        self.pivot_role,
+                        self.default_role,
+                    ] + group_roles,
+                    resources=["*"],
+                    conditions={
+                        "StringEquals": {"kms:ViaService": f"sqs.{self._environment.region}.amazonaws.com"}
+                    }
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "kms:DescribeKey",
+                        "kms:List*",
+                        "kms:GetKeyPolicy",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    principals=[
+                        self.default_role,
+                    ] + group_roles,
+                    resources=["*"],
+                )
+            ]
         )
 
         kms_key = kms.Key(
@@ -761,7 +763,7 @@ class EnvironmentSetup(Stack):
             admins=[
                 iam.ArnPrincipal(self._environment.CDKRoleArn),
             ],
-            policy = key_policy
+            policy=key_policy
         )
         return kms_key
 

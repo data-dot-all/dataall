@@ -376,7 +376,7 @@ class Dataset(Stack):
             ),
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
-        
+
         # Add Key Policy For Users
         if not dataset.imported:
             dataset_key.add_to_resource_policy(
