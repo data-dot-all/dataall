@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_ssm as ssm,
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
     aws_certificatemanager as acm,
     aws_route53 as route53,
     aws_route53_targets as route53_targets,
@@ -285,43 +286,24 @@ class CloudfrontDistro(pyNestedClass):
                 )
             )
 
-        cloudfront_distribution = cloudfront.CloudFrontWebDistribution(
+        cloudfront_distribution = cloudfront.Distribution(
             self,
             'CloudFrontDistribution',
-            viewer_certificate=frontend_alias_configuration,
-            origin_configs=[
-                cloudfront.SourceConfiguration(
-                    s3_origin_source=cloudfront.S3OriginConfig(
-                        s3_bucket_source=cloudfront_bucket,
-                        origin_access_identity=origin_access_identity,
-                    ),
-                    behaviors=[
-                        cloudfront.Behavior(
-                            is_default_behavior=True, default_ttl=Duration.hours(1)
-                        )
-                    ],
-                )
-            ],
-            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-            default_root_object='index.html',
-            error_configurations=[
-                cloudfront.CfnDistribution.CustomErrorResponseProperty(
-                    error_code=404,
-                    response_code=404,
-                    error_caching_min_ttl=0,
-                    response_page_path='/index.html',
+            certificate=frontend_alias_configuration,
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3Origin(
+                    bucket=cloudfront_bucket,
+                    origin_access_identity=origin_access_identity
                 ),
-                cloudfront.CfnDistribution.CustomErrorResponseProperty(
-                    error_code=403,
-                    response_code=403,
-                    error_caching_min_ttl=0,
-                    response_page_path='/index.html',
-                ),
-            ],
-            web_acl_id=acl.get_att('Arn').to_string(),
-            logging_config=cloudfront.LoggingConfiguration(
-                bucket=logging_bucket, prefix='cloudfront-logs/frontend'
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
             ),
+            default_root_object='index.html',
+            error_responses=self.error_responses(),
+            web_acl_id=acl.get_att('Arn').to_string(),
+            log_bucket=logging_bucket,
+            log_file_prefix='cloudfront-logs/frontend',
         )
 
         ssm_distribution_id = ssm.StringParameter(
@@ -558,120 +540,47 @@ class CloudfrontDistro(pyNestedClass):
 
         cloudfront_bucket.grant_read(origin_access_identity)
 
-        cloudfront_distribution = cloudfront.CloudFrontWebDistribution(
+        cloudfront_distribution = cloudfront.Distribution(
             self,
             f'{construct_id}Distribution',
-            viewer_certificate=alias_configuration,
-            origin_configs=[
-                cloudfront.SourceConfiguration(
-                    custom_origin_source=cloudfront.CustomOriginConfig(
-                        domain_name='example.org',
-                        origin_protocol_policy=cloudfront.OriginProtocolPolicy.MATCH_VIEWER,
+            certificate=alias_configuration,
+            default_behavior=cloudfront.BehaviorOptions(
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+                compress=True,
+                origin=origins.S3Origin(
+                    bucket=cloudfront_bucket,
+                    origin_access_identity=origin_access_identity
+                ),
+
+                edge_lambdas=[
+                    cloudfront.EdgeLambda(
+                        event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+                        function_version=self.func_version(f'{construct_id}CheckerV', check)
                     ),
-                    behaviors=[
-                        cloudfront.Behavior(
-                            path_pattern='/parseauth',
-                            compress=True,
-                            forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
-                                query_string=True
-                            ),
-                            lambda_function_associations=[
-                                cloudfront.LambdaFunctionAssociation(
-                                    event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                                    lambda_function=_lambda.Version.from_version_arn(
-                                        self,
-                                        f'{construct_id}ParserV',
-                                        version_arn=parse,
-                                    ),
-                                )
-                            ],
-                        ),
-                        cloudfront.Behavior(
-                            path_pattern='/refreshauth',
-                            compress=True,
-                            forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
-                                query_string=True
-                            ),
-                            lambda_function_associations=[
-                                cloudfront.LambdaFunctionAssociation(
-                                    event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                                    lambda_function=_lambda.Version.from_version_arn(
-                                        self,
-                                        f'{construct_id}RefresherV',
-                                        version_arn=refresh,
-                                    ),
-                                )
-                            ],
-                        ),
-                        cloudfront.Behavior(
-                            path_pattern='/signout',
-                            compress=True,
-                            forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
-                                query_string=True
-                            ),
-                            lambda_function_associations=[
-                                cloudfront.LambdaFunctionAssociation(
-                                    event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                                    lambda_function=_lambda.Version.from_version_arn(
-                                        self,
-                                        f'{construct_id}SingouterV',
-                                        version_arn=signout,
-                                    ),
-                                )
-                            ],
-                        ),
-                    ],
-                ),
-                cloudfront.SourceConfiguration(
-                    s3_origin_source=cloudfront.S3OriginConfig(
-                        s3_bucket_source=cloudfront_bucket,
-                        origin_access_identity=origin_access_identity,
+                    cloudfront.EdgeLambda(
+                        event_type=cloudfront.LambdaEdgeEventType.VIEWER_RESPONSE,
+                        function_version=self.http_header_func.current_version,
                     ),
-                    behaviors=[
-                        cloudfront.Behavior(
-                            is_default_behavior=True,
-                            compress=True,
-                            forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
-                                query_string=True
-                            ),
-                            lambda_function_associations=[
-                                cloudfront.LambdaFunctionAssociation(
-                                    event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-                                    lambda_function=_lambda.Version.from_version_arn(
-                                        self,
-                                        f'{construct_id}CheckerV',
-                                        version_arn=check,
-                                    ),
-                                ),
-                                cloudfront.LambdaFunctionAssociation(
-                                    event_type=cloudfront.LambdaEdgeEventType.ORIGIN_RESPONSE,
-                                    lambda_function=self.http_header_func.current_version,
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-            ],
-            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-            default_root_object='index.html',
-            error_configurations=[
-                cloudfront.CfnDistribution.CustomErrorResponseProperty(
-                    error_code=404,
-                    response_code=404,
-                    error_caching_min_ttl=0,
-                    response_page_path='/index.html',
-                ),
-                cloudfront.CfnDistribution.CustomErrorResponseProperty(
-                    error_code=403,
-                    response_code=403,
-                    error_caching_min_ttl=0,
-                    response_page_path='/index.html',
-                ),
-            ],
-            web_acl_id=acl.get_att('Arn').to_string(),
-            logging_config=cloudfront.LoggingConfiguration(
-                bucket=logging_bucket, prefix=f'cloudfront-logs/{construct_id}'
+                ],
             ),
+            additional_behaviors={
+                '/parseauth': self.additional_documentation_behavior(
+                    self.func_version(f'{construct_id}ParserV', parse)
+                ),
+                '/refreshauth': self.additional_documentation_behavior(
+                    self.func_version(f'{construct_id}RefresherV', refresh)
+                ),
+                '/signout': self.additional_documentation_behavior(
+                    self.func_version(f'{construct_id}SingouterV', signout)
+                ),
+            },
+            default_root_object='index.html',
+            error_responses=self.error_responses(),
+            web_acl_id=acl.get_att('Arn').to_string(),
+            log_bucket=logging_bucket,
+            log_file_prefix=f'cloudfront-logs/{construct_id}'
         )
 
         param_path = f'/dataall/{envname}/cloudfront/docs/user'
@@ -702,3 +611,40 @@ class CloudfrontDistro(pyNestedClass):
             parameter_name=f'{param_path}/CloudfrontDistributionBucket',
             string_value=cloudfront_bucket.bucket_name,
         )
+
+    @staticmethod
+    def additional_documentation_behavior(func) -> cloudfront.BehaviorOptions:
+        return cloudfront.BehaviorOptions(
+                origin=origins.HttpOrigin('example.org'),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                compress=True,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+                response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+
+                edge_lambdas=[
+                    cloudfront.EdgeLambda(
+                        event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+                        function_version=func
+                    )
+                ],
+            )
+
+    def func_version(self, name, arn):
+        return _lambda.Version.from_version_arn(self, name, version_arn=arn)
+
+    @staticmethod
+    def error_responses():
+        return [
+            cloudfront.ErrorResponse(
+                http_status=404,
+                response_http_status=404,
+                ttl=Duration.seconds(0),
+                response_page_path='/index.html',
+            ),
+            cloudfront.ErrorResponse(
+                http_status=403,
+                response_http_status=403,
+                ttl=Duration.seconds(0),
+                response_page_path='/index.html',
+            ),
+        ]
