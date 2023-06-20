@@ -10,6 +10,9 @@ logger = logging.getLogger()
 
 
 class ServicePolicy(object):
+    """
+    Generic Class to define AWS-services policies added to an IAM role
+    """
     def __init__(
         self,
         stack,

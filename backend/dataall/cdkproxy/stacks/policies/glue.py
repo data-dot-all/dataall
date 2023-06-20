@@ -3,6 +3,9 @@ from aws_cdk import aws_iam as iam
 
 
 class GlueCatalog(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS Glue Catalog.
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
@@ -62,6 +65,9 @@ class GlueCatalog(ServicePolicy):
 
 
 class Glue(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS Glue ETL.
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

@@ -3,6 +3,9 @@ from aws_cdk import aws_iam
 
 
 class SSM(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS SSM Parameter Store.
+    """
 
     def get_statements(self):
         statements = [

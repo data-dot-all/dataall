@@ -3,6 +3,13 @@ from aws_cdk import aws_iam as iam
 
 
 class Cloudformation(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS CloudFormation.
+    It allows data.all users to:
+    - Create/Delete CloudFormation team stacks
+    - Create an S3 Bucket for codepipeline prefixed by "cf-templates-"
+    - Read/Write to and from S3 Buckets prefixed by "cf-templates-"
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

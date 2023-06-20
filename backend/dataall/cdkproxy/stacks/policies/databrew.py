@@ -3,6 +3,9 @@ from aws_cdk import aws_iam as iam
 
 
 class Databrew(ServicePolicy):
+    """
+    Class including all permissions needed to work with AWS DataBrew.
+    """
     def get_statements(self):
         statements = [
             iam.PolicyStatement(

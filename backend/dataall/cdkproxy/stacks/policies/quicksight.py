@@ -4,6 +4,11 @@ from .service_policy import ServicePolicy
 
 
 class QuickSight(ServicePolicy):
+    """
+    Class including all permissions needed to work with Amazon Quicksight.
+    It allows data.all users to:
+    -
+    """
     def get_statements(self):
         return [
             iam.PolicyStatement(
