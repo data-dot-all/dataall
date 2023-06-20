@@ -147,7 +147,6 @@ class SageMakerDomain:
             alias='SagemakerStudioDomain',
             enable_key_rotation=True,
             admins=[
-                iam.ArnPrincipal(f"arn:aws:iam::{self.environment.AwsAccountId}:role/admin"),
                 iam.ArnPrincipal(self.environment.CDKRoleArn),
                 iam.ArnPrincipal(self.environment.EnvironmentDefaultIAMRoleArn),
                 sagemaker_domain_role

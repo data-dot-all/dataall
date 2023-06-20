@@ -142,7 +142,6 @@ class PipelineStack(Stack):
             alias=f"{pipeline.name}-codebuild-key",
             enable_key_rotation=True,
             admins=[
-                iam.ArnPrincipal(f"arn:aws:iam::{self.account}:role/admin"),
                 iam.ArnPrincipal(pipeline_environment.CDKRoleArn),
                 iam.iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn)
             ],

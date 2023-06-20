@@ -135,7 +135,6 @@ class Dataset(Stack):
                     ]
                 ),
                 admins=[
-                    iam.ArnPrincipal(f"arn:aws:iam::{env.AwsAccountId}:role/admin"),
                     iam.ArnPrincipal(env.CDKRoleArn),
                     iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'),
                     iam.ArnPrincipal(env_group.environmentIAMRoleArn)

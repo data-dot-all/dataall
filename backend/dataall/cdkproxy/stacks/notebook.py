@@ -71,7 +71,6 @@ class SagemakerNotebook(Stack):
             alias=notebook.NotebookInstanceName,
             enable_key_rotation=True,
             admins=[
-                iam.ArnPrincipal(f"arn:aws:iam::{notebook.AWSAccountId}:role/admin"),
                 iam.ArnPrincipal(cdk_exec_role),
                 iam.ArnPrincipal(env_group.environmentIAMRoleArn),
             ],

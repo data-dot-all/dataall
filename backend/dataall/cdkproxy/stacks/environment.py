@@ -410,7 +410,6 @@ class EnvironmentSetup(Stack):
                 alias='dataall-env-subscription-key',
                 enable_key_rotation=True,
                 admins=[
-                    iam.ArnPrincipal(f"arn:aws:iam::{self._environment.AwsAccountId}:role/admin"),
                     iam.ArnPrincipal(self._environment.CDKRoleArn),
                     iam.ArnPrincipal(self.default_role.role_arn)
                 ],
@@ -737,7 +736,6 @@ class EnvironmentSetup(Stack):
             alias='dataall-env-cr-key',
             enable_key_rotation=True,
             admins=[
-                iam.ArnPrincipal(f"arn:aws:iam::{self._environment.AwsAccountId}:role/admin"),
                 iam.ArnPrincipal(self._environment.CDKRoleArn),
                 iam.ArnPrincipal(self.default_role.role_arn)
             ],
