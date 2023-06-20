@@ -147,9 +147,6 @@ class Sagemaker(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
                 ],
-                # write a condition to check if resource is tagged with tag key = self.tag_key and the value is self.tag_value and
-                # the request is tagged with the tag key = self.tag_key and the value is self.tag_value
-                # if both conditions are met then allow action if not deny action
                 conditions={
                     'StringEquals': {
                         f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
