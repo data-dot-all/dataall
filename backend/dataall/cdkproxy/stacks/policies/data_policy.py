@@ -74,7 +74,7 @@ class DataPolicy:
         ]
 
         self.set_allowed_s3_buckets_statements(statements)
-        # self.set_allowed_kms_keys_statements(statements)
+        self.set_allowed_kms_keys_statements(statements)
 
         return statements
 
@@ -124,40 +124,41 @@ class DataPolicy:
                 ]
             )
 
-    # def set_allowed_kms_keys_statements(self, statements):
-    #     allowed_buckets_kms_keys = []
-    #     if self.datasets:
-    #         dataset: models.Dataset
-    #         for dataset in self.datasets:
-    #             key_id = KMS.get_key_id(
-    #                 account_id=dataset.AwsAccountId,
-    #                 region=dataset.region,
-    #                 key_alias=f"alias/{dataset.KmsAlias}"
-    #             )
-    #             allowed_buckets_kms_keys.append(f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
-
-    #         statements.extend(
-    #             [
-    #                 iam.PolicyStatement(
-    #                     sid="KMSList",
-    #                     effect=iam.Effect.ALLOW,
-    #                     actions=[
-    #                         'kms:ListAliases',
-    #                         'kms:ListKeys'
-    #                     ],
-    #                     resources=['*'],
-    #                 ),
-    #                 iam.PolicyStatement(
-    #                     sid="KMSDatasetAccess",
-    #                     actions=[
-    #                         "kms:Decrypt",
-    #                         "kms:Encrypt",
-    #                         "kms:ReEncrypt*",
-    #                         "kms:DescribeKey",
-    #                         "kms:GenerateDataKey"
-    #                     ],
-    #                     effect=iam.Effect.ALLOW,
-    #                     resources=allowed_buckets_kms_keys
-    #                 )
-    #             ]
-    #         )
+    def set_allowed_kms_keys_statements(self, statements):
+        allowed_buckets_kms_keys = []
+        if self.datasets:
+            dataset: models.Dataset
+            for dataset in self.datasets:
+                if dataset.imported:
+                    key_id = KMS.get_key_id(
+                        account_id=dataset.AwsAccountId,
+                        region=dataset.region,
+                        key_alias=f"alias/{dataset.KmsAlias}"
+                    )
+                    allowed_buckets_kms_keys.append(f"arn:aws:kms:{dataset.region}:{dataset.AwsAccountId}:key/{key_id}")
+            if len(allowed_buckets_kms_keys):
+                statements.extend(
+                    [
+                        # iam.PolicyStatement(
+                        #     sid="KMSList",
+                        #     effect=iam.Effect.ALLOW,
+                        #     actions=[
+                        #         'kms:ListAliases',
+                        #         'kms:ListKeys'
+                        #     ],
+                        #     resources=['*'],
+                        # ),
+                        iam.PolicyStatement(
+                            sid="KMSImportedDatasetAccess",
+                            actions=[
+                                "kms:Decrypt",
+                                "kms:Encrypt",
+                                "kms:ReEncrypt*",
+                                "kms:DescribeKey",
+                                "kms:GenerateDataKey"
+                            ],
+                            effect=iam.Effect.ALLOW,
+                            resources=allowed_buckets_kms_keys
+                        )
+                    ]
+                )

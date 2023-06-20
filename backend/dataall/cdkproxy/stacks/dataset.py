@@ -141,6 +141,7 @@ class Dataset(Stack):
                                 'kms:Encrypt',
                                 'kms:GenerateDataKey*',
                                 'kms:PutKeyPolicy',
+                                "kms:GetKeyPolicy",
                                 'kms:ReEncrypt*',
                                 'kms:TagResource',
                                 'kms:UntagResource',
