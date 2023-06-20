@@ -139,15 +139,6 @@ class DataPolicy:
             if len(allowed_buckets_kms_keys):
                 statements.extend(
                     [
-                        # iam.PolicyStatement(
-                        #     sid="KMSList",
-                        #     effect=iam.Effect.ALLOW,
-                        #     actions=[
-                        #         'kms:ListAliases',
-                        #         'kms:ListKeys'
-                        #     ],
-                        #     resources=['*'],
-                        # ),
                         iam.PolicyStatement(
                             sid="KMSImportedDatasetAccess",
                             actions=[
