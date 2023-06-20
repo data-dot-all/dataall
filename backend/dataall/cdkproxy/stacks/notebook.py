@@ -80,11 +80,7 @@ class SagemakerNotebook(Stack):
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.Role.from_role_arn(
-                                self,
-                                'NotebookRole',
-                                role_arn=notebook.RoleArn,
-                            ),
+                            iam.ArnPrincipal(notebook.RoleArn)
                         ],
                         actions=[
                             "kms:Encrypt",
@@ -101,11 +97,7 @@ class SagemakerNotebook(Stack):
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.Role.from_role_arn(
-                                self,
-                                'NotebookRole',
-                                role_arn=notebook.RoleArn,
-                            ),
+                            iam.ArnPrincipal(notebook.RoleArn)
                         ],
                         actions=[
                             "kms:DescribeKey",

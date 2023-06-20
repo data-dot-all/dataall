@@ -143,7 +143,7 @@ class PipelineStack(Stack):
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(pipeline_environment.CDKRoleArn),
-                iam.iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn)
+                # iam.iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn)
             ],
             policy=iam.PolicyDocument(
                 statements=[
@@ -151,7 +151,7 @@ class PipelineStack(Stack):
                         resources=["*"],
                         effect=iam.Effect.ALLOW,
                         principals=[
-                            iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
+                            # iam.ArnPrincipal(pipeline_env_team.environmentIAMRoleArn),
                             build_project_role
                         ],
                         actions=[
@@ -160,9 +160,6 @@ class PipelineStack(Stack):
                             "kms:ReEncrypt*",
                             "kms:GenerateDataKey*",
                         ],
-                        conditions={
-                            "StringEquals": {"kms:ViaService": f"codebuild.{pipeline_environment.region}.amazonaws.com"}
-                        }
                     ),
                     iam.PolicyStatement(
                         resources=["*"],

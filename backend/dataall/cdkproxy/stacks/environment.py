@@ -409,9 +409,7 @@ class EnvironmentSetup(Stack):
                             "kms:GetKeyPolicy",
                         ],
                         effect=iam.Effect.ALLOW,
-                        principals=[
-                            self.default_role,
-                        ] + group_roles,
+                        principals=[self.default_role] + group_roles,
                         resources=["*"],
                     )
                 ]
