@@ -8,6 +8,8 @@
 from dataall.api import gql
 from .resolvers import *
 from dataall.modules.omics.api.enums import OmicsPipelineRole
+from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
+from dataall.api.Objects.Environment.resolvers import resolve_environment
 
 OmicsPipeline = gql.ObjectType(
     name="OmicsPipeline",
@@ -33,13 +35,13 @@ OmicsPipeline = gql.ObjectType(
         gql.Field("OmicsWorkflowStatus", type=gql.String, resolver=resolve_workflow_status),
         gql.Field("SamlGroupName", type=gql.String),
         gql.Field("AwsResources", type=gql.String),
-        gql.Field("environment", type=gql.Ref("Environment"), resolver=get_omics_pipeline_env),
-        gql.Field("organization", type=gql.Ref("Organization"), resolver=get_omics_pipeline_org),
+        gql.Field("environment", type=gql.Ref("Environment"), resolver=resolve_environment),
+        gql.Field("organization", type=gql.Ref("Organization"), resolver=resolve_organization_by_env),
         gql.Field("S3InputBucket", type=gql.String),
         gql.Field("S3InputPrefix", type=gql.String),
         gql.Field("S3OutputBucket", type=gql.String),
         gql.Field("S3OutputPrefix", type=gql.String),
-        gql.Field("stack", gql.Ref("Stack"), resolver=get_stack),
+        gql.Field("stack", gql.Ref("Stack"), resolver=resolve_omics_pipeline_stack),
         gql.Field(
             "userRoleForPipeline",
             type=OmicsPipelineRole.toGraphQLEnum(),

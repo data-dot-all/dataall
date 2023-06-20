@@ -1,5 +1,5 @@
-# update for Omics 
-"""Contains the code related to SageMaker notebooks"""
+#TODO 1: define loading interfaces
+"""Contains the code related to X"""
 import logging
 
 from dataall.db.api import TargetType
