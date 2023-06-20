@@ -5,6 +5,12 @@ from aws_cdk import aws_iam as iam
 class Sagemaker(ServicePolicy):
     """
     Class including all permissions needed to work with Amazon SageMaker.
+    - Allow creation and management of SageMaker Notebooks only if tagged with team tag
+    - DO NOT allow creation of domain because this is handled in the environment stack
+    - DO NOT allow creation of user-profiles because this is handled in the ML Studio stack
+    - Allow management of domains and user-profiles tagged with team tag
+    - Allow any action besides the above listed ones on resources that are not notebooks, domains, apps and user-profiles
+    - Allow support permissions on ECR, Service Catalog and logging
     """
     def get_statements(self):
         statements = [
@@ -136,14 +142,13 @@ class Sagemaker(ServicePolicy):
                     }
                 },
             ),
+            # For everything that is not notebooks, domains, user-profiles and apps we allow permissions if the resource is tagged
             iam.PolicyStatement(
                 sid="SageMakerCreateTaggedGenericResources",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Create*'],
                 not_resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
                 ],
                 conditions={
@@ -155,9 +160,6 @@ class Sagemaker(ServicePolicy):
                     },
                 },
             ),
-            #processing job
-            # model registry
-            # use one of the project templates
             iam.PolicyStatement(
                 sid="SageMakerManageTeamResources",
                 effect=iam.Effect.ALLOW,
@@ -166,7 +168,7 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:Update*'
                 ],
                 not_resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
@@ -178,36 +180,16 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerStartStopTeamResources",
+                sid="SageMakerManageTeamResources2",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:Start*',
-                    'sagemaker:Stop*'
-                ],
-                resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:monitoring-schedule/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:pipeline/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:training-job/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:processing-job/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:hyper-parameter-tuning-job/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:transform-job/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:automl-job/{self.resource_prefix}*',
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                sid="SageMakerTeamEndpoints",
-                effect=iam.Effect.ALLOW,
-                actions=[
+                    'sagemaker:Stop*',
                     'sagemaker:InvokeEndpoint',
                     'sagemaker:InvokeEndpointAsync'
                 ],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:endpoint/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*'
                 ],
                 conditions={
                     'StringEquals': {
@@ -215,16 +197,7 @@ class Sagemaker(ServicePolicy):
                     }
                 },
             ),
-            iam.PolicyStatement(
-                sid="SageMakerReadServiceCatalog",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'servicecatalog:ListAcceptedPortfolioShares',
-                    'servicecatalog:ListPrincipalsForPortfolio',
-                ],
-                resources=['*']
-            ),
-            # Logging and ECR support permissions
+            # Logging and support permissions
             iam.PolicyStatement(
                 sid="SageMakerLogging",
                 effect=iam.Effect.ALLOW,
@@ -246,6 +219,15 @@ class Sagemaker(ServicePolicy):
                     'ecr:BatchCheckLayerAvailability',
                     'ecr:GetDownloadUrlForLayer',
                     'ecr:BatchGetImage'
+                ],
+                resources=['*']
+            ),
+            iam.PolicyStatement(
+                sid="SageMakerReadServiceCatalog",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'servicecatalog:ListAcceptedPortfolioShares',
+                    'servicecatalog:ListPrincipalsForPortfolio',
                 ],
                 resources=['*']
             )
