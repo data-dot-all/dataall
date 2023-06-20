@@ -2,7 +2,7 @@ import logging
 
 from ....db import models, api
 from ..share_managers import S3ShareManager
-
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 log = logging.getLogger(__name__)
 
@@ -11,9 +11,9 @@ class ProcessS3Share(S3ShareManager):
     def __init__(
         self,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
-        share_folder: models.DatasetStorageLocation,
+        share_folder: DatasetStorageLocation,
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -35,9 +35,9 @@ class ProcessS3Share(S3ShareManager):
     def process_approved_shares(
         cls,
         session,
-        dataset: models.Dataset,
+        dataset: Dataset,
         share: models.ShareObject,
-        share_folders: [models.DatasetStorageLocation],
+        share_folders: [DatasetStorageLocation],
         source_environment: models.Environment,
         target_environment: models.Environment,
         source_env_group: models.EnvironmentGroup,
@@ -102,9 +102,9 @@ class ProcessS3Share(S3ShareManager):
     def process_revoked_shares(
             cls,
             session,
-            dataset: models.Dataset,
+            dataset: Dataset,
             share: models.ShareObject,
-            revoke_folders: [models.DatasetStorageLocation],
+            revoke_folders: [DatasetStorageLocation],
             source_environment: models.Environment,
             target_environment: models.Environment,
             source_env_group: models.EnvironmentGroup,
@@ -163,7 +163,7 @@ class ProcessS3Share(S3ShareManager):
 
     @staticmethod
     def clean_up_share(
-            dataset: models.Dataset,
+            dataset: Dataset,
             share: models.ShareObject,
             target_environment: models.Environment
     ):

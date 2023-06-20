@@ -5,7 +5,9 @@ const addConsumptionRoleToEnvironment = (input) => ({
     input
   },
   mutation: gql`
-    mutation addConsumptionRoleToEnvironment($input: AddConsumptionRoleToEnvironmentInput!) {
+    mutation addConsumptionRoleToEnvironment(
+      $input: AddConsumptionRoleToEnvironmentInput!
+    ) {
       addConsumptionRoleToEnvironment(input: $input) {
         consumptionRoleUri
         consumptionRoleName

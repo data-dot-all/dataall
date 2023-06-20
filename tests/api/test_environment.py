@@ -1,7 +1,8 @@
 import pytest
 
 import dataall
-from dataall.db import permissions
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.dataset_permissions import CREATE_DATASET
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -11,11 +12,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
@@ -35,7 +32,6 @@ def get_env(client, env1, group):
                 SamlGroupName
                 owner
                 dashboardsEnabled
-                mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
                 stack{
@@ -63,7 +59,6 @@ def test_get_environment(client, org1, env1, group):
     assert response.data.getEnvironment.owner == 'alice'
     assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
     assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.mlStudiosEnabled
     assert response.data.getEnvironment.pipelinesEnabled
     assert response.data.getEnvironment.warehousesEnabled
 
@@ -107,7 +102,6 @@ def test_update_env(client, org1, env1, group):
                 tags
                 resourcePrefix
                 dashboardsEnabled
-                mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
                 parameters {
@@ -125,12 +119,11 @@ def test_update_env(client, org1, env1, group):
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
+                    'key': 'moduleEnabled',
                     'value': 'True'
                 }
             ],
@@ -147,12 +140,11 @@ def test_update_env(client, org1, env1, group):
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
+                    'key': 'moduleEnabled',
                     'value': 'True'
                 }
             ],
@@ -170,12 +162,10 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.label == 'DEV'
     assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
     assert not response.data.updateEnvironment.dashboardsEnabled
-    assert not response.data.updateEnvironment.notebooksEnabled
-    assert not response.data.updateEnvironment.mlStudiosEnabled
     assert not response.data.updateEnvironment.pipelinesEnabled
     assert not response.data.updateEnvironment.warehousesEnabled
     assert response.data.updateEnvironment.parameters
-    assert response.data.updateEnvironment.parameters[0]["key"] == "notebooksEnabled"
+    assert response.data.updateEnvironment.parameters[0]["key"] == "moduleEnabled"
     assert response.data.updateEnvironment.parameters[0]["value"] == "True"
     assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
@@ -201,24 +191,10 @@ def test_update_params(client, org1, env1, group):
         }
     """
 
-    notebooks_enabled = {'parameters': [ {'key': 'notebooksEnabled','value': 'True'}]}
-    environment = update_params(notebooks_enabled).data.updateEnvironment
+    module_enabled = {'parameters': [ {'key': 'moduleEnabled','value': 'True'}]}
+    environment = update_params(module_enabled).data.updateEnvironment
     assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "notebooksEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # parameters should be rewritten. Notebooks should go away
-    dashboards_enabled = {'parameters': [{'key': 'dashboardsEnabled', 'value': 'True'}]}
-    environment = update_params(dashboards_enabled).data.updateEnvironment
-    assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # retrieve the environment one more time via GraphQL API, to check if it's correct
-    response = get_env(client, env1, group)
-    environment = response.data.getEnvironment
-    assert len(environment.parameters) == 1
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
+    assert environment.parameters[0]["key"] == "moduleEnabled"
     assert environment.parameters[0]["value"] == "True"
 
 
@@ -435,7 +411,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
     env_permissions = [
         p.name for p in response.data.listEnvironmentGroupInvitationPermissions
     ]
-    assert permissions.CREATE_DATASET in env_permissions
+    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -473,7 +449,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
         environmentUri=env1.environmentUri,
     )
     env_permissions = [p.name for p in response.data.getGroup.environmentPermissions]
-    assert permissions.CREATE_DATASET in env_permissions
+    assert CREATE_DATASET in env_permissions
 
     response = client.query(
         """
@@ -599,7 +575,7 @@ def test_group_invitation(db, client, env1, org1, group2, user, group3, group, d
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset = session.query(dataall.db.models.Dataset).get(dataset.datasetUri)
+        dataset = session.query(Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()
 

@@ -3,7 +3,10 @@ import typing
 import pytest
 
 import dataall
-from dataall.searchproxy import indexers
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -45,7 +48,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -70,7 +73,7 @@ def dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -89,7 +92,7 @@ def table(org, env, db, dataset):
 @pytest.fixture(scope='module', autouse=True)
 def folder(org, env, db, dataset):
     with db.scoped_session() as session:
-        location = dataall.db.models.DatasetStorageLocation(
+        location = DatasetStorageLocation(
             datasetUri=dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -121,34 +124,34 @@ def test_es_request():
 
 
 def test_upsert_dataset(db, dataset, env, mocker):
-    mocker.patch('dataall.searchproxy.upsert', return_value={})
+    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
     with db.scoped_session() as session:
-        dataset_indexed = indexers.upsert_dataset(
-            session, es={}, datasetUri=dataset.datasetUri
+        dataset_indexed = DatasetIndexer.upsert(
+            session, dataset_uri=dataset.datasetUri
         )
         assert dataset_indexed.datasetUri == dataset.datasetUri
 
 
 def test_upsert_table(db, dataset, env, mocker, table):
-    mocker.patch('dataall.searchproxy.upsert', return_value={})
+    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
     with db.scoped_session() as session:
-        table_indexed = indexers.upsert_table(session, es={}, tableUri=table.tableUri)
+        table_indexed = DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
         assert table_indexed.uri == table.tableUri
 
 
 def test_upsert_folder(db, dataset, env, mocker, folder):
-    mocker.patch('dataall.searchproxy.upsert', return_value={})
+    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
     with db.scoped_session() as session:
-        folder_indexed = indexers.upsert_folder(
-            session, es={}, locationUri=folder.locationUri
+        folder_indexed = DatasetLocationIndexer.upsert(
+            session=session, folder_uri=folder.locationUri
         )
         assert folder_indexed.uri == folder.locationUri
 
 
 def test_upsert_tables(db, dataset, env, mocker, folder):
-    mocker.patch('dataall.searchproxy.upsert', return_value={})
+    mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer._index', return_value={})
     with db.scoped_session() as session:
-        tables = indexers.upsert_dataset_tables(
-            session, es={}, datasetUri=dataset.datasetUri
+        tables = DatasetTableIndexer.upsert_all(
+            session, dataset_uri=dataset.datasetUri
         )
         assert len(tables) == 1

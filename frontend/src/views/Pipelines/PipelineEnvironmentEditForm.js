@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
@@ -29,28 +28,44 @@ import listEnvironmentGroups from '../../api/Environment/listEnvironmentGroups';
 import * as Defaults from '../../components/defaults';
 
 const PipelineEnvironmentEditForm = (props) => {
-  const { environmentOptions, triggerEnvSubmit, pipelineUri, pipeline, handleCountEnvironmentValid } = props;
+  const {
+    environmentOptions,
+    triggerEnvSubmit,
+    pipelineUri,
+    pipeline,
+    handleCountEnvironmentValid
+  } = props;
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [envsToRemove, setEnvsToRemove] = useState([]);
   const [environments, setEnvironments] = useState([]);
-  const [mapGroups, setMapGroups] = useState(new Map())
-  const stageOps =[{value:"dev", label:"dev"},{value:"test", label:"test"},{value:"val", label:"val"},{value:"prod", label:"prod"},{value:"other", label:"other"}];
-  const [environmentOps, setEnvironmentOps] = useState(
-    environmentOptions && environmentOptions.length > 0 ? environmentOptions : [{ environmentUri: 'someUri', label: 'some' },{ environmentUri: 'someUri', label: 'some2' }]
-  );
+  const [mapGroups, setMapGroups] = useState(new Map());
+  const stageOps = [
+    { value: 'dev', label: 'dev' },
+    { value: 'test', label: 'test' },
+    { value: 'val', label: 'val' },
+    { value: 'prod', label: 'prod' },
+    { value: 'other', label: 'other' }
+  ];
+
+  const environmentOps =
+    environmentOptions && environmentOptions.length > 0
+      ? environmentOptions
+      : [
+          { environmentUri: 'someUri', label: 'some' },
+          { environmentUri: 'someUri', label: 'some2' }
+        ];
 
   useEffect(() => {
     if (client && pipeline) {
-      console.log("useeffect")
-      console.log(pipeline)
-      const environmentsSorted = pipeline.developmentEnvironments.nodes.sort((a, b) => {
-        return a.order - b.order;
-      });
+      const environmentsSorted = pipeline.developmentEnvironments.nodes.sort(
+        (a, b) => {
+          return a.order - b.order;
+        }
+      );
       if (environmentsSorted) {
-        environmentsSorted.map((e) => (handleExistingEnvRow(e)))
+        environmentsSorted.map((e) => handleExistingEnvRow(e));
       }
     }
   }, [client, pipeline]);
@@ -65,7 +80,14 @@ const PipelineEnvironmentEditForm = (props) => {
       );
 
       if (!response.errors) {
-        setMapGroups(new Map(mapGroups.set(environment.environmentUri, response.data.listEnvironmentGroups.nodes)) )//Array of groups (Objects)
+        setMapGroups(
+          new Map(
+            mapGroups.set(
+              environment.environmentUri,
+              response.data.listEnvironmentGroups.nodes
+            )
+          )
+        ); //Array of groups (Objects)
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -118,10 +140,10 @@ const PipelineEnvironmentEditForm = (props) => {
       const rows = [...prevstate];
       if (field === 'stage') {
         rows[idx].stage = value;
-      } else if (field === 'env'){
+      } else if (field === 'env') {
         rows[idx].environmentLabel = value.label;
         rows[idx].environmentUri = value.environmentUri;
-      } else{
+      } else {
         rows[idx].samlGroupName = value;
       }
       return rows;
@@ -156,7 +178,6 @@ const PipelineEnvironmentEditForm = (props) => {
             environmentLabel: element.environmentLabel,
             environmentUri: element.environmentUri,
             samlGroupName: element.samlGroupName
-
           }
         })
       );
@@ -212,25 +233,25 @@ const PipelineEnvironmentEditForm = (props) => {
   }
 
   useEffect(() => {
-      if (client && triggerEnvSubmit && pipelineUri && envsToRemove.length > 0) {
-        envsToRemove.forEach((element, index) => deleteEnv(element, index))
-      }
-      if (client && triggerEnvSubmit && pipelineUri && environments.length > 0) {
-        environments.forEach((element, index) => update(element, index))
-      }
-      if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
-        kvEnvs.forEach((element, index) => submit(element, index))
-      }
-      if (client && environmentOptions.length > 0) {
-        environmentOptions.forEach((element) => fetchGroups(element))
-      }
-    }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
+    if (client && triggerEnvSubmit && pipelineUri && envsToRemove.length > 0) {
+      envsToRemove.forEach((element, index) => deleteEnv(element, index));
+    }
+    if (client && triggerEnvSubmit && pipelineUri && environments.length > 0) {
+      environments.forEach((element, index) => update(element, index));
+    }
+    if (client && triggerEnvSubmit && pipelineUri && kvEnvs.length > 0) {
+      kvEnvs.forEach((element, index) => submit(element, index));
+    }
+    if (client && environmentOptions.length > 0) {
+      environmentOptions.forEach((element) => fetchGroups(element));
+    }
+  }, [client, dispatch, triggerEnvSubmit, pipelineUri, environmentOptions]);
 
   useEffect(() => {
-    if  ((kvEnvs.length + environments.length) > 0){
-      handleCountEnvironmentValid(true)
-    }else{
-      handleCountEnvironmentValid(false)
+    if (kvEnvs.length + environments.length > 0) {
+      handleCountEnvironmentValid(true);
+    } else {
+      handleCountEnvironmentValid(false);
     }
   }, [kvEnvs.length, environments.length]);
 
@@ -239,18 +260,18 @@ const PipelineEnvironmentEditForm = (props) => {
       <Grid container spacing={3}>
         <Grid item lg={12} xl={12} xs={12}>
           <Box>
-          <Card>
+            <Card>
               <CardHeader title="Current Development Environments" />
               <Divider />
               <CardContent>
                 <Box>
                   <Table size="small">
                     <colgroup>
-                        <col width="5%" />
-                        <col width="10%" />
-                        <col width="35%" />
-                        <col width="35%" />
-                        <col width="15%" />
+                      <col width="5%" />
+                      <col width="10%" />
+                      <col width="35%" />
+                      <col width="35%" />
+                      <col width="15%" />
                     </colgroup>
                     {environments && environments.length > 0 && (
                       <TableHead>
@@ -261,64 +282,64 @@ const PipelineEnvironmentEditForm = (props) => {
                           <TableCell>Team</TableCell>
                           <TableCell>AWS Account</TableCell>
                         </TableRow>
-                    </TableHead>
+                      </TableHead>
                     )}
                     <TableBody>
                       {environments.map((item, idx) => (
-                          <>
-                            <TableRow id="addr0" key={item.envPipelineUri}>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  name="orderCurrent"
-                                  value={(idx+1).toString()}
-                                  variant="filled"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  name="stageCurrent"
-                                  value={item.stage}
-                                  variant="filled"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  name="envLabelCurrent"
-                                  value={item.environmentLabel}
-                                  variant="filled"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  name="envLabelCurrent"
-                                  value={item.samlGroupName}
-                                  variant="filled"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  name="EnvAccountCurrent"
-                                  value={item.AwsAccountId}
-                                  variant="filled"
-                                />
-                              </TableCell>
-                              <td>
-                                <IconButton
-                                  onClick={() => {
-                                    handleRemoveExistingEnvRow(idx);
-                                  }}
-                                >
-                                  <DeleteOutlined fontSize="small" />
-                                </IconButton>
-                              </td>
-                            </TableRow>
-                          </>
-                        ))}
+                        <>
+                          <TableRow id="addr0" key={item.envPipelineUri}>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="orderCurrent"
+                                value={(idx + 1).toString()}
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="stageCurrent"
+                                value={item.stage}
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="envLabelCurrent"
+                                value={item.environmentLabel}
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="envLabelCurrent"
+                                value={item.samlGroupName}
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                name="EnvAccountCurrent"
+                                value={item.AwsAccountId}
+                                variant="filled"
+                              />
+                            </TableCell>
+                            <td>
+                              <IconButton
+                                onClick={() => {
+                                  handleRemoveExistingEnvRow(idx);
+                                }}
+                              >
+                                <DeleteOutlined fontSize="small" />
+                              </IconButton>
+                            </td>
+                          </TableRow>
+                        </>
+                      ))}
                     </TableBody>
                   </Table>
                 </Box>
@@ -333,10 +354,10 @@ const PipelineEnvironmentEditForm = (props) => {
                 <Box>
                   <Table size="small">
                     <colgroup>
-                        <col width="5%" />
-                        <col width="15%" />
-                        <col width="40%" />
-                        <col width="40%" />
+                      <col width="5%" />
+                      <col width="15%" />
+                      <col width="40%" />
+                      <col width="40%" />
                     </colgroup>
                     {kvEnvs && kvEnvs.length > 0 && (
                       <TableHead>
@@ -356,7 +377,11 @@ const PipelineEnvironmentEditForm = (props) => {
                               <TextField
                                 fullWidth
                                 name="idx"
-                                value={(idx + environments.length + 1).toString()}
+                                value={(
+                                  idx +
+                                  environments.length +
+                                  1
+                                ).toString()}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -407,14 +432,17 @@ const PipelineEnvironmentEditForm = (props) => {
                                 select
                                 variant="outlined"
                               >
-                                {mapGroups.get(kvEnvs[idx].environmentUri) && (mapGroups.get(kvEnvs[idx].environmentUri).map((g) => (
-                                  <MenuItem
-                                    key={g.groupUri}
-                                    value={g.groupUri}
-                                  >
-                                    {g.groupUri}
-                                  </MenuItem>
-                                )))}
+                                {mapGroups.get(kvEnvs[idx].environmentUri) &&
+                                  mapGroups
+                                    .get(kvEnvs[idx].environmentUri)
+                                    .map((g) => (
+                                      <MenuItem
+                                        key={g.groupUri}
+                                        value={g.groupUri}
+                                      >
+                                        {g.groupUri}
+                                      </MenuItem>
+                                    ))}
                               </TextField>
                             </TableCell>
                             <td>

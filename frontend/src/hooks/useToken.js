@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { SET_ERROR } from '../store/errorReducer';
 import { useDispatch } from '../store';
-import useAuth from "./useAuth";
+import useAuth from './useAuth';
 
 const useToken = () => {
   const dispatch = useDispatch();

@@ -1,5 +1,6 @@
 import pytest
 import dataall
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -41,7 +42,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def sync_dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -65,7 +66,7 @@ def sync_dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, sync_dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=sync_dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -83,12 +84,13 @@ def table(org, env, db, sync_dataset):
 
 def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
-        'dataall.searchproxy.indexers.upsert_dataset_tables', return_value=[table]
+        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
+        return_value=[table]
     )
     mocker.patch(
-        'dataall.searchproxy.indexers.upsert_dataset', return_value=sync_dataset
+        'dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
     indexed_objects_counter = dataall.tasks.catalog_indexer.index_objects(
-        engine=db, es=True
+        engine=db
     )
     assert indexed_objects_counter == 2

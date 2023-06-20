@@ -2,6 +2,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -16,6 +17,9 @@ def env1(env, org1, user, group, tenant, module_mocker):
     module_mocker.patch(
         'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
     )
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
@@ -25,7 +29,7 @@ def dataset1(
     org1: dataall.db.models.Organization,
     env1: dataall.db.models.Environment,
     dataset: typing.Callable,
-) -> dataall.db.models.Dataset:
+) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=env1.owner, group='dataset1admins'
     )

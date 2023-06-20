@@ -271,7 +271,7 @@ const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filter]);
 
-  const fetchRoles= useCallback(async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const response = await client.query(
         listAllEnvironmentConsumptionRoles({
@@ -292,7 +292,6 @@ const EnvironmentTeams = ({ environment }) => {
   }, [client, dispatch, environment, filterRoles]);
 
   const removeConsumptionRole = async (consumptionGroupUri) => {
-    console.log(consumptionGroupUri)
     try {
       const response = await client.mutate(
         removeConsumptionRoleFromEnvironment({
@@ -316,7 +315,6 @@ const EnvironmentTeams = ({ environment }) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
-
 
   useEffect(() => {
     if (client) {
@@ -371,227 +369,231 @@ const EnvironmentTeams = ({ environment }) => {
     <Box>
       <Box>
         <Card>
-        <CardHeader
-          action={<RefreshTableMenu refresh={fetchItems} />}
-          title={
-            <Box>
-              <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
-              Environment Teams
-            </Box>
-          }
-        />
-        <Divider />
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexWrap: 'wrap',
-            m: -1,
-            p: 2
-          }}
-        >
-          <Grid item md={10} sm={6} xs={12}>
-            <Box
-              sx={{
-                m: 1,
-                maxWidth: '100%',
-                width: 500
-              }}
-            >
-              <TextField
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  )
+          <CardHeader
+            action={<RefreshTableMenu refresh={fetchItems} />}
+            title={
+              <Box>
+                <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
+                Environment Teams
+              </Box>
+            }
+          />
+          <Divider />
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
+              m: -1,
+              p: 2
+            }}
+          >
+            <Grid item md={10} sm={6} xs={12}>
+              <Box
+                sx={{
+                  m: 1,
+                  maxWidth: '100%',
+                  width: 500
                 }}
-                onChange={handleInputChange}
-                onKeyUp={handleInputKeyup}
-                placeholder="Search"
-                value={inputValue}
-                variant="outlined"
-              />
-            </Box>
-          </Grid>
-          <Grid item md={2} sm={6} xs={12}>
-            <Button
-              color="primary"
-              startIcon={<GroupAddOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              onClick={handleTeamInviteModalOpen}
-              variant="contained"
-            >
-              Invite
-            </Button>
-            {isTeamInviteModalOpen && (
-              <EnvironmentTeamInviteForm
-                environment={environment}
-                open
-                reloadTeams={fetchItems}
-                onClose={handleTeamInviteModalClose}
-              />
-            )}
-          </Grid>
-        </Box>
-        <Scrollbar>
-          <Box sx={{ minWidth: 600 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>IAM Role</TableCell>
-                  <TableCell>Athena WorkGroup</TableCell>
-                  <TableCell>Permissions</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              {loading ? (
-                <CircularProgress sx={{ mt: 1 }} />
-              ) : (
-                <TableBody>
-                  {items.nodes.length > 0 ? (
-                    items.nodes.map((team) => (
-                      <TeamRow
-                        team={team}
-                        environment={environment}
-                        fetchItems={fetchItems}
-                      />
-                    ))
-                  ) : (
-                    <TableRow hover>
-                      <TableCell>No Team invited</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+              >
+                <TextField
+                  fullWidth
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
+                  onChange={handleInputChange}
+                  onKeyUp={handleInputKeyup}
+                  placeholder="Search"
+                  value={inputValue}
+                  variant="outlined"
+                />
+              </Box>
+            </Grid>
+            <Grid item md={2} sm={6} xs={12}>
+              <Button
+                color="primary"
+                startIcon={<GroupAddOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                onClick={handleTeamInviteModalOpen}
+                variant="contained"
+              >
+                Invite
+              </Button>
+              {isTeamInviteModalOpen && (
+                <EnvironmentTeamInviteForm
+                  environment={environment}
+                  open
+                  reloadTeams={fetchItems}
+                  onClose={handleTeamInviteModalClose}
+                />
               )}
-            </Table>
-            {!loading && items.nodes.length > 0 && (
-              <Pager
-                mgTop={2}
-                mgBottom={2}
-                items={items}
-                onChange={handlePageChange}
-              />
-            )}
+            </Grid>
           </Box>
-        </Scrollbar>
-      </Card>
+          <Scrollbar>
+            <Box sx={{ minWidth: 600 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>IAM Role</TableCell>
+                    <TableCell>Athena WorkGroup</TableCell>
+                    <TableCell>Permissions</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                {loading ? (
+                  <CircularProgress sx={{ mt: 1 }} />
+                ) : (
+                  <TableBody>
+                    {items.nodes.length > 0 ? (
+                      items.nodes.map((team) => (
+                        <TeamRow
+                          team={team}
+                          environment={environment}
+                          fetchItems={fetchItems}
+                        />
+                      ))
+                    ) : (
+                      <TableRow hover>
+                        <TableCell>No Team invited</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                )}
+              </Table>
+              {!loading && items.nodes.length > 0 && (
+                <Pager
+                  mgTop={2}
+                  mgBottom={2}
+                  items={items}
+                  onChange={handlePageChange}
+                />
+              )}
+            </Box>
+          </Scrollbar>
+        </Card>
       </Box>
       <Box sx={{ mt: 3 }}>
         <Card>
-        <CardHeader
-          action={<RefreshTableMenu refresh={fetchRoles} />}
-          title={
-            <Box>
-              <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
-              Environment Consumption IAM roles
-            </Box>
-          }
-        />
-        <Divider />
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexWrap: 'wrap',
-            m: -1,
-            p: 2
-          }}
-        >
-          <Grid item md={10} sm={6} xs={12}>
-            <Box
-              sx={{
-                m: 1,
-                maxWidth: '100%',
-                width: 500
-              }}
-            >
-              <TextField
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  )
+          <CardHeader
+            action={<RefreshTableMenu refresh={fetchRoles} />}
+            title={
+              <Box>
+                <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
+                Environment Consumption IAM roles
+              </Box>
+            }
+          />
+          <Divider />
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
+              m: -1,
+              p: 2
+            }}
+          >
+            <Grid item md={10} sm={6} xs={12}>
+              <Box
+                sx={{
+                  m: 1,
+                  maxWidth: '100%',
+                  width: 500
                 }}
-                onChange={handleInputChangeRoles}
-                onKeyUp={handleInputKeyupRoles}
-                placeholder="Search"
-                value={inputValueRoles}
-                variant="outlined"
-              />
-            </Box>
-          </Grid>
-          <Grid item md={2} sm={6} xs={12}>
-            <Button
-              color="primary"
-              startIcon={<GroupAddOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              onClick={handleAddRoleModalOpen}
-              variant="contained"
-            >
-              Add Consumption Role
-            </Button>
-            {isAddRoleModalOpen && (
-              <EnvironmentRoleAddForm
-                environment={environment}
-                open
-                reloadRoles={fetchRoles}
-                onClose={handleAddRoleModalClose}
-              />
-            )}
-          </Grid>
-        </Box>
-        <Scrollbar>
-          <Box sx={{ minWidth: 600 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>IAM Role</TableCell>
-                  <TableCell>Role Owner</TableCell>
-                  <TableCell>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              {loading ? (
-                <CircularProgress sx={{ mt: 1 }} />
-              ) : (
-                <TableBody>
-                  {roles.nodes.length > 0 ? (
-                    roles.nodes.map((role) => (
-                      <TableRow hover key={role.consumptionRoleUri}>
-                        <TableCell>{role.consumptionRoleName}</TableCell>
-                        <TableCell>{role.IAMRoleArn}</TableCell>
-                        <TableCell>{role.groupUri}</TableCell>
-                        <TableCell>
-                          <IconButton onClick={() => removeConsumptionRole(role.consumptionRoleUri)}>
-                            <DeleteOutlined fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow hover>
-                      <TableCell>No Consumption IAM Role added</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
+              >
+                <TextField
+                  fullWidth
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
+                  onChange={handleInputChangeRoles}
+                  onKeyUp={handleInputKeyupRoles}
+                  placeholder="Search"
+                  value={inputValueRoles}
+                  variant="outlined"
+                />
+              </Box>
+            </Grid>
+            <Grid item md={2} sm={6} xs={12}>
+              <Button
+                color="primary"
+                startIcon={<GroupAddOutlined fontSize="small" />}
+                sx={{ m: 1 }}
+                onClick={handleAddRoleModalOpen}
+                variant="contained"
+              >
+                Add Consumption Role
+              </Button>
+              {isAddRoleModalOpen && (
+                <EnvironmentRoleAddForm
+                  environment={environment}
+                  open
+                  reloadRoles={fetchRoles}
+                  onClose={handleAddRoleModalClose}
+                />
               )}
-            </Table>
-            {!loading && roles.nodes.length > 0 && (
-              <Pager
-                mgTop={2}
-                mgBottom={2}
-                items={roles}
-                onChange={handlePageChangeRoles}
-              />
-            )}
+            </Grid>
           </Box>
-        </Scrollbar>
-      </Card>
+          <Scrollbar>
+            <Box sx={{ minWidth: 600 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>IAM Role</TableCell>
+                    <TableCell>Role Owner</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                {loading ? (
+                  <CircularProgress sx={{ mt: 1 }} />
+                ) : (
+                  <TableBody>
+                    {roles.nodes.length > 0 ? (
+                      roles.nodes.map((role) => (
+                        <TableRow hover key={role.consumptionRoleUri}>
+                          <TableCell>{role.consumptionRoleName}</TableCell>
+                          <TableCell>{role.IAMRoleArn}</TableCell>
+                          <TableCell>{role.groupUri}</TableCell>
+                          <TableCell>
+                            <IconButton
+                              onClick={() =>
+                                removeConsumptionRole(role.consumptionRoleUri)
+                              }
+                            >
+                              <DeleteOutlined fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow hover>
+                        <TableCell>No Consumption IAM Role added</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                )}
+              </Table>
+              {!loading && roles.nodes.length > 0 && (
+                <Pager
+                  mgTop={2}
+                  mgBottom={2}
+                  items={roles}
+                  onChange={handlePageChangeRoles}
+                />
+              )}
+            </Box>
+          </Scrollbar>
+        </Card>
       </Box>
     </Box>
   );

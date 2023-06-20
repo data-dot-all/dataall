@@ -1,6 +1,7 @@
 from ... import gql
 from .resolvers import *
 from ...constants import GlossaryRole
+from dataall.api.Objects.Glossary.registry import GlossaryRegistry
 
 GlossaryNode = gql.Union(
     name='GlossaryNode',
@@ -246,13 +247,7 @@ GlossarySearchResult = gql.ObjectType(
 
 GlossaryTermLinkTarget = gql.Union(
     name='GlossaryTermLinkTarget',
-    types=[
-        gql.Ref('Dataset'),
-        gql.Ref('DatasetTable'),
-        gql.Ref('DatasetStorageLocation'),
-        gql.Ref('DatasetTableColumn'),
-        gql.Ref('Dashboard'),
-    ],
+    type_registry=GlossaryRegistry,
     resolver=target_union_resolver,
 )
 

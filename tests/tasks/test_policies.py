@@ -1,5 +1,6 @@
 from dataall.api.constants import OrganisationUserRole
-from dataall.tasks.bucket_policy_updater import BucketPoliciesUpdater
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
 import pytest
 import dataall
 
@@ -43,7 +44,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def sync_dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -68,7 +69,7 @@ def sync_dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, sync_dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=sync_dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -137,15 +138,15 @@ def test_group_prefixes_by_accountid(db, mocker):
 
 def test_handler(org, env, db, sync_dataset, mocker):
     mocker.patch(
-        'dataall.tasks.bucket_policy_updater.BucketPoliciesUpdater.init_s3_client',
+        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.init_s3_client',
         return_value=True,
     )
     mocker.patch(
-        'dataall.tasks.bucket_policy_updater.BucketPoliciesUpdater.get_bucket_policy',
+        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.get_bucket_policy',
         return_value={'Version': '2012-10-17', 'Statement': []},
     )
     mocker.patch(
-        'dataall.tasks.bucket_policy_updater.BucketPoliciesUpdater.put_bucket_policy',
+        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.put_bucket_policy',
         return_value={'status': 'SUCCEEDED'},
     )
     updater = BucketPoliciesUpdater(db)

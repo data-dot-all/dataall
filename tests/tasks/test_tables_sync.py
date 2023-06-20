@@ -1,6 +1,10 @@
+from unittest.mock import MagicMock
+
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -43,7 +47,7 @@ def env(org, db):
 @pytest.fixture(scope='module', autouse=True)
 def sync_dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -76,7 +80,7 @@ def sync_dataset(org, env, db):
 @pytest.fixture(scope='module', autouse=True)
 def table(org, env, db, sync_dataset):
     with db.scoped_session() as session:
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             datasetUri=sync_dataset.datasetUri,
             AWSAccountId='12345678901',
             S3Prefix='S3prefix',
@@ -92,7 +96,13 @@ def table(org, env, db, sync_dataset):
     yield table
 
 
-def _test_tables_sync(db, org, env, sync_dataset, table, mocker):
+@pytest.fixture(scope='module', autouse=True)
+def permissions(db):
+    with db.scoped_session() as session:
+        yield dataall.db.api.Permission.init_permissions(session)
+
+
+def test_tables_sync(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.aws.handlers.glue.Glue.list_glue_database_tables',
         return_value=[
@@ -147,19 +157,19 @@ def _test_tables_sync(db, org, env, sync_dataset, table, mocker):
         ],
     )
     mocker.patch(
-        'dataall.tasks.tables_syncer.is_assumable_pivot_role', return_value=True
-    )
-    mocker.patch(
-        'dataall.aws.handlers.glue.Glue.grant_principals_all_table_permissions',
-        return_value=True,
+        'dataall.modules.datasets.tasks.tables_syncer.is_assumable_pivot_role', return_value=True
     )
 
-    processed_tables = dataall.tasks.tables_syncer.sync_tables(engine=db)
+    mock_client = MagicMock()
+    mocker.patch("dataall.modules.datasets.tasks.tables_syncer.LakeFormationTableClient", mock_client)
+    mock_client.grant_principals_all_table_permissions = True
+
+    processed_tables = sync_tables(engine=db)
     assert len(processed_tables) == 2
     with db.scoped_session() as session:
-        saved_table: dataall.db.models.DatasetTable = (
-            session.query(dataall.db.models.DatasetTable)
-            .filter(dataall.db.models.DatasetTable.GlueTableName == 'table1')
+        saved_table: DatasetTable = (
+            session.query(DatasetTable)
+            .filter(DatasetTable.GlueTableName == 'table1')
             .first()
         )
         assert saved_table

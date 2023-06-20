@@ -18,12 +18,7 @@ import { FaAws, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import * as PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import {
-  ForumOutlined,
-  Info,
-  LocalOffer,
-  PlaylistPlay
-} from '@mui/icons-material';
+import { ForumOutlined, Info, LocalOffer } from '@mui/icons-material';
 import useSettings from '../../hooks/useSettings';
 import useClient from '../../hooks/useClient';
 import ChevronRightIcon from '../../icons/ChevronRight';
@@ -38,7 +33,6 @@ import getDataPipeline from '../../api/DataPipeline/getDataPipeline';
 import StackStatus from '../Stack/StackStatus';
 import KeyValueTagList from '../KeyValueTags/KeyValueTagList';
 import FeedComments from '../Feed/FeedComments';
-
 
 function PipelineViewPageHeader({ pipeline, deletePipeline }) {
   const [openFeed, setOpenFeed] = useState(false);
@@ -138,13 +132,14 @@ const PipelineView = () => {
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState(null);
   const [stack, setStack] = useState(null);
-  const [cdkTrunk, setCdkTrunk] = useState(null);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  const [tabs, setTabs] = useState([
+  const tabs = [
     { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
     { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
-    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }]);
-    const handleDeleteObjectModalOpen = () => {
+    { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
+  ];
+
+  const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
   };
 
@@ -165,7 +160,7 @@ const PipelineView = () => {
     }
     setLoading(false);
   }, [client, dispatch, params.uri, stack]);
-  
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -263,7 +258,11 @@ const PipelineView = () => {
                 environmentUri={pipeline.environment.environmentUri}
                 stackUri={pipeline.stack.stackUri}
                 targetUri={pipeline.DataPipelineUri}
-                targetType={pipeline.devStrategy == 'cdk-trunk' ? "cdkpipeline" : "pipeline"}
+                targetType={
+                  pipeline.devStrategy === 'cdk-trunk'
+                    ? 'cdkpipeline'
+                    : 'pipeline'
+                }
               />
             )}
           </Box>

@@ -10,6 +10,9 @@ from . import (
 from .. import api, utils
 from .. import models, exceptions, permissions, paginate
 from ..models.Enums import ShareObjectStatus, ShareItemStatus, ShareObjectActions, ShareItemActions, ShareableType, PrincipalType
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_permissions import DATASET_TABLE_READ
 
 logger = logging.getLogger(__name__)
 
@@ -344,8 +347,8 @@ class ShareObject:
         itemUri = data.get('itemUri')
         itemType = data.get('itemType')
 
-        dataset: models.Dataset = data.get(
-            'dataset', api.Dataset.get_dataset_by_uri(session, datasetUri)
+        dataset: Dataset = data.get(
+            'dataset', DatasetService.get_dataset_by_uri(session, datasetUri)
         )
         environment: models.Environment = data.get(
             'environment',
@@ -419,9 +422,9 @@ class ShareObject:
             item = None
             if itemType:
                 if itemType == ShareableType.StorageLocation.value:
-                    item = session.query(models.DatasetStorageLocation).get(itemUri)
+                    item = session.query(DatasetStorageLocation).get(itemUri)
                 if itemType == ShareableType.Table.value:
-                    item = session.query(models.DatasetTable).get(itemUri)
+                    item = session.query(DatasetTable).get(itemUri)
 
             share_item = (
                 session.query(models.ShareObjectItem)
@@ -538,7 +541,7 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         valid_states = [ShareItemStatus.PendingApproval.value]
@@ -560,7 +563,9 @@ class ShareObject:
 
         Share_SM.update_state(session, share, new_share_state)
 
-        api.Notification.notify_share_object_submission(
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
+        ShareNotificationService.notify_share_object_submission(
             session, username, dataset, share
         )
         return share
@@ -576,7 +581,7 @@ class ShareObject:
         check_perm: bool = False,
     ) -> models.ShareObject:
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
@@ -602,12 +607,14 @@ class ShareObject:
             ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=table.itemUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
 
-        api.Notification.notify_share_object_approval(session, username, dataset, share)
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
+        ShareNotificationService.notify_share_object_approval(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -622,7 +629,7 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObject.get_share_items_states(session, uri)
 
         Share_SM = ShareObjectSM(share.status)
@@ -640,7 +647,10 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_rejection(session, username, dataset, share)
+
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
+        ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -655,7 +665,7 @@ class ShareObject:
     ) -> models.ShareObject:
 
         share = ShareObject.get_share_by_uri(session, uri)
-        dataset = api.Dataset.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetService.get_dataset_by_uri(session, share.datasetUri)
         revoked_items_states = ShareObject.get_share_items_states(session, uri, data.get("revokedItemUris"))
         revoked_items = [ShareObject.get_share_item_by_uri(session, uri) for uri in data.get("revokedItemUris")]
 
@@ -682,7 +692,10 @@ class ShareObject:
             group=share.groupUri,
             resource_uri=dataset.datasetUri,
         )
-        api.Notification.notify_share_object_rejection(session, username, dataset, share)
+
+        # TODO Temporary, to solve cyclic imports. It will go away when shares are in a dedicated module.
+        from dataall.modules.datasets.services.share_notification_service import ShareNotificationService
+        ShareNotificationService.notify_share_object_rejection(session, username, dataset, share)
         return share
 
     @staticmethod
@@ -716,9 +729,9 @@ class ShareObject:
             ShareObject.get_share_item_by_uri(session, data['shareItemUri']),
         )
         if share_item.itemType == ShareableType.Table.value:
-            return session.query(models.DatasetTable).get(share_item.itemUri)
+            return session.query(DatasetTable).get(share_item.itemUri)
         if share_item.itemType == ShareableType.StorageLocation:
-            return session.Query(models.DatasetStorageLocation).get(share_item.itemUri)
+            return session.Query(DatasetStorageLocation).get(share_item.itemUri)
 
     @staticmethod
     def get_share_by_uri(session, uri):
@@ -751,7 +764,7 @@ class ShareObject:
         itemUri = data.get('itemUri')
         item = None
         share: models.ShareObject = session.query(models.ShareObject).get(uri)
-        dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
+        dataset: Dataset = session.query(Dataset).get(share.datasetUri)
         target_environment: models.Environment = session.query(models.Environment).get(
             share.environmentUri
         )
@@ -761,7 +774,7 @@ class ShareObject:
         Share_SM.update_state(session, share, new_share_state)
 
         if itemType == ShareableType.Table.value:
-            item: models.DatasetTable = session.query(models.DatasetTable).get(itemUri)
+            item: DatasetTable = session.query(DatasetTable).get(itemUri)
             if item and item.region != target_environment.region:
                 raise exceptions.UnauthorizedOperation(
                     action=permissions.ADD_ITEM,
@@ -771,7 +784,7 @@ class ShareObject:
                 )
 
         elif itemType == ShareableType.StorageLocation.value:
-            item = session.query(models.DatasetStorageLocation).get(itemUri)
+            item = session.query(DatasetStorageLocation).get(itemUri)
 
         if not item:
             raise exceptions.ObjectNotFound('ShareObjectItem', itemUri)
@@ -943,10 +956,10 @@ class ShareObject:
         # marking the table as part of the shareObject
         tables = (
             session.query(
-                models.DatasetTable.tableUri.label('itemUri'),
+                DatasetTable.tableUri.label('itemUri'),
                 func.coalesce('DatasetTable').label('itemType'),
-                models.DatasetTable.GlueTableName.label('itemName'),
-                models.DatasetTable.description.label('description'),
+                DatasetTable.GlueTableName.label('itemName'),
+                DatasetTable.description.label('description'),
                 models.ShareObjectItem.shareItemUri.label('shareItemUri'),
                 models.ShareObjectItem.status.label('status'),
                 case(
@@ -958,10 +971,10 @@ class ShareObject:
                 models.ShareObjectItem,
                 and_(
                     models.ShareObjectItem.shareUri == share.shareUri,
-                    models.DatasetTable.tableUri == models.ShareObjectItem.itemUri,
+                    DatasetTable.tableUri == models.ShareObjectItem.itemUri,
                 ),
             )
-            .filter(models.DatasetTable.datasetUri == datasetUri)
+            .filter(DatasetTable.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
@@ -971,10 +984,10 @@ class ShareObject:
         # marking the folder as part of the shareObject
         locations = (
             session.query(
-                models.DatasetStorageLocation.locationUri.label('itemUri'),
+                DatasetStorageLocation.locationUri.label('itemUri'),
                 func.coalesce('DatasetStorageLocation').label('itemType'),
-                models.DatasetStorageLocation.S3Prefix.label('itemName'),
-                models.DatasetStorageLocation.description.label('description'),
+                DatasetStorageLocation.S3Prefix.label('itemName'),
+                DatasetStorageLocation.description.label('description'),
                 models.ShareObjectItem.shareItemUri.label('shareItemUri'),
                 models.ShareObjectItem.status.label('status'),
                 case(
@@ -986,11 +999,11 @@ class ShareObject:
                 models.ShareObjectItem,
                 and_(
                     models.ShareObjectItem.shareUri == share.shareUri,
-                    models.DatasetStorageLocation.locationUri
+                    DatasetStorageLocation.locationUri
                     == models.ShareObjectItem.itemUri,
                 ),
             )
-            .filter(models.DatasetStorageLocation.datasetUri == datasetUri)
+            .filter(DatasetStorageLocation.datasetUri == datasetUri)
         )
         if data:
             if data.get("isRevokable"):
@@ -1021,16 +1034,16 @@ class ShareObject:
         query = (
             session.query(models.ShareObject)
             .join(
-                models.Dataset,
-                models.Dataset.datasetUri == models.ShareObject.datasetUri,
+                Dataset,
+                Dataset.datasetUri == models.ShareObject.datasetUri,
             )
             .filter(
                 or_(
-                    models.Dataset.businessOwnerEmail == username,
-                    models.Dataset.businessOwnerDelegationEmails.contains(
+                    Dataset.businessOwnerEmail == username,
+                    Dataset.businessOwnerDelegationEmails.contains(
                         f'{{{username}}}'
                     ),
-                    models.Dataset.stewards.in_(groups),
+                    Dataset.stewards.in_(groups),
                 )
             )
         )
@@ -1144,7 +1157,7 @@ class ShareObject:
     def find_share_item_by_table(
         session,
         share: models.ShareObject,
-        table: models.DatasetTable,
+        table: DatasetTable,
     ) -> models.ShareObjectItem:
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
@@ -1162,7 +1175,7 @@ class ShareObject:
     def find_share_item_by_folder(
         session,
         share: models.ShareObject,
-        folder: models.DatasetStorageLocation,
+        folder: DatasetStorageLocation,
     ) -> models.ShareObjectItem:
         share_item: models.ShareObjectItem = (
             session.query(models.ShareObjectItem)
@@ -1182,7 +1195,7 @@ class ShareObject:
         if not share:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
-        dataset: models.Dataset = session.query(models.Dataset).get(share.datasetUri)
+        dataset: Dataset = session.query(Dataset).get(share.datasetUri)
         if not dataset:
             raise exceptions.ObjectNotFound('Dataset', share.datasetUri)
 
@@ -1246,10 +1259,10 @@ class ShareObject:
             raise exceptions.ObjectNotFound('Share', share_uri)
 
         tables = (
-            session.query(models.DatasetTable)
+            session.query(DatasetTable)
             .join(
                 models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == models.DatasetTable.tableUri,
+                models.ShareObjectItem.itemUri == DatasetTable.tableUri,
             )
             .join(
                 models.ShareObject,
@@ -1268,10 +1281,10 @@ class ShareObject:
         )
 
         folders = (
-            session.query(models.DatasetStorageLocation)
+            session.query(DatasetStorageLocation)
             .join(
                 models.ShareObjectItem,
-                models.ShareObjectItem.itemUri == models.DatasetStorageLocation.locationUri,
+                models.ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
             )
             .join(
                 models.ShareObject,

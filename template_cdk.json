@@ -7,6 +7,7 @@
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "string_TOOLING_REGION|DEFAULT=eu-west-1",
     "tooling_vpc_id": "string_IMPORT_AN_EXISTING_VPC_FROM_TOOLING|DEFAULT=None",
+    "tooling_vpc_restricted_nacl": "boolean_CREATE_CUSTOM_NACL|DEFAULT=false",
     "git_branch": "string_GIT_BRANCH_NAME|DEFAULT=dataall",
     "git_release": "boolean_MANAGE_GIT_RELEASE|DEFAULT=false",
     "quality_gate": "boolean_MANAGE_QUALITY_GATE_STAGE|DEFAULT=true",
@@ -31,7 +32,11 @@
         "prod_sizing": "boolean_SET_INFRA_SIZING_TO_PROD_VALUES_IF_TRUE|DEFAULT=true",
         "enable_cw_rum":  "boolean_SET_CLOUDWATCH_RUM_APP_MONITOR|DEFAULT=false",
         "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false",
-        "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous"
+        "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
+        "enable_quicksight_monitoring": "boolean_ENABLE_CONNECTION_QUICKSIGHT_RDS|DEFAULT=false",
+        "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
+        "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
+        "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false"
       }
     ]
   }

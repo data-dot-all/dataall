@@ -2,6 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module')
@@ -64,7 +65,7 @@ def otherenv(org, db):
 @pytest.fixture(scope='module')
 def dataset(org, env, db):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -87,13 +88,13 @@ def dataset(org, env, db):
 
 @pytest.fixture(scope='module')
 def share(
-    dataset: dataall.db.models.Dataset,
+    dataset: Dataset,
     db: dataall.db.Engine,
     otherenv: dataall.db.models.Environment,
 ):
     with db.scoped_session() as session:
 
-        table = dataall.db.models.DatasetTable(
+        table = DatasetTable(
             label='foo',
             name='foo',
             owner='alice',
@@ -134,10 +135,10 @@ def share(
 
 def test_subscriptions(org, env, otherenv, db, dataset, share, mocker):
     mocker.patch(
-        'dataall.tasks.subscriptions.subscription_service.SubscriptionService.sns_call',
+        'dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService.sns_call',
         return_value=True,
     )
-    subscriber = dataall.tasks.subscriptions.subscription_service.SubscriptionService()
+    subscriber = dataall.modules.datasets.tasks.dataset_subscription_task.DatasetSubscriptionService()
     messages = [
         {
             'prefix': 's3://dataset/testtable/csv/',

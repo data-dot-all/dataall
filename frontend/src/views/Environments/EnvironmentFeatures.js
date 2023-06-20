@@ -51,8 +51,16 @@ const EnvironmentFeatures = (props) => {
               Notebooks
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.parameters["notebooksEnabled"] === 'true' ? 'success' : 'error'}>
-                {environment.parameters["notebooksEnabled"] === 'true' ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['notebooksEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['notebooksEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>
@@ -68,8 +76,16 @@ const EnvironmentFeatures = (props) => {
               ML Studio
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              <Label color={environment.mlStudiosEnabled ? 'success' : 'error'}>
-                {environment.mlStudiosEnabled ? 'Enabled' : 'Disabled'}
+              <Label
+                color={
+                  environment.parameters['mlStudiosEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
+              >
+                {environment.parameters['mlStudiosEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>
@@ -90,7 +106,7 @@ const EnvironmentFeatures = (props) => {
               </Label>
             </Typography>
           </ListItem>
-{/*          <ListItem
+          {/*          <ListItem
             disableGutters
             divider
             sx={{

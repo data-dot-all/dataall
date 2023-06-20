@@ -15,10 +15,12 @@ import {
 import useSettings from '../../hooks/useSettings';
 import ChevronRightIcon from '../../icons/ChevronRight';
 import AdministrationTeams from './AdministrationTeams';
-import DashboardViewer from './AdministratorDashboardViewer'
+import DashboardViewer from './AdministratorDashboardViewer';
 
-
-const tabs = [{ label: 'Teams', value: 'teams' },{ label: 'Monitoring', value: 'dashboard' }];
+const tabs = [
+  { label: 'Teams', value: 'teams' },
+  { label: 'Monitoring', value: 'dashboard' }
+];
 
 const AdministrationView = () => {
   const { settings } = useSettings();
@@ -98,4 +100,3 @@ const AdministrationView = () => {
 };
 
 export default AdministrationView;
-

@@ -4,6 +4,10 @@ import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
 from dataall.db.models.Permission import PermissionType
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_WRITE, \
+    DATASET_TABLE_READ
 
 
 @pytest.fixture(scope='module')
@@ -11,9 +15,7 @@ def permissions(db):
     with db.scoped_session() as session:
         permissions = []
         for p in (
-            dataall.db.permissions.DATASET_READ
-            + dataall.db.permissions.DATASET_WRITE
-            + dataall.db.permissions.DATASET_TABLE_READ
+            DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ
             + dataall.db.permissions.ORGANIZATION_ALL
             + dataall.db.permissions.ENVIRONMENT_ALL
         ):
@@ -115,7 +117,7 @@ def env(org, db, group):
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             organizationUri=org.organizationUri,
             environmentUri=env.environmentUri,
             label='label',
@@ -142,15 +144,15 @@ def test_attach_resource_policy(db, user, group, group_user, dataset, permission
         dataall.db.api.ResourcePolicy.attach_resource_policy(
             session=session,
             group=group.name,
-            permissions=dataall.db.permissions.DATASET_WRITE,
+            permissions=DATASET_WRITE,
             resource_uri=dataset.datasetUri,
-            resource_type=dataall.db.models.Dataset.__name__,
+            resource_type=Dataset.__name__,
         )
         assert dataall.db.api.ResourcePolicy.check_user_resource_permission(
             session=session,
             username=user.userName,
             groups=[group.name],
-            permission_name=dataall.db.permissions.UPDATE_DATASET,
+            permission_name=UPDATE_DATASET,
             resource_uri=dataset.datasetUri,
         )
 
@@ -163,7 +165,7 @@ def test_attach_tenant_policy(
         dataall.db.api.TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=[dataall.db.permissions.MANAGE_DATASETS],
+            permissions=[MANAGE_DATASETS],
             tenant_name='dataall',
         )
 
@@ -171,7 +173,7 @@ def test_attach_tenant_policy(
             session=session,
             username=user.userName,
             groups=[group.name],
-            permission_name=dataall.db.permissions.MANAGE_DATASETS,
+            permission_name=MANAGE_DATASETS,
             tenant_name='dataall',
         )
 
@@ -257,7 +259,7 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
         )
-        dataset = dataall.db.api.Dataset.create_dataset(
+        dataset = DatasetService.create_dataset(
             session=session,
             username=user.userName,
             groups=[group.name],

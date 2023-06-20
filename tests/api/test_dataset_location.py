@@ -1,8 +1,11 @@
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
 import dataall
+from dataall.modules.datasets.aws.s3_location_client import S3LocationClient
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -12,17 +15,13 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> dataall.db.models.Dataset:
+def dataset1(env1, org1, dataset, group) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
     )
@@ -70,9 +69,8 @@ def test_get_dataset(client, dataset1, env1, user, group):
 
 
 def test_create_location(client, dataset1, env1, user, group, patch_es, module_mocker):
-    module_mocker.patch(
-        'dataall.aws.handlers.s3.S3.create_bucket_prefix', return_value=True
-    )
+    mock_client = MagicMock()
+    module_mocker.patch("dataall.modules.datasets.api.storage_location.resolvers.S3LocationClient", mock_client)
     response = client.query(
         """
         mutation createDatasetStorageLocation($datasetUri:String!, $input:NewDatasetStorageLocationInput!){

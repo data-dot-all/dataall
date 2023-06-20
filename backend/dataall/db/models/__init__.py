@@ -4,13 +4,6 @@ from .KeyValueTag import KeyValueTag
 from .Dashboard import Dashboard
 from .DashboardShare import DashboardShare
 from .DashboardShare import DashboardShareStatus
-from .Dataset import Dataset
-from .DatasetProfilingRun import DatasetProfilingRun
-from .DatasetQualityRule import DatasetQualityRule
-from .DatasetStorageLocation import DatasetStorageLocation
-from .DatasetTable import DatasetTable
-from .DatasetTableColumn import DatasetTableColumn
-from .DatasetTableProfilingJob import DatasetTableProfilingJob
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup
 from .FeedMessage import FeedMessage
@@ -27,7 +20,6 @@ from .RedshiftClusterDataset import RedshiftClusterDataset
 from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
-from .SagemakerStudio import SagemakerStudio, SagemakerStudioUserProfile
 from .ShareObject import ShareObject
 from .ShareObjectItem import ShareObjectItem
 from .DataPipeline import DataPipeline
@@ -41,5 +33,4 @@ from .TenantPolicyPermission import TenantPolicyPermission
 from .TenantAdministrator import TenantAdministrator
 from .User import User
 from .Vpc import Vpc
-from .Worksheet import Worksheet, WorksheetQueryResult, WorksheetShare
 from .Vote import Vote

@@ -10,6 +10,8 @@ from typing import Callable
 
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_alarm_service import DatasetAlarmService
 
 from dataall.tasks.data_sharing.share_processors.lf_process_cross_account_share import ProcessLFCrossAccountShare
 from dataall.tasks.data_sharing.share_processors.lf_process_same_account_share import ProcessLFSameAccountShare
@@ -85,7 +87,7 @@ def target_environment_group(environment_group: Callable, target_environment: mo
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: models.Organization, source_environment: models.Environment) -> models.Dataset:
+def dataset1(dataset: Callable, org1: models.Organization, source_environment: models.Environment) -> Dataset:
     yield dataset(
         organization=org1,
         environment=source_environment,
@@ -94,7 +96,7 @@ def dataset1(dataset: Callable, org1: models.Organization, source_environment: m
 
 
 @pytest.fixture(scope="module")
-def table1(table: Callable, dataset1: models.Dataset) -> models.DatasetTable:
+def table1(table: Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         label="table1"
@@ -102,7 +104,7 @@ def table1(table: Callable, dataset1: models.Dataset) -> models.DatasetTable:
 
 
 @pytest.fixture(scope="module")
-def table2(table: Callable, dataset1: models.Dataset) -> models.DatasetTable:
+def table2(table: Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         label="table2"
@@ -111,7 +113,7 @@ def table2(table: Callable, dataset1: models.Dataset) -> models.DatasetTable:
 
 @pytest.fixture(scope="module")
 def share_same_account(
-        share: Callable, dataset1: models.Dataset, source_environment: models.Environment,
+        share: Callable, dataset1: Dataset, source_environment: models.Environment,
         source_environment_group_requesters: models.EnvironmentGroup) -> models.ShareObject:
     yield share(
         dataset=dataset1,
@@ -122,7 +124,7 @@ def share_same_account(
 
 @pytest.fixture(scope="module")
 def share_cross_account(
-        share: Callable, dataset1: models.Dataset, target_environment: models.Environment,
+        share: Callable, dataset1: Dataset, target_environment: models.Environment,
         target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
     yield share(
         dataset=dataset1,
@@ -133,7 +135,7 @@ def share_cross_account(
 
 @pytest.fixture(scope="module")
 def share_item_same_account(share_item_table: Callable, share_same_account: models.ShareObject,
-                            table1: models.DatasetTable) -> models.ShareObjectItem:
+                            table1: DatasetTable) -> models.ShareObjectItem:
     yield share_item_table(
         share=share_same_account,
         table=table1,
@@ -142,7 +144,7 @@ def share_item_same_account(share_item_table: Callable, share_same_account: mode
 
 @pytest.fixture(scope="module")
 def revoke_item_same_account(share_item_table: Callable, share_same_account: models.ShareObject,
-                             table2: models.DatasetTable) -> models.ShareObjectItem:
+                             table2: DatasetTable) -> models.ShareObjectItem:
     yield share_item_table(
         share=share_same_account,
         table=table2,
@@ -151,7 +153,7 @@ def revoke_item_same_account(share_item_table: Callable, share_same_account: mod
 
 @pytest.fixture(scope="module")
 def share_item_cross_account(share_item_table: Callable, share_cross_account: models.ShareObject,
-                             table1: models.DatasetTable) -> models.ShareObjectItem:
+                             table1: DatasetTable) -> models.ShareObjectItem:
     yield share_item_table(
         share=share_cross_account,
         table=table1,
@@ -160,7 +162,7 @@ def share_item_cross_account(share_item_table: Callable, share_cross_account: mo
 
 @pytest.fixture(scope="module")
 def revoke_item_cross_account(share_item_table: Callable, share_cross_account: models.ShareObject,
-                              table2: models.DatasetTable) -> models.ShareObjectItem:
+                              table2: DatasetTable) -> models.ShareObjectItem:
     yield share_item_table(
         share=share_cross_account,
         table=table2,
@@ -208,7 +210,7 @@ def test_init(processor_same_account, processor_cross_account):
 def test_build_shared_db_name(
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        dataset1: models.Dataset,
+        dataset1: Dataset,
         share_same_account: models.ShareObject,
         share_cross_account: models.ShareObject,
 ):
@@ -240,7 +242,7 @@ def test_create_shared_database(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
+        dataset1: Dataset,
         mocker,
 ):
     create_db_mock = mocker.patch(
@@ -294,7 +296,7 @@ def test_check_share_item_exists_on_glue_catalog(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        table1: models.DatasetTable,
+        table1: DatasetTable,
         share_item_same_account: models.ShareObjectItem,
         share_item_cross_account: models.ShareObjectItem,
         mocker,
@@ -331,8 +333,8 @@ def test_build_share_data(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table1: models.DatasetTable,
+        dataset1: Dataset,
+        table1: DatasetTable,
 ):
     data_same_account = {
         'source': {
@@ -379,8 +381,8 @@ def test_create_resource_link(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table1: models.DatasetTable,
+        dataset1: Dataset,
+        table1: DatasetTable,
         mocker,
 ):
     sts_mock = mocker.patch(
@@ -462,8 +464,8 @@ def test_revoke_table_resource_link_access(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table2: models.DatasetTable,
+        dataset1: Dataset,
+        table2: DatasetTable,
         mocker,
 ):
     glue_mock = mocker.patch(
@@ -510,8 +512,8 @@ def test_revoke_source_table_access(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table2: models.DatasetTable,
+        dataset1: Dataset,
+        table2: DatasetTable,
         mocker,
 ):
     glue_mock = mocker.patch(
@@ -553,8 +555,8 @@ def test_delete_resource_link_table(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table2: models.DatasetTable,
+        dataset1: Dataset,
+        table2: DatasetTable,
         mocker,
 ):
     glue_mock = mocker.patch(
@@ -595,8 +597,8 @@ def test_delete_shared_database(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table1: models.DatasetTable,
+        dataset1: Dataset,
+        table1: DatasetTable,
         mocker,
 ):
     glue_mock = mocker.patch(
@@ -624,9 +626,9 @@ def test_revoke_external_account_access_on_source_account(
         share_cross_account: models.ShareObject,
         source_environment: models.Environment,
         target_environment: models.Environment,
-        dataset1: models.Dataset,
-        table1: models.DatasetTable,
-        table2: models.DatasetTable,
+        dataset1: Dataset,
+        table1: DatasetTable,
+        table2: DatasetTable,
         mocker,
 ):
     lf_mock = mocker.patch(
@@ -643,18 +645,19 @@ def test_revoke_external_account_access_on_source_account(
     # Then
     lf_mock.assert_called_once()
 
+
 def test_handle_share_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
         share_item_same_account: models.ShareObjectItem,
         share_item_cross_account: models.ShareObjectItem,
-        table1: models.DatasetTable,
+        table1: DatasetTable,
         mocker,
 ):
 
     # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_table_sharing_failure_alarm")
+    alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_table_sharing_failure_alarm")
     error = Exception
 
     # When
@@ -672,17 +675,18 @@ def test_handle_share_failure(
     # Then
     alarm_service_mock.assert_called_once()
 
+
 def test_handle_revoke_failure(
         db,
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
         revoke_item_same_account: models.ShareObjectItem,
         revoke_item_cross_account: models.ShareObjectItem,
-        table1: models.DatasetTable,
+        table1: DatasetTable,
         mocker,
 ):
     # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_revoke_table_sharing_failure_alarm")
+    alarm_service_mock = mocker.patch.object(DatasetAlarmService, "trigger_revoke_table_sharing_failure_alarm")
     error = Exception
 
     # When

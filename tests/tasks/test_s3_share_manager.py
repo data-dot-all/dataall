@@ -7,7 +7,7 @@ from dataall.db import models
 
 from dataall.tasks.data_sharing.share_managers.s3_share_manager import S3ShareManager
 from dataall.utils.alarm_service import AlarmService
-
+from dataall.modules.datasets.db.models import DatasetStorageLocation, Dataset
 
 SOURCE_ENV_ACCOUNT = "111111111111"
 SOURCE_ENV_ROLE_NAME = "dataall-ProducerEnvironment-i6v1v1c2"
@@ -68,12 +68,12 @@ def dataset1(dataset: Callable, org1: models.Organization, source_environment: m
 
 
 @pytest.fixture(scope="module")
-def location1(location: Callable, dataset1: models.Dataset) -> models.DatasetStorageLocation:
+def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
     yield location(dataset1, "location1")
 
 
 @pytest.fixture(scope="module")
-def share1(share: Callable, dataset1: models.Dataset, 
+def share1(share: Callable, dataset1: Dataset,
            target_environment: models.Environment,
            target_environment_group: models.EnvironmentGroup) -> models.ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
@@ -81,7 +81,7 @@ def share1(share: Callable, dataset1: models.Dataset,
 
 
 @pytest.fixture(scope="module")
-def share_item_folder1(share_item_folder: Callable, share1: models.ShareObject, location1: models.DatasetStorageLocation):
+def share_item_folder1(share_item_folder: Callable, share1: models.ShareObject, location1: DatasetStorageLocation):
     share_item_folder1 = share_item_folder(share1, location1)
     return share_item_folder1
 
@@ -379,11 +379,11 @@ def test_grant_target_role_access_policy_test_no_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -441,11 +441,11 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -558,11 +558,11 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -638,11 +638,11 @@ def test_manage_access_point_and_policy_1(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -729,11 +729,11 @@ def test_manage_access_point_and_policy_2(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -803,11 +803,11 @@ def test_manage_access_point_and_policy_3(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -874,11 +874,11 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -946,11 +946,11 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1013,11 +1013,11 @@ def test_dont_delete_access_point_with_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1059,11 +1059,11 @@ def test_delete_access_point_without_policy(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1105,11 +1105,11 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1170,11 +1170,11 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1256,11 +1256,11 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1347,11 +1347,11 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     mocker,
     source_environment_group: models.EnvironmentGroup,
     target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
+    dataset1: Dataset,
     db,
     share1: models.ShareObject,
     share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
+    location1: DatasetStorageLocation,
     source_environment: models.Environment,
     target_environment: models.Environment,
 ):
@@ -1414,73 +1414,3 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
         # Then
         kms_put_key_policy_mock.assert_called()
         kms_put_key_policy_mock.assert_called_with(source_environment.AwsAccountId, 'eu-central-1', kms_get_key_mock.return_value, "default", json.dumps(remaining_policy))
-
-
-def test_handle_share_failure(
-    mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
-    db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
-):
-    # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_folder_sharing_failure_alarm")
-
-    with db.scoped_session() as session:
-        manager = S3ShareManager(
-            session,
-            dataset1,
-            share1,
-            location1,
-            source_environment,
-            target_environment,
-            source_environment_group,
-            target_environment_group,
-        )
-
-        error = Exception
-        # When
-        manager.handle_share_failure(error)
-
-        # Then
-        alarm_service_mock.assert_called()
-
-
-def test_handle_revoke_failure(
-    mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
-    dataset1: models.Dataset,
-    db,
-    share1: models.ShareObject,
-    share_item_folder1: models.ShareObjectItem,
-    location1: models.DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
-):
-    # Given
-    alarm_service_mock = mocker.patch.object(AlarmService, "trigger_revoke_folder_sharing_failure_alarm")
-
-    with db.scoped_session() as session:
-        manager = S3ShareManager(
-            session,
-            dataset1,
-            share1,
-            location1,
-            source_environment,
-            target_environment,
-            source_environment_group,
-            target_environment_group,
-        )
-
-        error = Exception
-        # When
-        manager.handle_revoke_failure(error)
-
-        # Then
-        alarm_service_mock.assert_called()

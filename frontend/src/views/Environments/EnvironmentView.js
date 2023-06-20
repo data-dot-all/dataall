@@ -27,7 +27,6 @@ import {
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router';
 import { FaAws, FaNetworkWired, FaTrash } from 'react-icons/fa';
-import { GoDatabase } from 'react-icons/go';
 import useSettings from '../../hooks/useSettings';
 import getEnvironment from '../../api/Environment/getEnvironment';
 import useClient from '../../hooks/useClient';
@@ -122,11 +121,15 @@ const EnvironmentView = () => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
       setStack(environment.stack);
-      setIsAdmin(['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1
+      );
     } else {
       const error = response.errors
         ? response.errors[0].message

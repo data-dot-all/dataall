@@ -1,6 +1,10 @@
 import { gql } from 'apollo-boost';
 
-const listDataItemsSharedWithEnvGroup = ({ filter, environmentUri, groupUri }) => ({
+const listDataItemsSharedWithEnvGroup = ({
+  filter,
+  environmentUri,
+  groupUri
+}) => ({
   variables: {
     environmentUri,
     groupUri,

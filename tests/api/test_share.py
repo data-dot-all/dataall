@@ -3,6 +3,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 def random_table_name():
@@ -48,7 +49,7 @@ def env1group(environment_group: typing.Callable, env1, user, group
 
 @pytest.fixture(scope='module')
 def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: dataall.db.models.Environment
-             ) -> dataall.db.models.Dataset:
+             ) -> Dataset:
     yield dataset_model(
         organization=org1,
         environment=env1,
@@ -57,14 +58,14 @@ def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organizatio
 
 
 @pytest.fixture(scope='module')
-def tables1(table: typing.Callable, dataset1: dataall.db.models.Dataset):
+def tables1(table: typing.Callable, dataset1: Dataset):
     for i in range(1, 100):
         table(dataset1, name=random_table_name(), username=dataset1.owner)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table1(table: typing.Callable, dataset1: dataall.db.models.Dataset,
-           user: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+def table1(table: typing.Callable, dataset1: Dataset,
+           user: dataall.db.models.User) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
@@ -96,7 +97,7 @@ def env2(
 @pytest.fixture(scope='module')
 def dataset2(
         dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: dataall.db.models.Environment
-) -> dataall.db.models.Dataset:
+) -> Dataset:
     yield dataset_model(
         organization=org2,
         environment=env2,
@@ -111,8 +112,8 @@ def tables2(table, dataset2):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table2(table: typing.Callable, dataset2: dataall.db.models.Dataset,
-           user2: dataall.db.models.User) -> dataall.db.models.DatasetTable:
+def table2(table: typing.Callable, dataset2: Dataset,
+           user2: dataall.db.models.User) -> DatasetTable:
     yield table(
         dataset=dataset2,
         name="table2",
@@ -135,7 +136,7 @@ def share1_draft(
         user2,
         group2,
         share: typing.Callable,
-        dataset1: dataall.db.models.Dataset,
+        dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
 ) -> dataall.db.models.ShareObject:
@@ -195,7 +196,7 @@ def share1_draft(
 def share1_item_pa(
         share_item: typing.Callable,
         share1_draft: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1: DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share1_draft
     yield share_item(
@@ -212,7 +213,7 @@ def share2_submitted(
         user2,
         group2,
         share: typing.Callable,
-        dataset1: dataall.db.models.Dataset,
+        dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
 ) -> dataall.db.models.ShareObject:
@@ -270,7 +271,7 @@ def share2_submitted(
 def share2_item_pa(
         share_item: typing.Callable,
         share2_submitted: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1: DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share2
     yield share_item(
@@ -287,7 +288,7 @@ def share3_processed(
         user2,
         group2,
         share: typing.Callable,
-        dataset1: dataall.db.models.Dataset,
+        dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
 ) -> dataall.db.models.ShareObject:
@@ -345,7 +346,7 @@ def share3_processed(
 def share3_item_shared(
         share_item: typing.Callable,
         share3_processed: dataall.db.models.ShareObject,
-        table1: dataall.db.models.DatasetTable
+        table1:DatasetTable
 ) -> dataall.db.models.ShareObjectItem:
     # Cleaned up with share3
     yield share_item(
@@ -359,7 +360,7 @@ def share3_item_shared(
 def share4_draft(
         user2,
         share: typing.Callable,
-        dataset1: dataall.db.models.Dataset,
+        dataset1: Dataset,
         env2: dataall.db.models.Environment,
         env2group: dataall.db.models.EnvironmentGroup,
 ) -> dataall.db.models.ShareObject:

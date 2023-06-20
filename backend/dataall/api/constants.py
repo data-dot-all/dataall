@@ -80,16 +80,6 @@ class DataPipelineRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class DatasetRole(GraphQLEnumMapper):
-    # Permissions on a dataset
-    BusinessOwner = '999'
-    DataSteward = '998'
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class GlossaryRole(GraphQLEnumMapper):
     # Permissions on a glossary
     Admin = '900'
@@ -104,13 +94,6 @@ class RedshiftClusterRole(GraphQLEnumMapper):
 
 
 class ScheduledQueryRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
-class SagemakerStudioRole(GraphQLEnumMapper):
     Creator = '950'
     Admin = '900'
     Shared = '300'
@@ -222,14 +205,6 @@ class Topic(GraphQLEnumMapper):
     Energy = 'Energy'
     Customers = 'Customers'
     Misc = 'Misc'
-
-
-class WorksheetRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    SharedWithWritePermission = '500'
-    SharedWithReadPermission = '400'
-    NoPermission = '000'
 
 
 GLUEBUSINESSPROPERTIES = ['EXAMPLE_GLUE_PROPERTY_TO_BE_ADDED_ON_ES']

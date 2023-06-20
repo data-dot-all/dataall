@@ -2,14 +2,13 @@ import logging
 import os
 import sys
 
-from .. import db
-from ..db import get_engine, exceptions
-from ..db import models
-from ..searchproxy import indexers
-from ..searchproxy.connect import (
-    connect,
-)
-from ..utils.alarm_service import AlarmService
+from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
+from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.db import get_engine, models
+from dataall.searchproxy.indexers import DashboardIndexer
+from dataall.utils.alarm_service import AlarmService
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -18,25 +17,19 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-def index_objects(engine, es):
+def index_objects(engine):
     try:
-        if not es:
-            raise exceptions.AWSResourceNotFound(
-                action='CATALOG_INDEXER_TASK', message='ES configuration not found'
-            )
         indexed_objects_counter = 0
         with engine.scoped_session() as session:
 
-            all_datasets: [models.Dataset] = db.api.Dataset.list_all_active_datasets(
+            all_datasets: [Dataset] = DatasetService.list_all_active_datasets(
                 session
             )
             log.info(f'Found {len(all_datasets)} datasets')
-            dataset: models.Dataset
+            dataset: Dataset
             for dataset in all_datasets:
-                tables = indexers.upsert_dataset_tables(session, es, dataset.datasetUri)
-                folders = indexers.upsert_dataset_folders(
-                    session, es, dataset.datasetUri
-                )
+                tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
+                folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
                 indexed_objects_counter = (
                     indexed_objects_counter + len(tables) + len(folders) + 1
                 )
@@ -45,7 +38,7 @@ def index_objects(engine, es):
             log.info(f'Found {len(all_dashboards)} dashboards')
             dashboard: models.Dashboard
             for dashboard in all_dashboards:
-                indexers.upsert_dashboard(session, es, dashboard.dashboardUri)
+                DashboardIndexer.upsert(session=session, dashboard_uri=dashboard.dashboardUri)
                 indexed_objects_counter = indexed_objects_counter + 1
 
             log.info(f'Successfully indexed {indexed_objects_counter} objects')
@@ -58,5 +51,4 @@ def index_objects(engine, es):
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    ES = connect(envname=ENVNAME)
-    index_objects(engine=ENGINE, es=ES)
+    index_objects(engine=ENGINE)

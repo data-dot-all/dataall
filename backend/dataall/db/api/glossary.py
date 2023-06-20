@@ -4,11 +4,12 @@ from datetime import datetime
 from sqlalchemy import asc, or_, and_, literal, case
 from sqlalchemy.orm import with_expression, aliased
 
-from .. import models, exceptions, permissions, paginate
-from .permission_checker import (
-    has_tenant_perm,
-)
+from .. import models, exceptions, permissions, paginate, Resource
+from .permission_checker import has_tenant_perm
 from ..models.Glossary import GlossaryNodeStatus
+from ..paginator import Page
+from dataall.core.permission_checker import has_tenant_permission
+from dataall.core.context import get_context
 
 logger = logging.getLogger(__name__)
 
@@ -111,8 +112,8 @@ class Glossary:
         return node
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_GLOSSARIES)
-    def link_term(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_GLOSSARIES)
+    def link_term(session, uri, target_model: Resource, data):
         term: models.GlossaryNode = session.query(models.GlossaryNode).get(uri)
         if not term:
             raise exceptions.ObjectNotFound('Node', uri)
@@ -123,34 +124,20 @@ class Glossary:
                 'associations are allowed for Glossary terms only',
             )
 
-        targetUri: str = data['targetUri']
-        targetType: str = data['targetType']
+        target_uri: str = data['targetUri']
+        target_type: str = data['targetType']
 
-        if targetType == 'Dataset':
-            target = session.query(models.Dataset).get(targetUri)
-        elif targetType == 'DatasetTable':
-            target = session.query(models.DatasetTable).get(targetUri)
-        elif targetType == 'Folder':
-            target = session.query(models.DatasetStorageLocation).get(targetUri)
-        elif targetType == 'Column':
-            target = session.query(models.DatasetTableColumn).get(targetUri)
-        elif targetType == 'Dashboard':
-            target = session.query(models.Dashboard).get(targetUri)
-        else:
-            raise exceptions.InvalidInput(
-                'NodeType', 'term.nodeType', 'association target type is invalid'
-            )
-
+        target = session.query(target_model).get(target_uri)
         if not target:
             raise exceptions.ObjectNotFound('Association target', uri)
 
         link = models.TermLink(
-            owner=username,
+            owner=get_context().username,
             approvedByOwner=data.get('approvedByOwner', True),
             approvedBySteward=data.get('approvedBySteward', True),
             nodeUri=uri,
-            targetUri=targetUri,
-            targetType=targetType,
+            targetUri=target_uri,
+            targetType=target_type,
         )
         session.add(link)
         return link
@@ -341,51 +328,29 @@ class Glossary:
         ).to_dict()
 
     @staticmethod
-    def list_term_associations(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    def list_term_associations(session, target_model_definitions, data=None):
         source = data['source']
         filter = data['filter']
-        datasets = session.query(
-            models.Dataset.datasetUri.label('targetUri'),
-            literal('dataset').label('targetType'),
-            models.Dataset.label.label('label'),
-            models.Dataset.name.label('name'),
-            models.Dataset.description.label('description'),
-        )
-        tables = session.query(
-            models.DatasetTable.tableUri.label('targetUri'),
-            literal('table').label('targetType'),
-            models.DatasetTable.label.label('label'),
-            models.DatasetTable.name.label('name'),
-            models.DatasetTable.description.label('description'),
-        )
-        columns = session.query(
-            models.DatasetTableColumn.columnUri.label('targetUri'),
-            literal('column').label('targetType'),
-            models.DatasetTableColumn.label.label('label'),
-            models.DatasetTableColumn.name.label('name'),
-            models.DatasetTableColumn.description.label('description'),
-        )
-        folders = session.query(
-            models.DatasetStorageLocation.locationUri.label('targetUri'),
-            literal('folder').label('targetType'),
-            models.DatasetStorageLocation.label.label('label'),
-            models.DatasetStorageLocation.name.label('name'),
-            models.DatasetStorageLocation.description.label('description'),
-        )
 
-        dashboards = session.query(
-            models.Dashboard.dashboardUri.label('targetUri'),
-            literal('dashboard').label('targetType'),
-            models.Dashboard.label.label('label'),
-            models.Dashboard.name.label('name'),
-            models.Dashboard.description.label('description'),
-        )
+        query = None
+        for definition in target_model_definitions:
+            model = definition.model
+            subquery = session.query(
+                definition.target_uri().label('targetUri'),
+                literal(definition.target_type.lower()).label('targetType'),
+                model.label.label('label'),
+                model.name.label('name'),
+                model.description.label('description'),
+            )
+            if query:
+                query.union(subquery)
+            else:
+                query = subquery
 
-        linked_objects = datasets.union(tables, columns, folders, dashboards).subquery(
-            'linked_objects'
-        )
+        if query is None:
+            return Page([], 1, 1, 0)  # empty page. All modules are turned off
+
+        linked_objects = query.subquery('linked_objects')
 
         path = models.GlossaryNode.path
         q = (

@@ -26,7 +26,7 @@ class Ecs:
             return DataSharingService.approve_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'approve_share'
+                envname=envname, share_uri=task.targetUri, handler='approve_share'
             )
 
     @staticmethod
@@ -37,7 +37,7 @@ class Ecs:
             return DataSharingService.revoke_share(engine, task.targetUri)
         else:
             return Ecs.run_share_management_ecs_task(
-                envname, task.targetUri, 'revoke_share'
+                envname=envname, share_uri=task.targetUri, handler='revoke_share'
             )
 
     @staticmethod
@@ -56,12 +56,12 @@ class Ecs:
 
         try:
             Ecs.run_ecs_task(
-                cluster_name,
-                share_task_definition,
-                container_name,
-                security_groups,
-                subnets,
-                [
+                cluster_name=cluster_name,
+                task_definition=share_task_definition,
+                container_name=container_name,
+                security_groups=security_groups,
+                subnets=subnets,
+                environment=[
                     {'name': 'shareUri', 'value': share_uri},
                     {'name': 'config_location', 'value': '/config.json'},
                     {'name': 'envname', 'value': envname},
@@ -89,13 +89,13 @@ class Ecs:
                 env=envname, path='ecs/cluster/name'
             )
 
-            while Ecs.is_task_running(cluster_name, f'awsworker-{task.targetUri}'):
+            while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{task.targetUri}'):
                 log.info(
                     f'ECS task for stack stack-{task.targetUri} is running waiting for 30 seconds before retrying...'
                 )
                 time.sleep(30)
 
-            stack.EcsTaskArn = Ecs.run_cdkproxy_task(task.targetUri)
+            stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack_uri=task.targetUri)
 
     @staticmethod
     def run_cdkproxy_task(stack_uri):
@@ -113,12 +113,12 @@ class Ecs:
         )
         try:
             task_arn = Ecs.run_ecs_task(
-                cluster_name,
-                cdkproxy_task_definition,
-                container_name,
-                security_groups,
-                subnets,
-                [
+                cluster_name=cluster_name,
+                task_definition=cdkproxy_task_definition,
+                container_name=container_name,
+                security_groups=security_groups,
+                subnets=subnets,
+                environment=[
                     {'name': 'stackUri', 'value': stack_uri},
                     {'name': 'config_location', 'value': '/config.json'},
                     {'name': 'envname', 'value': envname},
@@ -127,7 +127,7 @@ class Ecs:
                         'value': os.getenv('AWS_REGION', 'eu-west-1'),
                     },
                 ],
-                f'awsworker-{stack_uri}',
+                started_by=f'awsworker-{stack_uri}',
             )
             log.info(f'ECS Task {task_arn} running')
             return task_arn

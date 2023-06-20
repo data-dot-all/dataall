@@ -1,6 +1,8 @@
+import dataall.searchproxy.indexers
 from .client import *
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -15,24 +17,36 @@ def patch_check_env(module_mocker):
         'dataall.api.Objects.Environment.resolvers.check_environment',
         return_value='CDKROLENAME',
     )
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
-def patch_check_env(module_mocker):
-    module_mocker.patch('dataall.utils.Parameter.get_parameter', return_value='unknownvalue')
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.modules.datasets.api.dataset.resolvers.check_dataset_account', return_value=True
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
 def patch_es(module_mocker):
     module_mocker.patch('dataall.searchproxy.connect', return_value={})
     module_mocker.patch('dataall.searchproxy.search', return_value={})
-    module_mocker.patch('dataall.searchproxy.upsert', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset_tables', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dataset', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_table', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_folder', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.upsert_dashboard', return_value={})
-    module_mocker.patch('dataall.searchproxy.indexers.delete_doc', return_value={})
+    module_mocker.patch(
+
+        'dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all',
+        return_value={}
+
+    )
+    module_mocker.patch('dataall.modules.datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.modules.datasets.indexers.table_indexer.DatasetTableIndexer.upsert', return_value={})
+    module_mocker.patch(
+        'dataall.modules.datasets.indexers.location_indexer.DatasetLocationIndexer.upsert',
+        return_value={}
+    )
+    module_mocker.patch('dataall.searchproxy.indexers.DashboardIndexer.upsert', return_value={})
+    module_mocker.patch('dataall.searchproxy.base_indexer.BaseIndexer.delete_doc', return_value={})
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -182,7 +196,7 @@ def dataset(client, patch_es):
         name: str,
         owner: str,
         group: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         key = f'{org.organizationUri}-{env.environmentUri}-{name}-{group}'
         if cache.get(key):
             print('found in cache ', cache[key])
@@ -382,9 +396,9 @@ def dataset_model(db):
         organization: models.Organization,
         environment: models.Environment,
         label: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         with db.scoped_session() as session:
-            dataset = models.Dataset(
+            dataset = Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -440,7 +454,7 @@ def environment_group(db):
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
-            dataset: models.Dataset,
+            dataset: Dataset,
             environment: models.Environment,
             env_group: models.EnvironmentGroup,
             owner: str,
@@ -498,7 +512,7 @@ def share(db):
 def share_item(db):
     def factory(
             share: models.ShareObject,
-            table: models.DatasetTable,
+            table: DatasetTable,
             status: str
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:
@@ -521,12 +535,12 @@ def share_item(db):
 def location(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> models.DatasetStorageLocation:
+    def factory(dataset: Dataset, name, username) -> DatasetStorageLocation:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
         with db.scoped_session() as session:
-            ds_location = models.DatasetStorageLocation(
+            ds_location = DatasetStorageLocation(
                 name=name,
                 label=name,
                 owner=username,
@@ -546,12 +560,12 @@ def location(db):
 def table(db):
     cache = {}
 
-    def factory(dataset: models.Dataset, name, username) -> models.DatasetTable:
+    def factory(dataset: Dataset, name, username) -> DatasetTable:
         key = f'{dataset.datasetUri}-{name}'
         if cache.get(key):
             return cache.get(key)
         with db.scoped_session() as session:
-            table = models.DatasetTable(
+            table = DatasetTable(
                 name=name,
                 label=name,
                 owner=username,
@@ -613,12 +627,15 @@ def org_fixture(org, user, group, tenant):
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
-def dataset_fixture(env_fixture, org_fixture, dataset, group) -> dataall.db.models.Dataset:
+def dataset_fixture(env_fixture, org_fixture, dataset, group, module_mocker) -> Dataset:
     yield dataset(
         org=org_fixture,
         env=env_fixture,
@@ -701,41 +718,8 @@ def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
             'tags': [group.name],
             'environmentUri': env_fixture.environmentUri,
             'devStrategy': 'trunk',
-            'template': '',
         },
         username='alice',
         groups=[group.name],
     )
     yield response.data.createDataPipeline
-
-
-@pytest.fixture(scope='module')
-def sgm_studio(client, tenant, group, env_fixture, module_mocker) -> models.SagemakerStudioUserProfile:
-    module_mocker.patch(
-        'dataall.aws.handlers.sagemaker_studio.SagemakerStudio.get_sagemaker_studio_domain',
-        return_value={'DomainId': 'test'},
-    )
-    response = client.query(
-        """
-            mutation createSagemakerStudioUserProfile($input:NewSagemakerStudioUserProfileInput){
-            createSagemakerStudioUserProfile(input:$input){
-                sagemakerStudioUserProfileUri
-                name
-                label
-                created
-                description
-                SamlAdminGroupName
-                environmentUri
-                tags
-            }
-        }
-            """,
-        input={
-            'label': f'test1',
-            'SamlAdminGroupName': group.name,
-            'environmentUri': env_fixture.environmentUri,
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createSagemakerStudioUserProfile

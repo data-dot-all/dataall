@@ -1,9 +1,8 @@
-import boto3
-import os
 import pytest
 
 from dataall.db import models
 from dataall.api import constants
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 
 @pytest.fixture(scope="module")
@@ -101,9 +100,9 @@ def dataset(db):
         organization: models.Organization,
         environment: models.Environment,
         label: str,
-    ) -> models.Dataset:
+    ) -> Dataset:
         with db.scoped_session() as session:
-            dataset = models.Dataset(
+            dataset = Dataset(
                 organizationUri=organization.organizationUri,
                 environmentUri=environment.environmentUri,
                 label=label,
@@ -128,10 +127,10 @@ def dataset(db):
 
 @pytest.fixture(scope="module")
 def location(db):
-    def factory(dataset: models.Dataset, label: str) -> models.DatasetStorageLocation:
+    def factory(dataset: Dataset, label: str) -> DatasetStorageLocation:
 
         with db.scoped_session() as session:
-            ds_location = models.DatasetStorageLocation(
+            ds_location = DatasetStorageLocation(
                 name=label,
                 label=label,
                 owner=dataset.owner,
@@ -149,10 +148,10 @@ def location(db):
 
 @pytest.fixture(scope='module')
 def table(db):
-    def factory(dataset: models.Dataset, label: str) -> models.DatasetTable:
+    def factory(dataset: Dataset, label: str) -> DatasetTable:
 
         with db.scoped_session() as session:
-            table = models.DatasetTable(
+            table = DatasetTable(
                 name=label,
                 label=label,
                 owner=dataset.owner,
@@ -173,7 +172,7 @@ def table(db):
 @pytest.fixture(scope="module")
 def share(db):
     def factory(
-        dataset: models.Dataset,
+        dataset: Dataset,
         environment: models.Environment,
         env_group: models.EnvironmentGroup
     ) -> models.ShareObject:
@@ -198,7 +197,7 @@ def share(db):
 def share_item_folder(db):
     def factory(
         share: models.ShareObject,
-        location: models.DatasetStorageLocation,
+        location: DatasetStorageLocation,
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:
             share_item = models.ShareObjectItem(
@@ -219,7 +218,7 @@ def share_item_folder(db):
 def share_item_table(db):
     def factory(
         share: models.ShareObject,
-        table: models.DatasetTable,
+        table: DatasetTable,
         status: str,
     ) -> models.ShareObjectItem:
         with db.scoped_session() as session:

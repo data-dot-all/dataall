@@ -1,8 +1,11 @@
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
 import dataall
+from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets.services.dataset_service import DatasetService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -12,17 +15,13 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env1(env, org1, user, group, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant):
     env1 = env(org1, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module')
-def dataset1(env1, org1, dataset, group) -> dataall.db.models.Dataset:
+def dataset1(env1, org1, dataset, group) -> Dataset:
     yield dataset(
         org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name
     )
@@ -50,7 +49,7 @@ def dataset1(
     env1: dataall.db.models.Environment,
     dataset: typing.Callable,
     group,
-) -> dataall.db.models.Dataset:
+) -> Dataset:
     d = dataset(org=org1, env=env1, name='dataset1', owner=env1.owner, group=group.name)
     print(d)
     yield d
@@ -104,7 +103,7 @@ def test_list_datasets(client, dataset1, group):
     assert response.data.listDatasets.nodes[0].datasetUri == dataset1.datasetUri
 
 
-def test_update_dataset(dataset1, client, patch_es, group, group2):
+def test_update_dataset(dataset1, client, group, group2):
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -178,8 +177,7 @@ def test_update_dataset(dataset1, client, patch_es, group, group2):
 
 def test_start_crawler(org1, env1, dataset1, client, group, module_mocker):
     module_mocker.patch(
-        'dataall.aws.handlers.glue.Glue.get_glue_crawler',
-        return_value={'crawler_name': dataset1.GlueCrawlerName},
+        'dataall.modules.datasets.api.dataset.resolvers.DatasetCrawler', MagicMock()
     )
     mutation = """
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
@@ -226,7 +224,7 @@ def test_add_tables(table, dataset1, db):
         table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetTable).count()
+        nb = session.query(DatasetTable).count()
     assert nb == 10
 
 
@@ -235,7 +233,7 @@ def test_add_locations(location, dataset1, db):
         location(dataset=dataset1, name=f'unstructured{i+1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
-        nb = session.query(dataall.db.models.DatasetStorageLocation).count()
+        nb = session.query(DatasetStorageLocation).count()
     assert nb == 10
 
 
@@ -362,7 +360,7 @@ def test_dataset_in_environment(client, env1, dataset1, group):
 
 def test_delete_dataset(client, dataset, env1, org1, db, module_mocker, group, user):
     with db.scoped_session() as session:
-        session.query(dataall.db.models.Dataset).delete()
+        session.query(Dataset).delete()
         session.commit()
     deleted_dataset = dataset(
         org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
@@ -468,7 +466,7 @@ def test_import_dataset(org1, env1, dataset1, client, group):
 
 def test_get_dataset_by_prefix(db, env1, org1):
     with db.scoped_session() as session:
-        dataset = dataall.db.models.Dataset(
+        dataset = Dataset(
             label='thisdataset',
             environmentUri=env1.environmentUri,
             organizationUri=org1.organizationUri,
@@ -489,7 +487,7 @@ def test_get_dataset_by_prefix(db, env1, org1):
         )
         session.add(dataset)
         session.commit()
-        dataset_found: dataall.db.models.Dataset = dataall.db.api.Dataset.get_dataset_by_bucket_name(
+        dataset_found: Dataset = DatasetService.get_dataset_by_bucket_name(
             session,
             bucket='s3a://insite-data-lake-raw-alpha-eu-west-1/booker/volume_constraints/insite_version=1/volume_constraints.delta'.split(
                 '//'

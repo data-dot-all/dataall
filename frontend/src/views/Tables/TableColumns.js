@@ -43,7 +43,7 @@ const TableColumns = (props) => {
     }
   };
 
-  const handleEditCellChangeCommitted = (e:GridCellEditCommitParams) => {
+  const handleEditCellChangeCommitted = (e: GridCellEditCommitParams) => {
     const data = e.value;
     if (e.field === 'description') {
       columns.map((c) => {

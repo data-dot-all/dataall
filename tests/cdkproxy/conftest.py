@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.db import models, api
+from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -69,7 +70,7 @@ def another_group(db, env):
             environmentAthenaWorkGroup='workgroup',
         )
         session.add(env_group)
-        dataset = models.Dataset(
+        dataset = Dataset(
             label='thisdataset',
             environmentUri=env.environmentUri,
             organizationUri=env.organizationUri,
@@ -94,9 +95,9 @@ def another_group(db, env):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset(db, env: models.Environment) -> models.Dataset:
+def dataset(db, env: models.Environment) -> Dataset:
     with db.scoped_session() as session:
-        dataset = models.Dataset(
+        dataset = Dataset(
             label='thisdataset',
             environmentUri=env.environmentUri,
             organizationUri=env.organizationUri,
@@ -121,9 +122,9 @@ def dataset(db, env: models.Environment) -> models.Dataset:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def table(db, dataset: models.Dataset) -> models.DatasetTable:
+def table(db, dataset: Dataset) -> DatasetTable:
     with db.scoped_session() as session:
-        table = models.DatasetTable(
+        table = DatasetTable(
             label='thistable',
             owner='me',
             datasetUri=dataset.datasetUri,
@@ -137,26 +138,6 @@ def table(db, dataset: models.Dataset) -> models.DatasetTable:
 
         session.add(table)
     yield table
-
-
-@pytest.fixture(scope='module', autouse=True)
-def sgm_studio(db, env: models.Environment) -> models.SagemakerStudioUserProfile:
-    with db.scoped_session() as session:
-        notebook = models.SagemakerStudioUserProfile(
-            label='thistable',
-            owner='me',
-            AWSAccountId=env.AwsAccountId,
-            region=env.region,
-            sagemakerStudioUserProfileStatus='UP',
-            sagemakerStudioUserProfileName='Profile',
-            sagemakerStudioUserProfileNameSlugify='Profile',
-            sagemakerStudioDomainID='domain',
-            environmentUri=env.environmentUri,
-            RoleArn=env.EnvironmentDefaultIAMRoleArn,
-            SamlAdminGroupName='admins',
-        )
-        session.add(notebook)
-    yield notebook
 
 
 @pytest.fixture(scope='module', autouse=True)

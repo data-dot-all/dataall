@@ -14,12 +14,15 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
+from ....aws.handlers.parameter_store import ParameterStoreManager
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+
+from dataall.modules.datasets.services.dataset_share_service import DatasetShareService
 
 log = logging.getLogger()
 
@@ -30,16 +33,39 @@ def get_trust_account(context: Context, source, **kwargs):
     return current_account
 
 
-def check_environment(context: Context, source, input=None):
+def get_pivot_role_as_part_of_environment(context: Context, source, **kwargs):
+    ssm_param = ParameterStoreManager.get_parameter_value(region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate")
+    return True if ssm_param == "True" else False
+
+
+def check_environment(context: Context, source, account_id, region):
+    """ Checks necessary resources for environment deployment.
+    - Check CDKToolkit exists in Account assuming cdk_look_up_role
+    - Check Pivot Role exists in Account if pivot_role_as_part_of_environment is False
+    Args:
+        input: environment creation input
+    """
+    pivot_role_as_part_of_environment = get_pivot_role_as_part_of_environment(context, source)
+    log.info(f"Creating environment. Pivot role as part of environment = {pivot_role_as_part_of_environment}")
     ENVNAME = os.environ.get('envname', 'local')
     if ENVNAME == 'pytest':
         return 'CdkRoleName'
-    account = input.get('AwsAccountId')
-    region = input.get('region')
-    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(AwsAccountId=account, region=region)
 
-    if input.get('dashboardsEnabled'):
-        existing_quicksight = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=account)
+    cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
+        accountid=account_id, region=region
+    )
+    cdk_role_name = CloudFormation.check_existing_cdk_toolkit_stack(
+        AwsAccountId=account_id, region=region
+    )
+    if not pivot_role_as_part_of_environment:
+        log.info("Check if PivotRole exist in the account")
+        pivot_role_arn = SessionHelper.get_delegation_role_arn(accountid=account_id)
+        role = IAM.get_role(account_id=account_id, role_arn=pivot_role_arn, role=cdk_look_up_role_arn)
+        if not role:
+            raise exceptions.AWSResourceNotFound(
+                action='CHECK_PIVOT_ROLE',
+                message='Pivot Role has not been created in the Environment AWS Account',
+            )
 
     return cdk_role_name
 
@@ -52,7 +78,10 @@ def create_environment(context: Context, source, input=None):
         )
 
     with context.engine.scoped_session() as session:
-        cdk_role_name = check_environment(context, source, input=input)
+        cdk_role_name = check_environment(context, source,
+                                          account_id=input.get('AwsAccountId'),
+                                          region=input.get('region')
+                                          )
         input['cdk_role_name'] = cdk_role_name
         env = Environment.create_environment(
             session=session,
@@ -86,6 +115,11 @@ def update_environment(
     with context.engine.scoped_session() as session:
 
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        cdk_role_name = check_environment(context, source,
+                                          account_id=environment.AwsAccountId,
+                                          region=environment.region
+                                          )
+
         previous_resource_prefix = environment.resourcePrefix
 
         environment = db.api.Environment.update_environment(
@@ -369,29 +403,13 @@ def list_environment_group_permissions(
         )
 
 
-def list_datasets_created_in_environment(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_environment_datasets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def list_shared_with_environment_data_items(
     context: Context, source, environmentUri: str = None, filter: dict = None
 ):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_shared_with_environment_datasets(
+        return DatasetShareService.paginated_shared_with_environment_datasets(
             session=session,
             username=context.username,
             groups=context.groups,

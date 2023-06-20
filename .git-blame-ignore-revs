@@ -1,0 +1,5 @@
+# Run this command to always ignore formatting commits in `git blame`
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Enforce frontend styling and remove dead code
+fefc45c2cdc4d3107369c4d70210894d098a775c

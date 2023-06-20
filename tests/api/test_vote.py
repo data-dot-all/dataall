@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.db import models
+from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module')
@@ -11,18 +12,14 @@ def org1(db, org, tenant, user, group) -> models.Organization:
 
 @pytest.fixture(scope='module')
 def env1(
-    db, org1: models.Organization, user, group, module_mocker, env
+    db, org1: models.Organization, user, group, env
 ) -> models.Environment:
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
 
 
 @pytest.fixture(scope='module', autouse=True)
-def dataset1(db, env1, org1, group, user, dataset) -> models.Dataset:
+def dataset1(db, env1, org1, group, user, dataset) -> Dataset:
     with db.scoped_session() as session:
         yield dataset(
             org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
@@ -109,8 +106,7 @@ def get_vote_query(client, target_uri, target_type, group):
     return response
 
 
-def test_upvote(patch_es, client, dataset1, module_mocker, dashboard):
-    module_mocker.patch('dataall.api.Objects.Vote.resolvers.reindex', return_value={})
+def test_upvote(patch_es, client, dataset1, dashboard):
     response = upvote_mutation(
         client, dataset1.datasetUri, 'dataset', True, dataset1.SamlAdminGroupName
     )
