@@ -36,7 +36,9 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:RenderUiTemplate',
                     'sagemaker:GetSearchSuggestions',
                     'sagemaker:QueryLineage',
-                    'sagemaker:GetSagemakerServicecatalogPortfolioStatus'
+                    'sagemaker:GetSagemakerServicecatalogPortfolioStatus',
+                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
+                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
                 ],
                 resources=['*'],
             ),
@@ -57,15 +59,6 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="SageMakerNotebookInstanceLifecycleConfig",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
-                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
-                ],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
                 #sid="SageMakerCreatePresignedNotebookInstanceUrl",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreatePresignedNotebookInstanceUrl'],
@@ -82,10 +75,7 @@ class Sagemaker(ServicePolicy):
                 #sid="SageMakerManageResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'sagemaker:DeleteNotebookInstance',
-                    'sagemaker:UpdateNotebookInstance',
-                    'sagemaker:StartNotebookInstance',
-                    'sagemaker:StopNotebookInstance'
+                    'sagemaker:*NotebookInstance',
                 ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
@@ -204,20 +194,13 @@ class Sagemaker(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
-                #sid="SageMakerReadECR",
+                #sid="SageMakerSupport",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'ecr:GetAuthorizationToken',
                     'ecr:BatchCheckLayerAvailability',
                     'ecr:GetDownloadUrlForLayer',
-                    'ecr:BatchGetImage'
-                ],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
-                #sid="SageMakerReadServiceCatalog",
-                effect=iam.Effect.ALLOW,
-                actions=[
+                    'ecr:BatchGetImage',
                     'servicecatalog:ListAcceptedPortfolioShares',
                     'servicecatalog:ListPrincipalsForPortfolio',
                 ],

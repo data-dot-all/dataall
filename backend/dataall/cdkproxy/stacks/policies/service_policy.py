@@ -59,8 +59,7 @@ class ServicePolicy(object):
         from .stepfunctions import StepFunctions
 
         policies: [aws_iam.ManagedPolicy] = [
-            # This policy covers the minimum actions required independent
-            # of the service permissions given to the group.
+            # This policy adds some minimum actions required independent from the services enabled for the group
             aws_iam.ManagedPolicy(
                 self.stack,
                 self.id,

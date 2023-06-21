@@ -45,7 +45,7 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodecommitTeamRepo",
-                actions=["codecommit:*"],
+                not_actions=["codecommit:TagResource"],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
                 ],
@@ -75,7 +75,7 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodepipelineTeamRepo",
-                actions=['codepipeline:*'],
+                not_actions=["codepipeline:TagResource"],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*/*',
                     f'arn:aws:codepipeline:{self.region}:{self.account}:actiontype:/*/*/*',
@@ -147,8 +147,12 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodebuildTeamRepo",
-                actions=[
-                    'codebuild:*',
+                not_actions=[
+                    'codebuild:CreateProject',
+                    'codebuild:UpdateProject',
+                    'codebuild:UpdateProjectVisibility',
+                    'codebuild:CreateReportGroup',
+                    'codebuild:UpdateReportGroup',
                 ],
                 resources=[
                     f'arn:aws:codebuild:{self.region}:{self.account}:project/{self.resource_prefix}*',

@@ -21,11 +21,7 @@ class SecretsManager(ServicePolicy):
                 #sid='CreateTeamSecrets',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:DescribeSecret",
                     "secretsmanager:CreateSecret",
-                    "secretsmanager:DeleteSecret",
-                    "secretsmanager:UpdateSecret",
                     "secretsmanager:TagResource",
                 ],
                 resources=[f"arn:aws:secretsmanager:*:{self.account}:secret:{self.resource_prefix}*"],
@@ -41,7 +37,6 @@ class SecretsManager(ServicePolicy):
                 actions=[
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:DescribeSecret",
-                    "secretsmanager:CreateSecret",
                     "secretsmanager:DeleteSecret",
                     "secretsmanager:UpdateSecret"
                 ],
