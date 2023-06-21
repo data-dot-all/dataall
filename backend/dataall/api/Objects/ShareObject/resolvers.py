@@ -232,7 +232,7 @@ def resolve_user_role(context: Context, source: models.ShareObject, **kwargs):
             return ShareObjectPermission.Approvers.value
         if (
             source.owner == context.username
-            or source.principalId in context.groups
+            or source.groupUri in context.groups
         ):
             return ShareObjectPermission.Requesters.value
         else:
