@@ -251,21 +251,17 @@ class Dataset(Stack):
                 iam.PolicyStatement(
                     sid="GlueAccessCrawler",
                     actions=[
-                        "glue:GetDatabase",
-                        "glue:GetTableVersion",
+                        "glue:Get*",
+                        "glue:BatchGet*",
                         "glue:CreateTable",
-                        "glue:GetTables",
-                        "glue:GetTableVersions",
                         "glue:UpdateTable",
                         "glue:DeleteTableVersion",
                         "glue:DeleteTable",
-                        "glue:GetTable",
-                        "glue:BatchGetPartition",
-                        "glue:BatchCreatePartition"
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
                     ]
