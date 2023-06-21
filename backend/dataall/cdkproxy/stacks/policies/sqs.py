@@ -10,7 +10,7 @@ class SQS(ServicePolicy):
 
         statements = [
             aws_iam.PolicyStatement(
-                sid='SQSRead',
+                #sid='SQSRead',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     "sqs:ListQueues",
@@ -18,7 +18,7 @@ class SQS(ServicePolicy):
                 resources=["*"]
             ),
             aws_iam.PolicyStatement(
-                sid='SQSCreate',
+                #sid='SQSCreate',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     "sqs:CreateQueue",
@@ -32,7 +32,7 @@ class SQS(ServicePolicy):
                 }
             ),
             aws_iam.PolicyStatement(
-                sid='SQSManageTeamQueue',
+                #sid='SQSManageTeamQueue',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     "sqs:GetQueueUrl",

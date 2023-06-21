@@ -13,7 +13,7 @@ class AwsCICD(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="GenericCodeCommit",
+                #sid="GenericCodeCommit",
                 actions=[
                     'codecommit:List*',
                     'codecommit:CreateApprovalRuleTemplate',
@@ -27,7 +27,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="TagCodecommitTeamRepo",
+                #sid="TagCodecommitTeamRepo",
                 actions=[
                     "codecommit:TagResource"
                 ],
@@ -41,7 +41,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="AllCodecommitTeamRepo",
+                #sid="AllCodecommitTeamRepo",
                 actions=[
                     "codecommit:AssociateApprovalRuleTemplateWithRepository",
                     "codecommit:Batch*",
@@ -72,7 +72,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="GenericCodePipeline",
+                #sid="GenericCodePipeline",
                 actions=[
                     'codepipeline:AcknowledgeJob',
                     'codepipeline:AcknowledgeThirdPartyJob',
@@ -90,7 +90,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="TagCodepipelineTeamRepo",
+                #sid="TagCodepipelineTeamRepo",
                 actions=['codepipeline:TagResource'],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*',
@@ -104,7 +104,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="AllCodepipelineTeamRepo",
+                #sid="AllCodepipelineTeamRepo",
                 actions=[
                     'codepipeline:Create*',
                     'codepipeline:Delete*',
@@ -135,7 +135,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="CodePipelineCreateS3Bucket",
+                #sid="CodePipelineCreateS3Bucket",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:CreateBucket',
@@ -145,7 +145,7 @@ class AwsCICD(ServicePolicy):
                 resources=["arn:aws:s3:::codepipeline-*"],
             ),
             iam.PolicyStatement(
-                sid="CodePipelineReadWriteS3Bucket",
+                #sid="CodePipelineReadWriteS3Bucket",
                 actions=[
                     's3:GetObject',
                     's3:PutObject',
@@ -157,7 +157,7 @@ class AwsCICD(ServicePolicy):
                 ],
             ),
             iam.PolicyStatement(
-                sid="GenericCodeBuild",
+                #sid="GenericCodeBuild",
                 actions=[
                     'codebuild:ListCuratedEnvironmentImages',
                     'codebuild:ListReportGroups',
@@ -178,7 +178,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="TagCodebuildTeamRepo",
+                #sid="TagCodebuildTeamRepo",
                 actions=[
                     'codebuild:CreateProject',
                     'codebuild:UpdateProject',
@@ -197,7 +197,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="AllCodebuildTeamRepo",
+                #sid="AllCodebuildTeamRepo",
                 actions=[
                     'codebuild:Batch*',
                     'codebuild:CreateReport',

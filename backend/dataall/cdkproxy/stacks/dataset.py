@@ -292,9 +292,9 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:ListEnvironmentBucket'],
+                    actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
-                    effect=iam.Effect.ALLOW,
+                    effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
                     sid="ReadEnvironmentBucketProfiling",
@@ -304,7 +304,7 @@ class Dataset(Stack):
                         "s3:GetObjectVersion"
                     ],
                     effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/code/*'],
                 ),
                 iam.PolicyStatement(
                     sid="ReadWriteEnvironmentBucketProfiling",
