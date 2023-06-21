@@ -54,6 +54,7 @@ class ServicePolicy(object):
         from .quicksight import QuickSight
         from .sagemaker import Sagemaker
         from .secretsmanager import SecretsManager
+        from .sqs import SQS
         from .ssm import SSM
         from .stepfunctions import StepFunctions
 
