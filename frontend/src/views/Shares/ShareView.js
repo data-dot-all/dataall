@@ -739,6 +739,7 @@ const ShareView = () => {
                         <Typography
                           color="textPrimary"
                           variant="subtitle2"
+                          sx={{ wordBreak: "break-word" }}
                         >
                           {share.requestPurpose || '-'}
                         </Typography>
@@ -764,6 +765,7 @@ const ShareView = () => {
                         <Typography
                           color="textPrimary"
                           variant="subtitle2"
+                          sx={{ wordBreak: "break-word" }}
                         >
                           {share.rejectPurpose || '-'}
                         </Typography>
