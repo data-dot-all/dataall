@@ -15,17 +15,12 @@ class Lambda(ServicePolicy):
             iam.PolicyStatement(
                 #sid="ListLambda",
                 actions=[
-                    'lambda:ListFunctions',
-                    'lambda:ListEventSourceMappings',
-                    'lambda:ListLayerVersions',
-                    'lambda:ListLayers',
+                    'lambda:List*',
                     'lambda:GetLayer*',
                     'lambda:GetAccountSettings',
                     'lambda:GetEventSourceMapping',
                     'lambda:CreateEventSourceMapping',
-                    'lambda:ListEventSourceMappings',
                     'lambda:CreateCodeSigningConfig',
-                    'lambda:ListCodeSigningConfigs',
                 ],
                 resources=['*'],
             ),
@@ -60,16 +55,7 @@ class Lambda(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="ManageTeamLambda",
-                actions=[
-                    'lambda:CreateAlias',
-                    'lambda:Delete*',
-                    'lambda:Get*',
-                    'lambda:Invoke*',
-                    'lambda:List*',
-                    'lambda:Publish*',
-                    'lambda:Put*',
-                    'lambda:Update*',
-                ],
+                actions=['lambda:*'],
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*'

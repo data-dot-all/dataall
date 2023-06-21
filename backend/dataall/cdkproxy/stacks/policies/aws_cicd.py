@@ -19,7 +19,6 @@ class AwsCICD(ServicePolicy):
                     'codecommit:CreateApprovalRuleTemplate',
                     'codecommit:UpdateApprovalRuleTemplateName',
                     'codecommit:GetApprovalRuleTemplate',
-                    'codecommit:ListApprovalRuleTemplates',
                     'codecommit:DeleteApprovalRuleTemplate',
                     'codecommit:UpdateApprovalRuleTemplateContent',
                     'codecommit:UpdateApprovalRuleTemplateDescription',
@@ -27,12 +26,16 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="TagCodecommitTeamRepo",
+                #sid="TagCICD",
                 actions=[
-                    "codecommit:TagResource"
+                    "codecommit:TagResource",
+                    "codepipeline:TagResource"
                 ],
                 resources=[
-                    f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
+                    f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*',
+                    f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*',
+                    f'arn:aws:codepipeline:{self.region}:{self.account}:actiontype:/*/*/*',
+                    f'arn:aws:codepipeline:{self.region}:{self.account}:webhook:{self.resource_prefix}',
                 ],
                 conditions={
                     'StringEquals': {
@@ -42,26 +45,7 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodecommitTeamRepo",
-                actions=[
-                    "codecommit:AssociateApprovalRuleTemplateWithRepository",
-                    "codecommit:Batch*",
-                    "codecommit:CancelUploadArchive",
-                    "codecommit:Create*",
-                    "codecommit:Delete*",
-                    "codecommit:Describe*",
-                    "codecommit:DisassociateApprovalRuleTemplateFromRepository",
-                    "codecommit:EvaluatePullRequestApprovalRules",
-                    "codecommit:Get*",
-                    "codecommit:Git*",
-                    "codecommit:List*",
-                    "codecommit:Merge*",
-                    "codecommit:OverridePullRequestApprovalRules",
-                    "codecommit:Post*",
-                    "codecommit:Put*",
-                    "codecommit:TestRepositoryTriggers",
-                    "codecommit:Update*",
-                    "codecommit:UploadArchive",
-                ],
+                actions=["codecommit:*"],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
                 ],
@@ -90,37 +74,8 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="TagCodepipelineTeamRepo",
-                actions=['codepipeline:TagResource'],
-                resources=[
-                    f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*',
-                    f'arn:aws:codepipeline:{self.region}:{self.account}:actiontype:/*/*/*',
-                    f'arn:aws:codepipeline:{self.region}:{self.account}:webhook:{self.resource_prefix}',
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:RequestTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
                 #sid="AllCodepipelineTeamRepo",
-                actions=[
-                    'codepipeline:Create*',
-                    'codepipeline:Delete*',
-                    'codepipeline:DeregisterWebhookWithThirdParty',
-                    'codepipeline:DisableStageTransition',
-                    'codepipeline:EnableStageTransition',
-                    'codepipeline:Get*',
-                    'codepipeline:List*',
-                    'codepipeline:PollForJobs',
-                    'codepipeline:Put*',
-                    'codepipeline:RegisterWebhookWithThirdParty',
-                    'codepipeline:RetryStageExecution',
-                    'codepipeline:StartPipelineExecution',
-                    'codepipeline:StopPipelineExecution',
-                    'codepipeline:Update*',
-                ],
+                actions=['codepipeline:*'],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*/*',
                     f'arn:aws:codepipeline:{self.region}:{self.account}:actiontype:/*/*/*',
@@ -140,20 +95,14 @@ class AwsCICD(ServicePolicy):
                 actions=[
                     's3:CreateBucket',
                     's3:ListBucket',
-                    's3:PutBucketPublicAccessBlock'
-                ],
-                resources=["arn:aws:s3:::codepipeline-*"],
-            ),
-            iam.PolicyStatement(
-                #sid="CodePipelineReadWriteS3Bucket",
-                actions=[
+                    's3:PutBucketPublicAccessBlock',
                     's3:GetObject',
                     's3:PutObject',
                     's3:DeleteObject'
                 ],
-                effect=iam.Effect.ALLOW,
                 resources=[
-                    'arn:aws:s3:::codepipeline-*/*',
+                    "arn:aws:s3:::codepipeline-*",
+                    "arn:aws:s3:::codepipeline-*/*"
                 ],
             ),
             iam.PolicyStatement(
@@ -199,20 +148,7 @@ class AwsCICD(ServicePolicy):
             iam.PolicyStatement(
                 #sid="AllCodebuildTeamRepo",
                 actions=[
-                    'codebuild:Batch*',
-                    'codebuild:CreateReport',
-                    'codebuild:CreateWebhoook',
-                    'codebuild:Delete*',
-                    'codebuild:Describe*',
-                    'codebuild:Get*',
-                    'codebuild:InvalidateProjectCache',
-                    'codebuild:List*',
-                    'codebuild:PutResourcePolicy',
-                    'codebuild:Retry*',
-                    'codebuild:Start*',
-                    'codebuild:Stop*',
-                    'codebuild:UpdateReport',
-                    'codebuild:UpdateWebhook',
+                    'codebuild:*',
                 ],
                 resources=[
                     f'arn:aws:codebuild:{self.region}:{self.account}:project/{self.resource_prefix}*',
