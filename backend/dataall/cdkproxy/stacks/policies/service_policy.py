@@ -143,7 +143,7 @@ class ServicePolicy(object):
             statements.extend(service.get_statements(self))
 
         statements_chunks: list = [
-            statements[i : i + 8] for i in range(0, len(statements), 8)
+            statements[i : i + 10] for i in range(0, len(statements), 10)
         ]
 
         for index, chunk in enumerate(statements_chunks):
