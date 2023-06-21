@@ -28,6 +28,7 @@ class Databrew(ServicePolicy):
                 not_actions=[
                     'databrew:Create*',
                     'databrew:TagResource',
+                    'databrew:UntagResource',
                 ],
                 resources=[
                     f'arn:aws:databrew:{self.region}:{self.account}:*/{self.resource_prefix}*'

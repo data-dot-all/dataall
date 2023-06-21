@@ -55,7 +55,11 @@ class Lambda(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="ManageTeamLambda",
-                actions=['lambda:*'],
+                not_actions=[
+                    'lambda:CreateFunction',
+                    'lambda:TagResource',
+                    'lambda:UntagResource',
+                ],
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*:*'

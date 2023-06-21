@@ -45,7 +45,10 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodecommitTeamRepo",
-                not_actions=["codecommit:TagResource"],
+                not_actions=[
+                    "codecommit:TagResource",
+                    "codecommit:UntagResource",
+                ],
                 resources=[
                     f'arn:aws:codecommit:{self.region}:{self.account}:{self.resource_prefix}*'
                 ],
@@ -75,7 +78,10 @@ class AwsCICD(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="AllCodepipelineTeamRepo",
-                not_actions=["codepipeline:TagResource"],
+                not_actions=[
+                    "codepipeline:TagResource",
+                    "codepipeline:UntagResource",
+                ],
                 resources=[
                     f'arn:aws:codepipeline:{self.region}:{self.account}:{self.resource_prefix}*/*/*',
                     f'arn:aws:codepipeline:{self.region}:{self.account}:actiontype:/*/*/*',
