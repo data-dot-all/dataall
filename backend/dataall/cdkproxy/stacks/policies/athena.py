@@ -12,7 +12,7 @@ class Athena(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="ListAthena",
+                #sid="ListAthena",
                 actions=[
                     "athena:ListWorkGroups",
                     "athena:ListTagsForResource",
@@ -22,31 +22,23 @@ class Athena(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="AthenaWorkgroup",
+                #sid="AthenaWorkgroup",
                 actions=[
-                    "athena:GetWorkGroup",
-                    "athena:BatchGetQueryExecution",
-                    "athena:GetQueryExecution",
-                    "athena:ListQueryExecutions",
+                    "athena:Get*",
+                    "athena:BatchGet*",
+                    "athena:List*",
                     "athena:StartQueryExecution",
                     "athena:StopQueryExecution",
-                    "athena:GetQueryResults",
-                    "athena:GetQueryResultsStream",
                     "athena:CreateNamedQuery",
-                    "athena:GetNamedQuery",
-                    "athena:BatchGetNamedQuery",
-                    "athena:ListNamedQueries",
                     "athena:DeleteNamedQuery",
                     "athena:CreatePreparedStatement",
-                    "athena:GetPreparedStatement",
-                    "athena:ListPreparedStatements",
                     "athena:UpdatePreparedStatement",
                     "athena:DeletePreparedStatement"
                 ],
                 resources=[f'arn:aws:athena:{self.region}:{self.account}:workgroup/{self.team.environmentAthenaWorkGroup}'],
             ),
             iam.PolicyStatement(
-                sid="ListBucketAthena",
+                #sid="ListBucketAthena",
                 actions=[
                     "s3:ListBucket",
                 ],
@@ -55,7 +47,7 @@ class Athena(ServicePolicy):
                 conditions={"StringEquals": {"s3:prefix": ["", "athenaqueries/", f"athenaqueries/{self.team.environmentIAMRoleName}/"], "s3:delimiter": ["/"]}}
             ),
             iam.PolicyStatement(
-                sid="ReadWriteEnvironmentBucketAthenaQueries",
+                #sid="ReadWriteEnvironmentBucketAthenaQueries",
                 actions=[
                     "s3:PutObject",
                     "s3:PutObjectAcl",

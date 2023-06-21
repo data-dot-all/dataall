@@ -13,24 +13,19 @@ class Lambda(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="ListLambda",
+                #sid="ListLambda",
                 actions=[
-                    'lambda:ListFunctions',
-                    'lambda:ListEventSourceMappings',
-                    'lambda:ListLayerVersions',
-                    'lambda:ListLayers',
+                    'lambda:List*',
                     'lambda:GetLayer*',
                     'lambda:GetAccountSettings',
                     'lambda:GetEventSourceMapping',
                     'lambda:CreateEventSourceMapping',
-                    'lambda:ListEventSourceMappings',
                     'lambda:CreateCodeSigningConfig',
-                    'lambda:ListCodeSigningConfigs',
                 ],
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="GenericLambdaFunctions",
+                #sid="GenericLambdaFunctions",
                 actions=[
                     'lambda:UpdateFunctionCodeSigningConfig',
                     'lambda:UpdateEventSourceMapping',
@@ -43,7 +38,7 @@ class Lambda(ServicePolicy):
                 ],
             ),
             iam.PolicyStatement(
-                sid="CreateTeamLambda",
+                #sid="CreateTeamLambda",
                 actions=[
                     'lambda:CreateFunction',
                     'lambda:TagResource',
@@ -59,16 +54,11 @@ class Lambda(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="ManageTeamLambda",
-                actions=[
-                    'lambda:CreateAlias',
-                    'lambda:Delete*',
-                    'lambda:Get*',
-                    'lambda:Invoke*',
-                    'lambda:List*',
-                    'lambda:Publish*',
-                    'lambda:Put*',
-                    'lambda:Update*',
+                #sid="ManageTeamLambda",
+                not_actions=[
+                    'lambda:CreateFunction',
+                    'lambda:TagResource',
+                    'lambda:UntagResource',
                 ],
                 resources=[
                     f'arn:aws:lambda:{self.region}:{self.account}:function:{self.resource_prefix}*',
@@ -81,7 +71,7 @@ class Lambda(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="ManageLambdaLayers",
+                #sid="ManageLambdaLayers",
                 actions=[
                     'lambda:PublishLayerVersion',
                     'lambda:DeleteLayerVersion',
@@ -92,7 +82,7 @@ class Lambda(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
-                sid="LoggingLambda",
+                #sid="LoggingLambda",
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',

@@ -12,20 +12,16 @@ class SecretsManager(ServicePolicy):
     def get_statements(self):
         statements = [
             aws_iam.PolicyStatement(
-                sid="SecretsReadAll",
+                #sid="SecretsReadAll",
                 effect=aws_iam.Effect.ALLOW,
                 actions=["secretsmanager:ListSecrets"],
                 resources=["*"],
             ),
             aws_iam.PolicyStatement(
-                sid='CreateTeamSecrets',
+                #sid='CreateTeamSecrets',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:DescribeSecret",
                     "secretsmanager:CreateSecret",
-                    "secretsmanager:DeleteSecret",
-                    "secretsmanager:UpdateSecret",
                     "secretsmanager:TagResource",
                 ],
                 resources=[f"arn:aws:secretsmanager:*:{self.account}:secret:{self.resource_prefix}*"],
@@ -36,12 +32,11 @@ class SecretsManager(ServicePolicy):
                 },
             ),
             aws_iam.PolicyStatement(
-                sid='ManageTeamSecrets',
+                #sid='ManageTeamSecrets',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:DescribeSecret",
-                    "secretsmanager:CreateSecret",
                     "secretsmanager:DeleteSecret",
                     "secretsmanager:UpdateSecret"
                 ],

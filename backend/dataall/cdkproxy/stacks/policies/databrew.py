@@ -9,32 +9,26 @@ class Databrew(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="DataBrewGeneric",
+                #sid="DataBrewGeneric",
                 actions=['databrew:List*'],
                 resources=['*']
             ),
             iam.PolicyStatement(
-                sid="DataBrewRecipes",
+                #sid="DataBrewRecipes",
                 actions=[
                     'databrew:BatchDeleteRecipeVersion',
-                    'databrew:CreateRecipe',
-                    'databrew:DescribeRecipe',
-                    'databrew:PublishRecipe',
-                    'databrew:UpdateRecipe',
+                    'databrew:*Recipe',
                 ],
                 resources=[
                     f'arn:aws:databrew:{self.region}:{self.account}:recipe/{self.resource_prefix}*'
                 ],
             ),
             iam.PolicyStatement(
-                sid="DataBrewManageTeamResources",
-                actions=[
-                    'databrew:Delete*',
-                    'databrew:Describe*',
-                    'databrew:Update*',
-                    'databrew:Start*',
-                    'databrew:Stop*',
-                    'databrew:SendProjectSessionAction',
+                #sid="DataBrewManageTeamResources",
+                not_actions=[
+                    'databrew:Create*',
+                    'databrew:TagResource',
+                    'databrew:UntagResource',
                 ],
                 resources=[
                     f'arn:aws:databrew:{self.region}:{self.account}:*/{self.resource_prefix}*'
@@ -46,7 +40,7 @@ class Databrew(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="DataBrewCreateTeamResources",
+                #sid="DataBrewCreateTeamResources",
                 actions=[
                     'databrew:Create*',
                     'databrew:TagResource',

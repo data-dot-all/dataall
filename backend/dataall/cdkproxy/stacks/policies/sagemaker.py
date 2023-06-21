@@ -15,7 +15,6 @@ class Sagemaker(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="SageMakerTagResources",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:AddTags'],
                 resources=['*'],
@@ -27,7 +26,6 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerRead",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:List*',
@@ -38,13 +36,15 @@ class Sagemaker(ServicePolicy):
                     'sagemaker:RenderUiTemplate',
                     'sagemaker:GetSearchSuggestions',
                     'sagemaker:QueryLineage',
-                    'sagemaker:GetSagemakerServicecatalogPortfolioStatus'
+                    'sagemaker:GetSagemakerServicecatalogPortfolioStatus',
+                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
+                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
                 ],
                 resources=['*'],
             ),
             # SageMaker Notebooks permissions
             iam.PolicyStatement(
-                sid="SageMakerCreateTaggedResourcesNotebooks",
+                #sid="SageMakerCreateTaggedResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreateNotebookInstance'],
                 resources=[
@@ -59,16 +59,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerNotebookInstanceLifecycleConfig",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:CreateNotebookInstanceLifecycleConfig',
-                    'sagemaker:DeleteNotebookInstanceLifecycleConfig',
-                ],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
-                sid="SageMakerCreatePresignedNotebookInstanceUrl",
+                #sid="SageMakerCreatePresignedNotebookInstanceUrl",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreatePresignedNotebookInstanceUrl'],
                 resources=[
@@ -81,13 +72,10 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerManageResourcesNotebooks",
+                #sid="SageMakerManageResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'sagemaker:DeleteNotebookInstance',
-                    'sagemaker:UpdateNotebookInstance',
-                    'sagemaker:StartNotebookInstance',
-                    'sagemaker:StopNotebookInstance'
+                    'sagemaker:*NotebookInstance',
                 ],
                 resources=[
                     f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
@@ -100,7 +88,7 @@ class Sagemaker(ServicePolicy):
             ),
             # SageMaker Studio permissions
             iam.PolicyStatement(
-                sid="SageMakerApps",
+                #sid="SageMakerApps",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:CreateApp',
@@ -109,7 +97,7 @@ class Sagemaker(ServicePolicy):
                 resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*']
             ),
             iam.PolicyStatement(
-                sid="SageMakerCreatePresignedDomainUrl",
+                #sid="SageMakerCreatePresignedDomainUrl",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreatePresignedDomainUrl'],
                 resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*'],
@@ -120,7 +108,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerManageTeamResourcesMLStudio",
+                #sid="SageMakerManageTeamResourcesMLStudio",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:DeleteDomain',
@@ -140,7 +128,7 @@ class Sagemaker(ServicePolicy):
             ),
             # For everything that is not notebooks, domains, user-profiles and apps we allow permissions if the resource is tagged
             iam.PolicyStatement(
-                sid="SageMakerCreateTaggedGenericResources",
+                #sid="SageMakerCreateTaggedGenericResources",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Create*'],
                 not_resources=[
@@ -155,7 +143,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerManageTeamResources",
+                #sid="SageMakerManageTeamResources",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:Delete*',
@@ -174,7 +162,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="SageMakerManageTeamResources2",
+                #sid="SageMakerManageTeamResources2",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:Start*',
@@ -193,7 +181,7 @@ class Sagemaker(ServicePolicy):
             ),
             # Logging and support permissions
             iam.PolicyStatement(
-                sid="SageMakerLogging",
+                #sid="SageMakerLogging",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'logs:CreateLogGroup',
@@ -206,20 +194,13 @@ class Sagemaker(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
-                sid="SageMakerReadECR",
+                #sid="SageMakerSupport",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'ecr:GetAuthorizationToken',
                     'ecr:BatchCheckLayerAvailability',
                     'ecr:GetDownloadUrlForLayer',
-                    'ecr:BatchGetImage'
-                ],
-                resources=['*']
-            ),
-            iam.PolicyStatement(
-                sid="SageMakerReadServiceCatalog",
-                effect=iam.Effect.ALLOW,
-                actions=[
+                    'ecr:BatchGetImage',
                     'servicecatalog:ListAcceptedPortfolioShares',
                     'servicecatalog:ListPrincipalsForPortfolio',
                 ],

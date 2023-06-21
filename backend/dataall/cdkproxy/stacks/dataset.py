@@ -281,22 +281,17 @@ class Dataset(Stack):
                 iam.PolicyStatement(
                     sid="GlueAccessCrawler",
                     actions=[
-                        "glue:GetDatabase",
-                        "glue:GetUserDefinedFunctions",
-                        "glue:GetTableVersion",
+                        "glue:Get*",
+                        "glue:BatchGet*",
                         "glue:CreateTable",
-                        "glue:GetTables",
-                        "glue:GetTableVersions",
                         "glue:UpdateTable",
                         "glue:DeleteTableVersion",
                         "glue:DeleteTable",
-                        "glue:GetTable",
-                        "glue:BatchGetPartition",
-                        "glue:BatchCreatePartition"
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
                     ]
@@ -333,9 +328,9 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:ListEnvironmentBucket'],
+                    actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
-                    effect=iam.Effect.ALLOW,
+                    effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
                     sid="ReadEnvironmentBucketProfiling",
@@ -345,7 +340,7 @@ class Dataset(Stack):
                         "s3:GetObjectVersion"
                     ],
                     effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/code/*'],
                 ),
                 iam.PolicyStatement(
                     sid="ReadWriteEnvironmentBucketProfiling",

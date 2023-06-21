@@ -10,7 +10,7 @@ class SSM(ServicePolicy):
     def get_statements(self):
         statements = [
             aws_iam.PolicyStatement(
-                sid="SSMReadAll",
+                #sid="SSMReadAll",
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     "ssm:DescribeParameters",
@@ -18,7 +18,7 @@ class SSM(ServicePolicy):
                 resources=["*"],
             ),
             aws_iam.PolicyStatement(
-                sid='CreateTeamParameters',
+                #sid='CreateTeamParameters',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'ssm:AddTagsToResource'
@@ -31,7 +31,7 @@ class SSM(ServicePolicy):
                 },
             ),
             aws_iam.PolicyStatement(
-                sid='ManageTeamParameters',
+                #sid='ManageTeamParameters',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'ssm:PutParameter',

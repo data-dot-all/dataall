@@ -54,12 +54,12 @@ class ServicePolicy(object):
         from .quicksight import QuickSight
         from .sagemaker import Sagemaker
         from .secretsmanager import SecretsManager
+        from .sqs import SQS
         from .ssm import SSM
         from .stepfunctions import StepFunctions
 
         policies: [aws_iam.ManagedPolicy] = [
-            # This policy covers the minimum actions required independent
-            # of the service permissions given to the group.
+            # This policy adds some minimum actions required independent from the services enabled for the group
             aws_iam.ManagedPolicy(
                 self.stack,
                 self.id,
@@ -143,7 +143,7 @@ class ServicePolicy(object):
             statements.extend(service.get_statements(self))
 
         statements_chunks: list = [
-            statements[i : i + 8] for i in range(0, len(statements), 8)
+            statements[i : i + 10] for i in range(0, len(statements), 10)
         ]
 
         for index, chunk in enumerate(statements_chunks):

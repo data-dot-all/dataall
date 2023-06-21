@@ -9,7 +9,7 @@ class GlueCatalog(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="GlueLFReadData",
+                #sid="GlueLFReadData",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     "lakeformation:GetDataAccess",
@@ -28,7 +28,7 @@ class GlueCatalog(ServicePolicy):
                 resources=["*"],
             ),
             iam.PolicyStatement(
-                sid="GlueManageCatalog",
+                #sid="GlueManageCatalog",
                 actions=[
                     'glue:CreateConnection',
                     'glue:CreateDatabase',
@@ -71,7 +71,7 @@ class Glue(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                sid="ListBucketProfilingGlue",
+                #sid="ListBucketProfilingGlue",
                 actions=[
                     "s3:ListBucket",
                 ],
@@ -82,7 +82,7 @@ class Glue(ServicePolicy):
                     "s3:delimiter": ["/"]}}
             ),
             iam.PolicyStatement(
-                sid="ReadEnvironmentBucketProfilingGlue",
+                #sid="ReadEnvironmentBucketProfilingGlue",
                 actions=[
                     "s3:GetObject",
                     "s3:GetObjectAcl",
@@ -93,7 +93,7 @@ class Glue(ServicePolicy):
                 effect=iam.Effect.ALLOW,
             ),
             iam.PolicyStatement(
-                sid="GlueList",
+                #sid="GlueList",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'glue:Get*',
@@ -103,7 +103,7 @@ class Glue(ServicePolicy):
                 resources=["*"],
             ),
             iam.PolicyStatement(
-                sid="GlueCreateS3Bucket",
+                #sid="GlueCreateS3Bucket",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:CreateBucket',
@@ -113,7 +113,7 @@ class Glue(ServicePolicy):
                 resources=["arn:aws:s3:::aws-glue-*"],
             ),
             iam.PolicyStatement(
-                sid="GlueReadWriteS3Bucket",
+                #sid="GlueReadWriteS3Bucket",
                 actions=[
                     's3:GetObject',
                     's3:PutObject',
@@ -125,7 +125,7 @@ class Glue(ServicePolicy):
                 ],
             ),
             iam.PolicyStatement(
-                sid="GlueCreate",
+                #sid="GlueCreate",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'glue:CreateDevEndpoint',
@@ -147,18 +147,18 @@ class Glue(ServicePolicy):
                 }
             ),
             iam.PolicyStatement(
-                sid="GlueCrawler",
+                #sid="GlueManageGlueResources",
                 effect=iam.Effect.ALLOW,
-                actions=[
-                    'glue:DeleteCrawler',
-                    'glue:StartCrawler',
-                    'glue:StopCrawler',
-                    'glue:UpdateCrawler',
-                    'glue:StartCrawlerSchedule',
-                    'glue:UpdateCrawlerSchedule',
-                    'glue:StopCrawlerSchedule',
+                not_actions=[
+                    'glue:CreateDevEndpoint',
+                    'glue:CreateTrigger',
+                    'glue:CreateJob',
+                    'glue:CreateCrawler',
                 ],
                 resources=[
+                    f'arn:aws:glue:{self.region}:{self.account}:devEndpoint/{self.resource_prefix}*',
+                    f'arn:aws:glue:{self.region}:{self.account}:trigger/{self.resource_prefix}*',
+                    f'arn:aws:glue:{self.region}:{self.account}:job/{self.resource_prefix}*',
                     f'arn:aws:glue:{self.region}:{self.account}:crawler/{self.resource_prefix}*'
                 ],
                 conditions={
@@ -168,71 +168,10 @@ class Glue(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                sid="GlueJobs",
+                #sid="SupportGluePermissions",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'glue:DeleteJob',
-                    'glue:UpdateJob',
-                    'glue:StartJobRun',
-                    'glue:BatchStopJobRun'
-                ],
-                resources=[
-                    f'arn:aws:glue:{self.region}:{self.account}:job/{self.resource_prefix}*'
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:resourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                sid="GlueDevEndpoints",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'glue:DeleteDevEndpoint',
-                    'glue:UpdateDevEndpoint',
-                ],
-                resources=[
-                    f'arn:aws:glue:{self.region}:{self.account}:devEndpoint/{self.resource_prefix}*',
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:resourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                sid="GlueTriggers",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'glue:DeleteTrigger',
-                    'glue:StartTrigger',
-                    'glue:StopTrigger',
-                    'glue:UpdateTrigger',
-                ],
-                resources=[
-                    f'arn:aws:glue:{self.region}:{self.account}:trigger/{self.resource_prefix}*',
-                ],
-                conditions={
-                    'StringEquals': {
-                        f'aws:resourceTag/{self.tag_key}': [self.tag_value]
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                sid="GlueClassifiers",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'glue:CreateClassifier',
-                    'glue:UpdateClassifier',
-                    'glue:DeleteClassifier'
-                ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
-                sid="SupportGluePermissions",
-                effect=iam.Effect.ALLOW,
-                actions=[
+                    'glue:*Classifier',
                     'glue:CreateScript',
                     'glue:CreateSecurityConfiguration',
                     'glue:DeleteSecurityConfiguration',
@@ -240,7 +179,7 @@ class Glue(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                sid="LoggingGlue",
+                #sid="LoggingGlue",
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
