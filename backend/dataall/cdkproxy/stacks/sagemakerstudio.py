@@ -293,7 +293,6 @@ class SagemakerStudioUserProfile(Stack):
             .to_string()
         )
 
-
         TagsUtil.add_tags(self)
 
         CDKNagUtil.check_rules(self)

@@ -388,7 +388,7 @@ class S3ShareManager:
         target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
         if existing_policy and f'{target_requester_id}:*' in existing_policy:
             policy = json.loads(existing_policy)
-            policy["Statement"] = [item for item in policy["Statement"] if item.get("Sid",None) != f"{target_requester_id}"]
+            policy["Statement"] = [item for item in policy["Statement"] if item.get("Sid", None) != f"{target_requester_id}"]
             KMS.put_key_policy(
                 dataset.AwsAccountId,
                 dataset.region,
