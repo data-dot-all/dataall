@@ -25,7 +25,10 @@ class Databrew(ServicePolicy):
             ),
             iam.PolicyStatement(
                 #sid="DataBrewManageTeamResources",
-                actions=['databrew:*'],
+                not_actions=[
+                    'databrew:Create*',
+                    'databrew:TagResource',
+                ],
                 resources=[
                     f'arn:aws:databrew:{self.region}:{self.account}:*/{self.resource_prefix}*'
                 ],
