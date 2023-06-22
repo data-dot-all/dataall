@@ -5,7 +5,7 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.context import Context
 from dataall.core.context import get_context
-from dataall.db import models
+from dataall.db import models, exceptions
 from dataall.db.api import Environment, Stack
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
@@ -16,6 +16,8 @@ log = logging.getLogger(__name__)
 
 
 def create_pipeline(context: Context, source, input=None):
+    _validate_input(input)
+
     with context.engine.scoped_session() as session:
         pipeline = DataPipelineService.create_pipeline(
             session=session,
@@ -309,3 +311,14 @@ def update_pipeline_environment(context: Context, source, input=None):
             uri=input['pipelineUri'],
         )
     return pipeline_env
+
+
+def _validate_input(data):
+    if not data:
+        raise exceptions.RequiredParameter(data)
+    if not data.get('environmentUri'):
+        raise exceptions.RequiredParameter('environmentUri')
+    if not data.get('SamlGroupName'):
+        raise exceptions.RequiredParameter('group')
+    if not data.get('label'):
+        raise exceptions.RequiredParameter('label')

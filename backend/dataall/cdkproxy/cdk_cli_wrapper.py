@@ -106,10 +106,9 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                     }
                 )
 
-            if stack.stack == 'cdkpipeline':
-                if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
-                    logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
-
+            extension = _CDK_CLI_WRAPPER_EXTENSIONS.get(stack.stack)
+            if extension:
+                logger.info(f'Extending CDK deployment process with steps for the following stack: {stack.stack}')
                 finish_deployment, path = _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].extend_deployment(
                     stack=stack,
                     session=session,
@@ -117,6 +116,8 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 )
                 if finish_deployment:
                     return
+            else:
+                logger.info(f'There is no CDK deployment extension for {stack.stack}. Proceeding further with the deployment')
 
             cwd = (
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), path)

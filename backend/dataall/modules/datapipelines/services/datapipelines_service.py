@@ -36,8 +36,6 @@ class DataPipelineService:
         data: dict = None,
     ) -> DataPipeline:
 
-        DataPipelineService._validate_input(data)
-
         environment = Environment.get_environment_by_uri(session, uri)
 
         if not environment.pipelinesEnabled:
@@ -141,17 +139,6 @@ class DataPipelineService:
         session.commit()
 
         return pipeline_env
-
-    @staticmethod
-    def _validate_input(data):
-        if not data:
-            raise exceptions.RequiredParameter(data)
-        if not data.get('environmentUri'):
-            raise exceptions.RequiredParameter('environmentUri')
-        if not data.get('SamlGroupName'):
-            raise exceptions.RequiredParameter('group')
-        if not data.get('label'):
-            raise exceptions.RequiredParameter('label')
 
     @staticmethod
     def validate_group_membership(

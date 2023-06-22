@@ -11,8 +11,7 @@ class DatapipelinesRepository(GroupResource):
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
-    @staticmethod
-    def count_resources(session, environment, group_uri) -> int:
+    def count_resources(self, session, environment, group_uri) -> int:
         return (
             session.query(DataPipeline)
             .filter(

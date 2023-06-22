@@ -63,6 +63,6 @@ class DatapipelinesCdkModuleInterface(ModuleInterface):
         from dataall.modules.datapipelines.cdk.datapipelines_cdk_cli_wrapper_extension import \
             DatapipelinesCDKCliWrapperExtension
 
-        _CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension
+        _CDK_CLI_WRAPPER_EXTENSIONS['cdkpipeline'] = DatapipelinesCDKCliWrapperExtension()
 
         log.info("Datapipelines stacks have been imported")
