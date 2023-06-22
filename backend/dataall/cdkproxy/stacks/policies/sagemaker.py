@@ -88,26 +88,6 @@ class Sagemaker(ServicePolicy):
             ),
             # SageMaker Studio permissions
             iam.PolicyStatement(
-                #sid="SageMakerApps",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'sagemaker:CreateApp',
-                    'sagemaker:DeleteApp'
-                ],
-                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*']
-            ),
-            iam.PolicyStatement(
-                #sid="SageMakerCreatePresignedDomainUrl",
-                effect=iam.Effect.ALLOW,
-                actions=['sagemaker:CreatePresignedDomainUrl'],
-                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*'],
-                conditions={
-                    'StringEquals': {
-                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
-                    },
-                },
-            ),
-            iam.PolicyStatement(
                 #sid="SageMakerManageTeamResourcesMLStudio",
                 effect=iam.Effect.ALLOW,
                 actions=[
@@ -126,14 +106,25 @@ class Sagemaker(ServicePolicy):
                     }
                 },
             ),
-            # For everything that is not notebooks, domains, user-profiles and apps we allow permissions if the resource is tagged
+            # For everything that is not domains and user-profiles we allow permissions if the resource is tagged
+            # Deny on creation of domains and users, generic allow for prefixed and tagged resources
+            # allow for apps (cannot be tagged) and special tag needed for CreatePresignedDomainUrl
             iam.PolicyStatement(
-                #sid="SageMakerCreateTaggedGenericResources",
+                #sid="SageMakerDenyCreateDomainsUsers",
+                effect=iam.Effect.DENY,
+                actions=['sagemaker:Create*'],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                # sid="SageMakerCreateGenericResources",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:Create*'],
                 not_resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*/*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -143,40 +134,44 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="SageMakerManageTeamResources",
+                # sid="SageMakerApps",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'sagemaker:Delete*',
-                    'sagemaker:Update*'
+                    'sagemaker:CreateApp',
+                    'sagemaker:DeleteApp'
                 ],
-                not_resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:notebook-instance/{self.resource_prefix}*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*',
-                ],
+                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:app/*/*']
+            ),
+            iam.PolicyStatement(
+                # sid="SageMakerCreatePresignedDomainUrl",
+                effect=iam.Effect.ALLOW,
+                actions=['sagemaker:CreatePresignedDomainUrl'],
+                resources=[f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*'],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
+                        f'sagemaker:ResourceTag/{self.tag_key}': [self.tag_value]
+                    },
                 },
             ),
             iam.PolicyStatement(
-                #sid="SageMakerManageTeamResources2",
+                # sid="SageMakerManageGenericResources",
                 effect=iam.Effect.ALLOW,
                 actions=[
+                    'sagemaker:Delete*',
+                    'sagemaker:Update*',
                     'sagemaker:Start*',
                     'sagemaker:Stop*',
                     'sagemaker:InvokeEndpoint',
                     'sagemaker:InvokeEndpointAsync'
                 ],
                 resources=[
-                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*'
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*',
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:*/{self.resource_prefix}*/*',
                 ],
                 conditions={
                     'StringEquals': {
-                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value]
-                    }
+                        f'aws:ResourceTag/{self.tag_key}': [self.tag_value],
+                    },
                 },
             ),
             # Logging and support permissions

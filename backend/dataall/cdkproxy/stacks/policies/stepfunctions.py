@@ -32,6 +32,7 @@ class StepFunctions(ServicePolicy):
                 ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*',
+                    f'arn:aws:states:{self.region}:{self.account}:activity:{self.resource_prefix}*',
                 ],
                 conditions={
                     'StringEquals': {
@@ -52,7 +53,7 @@ class StepFunctions(ServicePolicy):
                 ],
                 resources=[
                     f'arn:aws:states:{self.region}:{self.account}:execution:{self.resource_prefix}*:*',
-                    f'arn:aws:states:{self.region}:{self.account}:activity:*',
+                    f'arn:aws:states:{self.region}:{self.account}:activity:{self.resource_prefix}*',
                     f'arn:aws:states:{self.region}:{self.account}:stateMachine:{self.resource_prefix}*'
                 ],
                 conditions={
