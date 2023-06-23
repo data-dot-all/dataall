@@ -29,7 +29,7 @@ class VpcStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
-
+        self.s3_cidrs = self.get_s3_cidr_list(tooling_region)
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
@@ -129,80 +129,71 @@ class VpcStack(pyNestedClass):
             ],
             nat_gateways=1,
         )
-        if backend_vpc:
-            backend_private_subnets = self.vpc.private_subnets
-            nacl = ec2.NetworkAcl(
-                self, "BackendRestrictedNACL",
-                vpc=self.vpc,
-                network_acl_name=f'{resource_prefix}-{envname}-backendRestrictedNACL',
-                subnet_selection=ec2.SubnetSelection(subnets=backend_private_subnets),
-            )
+        # if backend_vpc:
+        #     backend_private_subnets = self.vpc.private_subnets
+        #     nacl = ec2.NetworkAcl(
+        #         self, "BackendRestrictedNACL",
+        #         vpc=self.vpc,
+        #         network_acl_name=f'{resource_prefix}-{envname}-backendRestrictedNACL',
+        #         subnet_selection=ec2.SubnetSelection(subnets=backend_private_subnets),
+        #     )
 
-            for index, subnet in enumerate(backend_private_subnets):
-                ## Inbound NACL Rule
-                nacl.add_entry(
-                    f"entryInboundHTTPS{index+1}",
-                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
-                    traffic=ec2.AclTraffic.tcp_port(443),
-                    rule_number=(100 + index),
-                    direction=ec2.TrafficDirection.INGRESS,
-                    rule_action=ec2.Action.ALLOW
-                )
-                nacl.add_entry(
-                    f"entryInboundTCP{index+1}",
-                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
-                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
-                    rule_number=(110 + index),
-                    direction=ec2.TrafficDirection.INGRESS,
-                    rule_action=ec2.Action.ALLOW
-                )
-                ## Outbound NACL Rule
-                nacl.add_entry(
-                    f"entryOutboundHTTPS{index+1}",
-                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
-                    traffic=ec2.AclTraffic.tcp_port(443),
-                    rule_number=(100 + index),
-                    direction=ec2.TrafficDirection.EGRESS,
-                    rule_action=ec2.Action.ALLOW
-                )
-                nacl.add_entry(
-                    f"entryOutboundTCP{index+1}",
-                    cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
-                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
-                    rule_number=(110 + index),
-                    direction=ec2.TrafficDirection.EGRESS,
-                    rule_action=ec2.Action.ALLOW
-                ) 
-            ec2_client = boto3.client("ec2", region_name=tooling_region)
-            response = ec2_client.describe_prefix_lists(
-                Filters=[
-                    {
-                        'Name': 'prefix-list-name',
-                        'Values': [f'com.amazonaws.{tooling_region}.s3']
-                    },
-                ]
-            )
-            s3_cidrs = response['PrefixLists'][0].get('Cidrs')
-            for index, s3_cidr in enumerate(s3_cidrs):
-                ## Inbound S3 NACL Rule
-                nacl.add_entry(
-                    f"entryS3InboundTCP{index+1}",
-                    cidr=ec2.AclCidr.ipv4(s3_cidr),
-                    traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
-                    rule_number=(200 + index),
-                    direction=ec2.TrafficDirection.INGRESS,
-                    rule_action=ec2.Action.ALLOW
-                )
-                ## Outbound S3 NACL Rule
-                nacl.add_entry(
-                    f"entryS3OutboundHTTPS{index+1}",
-                    cidr=ec2.AclCidr.ipv4(s3_cidr),
-                    traffic=ec2.AclTraffic.tcp_port(443),
-                    rule_number=(200 + index),
-                    direction=ec2.TrafficDirection.EGRESS,
-                    rule_action=ec2.Action.ALLOW
-                )
-        elif restricted_nacl:
+        #     for index, subnet in enumerate(backend_private_subnets):
+        #         ## Inbound NACL Rule
+        #         nacl.add_entry(
+        #             f"entryInboundHTTPS{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
+        #             traffic=ec2.AclTraffic.tcp_port(443),
+        #             rule_number=(100 + index),
+        #             direction=ec2.TrafficDirection.INGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         )
+        #         nacl.add_entry(
+        #             f"entryInboundTCP{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
+        #             traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+        #             rule_number=(110 + index),
+        #             direction=ec2.TrafficDirection.INGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         )
+        #         ## Outbound NACL Rule
+        #         nacl.add_entry(
+        #             f"entryOutboundHTTPS{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
+        #             traffic=ec2.AclTraffic.tcp_port(443),
+        #             rule_number=(100 + index),
+        #             direction=ec2.TrafficDirection.EGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         )
+        #         nacl.add_entry(
+        #             f"entryOutboundTCP{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(subnet.ipv4_cidr_block),
+        #             traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+        #             rule_number=(110 + index),
+        #             direction=ec2.TrafficDirection.EGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         ) 
+
+        #     for index, s3_cidr in enumerate(s3_cidrs):
+        #         ## Inbound S3 NACL Rule
+        #         nacl.add_entry(
+        #             f"entryS3InboundTCP{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(s3_cidr),
+        #             traffic=ec2.AclTraffic.tcp_port_range(start_port=1024, end_port=65535),
+        #             rule_number=(200 + index),
+        #             direction=ec2.TrafficDirection.INGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         )
+        #         ## Outbound S3 NACL Rule
+        #         nacl.add_entry(
+        #             f"entryS3OutboundHTTPS{index+1}",
+        #             cidr=ec2.AclCidr.ipv4(s3_cidr),
+        #             traffic=ec2.AclTraffic.tcp_port(443),
+        #             rule_number=(200 + index),
+        #             direction=ec2.TrafficDirection.EGRESS,
+        #             rule_action=ec2.Action.ALLOW
+        #         )
+        if restricted_nacl:
             nacl = ec2.NetworkAcl(
                 self, "RestrictedNACL",
                 vpc=self.vpc,

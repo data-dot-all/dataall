@@ -1,4 +1,5 @@
 from builtins import super
+import boto3
 
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
@@ -70,6 +71,7 @@ class BackendStack(Stack):
         )
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
+        self.s3_cidr_list = self.get_s3_cidr_list(tooling_region)
 
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
 
@@ -133,6 +135,8 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
+            vpc_endpoints_sg=vpc_endpoints_sg,
+            s3_cidr_list=self.s3_cidr_list,
             sqs_queue=sqs_stack.queue,
             image_tag=image_tag,
             ecr_repository=repo,
@@ -157,6 +161,8 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             pivot_role_name=self.pivot_role_name,
             tooling_account_id=tooling_account_id,
+            s3_cidr_list=self.s3_cidr_list,
+            lambda_sgs=self.lambda_api_stack.lambda_sgs,
             **kwargs,
         )
 
@@ -348,3 +354,15 @@ class BackendStack(Stack):
             collection_id=aoss_stack.collection_id,
             collection_name=aoss_stack.collection_name,
         )
+
+    def get_s3_cidr_list(tooling_region):
+        ec2_client = boto3.client("ec2", region_name=tooling_region)
+        response = ec2_client.describe_prefix_lists(
+            Filters=[
+                {
+                    'Name': 'prefix-list-name',
+                    'Values': [f'com.amazonaws.{tooling_region}.s3']
+                },
+            ]
+        )
+        return response['PrefixLists'][0].get('Cidrs')

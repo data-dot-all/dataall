@@ -45,6 +45,11 @@ class OpenSearchStack(pyNestedClass):
                         connection=ec2.Port.tcp(443),
                         description=f'Allow dataall lambda {l.function_name}',
                     )
+                    sg.add_ingress_rule(
+                        peer=db_security_group,
+                        connection=ec2.Port.tcp(443),
+                        description=f'Allow dataall OpenSearch',
+                    )
 
         if ecs_security_groups:
             for sg in ecs_security_groups:
@@ -52,6 +57,11 @@ class OpenSearchStack(pyNestedClass):
                     peer=sg,
                     connection=ec2.Port.tcp(443),
                     description=f'Allow dataall ECS cluster tasks',
+                )
+                sg.add_ingress_rule(
+                    peer=db_security_group,
+                    connection=ec2.Port.tcp(443),
+                    description=f'Allow dataall OpenSearch Domain',
                 )
 
         key = aws_kms.Key(

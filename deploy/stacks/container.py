@@ -27,6 +27,8 @@ class ContainerStack(pyNestedClass):
         prod_sizing=False,
         pivot_role_name=None,
         tooling_account_id=None,
+        s3_cidr_list=None,
+        lambda_sgs=None
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -35,8 +37,16 @@ class ContainerStack(pyNestedClass):
             image_tag = self.node.try_get_context('image_tag')
 
         cdkproxy_image_tag = f'cdkproxy-{image_tag}'
-
-        self.ecs_security_groups: [aws_ec2.SecurityGroup] = []
+        
+        (self.scheduled_tasks_sg, self.cdkproxy_sg) = self.create_ecs_security_groups(
+            envname, 
+            resource_prefix, 
+            vpc, 
+            vpc_endpoints_sg,
+            s3_cidr_list,
+            lambda_sgs
+        )
+        self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.cdkproxy_sg]
 
         cluster = ecs.Cluster(
             self,
@@ -93,9 +103,9 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container.container_name,
         )
 
-        scheduled_tasks_sg = self.create_task_sg(
-            envname, resource_prefix, vpc, vpc_endpoints_sg
-        )
+        # scheduled_tasks_sg = self.create_task_sg(
+        #     envname, resource_prefix, vpc, vpc_endpoints_sg
+        # )
 
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -116,10 +126,10 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-tables-syncer',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
+        # self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -140,10 +150,10 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-catalog-indexer',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(catalog_indexer_task.task.security_groups)
+        # self.ecs_security_groups.extend(catalog_indexer_task.task.security_groups)
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -164,10 +174,10 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-stacks-updater',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self.cdkproxy_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(stacks_updater.task.security_groups)
+        # self.ecs_security_groups.extend(stacks_updater.task.security_groups)
 
         ssm.StringParameter(
             self,
@@ -195,12 +205,12 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-policies-updater',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(
-            update_bucket_policies_task.task.security_groups
-        )
+        # self.ecs_security_groups.extend(
+        #     update_bucket_policies_task.task.security_groups
+        # )
 
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -225,10 +235,10 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-subscriptions',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
+        # self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
 
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -292,12 +302,12 @@ class ContainerStack(pyNestedClass):
             ),
         )
 
-        ssm.StringParameter(
-            self,
-            f'SecurityGroup{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/security_groups',
-            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
-        )
+        # ssm.StringParameter(
+        #     self,
+        #     f'SecurityGroup{envname}',
+        #     parameter_name=f'/dataall/{envname}/ecs/security_groups',
+        #     string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
+        # )
 
         self.ecs_cluster = cluster
         self.ecs_task_definitions = [
@@ -308,6 +318,89 @@ class ContainerStack(pyNestedClass):
             share_management_task_definition,
             subscriptions_task.task_definition,
         ]
+
+    def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list, lambda_sgs):
+        scheduled_tasks_sg = ec2.SecurityGroup(
+            self,
+            f'ScheduledTasksSG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-ecs-tasks-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+        )
+
+        # Requires QS Access via NAT 
+        cdkproxy_sg = ec2.SecurityGroup(
+            self,
+            f'CDKProxySG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-ecs-cdkproxy-tasks-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+        )
+
+        for sg in [scheduled_tasks_sg,cdkproxy_sg]:
+            # Add VPC Endpoint Connectivity
+            sg.add_egress_rule(
+                peer=vpc_endpoints_sg,
+                connection=ec2.Port.tcp(443),
+                description='Allow VPC Endpoint SG Egress',
+            )
+            sg.add_egress_rule(
+                peer=vpc_endpoints_sg,
+                connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                description='Allow VPC Endpoint SG Egress',
+            )
+
+            # Add Lambda SG Connectivity
+            if lambda_sgs:
+                for lambda_sg in lambda_sgs:
+                    sg.add_ingress_rule(
+                        peer=lambda_sg,
+                        connection=ec2.Port.tcp(443),
+                        description='Allow Lambda SG SG Ingress',
+                    )
+                    lambda_sg.add_egress_rule(
+                        peer=sg,
+                        connection=ec2.Port.tcp(443),
+                        description='Allow ECS SG Egress',
+                    )
+            
+            # Add S3 Gateway Connectivity
+            if s3_cidr_list:
+                for cidr in s3_cidr_list:
+                    sg.add_egress_rule(
+                        peer=ec2.Peer.ipv4(cidr),
+                        connection=ec2.Port.tcp(443),
+                        description='Allow S3 Endpoint SG Egress',
+                    )
+                    sg.add_egress_rule(
+                        peer=ec2.Peer.ipv4(cidr),
+                        connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                        description='Allow S3 Endpoint SG Egress',
+                    )
+
+        # Add NAT Gateway Access for QS API 
+        # for subnet in vpc.public_subnets:
+        cdkproxy_sg.add_egress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(443),
+            description='Allow NAT Internet Access SG Egress',
+        )
+
+        # Create SSM of Security Group IDs
+        ssm.StringParameter(
+            self,
+            f'SecurityGroup{envname}',
+            parameter_name=f'/dataall/{envname}/ecs/security_groups',
+            string_value=scheduled_tasks_sg.security_group_id,
+        )
+        ssm.StringParameter(
+            self,
+            f'SecurityGroupCDKProxy{envname}',
+            parameter_name=f'/dataall/{envname}/ecs/cdkproxy_security_groups',
+            string_value=cdkproxy_sg.security_group_id,
+        )
+
+        return scheduled_tasks_sg, cdkproxy_sg
 
     def create_cicd_stacks_updater_role(self, envname, resource_prefix, tooling_account_id):
         cicd_stacks_updater_role = iam.Role(
@@ -446,31 +539,6 @@ class ContainerStack(pyNestedClass):
         task_role.grant_pass_role(task_role)
         return task_role
 
-    def create_task_sg(self, envname, resource_prefix, vpc, vpc_endpoints_sg):
-        if vpc_endpoints_sg:
-            scheduled_tasks_sg = ec2.SecurityGroup(
-                self,
-                f'ScheduledTasksSG{envname}',
-                security_group_name=f'{resource_prefix}-{envname}-ecs-tasks-sg',
-                vpc=vpc,
-                allow_all_outbound=False,
-            )
-
-            scheduled_tasks_sg.add_egress_rule(
-                peer=vpc_endpoints_sg,
-                connection=ec2.Port.tcp(443),
-                description='Allow VPC Endpoint SG Egress',
-            )
-        else:
-            scheduled_tasks_sg = ec2.SecurityGroup(
-                self,
-                f'ScheduledTasksSG{envname}',
-                security_group_name=f'{resource_prefix}-{envname}-ecs-tasks-sg',
-                vpc=vpc,
-                allow_all_outbound=True,
-            )
-        return scheduled_tasks_sg
-
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(
             self,
@@ -559,8 +627,8 @@ class ContainerStack(pyNestedClass):
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT
                 ).subnets
             ),
-            rule_name=scheduled_task_id
-            # security_groups=[security_group],
+            rule_name=scheduled_task_id,
+            security_groups=[security_group],
         )
         return scheduled_task, task
 

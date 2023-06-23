@@ -36,6 +36,8 @@ class LambdaApiStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         vpc=None,
+        vpc_endpoints_sg=None,
+        s3_cidr_list=None,
         sqs_queue: sqs.Queue = None,
         ecr_repository=None,
         image_tag=None,
@@ -55,7 +57,9 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
+        esproxy_sg = self.create_lambda_sgs(envname, "esproxy", resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
@@ -66,6 +70,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
             vpc=vpc,
+            security_groups=[esproxy_sg],
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
@@ -76,6 +81,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
+        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
@@ -86,6 +92,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
             vpc=vpc,
+            security_groups=[api_handler_sg],
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
@@ -96,6 +103,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
+        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list)
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
@@ -109,6 +117,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
+            security_groups=[awsworker_sg],
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.aws_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.aws_handler_dlq),
@@ -120,6 +129,8 @@ class LambdaApiStack(pyNestedClass):
                 batch_size=1,
             )
         )
+
+        self.lambda_sgs = [esproxy_sg, api_handler_sg, awsworker_sg]
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
@@ -141,6 +152,50 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
+
+    def create_lambda_sgs(self, envname, name, resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list):
+        lambda_sg = ec2.SecurityGroup(
+            self,
+            f'{name}SG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+        )
+
+        # Add VPC Endpoint Connectivity
+        lambda_sg.add_egress_rule(
+            peer=vpc_endpoints_sg,
+            connection=ec2.Port.tcp(443),
+            description='Allow VPC Endpoint SG Egress',
+        )
+        lambda_sg.add_egress_rule(
+            peer=vpc_endpoints_sg,
+            connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+            description='Allow VPC Endpoint SG Egress',
+        )
+
+        # Add S3 Gateway Endpoint Connectivity
+        if s3_cidr_list:
+            for cidr in s3_cidr_list:
+                lambda_sg.add_egress_rule(
+                    peer=ec2.Peer.ipv4(cidr),
+                    connection=ec2.Port.tcp(443),
+                    description='Allow S3 Endpoint SG Egress',
+                )
+                lambda_sg.add_egress_rule(
+                    peer=ec2.Peer.ipv4(cidr),
+                    connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                    description='Allow S3 Endpoint SG Egress',
+                )
+        
+        # Add NAT Internet Connectivity for QS API
+        if name != "esproxy":
+            lambda_sg.add_egress_rule(
+                peer=ec2.Peer.any_ipv4(),
+                connection=ec2.Port.tcp(443),
+                description='Allow NAT Internet Access SG Egress',
+            )
+        return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
 

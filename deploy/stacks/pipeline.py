@@ -687,7 +687,7 @@ class PipelineStack(Stack):
                     'aws sts get-caller-identity --profile buildprofile',
                     f"export cluster_name=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cluster/name --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export private_subnets=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/private_subnets --profile buildprofile --output text --query 'Parameter.Value')",
-                    f"export security_groups=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/security_groups --profile buildprofile --output text --query 'Parameter.Value')",
+                    f"export security_groups=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cdkproxy_security_groups --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export task_definition=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/task_def_arn/stacks_updater --profile buildprofile --output text --query 'Parameter.Value')",
                     'network_config="awsvpcConfiguration={subnets=[$private_subnets],securityGroups=[$security_groups],assignPublicIp=DISABLED}"',
                     f'cluster_arn="arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/$cluster_name"',
