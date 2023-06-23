@@ -70,8 +70,7 @@ class BackendStack(Stack):
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
-        vpc_endpoints_sg = self.vpc_stack.vpce_security_group
-        vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
+        vpce_connection = ec2.Connections(security_groups=[self.vpc_stack.vpce_security_group])
         self.s3_cidr_list = self.get_s3_cidr_list(tooling_region)
 
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"

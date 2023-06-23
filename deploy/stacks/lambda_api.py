@@ -131,21 +131,37 @@ class LambdaApiStack(pyNestedClass):
         )
 
         # Add VPC Endpoint Connectivity
-        # for lmbda in [
-        #     self.aws_handler,
-        #     self.api_handler,
-        #     self.elasticsearch_proxy_handler,
-        # ]:
-        #     vpce_connection.allow_from(
-        #         lmbda.connections,
-        #         ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #         'Allow Lambda to VPC Endpoint'
-        #     )
-        #     vpce_connection.allow_from(
-        #         lmbda.connections,
-        #         ec2.Port.tcp(443),
-        #         'Allow Lambda to VPC Endpoint'
-        #     )
+        for lmbda in [
+            self.aws_handler,
+            self.api_handler,
+            self.elasticsearch_proxy_handler,
+        ]:
+            vpce_connection.allow_from(
+                lmbda,
+                ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                'Allow Lambda to VPC Endpoint'
+            )
+            vpce_connection.allow_from(
+                lmbda,
+                ec2.Port.tcp(443),
+                'Allow Lambda to VPC Endpoint'
+            )
+        # Add NAT Connectivity
+        for lmbda in [
+            self.aws_handler,
+            self.api_handler
+        ]:
+            lmbda.connections.allow_to(
+                ec2.Peer.ipv4(vpc.vpc_cidr_block),
+                ec2.Port.tcp(443),
+                'Allow NAT Internet Access SG Egress'
+            )
+            # for sg in lmbda.connections.security_groups:
+            #     sg.add_egress_rule(
+            #         peer=ec2.Peer.any_ipv4(),
+            #         connection=ec2.Port.tcp(443),
+            #         description='Allow NAT Internet Access SG Egress',
+            #     )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
