@@ -160,6 +160,7 @@ class LambdaApiStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
             vpc=vpc,
             allow_all_outbound=False,
+            disable_inline_rules=True,
         )
 
         # Add VPC Endpoint Connectivity

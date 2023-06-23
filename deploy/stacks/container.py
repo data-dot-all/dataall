@@ -326,6 +326,7 @@ class ContainerStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-ecs-tasks-sg',
             vpc=vpc,
             allow_all_outbound=False,
+            disable_inline_rules=True,
         )
 
         # Requires QS Access via NAT 
@@ -335,6 +336,7 @@ class ContainerStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-ecs-cdkproxy-tasks-sg',
             vpc=vpc,
             allow_all_outbound=False,
+            disable_inline_rules=True,
         )
 
         for sg in [scheduled_tasks_sg,cdkproxy_sg]:

@@ -52,6 +52,7 @@ class AuroraServerlessStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-aurora-sg',
             vpc=vpc,
             allow_all_outbound=False,
+            disable_inline_rules=True
         )
 
         if lambdas:
