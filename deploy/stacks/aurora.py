@@ -65,8 +65,18 @@ class AuroraServerlessStack(pyNestedClass):
                         connection=ec2.Port.tcp(5432),
                         description=f'Allow dataall lambda {l.function_name}',
                     )
+                    # ec2.CfnSecurityGroupEgress(
+                    #     self,
+                    #     f"AuroraDB{sg.security_group_id}",
+                    #     group_id=sg.security_group_id,
+                    #     ip_protocol='tcp',
+                    #     description='Allow dataall Aurora DB',
+                    #     destination_security_group_id=
+                    #     from_port=5432,
+                    #     to_port=5432
+                    # )
                     sg.add_egress_rule(
-                        peer=sg,
+                        peer=db_security_group,
                         connection=ec2.Port.tcp(5432),
                         description=f'Allow dataall Aurora DB',
                     )
