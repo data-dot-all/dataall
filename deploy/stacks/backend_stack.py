@@ -355,7 +355,7 @@ class BackendStack(Stack):
             collection_name=aoss_stack.collection_name,
         )
 
-    def get_s3_cidr_list(tooling_region):
+    def get_s3_cidr_list(self, tooling_region):
         ec2_client = boto3.client("ec2", region_name=tooling_region)
         response = ec2_client.describe_prefix_lists(
             Filters=[

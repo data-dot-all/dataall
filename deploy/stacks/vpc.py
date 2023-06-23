@@ -29,7 +29,7 @@ class VpcStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
-        self.s3_cidrs = self.get_s3_cidr_list(tooling_region)
+
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
