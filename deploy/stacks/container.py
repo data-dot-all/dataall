@@ -28,7 +28,7 @@ class ContainerStack(pyNestedClass):
         pivot_role_name=None,
         tooling_account_id=None,
         s3_cidr_list=None,
-        lambda_sgs=None
+        lambda_sgs=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
