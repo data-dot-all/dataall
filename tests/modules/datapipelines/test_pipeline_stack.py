@@ -1,7 +1,8 @@
 import json
 
 import pytest
-from aws_cdk import App
+from aws_cdk import App, Stack
+from aws_cdk.assertions import Template
 
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
@@ -88,14 +89,12 @@ def patch_methods(mocker, db, pipeline2, env, pip_envs, org):
         return_value=org,
     )
 
-@pytest.fixture(scope='function', autouse=True)
-def template2(pipeline2):
+
+def test_resources_created(pipeline2):
     app = App()
-    PipelineStack(app, 'Pipeline', target_uri=pipeline2.DataPipelineUri)
-    return json.dumps(app.synth().get_stack_by_name('Pipeline').template)
-
-
-def test_resources_created_cp_trunk(template2):
-    assert 'AWS::CodeCommit::Repository' in template2
-    assert 'AWS::CodePipeline::Pipeline' in template2
-    assert 'AWS::CodeBuild::Project' in template2
+    stack = PipelineStack(app, 'Pipeline', target_uri=pipeline2.DataPipelineUri)
+    template = Template.from_stack(stack)
+    # TODO: Add more assertions
+    template.resource_count_is("AWS::CodeCommit::Repository", 1)
+    template.resource_count_is("AWS::CodePipeline::Pipeline", 1)
+    template.resource_count_is("AWS::CodeBuild::Project", 1)
