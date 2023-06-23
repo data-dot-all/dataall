@@ -11,7 +11,7 @@ from dataall.db import models, exceptions, paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
-from dataall.core.group.services.group_resource_manager import EnvironmentResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,

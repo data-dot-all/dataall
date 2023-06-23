@@ -8,7 +8,7 @@ from sqlalchemy.orm import Query
 
 from dataall.db import paginate
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.core.group.services.group_resource_manager import EnvironmentResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 
 
 class SageMakerStudioRepository(EnvironmentResource):
