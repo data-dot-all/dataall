@@ -228,7 +228,7 @@ def _delete_repository(accountid, region, repo_name):
             region=region,
             repository=repo_name)
     except Exception as e:
-            log.error(f"Failed to execute task due to: {e}")
+        log.error(f"Failed to execute task due to: {e}")
 
     return True
 
@@ -243,7 +243,7 @@ def delete_pipeline(
         env: models.Environment = Environment.get_environment_by_uri(
             session, pipeline.environmentUri
         )
-    
+
         DataPipelineService.delete_pipeline(
             session=session,
             uri=DataPipelineUri,

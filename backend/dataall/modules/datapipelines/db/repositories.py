@@ -21,46 +21,46 @@ class DatapipelinesRepository(GroupResource):
                 ))
             .count()
         )
-    
+
     @staticmethod
     def get_clone_url_http(session, environmentUri, repo):
         env: models.Environment = session.query(models.Environment).get(
             environmentUri
         )
         return f'codecommit::{env.region}://{repo}'
-    
+
     @staticmethod
     def get_pipeline_by_uri(session, uri):
         pipeline: DataPipeline = session.query(DataPipeline).get(uri)
         if not pipeline:
             raise exceptions.ObjectNotFound('DataPipeline', uri)
         return pipeline
-    
+
     @staticmethod
     def get_pipeline_environment_by_uri(session, uri):
         pipeline_env: DataPipelineEnvironment = session.query(DataPipelineEnvironment).get(uri)
         if not pipeline_env:
             raise exceptions.ObjectNotFound('PipelineEnvironment', uri)
         return pipeline_env
-    
+
     @staticmethod
     def get_pipeline_and_environment_by_uri(session, uri):
         pipeline: DataPipeline = session.query(DataPipeline).get(uri)
         env: models.Environment = session.query(models.Environment).get(pipeline.environmentUri)
         return (pipeline, env)
-    
+
     @staticmethod
     def get_pipeline_stack_by_uri(session, uri):
-        return (session.query(models.Stack)
+        return (
+            session.query(models.Stack)
             .filter(
                 and_(
                     models.Stack.targetUri == uri,
                     models.Stack.stack == 'PipelineStack',
-                )
-            )
+                ))
             .first()
         )
-    
+
     @staticmethod
     def query_user_pipelines(session, username, groups, filter) -> Query:
         query = session.query(DataPipeline).filter(
@@ -104,14 +104,14 @@ class DatapipelinesRepository(GroupResource):
             page=data.get('page', DatapipelinesRepository._DEFAULT_PAGE),
             page_size=data.get('pageSize', DatapipelinesRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
-    
+
     @staticmethod
     def query_pipeline_environments(session, uri) -> Query:
         query = session.query(DataPipelineEnvironment).filter(
             DataPipelineEnvironment.pipelineUri.ilike(uri + '%%'),
         )
         return query
-    
+
     @staticmethod
     def paginated_pipeline_environments(
         session, uri, data=None
@@ -130,7 +130,7 @@ class DatapipelinesRepository(GroupResource):
         )
         session.commit()
         return True
-    
+
     @staticmethod
     def delete_pipeline_environment(
         session, envPipelineUri
@@ -141,11 +141,11 @@ class DatapipelinesRepository(GroupResource):
         )
         session.commit()
         return True
-    
+
     @staticmethod
     def get_pipeline_environment(
         session, pipelineUri, environmentUri, stage
-        ) -> DataPipelineEnvironment:
+    ) -> DataPipelineEnvironment:
         return session.query(DataPipelineEnvironment).filter(
             and_(
                 DataPipelineEnvironment.pipelineUri == pipelineUri,

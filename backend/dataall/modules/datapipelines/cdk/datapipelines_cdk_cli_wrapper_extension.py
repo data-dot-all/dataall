@@ -26,7 +26,7 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
             stack.status = meta['StackStatus']
             update_stack_output(session, stack)
             return True, path
-        
+
         aws = SessionHelper.remote_session(stack.accountid)
         creds = aws.get_credentials()
         env.update(
@@ -42,6 +42,6 @@ class DatapipelinesCDKCliWrapperExtension(CDKCliWrapperExtension):
         )
 
         return False, path
-    
+
     def cleanup(self):
         CDKPipelineStack.clean_up_repo(path=f'./{self.pipeline.repo}')

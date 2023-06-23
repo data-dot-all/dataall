@@ -228,7 +228,7 @@ class DataPipelineService:
                     print(f"KEY: {k}, VALUE: {data.get(k)}")
                     setattr(pipeline_env, k, data.get(k))
         return pipeline_env
-    
+
     @staticmethod
     @has_resource_permission(DELETE_PIPELINE)
     def delete_pipeline(session, uri, pipeline):
@@ -259,7 +259,7 @@ class DataPipelineService:
             }
         )
         return body
-    
+
     @staticmethod
     @has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(session, uri):
@@ -291,7 +291,7 @@ class DataPipelineService:
             commit_specifier=input.get('branch', 'master'),
             file_path=input.get('absolutePath', 'README.md')
         )
-    
+
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(GET_PIPELINE)
@@ -306,7 +306,7 @@ class DataPipelineService:
             commit_specifier=input.get('branch', 'master'),
             folder_path=input.get('folderPath', '/')
         )
-    
+
     @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(GET_PIPELINE)
@@ -319,35 +319,35 @@ class DataPipelineService:
         return DatapipelineCodecommitClient(env.AwsAccountId, env.region).list_branches(
             repository=pipeline.repo
         )
-    
+
     @staticmethod
     def delete_repository(aws_account_id, region, repository):
-        _aws_account_id =  aws_account_id if aws_account_id else '111111111111'
+        _aws_account_id = aws_account_id if aws_account_id else '111111111111'
         _region = region if region else 'eu-west-1'
         _repository = repository if repository else "dataall-repo"
         return DatapipelineCodecommitClient(_aws_account_id, _region).delete_repository(
             repository=_repository
         )
-    
+
     @staticmethod
     def get_job_runs(session, datapipeline_uri):
         data_pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(
             session=session,
             uri=datapipeline_uri
         )
-        
+
         return GlueDatapipelineClient(
             aws_account_id=data_pipeline.AwsAccountId,
             region=data_pipeline.region
         ).get_job_runs(datapipeline_job_name=data_pipeline.name)
-    
+
     @staticmethod
     def get_pipeline_execution(session, datapipeline_uri):
         stack = DatapipelinesRepository.get_pipeline_stack_by_uri(session, datapipeline_uri)
         datapipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, datapipeline_uri)
         outputs = stack.outputs
         codepipeline_name = outputs['PipelineNameOutput']
-        
+
         return CodepipelineDatapipelineClient(
             aws_account_id=datapipeline.AwsAccountId,
             region=datapipeline.region

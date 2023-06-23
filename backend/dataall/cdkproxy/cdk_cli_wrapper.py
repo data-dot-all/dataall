@@ -85,7 +85,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             logger.warning(f'stackuri = {stack.stackUri}, stackId = {stack.stackid}')
             stack.status = 'PENDING'
             session.commit()
-            
+
             python_path = '/:'.join(sys.path)[1:] + ':/code'
             logger.info(f'python path = {python_path}')
 
@@ -166,13 +166,13 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 env=env,
                 cwd=cwd,
             )
-  
+
             if stack.stack == 'cdkpipeline':
                 if stack.stack not in _CDK_CLI_WRAPPER_EXTENSIONS:
                     logger.error(f'No CDK CLI wrapper extension is registered for {stack.stack} stack type')
 
                 _CDK_CLI_WRAPPER_EXTENSIONS[stack.stack].cleanup()
-            
+
             if process.returncode == 0:
                 meta = describe_stack(stack)
                 stack.stackid = meta['StackId']
