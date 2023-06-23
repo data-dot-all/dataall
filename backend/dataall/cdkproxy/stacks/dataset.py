@@ -393,6 +393,7 @@ class Dataset(Stack):
         # Datalake location custom resource: registers the S3 location in LakeFormation
         registered_location = LakeFormation.check_existing_lf_registered_location(
             resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            role_arn=dataset.IAMDatasetAdminRoleArn,
             accountid=env.AwsAccountId,
             region=env.region
         )
