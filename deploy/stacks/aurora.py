@@ -97,14 +97,14 @@ class AuroraServerlessStack(pyNestedClass):
         database.add_rotation_single_user(automatically_after=Duration.days(90))
 
         # Allow SG Connections
-        if lambdas:
-            l: _lambda.Function
-            for l in lambdas:
-                database.connections.allow_from(
-                    l.connections,
-                    ec2.Port.tcp(5432),
-                    f'Allow dataall lambda {l.function_name}',
-                )
+        # if lambdas:
+        #     l: _lambda.Function
+        #     for l in lambdas:
+        #         database.connections.allow_from(
+        #             l.connections,
+        #             ec2.Port.tcp(5432),
+        #             f'Allow dataall lambda {l.function_name}',
+        #         )
 
                 # sgs = l.connections.security_groups
                 # for i, sg in enumerate(sgs):
@@ -129,13 +129,13 @@ class AuroraServerlessStack(pyNestedClass):
                     #     description=f'Allow dataall Aurora DB',
                     # )
 
-        if ecs_security_groups:
-            for sg in ecs_security_groups:
-                database.connections.allow_from(
-                    ec2.Connections(security_groups=[sg]),
-                    ec2.Port.tcp(5432),
-                    f'Allow dataall ecs to db connection',
-                )
+        # if ecs_security_groups:
+        #     for sg in ecs_security_groups:
+        #         database.connections.allow_from(
+        #             ec2.Connections(security_groups=[sg]),
+        #             ec2.Port.tcp(5432),
+        #             f'Allow dataall ecs to db connection',
+        #         )
                     
                 # db_security_group.add_ingress_rule(
                 #     peer=sg,

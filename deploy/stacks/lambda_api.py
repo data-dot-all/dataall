@@ -131,21 +131,21 @@ class LambdaApiStack(pyNestedClass):
         )
 
         # Add VPC Endpoint Connectivity
-        for lmbda in [
-            self.aws_handler,
-            self.api_handler,
-            self.elasticsearch_proxy_handler,
-        ]:
-            vpce_connection.allow_from(
-                lmbda.connections,
-                ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                'Allow Lambda to VPC Endpoint'
-            )
-            vpce_connection.allow_from(
-                lmbda.connections,
-                ec2.Port.tcp(443),
-                'Allow Lambda to VPC Endpoint'
-            )
+        # for lmbda in [
+        #     self.aws_handler,
+        #     self.api_handler,
+        #     self.elasticsearch_proxy_handler,
+        # ]:
+        #     vpce_connection.allow_from(
+        #         lmbda.connections,
+        #         ec2.Port.tcp_range(start_port=1024, end_port=65535),
+        #         'Allow Lambda to VPC Endpoint'
+        #     )
+        #     vpce_connection.allow_from(
+        #         lmbda.connections,
+        #         ec2.Port.tcp(443),
+        #         'Allow Lambda to VPC Endpoint'
+        #     )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
@@ -190,27 +190,27 @@ class LambdaApiStack(pyNestedClass):
         #     description='Allow VPC Endpoint SG Egress',
         # )
 
-        # Add S3 Gateway Endpoint Connectivity
-        if s3_cidr_list:
-            for cidr in s3_cidr_list:
-                lambda_sg.add_egress_rule(
-                    peer=ec2.Peer.ipv4(cidr),
-                    connection=ec2.Port.tcp(443),
-                    description='Allow S3 Endpoint SG Egress',
-                )
-                lambda_sg.add_egress_rule(
-                    peer=ec2.Peer.ipv4(cidr),
-                    connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                    description='Allow S3 Endpoint SG Egress',
-                )
+        # # Add S3 Gateway Endpoint Connectivity
+        # if s3_cidr_list:
+        #     for cidr in s3_cidr_list:
+        #         lambda_sg.add_egress_rule(
+        #             peer=ec2.Peer.ipv4(cidr),
+        #             connection=ec2.Port.tcp(443),
+        #             description='Allow S3 Endpoint SG Egress',
+        #         )
+        #         lambda_sg.add_egress_rule(
+        #             peer=ec2.Peer.ipv4(cidr),
+        #             connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+        #             description='Allow S3 Endpoint SG Egress',
+        #         )
         
-        # Add NAT Internet Connectivity for QS API
-        if name != "esproxy":
-            lambda_sg.add_egress_rule(
-                peer=ec2.Peer.any_ipv4(),
-                connection=ec2.Port.tcp(443),
-                description='Allow NAT Internet Access SG Egress',
-            )
+        # # Add NAT Internet Connectivity for QS API
+        # if name != "esproxy":
+        #     lambda_sg.add_egress_rule(
+        #         peer=ec2.Peer.any_ipv4(),
+        #         connection=ec2.Port.tcp(443),
+        #         description='Allow NAT Internet Access SG Egress',
+        #     )
         return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):

@@ -339,70 +339,70 @@ class ContainerStack(pyNestedClass):
             disable_inline_rules=True,
         )
 
-        for sg in [scheduled_tasks_sg,cdkproxy_sg]:
-            # Add VPC Endpoint Connectivity
-            vpce_connection.allow_from(
-                ec2.Connections(security_groups=[sg]),
-                ec2.Port.tcp(443),
-                'Allow ECS to VPC Endpoint SG'
-            )
-            vpce_connection.allow_from(
-                ec2.Connections(security_groups=[sg]),
-                ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                'Allow ECS to VPC Endpoint SG'
-            )
-            # sg.add_egress_rule(
-            #     peer=vpc_endpoints_sg,
-            #     connection=ec2.Port.tcp(443),
-            #     description='Allow VPC Endpoint SG Egress',
-            # )
-            # sg.add_egress_rule(
-            #     peer=vpc_endpoints_sg,
-            #     connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-            #     description='Allow VPC Endpoint SG Egress',
-            # )
+        # for sg in [scheduled_tasks_sg,cdkproxy_sg]:
+        #     # Add VPC Endpoint Connectivity
+        #     vpce_connection.allow_from(
+        #         ec2.Connections(security_groups=[sg]),
+        #         ec2.Port.tcp(443),
+        #         'Allow ECS to VPC Endpoint SG'
+        #     )
+        #     vpce_connection.allow_from(
+        #         ec2.Connections(security_groups=[sg]),
+        #         ec2.Port.tcp_range(start_port=1024, end_port=65535),
+        #         'Allow ECS to VPC Endpoint SG'
+        #     )
+        #     # sg.add_egress_rule(
+        #     #     peer=vpc_endpoints_sg,
+        #     #     connection=ec2.Port.tcp(443),
+        #     #     description='Allow VPC Endpoint SG Egress',
+        #     # )
+        #     # sg.add_egress_rule(
+        #     #     peer=vpc_endpoints_sg,
+        #     #     connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+        #     #     description='Allow VPC Endpoint SG Egress',
+        #     # )
 
-            # Add Lambda SG Connectivity
-            if lambdas:
-                for lmbda in lambdas:
-                    sg_connection = ec2.Connections(security_groups=[sg])
-                    sg_connection.allow_from(
-                        lmbda.connections,
-                        ec2.Port.tcp(443),
-                        'Allow Lambda to ECS Connection'
-                    )
-                    # sg.add_ingress_rule(
-                    #     peer=lambda_sg,
-                    #     connection=ec2.Port.tcp(443),
-                    #     description='Allow Lambda SG SG Ingress',
-                    # )
-                    # lambda_sg.add_egress_rule(
-                    #     peer=sg,
-                    #     connection=ec2.Port.tcp(443),
-                    #     description='Allow ECS SG Egress',
-                    # )
+        #     # Add Lambda SG Connectivity
+        #     if lambdas:
+        #         for lmbda in lambdas:
+        #             sg_connection = ec2.Connections(security_groups=[sg])
+        #             sg_connection.allow_from(
+        #                 lmbda.connections,
+        #                 ec2.Port.tcp(443),
+        #                 'Allow Lambda to ECS Connection'
+        #             )
+        #             # sg.add_ingress_rule(
+        #             #     peer=lambda_sg,
+        #             #     connection=ec2.Port.tcp(443),
+        #             #     description='Allow Lambda SG SG Ingress',
+        #             # )
+        #             # lambda_sg.add_egress_rule(
+        #             #     peer=sg,
+        #             #     connection=ec2.Port.tcp(443),
+        #             #     description='Allow ECS SG Egress',
+        #             # )
             
-            # Add S3 Gateway Connectivity
-            if s3_cidr_list:
-                for cidr in s3_cidr_list:
-                    sg.add_egress_rule(
-                        peer=ec2.Peer.ipv4(cidr),
-                        connection=ec2.Port.tcp(443),
-                        description='Allow S3 Endpoint SG Egress',
-                    )
-                    sg.add_egress_rule(
-                        peer=ec2.Peer.ipv4(cidr),
-                        connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                        description='Allow S3 Endpoint SG Egress',
-                    )
+        #     # Add S3 Gateway Connectivity
+        #     if s3_cidr_list:
+        #         for cidr in s3_cidr_list:
+        #             sg.add_egress_rule(
+        #                 peer=ec2.Peer.ipv4(cidr),
+        #                 connection=ec2.Port.tcp(443),
+        #                 description='Allow S3 Endpoint SG Egress',
+        #             )
+        #             sg.add_egress_rule(
+        #                 peer=ec2.Peer.ipv4(cidr),
+        #                 connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+        #                 description='Allow S3 Endpoint SG Egress',
+        #             )
 
-        # Add NAT Gateway Access for QS API 
-        # for subnet in vpc.public_subnets:
-        cdkproxy_sg.add_egress_rule(
-            peer=ec2.Peer.any_ipv4(),
-            connection=ec2.Port.tcp(443),
-            description='Allow NAT Internet Access SG Egress',
-        )
+        # # Add NAT Gateway Access for QS API 
+        # # for subnet in vpc.public_subnets:
+        # cdkproxy_sg.add_egress_rule(
+        #     peer=ec2.Peer.any_ipv4(),
+        #     connection=ec2.Port.tcp(443),
+        #     description='Allow NAT Internet Access SG Egress',
+        # )
 
         # Create SSM of Security Group IDs
         ssm.StringParameter(

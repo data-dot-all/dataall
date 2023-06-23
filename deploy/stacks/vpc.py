@@ -43,10 +43,10 @@ class VpcStack(pyNestedClass):
             self.vpce_security_group = ec2.SecurityGroup(
                 self, 'vpc-sg', vpc=cast(ec2.IVpc, self.vpc), allow_all_outbound=False, disable_inline_rules=True
             )
-            self.vpce_security_group.add_ingress_rule(
-                peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
-                connection=ec2.Port.all_tcp(),
-            )
+            # self.vpce_security_group.add_ingress_rule(
+            #     peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
+            #     connection=ec2.Port.all_tcp(),
+            # )
             self._create_vpc_endpoints()
 
         self.private_subnets = []
