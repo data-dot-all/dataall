@@ -13,11 +13,12 @@
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",
-    "@appbaseio/reactivesearch": "^3.29.1",
+    "@appbaseio/reactivesearch": "^3.43.10",
     "@emotion/react": "^11.8.2",
     "@emotion/styled": "^11.8.1",
     "@monaco-editor/react": "^4.3.1",
     "@mui/icons-material": "^5.5.1",
+    "@mui/x-date-pickers": "^5.0.0",
     "@mui/lab": "^5.0.0-alpha.74",
     "@mui/material": "^5.5.2",
     "@mui/styles": "^5.5.1",
@@ -29,7 +30,7 @@
     "amazon-quicksight-embedding-sdk": "^1.18.1",
     "apexcharts": "^3.33.2",
     "apollo-boost": "^0.4.9",
-    "aws-amplify": "^4.3.17",
+    "aws-amplify": "^5.2.6",
     "axios": "^0.26.1",
     "classnames": "^2.3.1",
     "date-fns": "^2.28.0",
@@ -53,11 +54,16 @@
     "react-redux": "^7.2.6",
     "react-router": "6.0.0",
     "react-router-dom": "6.0.0",
-    "react-scripts": "^5.0.0",
+    "react-scripts": "^5.0.1",
     "simplebar": "^5.3.6",
     "simplebar-react": "^2.3.6",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
+  },
+  "overrides" : {
+    "@appbaseio/reactivesearch": {
+      "react-redux": "^7.2.6"
+    }
   },
   "resolutions": {
     "nth-check": "^2.0.1"
