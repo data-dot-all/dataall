@@ -178,15 +178,6 @@ class Glue(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                # sid="SupportGluePermissions",
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'glue:CreateSecurityConfiguration',
-                    'glue:DeleteSecurityConfiguration',
-                ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
                 #sid="LoggingGlue",
                 actions=[
                     'logs:CreateLogGroup',
