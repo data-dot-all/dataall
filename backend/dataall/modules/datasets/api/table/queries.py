@@ -34,8 +34,8 @@ QueryPreviewResult = gql.ObjectType(
     ],
 )
 
-previewTable2 = gql.QueryField(
-    name='previewTable2',
+previewTable = gql.QueryField(
+    name='previewTable',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     resolver=preview,
     type=gql.Ref('QueryPreviewResult'),

@@ -2,7 +2,6 @@
 import logging
 from typing import List, Type, Set
 
-from dataall.core.catalog.catalog_indexer import CatalogIndexer
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
