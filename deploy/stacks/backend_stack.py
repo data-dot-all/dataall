@@ -259,6 +259,7 @@ class BackendStack(Stack):
                 security_group_name=f'{resource_prefix}-{envname}-quicksight-monitoring-sg',
                 vpc=vpc,
                 allow_all_outbound=False,
+                disable_inline_rules=True,
             )
 
         else:

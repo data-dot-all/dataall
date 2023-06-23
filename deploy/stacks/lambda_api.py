@@ -146,6 +146,7 @@ class LambdaApiStack(pyNestedClass):
                 ec2.Port.tcp(443),
                 'Allow Lambda to VPC Endpoint'
             )
+
         # Add NAT Connectivity
         for lmbda in [
             self.aws_handler,
@@ -156,12 +157,6 @@ class LambdaApiStack(pyNestedClass):
                 ec2.Port.tcp(443),
                 'Allow NAT Internet Access SG Egress'
             )
-            # for sg in lmbda.connections.security_groups:
-            #     sg.add_egress_rule(
-            #         peer=ec2.Peer.any_ipv4(),
-            #         connection=ec2.Port.tcp(443),
-            #         description='Allow NAT Internet Access SG Egress',
-            #     )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
@@ -194,18 +189,6 @@ class LambdaApiStack(pyNestedClass):
             disable_inline_rules=True,
         )
 
-        # # Add VPC Endpoint Connectivity
-        # lambda_sg.add_egress_rule(
-        #     peer=vpc_endpoints_sg,
-        #     connection=ec2.Port.tcp(443),
-        #     description='Allow VPC Endpoint SG Egress',
-        # )
-        # lambda_sg.add_egress_rule(
-        #     peer=vpc_endpoints_sg,
-        #     connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #     description='Allow VPC Endpoint SG Egress',
-        # )
-
         # # Add S3 Gateway Endpoint Connectivity
         # if s3_cidr_list:
         #     for cidr in s3_cidr_list:
@@ -219,14 +202,6 @@ class LambdaApiStack(pyNestedClass):
         #             connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
         #             description='Allow S3 Endpoint SG Egress',
         #         )
-        
-        # # Add NAT Internet Connectivity for QS API
-        # if name != "esproxy":
-        #     lambda_sg.add_egress_rule(
-        #         peer=ec2.Peer.any_ipv4(),
-        #         connection=ec2.Port.tcp(443),
-        #         description='Allow NAT Internet Access SG Egress',
-        #     )
         return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):

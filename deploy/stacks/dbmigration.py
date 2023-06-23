@@ -115,6 +115,7 @@ class DBMigrationStack(pyNestedClass):
             security_group_name=f'{resource_prefix}-{envname}-cb-dbmigration-sg',
             vpc=vpc,
             allow_all_outbound=True,
+            disable_inline_rules=True
         )
         self.db_migration_project = codebuild.Project(
             scope=self,

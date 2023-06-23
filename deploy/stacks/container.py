@@ -338,19 +338,34 @@ class ContainerStack(pyNestedClass):
             allow_all_outbound=False,
             disable_inline_rules=True,
         )
+        # Add ECS to VPC Endpoint Connection
+        if vpce_connection:
+            for sg in [scheduled_tasks_sg,cdkproxy_sg]:
+                vpce_connection.allow_from(
+                    sg,
+                    ec2.Port.tcp(443),
+                    'Allow ECS to VPC Endpoint SG'
+                )
+                vpce_connection.allow_from(
+                    sg,
+                    ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                    'Allow ECS to VPC Endpoint SG'
+                )
 
-        # for sg in [scheduled_tasks_sg,cdkproxy_sg]:
-        #     # Add VPC Endpoint Connectivity
-        #     vpce_connection.allow_from(
-        #         ec2.Connections(security_groups=[sg]),
-        #         ec2.Port.tcp(443),
-        #         'Allow ECS to VPC Endpoint SG'
-        #     )
-        #     vpce_connection.allow_from(
-        #         ec2.Connections(security_groups=[sg]),
-        #         ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #         'Allow ECS to VPC Endpoint SG'
-        #     )
+        # Add Lambda to ECS Connection
+        # if lambdas:
+        #     for l in lambdas:
+        #         l.connections.allow_to(
+        #             scheduled_tasks_sg,
+        #             ec2.Port.tcp(443),
+        #             'Allow Lambda to ECS Connection'
+        #         )
+        #         l.connections.allow_to(
+        #             cdkproxy_sg,
+        #             ec2.Port.tcp(443),
+        #             'Allow Lambda to ECS Connection'
+        #         )
+
         #     # sg.add_egress_rule(
         #     #     peer=vpc_endpoints_sg,
         #     #     connection=ec2.Port.tcp(443),
