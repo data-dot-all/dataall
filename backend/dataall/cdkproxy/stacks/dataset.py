@@ -439,6 +439,7 @@ class Dataset(Stack):
                     'LocationUri': f's3://{dataset.S3BucketName}/',
                     'Name': f'{dataset.GlueDatabaseName}',
                     'CreateTableDefaultPermissions': [],
+                    'Imported': 'IMPORTED-' if dataset.imported else ''
                 },
                 'DatabaseAdministrators': dataset_admins
             },
