@@ -19,7 +19,7 @@ class ContainerStack(pyNestedClass):
         scope,
         id,
         vpc: ec2.Vpc = None,
-        vpc_endpoints_sg: ec2.SecurityGroup = None,
+        vpce_connection: ec2.Connections = None,
         envname='dev',
         resource_prefix='dataall',
         ecr_repository=None,
@@ -28,7 +28,7 @@ class ContainerStack(pyNestedClass):
         pivot_role_name=None,
         tooling_account_id=None,
         s3_cidr_list=None,
-        lambda_sgs=None,
+        lambdas=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -42,9 +42,9 @@ class ContainerStack(pyNestedClass):
             envname, 
             resource_prefix, 
             vpc, 
-            vpc_endpoints_sg,
+            vpce_connection,
             s3_cidr_list,
-            lambda_sgs
+            lambdas
         )
         self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.cdkproxy_sg]
 
@@ -319,7 +319,7 @@ class ContainerStack(pyNestedClass):
             subscriptions_task.task_definition,
         ]
 
-    def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpc_endpoints_sg, s3_cidr_list, lambda_sgs):
+    def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_cidr_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
             self,
             f'ScheduledTasksSG{envname}',
@@ -341,30 +341,46 @@ class ContainerStack(pyNestedClass):
 
         for sg in [scheduled_tasks_sg,cdkproxy_sg]:
             # Add VPC Endpoint Connectivity
-            sg.add_egress_rule(
-                peer=vpc_endpoints_sg,
-                connection=ec2.Port.tcp(443),
-                description='Allow VPC Endpoint SG Egress',
+            vpce_connection.allow_from(
+                ec2.Connections(security_groups=[sg]),
+                ec2.Port.tcp(443),
+                'Allow ECS to VPC Endpoint SG'
             )
-            sg.add_egress_rule(
-                peer=vpc_endpoints_sg,
-                connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                description='Allow VPC Endpoint SG Egress',
+            vpce_connection.allow_from(
+                ec2.Connections(security_groups=[sg]),
+                ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                'Allow ECS to VPC Endpoint SG'
             )
+            # sg.add_egress_rule(
+            #     peer=vpc_endpoints_sg,
+            #     connection=ec2.Port.tcp(443),
+            #     description='Allow VPC Endpoint SG Egress',
+            # )
+            # sg.add_egress_rule(
+            #     peer=vpc_endpoints_sg,
+            #     connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
+            #     description='Allow VPC Endpoint SG Egress',
+            # )
 
             # Add Lambda SG Connectivity
-            if lambda_sgs:
-                for lambda_sg in lambda_sgs:
-                    sg.add_ingress_rule(
-                        peer=lambda_sg,
-                        connection=ec2.Port.tcp(443),
-                        description='Allow Lambda SG SG Ingress',
+            if lambdas:
+                for lmbda in lambdas:
+                    sg_connection = ec2.Connections(security_groups=[sg])
+                    sg_connection.allow_from(
+                        lmbda.connections,
+                        ec2.Port.tcp(443),
+                        'Allow Lambda to ECS Connection'
                     )
-                    lambda_sg.add_egress_rule(
-                        peer=sg,
-                        connection=ec2.Port.tcp(443),
-                        description='Allow ECS SG Egress',
-                    )
+                    # sg.add_ingress_rule(
+                    #     peer=lambda_sg,
+                    #     connection=ec2.Port.tcp(443),
+                    #     description='Allow Lambda SG SG Ingress',
+                    # )
+                    # lambda_sg.add_egress_rule(
+                    #     peer=sg,
+                    #     connection=ec2.Port.tcp(443),
+                    #     description='Allow ECS SG Egress',
+                    # )
             
             # Add S3 Gateway Connectivity
             if s3_cidr_list:
