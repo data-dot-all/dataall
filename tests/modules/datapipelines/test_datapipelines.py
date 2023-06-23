@@ -190,6 +190,11 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         groups=[group.name],
     )
     assert response.data.getDataPipelineCredsLinux
+
+    module_mocker.patch(
+        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService.ls',
+        return_value=[{'response': 'return value'}],
+    )
     response = client.query(
         """
         query browseDataPipelineRepository($input:DataPipelineBrowseInput!){

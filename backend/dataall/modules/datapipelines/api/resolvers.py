@@ -137,61 +137,41 @@ def get_clone_url_http(context: Context, source: DataPipeline, **kwargs):
 
 def cat(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        DataPipelineService.get_pipeline(
-            session=session,
-            uri=input['DataPipelineUri'],
-        )
-        task = models.Task(
-            action='repo.datapipeline.cat',
-            targetUri=input.get('DataPipelineUri'),
-            payload={
-                'absolutePath': input.get('absolutePath'),
-                'branch': input.get('branch', 'master'),
-            },
-        )
-        session.add(task)
+        try:
+            response = DataPipelineService.cat(
+                session=session,
+                input=input
+            )
+        except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return response[0]['response'].decode('ascii')
+        return response[0]['response'].decode('ascii')
 
 
 def ls(context: Context, source, input: dict = None):
     with context.engine.scoped_session() as session:
-        DataPipelineService.get_pipeline(
-            session=session,
-            uri=input['DataPipelineUri'],
-        )
-        task = models.Task(
-            action='repo.datapipeline.ls',
-            targetUri=input.get('DataPipelineUri'),
-            payload={
-                'folderPath': input.get('folderPath', '/'),
-                'branch': input.get('branch', 'master'),
-            },
-        )
-        session.add(task)
+        try:
+            response = DataPipelineService.ls(
+                session=session,
+                input=input
+            )
+        except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return json.dumps(response[0]['response'])
+        return json.dumps(response[0]['response'])
 
 
 def list_branches(context: Context, source, DataPipelineUri: str = None):
     with context.engine.scoped_session() as session:
-        DataPipelineService.get_pipeline(
-            session=session,
-            uri=DataPipelineUri,
-        )
-        task = models.Task(action='repo.datapipeline.branches', targetUri=DataPipelineUri)
-        session.add(task)
+        try:
+            response = DataPipelineService.list_branches(
+                session=session,
+                datapipeline_uri=DataPipelineUri
+            )
+        except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )
-    return response[0]['response']
+        return response[0]['response']
 
 
 def get_stack(context, source: DataPipeline, **kwargs):
@@ -207,28 +187,30 @@ def get_job_runs(context, source: DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        task = models.Task(targetUri=source.DataPipelineUri, action='glue.job.runs')
-        session.add(task)
+        try:
+            response = DataPipelineService.get_job_runs(
+                session=session,
+                datapipeline_uri=source.DataPipelineUri
+            )
+        except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )[0]
-    return response['response']
+        return response[0]['response']
 
 
 def get_pipeline_executions(context: Context, source: DataPipeline, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=source.DataPipelineUri, action='datapipeline.pipeline.executions'
-        )
-        session.add(task)
+        try:
+            response = DataPipelineService.get_pipeline_execution(
+                session=session,
+                datapipeline_uri=source.DataPipelineUri
+            )
+        except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
 
-    response = Worker.process(
-        engine=context.engine, task_ids=[task.taskUri], save_response=False
-    )[0]
-    return response['response']
+        return response[0]['response']
 
 
 def get_creds(context: Context, source, DataPipelineUri: str = None):
@@ -239,23 +221,15 @@ def get_creds(context: Context, source, DataPipelineUri: str = None):
         )
 
 
-def _delete_repository(
-    target_uri, accountid, cdk_role_arn, region, repo_name
-):
-    context = get_context()
-    with context.db_engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=target_uri,
-            action='repo.datapipeline.delete',
-            payload={
-                'accountid': accountid,
-                'region': region,
-                'cdk_role_arn': cdk_role_arn,
-                'repo_name': repo_name,
-            },
-        )
-        session.add(task)
-    Worker.queue(context.db_engine, [task.taskUri])
+def _delete_repository(accountid, region, repo_name):
+    try:
+        DataPipelineService.delete_repository(
+            aws_account_id=accountid,
+            region=region,
+            repository=repo_name)
+    except Exception as e:
+            log.error(f"Failed to execute task due to: {e}")
+
     return True
 
 
@@ -278,9 +252,7 @@ def delete_pipeline(
 
     if deleteFromAWS:
         _delete_repository(
-            target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
-            cdk_role_arn=env.CDKRoleArn,
             region=env.region,
             repo_name=pipeline.repo,
         )

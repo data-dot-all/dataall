@@ -10,6 +10,9 @@ from dataall.db.api import (
     KeyValueTag,
 )
 from dataall.db import models, exceptions
+from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
+from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
+from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import DELETE_PIPELINE, \
@@ -263,3 +266,86 @@ class DataPipelineService:
         env_role_arn = env.EnvironmentDefaultIAMRoleArn
 
         return DataPipelineService._get_creds_from_aws(pipeline, env_role_arn)
+
+    @staticmethod
+    def _unpack(session, task):
+        return DatapipelinesRepository.get_pipeline_and_environment_by_uri(
+            session=session,
+            uri=task.targetUri
+        )
+
+    @staticmethod
+    @has_tenant_permission(MANAGE_PIPELINES)
+    @has_resource_permission(GET_PIPELINE)
+    def cat(session, input):
+        (pipeline, env) = DatapipelinesRepository.get_pipeline_and_environment_by_uri(
+            session=session,
+            uri=input.get('DataPipelineUri')
+        )
+
+        return DatapipelineCodecommitClient(env.AwsAccountId, env.region).get_file_content(
+            repository=pipeline.repo,
+            commit_specifier=input.get('branch', 'master'),
+            file_path=input.get('absolutePath', 'README.md')
+        )
+    
+    @staticmethod
+    @has_tenant_permission(MANAGE_PIPELINES)
+    @has_resource_permission(GET_PIPELINE)
+    def ls(session, input):
+        (pipeline, env) = DatapipelinesRepository.get_pipeline_and_environment_by_uri(
+            session=session,
+            uri=input.get('DataPipelineUri')
+        )
+
+        return DatapipelineCodecommitClient(env.AwsAccountId, env.region).get_folder_content(
+            repository=pipeline.repo,
+            commit_specifier=input.get('branch', 'master'),
+            folder_path=input.get('folderPath', '/')
+        )
+    
+    @staticmethod
+    @has_tenant_permission(MANAGE_PIPELINES)
+    @has_resource_permission(GET_PIPELINE)
+    def list_branches(session, datapipeline_uri):
+        (pipeline, env) = DatapipelinesRepository.get_pipeline_and_environment_by_uri(
+            session=session,
+            uri=datapipeline_uri
+        )
+
+        return DatapipelineCodecommitClient(env.AwsAccountId, env.region).list_branches(
+            repository=pipeline.repo
+        )
+    
+    @staticmethod
+    def delete_repository(aws_account_id, region, repository):
+        _aws_account_id =  aws_account_id if aws_account_id else '111111111111'
+        _region = region if region else 'eu-west-1'
+        _repository = repository if repository else "dataall-repo"
+        return DatapipelineCodecommitClient(_aws_account_id, _region).delete_repository(
+            repository=_repository
+        )
+    
+    @staticmethod
+    def get_job_runs(session, datapipeline_uri):
+        data_pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(
+            session=session,
+            uri=datapipeline_uri
+        )
+        
+        return GlueDatapipelineClient(
+            aws_account_id=data_pipeline.AwsAccountId,
+            region=data_pipeline.region
+        ).get_job_runs(datapipeline_job_name=data_pipeline.name)
+    
+    @staticmethod
+    def get_pipeline_execution(session, datapipeline_uri):
+        stack = DatapipelinesRepository.get_pipeline_stack_by_uri(session, datapipeline_uri)
+        datapipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(session, datapipeline_uri)
+        outputs = stack.outputs
+        codepipeline_name = outputs['PipelineNameOutput']
+        
+        return CodepipelineDatapipelineClient(
+            aws_account_id=datapipeline.AwsAccountId,
+            region=datapipeline.region
+        ).get_pipeline_execution_summaries(codepipeline_name=codepipeline_name)
