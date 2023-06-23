@@ -32,7 +32,6 @@ def get_env(client, env1, group):
                 SamlGroupName
                 owner
                 dashboardsEnabled
-                pipelinesEnabled
                 warehousesEnabled
                 stack{
                  EcsTaskArn
@@ -59,7 +58,6 @@ def test_get_environment(client, org1, env1, group):
     assert response.data.getEnvironment.owner == 'alice'
     assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
     assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.pipelinesEnabled
     assert response.data.getEnvironment.warehousesEnabled
 
 
@@ -102,7 +100,6 @@ def test_update_env(client, org1, env1, group):
                 tags
                 resourcePrefix
                 dashboardsEnabled
-                pipelinesEnabled
                 warehousesEnabled
                 parameters {
                     key
@@ -119,7 +116,6 @@ def test_update_env(client, org1, env1, group):
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -140,7 +136,6 @@ def test_update_env(client, org1, env1, group):
             'label': 'DEV',
             'tags': ['test', 'env'],
             'dashboardsEnabled': False,
-            'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -162,7 +157,6 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.label == 'DEV'
     assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
     assert not response.data.updateEnvironment.dashboardsEnabled
-    assert not response.data.updateEnvironment.pipelinesEnabled
     assert not response.data.updateEnvironment.warehousesEnabled
     assert response.data.updateEnvironment.parameters
     assert response.data.updateEnvironment.parameters[0]["key"] == "moduleEnabled"

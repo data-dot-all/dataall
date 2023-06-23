@@ -14,7 +14,6 @@ const createEnvironment = (input) => ({
         AwsAccountId
         created
         dashboardsEnabled
-        pipelinesEnabled
         warehousesEnabled
         parameters {
           key

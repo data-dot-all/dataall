@@ -2,6 +2,7 @@ import json
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.db.api import (
@@ -40,8 +41,9 @@ class DataPipelineService:
     ) -> DataPipeline:
 
         environment = Environment.get_environment_by_uri(session, uri)
+        enabled = EnvironmentParameterRepository(session).get_param(uri, "pipelinesEnabled")
 
-        if not environment.pipelinesEnabled:
+        if not enabled and enabled.lower() != "true":
             raise exceptions.UnauthorizedOperation(
                 action=CREATE_PIPELINE,
                 message=f'Pipelines feature is disabled for the environment {environment.label}',
@@ -114,8 +116,9 @@ class DataPipelineService:
     ) -> DataPipelineEnvironment:
 
         environment = Environment.get_environment_by_uri(session, data['environmentUri'])
+        enabled = EnvironmentParameterRepository(session).get_param(uri, "pipelinesEnabled")
 
-        if not environment.pipelinesEnabled:
+        if not enabled and enabled.lower() != "true":
             raise exceptions.UnauthorizedOperation(
                 action=CREATE_PIPELINE,
                 message=f'Pipelines feature is disabled for the environment {environment.label}',

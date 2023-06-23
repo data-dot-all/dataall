@@ -7,7 +7,20 @@ from dataall.modules.datapipelines.db.models import DataPipeline
 
 
 @pytest.fixture(scope='module')
-def pipeline(client, tenant, group, env_fixture) -> DataPipeline:
+def pipeline_env(env, org_fixture, user, group, tenant, module_mocker):
+    module_mocker.patch('requests.post', return_value=True)
+    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch(
+        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+    )
+    env1 = env(
+        org_fixture,'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1', parameters={'pipelinesEnabled': 'True'}
+    )
+    yield env1
+
+
+@pytest.fixture(scope='module')
+def pipeline(client, tenant, group, pipeline_env) -> DataPipeline:
     response = client.query(
         """
         mutation createDataPipeline ($input:NewDataPipelineInput){
@@ -26,7 +39,7 @@ def pipeline(client, tenant, group, env_fixture) -> DataPipeline:
             'label': 'my pipeline',
             'SamlGroupName': group.name,
             'tags': [group.name],
-            'environmentUri': env_fixture.environmentUri,
+            'environmentUri': pipeline_env.environmentUri,
             'devStrategy': 'trunk',
         },
         username='alice',

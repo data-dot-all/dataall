@@ -12,12 +12,29 @@ def org1(org, user, group, tenant):
 
 @pytest.fixture(scope='module')
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'cicd', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(
+        org1, 'cicd',
+        user.userName,
+        group.name,
+        '111111111111',
+        'eu-west-1',
+        parameters={'pipelinesEnabled': 'True'}
+    )
+
     yield env1
 
 @pytest.fixture(scope='module')
 def env2(env, org1, user, group):
-    env2 = env(org1, 'dev', user.userName, group.name, '222222222222', 'eu-west-1')
+    env2 = env(
+        org1,
+        'dev',
+        user.userName,
+        group.name,
+        '222222222222',
+        'eu-west-1',
+        parameters={'pipelinesEnabled': 'True'}
+    )
+
     yield env2
 
 
