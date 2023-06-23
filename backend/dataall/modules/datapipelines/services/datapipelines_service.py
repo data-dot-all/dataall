@@ -271,13 +271,6 @@ class DataPipelineService:
         return DataPipelineService._get_creds_from_aws(pipeline, env_role_arn)
 
     @staticmethod
-    def _unpack(session, task):
-        return DatapipelinesRepository.get_pipeline_and_environment_by_uri(
-            session=session,
-            uri=task.targetUri
-        )
-
-    @staticmethod
     @has_tenant_permission(MANAGE_PIPELINES)
     @has_resource_permission(GET_PIPELINE)
     def cat(session, input):
