@@ -54,10 +54,11 @@ class PivotRole(NestedStack):
                 actions=['sts:AssumeRole'],
                 conditions={
                     'StringEquals': {'sts:ExternalId': external_id},
-                    'StringLike':{"aws:PrincipalArn": [f"arn:aws:iam::{principal_id}:role/*graphql-role",
-                                                       f"arn:aws:iam::{principal_id}:role/*esproxy-role",
-                                                       f"arn:aws:iam::{principal_id}:role/*ecs-tasks-role"]
-                                  }
+                    'StringLike': {"aws:PrincipalArn": [
+                        f"arn:aws:iam::{principal_id}:role/*graphql-role",
+                        f"arn:aws:iam::{principal_id}:role/*esproxy-role",
+                        f"arn:aws:iam::{principal_id}:role/*ecs-tasks-role"
+                    ]}
                 },
             )
         )
@@ -685,8 +686,8 @@ class PivotRole(NestedStack):
                     sid="PassRoleGlue",
                     actions=[
                         'iam:PassRole',
-                ],
-                   resources=[
+                    ],
+                    resources=[
                         f'arn:aws:iam::{self.account}:role/{env_resource_prefix}*',
                     ],
                     conditions={
@@ -697,7 +698,6 @@ class PivotRole(NestedStack):
                         }
                     }
                 ),
-                
                 # STS
                 iam.PolicyStatement(
                     sid='STS',
