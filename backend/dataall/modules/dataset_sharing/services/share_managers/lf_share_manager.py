@@ -41,6 +41,12 @@ class LFShareManager:
         self.shared_db_name = self.build_shared_db_name()
         self.principals = self.get_share_principals()
 
+        self.glue_client = GlueClient(
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+        )
+
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
         return NotImplementedError
@@ -74,10 +80,6 @@ class LFShareManager:
         """
         Build Glue shared database name.
         Unique per share Uri.
-        Parameters
-        ----------
-        dataset : Dataset
-        share : ShareObject
 
         Returns
         -------
@@ -128,7 +130,7 @@ class LFShareManager:
         -------
         exceptions.AWSResourceNotFound
         """
-        if not self._create_glue_client().table_exists(table.GlueTableName):
+        if not self.glue_client.table_exists(table.GlueTableName):
             raise exceptions.AWSResourceNotFound(
                 action='ProcessShare',
                 message=(
@@ -209,7 +211,7 @@ class LFShareManager:
         bool
         """
         logger.info(f'Deleting shared database {self.shared_db_name}')
-        return self._create_glue_client().delete_database()
+        return self.glue_client.delete_database()
 
     @classmethod
     def create_resource_link(cls, **data) -> dict:
@@ -274,7 +276,7 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        glue_client = self._create_glue_client()
+        glue_client = self.glue_client
         if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Resource link could not be found '
@@ -325,7 +327,7 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        glue_client = self._create_glue_client()
+        glue_client = self.glue_client
         if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Source table could not be found '
@@ -351,7 +353,7 @@ class LFShareManager:
 
     def delete_resource_link_table(self, table: DatasetTable):
         logger.info(f'Deleting shared table {table.GlueTableName}')
-        glue_client = self._create_glue_client()
+        glue_client = self.glue_client
 
         if not glue_client.table_exists(table.GlueTableName):
             return True
@@ -527,10 +529,3 @@ class LFShareManager:
             table, self.share, self.target_environment
         )
         return True
-
-    def _create_glue_client(self):
-        return GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-        )
