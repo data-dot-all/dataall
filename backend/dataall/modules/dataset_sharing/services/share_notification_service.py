@@ -16,8 +16,6 @@ class ShareNotificationService:
             target_uri=f'{share.shareUri}|{dataset.datasetUri}',
             message=f'User {username} submitted share request for dataset {dataset.label}',
         )]
-        # stewards = Notification.get_dataset_stewards(session, dataset)
-        # for steward in stewards:
         session.add_all(notifications)
         return notifications
 
