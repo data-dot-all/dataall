@@ -14,9 +14,8 @@ from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import Resource, models
 from dataall.db.api import ResourcePolicy
-from dataall.db.models import TenantPolicyPermission, PermissionType, EnvironmentGroup
+from dataall.db.models import EnvironmentGroup
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"
@@ -159,8 +158,7 @@ def migrate_groups_permissions(session):
     """
     Adds new permission if the old exist. needed to get rid of old hacks in the code
     """
-    permissions = [(CREATE_DATASET, LIST_ENVIRONMENT_DATASETS),
-                   (CREATE_NOTEBOOK, LIST_ENVIRONMENT_NOTEBOOKS)]
+    permissions = [CREATE_DATASET, LIST_ENVIRONMENT_DATASETS]
 
     groups = find_all_groups(session)
     for group in groups:
