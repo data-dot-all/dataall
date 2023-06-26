@@ -35,6 +35,7 @@ class PivotRole(NestedStack):
             role_name=name,
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('lakeformation.amazonaws.com'),
+                iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
             ),
             path='/',
@@ -667,20 +668,13 @@ class PivotRole(NestedStack):
                     resources=['*'],
                 ),
                 iam.PolicyStatement(
-                    sid="PassRoleLambda",
+                    sid="PassRole",
                     actions=[
                         'iam:PassRole',
                     ],
                     resources=[
                         f'arn:aws:iam::{self.account}:role/{role_name}',
                     ],
-                    conditions={
-                        "StringEquals": {
-                            "iam:PassedToService": [
-                                "lambda.amazonaws.com",
-                            ]
-                        }
-                    }
                 ),
                 iam.PolicyStatement(
                     sid="PassRoleGlue",

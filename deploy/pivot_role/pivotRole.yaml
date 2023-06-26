@@ -28,6 +28,7 @@ Resources:
               Service:
                 - lakeformation.amazonaws.com
                 - lambda.amazonaws.com
+                - glue.amazonaws.com
             Action:
               - 'sts:AssumeRole'
           - Effect: Allow
@@ -514,15 +515,12 @@ Resources:
               - 'iam:DeleteRolePolicy'
             Effect: Allow
             Resource: '*'
-          - Sid: IAMPassRoleLambda
+          - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'
             Effect: Allow
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${PivotRoleName}'
-            Condition:
-              StringEquals:
-                'iam:PassedToService': ["lambda.amazonaws.com"]
           - Sid: IAMPassRoleGlue
             Action:
               - 'iam:PassRole'
