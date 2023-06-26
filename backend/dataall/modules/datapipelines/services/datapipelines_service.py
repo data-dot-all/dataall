@@ -314,15 +314,6 @@ class DataPipelineService:
         )
 
     @staticmethod
-    def delete_repository(aws_account_id, region, repository):
-        _aws_account_id = aws_account_id if aws_account_id else '111111111111'
-        _region = region if region else 'eu-west-1'
-        _repository = repository if repository else "dataall-repo"
-        return DatapipelineCodecommitClient(_aws_account_id, _region).delete_repository(
-            repository=_repository
-        )
-
-    @staticmethod
     def get_job_runs(session, datapipeline_uri):
         data_pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(
             session=session,

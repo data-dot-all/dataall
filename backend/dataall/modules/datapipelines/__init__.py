@@ -38,6 +38,18 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
         log.info("API of datapipelines has been imported")
 
 
+class DatapipelinesAsyncHandlersModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for datapipelines async lambda"""
+
+    @staticmethod
+    def is_supported(modes: List[ImportMode]):
+        return ImportMode.HANDLERS in modes
+
+    def __init__(self):
+        import dataall.modules.datapipelines.handlers
+        log.info("Datapipelines handlers have been imported")
+
+
 class DatapipelinesCdkModuleInterface(ModuleInterface):
     """Loads datapipelines cdk stacks """
 

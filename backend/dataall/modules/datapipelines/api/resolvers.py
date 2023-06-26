@@ -208,7 +208,7 @@ def get_pipeline_executions(context: Context, source: DataPipeline, **kwargs):
                 datapipeline_uri=source.DataPipelineUri
             )
         except Exception as e:
-            log.error(f"Failed to execute task due to: {e}")
+            log.error(f"Failed to find pipeline execution for {source.DataPipelineUri}. Error {e}")
 
         return response[0]['response']
 
@@ -221,14 +221,23 @@ def get_creds(context: Context, source, DataPipelineUri: str = None):
         )
 
 
-def _delete_repository(accountid, region, repo_name):
-    try:
-        DataPipelineService.delete_repository(
-            aws_account_id=accountid,
-            region=region,
-            repository=repo_name)
-    except Exception as e:
-        log.error(f"Failed to execute task due to: {e}")
+def _delete_repository(
+    target_uri, accountid, cdk_role_arn, region, repo_name
+):
+    context = get_context()
+    with context.db_engine.scoped_session() as session:
+        task = models.Task(
+            targetUri=target_uri,
+            action='repo.datapipeline.delete',
+            payload={
+                'accountid': accountid,
+                'region': region,
+                'cdk_role_arn': cdk_role_arn,
+                'repo_name': repo_name,
+            },
+        )
+        session.add(task)
+    Worker.queue(context.db_engine, [task.taskUri])
 
     return True
 
@@ -252,7 +261,9 @@ def delete_pipeline(
 
     if deleteFromAWS:
         _delete_repository(
+            target_uri=DataPipelineUri,
             accountid=env.AwsAccountId,
+            cdk_role_arn=env.CDKRoleArn,
             region=env.region,
             repo_name=pipeline.repo,
         )
