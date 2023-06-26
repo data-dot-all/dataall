@@ -67,7 +67,6 @@ class CloudFormation:
             cfnclient = aws_session.client('cloudformation', region_name=region)
             response = cfnclient.delete_stack(
                 StackName=stack_name,
-                RoleARN=cdk_role_arn,
                 ClientRequestToken=str(uuid.uuid4()),
             )
             log.info(f'Stack {stack_name} deleted: {response}')
