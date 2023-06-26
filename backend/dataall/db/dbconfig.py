@@ -26,11 +26,11 @@ class DbConfig:
         if _envname not in ['local', 'pytest', 'dkrcompose'] and not host.lower().endswith(_AURORA_HOST_SUFFIX):
             raise ValueError(f"Unknown host {host} for the rds")
 
-        self.user = self._sanitize(_SANITIZE_WORD_REGEX, user)
-        self.host = self._sanitize(_SANITIZE_HOST_REGEX, host)
-        self.db = self._sanitize(_SANITIZE_WORD_REGEX, db)
-        self.schema = self._sanitize(_SANITIZE_WORD_REGEX, schema)
-        pwd = self._sanitize(_SANITIZE_PWD_REGEX, pwd)
+        self.user = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, user, "username")
+        self.host = self._sanitize_and_compare(_SANITIZE_HOST_REGEX, host, "host")
+        self.db = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, db, "database name")
+        self.schema = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, schema, "schema")
+        pwd = self._sanitize_and_compare(_SANITIZE_PWD_REGEX, pwd, "password")
         self.url = f"postgresql+pygresql://{self.user}:{pwd}@{self.host}/{self.db}"
 
     def __str__(self):
@@ -51,5 +51,9 @@ class DbConfig:
         return '\n'.join(lines)
 
     @staticmethod
-    def _sanitize(regex, string: str) -> str:
-        return re.sub(regex, "", string)
+    def _sanitize_and_compare(regex, string: str, param_name) -> str:
+        sanitized = re.sub(regex, "", string)
+        if sanitized != string:
+            raise ValueError(f"Can't create a database connection. The {param_name} parameter has invalid symbols."
+                             f" The sanitized string length: {len(sanitized)} <  original : {len(string)}")
+        return sanitized
