@@ -85,7 +85,7 @@ def check_connect(response: Response):
         engine = connect()
         return {
             '_ts': datetime.now().isoformat(),
-            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.params['host']}:{engine.dbconfig.params['port']})",
+            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.host})",
         }
     except Exception as e:
         logger.exception('DBCONNECTIONERROR')

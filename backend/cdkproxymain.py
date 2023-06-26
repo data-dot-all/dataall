@@ -84,7 +84,7 @@ def check_connect(response: Response):
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
             '_ts': datetime.now().isoformat(),
-            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.params['host']}:{engine.dbconfig.params['port']})",
+            'message': f"Connected to database for environment {ENVNAME}({engine.dbconfig.host})",
         }
     except Exception as e:
         logger.exception('DBCONNECTIONERROR')
