@@ -4,7 +4,7 @@ import dataall
 from dataall.core.config import config
 from dataall.modules.loader import load_modules, ImportMode
 
-load_modules(modes=[ImportMode.HANDLERS, ImportMode.API, ImportMode.CDK])
+load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
 
 collect_ignore_glob = []

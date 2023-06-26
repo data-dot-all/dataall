@@ -4,7 +4,7 @@ import { Card, CircularProgress } from '@mui/material';
 import * as PropTypes from 'prop-types';
 import { DataGrid } from '@mui/x-data-grid';
 import { styled } from '@mui/styles';
-import previewTable2 from '../../api/DatasetTable/previewTable2';
+import previewTable from '../../api/DatasetTable/previewTable';
 import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import useClient from '../../hooks/useClient';
@@ -25,9 +25,9 @@ const TablePreview = (props) => {
   const [result, setResult] = useState({ rows: [], fields: [] });
   const fetchData = useCallback(async () => {
     setRunning(true);
-    const response = await client.query(previewTable2(table.tableUri));
+    const response = await client.query(previewTable(table.tableUri));
     if (!response.errors) {
-      setResult(response.data.previewTable2);
+      setResult(response.data.previewTable);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }

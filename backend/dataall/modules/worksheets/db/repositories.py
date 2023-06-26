@@ -4,17 +4,18 @@ DAO layer that encapsulates the logic and interaction with the database for work
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 from dataall.db import paginate
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetQueryResult
 
 
-class WorksheetRepository(GroupResource):
+class WorksheetRepository(EnvironmentResource):
     """DAO layer for worksheets"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10
 
-    def count_resources(self, session, environment, group_uri) -> int:
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
         return (
             session.query(WorksheetQueryResult)
             .filter(

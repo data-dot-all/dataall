@@ -125,39 +125,6 @@ EnvironmentSearchResult = gql.ObjectType(
 )
 
 
-EnvironmentPublishedItem = gql.ObjectType(
-    name='EnvironmentPublishedItem',
-    fields=[
-        gql.Field(name='shareUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='datasetName', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='itemAccess', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='itemType', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='environmentName', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='organizationUri', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='organizationName', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='created', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
-        gql.Field(name='S3AccessPointName', type=gql.String),
-    ],
-)
-
-
-EnvironmentPublishedItemSearchResults = gql.ObjectType(
-    name='EnvironmentPublishedItemSearchResults',
-    fields=[
-        gql.Field(name='count', type=gql.Integer),
-        gql.Field(name='page', type=gql.Integer),
-        gql.Field(name='pages', type=gql.Integer),
-        gql.Field(name='hasNext', type=gql.Boolean),
-        gql.Field(name='hasPrevious', type=gql.Boolean),
-        gql.Field(name='nodes', type=gql.ArrayType(EnvironmentPublishedItem)),
-    ],
-)
-
 ConsumptionRole = gql.ObjectType(
     name='ConsumptionRole',
     fields=[

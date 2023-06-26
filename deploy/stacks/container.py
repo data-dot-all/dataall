@@ -118,7 +118,7 @@ class ContainerStack(pyNestedClass):
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.catalog_indexer'],
+            command=['python3.8', '-m', 'dataall.tasks.catalog_indexer_task'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
@@ -221,6 +221,7 @@ class ContainerStack(pyNestedClass):
             family=f'{resource_prefix}-{envname}-share-manager',
         )
 
+        # TODO introduce the ability to change the deployment depending on config.json file
         share_management_container = share_management_task_definition.add_container(
             f'ShareManagementTaskContainer{envname}',
             container_name=f'container',
@@ -228,7 +229,7 @@ class ContainerStack(pyNestedClass):
                 repository=ecr_repository, tag=cdkproxy_image_tag
             ),
             environment=self._create_env('DEBUG'),
-            command=['python3.8', '-m', 'dataall.tasks.share_manager'],
+            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(

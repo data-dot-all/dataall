@@ -3,13 +3,13 @@ import os
 import sys
 import time
 
-from dataall.modules.datasets.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
-from .. import db
-from ..db import models
-from ..aws.handlers.ecs import Ecs
-from ..db import get_engine
-from ..utils import Parameter
+from dataall.core.stack_finder import StackFinder
+from dataall.modules.loader import ImportMode, load_modules
+from dataall import db
+from dataall.db import models
+from dataall.aws.handlers.ecs import Ecs
+from dataall.db import get_engine
+from dataall.utils import Parameter
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -23,21 +23,20 @@ SLEEP_TIME = 30
 
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
-
-        all_datasets: [Dataset] = DatasetService.list_all_active_datasets(session)
         all_environments: [models.Environment] = db.api.Environment.list_all_active_environments(session)
+        additional_stacks = []
+        for finder in StackFinder.all():
+            additional_stacks.extend(finder.find_stack_uris(session))
 
         log.info(f'Found {len(all_environments)} environments, triggering update stack tasks...')
         environment: models.Environment
         for environment in all_environments:
             update_stack(session=session, envname=envname, target_uri=environment.environmentUri, wait=True)
 
-        log.info(f'Found {len(all_datasets)} datasets')
-        dataset: Dataset
-        for dataset in all_datasets:
-            update_stack(session=session, envname=envname, target_uri=dataset.datasetUri, wait=False)
+        for stack_uri in additional_stacks:
+            update_stack(session=session, envname=envname, target_uri=stack_uri, wait=False)
 
-        return all_environments, all_datasets
+        return len(all_environments), len(additional_stacks)
 
 
 def update_stack(session, envname, target_uri, wait=False):
@@ -66,4 +65,6 @@ def update_stack(session, envname, target_uri, wait=False):
 if __name__ == '__main__':
     envname = os.environ.get('envname', 'local')
     engine = get_engine(envname=envname)
+
+    load_modules({ImportMode.STACK_UPDATER_TASK})
     update_stacks(engine=engine, envname=envname)

@@ -1,157 +1,100 @@
-from sqlalchemy import and_
+import json
 
-from dataall.db import paginate, models
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.context import get_context
+from dataall.core.permission_checker import has_resource_permission
+from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound
-from dataall.modules.datasets.db.models import DatasetProfilingRun, DatasetTable, Dataset
+from dataall.db.models import Task
+from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
+from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
+from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
 
 
 class DatasetProfilingService:
-    def __init__(self):
-        pass
-
     @staticmethod
-    def start_profiling(
-        session, datasetUri, tableUri=None, GlueTableName=None, GlueJobRunId=None
-    ):
-        dataset: Dataset = session.query(Dataset).get(datasetUri)
-        if not dataset:
-            raise ObjectNotFound('Dataset', datasetUri)
+    @has_resource_permission(PROFILE_DATASET_TABLE)
+    def start_profiling_run(uri, table_uri, glue_table_name):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
-        if tableUri and not GlueTableName:
-            table: DatasetTable = session.query(DatasetTable).get(
-                tableUri
+            if table_uri and not glue_table_name:
+                table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+                if not table:
+                    raise ObjectNotFound('DatasetTable', table_uri)
+                glue_table_name = table.GlueTableName
+
+            environment: Environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            if not environment:
+                raise ObjectNotFound('Environment', dataset.environmentUri)
+
+            run = DatasetProfilingRepository.save_profiling(
+                session=session,
+                dataset=dataset,
+                env=environment,
+                glue_table_name=glue_table_name,
             )
-            if not table:
-                raise ObjectNotFound('DatasetTable', tableUri)
-            GlueTableName = table.GlueTableName
 
-        environment: models.Environment = session.query(models.Environment).get(
-            dataset.environmentUri
-        )
-        if not environment:
-            raise ObjectNotFound('Environment', dataset.environmentUri)
+            run_id = GlueDatasetProfilerClient(dataset).run_job(run)
 
-        run = DatasetProfilingRun(
-            datasetUri=dataset.datasetUri,
-            status='RUNNING',
-            AwsAccountId=environment.AwsAccountId,
-            GlueJobName=dataset.GlueProfilingJobName or 'Unknown',
-            GlueTriggerSchedule=dataset.GlueProfilingTriggerSchedule,
-            GlueTriggerName=dataset.GlueProfilingTriggerName,
-            GlueTableName=GlueTableName,
-            GlueJobRunId=GlueJobRunId,
-            owner=dataset.owner,
-            label=dataset.GlueProfilingJobName or 'Unknown',
-        )
+            DatasetProfilingRepository.update_run(
+                session,
+                run_uri=run.profilingRunUri,
+                glue_job_run_id=run_id,
+            )
 
-        session.add(run)
-        session.commit()
         return run
 
     @staticmethod
-    def update_run(
-        session,
-        profilingRunUri=None,
-        GlueJobRunId=None,
-        GlueJobRunState=None,
-        results=None,
-    ):
-        run = DatasetProfilingService.get_profiling_run(
-            session, profilingRunUri=profilingRunUri, GlueJobRunId=GlueJobRunId
-        )
-        if GlueJobRunId:
-            run.GlueJobRunId = GlueJobRunId
-        if GlueJobRunState:
-            run.status = GlueJobRunState
-        if results:
-            run.results = results
-        session.commit()
-        return run
+    def queue_profiling_run(run_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            task = Task(
+                targetUri=run_uri, action='glue.job.profiling_run_status'
+            )
+            session.add(task)
+        Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
     @staticmethod
-    def get_profiling_run(
-        session, profilingRunUri=None, GlueJobRunId=None, GlueTableName=None
-    ):
-        if profilingRunUri:
-            run: DatasetProfilingRun = session.query(
-                DatasetProfilingRun
-            ).get(profilingRunUri)
-        else:
+    def list_profiling_runs(dataset_uri):
+        # TODO NO PERMISSION CHECK
+        with get_context().db_engine.scoped_session() as session:
+            return DatasetProfilingRepository.list_profiling_runs(session, dataset_uri)
+
+    @staticmethod
+    def get_last_table_profiling_run(table_uri: str):
+        # TODO NO PERMISSION CHECK
+        with get_context().db_engine.scoped_session() as session:
             run: DatasetProfilingRun = (
-                session.query(DatasetProfilingRun)
-                .filter(DatasetProfilingRun.GlueJobRunId == GlueJobRunId)
-                .filter(DatasetProfilingRun.GlueTableName == GlueTableName)
-                .first()
+                DatasetProfilingRepository.get_table_last_profiling_run(session, table_uri)
             )
-        return run
+
+            if run:
+                if not run.results:
+                    table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+                    dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+                    environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+                    content = S3ProfilerClient(environment).get_profiling_results_from_s3(dataset, table, run)
+                    if content:
+                        results = json.loads(content)
+                        run.results = results
+
+                if not run.results:
+                    run_with_results = (
+                        DatasetProfilingRepository.get_table_last_profiling_run_with_results(session, table_uri)
+                    )
+                    if run_with_results:
+                        run = run_with_results
+
+            return run
 
     @staticmethod
-    def list_profiling_runs(session, datasetUri, filter: dict = None):
-        if not filter:
-            filter = {}
-        q = (
-            session.query(DatasetProfilingRun)
-            .filter(DatasetProfilingRun.datasetUri == datasetUri)
-            .order_by(DatasetProfilingRun.created.desc())
-        )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
-
-    @staticmethod
-    def list_table_profiling_runs(session, tableUri, filter):
-        if not filter:
-            filter = {}
-        q = (
-            session.query(DatasetProfilingRun)
-            .join(
-                DatasetTable,
-                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
-            )
-            .filter(
-                and_(
-                    DatasetTable.tableUri == tableUri,
-                    DatasetTable.GlueTableName
-                    == DatasetProfilingRun.GlueTableName,
-                )
-            )
-            .order_by(DatasetProfilingRun.created.desc())
-        )
-        return paginate(
-            q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)
-        ).to_dict()
-
-    @staticmethod
-    def get_table_last_profiling_run(session, tableUri):
-        return (
-            session.query(DatasetProfilingRun)
-            .join(
-                DatasetTable,
-                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
-            )
-            .filter(DatasetTable.tableUri == tableUri)
-            .filter(
-                DatasetTable.GlueTableName
-                == DatasetProfilingRun.GlueTableName
-            )
-            .order_by(DatasetProfilingRun.created.desc())
-            .first()
-        )
-
-    @staticmethod
-    def get_table_last_profiling_run_with_results(session, tableUri):
-        return (
-            session.query(DatasetProfilingRun)
-            .join(
-                DatasetTable,
-                DatasetTable.datasetUri == DatasetProfilingRun.datasetUri,
-            )
-            .filter(DatasetTable.tableUri == tableUri)
-            .filter(
-                DatasetTable.GlueTableName
-                == DatasetProfilingRun.GlueTableName
-            )
-            .filter(DatasetProfilingRun.results.isnot(None))
-            .order_by(DatasetProfilingRun.created.desc())
-            .first()
-        )
+    def list_table_profiling_runs(table_uri: str):
+        # TODO NO PERMISSION CHECK
+        with get_context().db_engine.scoped_session() as session:
+            return DatasetProfilingRepository.list_table_profiling_runs(session, table_uri)

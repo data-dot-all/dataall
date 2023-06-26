@@ -2,15 +2,14 @@ import json
 import logging
 import os
 import sys
-import typing
 
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
-from dataall.db import models
-from dataall.modules.datasets.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.datasets_base.db.models import Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -42,12 +41,12 @@ class BucketPoliciesUpdater:
             for dataset in imported_datasets:
                 account_prefixes = {}
 
-                shared_tables = self.get_shared_tables(dataset)
+                shared_tables = ShareObjectRepository.get_shared_tables(session, dataset)
                 log.info(
                     f'Found {len(shared_tables)} shared tables with dataset {dataset.S3BucketName}'
                 )
 
-                shared_folders = self.get_shared_folders(dataset)
+                shared_folders = ShareObjectRepository.get_shared_folders(session, dataset)
                 log.info(
                     f'Found {len(shared_folders)} shared folders with dataset {dataset.S3BucketName}'
                 )
@@ -163,81 +162,6 @@ class BucketPoliciesUpdater:
         else:
             account_prefixes[accountid] = [prefix]
         return account_prefixes
-
-    def get_shared_tables(self, dataset) -> typing.List[models.ShareObjectItem]:
-        with self.engine.scoped_session() as session:
-            tables = (
-                session.query(
-                    DatasetTable.GlueDatabaseName.label('GlueDatabaseName'),
-                    DatasetTable.GlueTableName.label('GlueTableName'),
-                    DatasetTable.S3Prefix.label('S3Prefix'),
-                    DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
-                    DatasetTable.region.label('SourceRegion'),
-                    models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                    models.Environment.region.label('TargetRegion'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri == DatasetTable.tableUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        DatasetTable.datasetUri == dataset.datasetUri,
-                        DatasetTable.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
-                    )
-                )
-            ).all()
-        return tables
-
-    def get_shared_folders(self, dataset) -> typing.List[DatasetStorageLocation]:
-        with self.engine.scoped_session() as session:
-            locations = (
-                session.query(
-                    DatasetStorageLocation.locationUri.label('locationUri'),
-                    DatasetStorageLocation.S3BucketName.label('S3BucketName'),
-                    DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                    models.Environment.AwsAccountId.label('AwsAccountId'),
-                    models.Environment.region.label('region'),
-                )
-                .join(
-                    models.ShareObjectItem,
-                    and_(
-                        models.ShareObjectItem.itemUri
-                        == DatasetStorageLocation.locationUri
-                    ),
-                )
-                .join(
-                    models.ShareObject,
-                    models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
-                )
-                .join(
-                    models.Environment,
-                    models.Environment.environmentUri
-                    == models.ShareObject.environmentUri,
-                )
-                .filter(
-                    and_(
-                        DatasetStorageLocation.datasetUri == dataset.datasetUri,
-                        DatasetStorageLocation.deleted.is_(None),
-                        models.ShareObjectItem.status
-                        == models.Enums.ShareObjectStatus.Approved.value,
-                    )
-                )
-            ).all()
-        return locations
 
     @classmethod
     def init_s3_client(cls, dataset):

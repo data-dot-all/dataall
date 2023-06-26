@@ -182,7 +182,7 @@ def test_list_organizations_anyone(client, org1):
     assert response.data.listOrganizations.count == 0
 
 
-def test_group_invitation(db, client, org1, group2, user, group3, group, dataset, env):
+def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     response = client.query(
         """
         mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
@@ -280,8 +280,8 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, dataset
 
     assert 'OrganizationResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset = session.query(dataall.db.models.Environment).get(env2.environmentUri)
-        session.delete(dataset)
+        env = session.query(dataall.db.models.Environment).get(env2.environmentUri)
+        session.delete(env)
         session.commit()
 
     response = client.query(

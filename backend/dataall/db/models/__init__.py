@@ -20,8 +20,6 @@ from .RedshiftClusterDataset import RedshiftClusterDataset
 from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
-from .ShareObject import ShareObject
-from .ShareObjectItem import ShareObjectItem
 from .Stack import Stack
 from .Tag import Tag, ItemTags, updateObjectTags
 from .Task import Task

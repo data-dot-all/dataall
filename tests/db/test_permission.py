@@ -3,22 +3,15 @@ import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.db import exceptions
+from dataall.db.api import TenantPolicy, Tenant
 from dataall.db.models.Permission import PermissionType
-from dataall.modules.datasets.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
-from dataall.modules.datasets.services.dataset_permissions import MANAGE_DATASETS, UPDATE_DATASET, DATASET_READ, DATASET_WRITE, \
-    DATASET_TABLE_READ
+from dataall.db.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
 
-@pytest.fixture(scope='module')
-def permissions(db):
+def permissions(db, all_perms):
     with db.scoped_session() as session:
         permissions = []
-        for p in (
-            DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ
-            + dataall.db.permissions.ORGANIZATION_ALL
-            + dataall.db.permissions.ENVIRONMENT_ALL
-        ):
+        for p in all_perms:
             permissions.append(
                 dataall.db.api.Permission.save_permission(
                     session,
@@ -37,13 +30,12 @@ def permissions(db):
                 )
             )
         session.commit()
-        yield permissions
 
 
 @pytest.fixture(scope='module')
 def tenant(db):
     with db.scoped_session() as session:
-        tenant = dataall.db.api.Tenant.save_tenant(
+        tenant = Tenant.save_tenant(
             session, name='dataall', description='Tenant dataall'
         )
         yield tenant
@@ -65,17 +57,6 @@ def group(db, user):
         )
         session.add(group)
         yield group
-
-
-@pytest.fixture(scope='module')
-def group_user(db, group, user):
-    with db.scoped_session() as session:
-        member = dataall.db.models.GroupMember(
-            userName=user.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
-        yield member
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -114,157 +95,32 @@ def env(org, db, group):
     yield env
 
 
-@pytest.fixture(scope='module', autouse=True)
-def dataset(org, env, db, group):
+def test_attach_tenant_policy(db, user, group, tenant):
+    permissions(db, ORGANIZATION_ALL + ENVIRONMENT_ALL)
     with db.scoped_session() as session:
-        dataset = Dataset(
-            organizationUri=org.organizationUri,
-            environmentUri=env.environmentUri,
-            label='label',
-            owner='foo',
-            SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
-        )
-        session.add(dataset)
-    yield dataset
-
-
-def test_attach_resource_policy(db, user, group, group_user, dataset, permissions):
-    with db.scoped_session() as session:
-
-        dataall.db.api.ResourcePolicy.attach_resource_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=DATASET_WRITE,
-            resource_uri=dataset.datasetUri,
-            resource_type=Dataset.__name__,
-        )
-        assert dataall.db.api.ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
-            permission_name=UPDATE_DATASET,
-            resource_uri=dataset.datasetUri,
-        )
-
-
-def test_attach_tenant_policy(
-    db, user, group, group_user, dataset, permissions, tenant
-):
-    with db.scoped_session() as session:
-
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
-            session=session,
-            group=group.name,
-            permissions=[MANAGE_DATASETS],
+            permissions=[MANAGE_GROUPS],
             tenant_name='dataall',
         )
 
-        assert dataall.db.api.TenantPolicy.check_user_tenant_permission(
+        assert TenantPolicy.check_user_tenant_permission(
             session=session,
             username=user.userName,
             groups=[group.name],
-            permission_name=MANAGE_DATASETS,
+            permission_name=MANAGE_GROUPS,
             tenant_name='dataall',
         )
 
 
-def test_unauthorized_resource_policy(
-    db, user, group_user, group, dataset, permissions
-):
-    with pytest.raises(exceptions.ResourceUnauthorized):
-        with db.scoped_session() as session:
-            assert dataall.db.api.ResourcePolicy.check_user_resource_permission(
-                session=session,
-                username=user.userName,
-                groups=[group.name],
-                permission_name='UNKNOW_PERMISSION',
-                resource_uri=dataset.datasetUri,
-            )
-
-
-def test_unauthorized_tenant_policy(
-    db, user, group, group_user, dataset, permissions, tenant
-):
+def test_unauthorized_tenant_policy(db, user, group):
     with pytest.raises(exceptions.TenantUnauthorized):
         with db.scoped_session() as session:
-            assert dataall.db.api.TenantPolicy.check_user_tenant_permission(
+            assert TenantPolicy.check_user_tenant_permission(
                 session=session,
                 username=user.userName,
                 groups=[group.name],
                 permission_name='UNKNOW_PERMISSION',
                 tenant_name='dataall',
             )
-
-
-def test_create_dataset(db, env, user, group, group_user, dataset, permissions, tenant):
-    with db.scoped_session() as session:
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
-            session=session,
-            group=group.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
-            tenant_name='dataall',
-        )
-        org_with_perm = dataall.db.api.Organization.create_organization(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=None,
-            data={
-                'label': 'OrgWithPerm',
-                'SamlGroupName': group.name,
-                'description': 'desc',
-                'tags': [],
-            },
-            check_perm=True,
-        )
-        env_with_perm = dataall.db.api.Environment.create_environment(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=org_with_perm.organizationUri,
-            data={
-                'label': 'EnvWithPerm',
-                'organizationUri': org_with_perm.organizationUri,
-                'SamlGroupName': group.name,
-                'description': 'desc',
-                'AwsAccountId': '123456789012',
-                'region': 'eu-west-1',
-                'cdk_role_name': 'cdkrole',
-            },
-            check_perm=True,
-        )
-
-        data = dict(
-            label='label',
-            owner='foo',
-            SamlAdminGroupName=group.name,
-            businessOwnerDelegationEmails=['foo@amazon.com'],
-            businessOwnerEmail=['bar@amazon.com'],
-            name='name',
-            S3BucketName='S3BucketName',
-            GlueDatabaseName='GlueDatabaseName',
-            KmsAlias='kmsalias',
-            AwsAccountId='123456789012',
-            region='eu-west-1',
-            IAMDatasetAdminUserArn=f'arn:aws:iam::123456789012:user/dataset',
-            IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
-        )
-        dataset = DatasetService.create_dataset(
-            session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=env_with_perm.environmentUri,
-            data=data,
-            check_perm=True,
-        )
-        assert dataset

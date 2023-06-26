@@ -19,7 +19,6 @@ from . import (
     Group,
     Principal,
     Dashboard,
-    ShareObject,
     Organization,
     Stack,
     Test,

@@ -29,7 +29,7 @@ from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.group.services.group_resource_manager import GroupResourceManager
+from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 
 log = logging.getLogger(__name__)
 
@@ -292,9 +292,6 @@ class Environment:
         if permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
 
-        if permissions.CREATE_SHARE_OBJECT in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-
         if permissions.CREATE_NETWORK in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
 
@@ -302,7 +299,6 @@ class Environment:
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
         g_permissions.append(permissions.CREDENTIALS_ENVIRONMENT)
 
@@ -365,7 +361,7 @@ class Environment:
             .count()
         )
 
-        group_env_objects_count += GroupResourceManager.count_group_resources(
+        group_env_objects_count += EnvironmentResourceManager.count_group_resources(
             session=session,
             environment=environment,
             group_uri=group
@@ -963,19 +959,7 @@ class Environment:
             session, environment.environmentUri, 'environment'
         )
 
-        env_shared_with_objects = (
-            session.query(models.ShareObject)
-            .filter(models.ShareObject.environmentUri == environment.environmentUri)
-            .all()
-        )
-        for share in env_shared_with_objects:
-            (
-                session.query(models.ShareObjectItem)
-                .filter(models.ShareObjectItem.shareUri == share.shareUri)
-                .delete()
-            )
-            session.delete(share)
-
+        EnvironmentResourceManager.delete_env(session, environment)
         EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
 
         return session.delete(environment)

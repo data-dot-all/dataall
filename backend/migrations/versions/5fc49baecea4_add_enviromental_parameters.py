@@ -13,10 +13,9 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import Resource, models
-from dataall.db.api import ResourcePolicy
-from dataall.db.models import TenantPolicy, TenantPolicyPermission, PermissionType, EnvironmentGroup
+from dataall.db.api import ResourcePolicy, Permission
+from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, LIST_ENVIRONMENT_NOTEBOOKS, CREATE_NOTEBOOK
 
 # revision identifiers, used by Alembic.
 revision = "5fc49baecea4"
@@ -25,6 +24,10 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
+
+UNUSED_PERMISSIONS = ['LIST_DATASETS',  'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
+                      'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
+                      'CREATE_DATASET_TABLE']
 
 
 class Environment(Resource, Base):
@@ -100,6 +103,7 @@ def upgrade():
         session.commit()
 
         migrate_groups_permissions(session)
+        delete_unused_resource_permissions(session)
 
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
@@ -134,9 +138,13 @@ def downgrade():
                 pipelinesEnabled=params["pipelinesEnabled"] == "true"
             ))
 
+        for name in UNUSED_PERMISSIONS:
+            Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
+
         session.add_all(envs)
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
+
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")
@@ -167,8 +175,7 @@ def migrate_groups_permissions(session):
     """
     Adds new permission if the old exist. needed to get rid of old hacks in the code
     """
-    permissions = [(CREATE_DATASET, LIST_ENVIRONMENT_DATASETS),
-                   (CREATE_NOTEBOOK, LIST_ENVIRONMENT_NOTEBOOKS)]
+    permissions = [CREATE_DATASET, LIST_ENVIRONMENT_DATASETS]
 
     groups = find_all_groups(session)
     for group in groups:
@@ -190,3 +197,14 @@ def migrate_groups_permissions(session):
                 resource_uri=group.environmentUri,
                 resource_type=models.Environment.__name__
             )
+
+
+def delete_unused_resource_permissions(session):
+    for name in UNUSED_PERMISSIONS:
+        perm = Permission.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
+        (
+            session.query(ResourcePolicyPermission)
+            .filter(ResourcePolicyPermission.permissionUri == perm.permissionUri)
+            .delete()
+        )
+        session.delete(perm)

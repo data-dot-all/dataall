@@ -12,8 +12,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 from dataall.db import api, models, permissions, utils
-from dataall.db.models.Enums import ShareObjectStatus, ShareableType, PrincipalType
 from datetime import datetime
+
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus
 
 # revision identifiers, used by Alembic.
 revision = '04d92886fabe'

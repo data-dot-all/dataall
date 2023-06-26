@@ -2,7 +2,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 log = logging.getLogger(__name__)
 
@@ -14,9 +14,10 @@ class DatasetCrawler:
         self._client = session.client('glue', region_name=region)
         self._dataset = dataset
 
-    def get_crawler(self):
+    def get_crawler(self, crawler_name=None):
         crawler = None
-        crawler_name = self._dataset.GlueCrawlerName
+        if not crawler_name:
+            crawler_name = self._dataset.GlueCrawlerName
 
         try:
             crawler = self._client.get_crawler(Name=crawler_name)
@@ -64,4 +65,40 @@ class DatasetCrawler:
             else:
                 raise e
 
+    def list_glue_database_tables(self):
+        dataset = self._dataset
+        database = dataset.GlueDatabaseName
+        account_id = dataset.AwsAccountId
+        found_tables = []
+        try:
+            log.debug(f'Looking for {database} tables')
 
+            if not self.database_exists():
+                return found_tables
+
+            paginator = self._client.get_paginator('get_tables')
+
+            pages = paginator.paginate(
+                DatabaseName=database,
+                CatalogId=account_id,
+            )
+            for page in pages:
+                found_tables.extend(page['TableList'])
+
+            log.debug(f'Retrieved all database {database} tables: {found_tables}')
+
+        except ClientError as e:
+            log.error(
+                f'Failed to retrieve tables for database {account_id}|{database}: {e}',
+                exc_info=True,
+            )
+        return found_tables
+
+    def database_exists(self):
+        dataset = self._dataset
+        try:
+            self._client.get_database(CatalogId=dataset.AwsAccountId, Name=dataset.GlueDatabaseName)
+            return True
+        except ClientError:
+            log.info(f'Database {dataset.GlueDatabaseName} does not exist on account {dataset.AwsAccountId}...')
+            return False

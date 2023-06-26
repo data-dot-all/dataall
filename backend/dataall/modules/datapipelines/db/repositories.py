@@ -1,12 +1,12 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 
 
-class DatapipelinesRepository(GroupResource):
+class DatapipelinesRepository(EnvironmentResource):
     """DAO layer for datapipelines"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10

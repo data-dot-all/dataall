@@ -4,8 +4,18 @@ import typing
 import pytest
 import dataall
 from dataall.api.constants import RedshiftClusterRole
-from dataall.modules.datasets.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+
+from tests.modules.datasets.conftest import dataset, table
+
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.models import Dataset
+
+
+@pytest.fixture(scope='module', autouse=True)
+def patch_check_dataset(module_mocker):
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+    )
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -39,13 +49,11 @@ def dataset1(db, user, env1, org1, dataset, group, group3) -> Dataset:
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
             stewards=group3.name,
         )
-        dataset = DatasetService.create_dataset(
+        dataset = DatasetRepository.create_dataset(
             session=session,
             username=user.userName,
-            groups=[group.name],
             uri=env1.environmentUri,
             data=data,
-            check_perm=True,
         )
         yield dataset
 

@@ -96,18 +96,6 @@ EnvironmentFilter = gql.InputType(
 )
 
 
-EnvironmentDataItemFilter = gql.InputType(
-    name='EnvironmentDataItemFilter',
-    arguments=[
-        gql.Argument('itemTypes', gql.ArrayType(gql.String)),
-        gql.Argument('term', gql.String),
-        gql.Argument('page', gql.Integer),
-        gql.Argument('pageSize', gql.Integer),
-        gql.Argument('uniqueShares', gql.Boolean)
-    ],
-)
-
-
 InviteGroupOnEnvironmentInput = gql.InputType(
     name='InviteGroupOnEnvironmentInput',
     arguments=[

@@ -2,7 +2,7 @@
 import logging
 from typing import List, Type
 
-from dataall.core.group.services.group_resource_manager import GroupResourceManager
+from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.datapipelines.db.models import DataPipeline
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
@@ -33,7 +33,7 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
 
         TargetType("pipeline", GET_PIPELINE, UPDATE_PIPELINE)
 
-        GroupResourceManager.register(DatapipelinesRepository())
+        EnvironmentResourceManager.register(DatapipelinesRepository())
 
         log.info("API of datapipelines has been imported")
 
