@@ -7,12 +7,9 @@ from dataall.modules.datasets.api.dataset.input_types import (
 from dataall.modules.datasets.api.dataset.resolvers import (
     create_dataset,
     update_dataset,
-    sync_tables,
     generate_dataset_access_token,
-    save_dataset_summary,
     delete_dataset,
     import_dataset,
-    publish_dataset_update,
     start_crawler
 )
 
@@ -35,30 +32,11 @@ updateDataset = gql.MutationField(
     test_scope='Dataset',
 )
 
-syncTables = gql.MutationField(
-    name='syncTables',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('DatasetTableSearchResult'),
-    resolver=sync_tables,
-)
-
-
 generateDatasetAccessToken = gql.MutationField(
     name='generateDatasetAccessToken',
     args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=generate_dataset_access_token,
-)
-
-
-saveDatasetSummary = gql.MutationField(
-    name='saveDatasetSummary',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='content', type=gql.String),
-    ],
-    type=gql.Boolean,
-    resolver=save_dataset_summary,
 )
 
 
@@ -79,16 +57,6 @@ importDataset = gql.MutationField(
     type=gql.Ref('Dataset'),
     resolver=import_dataset,
     test_scope='Dataset',
-)
-
-publishDatasetUpdate = gql.MutationField(
-    name='publishDatasetUpdate',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='s3Prefix', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=publish_dataset_update,
-    type=gql.Boolean,
 )
 
 StartGlueCrawler = gql.MutationField(

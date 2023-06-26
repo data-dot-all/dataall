@@ -1,13 +1,10 @@
 import logging
 
-from botocore.exceptions import ClientError
-
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.datasets.db.models import Dataset
-from dataall.modules.datasets.services.dataset_service import DatasetService
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.db.models import Dataset
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +15,7 @@ class DatasetCrawlerHandler:
     @Worker.handler(path='glue.crawler.start')
     def start_crawler(engine, task: models.Task):
         with engine.scoped_session() as session:
-            dataset: Dataset = DatasetService.get_dataset_by_uri(
+            dataset: Dataset = DatasetRepository.get_dataset_by_uri(
                 session, task.targetUri
             )
             location = task.payload.get('location')

@@ -11,7 +11,6 @@ from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
 from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.quicksight import Quicksight
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
 from ....aws.handlers.parameter_store import ParameterStoreManager
@@ -21,8 +20,6 @@ from ....utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-
-from dataall.modules.datasets.services.dataset_share_service import DatasetShareService
 
 log = logging.getLogger()
 
@@ -399,22 +396,6 @@ def list_environment_group_permissions(
             groups=context.groups,
             uri=environmentUri,
             data={'groupUri': groupUri},
-            check_perm=True,
-        )
-
-
-def list_shared_with_environment_data_items(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return DatasetShareService.paginated_shared_with_environment_datasets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
             check_perm=True,
         )
 

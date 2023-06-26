@@ -8,10 +8,10 @@ from sqlalchemy.orm import Query
 
 from dataall.db import paginate
 from dataall.modules.notebooks.db.models import SagemakerNotebook
-from dataall.core.group.services.group_resource_manager import GroupResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 
 
-class NotebookRepository(GroupResource):
+class NotebookRepository(EnvironmentResource):
     """DAO layer for notebooks"""
     _DEFAULT_PAGE = 1
     _DEFAULT_PAGE_SIZE = 10

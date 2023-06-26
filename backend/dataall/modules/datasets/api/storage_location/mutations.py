@@ -7,7 +7,6 @@ from dataall.modules.datasets.api.storage_location.resolvers import (
     create_storage_location,
     update_storage_location,
     remove_storage_location,
-    publish_location_update
 )
 from dataall.modules.datasets.api.storage_location.schema import DatasetStorageLocation
 
@@ -36,14 +35,5 @@ deleteDatasetStorageLocation = gql.MutationField(
     name='deleteDatasetStorageLocation',
     args=[gql.Argument(name='locationUri', type=gql.NonNullableType(gql.String))],
     resolver=remove_storage_location,
-    type=gql.Boolean,
-)
-
-publishDatasetStorageLocationUpdate = gql.MutationField(
-    name='publishDatasetStorageLocationUpdate',
-    args=[
-        gql.Argument(name='locationUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=publish_location_update,
     type=gql.Boolean,
 )

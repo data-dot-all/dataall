@@ -1,13 +1,7 @@
-from sqlalchemy import or_
-
-from dataall import db
 from dataall.api.context import Context
-from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import paginate, models
-from dataall.db.api import ResourcePolicy
-from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.datasets.db.models import DatasetTableColumn, DatasetTable
-from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
+from dataall.modules.datasets.services.dataset_column_service import DatasetColumnService
+from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
 
 
 def list_table_columns(
@@ -20,47 +14,13 @@ def list_table_columns(
         tableUri = source.tableUri
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        if not source:
-            source = DatasetTableService.get_dataset_table_by_uri(session, tableUri)
-        q = (
-            session.query(DatasetTableColumn)
-            .filter(
-                DatasetTableColumn.tableUri == tableUri,
-                DatasetTableColumn.deleted.is_(None),
-            )
-            .order_by(DatasetTableColumn.columnType.asc())
-        )
-        term = filter.get('term')
-        if term:
-            q = q.filter(
-                or_(
-                    DatasetTableColumn.label.ilike('%' + term + '%'),
-                    DatasetTableColumn.description.ilike('%' + term + '%'),
-                )
-            ).order_by(DatasetTableColumn.columnType.asc())
-
-    return paginate(
-        q, page=filter.get('page', 1), page_size=filter.get('pageSize', 65)
-    ).to_dict()
+    return DatasetColumnService.paginate_active_columns_for_table(tableUri, filter)
 
 
 def sync_table_columns(context: Context, source, tableUri: str = None):
-    with context.engine.scoped_session() as session:
-        table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
-            session, tableUri
-        )
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=table.datasetUri,
-            permission_name=UPDATE_DATASET_TABLE,
-        )
-        task = models.Task(action='glue.table.columns', targetUri=table.tableUri)
-        session.add(task)
-    Worker.process(engine=context.engine, task_ids=[task.taskUri], save_response=False)
-    return list_table_columns(context, source=table, tableUri=tableUri)
+    if tableUri is None:
+        return None
+    return DatasetColumnService.sync_table_columns(table_uri=tableUri)
 
 
 def resolve_terms(context, source: DatasetTableColumn, **kwargs):
@@ -76,31 +36,11 @@ def resolve_terms(context, source: DatasetTableColumn, **kwargs):
 def update_table_column(
     context: Context, source, columnUri: str = None, input: dict = None
 ):
-    with context.engine.scoped_session() as session:
-        column: DatasetTableColumn = session.query(
-            DatasetTableColumn
-        ).get(columnUri)
-        if not column:
-            raise db.exceptions.ObjectNotFound('Column', columnUri)
-        table: DatasetTable = DatasetTableService.get_dataset_table_by_uri(
-            session, column.tableUri
-        )
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=table.datasetUri,
-            permission_name=UPDATE_DATASET_TABLE,
-        )
-        column.description = input.get('description', 'No description provided')
-        session.add(column)
-        session.commit()
+    if columnUri is None:
+        return None
 
-        task = models.Task(
-            action='glue.table.update_column', targetUri=column.columnUri
-        )
-        session.add(task)
-        session.commit()
+    if input is None:
+        input = {}
 
-    Worker.queue(engine=context.engine, task_ids=[task.taskUri])
-    return column
+    description = input.get('description', 'No description provided')
+    return DatasetColumnService.update_table_column_description(column_uri=columnUri, description=description)

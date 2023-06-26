@@ -1,23 +1,7 @@
 from dataall.api import gql
-from dataall.modules.datasets.api.table.input_types import (
-    ModifyDatasetTableInput,
-    NewDatasetTableInput,
-)
+from dataall.modules.datasets.api.table.input_types import ModifyDatasetTableInput
 from dataall.modules.datasets.api.table.resolvers import (
-    create_table,
-    update_table,
-    delete_table,
-    publish_table_update
-)
-
-createDatasetTable = gql.MutationField(
-    name='createDatasetTable',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='input', type=NewDatasetTableInput),
-    ],
-    type=gql.Ref('DatasetTable'),
-    resolver=create_table,
+    update_table, delete_table, sync_tables,
 )
 
 updateDatasetTable = gql.MutationField(
@@ -37,11 +21,10 @@ deleteDatasetTable = gql.MutationField(
     resolver=delete_table,
 )
 
-publishDatasetTableUpdate = gql.MutationField(
-    name='publishDatasetTableUpdate',
-    args=[
-        gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=publish_table_update,
-    type=gql.Boolean,
+syncTables = gql.MutationField(
+    name='syncTables',
+    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('DatasetTableSearchResult'),
+    resolver=sync_tables,
 )
+

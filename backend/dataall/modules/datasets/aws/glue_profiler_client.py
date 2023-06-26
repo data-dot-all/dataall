@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.datasets import Dataset
-from dataall.modules.datasets.db.models import DatasetProfilingRun
+from dataall.modules.datasets_base.db.models import DatasetProfilingRun
 
 log = logging.getLogger(__name__)
 
@@ -28,13 +28,7 @@ class GlueDatasetProfilerClient:
 
     def run_job(self, profiling: DatasetProfilingRun):
         """Run glue job. Returns id of the job"""
-        args = {
-            'arguments': (
-                {'--table': profiling.GlueTableName}
-                if profiling.GlueTableName
-                else {}
-            ),
-        }
+        args = {'--table': profiling.GlueTableName} if profiling.GlueTableName else {}
         try:
             response = self._client.start_job_run(
                 JobName=self._name, Arguments=args

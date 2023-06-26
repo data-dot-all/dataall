@@ -2,7 +2,6 @@ import typing
 import pytest
 
 import dataall
-from dataall.modules.datasets.db.models import Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -22,17 +21,6 @@ def env1(env, org1, user, group, tenant, module_mocker):
     )
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1
-
-
-@pytest.fixture(scope='module')
-def dataset1(
-    org1: dataall.db.models.Organization,
-    env1: dataall.db.models.Environment,
-    dataset: typing.Callable,
-) -> Dataset:
-    yield dataset(
-        org=org1, env=env1, name='dataset1', owner=env1.owner, group='dataset1admins'
-    )
 
 
 @pytest.fixture(scope='module')

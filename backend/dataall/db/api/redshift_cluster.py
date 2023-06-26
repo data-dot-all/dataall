@@ -2,15 +2,14 @@ import logging
 
 from sqlalchemy import and_, or_, literal
 
-from .. import models, api, exceptions, paginate, permissions
+from .. import models, exceptions, paginate, permissions
 from . import has_resource_perm, ResourcePolicy, Environment
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.modules.datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
 
@@ -182,32 +181,37 @@ class RedshiftCluster:
     def list_available_datasets(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
+
+        # TODO deal with it in redshift module
+        from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+        from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
+                ShareObject.datasetUri.label('datasetUri'),
                 literal(cluster.clusterUri).label('clusterUri'),
             )
             .join(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                == ShareObject.environmentUri,
             )
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
-                        models.ShareObject.owner == username,
-                        models.ShareObject.principalId.in_(groups),
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
                     ),
                 )
             )
-            .group_by(models.ShareObject.datasetUri, models.RedshiftCluster.clusterUri)
+            .group_by(ShareObject.datasetUri, models.RedshiftCluster.clusterUri)
         )
         created = (
             session.query(
@@ -297,39 +301,45 @@ class RedshiftCluster:
     def list_available_cluster_tables(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
+
+        # TODO deal with it in redshift module
+        from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
+        from dataall.modules.dataset_sharing.db.share_object_repository import ShareItemSM
+
         cluster: models.RedshiftCluster = RedshiftCluster.get_redshift_cluster_by_uri(
             session, uri
         )
-        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
 
         shared = (
             session.query(
-                models.ShareObject.datasetUri.label('datasetUri'),
-                models.ShareObjectItem.itemUri.label('tableUri'),
+                ShareObject.datasetUri.label('datasetUri'),
+                ShareObjectItem.itemUri.label('tableUri'),
                 literal(cluster.clusterUri).label('clusterUri'),
             )
             .join(
-                models.ShareObject,
-                models.ShareObject.shareUri == models.ShareObjectItem.shareUri,
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
-                == models.ShareObject.environmentUri,
+                == ShareObject.environmentUri,
             )
             .filter(
                 and_(
                     models.RedshiftCluster.clusterUri == cluster.clusterUri,
-                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.status.in_(share_item_shared_states),
                     or_(
-                        models.ShareObject.owner == username,
-                        models.ShareObject.principalId.in_(groups),
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
                     ),
                 )
             )
             .group_by(
-                models.ShareObject.datasetUri,
-                models.ShareObjectItem.itemUri,
+                ShareObject.datasetUri,
+                ShareObjectItem.itemUri,
                 models.RedshiftCluster.clusterUri,
             )
         )
@@ -394,7 +404,8 @@ class RedshiftCluster:
                 message=f'Cluster {cluster.name} is not on available state ({cluster.status})',
             )
 
-        dataset = DatasetService.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
+        from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri=data['datasetUri'])
 
         exists = session.query(models.RedshiftClusterDataset).get(
             (uri, data['datasetUri'])
@@ -497,8 +508,8 @@ class RedshiftCluster:
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
         # TODO this dirty hack should be removed in the redshift module or after pipeline migration (circular import)
-        from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
-        table = DatasetTableService.get_dataset_table_by_uri(
+        from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+        table = DatasetTableRepository.get_dataset_table_by_uri(
             session, data['tableUri']
         )
         table = models.RedshiftClusterDatasetTable(

@@ -1,4 +1,3 @@
-import random
 import typing
 import json
 import pytest
@@ -95,33 +94,3 @@ def deprecated(fn):
         print(fn.__name__, 'is deprecated')
 
     return wrapper
-
-
-def random_email():
-    names = ['andy', 'bill', 'satya', 'sundar']
-    corps = ['google.com', 'amazon.com', 'microsoft.com']
-    return f'{random.choice(names)}@{random.choice(corps)}'
-
-
-def random_emails():
-    emails = []
-    for i in range(1, 2 + random.choice([2, 3, 4])):
-        emails.append(random_email())
-    return emails
-
-
-def random_group():
-    prefixes = ['big', 'small', 'pretty', 'shiny']
-    names = ['team', 'people', 'group']
-    lands = ['snow', 'ice', 'green', 'high']
-    return f'{random.choice(prefixes).capitalize()}{random.choice(names).capitalize()}From{random.choice(lands).capitalize()}land'
-
-
-def random_tag():
-    return random.choice(
-        ['sales', 'finances', 'sites', 'people', 'products', 'partners', 'operations']
-    )
-
-
-def random_tags():
-    return [random_tag() for i in range(1, random.choice([2, 3, 4, 5]))]

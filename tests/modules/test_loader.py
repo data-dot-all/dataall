@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Type
+from typing import List, Type, Set
 
 import pytest
 
@@ -20,7 +20,7 @@ class TestModule(ModuleInterface, ABC):
 
 class TestApiModule(TestModule):
     @staticmethod
-    def is_supported(modes: List[ImportMode]) -> bool:
+    def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.API in modes
 
 
@@ -106,27 +106,35 @@ def patch_loading(mocker, all_modules, in_config):
     )
 
 
+@pytest.fixture(scope="function", autouse=True)
+def patch_modes(mocker):
+    mocker.patch(
+        'dataall.modules.loader._ACTIVE_MODES', set()
+    )
+    yield
+
+
 def test_nothing_to_load(mocker):
     patch_loading(mocker, [], set())
-    loader.load_modules([ImportMode.API, ImportMode.CDK])
+    loader.load_modules({ImportMode.API, ImportMode.CDK})
     assert len(order) == 0
 
 
 def test_import_with_one_dependency(mocker):
     patch_loading(mocker, [AModule, BModule], {BModule})
-    loader.load_modules([ImportMode.API])
+    loader.load_modules({ImportMode.API})
     assert order == [AModule, BModule]
 
 
 def test_load_with_cdk_mode(mocker):
     patch_loading(mocker, [DModule, CModule, BModule], {CModule})
-    loader.load_modules([ImportMode.CDK])
+    loader.load_modules({ImportMode.CDK})
     assert order == [CModule]
 
 
 def test_many_nested_layers(mocker):
     patch_loading(mocker, [BModule, CModule, AModule, DModule], {DModule, CModule})
-    loader.load_modules([ImportMode.API])
+    loader.load_modules({ImportMode.API})
     correct_order = [AModule, BModule, DModule]
     assert order == correct_order
     assert CModule not in correct_order
@@ -137,16 +145,16 @@ def test_complex_loading(mocker):
         AModule, BModule, CModule, DModule, EModule, FModule, GModule, IModule, JModule, KModule
     ], {CModule, FModule, GModule, IModule, KModule})
 
-    loader.load_modules([ImportMode.API])
+    loader.load_modules({ImportMode.API})
     assert order == [AModule, JModule, BModule, DModule, EModule, GModule, FModule, IModule, KModule]
 
 
 def test_incorrect_loading(mocker):
-    patch_loading(mocker, [AModule], set())  # A is not specified in config, but was found
+    patch_loading(mocker, [CModule], set())  # A is not specified in config, but was found
     with pytest.raises(ImportError):
-        loader.load_modules([ImportMode.API])
+        loader.load_modules({ImportMode.CDK})
 
     patch_loading(mocker, [AModule, BModule], {AModule})
     with pytest.raises(ImportError):
-        loader.load_modules([ImportMode.API])
+        loader.load_modules({ImportMode.API})
 

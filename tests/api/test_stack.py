@@ -4,18 +4,12 @@ def test_update_stack(
     group,
     pipeline,
     env_fixture,
-    dataset_fixture,
     cluster,
 ):
     response = update_stack_query(
         client, env_fixture.environmentUri, 'environment', group.name
     )
     assert response.data.updateStack.targetUri == env_fixture.environmentUri
-
-    response = update_stack_query(
-        client, dataset_fixture.datasetUri, 'dataset', group.name
-    )
-    assert response.data.updateStack.targetUri == dataset_fixture.datasetUri
 
     response = update_stack_query(client, cluster.clusterUri, 'redshift', group.name)
     assert response.data.updateStack.targetUri == cluster.clusterUri

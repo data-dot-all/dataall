@@ -1,6 +1,5 @@
 import logging
 import os
-import typing
 
 from aws_cdk import (
     custom_resources as cr,
@@ -21,13 +20,13 @@ from aws_cdk.aws_glue import CfnCrawler
 from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
 from dataall.aws.handlers.quicksight import Quicksight
-from dataall.aws.handlers.lakeformation import LakeFormation
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.db.api import Environment
+from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
 from dataall.utils.cdk_nag_utils import CDKNagUtil
 from dataall.utils.runtime_stacks_tagging import TagsUtil
-from dataall.modules.datasets.db.models import Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -307,11 +306,7 @@ class DatasetStack(Stack):
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
         # Datalake location custom resource: registers the S3 location in LakeFormation
-        registered_location = LakeFormation.check_existing_lf_registered_location(
-            resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
-            accountid=env.AwsAccountId,
-            region=env.region
-        )
+        registered_location = LakeFormationDatasetClient(env, dataset).check_existing_lf_registered_location()
 
         if not registered_location:
             storage_location = CfnResource(

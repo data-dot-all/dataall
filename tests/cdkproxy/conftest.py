@@ -1,7 +1,6 @@
 import pytest
 
 from dataall.db import models, api
-from dataall.modules.datasets.db.models import DatasetTable, Dataset
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -57,87 +56,6 @@ def env(db, org: models.Organization) -> models.Environment:
         )
         session.add(tags)
     yield env
-
-
-@pytest.fixture(scope='module', autouse=True)
-def another_group(db, env):
-    with db.scoped_session() as session:
-        env_group: models.EnvironmentGroup = models.EnvironmentGroup(
-            environmentUri=env.environmentUri,
-            groupUri='anothergroup',
-            environmentIAMRoleArn='aontherGroupArn',
-            environmentIAMRoleName='anotherGroupRole',
-            environmentAthenaWorkGroup='workgroup',
-        )
-        session.add(env_group)
-        dataset = Dataset(
-            label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
-            name='anotherdataset',
-            description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
-            S3BucketName='bucket',
-            GlueDatabaseName='db',
-            IAMDatasetAdminRoleArn='role',
-            IAMDatasetAdminUserArn='xxx',
-            KmsAlias='xxx',
-            owner='me',
-            confidentiality='C1',
-            businessOwnerEmail='jeff',
-            businessOwnerDelegationEmails=['andy'],
-            SamlAdminGroupName=env_group.groupUri,
-            GlueCrawlerName='dhCrawler',
-        )
-        session.add(dataset)
-        yield env_group
-
-
-@pytest.fixture(scope='module', autouse=True)
-def dataset(db, env: models.Environment) -> Dataset:
-    with db.scoped_session() as session:
-        dataset = Dataset(
-            label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
-            name='thisdataset',
-            description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
-            S3BucketName='bucket',
-            GlueDatabaseName='db',
-            IAMDatasetAdminRoleArn='role',
-            IAMDatasetAdminUserArn='xxx',
-            KmsAlias='xxx',
-            owner='me',
-            confidentiality='C1',
-            businessOwnerEmail='jeff',
-            businessOwnerDelegationEmails=['andy'],
-            SamlAdminGroupName='admins',
-            GlueCrawlerName='dhCrawler',
-        )
-        session.add(dataset)
-    yield dataset
-
-
-@pytest.fixture(scope='module', autouse=True)
-def table(db, dataset: Dataset) -> DatasetTable:
-    with db.scoped_session() as session:
-        table = DatasetTable(
-            label='thistable',
-            owner='me',
-            datasetUri=dataset.datasetUri,
-            AWSAccountId=dataset.AwsAccountId,
-            region=dataset.region,
-            GlueDatabaseName=dataset.GlueDatabaseName,
-            S3BucketName=dataset.S3BucketName,
-            GlueTableName='asimpletesttable',
-            S3Prefix='/raw/asimpletesttable/',
-        )
-
-        session.add(table)
-    yield table
 
 
 @pytest.fixture(scope='module', autouse=True)

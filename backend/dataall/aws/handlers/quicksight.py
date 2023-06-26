@@ -453,59 +453,6 @@ class Quicksight:
         return "dataall-metadata-db"
 
     @staticmethod
-    def create_data_set_from_source(AwsAccountId, region, UserName, dataSourceId, tablesToImport):
-        client = Quicksight.get_quicksight_client(AwsAccountId, region)
-        user = Quicksight.describe_user(AwsAccountId, UserName)
-        if not user:
-            return False
-
-        data_source = client.describe_data_source(
-            AwsAccountId=AwsAccountId,
-            DataSourceId=dataSourceId
-        )
-
-        if not data_source:
-            return False
-
-        for table in tablesToImport:
-
-            response = client.create_data_set(
-                AwsAccountId=AwsAccountId,
-                DataSetId=f"dataall-imported-{table}",
-                Name=f"dataall-imported-{table}",
-                PhysicalTableMap={
-                    'string': {
-                        'RelationalTable': {
-                            'DataSourceArn': data_source.get('DataSource').get('Arn'),
-                            'Catalog': 'string',
-                            'Schema': 'dev',
-                            'Name': table,
-                            'InputColumns': [
-                                {
-                                    'Name': 'string',
-                                    'Type': 'STRING'
-                                },
-                            ]
-                        }
-                    }},
-                ImportMode='DIRECT_QUERY',
-                Permissions=[
-                    {
-                        'Principal': user.get('Arn'),
-                        'Actions': [
-                            "quicksight:DescribeDataSet",
-                            "quicksight:DescribeDataSetPermissions",
-                            "quicksight:PassDataSet",
-                            "quicksight:DescribeIngestion",
-                            "quicksight:ListIngestions"
-                        ]
-                    },
-                ],
-            )
-
-        return True
-
-    @staticmethod
     def create_analysis(AwsAccountId, region, UserName):
         client = Quicksight.get_quicksight_client(AwsAccountId, region)
         user = Quicksight.describe_user(AwsAccountId, UserName)
