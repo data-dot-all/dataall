@@ -52,32 +52,13 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: Athena
+          - Sid: ReadBuckets
             Action:
-              - 'athena:GetQuery*'
-              - 'athena:StartQueryExecution'
-              - 'athena:ListWorkGroups'
+              - 's3:ListAllMyBuckets'
+              - 's3:GetBucketLocation'
+              - 's3:PutBucketTagging'
             Effect: Allow
             Resource: '*'
-          - Sid: AthenaWorkgroups
-            Action:
-              - 'athena:GetWorkGroup'
-              - 'athena:ListTagsForResource'
-            Effect: Allow
-            Resource: !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
-          - Sid: ManagedAccessPoints
-            Action:
-              - 's3:GetAccessPoint'
-              - 's3:GetAccessPointPolicy'
-              - 's3:ListAccessPoints'
-              - 's3:CreateAccessPoint'
-              - 's3:DeleteAccessPoint'
-              - 's3:GetAccessPointPolicyStatus'
-              - 's3:DeleteAccessPointPolicy'
-              - 's3:PutAccessPointPolicy'
-            Effect: Allow
-            Resource:
-              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: ManagedBuckets
             Action:
               - 's3:List*'
@@ -101,49 +82,45 @@ Resources:
             Effect: Allow
             Resource:
               - 'arn:aws:s3:::*'
-          - Sid: AWSLoggingBuckets
+          - Sid: KMS
             Action:
-              - 's3:PutBucketAcl'
-              - 's3:PutBucketNotification'
+              - 'kms:Decrypt'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey*'
+              - 'kms:PutKeyPolicy'
+              - 'kms:ReEncrypt*'
+              - 'kms:TagResource'
+              - 'kms:UntagResource'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
-          - Sid: ReadBuckets
+              - '*'
+          - Sid: KMSList
             Action:
-              - 's3:ListAllMyBuckets'
-              - 's3:GetBucketLocation'
-              - 's3:PutBucketTagging'
+              - 'kms:List*'
+              - 'kms:DescribeKey'
             Effect: Allow
             Resource: '*'
-          - Sid: CWMetrics
+          - Sid: AthenaWorkgroups
             Action:
-              - 'cloudwatch:PutMetricData'
-              - 'cloudwatch:GetMetricData'
-              - 'cloudwatch:GetMetricStatistics'
+              - 'athena:GetWorkGroup'
+              - 'athena:GetQueryExecution'
+              - 'athena:GetQueryResults'
+              - 'athena:StartQueryExecution'
             Effect: Allow
-            Resource: '*'
-          - Sid: Logs
-            Effect: Allow
+            Resource: !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
+          - Sid: ManagedAccessPoints
             Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
             Resource:
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
-              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
-          - Sid: Logging
-            Action:
-              - 'logs:PutLogEvents'
-            Effect: Allow
-            Resource: '*'
-          - Sid: CWEvents
-            Action:
-              - 'events:DeleteRule'
-              - 'events:List*'
-              - 'events:PutRule'
-              - 'events:PutTargets'
-              - 'events:RemoveTargets'
-            Effect: Allow
-            Resource: '*'
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
           - Sid: GlueCatalog
             Action:
               - 'glue:BatchCreatePartition'
@@ -178,34 +155,6 @@ Resources:
               - !Sub 'arn:aws:glue:*:${AWS::AccountId}:crawler/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:glue:*:${AWS::AccountId}:job/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:glue:*:${AWS::AccountId}:trigger/${EnvironmentResourcePrefix}*'
-          - Sid: KMS
-            Action:
-              - 'kms:Decrypt'
-              - 'kms:Encrypt'
-              - 'kms:GenerateDataKey*'
-              - 'kms:PutKeyPolicy'
-              - 'kms:ReEncrypt*'
-              - 'kms:TagResource'
-              - 'kms:UntagResource'
-            Effect: Allow
-            Resource:
-              - '*'
-          - Sid: KMSList
-            Action:
-              - 'kms:List*'
-              - 'kms:DescribeKey'
-            Effect: Allow
-            Resource: '*'
-          - Sid: Organizations
-            Action: 'organizations:DescribeOrganization'
-            Effect: Allow
-            Resource: '*'
-          - Sid: ResourcesGroupTags
-            Action:
-              - 'tag:*'
-              - 'resource-groups:*'
-            Effect: Allow
-            Resource: '*'
           - Sid: SNSPublish
             Action:
               - 'sns:Publish'
@@ -234,6 +183,33 @@ Resources:
               - 'sqs:SendMessage'
             Effect: Allow
             Resource: !Sub 'arn:aws:sqs:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+          - Sid: AWSLoggingBuckets
+            Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutBucketNotification'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
+          - Sid: CWMetrics
+            Action:
+              - 'cloudwatch:PutMetricData'
+              - 'cloudwatch:GetMetricData'
+              - 'cloudwatch:GetMetricStatistics'
+            Effect: Allow
+            Resource: '*'
+          - Sid: Logs
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+            Resource:
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
+          - Sid: Logging
+            Action:
+              - 'logs:PutLogEvents'
+            Effect: Allow
+            Resource: '*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-0
       Roles:
         - !Ref PivotRoleName
@@ -248,21 +224,12 @@ Resources:
           - Sid: EC2SG
             Effect: Allow
             Action:
-              - 'ec2:CreateSecurityGroup'
-              - 'ec2:CreateNetworkInterface'
-              - 'ec2:Describe*'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:DescribeVpcs'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeNetworkInterfaces'
             Resource: '*'
-          - Sid: TagsforENI
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:CreateTags'
-            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
-          - Sid: DeleteENI
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteNetworkInterface'
-            Resource: !Sub 'arn:aws:ec2:*:${AWS::AccountId}:network-interface/*'
           - Sid: SageMakerNotebookActions
             Effect: Allow
             Action:
@@ -341,40 +308,13 @@ Resources:
             Action:
               - "ram:AcceptResourceShareInvitation"
               - "ram:RejectResourceShareInvitation"
-              - "ec2:DescribeAvailabilityZones"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
           - Sid: RamReadGlue
             Effect: Allow
             Action:
-              - 'glue:PutResourcePolicy'
-              - 'glue:DeleteResourcePolicy'
               - 'ram:Get*'
               - 'ram:List*'
-            Resource: '*'
-          - Sid: SGCreateTag
-            Effect: Allow
-            Action:
-              - 'ec2:CreateTags'
-            Resource:
-              - !Sub 'arn:aws:ec2:*:${AWS::AccountId}:security-group/*'
-            Condition:
-              StringEquals:
-                'aws:RequestTag/dataall': 'true'
-          - Sid: SGandRedshift
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:DeleteSecurityGroup'
-              - 'redshift:DeleteClusterSubnetGroup'
-            Resource:
-              - '*'
-            Condition:
-              'ForAnyValue:StringEqualsIfExists':
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: DevTools0
-            Effect: Allow
-            Action: 'cloudformation:ValidateTemplate'
             Resource: '*'
           - Sid: CloudFormation
             Effect: Allow
@@ -383,9 +323,6 @@ Resources:
               - 'cloudformation:DescribeStackResources'
               - 'cloudformation:DescribeStackEvents'
               - 'cloudformation:DeleteStack'
-              - 'cloudformation:GetTemplate'
-              - 'cloudformation:ListStackResources'
-              - 'cloudformation:DescribeStackResource'
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'

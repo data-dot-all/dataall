@@ -79,42 +79,16 @@ class PivotRole(NestedStack):
             'PivotRolePolicy0',
             managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-0',
             statements=[
-                # Athena permissions
+                # Read Buckets
                 iam.PolicyStatement(
-                    sid='Athena',
+                    sid='ReadBuckets',
                     effect=iam.Effect.ALLOW,
+                    actions=[
+                        's3:ListAllMyBuckets',
+                        's3:GetBucketLocation',
+                        's3:PutBucketTagging'
+                    ],
                     resources=['*'],
-                    actions=[
-                        'athena:GetQuery*',
-                        'athena:StartQueryExecution',
-                        'athena:ListWorkGroups'
-                    ],
-                ),
-                # Athena Workgroups permissions
-                iam.PolicyStatement(
-                    sid='AthenaWorkgroups',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'athena:GetWorkGroup',
-                        'athena:ListTagsForResource',
-                    ],
-                    resources=[f'arn:aws:athena:*:{self.account}:workgroup/{env_resource_prefix}*'],
-                ),
-                # S3 Access points
-                iam.PolicyStatement(
-                    sid='ManagedAccessPoints',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        's3:GetAccessPoint',
-                        's3:GetAccessPointPolicy',
-                        's3:ListAccessPoints',
-                        's3:CreateAccessPoint',
-                        's3:DeleteAccessPoint',
-                        's3:GetAccessPointPolicyStatus',
-                        's3:DeleteAccessPointPolicy',
-                        's3:PutAccessPointPolicy',
-                    ],
-                    resources=[f'arn:aws:s3:*:{self.account}:accesspoint/*'],
                 ),
                 # S3 Managed Buckets
                 iam.PolicyStatement(
@@ -128,7 +102,7 @@ class PivotRole(NestedStack):
                     ],
                     resources=[f'arn:aws:s3:::{env_resource_prefix}*'],
                 ),
-                # S3 Imported Buckets
+                # S3 Imported Buckets - restrict resources via bucket policies
                 iam.PolicyStatement(
                     sid='ImportedBuckets',
                     effect=iam.Effect.ALLOW,
@@ -145,6 +119,133 @@ class PivotRole(NestedStack):
                     ],
                     resources=['arn:aws:s3:::*'],
                 ),
+                # KMS - needed for imported buckets
+                iam.PolicyStatement(
+                    sid='KMS',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'kms:Decrypt',
+                        'kms:Encrypt',
+                        'kms:GenerateDataKey*',
+                        'kms:PutKeyPolicy',
+                        'kms:ReEncrypt*',
+                        'kms:TagResource',
+                        'kms:UntagResource',
+                    ],
+                    resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    sid='KMSList',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'kms:List*',
+                        'kms:DescribeKey',
+                    ],
+                    resources=['*'],
+                ),
+                # Athena - needed for Worksheets feature
+                iam.PolicyStatement(
+                    sid='AthenaWorkgroups',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "athena:GetQueryExecution",
+                        "athena:GetQueryResults",
+                        "athena:GetWorkGroup",
+                        "athena:StartQueryExecution"
+                    ],
+                    resources=[f'arn:aws:athena:*:{self.account}:workgroup/{env_resource_prefix}*'],
+                ),
+                # S3 Access points - needed for access points sharing
+                iam.PolicyStatement(
+                    sid='ManagedAccessPoints',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        's3:GetAccessPoint',
+                        's3:GetAccessPointPolicy',
+                        's3:ListAccessPoints',
+                        's3:CreateAccessPoint',
+                        's3:DeleteAccessPoint',
+                        's3:GetAccessPointPolicyStatus',
+                        's3:DeleteAccessPointPolicy',
+                        's3:PutAccessPointPolicy',
+                    ],
+                    resources=[f'arn:aws:s3:*:{self.account}:accesspoint/*'],
+                ),
+                # Glue - needed to handle databases and tables
+                iam.PolicyStatement(
+                    sid='GlueCatalog',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'glue:BatchCreatePartition',
+                        'glue:BatchDeletePartition',
+                        'glue:BatchDeleteTable',
+                        'glue:CreateDatabase',
+                        'glue:CreatePartition',
+                        'glue:CreateTable',
+                        'glue:DeleteDatabase',
+                        'glue:DeletePartition',
+                        'glue:DeleteTable',
+                        'glue:BatchGet*',
+                        'glue:Get*',
+                        'glue:List*',
+                        'glue:SearchTables',
+                        'glue:UpdateDatabase',
+                        'glue:UpdatePartition',
+                        'glue:UpdateTable',
+                        'glue:TagResource',
+                    ],
+                    resources=['*'],
+                ),
+                # Glue ETL - needed to start crawler and profiling jobs
+                iam.PolicyStatement(
+                    sid='GlueETL',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'glue:StartCrawler',
+                        'glue:StartJobRun',
+                        'glue:StartTrigger',
+                        'glue:UpdateTrigger',
+                        'glue:UpdateJob',
+                        'glue:UpdateCrawler',
+                    ],
+                    resources=[
+                        f'arn:aws:glue:*:{self.account}:crawler/{env_resource_prefix}*',
+                        f'arn:aws:glue:*:{self.account}:job/{env_resource_prefix}*',
+                        f'arn:aws:glue:*:{self.account}:trigger/{env_resource_prefix}*',
+                    ],
+                ),
+                # SNS - For subscriptions
+                iam.PolicyStatement(
+                    sid='SNSPublish',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'sns:Publish',
+                        'sns:SetTopicAttributes',
+                        'sns:GetTopicAttributes',
+                        'sns:DeleteTopic',
+                        'sns:Subscribe',
+                        'sns:TagResource',
+                        'sns:UntagResource',
+                        'sns:CreateTopic',
+                    ],
+                    resources=[f'arn:aws:sns:*:{self.account}:{env_resource_prefix}*'],
+                ),
+                iam.PolicyStatement(
+                    sid='SNSList', effect=iam.Effect.ALLOW, actions=['sns:ListTopics'], resources=['*']
+                ),
+                # SQS - support SQS queues
+                iam.PolicyStatement(
+                    sid='SQSList', effect=iam.Effect.ALLOW, actions=['sqs:ListQueues'], resources=['*']
+                ),
+                iam.PolicyStatement(
+                    sid='SQS',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'sqs:ReceiveMessage',
+                        'sqs:SendMessage'
+                    ],
+                    resources=[f'arn:aws:sqs:*:{self.account}:{env_resource_prefix}*'],
+                ),
                 # AWS Logging Buckets
                 iam.PolicyStatement(
                     sid='AWSLoggingBuckets',
@@ -154,17 +255,6 @@ class PivotRole(NestedStack):
                         's3:PutBucketNotification'
                     ],
                     resources=[f'arn:aws:s3:::{env_resource_prefix}-logging-*'],
-                ),
-                # Read Buckets
-                iam.PolicyStatement(
-                    sid='ReadBuckets',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        's3:ListAllMyBuckets',
-                        's3:GetBucketLocation',
-                        's3:PutBucketTagging'
-                    ],
-                    resources=['*'],
                 ),
                 # CloudWatch Metrics
                 iam.PolicyStatement(
@@ -194,134 +284,6 @@ class PivotRole(NestedStack):
                 iam.PolicyStatement(
                     sid='Logging', effect=iam.Effect.ALLOW, actions=['logs:PutLogEvents'], resources=['*']
                 ),
-                # EventBridge (CloudWatch Events)
-                iam.PolicyStatement(
-                    sid='CWEvents',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'events:DeleteRule',
-                        'events:List*',
-                        'events:PutRule',
-                        'events:PutTargets',
-                        'events:RemoveTargets',
-                    ],
-                    resources=['*'],
-                ),
-                # Glue
-                iam.PolicyStatement(
-                    sid='GlueCatalog',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'glue:BatchCreatePartition',
-                        'glue:BatchDeletePartition',
-                        'glue:BatchDeleteTable',
-                        'glue:CreateDatabase',
-                        'glue:CreatePartition',
-                        'glue:CreateTable',
-                        'glue:DeleteDatabase',
-                        'glue:DeletePartition',
-                        'glue:DeleteTable',
-                        'glue:BatchGet*',
-                        'glue:Get*',
-                        'glue:List*',
-                        'glue:SearchTables',
-                        'glue:UpdateDatabase',
-                        'glue:UpdatePartition',
-                        'glue:UpdateTable',
-                        'glue:TagResource',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    sid='GlueETL',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'glue:StartCrawler',
-                        'glue:StartJobRun',
-                        'glue:StartTrigger',
-                        'glue:UpdateTrigger',
-                        'glue:UpdateJob',
-                        'glue:UpdateCrawler',
-                    ],
-                    resources=[
-                        f'arn:aws:glue:*:{self.account}:crawler/{env_resource_prefix}*',
-                        f'arn:aws:glue:*:{self.account}:job/{env_resource_prefix}*',
-                        f'arn:aws:glue:*:{self.account}:trigger/{env_resource_prefix}*',
-                    ],
-                ),
-                # KMS
-                iam.PolicyStatement(
-                    sid='KMS',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'kms:Decrypt',
-                        'kms:Encrypt',
-                        'kms:GenerateDataKey*',
-                        'kms:PutKeyPolicy',
-                        'kms:ReEncrypt*',
-                        'kms:TagResource',
-                        'kms:UntagResource',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    sid='KMSList',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'kms:List*',
-                        'kms:DescribeKey',
-                    ],
-                    resources=['*'],
-                ),
-                # AWS Organizations
-                iam.PolicyStatement(
-                    sid='Organizations',
-                    effect=iam.Effect.ALLOW,
-                    actions=['organizations:DescribeOrganization'],
-                    resources=['*'],
-                ),
-                # Resource Tags
-                iam.PolicyStatement(
-                    sid='ResourceGroupTags',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'tag:*',
-                        'resource-groups:*'
-                    ],
-                    resources=['*'],
-                ),
-                # SNS
-                iam.PolicyStatement(
-                    sid='SNSPublish',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'sns:Publish',
-                        'sns:SetTopicAttributes',
-                        'sns:GetTopicAttributes',
-                        'sns:DeleteTopic',
-                        'sns:Subscribe',
-                        'sns:TagResource',
-                        'sns:UntagResource',
-                        'sns:CreateTopic',
-                    ],
-                    resources=[f'arn:aws:sns:*:{self.account}:{env_resource_prefix}*'],
-                ),
-                iam.PolicyStatement(
-                    sid='SNSList', effect=iam.Effect.ALLOW, actions=['sns:ListTopics'], resources=['*']
-                ),
-                # SQS
-                iam.PolicyStatement(
-                    sid='SQSList', effect=iam.Effect.ALLOW, actions=['sqs:ListQueues'], resources=['*']
-                ),
-                iam.PolicyStatement(
-                    sid='SQS',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'sqs:ReceiveMessage',
-                        'sqs:SendMessage'
-                    ],
-                    resources=[f'arn:aws:sqs:*:{self.account}:{env_resource_prefix}*'],
-                ),
             ],
         )
 
@@ -338,31 +300,18 @@ class PivotRole(NestedStack):
             'PivotRolePolicy1',
             managed_policy_name=f'{env_resource_prefix}-pivotrole-cdk-policy-1',
             statements=[
-                # EC2
+                # EC2 describe needed for SageMaker
                 iam.PolicyStatement(
                     sid='EC2SG',
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'ec2:CreateSecurityGroup',
-                        'ec2:CreateNetworkInterface',
-                        'ec2:Describe*'
+                        'ec2:DescribeSubnets',
+                        'ec2:DescribeSecurityGroups',
+                        'ec2:DescribeVpcs',
+                        'ec2:DescribeInstances',
+                        'ec2:DescribeNetworkInterfaces',
                     ],
                     resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    sid='TagsforENI',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ec2:CreateTags',
-                        'ec2:DeleteTags'
-                    ],
-                    resources=[f'arn:aws:ec2:*:{self.account}:network-interface/*'],
-                ),
-                iam.PolicyStatement(
-                    sid='DeleteENI',
-                    effect=iam.Effect.ALLOW,
-                    actions=['ec2:DeleteNetworkInterface'],
-                    resources=[f'arn:aws:ec2:*:{self.account}:network-interface/*'],
                 ),
                 # SageMaker
                 iam.PolicyStatement(
@@ -447,64 +396,31 @@ class PivotRole(NestedStack):
                     actions=[
                         'ram:AcceptResourceShareInvitation',
                         'ram:RejectResourceShareInvitation',
-                        'ec2:DescribeAvailabilityZones',
                         'ram:EnableSharingWithAwsOrganization',
                     ],
                     resources=['*'],
                 ),
                 iam.PolicyStatement(
-                    sid='RamReadGlue',
+                    sid='RamRead',
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'glue:PutResourcePolicy',
-                        'glue:DeleteResourcePolicy',
                         'ram:Get*',
                         'ram:List*'
                     ],
                     resources=['*'],
                 ),
-                # Security Groups
-                iam.PolicyStatement(
-                    sid='SGCreateTag',
-                    effect=iam.Effect.ALLOW,
-                    actions=['ec2:CreateTags'],
-                    resources=[f'arn:aws:ec2:*:{self.account}:security-group/*'],
-                    conditions={'StringEquals': {'aws:RequestTag/dataall': 'true'}},
-                ),
-                iam.PolicyStatement(
-                    sid='SGandRedshift',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'ec2:DeleteTags',
-                        'ec2:DeleteSecurityGroup',
-                        'redshift:DeleteClusterSubnetGroup'
-                    ],
-                    resources=['*'],
-                    conditions={'ForAnyValue:StringEqualsIfExists': {'aws:ResourceTag/dataall': 'true'}},
-                ),
-                # Dev Tools
-                iam.PolicyStatement(
-                    sid='DevTools0',
-                    effect=iam.Effect.ALLOW,
-                    actions=['cloudformation:ValidateTemplate'],
-                    resources=['*'],
-                ),
+                # CloudFormation
                 iam.PolicyStatement(
                     sid='CloudFormation',
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        'cloudformation:DescribeStacks',
-                        'cloudformation:DescribeStackResources',
-                        'cloudformation:DescribeStackEvents',
-                        'cloudformation:DeleteStack',
-                        'cloudformation:CreateStack',
-                        'cloudformation:GetTemplate',
-                        'cloudformation:ListStackResources',
-                        'cloudformation:DescribeStackResource',
+                        "cloudformation:DeleteStack",
+                        "cloudformation:DescribeStacks",
+                        "cloudformation:DescribeStackEvents",
+                        "cloudformation:DescribeStackResources"
                     ],
                     resources=[
                         f'arn:aws:cloudformation:*:{self.account}:stack/{env_resource_prefix}*/*',
-                        f'arn:aws:cloudformation:*:{self.account}:stack/CDKToolkit/*',
                         f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
                     ],
                 ),
@@ -560,26 +476,6 @@ class PivotRole(NestedStack):
                         'lakeformation:DeleteObjectsOnCancel',
                     ],
                     resources=['*'],
-                ),
-                # Compute
-                iam.PolicyStatement(
-                    sid='Compute',
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        'lambda:AddPermission',
-                        'lambda:InvokeFunction',
-                        'lambda:RemovePermission',
-                        'lambda:GetFunction',
-                        'lambda:GetFunctionConfiguration',
-                        'codepipeline:GetPipelineState',
-                        'codepipeline:CreatePipeline',
-                        'codepipeline:TagResource',
-                        'codepipeline:UntagResource',
-                    ],
-                    resources=[
-                        f'arn:aws:lambda:*:{self.account}:function:{env_resource_prefix}*',
-                        f'arn:aws:codepipeline:*:{self.account}:{env_resource_prefix}*',
-                    ],
                 ),
                 # QuickSight
                 iam.PolicyStatement(
@@ -649,7 +545,7 @@ class PivotRole(NestedStack):
                         f'arn:aws:ssm:*:{self.account}:parameter/ddk/*',
                     ],
                 ),
-                # IAM
+                # IAM - needed for consumption roles and for S3 sharing
                 iam.PolicyStatement(
                     sid='IAMListGet',
                     effect=iam.Effect.ALLOW,
@@ -702,7 +598,7 @@ class PivotRole(NestedStack):
                         f'arn:aws:iam::{self.account}:role/ddk-*',
                     ],
                 ),
-                # CodeCommit
+                # CodeCommit - used in Pipelines
                 iam.PolicyStatement(
                     sid='CodeCommit',
                     effect=iam.Effect.ALLOW,
