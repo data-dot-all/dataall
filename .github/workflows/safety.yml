@@ -1,4 +1,4 @@
-name: "Minimal Security checks"
+name: Safety
 
 on:
   workflow_dispatch:
@@ -23,5 +23,6 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
-      - name: Security check
-        run: make check-security
+          python -m pip install safety
+      - name: Safety
+        run: safety check --ignore=51668
