@@ -1,4 +1,4 @@
-from dataall.modules.datapipelines.api import (
+from dataall.modules.dashboards.api import (
     input_types,
     mutations,
     queries,
