@@ -150,11 +150,11 @@ class LambdaApiStack(pyNestedClass):
 
         # Add NAT Connectivity
         for lmbda in [
-            self.aws_handler,
+            # self.aws_handler,
             self.api_handler
         ]:
             lmbda.connections.allow_to(
-                ec2.Peer.ipv4(vpc.vpc_cidr_block),
+                ec2.Peer.any_ipv4(),
                 ec2.Port.tcp(443),
                 'Allow NAT Internet Access SG Egress'
             )

@@ -343,6 +343,7 @@ class ContainerStack(pyNestedClass):
                     'Allow ECS from VPC Endpoint SG'
                 )
             # Add S3 Prefix List Connection
+            if s3_prefix_list:
                 sg_connection.allow_to(
                     ec2.Connections(peer=ec2.Peer.prefix_list(s3_prefix_list)),
                     ec2.Port.tcp(443),
@@ -360,9 +361,9 @@ class ContainerStack(pyNestedClass):
 
         # Add NAT Gateway Access for QS API 
         cdkproxy_sg.add_egress_rule(
-            peer=ec2.Peer.ipv4(vpc.vpc_cidr_block),
-            connection=ec2.Port.tcp(443),
-            description='Allow NAT Internet Access SG Egress',
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            'Allow NAT Internet Access SG Egress',
         )
 
         # Create SSM of Security Group IDs
