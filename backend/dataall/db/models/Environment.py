@@ -25,7 +25,6 @@ class Environment(Resource, Base):
     roleCreated = Column(Boolean, nullable=False, default=False)
 
     dashboardsEnabled = Column(Boolean, default=False)
-    pipelinesEnabled = Column(Boolean, default=True)
     warehousesEnabled = Column(Boolean, default=True)
 
     userRoleInEnvironment = query_expression()

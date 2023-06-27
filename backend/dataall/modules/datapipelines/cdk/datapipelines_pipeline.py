@@ -16,13 +16,15 @@ from aws_cdk import aws_kms as kms
 from aws_cdk.aws_s3_assets import Asset
 from botocore.exceptions import ClientError
 
-from .manager import stack
-from ...aws.handlers.sts import SessionHelper
-from ... import db
-from ...db import models
-from ...db.api import Environment, Pipeline
-from ...utils.cdk_nag_utils import CDKNagUtil
-from ...utils.runtime_stacks_tagging import TagsUtil
+from dataall.cdkproxy.stacks.manager import stack
+from dataall.aws.handlers.sts import SessionHelper
+from dataall import db
+from dataall.db import models
+from dataall.db.api import Environment
+from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
+from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.utils.cdk_nag_utils import CDKNagUtil
+from dataall.utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +33,7 @@ logger = logging.getLogger(__name__)
 class PipelineStack(Stack):
     """
     Create a stack that contains CDK Continuous Integration and Delivery (CI/CD) pipeline.
-
     The pipeline is based on CodePipeline pipelines
-
     - Defaults for source/synth - CodeCommit & cdk synth
     - blueprint with DDK application code added in the CodeCommit repository <https://github.com/awslabs/aws-ddk>
     - ability to define development stages: dev, test, prod
@@ -41,7 +41,6 @@ class PipelineStack(Stack):
     - Ability to connect to private artifactory to pull artifacts from at synth
     - Security best practices - ensures pipeline buckets block non-SSL, and are KMS-encrypted with rotated keys
     - data.all metadata as environment variables accesible at synth
-
     """
 
     module_name = __file__
@@ -51,28 +50,28 @@ class PipelineStack(Stack):
         engine = db.get_engine(envname=envname)
         return engine
 
-    def get_target(self, target_uri) -> models.DataPipeline:
+    def get_target(self, target_uri) -> DataPipeline:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            return Pipeline.get_pipeline_by_uri(session, target_uri)
+            return DatapipelinesRepository.get_pipeline_by_uri(session, target_uri)
 
-    def get_pipeline_environments(self, targer_uri) -> models.DataPipelineEnvironment:
+    def get_pipeline_environments(self, targer_uri) -> DataPipelineEnvironment:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            envs = Pipeline.query_pipeline_environments(
+            envs = DatapipelinesRepository.query_pipeline_environments(
                 session, targer_uri
             )
         return envs
 
     def get_pipeline_cicd_environment(
-        self, pipeline: models.DataPipeline
+        self, pipeline: DataPipeline
     ) -> models.Environment:
         envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         with engine.scoped_session() as session:
             return Environment.get_environment_by_uri(session, pipeline.environmentUri)
 
-    def get_env_team(self, pipeline: models.DataPipeline) -> models.EnvironmentGroup:
+    def get_env_team(self, pipeline: DataPipeline) -> models.EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
             env = Environment.get_environment_group(
@@ -159,7 +158,7 @@ class PipelineStack(Stack):
         code_dir_path = os.path.realpath(
             os.path.abspath(
                 os.path.join(
-                    __file__, "..", "..", "..", "..", "blueprints", "data_pipeline_blueprint"
+                    __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
                 )
             )
         )
@@ -362,7 +361,7 @@ class PipelineStack(Stack):
             value=codepipeline_pipeline.pipeline_name,
         )
 
-        TagsUtil.add_tags(stack=self, model=models.DataPipeline, target_type="pipeline")
+        TagsUtil.add_tags(stack=self, model=DataPipeline, target_type="pipeline")
 
         CDKNagUtil.check_rules(self)
 

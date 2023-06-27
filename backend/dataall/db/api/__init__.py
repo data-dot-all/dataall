@@ -14,4 +14,3 @@ from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
 from .dashboard import Dashboard
-from .pipeline import Pipeline

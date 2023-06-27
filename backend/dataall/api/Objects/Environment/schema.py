@@ -84,7 +84,6 @@ Environment = gql.ObjectType(
         ),
         gql.Field('validated', type=gql.Boolean),
         gql.Field('dashboardsEnabled', type=gql.Boolean),
-        gql.Field('pipelinesEnabled', type=gql.Boolean),
         gql.Field('warehousesEnabled', type=gql.Boolean),
         gql.Field('roleCreated', type=gql.Boolean),
         gql.Field('isOrganizationDefaultEnvironment', type=gql.Boolean),

@@ -6,6 +6,9 @@
         "notebooks": {
             "active": true
         },
+        "datapipelines": {
+            "active": true
+        },
         "datasets": {
             "active": true
         },

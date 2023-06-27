@@ -37,5 +37,4 @@ class TargetType:
 
 
 TargetType("environment", permissions.GET_ENVIRONMENT, permissions.UPDATE_ENVIRONMENT)
-TargetType("pipeline", permissions.GET_PIPELINE, permissions.UPDATE_PIPELINE)
 TargetType("redshift", permissions.GET_REDSHIFT_CLUSTER, permissions.GET_REDSHIFT_CLUSTER)

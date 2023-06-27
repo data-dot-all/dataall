@@ -20,8 +20,6 @@ from .RedshiftClusterDataset import RedshiftClusterDataset
 from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
-from .DataPipeline import DataPipeline
-from .DataPipelineEnvironment import DataPipelineEnvironment
 from .Stack import Stack
 from .Tag import Tag, ItemTags, updateObjectTags
 from .Task import Task

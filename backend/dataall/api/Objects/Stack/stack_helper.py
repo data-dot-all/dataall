@@ -107,23 +107,3 @@ def delete_stack(
 
     Worker.queue(context.db_engine, [task.taskUri])
     return True
-
-
-def delete_repository(
-    target_uri, accountid, cdk_role_arn, region, repo_name
-):
-    context = get_context()
-    with context.db_engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=target_uri,
-            action='repo.datapipeline.delete',
-            payload={
-                'accountid': accountid,
-                'region': region,
-                'cdk_role_arn': cdk_role_arn,
-                'repo_name': repo_name,
-            },
-        )
-        session.add(task)
-    Worker.queue(context.db_engine, [task.taskUri])
-    return True

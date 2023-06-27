@@ -36,5 +36,4 @@ class FeedRegistry(UnionTypeRegistry):
         return [gql.Ref(target_type) for target_type in cls._DEFINITIONS.keys()]
 
 
-FeedRegistry.register(FeedDefinition("DataPipeline", models.DataPipeline))
 FeedRegistry.register(FeedDefinition("Dashboard", models.Dashboard))
