@@ -136,13 +136,13 @@ class LambdaApiStack(pyNestedClass):
             self.api_handler,
             self.elasticsearch_proxy_handler,
         ]:
-            vpce_connection.allow_from(
-                lmbda,
+            lmbda.connections.allow_to(
+                vpce_connection,
                 ec2.Port.tcp_range(start_port=1024, end_port=65535),
                 'Allow Lambda to VPC Endpoint'
             )
-            vpce_connection.allow_from(
-                lmbda,
+            lmbda.connections.allow_to(
+                vpce_connection,
                 ec2.Port.tcp(443),
                 'Allow Lambda to VPC Endpoint'
             )

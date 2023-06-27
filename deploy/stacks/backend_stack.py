@@ -149,6 +149,13 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        # Lambda SGs
+        # lambdas = [
+        #     self.lambda_api_stack.aws_handler,
+        #     self.lambda_api_stack.api_handler,
+        #     self.lambda_api_stack.elasticsearch_proxy_handler,
+        # ]
+
         self.ecs_stack = ContainerStack(
             self,
             f'ECS',
@@ -169,6 +176,11 @@ class BackendStack(Stack):
             ],
             **kwargs,
         )
+
+        # container_sgs = [
+        #     self.ecs_stack.scheduled_tasks_sg, 
+        #     self.ecs_stack.cdkproxy_sg
+        # ]
 
         dbmigration_stack = DBMigrationStack(
             self,
