@@ -30,8 +30,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                mlStudiosEnabled
-                pipelinesEnabled
                 warehousesEnabled
                 stack{
                  EcsTaskArn

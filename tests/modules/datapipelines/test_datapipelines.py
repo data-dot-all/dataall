@@ -1,5 +1,8 @@
 import pytest
 
+from tests.api.client import *
+from tests.api.conftest import *
+
 
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
@@ -9,12 +12,29 @@ def org1(org, user, group, tenant):
 
 @pytest.fixture(scope='module')
 def env1(env, org1, user, group, tenant):
-    env1 = env(org1, 'cicd', user.userName, group.name, '111111111111', 'eu-west-1')
+    env1 = env(
+        org1, 'cicd',
+        user.userName,
+        group.name,
+        '111111111111',
+        'eu-west-1',
+        parameters={'pipelinesEnabled': 'True'}
+    )
+
     yield env1
 
 @pytest.fixture(scope='module')
 def env2(env, org1, user, group):
-    env2 = env(org1, 'dev', user.userName, group.name, '222222222222', 'eu-west-1')
+    env2 = env(
+        org1,
+        'dev',
+        user.userName,
+        group.name,
+        '222222222222',
+        'eu-west-1',
+        parameters={'pipelinesEnabled': 'True'}
+    )
+
     yield env2
 
 
@@ -160,7 +180,7 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         return_value=[{'response': 'return value'}],
     )
     module_mocker.patch(
-        'dataall.api.Objects.DataPipeline.resolvers._get_creds_from_aws',
+        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService._get_creds_from_aws',
         return_value=True,
     )
     response = client.query(
@@ -187,6 +207,11 @@ def test_get_pipeline(client, env1, db, org1, user, group, pipeline, module_mock
         groups=[group.name],
     )
     assert response.data.getDataPipelineCredsLinux
+
+    module_mocker.patch(
+        'dataall.modules.datapipelines.services.datapipelines_service.DataPipelineService.ls',
+        return_value=[{'response': 'return value'}],
+    )
     response = client.query(
         """
         query browseDataPipelineRepository($input:DataPipelineBrowseInput!){

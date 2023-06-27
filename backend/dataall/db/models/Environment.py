@@ -23,7 +23,7 @@ class Environment(Resource, Base):
     EnvironmentDefaultBucketName = Column(String)
     EnvironmentDefaultAthenaWorkGroup = Column(String)
     roleCreated = Column(Boolean, nullable=False, default=False)
-    pipelinesEnabled = Column(Boolean, default=True)
+
     warehousesEnabled = Column(Boolean, default=True)
 
     userRoleInEnvironment = query_expression()

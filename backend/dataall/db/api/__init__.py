@@ -13,4 +13,3 @@ from .vote import Vote
 from .notification import Notification
 from .redshift_cluster import RedshiftCluster
 from .vpc import Vpc
-from .pipeline import Pipeline

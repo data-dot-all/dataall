@@ -14,7 +14,6 @@ from .. import gql
 from ...api.constants import GraphQLEnumMapper
 from . import (
     Permission,
-    DataPipeline,
     Environment,
     Activity,
     Group,

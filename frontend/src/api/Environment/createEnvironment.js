@@ -13,7 +13,6 @@ const createEnvironment = (input) => ({
         SamlGroupName
         AwsAccountId
         created
-        pipelinesEnabled
         warehousesEnabled
         parameters {
           key

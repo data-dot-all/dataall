@@ -36,12 +36,6 @@ class ProjectMemberRole(Enum):
     NotContributor = '000'
 
 
-class DataPipelineRole(Enum):
-    Creator = '999'
-    Admin = '900'
-    NoPermission = '000'
-
-
 class RedshiftClusterRole(Enum):
     Creator = '950'
     Admin = '900'

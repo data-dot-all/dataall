@@ -283,11 +283,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     assert 'OrganizationResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
         env = session.query(dataall.db.models.Environment).get(env2.environmentUri)
-        (
-            session.query(EnvironmentParameter)
-            .filter(EnvironmentParameter.environmentUri == env2.environmentUri)
-            .delete()
-        )
         session.delete(env)
         session.commit()
 

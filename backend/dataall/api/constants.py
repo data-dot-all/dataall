@@ -67,12 +67,6 @@ class ProjectMemberRole(GraphQLEnumMapper):
     NotContributor = '000'
 
 
-class DataPipelineRole(GraphQLEnumMapper):
-    Creator = '999'
-    Admin = '900'
-    NoPermission = '000'
-
-
 class GlossaryRole(GraphQLEnumMapper):
     # Permissions on a glossary
     Admin = '900'

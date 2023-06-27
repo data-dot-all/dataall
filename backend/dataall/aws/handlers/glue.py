@@ -2,9 +2,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
 from .sts import SessionHelper
-from ...db import models
 
 log = logging.getLogger('aws:glue')
 
@@ -14,17 +12,21 @@ class Glue:
         pass
 
     @staticmethod
-    @Worker.handler(path='glue.job.runs')
-    def get_job_runs(engine, task: models.Task):
-        with engine.scoped_session() as session:
-            Data_pipeline: models.DataPipeline = session.query(models.DataPipeline).get(
-                task.targetUri
+    def table_exists(**data):
+        accountid = data['accountid']
+        region = data.get('region', 'eu-west-1')
+        database = data.get('database', 'UndefinedDatabaseName')
+        table_name = data.get('tablename', 'UndefinedTableName')
+        try:
+            table = (
+                SessionHelper.remote_session(accountid)
+                .client('glue', region_name=region)
+                .get_table(
+                    CatalogId=data['accountid'], DatabaseName=database, Name=table_name
+                )
             )
-            aws = SessionHelper.remote_session(Data_pipeline.AwsAccountId)
-            glue_client = aws.client('glue', region_name=Data_pipeline.region)
-            try:
-                response = glue_client.get_job_runs(JobName=Data_pipeline.name)
-            except ClientError as e:
-                log.warning(f'Could not retrieve pipeline runs , {str(e)}')
-                return []
-            return response['JobRuns']
+            log.info(f'Glue table found: {data}')
+            return table
+        except ClientError:
+            log.info(f'Glue table not found: {data}')
+            return None

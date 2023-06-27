@@ -29,7 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                pipelinesEnabled
                 warehousesEnabled
                 stack{
                  EcsTaskArn
@@ -57,7 +56,6 @@ def test_get_environment(client, org1, env1, group):
     body = response.data.getEnvironment
     assert body.owner == 'alice'
     assert body.AwsAccountId == env1.AwsAccountId
-    assert body.pipelinesEnabled
     assert body.warehousesEnabled
 
     params = {p.key: p.value for p in body.parameters}
@@ -102,7 +100,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                pipelinesEnabled
                 warehousesEnabled
                 parameters {
                     key
@@ -118,7 +115,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -138,7 +134,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -151,21 +146,20 @@ def test_update_env(client, org1, env1, group):
         groups=[group.name],
     )
     print(response)
-
-    body = response.data.updateEnvironment
-    assert body.organization.organizationUri == org1.organizationUri
-    assert body.owner == 'alice'
-    assert body.AwsAccountId == env1.AwsAccountId
-    assert body.label == 'DEV'
-    assert str(body.tags) == str(['test', 'env'])
-    assert not body.mlStudiosEnabled
-    assert not body.pipelinesEnabled
-    assert not body.warehousesEnabled
-
-    params = {p.key: p.value for p in body.parameters}
-    assert params["moduleEnabled"] == "True"
-
-    assert body.resourcePrefix == 'customer-prefix'
+    assert (
+        response.data.updateEnvironment.organization.organizationUri
+        == org1.organizationUri
+    )
+    assert response.data.updateEnvironment.owner == 'alice'
+    assert response.data.updateEnvironment.AwsAccountId == env1.AwsAccountId
+    assert response.data.updateEnvironment.label == 'DEV'
+    assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
+    assert not response.data.updateEnvironment.dashboardsEnabled
+    assert not response.data.updateEnvironment.warehousesEnabled
+    assert response.data.updateEnvironment.parameters
+    assert response.data.updateEnvironment.parameters[0]["key"] == "moduleEnabled"
+    assert response.data.updateEnvironment.parameters[0]["value"] == "True"
+    assert response.data.updateEnvironment.resourcePrefix == 'customer-prefix'
 
 
 def test_update_params(client, org1, env1, group):

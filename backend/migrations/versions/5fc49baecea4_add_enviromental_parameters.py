@@ -27,13 +27,15 @@ Base = declarative_base()
 
 UNUSED_PERMISSIONS = ['LIST_DATASETS',  'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
                       'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
-                      'CREATE_DATASET_TABLE']
+                      'CREATE_DATASET_TABLE', 'LIST_PIPELINES']
 
 
 class Environment(Resource, Base):
     __tablename__ = "environment"
     environmentUri = Column(String, primary_key=True)
     notebooksEnabled = Column(Boolean)
+    mlStudiosEnabled = Column(Boolean)
+    pipelinesEnabled = Column(Boolean)
     dashboardsEnabled = Column(Boolean)
 
 
@@ -81,6 +83,9 @@ def upgrade():
                 params, env, "mlStudiosEnabled", str(env.mlStudiosEnabled).lower()  # for frontend
             )
             _add_param_if_exists(
+                params, env, "pipelinesEnabled", str(env.pipelinesEnabled).lower()  # for frontend
+            )
+            _add_param_if_exists(
                 params, env, "dashboardsEnabled", str(env.dashboardsEnabled).lower()  # for frontend
             )
 
@@ -89,6 +94,7 @@ def upgrade():
 
         op.drop_column("environment", "notebooksEnabled")
         op.drop_column("environment", "mlStudiosEnabled")
+        op.drop_column("environment", "pipelinesEnabled")
         op.drop_column("environment", "dashbaordsEnabled")
         print("Dropped the columns from the environment table ")
 
@@ -123,6 +129,7 @@ def downgrade():
         op.drop_constraint("fk_dashboard_env_uri", "dashboard")
         op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
         op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
+        op.add_column("environment", Column("pipelinesEnabled", Boolean, default=True))
         op.add_column("environment", Column("dashbaordsEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
@@ -133,7 +140,8 @@ def downgrade():
             envs.append(Environment(
                 environmentUri=param.environmentUri,
                 notebooksEnabled=params["notebooksEnabled"] == "true",
-                mlStudiosEnabled=params["mlStudiosEnabled"] == "true"
+                mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
+                pipelinesEnabled=params["pipelinesEnabled"] == "true"
                 mlStudiosEnabled=params["dashboardsEnabled"] == "true"
             ))
 

@@ -4,10 +4,13 @@ import sys
 import subprocess
 import boto3
 
-from ... import db
-from ...db.api import Environment, Pipeline
-from ...aws.handlers.sts import SessionHelper
 from botocore.exceptions import ClientError
+
+from dataall import db
+from dataall.db.api import Environment
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +40,10 @@ class CDKPipelineStack:
         engine = self.get_engine()
         with engine.scoped_session() as session:
 
-            self.pipeline = Pipeline.get_pipeline_by_uri(session, target_uri)
+            self.pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, target_uri)
             self.pipeline_environment = Environment.get_environment_by_uri(session, self.pipeline.environmentUri)
             # Development environments
-            self.development_environments = Pipeline.query_pipeline_environments(session, target_uri)
+            self.development_environments = DatapipelinesRepository.query_pipeline_environments(session, target_uri)
 
         self.env, aws = CDKPipelineStack._set_env_vars(self.pipeline_environment)
 
@@ -54,7 +57,7 @@ class CDKPipelineStack:
                 self.code_dir_path = os.path.realpath(
                     os.path.abspath(
                         os.path.join(
-                            __file__, "..", "..", "..", "..", "blueprints", "data_pipeline_blueprint"
+                            __file__, "..", "..", "blueprints", "data_pipeline_blueprint"
                         )
                     )
                 )

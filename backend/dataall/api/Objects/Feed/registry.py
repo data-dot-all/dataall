@@ -34,6 +34,3 @@ class FeedRegistry(UnionTypeRegistry):
     @classmethod
     def types(cls):
         return [gql.Ref(target_type) for target_type in cls._DEFINITIONS.keys()]
-
-
-FeedRegistry.register(FeedDefinition("DataPipeline", models.DataPipeline))

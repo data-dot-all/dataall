@@ -373,32 +373,3 @@ def cluster(env_fixture, org_fixture, client, group):
     )
     print(res)
     yield res.data.createRedshiftCluster
-
-
-@pytest.fixture(scope='module')
-def pipeline(client, tenant, group, env_fixture) -> models.DataPipeline:
-    response = client.query(
-        """
-        mutation createDataPipeline ($input:NewDataPipelineInput){
-            createDataPipeline(input:$input){
-                DataPipelineUri
-                label
-                description
-                tags
-                owner
-                repo
-                userRoleForPipeline
-            }
-        }
-        """,
-        input={
-            'label': 'my pipeline',
-            'SamlGroupName': group.name,
-            'tags': [group.name],
-            'environmentUri': env_fixture.environmentUri,
-            'devStrategy': 'trunk',
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    yield response.data.createDataPipeline

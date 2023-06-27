@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import query_expression
 
 from .. import Base, Resource, utils
 
@@ -18,4 +17,3 @@ class Vpc(Resource, Base):
     privateSubnetIds = Column(ARRAY(String))
     publicSubnetIds = Column(ARRAY(String))
     default = Column(Boolean, default=False)
-    userRoleForPipeline = query_expression()
