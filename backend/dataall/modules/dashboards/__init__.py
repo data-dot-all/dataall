@@ -2,7 +2,7 @@
 import logging
 from typing import Set
 
-from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
+from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
 from dataall.modules.loader import ImportMode, ModuleInterface
@@ -36,6 +36,7 @@ class DashboardApiModuleInterface(ModuleInterface):
         add_vote_type("dashboard", DashboardIndexer)
 
         EnvironmentResourceManager.register(DashboardRepository())
+        log.info("Dashboard API has been loaded")
 
 
 class DashboardCdkModuleInterface(ModuleInterface):
@@ -46,6 +47,7 @@ class DashboardCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.dashboards.cdk
+        log.info("Dashboard CDK code has been loaded")
 
 
 class DashboardCatalogIndexerModuleInterface(ModuleInterface):
@@ -55,7 +57,7 @@ class DashboardCatalogIndexerModuleInterface(ModuleInterface):
         return ImportMode.CATALOG_INDEXER_TASK in modes
 
     def __init__(self):
-        from dataall.tasks.catalog_indexer import register_catalog_indexer
         from dataall.modules.dashboards.indexers.dashboard_catalog_indexer import DashboardCatalogIndexer
 
-        register_catalog_indexer(DashboardCatalogIndexer())
+        DashboardCatalogIndexer()
+        log.info("Dashboard catalog indexer task has been loaded")

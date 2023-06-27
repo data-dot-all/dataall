@@ -1,8 +1,8 @@
 import logging
 
+from dataall.core.catalog.catalog_indexer import CatalogIndexer
 from dataall.modules.dashboards import Dashboard
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
-from dataall.tasks.catalog_indexer import CatalogIndexer
 
 log = logging.getLogger(__name__)
 
