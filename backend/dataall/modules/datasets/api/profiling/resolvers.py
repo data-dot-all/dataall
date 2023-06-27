@@ -41,16 +41,8 @@ def get_profiling_results(context: Context, source: DatasetProfilingRun):
         return json.dumps(source.results)
 
 
-def update_profiling_run_results(context: Context, source, profilingRunUri, results):
-    return DatasetProfilingService.update_profiling_run_results(profilingRunUri, results)
-
-
 def list_profiling_runs(context: Context, source, datasetUri=None):
     return DatasetProfilingService.list_profiling_runs(datasetUri)
-
-
-def get_profiling_run(context: Context, source, profilingRunUri=None):
-    return DatasetProfilingService.get_profiling_run(profilingRunUri)
 
 
 def get_last_table_profiling_run(context: Context, source, tableUri=None):

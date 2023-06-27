@@ -1,7 +1,6 @@
 import logging
 
 from dataall import db
-from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.db.api import Glossary
@@ -9,21 +8,6 @@ from dataall.modules.datasets.services.dataset_table_service import DatasetTable
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 
 log = logging.getLogger(__name__)
-
-
-def create_table(context, source, datasetUri: str = None, input: dict = None):
-    if "name" not in input:
-        raise RequiredParameter("name")
-
-    return DatasetTableService.create_table(dataset_uri=datasetUri, table_data=input)
-
-
-def list_dataset_tables(context, source, filter: dict = None):
-    if not source:
-        return None
-    if not filter:
-        filter = {}
-    return DatasetTableService.list_dataset_tables(dataset_uri=source.datasetUri, filter=filter)
 
 
 def get_table(context, source: Dataset, tableUri: str = None):
@@ -52,6 +36,10 @@ def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
     return DatasetTableService.get_glue_table_properties(source.tableUri)
 
 
+def sync_tables(context: Context, source, datasetUri: str = None):
+    return DatasetTableService.sync_tables_for_dataset(uri=datasetUri)
+
+
 def resolve_dataset(context, source: DatasetTable, **kwargs):
     if not source:
         return None
@@ -69,10 +57,6 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return Glossary.get_glossary_terms_links(
             session, source.tableUri, 'DatasetTable'
         )
-
-
-def publish_table_update(context: Context, source, tableUri: str = None):
-    return DatasetTableService.publish_table_update(uri=tableUri)
 
 
 def resolve_redshift_copy_schema(context, source: DatasetTable, clusterUri: str):

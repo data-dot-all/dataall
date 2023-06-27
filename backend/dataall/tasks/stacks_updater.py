@@ -2,9 +2,8 @@ import logging
 import os
 import sys
 import time
-from abc import ABC
-from typing import List
 
+from dataall.core.stack_finder import StackFinder
 from dataall.modules.loader import ImportMode, load_modules
 from dataall import db
 from dataall.db import models
@@ -22,27 +21,11 @@ RETRIES = 30
 SLEEP_TIME = 30
 
 
-load_modules({ImportMode.STACK_UPDATER_TASK})
-
-
-class StackFinder(ABC):
-    def find_stack_uris(self, session) -> List[str]:
-        """Finds stacks to update"""
-        raise NotImplementedError("retrieve_stack_uris is not implemented")
-
-
-_finders: List[StackFinder] = []
-
-
-def register_stack_finder(finder: StackFinder):
-    _finders.append(finder)
-
-
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
         all_environments: [models.Environment] = db.api.Environment.list_all_active_environments(session)
         additional_stacks = []
-        for finder in _finders:
+        for finder in StackFinder.all():
             additional_stacks.extend(finder.find_stack_uris(session))
 
         log.info(f'Found {len(all_environments)} environments, triggering update stack tasks...')
@@ -82,4 +65,6 @@ def update_stack(session, envname, target_uri, wait=False):
 if __name__ == '__main__':
     envname = os.environ.get('envname', 'local')
     engine = get_engine(envname=envname)
+
+    load_modules({ImportMode.STACK_UPDATER_TASK})
     update_stacks(engine=engine, envname=envname)

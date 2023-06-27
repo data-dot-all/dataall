@@ -1,13 +1,16 @@
-import json
-
-import pytest
 from aws_cdk import App
+from aws_cdk.assertions import Template
 
 from dataall.cdkproxy.stacks import EnvironmentSetup
-from dataall.db.models import EnvironmentGroup
-from dataall.modules.datasets_base.db.models import Dataset
 from tests.cdkproxy.conftest import *
 
+@pytest.fixture(scope='function', autouse=True)
+def patch_extensions(mocker):
+    for extension in EnvironmentSetup._EXTENSIONS:
+        mocker.patch(
+            f"{extension.__module__}.{extension.__name__}.extent",
+            return_value=True,
+        )
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, env, another_group, permissions):
@@ -32,10 +35,6 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=[another_group],
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.sagemakerstudio.SageMakerDomain.check_existing_sagemaker_studio_domain',
-        return_value=True,
-    )
-    mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_account',
         return_value='012345678901x',
     )
@@ -50,54 +49,48 @@ def patch_methods(mocker, db, env, another_group, permissions):
     )
     mocker.patch(
         'dataall.aws.handlers.sts.SessionHelper.get_external_id_secret',
-        return_value='*****',
+        return_value='secretIdvalue',
     )
 
 
-@pytest.fixture(scope='module', autouse=True)
-def another_group(db, env):
-    with db.scoped_session() as session:
-        env_group: EnvironmentGroup = EnvironmentGroup(
-            environmentUri=env.environmentUri,
-            groupUri='anothergroup',
-            environmentIAMRoleArn='aontherGroupArn',
-            environmentIAMRoleName='anotherGroupRole',
-            environmentAthenaWorkGroup='workgroup',
-        )
-        session.add(env_group)
-        dataset = Dataset(
-            label='thisdataset',
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
-            name='anotherdataset',
-            description='test',
-            AwsAccountId=env.AwsAccountId,
-            region=env.region,
-            S3BucketName='bucket',
-            GlueDatabaseName='db',
-            IAMDatasetAdminRoleArn='role',
-            IAMDatasetAdminUserArn='xxx',
-            KmsAlias='xxx',
-            owner='me',
-            confidentiality='C1',
-            businessOwnerEmail='jeff',
-            businessOwnerDelegationEmails=['andy'],
-            SamlAdminGroupName=env_group.groupUri,
-            GlueCrawlerName='dhCrawler',
-        )
-        session.add(dataset)
-        yield env_group
-
-
-@pytest.fixture(scope='function', autouse=True)
-def template(env):
+def test_resources_created(env, org):
     app = App()
-    EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
-    return json.dumps(app.synth().get_stack_by_name('Environment').template)
 
+    # Create the Stack
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env.environmentUri)
 
-def test_resources_created(template, env):
-    assert 'AWS::S3::Bucket' in template
-    assert 'AWS::IAM::Role' in template
-    assert 'AWS::Lambda::Function' in template
-    assert 'AWS::IAM::Policy' in template
+    # Prepare the stack for assertions.
+    template = Template.from_stack(stack)
+
+    # Assert that we have created:
+    # TODO: Add more assertions
+    template.resource_properties_count_is(
+        type="AWS::S3::Bucket",
+        props={
+            'BucketName': env.EnvironmentDefaultBucketName,
+            'BucketEncryption': {
+                'ServerSideEncryptionConfiguration': [{
+                    'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}
+                }]
+            },
+            'PublicAccessBlockConfiguration': {
+                'BlockPublicAcls': True,
+                'BlockPublicPolicy': True,
+                'IgnorePublicAcls': True,
+                'RestrictPublicBuckets': True
+            },
+            'Tags': [
+                {'Key': 'CREATOR', 'Value': 'customtagowner'},
+                {'Key': 'dataall', 'Value': 'true'},
+                {'Key': 'Environment', 'Value': f'env_{env.environmentUri}'},
+                {'Key': 'Organization', 'Value': f'org_{org.organizationUri}'},
+                {'Key': 'Target', 'Value': f'Environment_{env.environmentUri}'},
+                {'Key': 'Team', 'Value': env.SamlGroupName}],
+        },
+        count=1
+    )
+    template.resource_count_is("AWS::S3::Bucket", 1)
+    template.resource_count_is("AWS::Lambda::Function", 7)
+    template.resource_count_is("AWS::SSM::Parameter", 10)
+    template.resource_count_is("AWS::IAM::Role", 5)
+    template.resource_count_is("AWS::IAM::Policy", 4)

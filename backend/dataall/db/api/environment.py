@@ -18,6 +18,8 @@ from ..models import EnvironmentGroup
 from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
+    PrincipalType
+
 )
 from ..models.Permission import PermissionType
 from ..paginator import paginate
@@ -27,7 +29,7 @@ from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
+from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +59,7 @@ class Environment:
             ),
             EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
+            dashboardsEnabled=data.get('dashboardsEnabled', False),
             mlStudiosEnabled=data.get('mlStudiosEnabled', True),
             pipelinesEnabled=data.get('pipelinesEnabled', True),
             warehousesEnabled=data.get('warehousesEnabled', True),
@@ -186,8 +189,6 @@ class Environment:
             environment.description = data.get('description', 'No description provided')
         if data.get('tags'):
             environment.tags = data.get('tags')
-        if 'mlStudiosEnabled' in data.keys():
-            environment.mlStudiosEnabled = data.get('mlStudiosEnabled')
         if 'pipelinesEnabled' in data.keys():
             environment.pipelinesEnabled = data.get('pipelinesEnabled')
         if 'warehousesEnabled' in data.keys():
@@ -286,9 +287,6 @@ class Environment:
         if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
 
-        if permissions.CREATE_SGMSTUDIO_NOTEBOOK in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_SGMSTUDIO_NOTEBOOKS)
-
         if permissions.INVITE_ENVIRONMENT_GROUP in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
@@ -345,11 +343,6 @@ class Environment:
         group_env_objects_count = (
             session.query(models.Environment)
             .outerjoin(
-                models.SagemakerStudioUserProfile,
-                models.SagemakerStudioUserProfile.environmentUri
-                == models.Environment.environmentUri,
-            )
-            .outerjoin(
                 models.RedshiftCluster,
                 models.RedshiftCluster.environmentUri
                 == models.Environment.environmentUri,
@@ -363,7 +356,6 @@ class Environment:
                     models.Environment.environmentUri == environment.environmentUri,
                     or_(
                         models.RedshiftCluster.SamlGroupName == group,
-                        models.SagemakerStudioUserProfile.SamlAdminGroupName == group,
                         models.DataPipeline.SamlGroupName == group,
                     ),
                 )

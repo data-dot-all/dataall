@@ -19,40 +19,6 @@ class DatasetTableRepository:
         session.add(table)
 
     @staticmethod
-    def exists(session, dataset_uri, glue_table_name):
-        return (
-            session.query(DatasetTable)
-            .filter(
-                and_(
-                    DatasetTable.datasetUri == dataset_uri,
-                    DatasetTable.GlueTableName == glue_table_name,
-                )
-            )
-            .count()
-        )
-
-    @staticmethod
-    def create_dataset_table(session, dataset: Dataset, data: dict = None) -> DatasetTable:
-        table = DatasetTable(
-            datasetUri=dataset.datasetUri,
-            label=data['name'],
-            name=data['name'],
-            description=data.get('description', 'No description provided'),
-            tags=data.get('tags', []),
-            S3BucketName=dataset.S3BucketName,
-            S3Prefix=data.get('S3Prefix', 'unknown'),
-            AWSAccountId=dataset.AwsAccountId,
-            GlueDatabaseName=dataset.GlueDatabaseName,
-            GlueTableConfig=data.get('config'),
-            GlueTableName=data['name'],
-            owner=dataset.owner,
-            region=dataset.region,
-        )
-        session.add(table)
-        session.commit()
-        return table
-
-    @staticmethod
     def create_synced_table(session, dataset: Dataset, table: dict):
         updated_table = DatasetTable(
             datasetUri=dataset.datasetUri,
@@ -73,21 +39,6 @@ class DatasetTableRepository:
         session.add(updated_table)
         session.commit()
         return updated_table
-
-    @staticmethod
-    def paginate_dataset_tables(session, dataset_uri, filter: dict) -> dict:
-        query = (
-            session.query(DatasetTable)
-            .filter(DatasetTable.datasetUri == dataset_uri)
-            .order_by(DatasetTable.created.desc())
-        )
-        if 'term' in filter:
-            query = query.filter(DatasetTable.label.ilike('%' + filter['term'] + '%'))
-        return paginate(
-            query=query,
-            page=filter.get('page', 1),
-            page_size=filter.get('pageSize', 10)
-        ).to_dict()
 
     @staticmethod
     def delete(session, table: DatasetTable):
@@ -139,6 +90,32 @@ class DatasetTableRepository:
                 logger.info(
                     f'Table {existing_table.GlueTableName} status set to Deleted from Glue.'
                 )
+
+    @staticmethod
+    def find_all_active_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus != 'Deleted',
+                )
+            )
+            .all()
+        )
+
+    @staticmethod
+    def find_all_deleted_tables(session, dataset_uri):
+        return (
+            session.query(DatasetTable)
+            .filter(
+                and_(
+                    DatasetTable.datasetUri == dataset_uri,
+                    DatasetTable.LastGlueTableStatus == 'Deleted',
+                )
+            )
+            .all()
+        )
 
     @staticmethod
     def sync_table_columns(session, dataset_table, glue_table):

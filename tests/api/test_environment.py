@@ -29,7 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
                 stack{
@@ -58,7 +57,6 @@ def test_get_environment(client, org1, env1, group):
     body = response.data.getEnvironment
     assert body.owner == 'alice'
     assert body.AwsAccountId == env1.AwsAccountId
-    assert body.mlStudiosEnabled
     assert body.pipelinesEnabled
     assert body.warehousesEnabled
 
@@ -104,7 +102,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                mlStudiosEnabled
                 pipelinesEnabled
                 warehousesEnabled
                 parameters {
@@ -121,17 +118,12 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
+                    'key': 'moduleEnabled',
                     'value': 'True'
-                },
-                {
-                    'key': 'dashboardsEnabled',
-                    'value': 'False'
                 }
             ],
             'resourcePrefix': 'customer-prefix_AZ390 ',
@@ -146,18 +138,13 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'mlStudiosEnabled': False,
             'pipelinesEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
-                    'key': 'notebooksEnabled',
-                    'value': 'true'
-                },
-                {
-                    'key': 'dashboardsEnabled',
-                    'value': 'false'
-                },
+                    'key': 'moduleEnabled',
+                    'value': 'True'
+                }
             ],
             'resourcePrefix': 'customer-prefix',
         },
@@ -176,8 +163,7 @@ def test_update_env(client, org1, env1, group):
     assert not body.warehousesEnabled
 
     params = {p.key: p.value for p in body.parameters}
-    assert params["notebooksEnabled"] == "true"
-    assert params["dashboardsEnabled"] == "false"
+    assert params["moduleEnabled"] == "True"
 
     assert body.resourcePrefix == 'customer-prefix'
 
@@ -203,24 +189,10 @@ def test_update_params(client, org1, env1, group):
         }
     """
 
-    notebooks_enabled = {'parameters': [ {'key': 'notebooksEnabled','value': 'True'}]}
-    environment = update_params(notebooks_enabled).data.updateEnvironment
+    module_enabled = {'parameters': [ {'key': 'moduleEnabled','value': 'True'}]}
+    environment = update_params(module_enabled).data.updateEnvironment
     assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "notebooksEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # parameters should be rewritten. Notebooks should go away
-    dashboards_enabled = {'parameters': [{'key': 'dashboardsEnabled', 'value': 'True'}]}
-    environment = update_params(dashboards_enabled).data.updateEnvironment
-    assert len(environment.parameters)
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
-    assert environment.parameters[0]["value"] == "True"
-
-    # retrieve the environment one more time via GraphQL API, to check if it's correct
-    response = get_env(client, env1, group)
-    environment = response.data.getEnvironment
-    assert len(environment.parameters) == 1
-    assert environment.parameters[0]["key"] == "dashboardsEnabled"
+    assert environment.parameters[0]["key"] == "moduleEnabled"
     assert environment.parameters[0]["value"] == "True"
 
 

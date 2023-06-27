@@ -1,19 +1,6 @@
 from dataall.api import gql
 from dataall.api.constants import SortDirection, GraphQLEnumMapper
 
-
-NewDatasetTableInput = gql.InputType(
-    name='NewDatasetTableInput',
-    arguments=[
-        gql.Argument('label', gql.String),
-        gql.Argument('name', gql.NonNullableType(gql.String)),
-        gql.Argument('tags', gql.ArrayType(gql.String)),
-        gql.Argument('description', gql.String),
-        gql.Argument('config', gql.String),
-        gql.Argument('region', gql.String),
-    ],
-)
-
 ModifyDatasetTableInput = gql.InputType(
     name='ModifyDatasetTableInput',
     arguments=[

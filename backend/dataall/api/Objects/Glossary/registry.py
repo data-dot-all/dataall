@@ -8,7 +8,8 @@ from dataall.searchproxy.base_indexer import BaseIndexer
 
 
 class Identifiable(Protocol):
-    def uri(self):
+    @classmethod
+    def uri(cls):
         ...
 
 

@@ -1,5 +1,3 @@
-from sqlalchemy import and_
-
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission
 from dataall.db import utils
@@ -28,9 +26,10 @@ class ShareObjectService:
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectRepository.get_share_by_uri(session, uri)
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
+            cls,
             uri: str,
             dataset_uri: str,
             item_uri: str,
@@ -74,7 +73,7 @@ class ShareObjectService:
                     message=f'Team: {group_uri} is managing the dataset {dataset.name}',
                 )
 
-            ShareObjectService._validate_group_membership(session, group_uri, environment.environmentUri)
+            cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             if not share:
@@ -133,10 +132,10 @@ class ShareObjectService:
             # requester group (groupUri)
             # dataset.SamlAdminGroupName
             # environment.SamlGroupName
-            ShareObjectService._attach_share_resource_policy(session, share, group_uri)
-            ShareObjectService._attach_share_resource_policy(session, share, dataset.SamlAdminGroupName)
+            cls._attach_share_resource_policy(session, share, group_uri)
+            cls._attach_share_resource_policy(session, share, dataset.SamlAdminGroupName)
             if dataset.SamlAdminGroupName != environment.SamlGroupName:
-                ShareObjectService._attach_share_resource_policy(session, share, environment.SamlGroupName)
+                cls._attach_share_resource_policy(session, share, environment.SamlGroupName)
 
             # Attaching REQUESTER permissions to:
             # dataset.stewards (includes the dataset Admins)
@@ -149,12 +148,12 @@ class ShareObjectService:
             )
             return share
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(SUBMIT_SHARE_OBJECT)
-    def submit_share_object(uri: str):
+    def submit_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            share, dataset, states = ShareObjectService._get_share_data(session, uri)
+            share, dataset, states = cls._get_share_data(session, uri)
 
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
@@ -165,19 +164,19 @@ class ShareObjectService:
                     message='The request is empty of pending items. Add items to share request.',
                 )
 
-            ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Submit)
+            cls._run_transitions(session, share, states, ShareObjectActions.Submit)
             ShareNotificationService.notify_share_object_submission(
                 session, context.username, dataset, share
             )
             return share
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(APPROVE_SHARE_OBJECT)
-    def approve_share_object(uri: str):
+    def approve_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            share, dataset, states = ShareObjectService._get_share_data(session, uri)
-            ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Approve)
+            share, dataset, states = cls._get_share_data(session, uri)
+            cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             # GET TABLES SHARED AND APPROVE SHARE FOR EACH TABLE
             share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
@@ -191,7 +190,6 @@ class ShareObjectService:
                 )
 
             ShareNotificationService.notify_share_object_approval(session, context.username, dataset, share)
-            return share
 
             approve_share_task: Task = Task(
                 action='ecs.share.approve',
@@ -204,13 +202,13 @@ class ShareObjectService:
 
         return share
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(REJECT_SHARE_OBJECT)
-    def reject_share_object(uri: str):
+    def reject_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            share, dataset, states = ShareObjectService._get_share_data(session, uri)
-            ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Reject)
+            share, dataset, states = cls._get_share_data(session, uri)
+            cls._run_transitions(session, share, states, ShareObjectActions.Reject)
             ResourcePolicy.delete_resource_policy(
                 session=session,
                 group=share.groupUri,
@@ -220,14 +218,14 @@ class ShareObjectService:
             ShareNotificationService.notify_share_object_rejection(session, context.username, dataset, share)
             return share
 
-    @staticmethod
+    @classmethod
     @has_resource_permission(DELETE_SHARE_OBJECT)
-    def delete_share_object(uri: str):
+    def delete_share_object(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
-            share, dataset, states = ShareObjectService._get_share_data(session, uri)
+            share, dataset, states = cls._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in states]
 
-            new_state = ShareObjectService._run_transitions(session, share, states, ShareObjectActions.Delete)
+            new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states:
                 raise ShareItemsFound(
                     action='Delete share object',

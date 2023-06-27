@@ -18,9 +18,8 @@ from dataall.modules.datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
-from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
-from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, SYNC_DATASET, CRAWL_DATASET, \
-    SUMMARY_DATASET, DELETE_DATASET, SUBSCRIPTIONS_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
+from dataall.modules.datasets.services.dataset_permissions import CREDENTIALS_DATASET, CRAWL_DATASET, \
+    DELETE_DATASET, MANAGE_DATASETS, UPDATE_DATASET, LIST_ENVIRONMENT_DATASETS, \
     CREATE_DATASET, DATASET_ALL, DATASET_READ
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.enums import DatasetRole
@@ -106,7 +105,7 @@ class DatasetService:
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset(session, uri=uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
@@ -203,18 +202,6 @@ class DatasetService:
 
     @staticmethod
     @has_resource_permission(CREDENTIALS_DATASET)
-    def get_dataset_etl_credentials(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            task = Task(targetUri=uri, action='iam.dataset.user.credentials')
-            session.add(task)
-        response = Worker.process(
-            engine=context.db_engine, task_ids=[task.taskUri], save_response=False
-        )[0]
-        return json.dumps(response['response'])
-
-    @staticmethod
-    @has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -250,30 +237,6 @@ class DatasetService:
             bucket=dataset.S3BucketName,
         )
         return url
-
-    @staticmethod
-    @has_resource_permission(SYNC_DATASET)
-    def sync_tables(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-            task = Task(
-                action='glue.dataset.database.tables',
-                targetUri=dataset.datasetUri,
-            )
-            session.add(task)
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
-        with context.db_engine.scoped_session() as session:
-            DatasetTableIndexer.upsert_all(
-                session=session, dataset_uri=dataset.datasetUri
-            )
-            DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
-            return DatasetRepository.paginated_dataset_tables(
-                session=session,
-                uri=uri,
-                data={'page': 1, 'pageSize': 10},
-            )
 
     @staticmethod
     @has_resource_permission(CRAWL_DATASET)
@@ -348,21 +311,6 @@ class DatasetService:
         )
 
     @staticmethod
-    @has_resource_permission(CRAWL_DATASET)
-    def get_crawler(uri: str, name: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-
-        response = DatasetCrawler(dataset).get_crawler(crawler_name=name)
-        return {
-            'Name': name,
-            'AwsAccountId': dataset.AwsAccountId,
-            'region': dataset.region,
-            'status': response.get('LastCrawl', {}).get('Status', 'N/A'),
-        }
-
-    @staticmethod
     @has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
@@ -432,32 +380,6 @@ class DatasetService:
         return True
 
     @staticmethod
-    @has_resource_permission(SUBSCRIPTIONS_DATASET)
-    def publish_dataset_update(uri: str, s3_prefix: str):
-        engine = get_context().db_engine
-        with engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
-                raise Exception(
-                    'Subscriptions are disabled. '
-                    "First enable subscriptions for this dataset's environment then retry."
-                )
-
-            task = Task(
-                targetUri=uri,
-                action='sns.dataset.publish_update',
-                payload={'s3Prefix': s3_prefix},
-            )
-            session.add(task)
-
-        response = Worker.process(
-            engine=engine, task_ids=[task.taskUri], save_response=False
-        )[0]
-        log.info(f'Dataset update publish response: {response}')
-        return True
-
-    @staticmethod
     def _deploy_dataset_stack(dataset: Dataset):
         """
         Each dataset stack deployment triggers environment stack update
@@ -497,8 +419,8 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_group_datasets(
                 session=session,
-                envUri=env_uri,
-                groupUri=group_uri,
+                env_uri=env_uri,
+                group_uri=group_uri,
                 data=data,
             )
 

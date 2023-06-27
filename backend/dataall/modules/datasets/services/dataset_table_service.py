@@ -1,19 +1,18 @@
 import logging
 
 
-from dataall.aws.handlers.service_handlers import Worker
 from dataall.core.context import get_context
 from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db import models
 from dataall.db.api import ResourcePolicy, Environment, Glossary
-from dataall.db.exceptions import ResourceShared, ResourceAlreadyExists
+from dataall.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient
+from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS, \
-    DELETE_DATASET_TABLE, CREATE_DATASET_TABLE
+    DELETE_DATASET_TABLE, SYNC_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ
@@ -27,38 +26,6 @@ class DatasetTableService:
     def _get_dataset_uri(session, table_uri):
         table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
         return table.datasetUri
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    @has_resource_permission(CREATE_DATASET_TABLE)
-    def create_table(uri: str, table_data: dict):
-        with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            glue_table = table_data['name']
-            exists = DatasetTableRepository.exists(session, dataset_uri=uri, glue_table_name=glue_table)
-
-            if exists:
-                raise ResourceAlreadyExists(
-                    action='Create Table',
-                    message=f'table: {glue_table} already exist on dataset {uri}',
-                )
-
-            table = DatasetTableRepository.create_dataset_table(session, dataset, table_data)
-
-            if 'terms' in table_data:
-                Glossary.set_glossary_terms_links(
-                    session, get_context().username, table.tableUri, 'DatasetTable', table_data['terms']
-                )
-
-            DatasetTableService._attach_dataset_table_permission(session, dataset, table.tableUri)
-        DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
-        return table
-
-    @staticmethod
-    @has_tenant_permission(MANAGE_DATASETS)
-    def list_dataset_tables(dataset_uri: str, filter):
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetTableRepository.paginate_dataset_tables(session, dataset_uri, filter)
 
     @staticmethod
     @has_tenant_permission(MANAGE_DATASETS)
@@ -136,30 +103,6 @@ class DatasetTableService:
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
     @staticmethod
-    @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
-    def publish_table_update(uri: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
-            if not env.subscriptionsEnabled or not env.subscriptionsProducersTopicName:
-                raise Exception(
-                    'Subscriptions are disabled. '
-                    "First enable subscriptions for this dataset's environment then retry."
-                )
-
-            task = models.Task(
-                targetUri=table.datasetUri,
-                action='sns.dataset.publish_update',
-                payload={'s3Prefix': table.S3Prefix},
-            )
-            session.add(task)
-
-        Worker.process(engine=context.db_engine, task_ids=[task.taskUri], save_response=False)
-        return True
-
-    @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         # TODO THERE WAS NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
@@ -169,6 +112,25 @@ class DatasetTableService:
                     session, env_uri, dataset_uri
                 )
             ]
+
+    @classmethod
+    @has_resource_permission(SYNC_DATASET)
+    def sync_tables_for_dataset(cls, uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
+
+            tables = DatasetCrawler(dataset).list_glue_database_tables()
+            cls.sync_existing_tables(session, dataset.datasetUri, glue_tables=tables)
+            DatasetTableIndexer.upsert_all(
+                session=session, dataset_uri=dataset.datasetUri
+            )
+            DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
+            return DatasetRepository.paginated_dataset_tables(
+                session=session,
+                uri=uri,
+                data={'page': 1, 'pageSize': 10},
+            )
 
     @staticmethod
     def sync_existing_tables(session, dataset_uri, glue_tables=None):

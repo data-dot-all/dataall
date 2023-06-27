@@ -4,7 +4,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset,
     list_datasets,
     get_dataset_assume_role_url,
-    get_dataset_etl_credentials,
     get_file_upload_presigned_url,
     list_dataset_share_objects,
     list_datasets_owned_by_env_group,
@@ -39,15 +38,6 @@ getDatasetAssumeRoleUrl = gql.QueryField(
 )
 
 
-getDatasetETLCredentials = gql.QueryField(
-    name='getDatasetETLCredentials',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.String,
-    resolver=get_dataset_etl_credentials,
-    test_scope='Dataset',
-)
-
-
 getDatasetPresignedUrl = gql.QueryField(
     name='getDatasetPresignedUrl',
     args=[
@@ -57,18 +47,6 @@ getDatasetPresignedUrl = gql.QueryField(
     type=gql.String,
     resolver=get_file_upload_presigned_url,
 )
-
-
-getGlueCrawlerStatus = gql.MutationField(
-    name='getGlueCrawlerStatus',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='name', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=lambda *_, **__: None,
-    type=gql.Ref('GlueCrawler'),
-)
-
 
 listShareObjects = gql.QueryField(
     name='listDatasetShareObjects',

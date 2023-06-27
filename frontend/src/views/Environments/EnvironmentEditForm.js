@@ -48,8 +48,10 @@ const EnvironmentEditForm = (props) => {
       getEnvironment({ environmentUri: params.uri })
     );
     if (!response.errors && response.data.getEnvironment) {
-      const environment = response.data.getEnvironment
-      environment.parameters = Object.fromEntries(environment.parameters.map(x => [x.key, x.value]))
+      const environment = response.data.getEnvironment;
+      environment.parameters = Object.fromEntries(
+        environment.parameters.map((x) => [x.key, x.value])
+      );
       setEnv(environment);
     } else {
       const error = response.errors
@@ -73,14 +75,17 @@ const EnvironmentEditForm = (props) => {
             label: values.label,
             tags: values.tags,
             description: values.description,
-            mlStudiosEnabled: values.mlStudiosEnabled,
             pipelinesEnabled: values.pipelinesEnabled,
             warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
-                key: "notebooksEnabled",
+                key: 'notebooksEnabled',
                 value: String(values.notebooksEnabled)
+              },
+              {
+                key: 'mlStudiosEnabled',
+                value: String(values.mlStudiosEnabled)
               },
               {
                 key: "dashboardsEnabled",
@@ -201,9 +206,10 @@ const EnvironmentEditForm = (props) => {
                 label: env.label,
                 description: env.description,
                 tags: env.tags || [],
-                dashboardsEnabled: env.parameters['dashboardsEnabled'] === 'true',
+                dashboardsEnabled: env.dashboardsEnabled,
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
-                mlStudiosEnabled: env.mlStudiosEnabled,
+                mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
+                dashboardsEnabled: env.parameters['dashboardsEnabled'] === 'true',
                 pipelinesEnabled: env.pipelinesEnabled,
                 warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
@@ -468,6 +474,7 @@ const EnvironmentEditForm = (props) => {
                                     </Typography>
                                   }
                                   labelPlacement="end"
+                                  value={values.mlStudiosEnabled}
                                 />
                               </FormGroup>
                             </Box>

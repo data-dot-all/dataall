@@ -14,7 +14,6 @@ const getEnvironment = ({ environmentUri }) => ({
         name
         label
         AwsAccountId
-        mlStudiosEnabled
         pipelinesEnabled
         warehousesEnabled
         region
@@ -48,9 +47,6 @@ const getEnvironment = ({ environmentUri }) => ({
           outputs
           resources
         }
-        mlStudiosEnabled
-        pipelinesEnabled
-        warehousesEnabled
         networks {
           VpcId
           privateSubnetIds

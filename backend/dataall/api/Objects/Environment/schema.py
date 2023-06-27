@@ -83,7 +83,6 @@ Environment = gql.ObjectType(
             resolver=resolve_user_role,
         ),
         gql.Field('validated', type=gql.Boolean),
-        gql.Field('mlStudiosEnabled', type=gql.Boolean),
         gql.Field('pipelinesEnabled', type=gql.Boolean),
         gql.Field('warehousesEnabled', type=gql.Boolean),
         gql.Field('roleCreated', type=gql.Boolean),

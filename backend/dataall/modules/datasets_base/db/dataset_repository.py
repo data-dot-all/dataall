@@ -11,7 +11,7 @@ from dataall.db import models, exceptions, paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
-from dataall.core.group.services.group_resource_manager import EnvironmentResource
+from dataall.core.group.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
@@ -147,10 +147,6 @@ class DatasetRepository(EnvironmentResource):
         dataset.GlueDataQualitySchedule = None
         dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dqtrigger'
         return dataset
-
-    @staticmethod
-    def get_dataset(session, uri: str) -> Dataset:
-        return DatasetRepository.get_dataset_by_uri(session, uri)
 
     @staticmethod
     def paginated_dataset_tables(session, uri, data=None) -> dict:
@@ -322,11 +318,11 @@ class DatasetRepository(EnvironmentResource):
         )
 
     @staticmethod
-    def query_environment_group_datasets(session, envUri, groupUri, filter) -> Query:
+    def query_environment_group_datasets(session, env_uri, group_uri, filter) -> Query:
         query = session.query(Dataset).filter(
             and_(
-                Dataset.environmentUri == envUri,
-                Dataset.SamlAdminGroupName == groupUri,
+                Dataset.environmentUri == env_uri,
+                Dataset.SamlAdminGroupName == group_uri,
                 Dataset.deleted.is_(None),
             )
         )
@@ -376,11 +372,11 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def paginated_environment_group_datasets(
-            session, envUri, groupUri, data=None
+            session, env_uri, group_uri, data=None
     ) -> dict:
         return paginate(
             query=DatasetRepository.query_environment_group_datasets(
-                session, envUri, groupUri, data
+                session, env_uri, group_uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),

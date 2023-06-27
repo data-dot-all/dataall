@@ -2,18 +2,14 @@ import json
 import logging
 import os
 import sys
-import typing
 
 from botocore.exceptions import ClientError
 from sqlalchemy import and_
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import get_engine
-from dataall.db import models
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus
-from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
-from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
+from dataall.modules.datasets_base.db.models import Dataset
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)

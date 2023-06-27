@@ -23,13 +23,19 @@ def dataset1(env1, org1, dataset, group, user) -> Dataset:
         org=org1, env=env1, name='dataset1', owner=user.userName, group=group.name
     )
 
+
 @pytest.fixture(scope='module', autouse=True)
 def patch_methods(module_mocker):
-    mock_client = MagicMock()
+    s3_mock_client = MagicMock()
+    glue_mock_client = MagicMock()
     module_mocker.patch(
-        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', mock_client
+        'dataall.modules.datasets.services.dataset_profiling_service.S3ProfilerClient', s3_mock_client
     )
-    mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
+    module_mocker.patch(
+        'dataall.modules.datasets.services.dataset_profiling_service.GlueDatasetProfilerClient', glue_mock_client
+    )
+    s3_mock_client().get_profiling_results_from_s3.return_value = '{"results": "yes"}'
+    glue_mock_client().run_job.return_value = True
 
 
 def test_add_tables(table, dataset1, db):
@@ -103,31 +109,6 @@ def list_profiling_runs(client, dataset1, group):
         groups=[group.name],
     )
     return response.data.listDatasetProfilingRuns['nodes']
-
-
-def test_get_profiling_run(client, dataset1, env1, module_mocker, db, group):
-    runs = list_profiling_runs(client, dataset1, group)
-    module_mocker.patch(
-        'dataall.aws.handlers.service_handlers.Worker.queue',
-        return_value=update_runs(db, runs),
-    )
-    response = client.query(
-        """
-        query getDatasetProfilingRun($profilingRunUri:String!){
-            getDatasetProfilingRun(profilingRunUri:$profilingRunUri){
-                profilingRunUri
-                status
-            }
-        }
-        """,
-        profilingRunUri=runs[0]['profilingRunUri'],
-        groups=[group.name],
-    )
-    assert (
-        response.data.getDatasetProfilingRun['profilingRunUri']
-        == runs[0]['profilingRunUri']
-    )
-    assert response.data.getDatasetProfilingRun['status'] == 'SUCCEEDED'
 
 
 def test_get_table_profiling_run(

@@ -14,13 +14,13 @@ def list_table_columns(
         tableUri = source.tableUri
     if not filter:
         filter = {}
-    DatasetColumnService.paginate_active_columns_for_table(tableUri, filter)
+    return DatasetColumnService.paginate_active_columns_for_table(tableUri, filter)
 
 
 def sync_table_columns(context: Context, source, tableUri: str = None):
     if tableUri is None:
         return None
-    return DatasetColumnService.sync_table_columns(tableUri)
+    return DatasetColumnService.sync_table_columns(table_uri=tableUri)
 
 
 def resolve_terms(context, source: DatasetTableColumn, **kwargs):
@@ -43,4 +43,4 @@ def update_table_column(
         input = {}
 
     description = input.get('description', 'No description provided')
-    return DatasetColumnService.update_table_column_description(columnUri, description)
+    return DatasetColumnService.update_table_column_description(column_uri=columnUri, description=description)

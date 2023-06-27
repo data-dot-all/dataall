@@ -30,7 +30,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.api.Objects.Vote.resolvers import add_vote_type
         from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
-        from dataall.core.group.services.group_resource_manager import EnvironmentResourceManager
+        from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
         from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer
@@ -40,6 +40,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         FeedRegistry.register(FeedDefinition("DatasetTableColumn", DatasetTableColumn))
         FeedRegistry.register(FeedDefinition("DatasetStorageLocation", DatasetStorageLocation))
         FeedRegistry.register(FeedDefinition("DatasetTable", DatasetTable))
+        FeedRegistry.register(FeedDefinition("Dataset", Dataset))
 
         GlossaryRegistry.register(GlossaryDefinition("Column", "DatasetTableColumn", DatasetTableColumn))
         GlossaryRegistry.register(GlossaryDefinition(
@@ -97,6 +98,10 @@ class DatasetCdkModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
         import dataall.modules.datasets.cdk
         from dataall.cdkproxy.stacks.environment import EnvironmentSetup
@@ -106,10 +111,6 @@ class DatasetCdkModuleInterface(ModuleInterface):
 
         log.info("Dataset stacks have been imported")
 
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        return [DatasetBaseModuleInterface]
-
 
 class DatasetStackUpdaterModuleInterface(ModuleInterface):
 
@@ -117,17 +118,15 @@ class DatasetStackUpdaterModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.STACK_UPDATER_TASK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
-        from dataall.tasks.stacks_updater import StackFinder
-        from dataall.tasks.stacks_updater import register_stack_finder
+        from dataall.modules.datasets.tasks.dataset_stack_finder import DatasetStackFinder
 
-        class DatasetStackFinder(StackFinder):
-            def find_stack_uris(self, session) -> List[str]:
-                all_datasets: [Dataset] = DatasetRepository.list_all_active_datasets(session)
-                log.info(f'Found {len(all_datasets)} datasets')
-                return [dataset.datasetUri for dataset in all_datasets]
-
-        register_stack_finder(DatasetStackFinder())
+        DatasetStackFinder()
+        log.info("Dataset stack updater task has been loaded")
 
 
 class DatasetCatalogIndexerModuleInterface(ModuleInterface):
@@ -136,8 +135,12 @@ class DatasetCatalogIndexerModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]) -> bool:
         return ImportMode.CATALOG_INDEXER_TASK in modes
 
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        return [DatasetBaseModuleInterface]
+
     def __init__(self):
-        from dataall.tasks.catalog_indexer import register_catalog_indexer
         from dataall.modules.datasets.indexers.dataset_catalog_indexer import DatasetCatalogIndexer
 
-        register_catalog_indexer(DatasetCatalogIndexer())
+        DatasetCatalogIndexer()
+        log.info("Dataset catalog indexer task has been loaded")

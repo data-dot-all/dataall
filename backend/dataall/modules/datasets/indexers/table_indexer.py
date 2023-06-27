@@ -2,6 +2,9 @@
 from operator import and_
 
 from dataall.db import models
+from dataall.db.api import Environment, Organization
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.searchproxy.base_indexer import BaseIndexer
@@ -11,68 +14,35 @@ class DatasetTableIndexer(BaseIndexer):
 
     @classmethod
     def upsert(cls, session, table_uri: str):
-        table = (
-            session.query(
-                DatasetTable.datasetUri.label('datasetUri'),
-                DatasetTable.tableUri.label('uri'),
-                DatasetTable.name.label('name'),
-                DatasetTable.owner.label('owner'),
-                DatasetTable.label.label('label'),
-                DatasetTable.description.label('description'),
-                Dataset.confidentiality.label('classification'),
-                DatasetTable.tags.label('tags'),
-                Dataset.topics.label('topics'),
-                Dataset.region.label('region'),
-                models.Organization.organizationUri.label('orgUri'),
-                models.Organization.name.label('orgName'),
-                models.Environment.environmentUri.label('envUri'),
-                models.Environment.name.label('envName'),
-                Dataset.SamlAdminGroupName.label('admins'),
-                Dataset.GlueDatabaseName.label('database'),
-                Dataset.S3BucketName.label('source'),
-                DatasetTable.created,
-                DatasetTable.updated,
-                DatasetTable.deleted,
-            )
-            .join(
-                Dataset,
-                Dataset.datasetUri == DatasetTable.datasetUri,
-            )
-            .join(
-                models.Organization,
-                Dataset.organizationUri == models.Organization.organizationUri,
-            )
-            .join(
-                models.Environment,
-                Dataset.environmentUri == models.Environment.environmentUri,
-            )
-            .filter(DatasetTable.tableUri == table_uri)
-            .first()
-        )
+        table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
 
         if table:
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            org = Organization.get_organization_by_uri(session, dataset.organizationUri)
             glossary = BaseIndexer._get_target_glossary_terms(session, table_uri)
+
             tags = table.tags if table.tags else []
             BaseIndexer._index(
                 doc_id=table_uri,
                 doc={
                     'name': table.name,
-                    'admins': table.admins,
+                    'admins': dataset.SamlAdminGroupName,
                     'owner': table.owner,
                     'label': table.label,
                     'resourceKind': 'table',
                     'description': table.description,
-                    'database': table.database,
-                    'source': table.source,
-                    'classification': table.classification,
+                    'database': table.GlueDatabaseName,
+                    'source': table.S3BucketName,
+                    'classification': dataset.confidentiality,
                     'tags': [t.replace('-', '') for t in tags or []],
-                    'topics': table.topics,
-                    'region': table.region.replace('-', ''),
+                    'topics': dataset.topics,
+                    'region': dataset.region.replace('-', ''),
                     'datasetUri': table.datasetUri,
-                    'environmentUri': table.envUri,
-                    'environmentName': table.envName,
-                    'organizationUri': table.orgUri,
-                    'organizationName': table.orgName,
+                    'environmentUri': env.environmentUri,
+                    'environmentName': env.name,
+                    'organizationUri': org.organizationUri,
+                    'organizationName': org.name,
                     'created': table.created,
                     'updated': table.updated,
                     'deleted': table.deleted,
@@ -84,32 +54,14 @@ class DatasetTableIndexer(BaseIndexer):
 
     @classmethod
     def upsert_all(cls, session, dataset_uri: str):
-        tables = (
-            session.query(DatasetTable)
-            .filter(
-                and_(
-                    DatasetTable.datasetUri == dataset_uri,
-                    DatasetTable.LastGlueTableStatus != 'Deleted',
-                )
-            )
-            .all()
-        )
+        tables = DatasetTableRepository.find_all_active_tables(session, dataset_uri)
         for table in tables:
             DatasetTableIndexer.upsert(session=session, table_uri=table.tableUri)
         return tables
 
     @classmethod
     def remove_all_deleted(cls, session, dataset_uri: str):
-        tables = (
-            session.query(DatasetTable)
-            .filter(
-                and_(
-                    DatasetTable.datasetUri == dataset_uri,
-                    DatasetTable.LastGlueTableStatus == 'Deleted',
-                )
-            )
-            .all()
-        )
+        tables = DatasetTableRepository.find_all_deleted_tables(session, dataset_uri)
         for table in tables:
             cls.delete_doc(doc_id=table.tableUri)
         return tables

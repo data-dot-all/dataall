@@ -23,8 +23,6 @@ class Environment(Resource, Base):
     EnvironmentDefaultBucketName = Column(String)
     EnvironmentDefaultAthenaWorkGroup = Column(String)
     roleCreated = Column(Boolean, nullable=False, default=False)
-
-    mlStudiosEnabled = Column(Boolean, default=True)
     pipelinesEnabled = Column(Boolean, default=True)
     warehousesEnabled = Column(Boolean, default=True)
 
