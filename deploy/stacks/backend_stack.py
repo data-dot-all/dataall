@@ -169,7 +169,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             pivot_role_name=self.pivot_role_name,
             tooling_account_id=tooling_account_id,
-            s3_cidr_list=self.s3_prefix_list,
+            s3_prefix_list=self.s3_prefix_list,
             lambdas=[
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,

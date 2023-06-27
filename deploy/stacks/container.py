@@ -27,7 +27,7 @@ class ContainerStack(pyNestedClass):
         prod_sizing=False,
         pivot_role_name=None,
         tooling_account_id=None,
-        s3_cidr_list=None,
+        s3_prefix_list=None,
         lambdas=None,
         **kwargs,
     ):
@@ -43,7 +43,7 @@ class ContainerStack(pyNestedClass):
             resource_prefix, 
             vpc, 
             vpce_connection,
-            s3_cidr_list,
+            s3_prefix_list,
             lambdas
         )
         self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.cdkproxy_sg]
@@ -308,7 +308,7 @@ class ContainerStack(pyNestedClass):
             subscriptions_task.task_definition,
         ]
 
-    def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_cidr_list, lambdas):
+    def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
             self,
             f'ScheduledTasksSG{envname}',
@@ -342,6 +342,13 @@ class ContainerStack(pyNestedClass):
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
                     'Allow ECS from VPC Endpoint SG'
                 )
+            # Add S3 Prefix List Connection
+                sg_connection.allow_to(
+                    ec2.Connections(peer=ec2.Peer.prefix_list(s3_prefix_list)),
+                    ec2.Port.tcp(443),
+                    'Allow ECS Task to S3 Prefix List'
+                )
+
             # Add Lambda to ECS Connection
             if lambdas:
                 for l in lambdas:
@@ -357,21 +364,6 @@ class ContainerStack(pyNestedClass):
             connection=ec2.Port.tcp(443),
             description='Allow NAT Internet Access SG Egress',
         )
-            
-        #     # Add S3 Gateway Connectivity
-        #     if s3_cidr_list:
-        #         for cidr in s3_cidr_list:
-        #             sg.add_egress_rule(
-        #                 peer=ec2.Peer.ipv4(cidr),
-        #                 connection=ec2.Port.tcp(443),
-        #                 description='Allow S3 Endpoint SG Egress',
-        #             )
-        #             sg.add_egress_rule(
-        #                 peer=ec2.Peer.ipv4(cidr),
-        #                 connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #                 description='Allow S3 Endpoint SG Egress',
-        #             )
-
 
         # Create SSM of Security Group IDs
         ssm.StringParameter(
