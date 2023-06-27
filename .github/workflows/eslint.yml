@@ -1,4 +1,4 @@
-name: npm
+name: npm-eslint
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  npm-test:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -26,7 +26,11 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }
-      - run: npm install -g yarn
-      - run: cd frontend && yarn install --frozen-lockfile
-      - run: yarn audit
+          node-version: ${{ matrix.node-version }}
+          cache-dependency-path: |
+            ./frontend/package-lock.json
+            ./frontend/package.json
+      - run: npm install
+        working-directory: frontend
+      - run: npm lint
+        working-directory: frontend
