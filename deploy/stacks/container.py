@@ -302,13 +302,6 @@ class ContainerStack(pyNestedClass):
             ),
         )
 
-        # ssm.StringParameter(
-        #     self,
-        #     f'SecurityGroup{envname}',
-        #     parameter_name=f'/dataall/{envname}/ecs/security_groups',
-        #     string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
-        # )
-
         self.ecs_cluster = cluster
         self.ecs_task_definitions = [
             cdkproxy_task_definition,
@@ -368,37 +361,6 @@ class ContainerStack(pyNestedClass):
             connection=ec2.Port.tcp(443),
             description='Allow NAT Internet Access SG Egress',
         )
-
-        #     # sg.add_egress_rule(
-        #     #     peer=vpc_endpoints_sg,
-        #     #     connection=ec2.Port.tcp(443),
-        #     #     description='Allow VPC Endpoint SG Egress',
-        #     # )
-        #     # sg.add_egress_rule(
-        #     #     peer=vpc_endpoints_sg,
-        #     #     connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #     #     description='Allow VPC Endpoint SG Egress',
-        #     # )
-
-        #     # Add Lambda SG Connectivity
-        #     if lambdas:
-        #         for lmbda in lambdas:
-        #             sg_connection = ec2.Connections(security_groups=[sg])
-        #             sg_connection.allow_from(
-        #                 lmbda.connections,
-        #                 ec2.Port.tcp(443),
-        #                 'Allow Lambda to ECS Connection'
-        #             )
-        #             # sg.add_ingress_rule(
-        #             #     peer=lambda_sg,
-        #             #     connection=ec2.Port.tcp(443),
-        #             #     description='Allow Lambda SG SG Ingress',
-        #             # )
-        #             # lambda_sg.add_egress_rule(
-        #             #     peer=sg,
-        #             #     connection=ec2.Port.tcp(443),
-        #             #     description='Allow ECS SG Egress',
-        #             # )
             
         #     # Add S3 Gateway Connectivity
         #     if s3_cidr_list:

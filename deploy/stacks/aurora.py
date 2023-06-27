@@ -96,15 +96,15 @@ class AuroraServerlessStack(pyNestedClass):
         )
         database.add_rotation_single_user(automatically_after=Duration.days(90))
 
-        # Allow SG Connections
-        # if lambdas:
-        #     l: _lambda.Function
-        #     for l in lambdas:
-        #         database.connections.allow_from(
-        #             l.connections,
-        #             ec2.Port.tcp(5432),
-        #             f'Allow dataall lambda {l.function_name}',
-        #         )
+        # Allow Lambda Connections
+        if lambdas:
+            l: _lambda.Function
+            for l in lambdas:
+                database.connections.allow_from(
+                    l.connections,
+                    ec2.Port.tcp(5432),
+                    f'Allow dataall lambda {l.function_name}',
+                )
 
                 # sgs = l.connections.security_groups
                 # for i, sg in enumerate(sgs):
@@ -113,29 +113,20 @@ class AuroraServerlessStack(pyNestedClass):
                 #         connection=ec2.Port.tcp(5432),
                 #         description=f'Allow dataall lambda {l.function_name}',
                 #     )
-                    # ec2.CfnSecurityGroupEgress(
-                    #     self,
-                    #     f"AuroraDB{sg.security_group_id}",
-                    #     group_id=sg.security_group_id,
-                    #     ip_protocol='tcp',
-                    #     description='Allow dataall Aurora DB',
-                    #     destination_security_group_id=
-                    #     from_port=5432,
-                    #     to_port=5432
-                    # )
                     # sg.add_egress_rule(
                     #     peer=db_security_group,
                     #     connection=ec2.Port.tcp(5432),
                     #     description=f'Allow dataall Aurora DB',
                     # )
-
-        # if ecs_security_groups:
-        #     for sg in ecs_security_groups:
-        #         database.connections.allow_from(
-        #             ec2.Connections(security_groups=[sg]),
-        #             ec2.Port.tcp(5432),
-        #             f'Allow dataall ecs to db connection',
-        #         )
+        # Allow ECS Connections
+        if ecs_security_groups:
+            for sg in ecs_security_groups:
+                sg_connection = ec2.Connections(security_groups=[sg])
+                database.connections.allow_from(
+                    sg_connection,
+                    ec2.Port.tcp(5432),
+                    f'Allow dataall ecs to db connection',
+                )
                     
                 # db_security_group.add_ingress_rule(
                 #     peer=sg,
