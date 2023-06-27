@@ -11,6 +11,7 @@ class DBMigrationStack(pyNestedClass):
         scope,
         id,
         vpc,
+        s3_prefix_list=None,
         envname='dev',
         resource_prefix='dataall',
         pipeline_bucket: str = None,
@@ -129,6 +130,12 @@ class DBMigrationStack(pyNestedClass):
             ec2.Port.tcp_range(start_port=1024, end_port=65535),
             'Allow DB Migration CodeBuild from VPC Endpoint'
         )
+        sg_connection.allow_to(
+            ec2.Connections(peer=ec2.Peer.prefix_list(s3_prefix_list)),
+            ec2.Port.tcp(443),
+            'Allow DB Migration CodeBuild to S3 Prefix List'
+        )
+
         self.db_migration_project = codebuild.Project(
             scope=self,
             id=f'DBMigrationCBProject{envname}',

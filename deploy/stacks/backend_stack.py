@@ -72,7 +72,7 @@ class BackendStack(Stack):
         vpc = self.vpc_stack.vpc
         vpc_endpoints_sg = self.vpc_stack.vpce_security_group
         vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
-        self.s3_cidr_list = self.get_s3_cidr_list(tooling_region)
+        self.s3_prefix_list = self.get_s3_prefix_list(tooling_region)
 
         self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
 
@@ -137,7 +137,7 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc=vpc,
             vpce_connection=vpce_connection,
-            s3_cidr_list=self.s3_cidr_list,
+            s3_cidr_list=self.s3_prefix_list,
             sqs_queue=sqs_stack.queue,
             image_tag=image_tag,
             ecr_repository=repo,
@@ -169,7 +169,7 @@ class BackendStack(Stack):
             prod_sizing=prod_sizing,
             pivot_role_name=self.pivot_role_name,
             tooling_account_id=tooling_account_id,
-            s3_cidr_list=self.s3_cidr_list,
+            s3_cidr_list=self.s3_prefix_list,
             lambdas=[
                 self.lambda_api_stack.aws_handler,
                 self.lambda_api_stack.api_handler,
@@ -189,6 +189,7 @@ class BackendStack(Stack):
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
+            s3_prefix_list=self.s3_prefix_list,
             tooling_account_id=tooling_account_id,
             pipeline_bucket=pipeline_bucket,
             vpce_connection=vpce_connection,
@@ -374,7 +375,7 @@ class BackendStack(Stack):
             collection_name=aoss_stack.collection_name,
         )
 
-    def get_s3_cidr_list(self, tooling_region):
+    def get_s3_prefix_list(self, tooling_region):
         ec2_client = boto3.client("ec2", region_name=tooling_region)
         response = ec2_client.describe_prefix_lists(
             Filters=[
@@ -384,4 +385,5 @@ class BackendStack(Stack):
                 },
             ]
         )
-        return response['PrefixLists'][0].get('Cidrs')
+        return response['PrefixLists'][0].get("PrefixListId")
+        # return ec2.PrefixList.from_prefix_list_id(self, "S3PrefixList", pl_id)

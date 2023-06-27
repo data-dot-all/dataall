@@ -109,45 +109,60 @@ class AuroraServerlessStack(pyNestedClass):
         # Allow ECS Connections
         if ecs_security_groups:
             for sg in ecs_security_groups:
-                sg_connection = ec2.Connections(security_groups=[sg])
                 database.connections.allow_from(
-                    sg_connection,
+                    ec2.Connections(security_groups=[sg]),
                     ec2.Port.tcp(5432),
                     f'Allow dataall ecs to db connection',
                 )
 
         # Allow CodeBuild DB Migration Connections
         if codebuild_dbmigration_sg:
-            db_security_group.add_ingress_rule(
-                peer=codebuild_dbmigration_sg,
-                connection=ec2.Port.tcp(5432),
-                description=f'Allow dataall ECS codebuild alembic migration',
+            # db_security_group.add_ingress_rule(
+            #     peer=codebuild_dbmigration_sg,
+            #     connection=ec2.Port.tcp(5432),
+            #     description=f'Allow dataall ECS codebuild alembic migration',
+            # )
+            database.connections.allow_from(
+                ec2.Connections(security_groups=[codebuild_dbmigration_sg]),
+                ec2.Port.tcp(5432),
+                'Allow dataall ECS codebuild alembic migration',
             )
 
         if quicksight_monitoring_sg:
-            db_security_group.add_ingress_rule(
-                peer=quicksight_monitoring_sg,
-                connection=ec2.Port.tcp(5432),
-                description=f'Allow Quicksight connection from Quicksight to RDS port',
+            database.connections.allow_from(
+                ec2.Connections(security_groups=[quicksight_monitoring_sg]),
+                ec2.Port.tcp(5432),
+                'Allow Quicksight connection from Quicksight to RDS port',
+            )
+            database.connections.allow_to(
+                ec2.Connections(security_groups=[quicksight_monitoring_sg]),
+                ec2.Port.all_tcp(),
+                'Allow Quicksight connection from RDS to Quicksight',
             )
 
-            db_security_group.add_egress_rule(
-                peer=quicksight_monitoring_sg,
-                connection=ec2.Port.all_tcp(),
-                description=f'Allow Quicksight connection from RDS to Quicksight',
-            )
+            # db_security_group.add_ingress_rule(
+            #     peer=quicksight_monitoring_sg,
+            #     connection=ec2.Port.tcp(5432),
+            #     description='Allow Quicksight connection from Quicksight to RDS port',
+            # )
 
-            quicksight_monitoring_sg.add_ingress_rule(
-                peer=db_security_group,
-                connection=ec2.Port.all_tcp(),
-                description=f'Allow RDS from RDS to Quicksight',
-            )
+            # db_security_group.add_egress_rule(
+            #     peer=quicksight_monitoring_sg,
+            #     connection=ec2.Port.all_tcp(),
+            #     description='Allow Quicksight connection from RDS to Quicksight',
+            # )
 
-            quicksight_monitoring_sg.add_egress_rule(
-                peer=db_security_group,
-                connection=ec2.Port.tcp(5432),
-                description=f'Allow RDS from Quicksight to RDS',
-            )
+            # quicksight_monitoring_sg.add_ingress_rule(
+            #     peer=db_security_group,
+            #     connection=ec2.Port.all_tcp(),
+            #     description=f'Allow RDS from RDS to Quicksight',
+            # )
+
+            # quicksight_monitoring_sg.add_egress_rule(
+            #     peer=db_security_group,
+            #     connection=ec2.Port.tcp(5432),
+            #     description=f'Allow RDS from Quicksight to RDS',
+            # )
 
         ssm.StringParameter(
             self,
