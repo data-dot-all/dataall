@@ -42,9 +42,9 @@ Resources:
                 'sts:ExternalId': !Ref ExternalId
               StringLike:
                 'aws:PrincipalArn': [
-                  "arn:aws:iam::694716750236:role/*graphql-role",
-                  "arn:aws:iam::694716750236:role/*esproxy-role",
-                  "arn:aws:iam::694716750236:role/*ecs-tasks-role"
+                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*graphql-role",
+                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*awsworker-role",
+                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*ecs-tasks-role"
                 ]
   PivotRolePolicy0:
     Type: 'AWS::IAM::ManagedPolicy'

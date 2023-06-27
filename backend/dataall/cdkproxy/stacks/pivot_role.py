@@ -57,7 +57,7 @@ class PivotRole(NestedStack):
                     'StringEquals': {'sts:ExternalId': external_id},
                     'StringLike': {"aws:PrincipalArn": [
                         f"arn:aws:iam::{principal_id}:role/*graphql-role",
-                        f"arn:aws:iam::{principal_id}:role/*esproxy-role",
+                        f"arn:aws:iam::{principal_id}:role/*awsworker-role",
                         f"arn:aws:iam::{principal_id}:role/*ecs-tasks-role"
                     ]}
                 },
