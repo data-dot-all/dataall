@@ -26,8 +26,7 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache-dependency-path: frontend/yarn.lock
+          node-version: ${{ matrix.node-version }
       - run: npm install -g yarn
-      - run: yarn install
+      - run: cd frontend && yarn install --frozen-lockfile
       - run: yarn audit
