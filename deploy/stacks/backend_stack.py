@@ -191,6 +191,7 @@ class BackendStack(Stack):
             vpc=vpc,
             tooling_account_id=tooling_account_id,
             pipeline_bucket=pipeline_bucket,
+            vpce_connection=vpce_connection,
             codeartifact_domain_name=codeartifact_domain_name,
             codeartifact_pip_repo_name=codeartifact_pip_repo_name,
             **kwargs,

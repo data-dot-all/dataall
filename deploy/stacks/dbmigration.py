@@ -17,6 +17,7 @@ class DBMigrationStack(pyNestedClass):
         tooling_account_id=None,
         codeartifact_domain_name=None,
         codeartifact_pip_repo_name=None,
+        vpce_connection=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -114,8 +115,19 @@ class DBMigrationStack(pyNestedClass):
             f'DBMigrationCBSG{envname}',
             security_group_name=f'{resource_prefix}-{envname}-cb-dbmigration-sg',
             vpc=vpc,
-            allow_all_outbound=True,
+            allow_all_outbound=False,
             disable_inline_rules=True
+        )
+        sg_connection = ec2.Connections(security_groups=[self.codebuild_sg])
+        sg_connection.allow_to(
+            vpce_connection,
+            ec2.Port.tcp(443),
+            'Allow DB Migration CodeBuild to VPC Endpoint SG'
+        )
+        sg_connection.allow_from(
+            vpce_connection,
+            ec2.Port.tcp_range(start_port=1024, end_port=65535),
+            'Allow DB Migration CodeBuild from VPC Endpoint'
         )
         self.db_migration_project = codebuild.Project(
             scope=self,
