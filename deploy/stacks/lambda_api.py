@@ -140,7 +140,7 @@ class LambdaApiStack(pyNestedClass):
                 lmbda.connections.allow_from(
                     vpce_connection,
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                    'Allow Lambda to VPC Endpoint'
+                    'Allow Lambda from VPC Endpoint'
                 )
                 lmbda.connections.allow_to(
                     vpce_connection,

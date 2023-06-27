@@ -103,10 +103,6 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container.container_name,
         )
 
-        # scheduled_tasks_sg = self.create_task_sg(
-        #     envname, resource_prefix, vpc, vpc_endpoints_sg
-        # )
-
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=cluster,
             command=['python3.8', '-m', 'dataall.tasks.tables_syncer'],
@@ -341,10 +337,10 @@ class ContainerStack(pyNestedClass):
                     ec2.Port.tcp(443),
                     'Allow ECS to VPC Endpoint SG'
                 )
-                sg_connection.allow_to(
+                sg_connection.allow_from(
                     vpce_connection,
                     ec2.Port.tcp_range(start_port=1024, end_port=65535),
-                    'Allow ECS to VPC Endpoint SG'
+                    'Allow ECS from VPC Endpoint SG'
                 )
             # Add Lambda to ECS Connection
             if lambdas:

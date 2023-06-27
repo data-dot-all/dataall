@@ -106,18 +106,6 @@ class AuroraServerlessStack(pyNestedClass):
                     f'Allow dataall lambda {l.function_name}',
                 )
 
-                # sgs = l.connections.security_groups
-                # for i, sg in enumerate(sgs):
-                #     db_security_group.add_ingress_rule(
-                #         peer=sg,
-                #         connection=ec2.Port.tcp(5432),
-                #         description=f'Allow dataall lambda {l.function_name}',
-                #     )
-                    # sg.add_egress_rule(
-                    #     peer=db_security_group,
-                    #     connection=ec2.Port.tcp(5432),
-                    #     description=f'Allow dataall Aurora DB',
-                    # )
         # Allow ECS Connections
         if ecs_security_groups:
             for sg in ecs_security_groups:
@@ -127,18 +115,8 @@ class AuroraServerlessStack(pyNestedClass):
                     ec2.Port.tcp(5432),
                     f'Allow dataall ecs to db connection',
                 )
-                    
-                # db_security_group.add_ingress_rule(
-                #     peer=sg,
-                #     connection=ec2.Port.tcp(5432),
-                #     description=f'Allow dataall ECS cluster tasks',
-                # )
-                # sg.add_egress_rule(
-                #     peer=db_security_group,
-                #     connection=ec2.Port.tcp(5432),
-                #     description=f'Allow dataall Aurora DB',
-                # )
 
+        # Allow CodeBuild DB Migration Connections
         if codebuild_dbmigration_sg:
             db_security_group.add_ingress_rule(
                 peer=codebuild_dbmigration_sg,
