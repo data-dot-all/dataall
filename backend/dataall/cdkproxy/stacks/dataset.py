@@ -2,10 +2,8 @@ import logging
 import os
 
 from aws_cdk import (
-    custom_resources as cr,
     aws_s3 as s3,
     aws_kms as kms,
-    aws_lambda as _lambda,
     aws_iam as iam,
     aws_ssm as ssm,
     aws_glue as glue,
@@ -410,7 +408,7 @@ class Dataset(Stack):
                 type='AWS::LakeFormation::Resource',
                 properties={
                     'ResourceArn': f'arn:aws:s3:::{dataset.S3BucketName}',
-                    'RoleArn': dataset.IAMDatasetAdminRoleArn,
+                    'RoleArn': f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}',
                     'UseServiceLinkedRole': False,
                 },
             )
