@@ -1,7 +1,7 @@
 {
   "name": "data.all",
   "author": "AWS Professional Services",
-  "version": "0.5.0",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
@@ -9,7 +9,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "node_modules/.bin/eslint --ext js src",
-    "lint-fix": "node_modules/.bin/eslint --fix --ext js src"
+    "lint-fix": "node_modules/.bin/eslint --fix --ext js src",
+    "audit": "npx better-npm-audit audit --level=high --registry='https://registry.npmjs.org/'"
   },
   "dependencies": {
     "@apollo/client": "^3.3.19",

@@ -1,4 +1,4 @@
-name: "Coverage Integration tests"
+name: Coverage Integration tests
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     - release/*
 
 jobs:
-  run-tests:
+  run-integration-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:

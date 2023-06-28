@@ -1,4 +1,4 @@
-name: Safety
+name: Run Safety
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     - release/*
 
 jobs:
-  build:
+  safety:
     runs-on: ubuntu-latest
     strategy:
       matrix:

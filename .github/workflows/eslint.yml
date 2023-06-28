@@ -1,4 +1,4 @@
-name: npm-eslint
+name: Run eslint
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  es-lint:
     runs-on: ubuntu-latest
 
     strategy:

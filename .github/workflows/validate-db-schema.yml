@@ -12,7 +12,7 @@ env:
   schema_name: validation
 
 jobs:
-  run-tests:
+  validate-migrations:
     runs-on: ubuntu-latest
     strategy:
       matrix:
