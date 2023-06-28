@@ -32,5 +32,5 @@ jobs:
             ./frontend/package.json
       - run: npm install
         working-directory: frontend
-      - run: npm lint
+      - run: npm run es-lint
         working-directory: frontend
