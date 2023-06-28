@@ -1,7 +1,8 @@
 import logging
 
 from dataall import db
-from dataall.db import models
+from dataall.db.api import Environment, Organization
+from dataall.modules.dashboards import DashboardRepository
 from dataall.searchproxy.base_indexer import BaseIndexer
 from dataall.modules.dashboards.db.models import Dashboard
 
@@ -11,36 +12,12 @@ log = logging.getLogger(__name__)
 class DashboardIndexer(BaseIndexer):
     @classmethod
     def upsert(cls, session, dashboard_uri: str):
-        dashboard = (
-            session.query(
-                Dashboard.dashboardUri.label('uri'),
-                Dashboard.name.label('name'),
-                Dashboard.owner.label('owner'),
-                Dashboard.label.label('label'),
-                Dashboard.description.label('description'),
-                Dashboard.tags.label('tags'),
-                Dashboard.region.label('region'),
-                models.Organization.organizationUri.label('orgUri'),
-                models.Organization.name.label('orgName'),
-                models.Environment.environmentUri.label('envUri'),
-                models.Environment.name.label('envName'),
-                Dashboard.SamlGroupName.label('admins'),
-                Dashboard.created,
-                Dashboard.updated,
-                Dashboard.deleted,
-            )
-            .join(
-                models.Organization,
-                Dashboard.organizationUri == Dashboard.organizationUri,
-            )
-            .join(
-                models.Environment,
-                Dashboard.environmentUri == models.Environment.environmentUri,
-            )
-            .filter(Dashboard.dashboardUri == dashboard_uri)
-            .first()
-        )
+        dashboard: Dashboard = DashboardRepository.get_dashboard_by_uri(session, dashboard_uri)
+
         if dashboard:
+            env = Environment.get_environment_by_uri(session, dashboard.environmentUri)
+            org = Organization.get_organization_by_uri(session, env.organizationUri)
+
             glossary = BaseIndexer._get_target_glossary_terms(session, dashboard_uri)
             count_upvotes = db.api.Vote.count_upvotes(
                 session, None, None, dashboard_uri, {'targetType': 'dashboard'}
@@ -49,7 +26,7 @@ class DashboardIndexer(BaseIndexer):
                 doc_id=dashboard_uri,
                 doc={
                     'name': dashboard.name,
-                    'admins': dashboard.admins,
+                    'admins': dashboard.SamlGroupName,
                     'owner': dashboard.owner,
                     'label': dashboard.label,
                     'resourceKind': 'dashboard',
@@ -57,10 +34,10 @@ class DashboardIndexer(BaseIndexer):
                     'tags': [f.replace('-', '') for f in dashboard.tags or []],
                     'topics': [],
                     'region': dashboard.region.replace('-', ''),
-                    'environmentUri': dashboard.envUri,
-                    'environmentName': dashboard.envName,
-                    'organizationUri': dashboard.orgUri,
-                    'organizationName': dashboard.orgName,
+                    'environmentUri': env.environmentUri,
+                    'environmentName': env.name,
+                    'organizationUri': org.organizationUri,
+                    'organizationName': org.name,
                     'created': dashboard.created,
                     'updated': dashboard.updated,
                     'deleted': dashboard.deleted,
