@@ -91,7 +91,7 @@ const EnvironmentEditForm = (props) => {
                 value: String(values.pipelinesEnabled)
               },
               {
-                key: "dashboardsEnabled",
+                key: 'dashboardsEnabled',
                 value: String(values.dashboardsEnabled)
               }
             ]
@@ -213,7 +213,8 @@ const EnvironmentEditForm = (props) => {
                 notebooksEnabled: env.parameters['notebooksEnabled'] === 'true',
                 mlStudiosEnabled: env.parameters['mlStudiosEnabled'] === 'true',
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
-                dashboardsEnabled: env.parameters['dashboardsEnabled'] === 'true',
+                dashboardsEnabled:
+                  env.parameters['dashboardsEnabled'] === 'true',
                 warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
               }}

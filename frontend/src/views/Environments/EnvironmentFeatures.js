@@ -32,7 +32,7 @@ const EnvironmentFeatures = (props) => {
               Dashboards
             </Typography>
             <Typography color="textPrimary" variant="body2">
-             <Label
+              <Label
                 color={
                   environment.parameters['dashboardsEnabled'] === 'true'
                     ? 'success'
