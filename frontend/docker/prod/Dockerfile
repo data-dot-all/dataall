@@ -17,11 +17,9 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.s
 RUN . ~/.nvm/nvm.sh && nvm install node
 RUN echo '. ~/.nvm/nvm.sh' >>  ~/.bashrc
 
-RUN . ~/.nvm/nvm.sh && npm install -g npm yarn
+COPY package.json package-lock.json ./
 
-COPY package.json yarn.lock ./
-
-RUN . ~/.nvm/nvm.sh && yarn install
+RUN . ~/.nvm/nvm.sh && npm ci --production && npm clean cache --force
 
 ENV PATH="./node_modules/.bin:$PATH"
 
