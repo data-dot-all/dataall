@@ -101,6 +101,7 @@ class Dataset(Stack):
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key
+        dataset_key = False
         if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
@@ -258,16 +259,6 @@ class Dataset(Stack):
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
                 iam.PolicyStatement(
-                    sid="KMSAccess",
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:Encrypt",
-                        "kms:GenerateDataKey"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=[dataset_key.key_arn],
-                ),
-                iam.PolicyStatement(
                     sid="ReadAccessPointsDatasetBucket",
                     actions=[
                         's3:GetAccessPoint',
@@ -358,6 +349,19 @@ class Dataset(Stack):
                 ),
             ],
         )
+        if dataset_key:
+            dataset_admin_policy.add_statements(
+                iam.PolicyStatement(
+                    sid="KMSAccess",
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[dataset_key.key_arn],
+                )
+            )
         dataset_admin_policy.node.add_dependency(dataset_bucket)
 
         dataset_admin_role = iam.Role(
