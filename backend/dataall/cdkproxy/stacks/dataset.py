@@ -101,13 +101,14 @@ class Dataset(Stack):
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key
-        if dataset.imported and dataset.importedS3Bucket and dataset.importedKmsKey:
+        if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
             )
-            dataset_key = kms.Key.from_lookup(
-                self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
-            )
+            if dataset.importedKmsKey:
+                dataset_key = kms.Key.from_lookup(
+                    self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
+                )
         else:
             dataset_key = kms.Key(
                 self,
