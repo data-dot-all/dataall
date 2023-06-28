@@ -141,8 +141,8 @@ def downgrade():
                 environmentUri=param.environmentUri,
                 notebooksEnabled=params["notebooksEnabled"] == "true",
                 mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
-                pipelinesEnabled=params["pipelinesEnabled"] == "true"
-                mlStudiosEnabled=params["dashboardsEnabled"] == "true"
+                pipelinesEnabled=params["pipelinesEnabled"] == "true",
+                dashboardsEnabled=params["dashboardsEnabled"] == "true"
             ))
 
         for name in UNUSED_PERMISSIONS:
