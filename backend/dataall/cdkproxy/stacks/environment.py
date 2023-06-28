@@ -177,17 +177,6 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
-        default_environment_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid='RedshiftLogging',
-                actions=['s3:PutObject', 's3:GetBucketAcl'],
-                resources=[
-                    f'{default_environment_bucket.bucket_arn}/*',
-                    default_environment_bucket.bucket_arn,
-                ],
-                principals=[iam.ServicePrincipal('redshift.amazonaws.com')],
-            )
-        )
 
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
@@ -237,7 +226,7 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        default_role = self.create_or_import_environment_default_role()
+        default_role = self.create_or_import_environment_admin_group_role()
         group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
@@ -615,16 +604,16 @@ class EnvironmentSetup(Stack):
         # print the IAM role arn for this service account
         CfnOutput(
             self,
-            'pivotRoleName',
-            export_name='pivotRoleName',
+            f'pivotRoleName-{self._environment.environmentUri}',
+            export_name=f'pivotRoleName-{self._environment.environmentUri}',
             value=self.pivot_role_name,
-            description='pivotRoleName',
+            description='pivotRole name, helps us to distinguish between auto-created pivot roles (dataallPivotRole-cdk) and manually created pivot roles (dataallPivotRole)',
         )
         TagsUtil.add_tags(self)
 
         CDKNagUtil.check_rules(self)
 
-    def create_or_import_environment_default_role(self):
+    def create_or_import_environment_admin_group_role(self):
         if self._environment.EnvironmentDefaultIAMRoleImported:
             default_role = iam.Role.from_role_arn(
                 self,
@@ -632,65 +621,15 @@ class EnvironmentSetup(Stack):
                 self._environment.EnvironmentDefaultIAMRoleArn,
             )
         else:
-            services_policies = ServicePolicy(
-                stack=self,
-                tag_key='Team',
-                tag_value=self._environment.SamlGroupName,
-                resource_prefix=self._environment.resourcePrefix,
-                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-{self._environment.environmentUri}-default-services-policy',
-                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-{self._environment.environmentUri}-default-services-policy',
-                account=self._environment.AwsAccountId,
-                region=self._environment.region,
-                role_name=self._environment.EnvironmentDefaultIAMRoleName,
-                permissions=self.get_environment_group_permissions(
-                    self.engine,
-                    self._environment.environmentUri,
-                    self._environment.SamlGroupName,
-                ),
-            ).generate_policies()
-
-            data_policy = DataPolicy(
-                stack=self,
-                tag_key='Team',
-                tag_value=self._environment.SamlGroupName,
-                resource_prefix=self._environment.resourcePrefix,
-                name=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy',
-                id=f'{self._environment.resourcePrefix}-{self._environment.SamlGroupName}-default-data-policy',
-                account=self._environment.AwsAccountId,
-                region=self._environment.region,
-                environment=self._environment,
-                team=self.environment_admins_group,
-                datasets=self.all_environment_datasets,
-            ).generate_admins_data_access_policy()
-
-            default_role = iam.Role(
-                self,
-                'DefaultEnvironmentRole',
-                role_name=self._environment.EnvironmentDefaultIAMRoleName,
-                inline_policies={
-                    f'DataPolicy{self._environment.environmentUri}': data_policy.document,
-                },
-                managed_policies=services_policies,
-                assumed_by=iam.CompositePrincipal(
-                    iam.ServicePrincipal('glue.amazonaws.com'),
-                    iam.ServicePrincipal('lambda.amazonaws.com'),
-                    iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                    iam.ServicePrincipal('athena.amazonaws.com'),
-                    iam.ServicePrincipal('states.amazonaws.com'),
-                    iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                    iam.ServicePrincipal('redshift.amazonaws.com'),
-                    iam.ServicePrincipal('databrew.amazonaws.com'),
-                    iam.AccountPrincipal(self._environment.AwsAccountId),
-                ),
-            )
-        return default_role
+            environment_admin_group_role = self.create_group_environment_role(group=self.environment_admins_group, id='DefaultEnvironmentRole')
+        return environment_admin_group_role
 
     def create_or_import_environment_groups_roles(self):
         group: models.EnvironmentGroup
         group_roles = []
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:
-                group_role = self.create_group_environment_role(group)
+                group_role = self.create_group_environment_role(group=group, id=f'{group.environmentIAMRoleName}')
                 group_roles.append(group_role)
             else:
                 iam.Role.from_role_arn(
@@ -700,7 +639,7 @@ class EnvironmentSetup(Stack):
                 )
         return group_roles
 
-    def create_group_environment_role(self, group):
+    def create_group_environment_role(self, group: models.EnvironmentGroup, id: str):
 
         group_permissions = self.get_environment_group_permissions(
             self.engine, self._environment.environmentUri, group.groupUri
@@ -715,6 +654,8 @@ class EnvironmentSetup(Stack):
             role_name=group.environmentIAMRoleName,
             account=self._environment.AwsAccountId,
             region=self._environment.region,
+            environment=self._environment,
+            team=group,
             permissions=group_permissions,
         ).generate_policies()
 
@@ -734,7 +675,7 @@ class EnvironmentSetup(Stack):
 
         group_role = iam.Role(
             self,
-            f'{group.environmentIAMRoleName}',
+            id,
             role_name=group.environmentIAMRoleName,
             inline_policies={
                 f'{group.environmentIAMRoleName}DataPolicy': data_policy.document,
@@ -743,12 +684,14 @@ class EnvironmentSetup(Stack):
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('glue.amazonaws.com'),
                 iam.ServicePrincipal('lambda.amazonaws.com'),
-                iam.ServicePrincipal('lakeformation.amazonaws.com'),
-                iam.ServicePrincipal('athena.amazonaws.com'),
-                iam.ServicePrincipal('states.amazonaws.com'),
                 iam.ServicePrincipal('sagemaker.amazonaws.com'),
-                iam.ServicePrincipal('redshift.amazonaws.com'),
-                iam.AccountPrincipal(self._environment.AwsAccountId),
+                iam.ServicePrincipal('states.amazonaws.com'),
+                iam.ServicePrincipal('databrew.amazonaws.com'),
+                iam.ServicePrincipal('codebuild.amazonaws.com'),
+                iam.ServicePrincipal('codepipeline.amazonaws.com'),
+                iam.ArnPrincipal(
+                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
+                ),
             ),
         )
         Tags.of(group_role).add('group', group.groupUri)

@@ -83,7 +83,7 @@ def import_dataset(context: Context, source, input=None):
         dataset.imported = True
         dataset.importedS3Bucket = True if input['bucketName'] else False
         dataset.importedGlueDatabase = True if input.get('glueDatabaseName') else False
-        dataset.importedKmsKey = True if input.get('KmsKeyId') else False
+        dataset.importedKmsKey = True if input.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if input.get('adminRoleName') else False
 
         Dataset.create_dataset_stack(session, dataset)

@@ -1,6 +1,5 @@
 import logging
 import os
-import typing
 
 from aws_cdk import (
     custom_resources as cr,
@@ -102,9 +101,12 @@ class Dataset(Stack):
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key
-        if dataset.imported and dataset.importedS3Bucket:
+        if dataset.imported and dataset.importedS3Bucket and dataset.importedKmsKey:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
+            )
+            dataset_key = kms.Key.from_lookup(
+                self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
             )
         else:
             dataset_key = kms.Key(
@@ -249,19 +251,17 @@ class Dataset(Stack):
                 iam.PolicyStatement(
                     sid="GlueAccessCrawler",
                     actions=[
-                        "glue:GetDatabase",
-                        "glue:GetTableVersion",
+                        "glue:Get*",
+                        "glue:BatchGet*",
                         "glue:CreateTable",
-                        "glue:GetTables",
-                        "glue:GetTableVersions",
                         "glue:UpdateTable",
                         "glue:DeleteTableVersion",
                         "glue:DeleteTable",
-                        "glue:GetTable"
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
                     ]
@@ -288,9 +288,9 @@ class Dataset(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
-                    actions=['s3:ListEnvironmentBucket'],
+                    actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
-                    effect=iam.Effect.ALLOW,
+                    effect=iam.Effect.ALLOW
                 ),
                 iam.PolicyStatement(
                     sid="ReadEnvironmentBucketProfiling",
@@ -300,7 +300,7 @@ class Dataset(Stack):
                         "s3:GetObjectVersion"
                     ],
                     effect=iam.Effect.ALLOW,
-                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling*'],
+                    resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}/profiling/code/*'],
                 ),
                 iam.PolicyStatement(
                     sid="ReadWriteEnvironmentBucketProfiling",
