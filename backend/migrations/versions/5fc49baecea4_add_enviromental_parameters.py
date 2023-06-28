@@ -130,7 +130,7 @@ def downgrade():
         op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
         op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
         op.add_column("environment", Column("pipelinesEnabled", Boolean, default=True))
-        op.add_column("environment", Column("dashbaordsEnabled", Boolean, default=True))
+        op.add_column("environment", Column("dashboardsEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
         params = session.query(EnvironmentParameter).all()
