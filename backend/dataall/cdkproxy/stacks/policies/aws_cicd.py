@@ -107,8 +107,8 @@ class AwsCICD(ServicePolicy):
                     's3:DeleteObject'
                 ],
                 resources=[
-                    "arn:aws:s3:::codepipeline-*",
-                    "arn:aws:s3:::codepipeline-*/*"
+                    f"arn:aws:s3:::codepipeline-{self.region}-{self.account}",
+                    f"arn:aws:s3:::codepipeline-{self.region}-{self.account}/{self.resource_prefix}*"
                 ],
             ),
             iam.PolicyStatement(

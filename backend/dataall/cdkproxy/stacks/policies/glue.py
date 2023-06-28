@@ -110,7 +110,7 @@ class Glue(ServicePolicy):
                     's3:ListBucket',
                     's3:PutBucketPublicAccessBlock'
                 ],
-                resources=["arn:aws:s3:::aws-glue-*"],
+                resources=[f'arn:aws:s3:::aws-glue-assets-{self.account}-{self.region}'],
             ),
             iam.PolicyStatement(
                 #sid="GlueReadWriteS3Bucket",
@@ -121,7 +121,8 @@ class Glue(ServicePolicy):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    'arn:aws:s3:::aws-glue-*/*',
+                    f'arn:aws:s3:::aws-glue-assets-{self.account}-{self.region}/{self.resource_prefix}/{self.team.groupUri}/',
+                    f'arn:aws:s3:::aws-glue-assets-{self.account}-{self.region}/{self.resource_prefix}/{self.team.groupUri}/*',
                 ],
             ),
             iam.PolicyStatement(
@@ -173,8 +174,6 @@ class Glue(ServicePolicy):
                 actions=[
                     'glue:*Classifier',
                     'glue:CreateScript',
-                    'glue:CreateSecurityConfiguration',
-                    'glue:DeleteSecurityConfiguration',
                 ],
                 resources=['*'],
             ),
