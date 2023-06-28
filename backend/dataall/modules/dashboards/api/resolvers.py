@@ -140,4 +140,4 @@ def get_quicksight_reader_url(context, source, dashboardUri: str = None):
 def get_quicksight_designer_url(
     context, source, environmentUri: str = None, dashboardUri: str = None
 ):
-    return DashboardQuicksightService.get_quicksight_designer_url(environmentUri)
+    return DashboardQuicksightService.get_quicksight_designer_url(uri=environmentUri)
