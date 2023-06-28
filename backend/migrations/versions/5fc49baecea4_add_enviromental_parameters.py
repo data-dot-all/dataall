@@ -95,7 +95,7 @@ def upgrade():
         op.drop_column("environment", "notebooksEnabled")
         op.drop_column("environment", "mlStudiosEnabled")
         op.drop_column("environment", "pipelinesEnabled")
-        op.drop_column("environment", "dashbaordsEnabled")
+        op.drop_column("environment", "dashboardsEnabled")
         print("Dropped the columns from the environment table ")
 
         create_foreign_key_to_env(op, 'sagemaker_notebook')
