@@ -10,7 +10,10 @@
             "active": true
         },
         "datasets": {
-            "active": true
+            "active": true,
+            "file_uploads": true,
+            "file_actions" : true,
+            "aws_actions": true
         },
         "worksheets": {
             "active": true
@@ -18,5 +21,8 @@
         "dashboards": {
             "active": true
         }
+    },
+    "core": {
+        "env_aws_actions": true
     }
 }
