@@ -259,7 +259,7 @@ class DashboardQuicksightClient:
 
     def _describe_user(self):
         """Describes a QS user, returns None if not found"""
-        client = QuicksightClient.get_quicksight_client_in_identity_region(self._username)
+        client = QuicksightClient.get_quicksight_client_in_identity_region(self._account_id)
         try:
             response = client.describe_user(
                 UserName=self._username, AwsAccountId=self._account_id, Namespace='default'
