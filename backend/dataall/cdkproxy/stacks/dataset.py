@@ -282,7 +282,6 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
                     ]

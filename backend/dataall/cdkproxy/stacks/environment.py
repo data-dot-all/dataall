@@ -253,7 +253,7 @@ class EnvironmentSetup(Stack):
                 f'PivotRole{self._environment.environmentUri}',
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
-        kms_key = self.set_cr_kms_key(group_roles)
+        kms_key = self.set_cr_kms_key(group_roles, default_role)
 
         # Lakeformation default settings custom resource
         # Set PivotRole as Lake Formation data lake admin
@@ -393,7 +393,7 @@ class EnvironmentSetup(Stack):
                             "kms:GenerateDataKey*",
                         ],
                         effect=iam.Effect.ALLOW,
-                        principals=[self.default_role] + group_roles,
+                        principals=[default_role] + group_roles,
                         resources=["*"],
                         conditions={
                             "StringEquals": {
@@ -411,7 +411,7 @@ class EnvironmentSetup(Stack):
                             "kms:GetKeyPolicy",
                         ],
                         effect=iam.Effect.ALLOW,
-                        principals=[self.default_role] + group_roles,
+                        principals=[default_role] + group_roles,
                         resources=["*"],
                     )
                 ]
@@ -538,11 +538,11 @@ class EnvironmentSetup(Stack):
         if self._environment.mlStudiosEnabled and not self.existing_sagemaker_domain:
             # Create dependency group - Sagemaker depends on group IAM roles
             sagemaker_dependency_group = DependencyGroup()
-            sagemaker_dependency_group.add(self.default_role)
+            sagemaker_dependency_group.add(default_role)
             for group_role in group_roles:
                 sagemaker_dependency_group.add(group_role)
 
-            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[self.default_role] + group_roles)
+            sagemaker_domain = domain.create_sagemaker_domain_resources(sagemaker_principals=[default_role] + group_roles)
 
             sagemaker_domain.node.add_dependency(sagemaker_dependency_group)
 
@@ -719,7 +719,7 @@ class EnvironmentSetup(Stack):
         shutil.make_archive(base_name=f'{assetspath}/{s3_key}', format='zip', root_dir=f'{assetspath}')
         return assetspath
 
-    def set_cr_kms_key(self, group_roles) -> kms.Key:
+    def set_cr_kms_key(self, group_roles, default_role) -> kms.Key:
         key_policy = iam.PolicyDocument(
             assign_sids=True,
             statements=[
@@ -733,7 +733,7 @@ class EnvironmentSetup(Stack):
                     effect=iam.Effect.ALLOW,
                     principals=[
                         self.pivot_role,
-                        self.default_role,
+                        default_role,
                     ] + group_roles,
                     resources=["*"],
                     conditions={
@@ -748,7 +748,7 @@ class EnvironmentSetup(Stack):
                     ],
                     effect=iam.Effect.ALLOW,
                     principals=[
-                        self.default_role,
+                        default_role,
                     ] + group_roles,
                     resources=["*"],
                 )
