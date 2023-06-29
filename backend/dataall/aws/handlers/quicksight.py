@@ -41,7 +41,7 @@ class QuicksightClient:
         client = QuicksightClient.get_quicksight_client(AwsAccountId=AwsAccountId, region=identity_region)
         try:
             response = client.describe_group(
-                AwsAccountId=AwsAccountId, GroupName=QuicksightClient._DEFAULT_GROUP_NAME, Namespace='default'
+                AwsAccountId=AwsAccountId, GroupName=QuicksightClient.DEFAULT_GROUP_NAME, Namespace='default'
             )
         except client.exceptions.AccessDeniedException as e:
             match = identity_region_rex.findall(str(e))
