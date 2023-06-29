@@ -167,7 +167,14 @@ class SageMakerDomain:
                         ] + sagemaker_principals,
                         resources=["*"],
                         conditions={
-                            "StringEquals": {"kms:ViaService": f"sagemaker.{self.environment.region}.amazonaws.com"}
+                            "StringEquals": {
+                                "kms:ViaService": [
+                                    f"sagemaker..amazonaws.com",
+                                    f"elasticfilesystem.{self.environment.region}.amazonaws.com",
+                                    f"ec2.{self.environment.region}.amazonaws.com",
+                                    f"s3.{self.environment.region}.amazonaws.com"
+                                ]
+                            }
                         }
                     ),
                     iam.PolicyStatement(

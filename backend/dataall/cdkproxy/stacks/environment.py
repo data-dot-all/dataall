@@ -167,6 +167,27 @@ class EnvironmentSetup(Stack):
 
         self.all_environment_datasets = self.get_all_environment_datasets(self.engine, self._environment)
 
+        # Create or import Pivot role
+        if self.create_pivot_role is True:
+            config = {
+                'roleName': self.pivot_role_name,
+                'accountId': self.dataall_central_account,
+                'externalId': self.external_id,
+                'resourcePrefix': self._environment.resourcePrefix,
+            }
+            pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
+            self.pivot_role = iam.Role.from_role_arn(
+                self,
+                f'PivotRole{self._environment.environmentUri}',
+                pivot_role_stack.pivot_role.role_arn,
+            )
+        else:
+            self.pivot_role = iam.Role.from_role_arn(
+                self,
+                f'PivotRole{self._environment.environmentUri}',
+                f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
+            )
+
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
@@ -237,22 +258,6 @@ class EnvironmentSetup(Stack):
         )
         self.create_athena_workgroups(self.environment_groups, default_environment_bucket)
 
-        # Create or import Pivot role
-        if self.create_pivot_role is True:
-            config = {
-                'roleName': self.pivot_role_name,
-                'accountId': self.dataall_central_account,
-                'externalId': self.external_id,
-                'resourcePrefix': self._environment.resourcePrefix,
-            }
-            pivot_role_stack = PivotRole(self, 'PivotRoleStack', config)
-            self.pivot_role = pivot_role_stack.pivot_role
-        else:
-            self.pivot_role = iam.Role.from_role_arn(
-                self,
-                f'PivotRole{self._environment.environmentUri}',
-                f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
-            )
         kms_key = self.set_cr_kms_key(group_roles, default_role)
 
         # Lakeformation default settings custom resource
@@ -634,9 +639,7 @@ class EnvironmentSetup(Stack):
                 iam.ServicePrincipal('databrew.amazonaws.com'),
                 iam.ServicePrincipal('codebuild.amazonaws.com'),
                 iam.ServicePrincipal('codepipeline.amazonaws.com'),
-                iam.ArnPrincipal(
-                    f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}'
-                ),
+                self.pivot_role,
             ),
         )
         Tags.of(group_role).add('group', group.groupUri)
@@ -732,7 +735,6 @@ class EnvironmentSetup(Stack):
                     ],
                     effect=iam.Effect.ALLOW,
                     principals=[
-                        self.pivot_role,
                         default_role,
                     ] + group_roles,
                     resources=["*"],
