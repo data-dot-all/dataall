@@ -179,6 +179,7 @@ class EnvironmentSetup(Stack):
             enforce_ssl=True,
         )
 
+
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
                 sid='AWSLogDeliveryWrite',
@@ -227,7 +228,7 @@ class EnvironmentSetup(Stack):
         )
 
         # Create or import team IAM roles
-        self.default_role = self.create_or_import_environment_admin_group_role()
+        default_role = self.create_or_import_environment_admin_group_role()
         group_roles = self.create_or_import_environment_groups_roles()
 
         self.create_default_athena_workgroup(
