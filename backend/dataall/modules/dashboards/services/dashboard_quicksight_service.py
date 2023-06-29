@@ -17,13 +17,8 @@ class DashboardQuicksightService:
     _PARAM_STORE = Parameter()
     _REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
-    @staticmethod
-    def _get_env_uri(session, uri):
-        dashboard: Dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-        return dashboard.environmentUri
-
     @classmethod
-    @has_resource_permission(GET_DASHBOARD, parent_resource=_get_env_uri)
+    @has_resource_permission(GET_DASHBOARD)
     def get_quicksight_reader_url(cls, uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
