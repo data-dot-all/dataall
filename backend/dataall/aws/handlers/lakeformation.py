@@ -14,7 +14,7 @@ class LakeFormation:
         pass
 
     @staticmethod
-    def check_existing_lf_registered_location(resource_arn:str, role_arn:str, accountid:str, region:str):
+    def check_existing_lf_registered_location(resource_arn: str, role_arn: str, accountid: str, region: str):
         """
         Checks if there is a non-dataall-created registered location for the Dataset
         Returns False is already existing location else return the resource info

@@ -10,7 +10,7 @@ class StepFunctions(ServicePolicy):
     def get_statements(self):
         return [
             aws_iam.PolicyStatement(
-                #sid='ListMonitorStepFunctions',
+                # sid='ListMonitorStepFunctions',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'states:ListStateMachines',
@@ -22,7 +22,7 @@ class StepFunctions(ServicePolicy):
                 resources=['*'],
             ),
             aws_iam.PolicyStatement(
-                #sid='CreateTeamStepFunctions',
+                # sid='CreateTeamStepFunctions',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'states:CreateStateMachine',
@@ -41,7 +41,7 @@ class StepFunctions(ServicePolicy):
                 },
             ),
             aws_iam.PolicyStatement(
-                #sid='ManageTeamStepFunctions',
+                # sid='ManageTeamStepFunctions',
                 effect=aws_iam.Effect.ALLOW,
                 actions=[
                     'states:Delete*',

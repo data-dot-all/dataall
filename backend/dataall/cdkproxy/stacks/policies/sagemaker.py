@@ -44,7 +44,7 @@ class Sagemaker(ServicePolicy):
             ),
             # SageMaker Notebooks permissions
             iam.PolicyStatement(
-                #sid="SageMakerCreateTaggedResourcesNotebooks",
+                # sid="SageMakerCreateTaggedResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreateNotebookInstance'],
                 resources=[
@@ -59,7 +59,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="SageMakerCreatePresignedNotebookInstanceUrl",
+                # sid="SageMakerCreatePresignedNotebookInstanceUrl",
                 effect=iam.Effect.ALLOW,
                 actions=['sagemaker:CreatePresignedNotebookInstanceUrl'],
                 resources=[
@@ -72,7 +72,7 @@ class Sagemaker(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="SageMakerManageResourcesNotebooks",
+                # sid="SageMakerManageResourcesNotebooks",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:*NotebookInstance',
@@ -88,7 +88,7 @@ class Sagemaker(ServicePolicy):
             ),
             # SageMaker Studio permissions
             iam.PolicyStatement(
-                #sid="SageMakerManageTeamResourcesMLStudio",
+                # sid="SageMakerManageTeamResourcesMLStudio",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'sagemaker:DeleteDomain',
@@ -110,7 +110,7 @@ class Sagemaker(ServicePolicy):
             # Deny on creation of domains and users, generic allow for prefixed and tagged resources
             # allow for apps (cannot be tagged) and special tag needed for CreatePresignedDomainUrl
             iam.PolicyStatement(
-                #sid="SageMakerDenyCreateDomainsUsers",
+                # sid="SageMakerDenyCreateDomainsUsers",
                 effect=iam.Effect.DENY,
                 actions=['sagemaker:Create*'],
                 resources=[
@@ -176,7 +176,7 @@ class Sagemaker(ServicePolicy):
             ),
             # Logging and support permissions
             iam.PolicyStatement(
-                #sid="SageMakerLogging",
+                # sid="SageMakerLogging",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'logs:CreateLogGroup',
@@ -189,7 +189,7 @@ class Sagemaker(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
-                #sid="SageMakerSupport",
+                # sid="SageMakerSupport",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'ecr:GetAuthorizationToken',

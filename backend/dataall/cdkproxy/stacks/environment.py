@@ -200,7 +200,6 @@ class EnvironmentSetup(Stack):
             enforce_ssl=True,
         )
 
-
         default_environment_bucket.add_to_resource_policy(
             iam.PolicyStatement(
                 sid='AWSLogDeliveryWrite',

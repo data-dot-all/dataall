@@ -12,7 +12,7 @@ class QuickSight(ServicePolicy):
     def get_statements(self):
         return [
             iam.PolicyStatement(
-                #sid="QuicksightList",
+                # sid="QuicksightList",
                 effect=iam.Effect.ALLOW,
                 actions=['quicksight:List*'],
                 resources=['*'],
