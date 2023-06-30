@@ -98,11 +98,7 @@ class Dataset(Stack):
 
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
-            quicksight_default_group_arn = ssm.StringParameter.from_string_parameter_name(
-                self,
-                'QuicksightGroupArn',
-                string_parameter_name=f'/dataall/{dataset.environmentUri}/quicksight/group_arn'
-            ).string_value
+            quicksight_default_group_arn = f"arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{Quicksight._DEFAULT_GROUP_NAME}"
 
         # Dataset S3 Bucket and KMS key
         if dataset.imported and dataset.importedS3Bucket:

@@ -29,16 +29,7 @@ def check_dataset_account(environment):
         quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
         if quicksight_subscription:
             group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
-            if group:
-                ParameterStoreManager.update_parameter(
-                    AwsAccountId=environment.AwsAccountId,
-                    region=environment.region, 
-                    parameter_name=f'/dataall/{environment.environmentUri}/quicksight/group_arn', 
-                    parameter_value=group['Group']['Arn']
-                )
-                return True
-            else:
-                return False
+            return True if group else False
     return True
 
 
