@@ -321,7 +321,7 @@ cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-i
 ```
 North Virginia region (needed for Cloudfront integration with ACM on us-east-1)
 ```bash
-cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east
+cdk bootstrap --trust <tooling-account-id> --trust-for-lookup <tooling-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<deployment-account-id>/us-east-1
 ```
 
 
@@ -393,6 +393,7 @@ Some AWS resources have deletion particularities:
 in AWS CloudFormation. Enable deletion in RDS before deleting `<resource_prefix>-<git_branch>-cicd-stack`. 
 - KMS keys are marked as `pending deletion` and once the waiting period is over they are effectively deleted. This is
 their default behavior explained in the [documentation](https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html).
+- The S3 buckets created by the deployment will not get deleted by AWS CloudFormation automatically, given these contain objects. Before running a new deployment, remove the S3 buckets matching the naming convention `<resource_prefix>-<git_branch>-cicd-stack-xxxxxxxxx` first to prevent a CloudFormation error reporting on already existing buckets.
 
 ### Troubleshooting - The CodePipeline Pipeline fails with CodeBuild Error Code "AccountLimitExceededException"
 Sometimes, we run into the following error *"Error calling startBuild: Cannot have more than 1 builds in queue for the account"*.

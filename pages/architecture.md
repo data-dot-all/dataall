@@ -73,14 +73,14 @@ from the AWS logic and processing. To achieve this decoupling, the web applicati
 5. Short Running Asynchronous Tasks Processor (AWS Lambda)
 
 data.all infrastructure runs <span style="color:#2074d5">**90% on serverless**</span> services in a private VPC, 
-the remaining 10% are for the OpenSearch cluster that is not serverless... yet!
+the remaining 10% is for the OpenSearch cluster. Since data.all release v1.5.0 you have the ability to deploy an OpenSearch Serverless cluster instead by specifying the `enable_opensearch_serverless` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
 ![archi](img/architecture_infrastructure.drawio.png#zoom#shadow)
 
 ## Frontend Components <a name="frontend"></a>
 
 To fit the requirements of enterprise grade customers, data.all architecture has two variants. Both 
-architectures are part of data.all code base and can be configured with in the deployment with the 
+architectures are part of data.all code base and can be configured in the deployment with the 
 `internet_facing` parameter of the configuration cdk.json file. Check the [Deploy to AWS](./deploy-aws/) section.
 
 - Internet facing architecture
