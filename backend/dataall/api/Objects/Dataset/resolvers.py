@@ -15,6 +15,7 @@ from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
 from ....aws.handlers.quicksight import Quicksight
+from ....aws.handlers.parameter_store import ParameterStoreManager
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
@@ -28,7 +29,16 @@ def check_dataset_account(environment):
         quicksight_subscription = Quicksight.check_quicksight_enterprise_subscription(AwsAccountId=environment.AwsAccountId)
         if quicksight_subscription:
             group = Quicksight.create_quicksight_group(AwsAccountId=environment.AwsAccountId)
-            return True if group else False
+            if group:
+                ParameterStoreManager.update_parameter(
+                    AwsAccountId=environment.AwsAccountId,
+                    region=environment.region, 
+                    parameter_name=f'/dataall/{environment.environmentUri}/quicksight/group_arn', 
+                    parameter_value=group['Group']['Arn']
+                )
+                return True
+            else:
+                return False
     return True
 
 

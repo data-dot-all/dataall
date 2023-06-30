@@ -360,11 +360,11 @@ class ContainerStack(pyNestedClass):
                     )
 
         # Add NAT Gateway Access for QS API 
-        cdkproxy_sg.add_egress_rule(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(443),
-            'Allow NAT Internet Access SG Egress',
-        )
+        # cdkproxy_sg.add_egress_rule(
+        #     ec2.Peer.any_ipv4(),
+        #     ec2.Port.tcp(443),
+        #     'Allow NAT Internet Access SG Egress',
+        # )
 
         # Create SSM of Security Group IDs
         ssm.StringParameter(
