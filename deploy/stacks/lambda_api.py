@@ -37,7 +37,6 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix='dataall',
         vpc=None,
         vpce_connection=None,
-        s3_cidr_list=None,
         sqs_queue: sqs.Queue = None,
         ecr_repository=None,
         image_tag=None,
@@ -59,7 +58,7 @@ class LambdaApiStack(pyNestedClass):
 
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
-        esproxy_sg = self.create_lambda_sgs(envname, "esproxy", resource_prefix, vpc, s3_cidr_list)
+        esproxy_sg = self.create_lambda_sgs(envname, "esproxy", resource_prefix, vpc)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
@@ -81,7 +80,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
-        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc, s3_cidr_list)
+        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
@@ -103,7 +102,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
-        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc, s3_cidr_list)
+        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc)
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
@@ -148,16 +147,12 @@ class LambdaApiStack(pyNestedClass):
                     'Allow Lambda to VPC Endpoint'
                 )
 
-        # Add NAT Connectivity
-        for lmbda in [
-            # self.aws_handler,
-            self.api_handler
-        ]:
-            lmbda.connections.allow_to(
-                ec2.Peer.any_ipv4(),
-                ec2.Port.tcp(443),
-                'Allow NAT Internet Access SG Egress'
-            )
+        # Add NAT Connectivity For API Handler
+        self.api_handler.connections.allow_to(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            'Allow NAT Internet Access SG Egress'
+        )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
@@ -180,7 +175,7 @@ class LambdaApiStack(pyNestedClass):
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
         
-    def create_lambda_sgs(self, envname, name, resource_prefix, vpc, s3_cidr_list):
+    def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
         lambda_sg = ec2.SecurityGroup(
             self,
             f'{name}SG{envname}',
@@ -189,20 +184,6 @@ class LambdaApiStack(pyNestedClass):
             allow_all_outbound=False,
             disable_inline_rules=True,
         )
-
-        # # Add S3 Gateway Endpoint Connectivity
-        # if s3_cidr_list:
-        #     for cidr in s3_cidr_list:
-        #         lambda_sg.add_egress_rule(
-        #             peer=ec2.Peer.ipv4(cidr),
-        #             connection=ec2.Port.tcp(443),
-        #             description='Allow S3 Endpoint SG Egress',
-        #         )
-        #         lambda_sg.add_egress_rule(
-        #             peer=ec2.Peer.ipv4(cidr),
-        #             connection=ec2.Port.tcp_range(start_port=1024, end_port=65535),
-        #             description='Allow S3 Endpoint SG Egress',
-        #         )
         return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):

@@ -137,7 +137,6 @@ class BackendStack(Stack):
             resource_prefix=resource_prefix,
             vpc=vpc,
             vpce_connection=vpce_connection,
-            s3_cidr_list=self.s3_prefix_list,
             sqs_queue=sqs_stack.queue,
             image_tag=image_tag,
             ecr_repository=repo,
@@ -149,13 +148,6 @@ class BackendStack(Stack):
             pivot_role_name=self.pivot_role_name,
             **kwargs,
         )
-
-        # Lambda SGs
-        # lambdas = [
-        #     self.lambda_api_stack.aws_handler,
-        #     self.lambda_api_stack.api_handler,
-        #     self.lambda_api_stack.elasticsearch_proxy_handler,
-        # ]
 
         self.ecs_stack = ContainerStack(
             self,
@@ -177,11 +169,6 @@ class BackendStack(Stack):
             ],
             **kwargs,
         )
-
-        # container_sgs = [
-        #     self.ecs_stack.scheduled_tasks_sg, 
-        #     self.ecs_stack.cdkproxy_sg
-        # ]
 
         dbmigration_stack = DBMigrationStack(
             self,
@@ -386,4 +373,3 @@ class BackendStack(Stack):
             ]
         )
         return response['PrefixLists'][0].get("PrefixListId")
-        # return ec2.PrefixList.from_prefix_list_id(self, "S3PrefixList", pl_id)

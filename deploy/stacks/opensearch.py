@@ -105,18 +105,6 @@ class OpenSearchStack(pyNestedClass):
                     ec2.Port.tcp(443),
                     f'Allow dataall opensearch to lambda {l.function_name}',
                 )
-                # sgs = l.connections.security_groups
-                # for i, sg in enumerate(sgs):
-                #     db_security_group.add_ingress_rule(
-                #         peer=sg,
-                #         connection=ec2.Port.tcp(443),
-                #         description=f'Allow dataall lambda {l.function_name}',
-                #     )
-                #     sg.add_ingress_rule(
-                #         peer=db_security_group,
-                #         connection=ec2.Port.tcp(443),
-                #         description=f'Allow dataall OpenSearch',
-                #     )
 
         if ecs_security_groups:
             for sg in ecs_security_groups:
@@ -126,17 +114,6 @@ class OpenSearchStack(pyNestedClass):
                     ec2.Port.tcp(443),
                     f'Allow dataall opensearch to ecs sg',
                 )
-
-                # db_security_group.add_ingress_rule(
-                #     peer=sg,
-                #     connection=ec2.Port.tcp(443),
-                #     description=f'Allow dataall ECS cluster tasks',
-                # )
-                # sg.add_ingress_rule(
-                #     peer=db_security_group,
-                #     connection=ec2.Port.tcp(443),
-                #     description=f'Allow dataall OpenSearch Domain',
-                # )
 
         ssm.StringParameter(
             self,
