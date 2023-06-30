@@ -125,7 +125,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        # self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -149,7 +148,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        # self.ecs_security_groups.extend(catalog_indexer_task.task.security_groups)
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -173,7 +171,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        # self.ecs_security_groups.extend(stacks_updater.task.security_groups)
 
         ssm.StringParameter(
             self,
@@ -204,9 +201,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        # self.ecs_security_groups.extend(
-        #     update_bucket_policies_task.task.security_groups
-        # )
 
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -234,7 +228,6 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
-        # self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
 
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
