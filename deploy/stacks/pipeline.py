@@ -32,7 +32,6 @@ class PipelineStack(Stack):
         **kwargs,
     ):
         super().__init__(id, scope, **kwargs)
-        git_branch="main"
         self.validate_deployment_params(git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
@@ -115,7 +114,7 @@ class PipelineStack(Stack):
         if self.source == 'github':
             source = CodePipelineSource.git_hub(
                 repo_string='awslabs/aws-dataall',
-                branch="487-restrict-nacls-backend-vpc",
+                branch=git_branch,
                 authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
             )
 
@@ -152,7 +151,7 @@ class PipelineStack(Stack):
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
                         "DATAALL_REPO_BRANCH": codebuild.BuildEnvironmentVariable(
-                            value="487-restrict-nacls-backend-vpc"
+                            value=git_branch
                         ),
                     }
                 )
