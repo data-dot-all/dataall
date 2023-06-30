@@ -102,7 +102,7 @@ class Dataset(Stack):
                 self,
                 'QuicksightGroupArn',
                 string_parameter_name=f'/dataall/{dataset.environmentUri}/quicksight/group_arn'
-            )
+            ).string_value
 
         # Dataset S3 Bucket and KMS key
         if dataset.imported and dataset.importedS3Bucket:
