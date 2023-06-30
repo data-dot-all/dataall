@@ -49,49 +49,88 @@ class ContainerStack(pyNestedClass):
         self.task_role = self.create_task_role(envname, resource_prefix, pivot_role_name)
         self.cicd_stacks_updater_role = self.create_cicd_stacks_updater_role(envname, resource_prefix, tooling_account_id)
 
-        cdkproxy_task_definition = ecs.FargateTaskDefinition(
-            self,
-            f'{resource_prefix}-{envname}-cdkproxy',
-            cpu=1024,
-            memory_limit_mib=2048,
-            task_role=self.task_role,
-            execution_role=self.task_role,
-            family=f'{resource_prefix}-{envname}-cdkproxy',
+        cdkproxy_container_name = f'container'
+        cdkproxy_log_group = self.create_log_group(
+            envname, resource_prefix, log_group_name='cdkproxy'
+        )
+        cdkproxy_image = ecs.ContainerImage.from_ecr_repository(
+            repository=ecr_repository,
+            tag=cdkproxy_image_tag
         )
 
-        cdkproxy_container = cdkproxy_task_definition.add_container(
-            f'ShareManagementTaskContainer{envname}',
-            container_name=f'container',
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
-            ),
-            environment={
-                'AWS_REGION': self.region,
-                'envname': envname,
-                'LOGLEVEL': 'DEBUG',
-            },
-            command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
-            logging=ecs.LogDriver.aws_logs(
-                stream_prefix='task',
-                log_group=self.create_log_group(
-                    envname, resource_prefix, log_group_name='cdkproxy'
+        cdkproxy_task_definition = ecs.CfnTaskDefinition(
+            self,
+            f'{resource_prefix}-{envname}-cdkproxy',
+            container_definitions=[ecs.CfnTaskDefinition.ContainerDefinitionProperty(
+                image=cdkproxy_image.image_name,
+                name=cdkproxy_container_name,
+                command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
+                environment=[
+                    ecs.CfnTaskDefinition.KeyValuePairProperty(
+                        name="AWS_REGION",
+                        value=self.region
+                    ),
+                    ecs.CfnTaskDefinition.KeyValuePairProperty(
+                        name="envname",
+                        value=envname
+                    ),
+                    ecs.CfnTaskDefinition.KeyValuePairProperty(
+                        name="LOGLEVEL",
+                        value="DEBUG"
+                    ),
+                ],
+                essential=True,
+                log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
+                    log_driver="awslogs",
+                    options={
+                        "awslogs-group": f'/{resource_prefix}/{envname}/ecs/cdkproxy',
+                        "awslogs-region": self.region,
+                        "awslogs-stream-prefix": "task"
+                    },
                 ),
-            ),
-            readonly_root_filesystem=True,
+                mount_points=[
+                    ecs.CfnTaskDefinition.MountPointProperty(
+                        container_path="/dataall",
+                        read_only=False,
+                        source_volume="dataall_scratch"
+                    ),
+                    ecs.CfnTaskDefinition.MountPointProperty(
+                        container_path="/tmp",
+                        read_only=False,
+                        source_volume="dataall_tmp_scratch"
+                    )
+                ],
+                readonly_root_filesystem=True,
+            )],
+            cpu="1024",
+            memory="2048",
+            execution_role_arn=self.task_role.role_arn,
+            family=f'{resource_prefix}-{envname}-cdkproxy',
+            requires_compatibilities=[ecs.Compatibility.FARGATE.name],
+            task_role_arn=self.task_role.role_arn,
+            network_mode="awsvpc",
+            volumes=[
+                ecs.CfnTaskDefinition.VolumeProperty(
+                    name="dataall_scratch"
+                ),
+                ecs.CfnTaskDefinition.VolumeProperty(
+                    name="dataall_tmp_scratch"
+                )
+            ]
         )
 
         ssm.StringParameter(
             self,
             f'CDKProxyTaskDefParam{envname}',
             parameter_name=f'/dataall/{envname}/ecs/task_def_arn/cdkproxy',
-            string_value=cdkproxy_task_definition.task_definition_arn,
+            string_value=cdkproxy_task_definition.attr_task_definition_arn,
         )
 
         ssm.StringParameter(
             self,
             f'CDKProxyContainerParam{envname}',
             parameter_name=f'/dataall/{envname}/ecs/container/cdkproxy',
-            string_value=cdkproxy_container.container_name,
+            string_value=cdkproxy_container_name,
         )
 
         scheduled_tasks_sg = self.create_task_sg(
@@ -302,13 +341,13 @@ class ContainerStack(pyNestedClass):
         )
 
         self.ecs_cluster = cluster
-        self.ecs_task_definitions = [
-            cdkproxy_task_definition,
-            sync_tables_task.task_definition,
-            update_bucket_policies_task.task_definition,
-            catalog_indexer_task.task_definition,
-            share_management_task_definition,
-            subscriptions_task.task_definition,
+        self.ecs_task_definitions_families = [
+            cdkproxy_task_definition.family,
+            sync_tables_task.task_definition.family,
+            update_bucket_policies_task.task_definition.family,
+            catalog_indexer_task.task_definition.family,
+            share_management_task_definition.family,
+            subscriptions_task.task_definition.family,
         ]
 
     def create_cicd_stacks_updater_role(self, envname, resource_prefix, tooling_account_id):
