@@ -315,7 +315,7 @@ class ContainerStack(pyNestedClass):
         share_manager_sg = ec2.SecurityGroup(
             self,
             f'ShareManagerSG{envname}',
-            security_group_name=f'{resource_prefix}-{envname}-ecs-cdkproxy-tasks-sg',
+            security_group_name=f'{resource_prefix}-{envname}-ecs-share-manager-tasks-sg',
             vpc=vpc,
             allow_all_outbound=False,
             disable_inline_rules=True,
