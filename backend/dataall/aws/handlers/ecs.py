@@ -51,7 +51,7 @@ class Ecs:
         cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
         subnets = Parameter().get_parameter(env=envname, path='ecs/private_subnets')
         security_groups = Parameter().get_parameter(
-            env=envname, path='ecs/security_groups'
+            env=envname, path='ecs/sharemanager_security_groups'
         )
 
         try:
@@ -108,7 +108,7 @@ class Ecs:
         cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')
         subnets = Parameter().get_parameter(env=envname, path='ecs/private_subnets')
         security_groups = Parameter().get_parameter(
-            env=envname, path='ecs/cdkproxy_security_groups'
+            env=envname, path='ecs/security_groups'
         )
         try:
             task_arn = Ecs.run_ecs_task(

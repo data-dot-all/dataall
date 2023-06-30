@@ -316,6 +316,8 @@ class VpcStack(pyNestedClass):
             'glue': ec2.InterfaceVpcEndpointAwsService.GLUE,
             'lakeformation': ec2.InterfaceVpcEndpointAwsService.LAKE_FORMATION,
             'athena': ec2.InterfaceVpcEndpointAwsService.ATHENA,
+            'codecommit': ec2.InterfaceVpcEndpointAwsService.CODECOMMIT,
+            'git-codecommit': ec2.InterfaceVpcEndpointAwsService.CODECOMMIT_GIT,
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():

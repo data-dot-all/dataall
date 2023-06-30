@@ -38,7 +38,7 @@ class ContainerStack(pyNestedClass):
 
         cdkproxy_image_tag = f'cdkproxy-{image_tag}'
         
-        (self.scheduled_tasks_sg, self.cdkproxy_sg) = self.create_ecs_security_groups(
+        (self.scheduled_tasks_sg, self.share_manager_sg) = self.create_ecs_security_groups(
             envname, 
             resource_prefix, 
             vpc, 
@@ -46,7 +46,7 @@ class ContainerStack(pyNestedClass):
             s3_prefix_list,
             lambdas
         )
-        self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.cdkproxy_sg]
+        self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.share_manager_sg]
 
         cluster = ecs.Cluster(
             self,
@@ -170,7 +170,7 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-stacks-updater',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=self.cdkproxy_sg,
+            security_group=self.scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
         # self.ecs_security_groups.extend(stacks_updater.task.security_groups)
@@ -318,17 +318,17 @@ class ContainerStack(pyNestedClass):
             disable_inline_rules=True,
         )
 
-        # Requires QS Access via NAT 
-        cdkproxy_sg = ec2.SecurityGroup(
+        # Requires RAM Access via NAT 
+        share_manager_sg = ec2.SecurityGroup(
             self,
-            f'CDKProxySG{envname}',
+            f'ShareManagerSG{envname}',
             security_group_name=f'{resource_prefix}-{envname}-ecs-cdkproxy-tasks-sg',
             vpc=vpc,
             allow_all_outbound=False,
             disable_inline_rules=True,
         )
         
-        for sg in [scheduled_tasks_sg,cdkproxy_sg]:
+        for sg in [scheduled_tasks_sg,share_manager_sg]:
             sg_connection = ec2.Connections(security_groups=[sg])
             # Add ECS to VPC Endpoint Connection
             if vpce_connection:
@@ -359,12 +359,12 @@ class ContainerStack(pyNestedClass):
                         'Allow Lambda to ECS Connection'
                     )
 
-        # Add NAT Gateway Access for QS API 
-        # cdkproxy_sg.add_egress_rule(
-        #     ec2.Peer.any_ipv4(),
-        #     ec2.Port.tcp(443),
-        #     'Allow NAT Internet Access SG Egress',
-        # )
+        # Add NAT Gateway Access for RAM API Access
+        share_manager_sg.add_egress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            'Allow NAT Internet Access SG Egress',
+        )
 
         # Create SSM of Security Group IDs
         ssm.StringParameter(
@@ -375,12 +375,12 @@ class ContainerStack(pyNestedClass):
         )
         ssm.StringParameter(
             self,
-            f'SecurityGroupCDKProxy{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/cdkproxy_security_groups',
-            string_value=cdkproxy_sg.security_group_id,
+            f'SecurityGroupShareManager{envname}',
+            parameter_name=f'/dataall/{envname}/ecs/sharemanager_security_groups',
+            string_value=share_manager_sg.security_group_id,
         )
 
-        return scheduled_tasks_sg, cdkproxy_sg
+        return scheduled_tasks_sg, share_manager_sg
 
     def create_cicd_stacks_updater_role(self, envname, resource_prefix, tooling_account_id):
         cicd_stacks_updater_role = iam.Role(
