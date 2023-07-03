@@ -2,7 +2,7 @@ import logging
 
 from dataall.modules.dataset_sharing.db.enums import ShareItemStatus, ShareObjectActions, ShareItemActions
 from ..share_managers import LFShareManager
-from dataall.aws.handlers.ram import Ram
+from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.db import models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.db.models import ShareObject
@@ -99,11 +99,11 @@ class ProcessLFCrossAccountShare(LFShareManager):
                     (
                         retry_share_table,
                         failed_invitations,
-                    ) = Ram.accept_ram_invitation(**data)
+                    ) = RamClient.accept_ram_invitation(**data)
 
                     if retry_share_table:
                         self.share_table_with_target_account(**data)
-                        Ram.accept_ram_invitation(**data)
+                        RamClient.accept_ram_invitation(**data)
 
                     self.create_resource_link(**data)
 

@@ -10,7 +10,7 @@ from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.ram import Ram
+from dataall.modules.dataset_sharing.aws.ram_client import RamClient
 from dataall.db import exceptions, models
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
@@ -467,7 +467,7 @@ class LFShareManager:
         list of ram associations
         """
         logger.info(f'Cleaning RAM resource shares for resource: {resource_arn} ...')
-        return Ram.delete_resource_shares(
+        return RamClient.delete_resource_shares(
             SessionHelper.remote_session(
                 accountid=self.source_environment.AwsAccountId
             ).client('ram', region_name=self.source_environment.region),

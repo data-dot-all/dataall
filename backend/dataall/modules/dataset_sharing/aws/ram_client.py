@@ -3,12 +3,12 @@ import time
 
 from botocore.exceptions import ClientError
 
-from .sts import SessionHelper
+from dataall.aws.handlers.sts import SessionHelper
 
 log = logging.getLogger('aws:ram')
 
 
-class Ram:
+class RamClient:
     @staticmethod
     def get_resource_share_invitations(
         client, resource_share_arns, sender_account, receiver_account
@@ -84,10 +84,10 @@ class Ram:
             f'arn:aws:glue:{source["region"]}:{source["accountid"]}:'
             f'table/{data["source"]["database"]}/{data["source"]["tablename"]}'
         )
-        associations = Ram.list_resource_share_associations(source_ram, resource_arn)
+        associations = RamClient.list_resource_share_associations(source_ram, resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
-        ram_invitations = Ram.get_resource_share_invitations(
+        ram_invitations = RamClient.get_resource_share_invitations(
             target_ram, resource_share_arns, source['accountid'], target['accountid']
         )
         log.info(
@@ -99,7 +99,7 @@ class Ram:
                     log.info(
                         f'Invitation {invitation} is in PENDING status accepting it ...'
                     )
-                    Ram.accept_resource_share_invitation(
+                    RamClient.accept_resource_share_invitation(
                         target_ram, invitation['resourceShareInvitationArn']
                     )
                     # Ram invitation acceptance is slow
@@ -159,7 +159,7 @@ class Ram:
     def delete_resource_shares(client, resource_arn):
         log.info(f'Cleaning RAM resource shares for resource: {resource_arn}')
         try:
-            associations = Ram.list_resource_share_associations(client, resource_arn)
+            associations = RamClient.list_resource_share_associations(client, resource_arn)
             for a in associations:
                 log.info(f"Deleting resource share: {a['resourceShareArn']}")
                 client.delete_resource_share(resourceShareArn=a['resourceShareArn'])
@@ -171,7 +171,7 @@ class Ram:
     def delete_lfv1_resource_shares_for_table(client, resource_arn):
         log.info(f'Cleaning LF V1 RAM resource shares for resource: {resource_arn}')
         try:
-            associations = Ram.list_resource_share_associations(client, resource_arn)
+            associations = RamClient.list_resource_share_associations(client, resource_arn)
             for a in associations:
                 if (
                     'LakeFormation' in a['resourceShareName']
