@@ -15,7 +15,8 @@ from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET
     DELETE_DATASET_TABLE, SYNC_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
-from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ
+from dataall.modules.datasets_base.services.permissions import PREVIEW_DATASET_TABLE, DATASET_TABLE_READ, \
+    GET_DATASET_TABLE
 from dataall.utils import json_utils
 
 log = logging.getLogger(__name__)
@@ -96,10 +97,10 @@ class DatasetTableService:
             return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
 
     @staticmethod
-    def get_glue_table_properties(table_uri: str):
-        # TODO THERE WAS NO PERMISSION CHECK
+    @has_resource_permission(GET_DATASET_TABLE)
+    def get_glue_table_properties(uri: str):
         with get_context().db_engine.scoped_session() as session:
-            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
     @staticmethod

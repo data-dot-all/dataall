@@ -42,12 +42,12 @@ def get_profiling_results(context: Context, source: DatasetProfilingRun):
 
 
 def list_profiling_runs(context: Context, source, datasetUri=None):
-    return DatasetProfilingService.list_profiling_runs(datasetUri)
+    return DatasetProfilingService.list_profiling_runs(uri=datasetUri)
 
 
 def get_last_table_profiling_run(context: Context, source, tableUri=None):
-    return DatasetProfilingService.get_last_table_profiling_run(tableUri)
+    return DatasetProfilingService.get_last_table_profiling_run(uri=tableUri)
 
 
 def list_table_profiling_runs(context: Context, source, tableUri=None):
-    return DatasetProfilingService.list_table_profiling_runs(tableUri)
+    return DatasetProfilingService.list_table_profiling_runs(uri=tableUri)
