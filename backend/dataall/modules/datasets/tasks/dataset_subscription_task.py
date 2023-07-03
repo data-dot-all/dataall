@@ -14,6 +14,7 @@ from dataall.db import models
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
+from dataall.modules.datasets.aws.sns_dataset_client import SnsDatasetClient
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
@@ -148,10 +149,8 @@ class DatasetSubscriptionService:
                             f'has updated the table shared with you {prefix}',
                         }
 
-                        response = DatasetSubscriptionService.sns_call(
-                            message, environment
-                        )
-
+                        sns_client = SnsDatasetClient(environment, dataset)
+                        response = sns_client.publish_dataset_message(message)
                         log.info(f'SNS update publish response {response}')
 
                         notifications = ShareNotificationService.notify_new_data_available_from_owners(
@@ -166,16 +165,6 @@ class DatasetSubscriptionService:
                         log.error(
                             f'Failed to deliver message {message} due to: {e}'
                         )
-
-    @staticmethod
-    def sns_call(message, environment):
-        aws_session = SessionHelper.remote_session(environment.AwsAccountId)
-        sns = aws_session.client('sns', region_name=environment.region)
-        response = sns.publish(
-            TopicArn=f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsConsumersTopicName}',
-            Message=json.dumps(message),
-        )
-        return response
 
     # TODO redshift related code
     def redshift_copy(
