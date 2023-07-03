@@ -167,15 +167,15 @@ class ContainerStack(pyNestedClass):
 
         self.ecs_cluster = cluster
 
-        self.add_sync_dataset_table_task()
-        self.add_bucket_policy_updater_task()
-        self.add_subscription_task()
-        self.add_share_management_task()
-
         self.ecs_task_definitions = [
             cdkproxy_task_definition,
             catalog_indexer_task.task_definition,
         ]
+
+        self.add_sync_dataset_table_task()
+        self.add_bucket_policy_updater_task()
+        self.add_subscription_task()
+        self.add_share_management_task()
 
     @run_if("modules.datasets.active")
     def add_share_management_task(self):
