@@ -455,25 +455,6 @@ class LFShareManager:
             )
         return revoke_entries
 
-    def delete_ram_resource_shares(self, resource_arn: str) -> [dict]:
-        """
-        Deletes resource share for the resource arn
-        Parameters
-        ----------
-        resource_arn : glue table arn
-
-        Returns
-        -------
-        list of ram associations
-        """
-        logger.info(f'Cleaning RAM resource shares for resource: {resource_arn} ...')
-        return RamClient.delete_resource_shares(
-            SessionHelper.remote_session(
-                accountid=self.source_environment.AwsAccountId
-            ).client('ram', region_name=self.source_environment.region),
-            resource_arn,
-        )
-
     def handle_share_failure(
         self,
         table: DatasetTable,
