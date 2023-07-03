@@ -12,6 +12,7 @@ from aws_cdk import (
 from aws_cdk.aws_applicationautoscaling import Schedule
 
 from .pyNestedStack import pyNestedClass
+from .run_if import run_if
 
 
 class ContainerStack(pyNestedClass):
@@ -176,6 +177,7 @@ class ContainerStack(pyNestedClass):
             catalog_indexer_task.task_definition,
         ]
 
+    @run_if("modules.datasets.active")
     def add_share_management_task(self):
         share_management_task_definition = ecs.FargateTaskDefinition(
             self,
@@ -218,6 +220,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions.append(share_management_task_definition)
 
+    @run_if("modules.datasets.active")
     def add_subscription_task(self):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -244,6 +247,7 @@ class ContainerStack(pyNestedClass):
         self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
         self.ecs_task_definitions.append(subscriptions_task.task_definition)
 
+    @run_if("modules.datasets.active")
     def add_bucket_policy_updater_task(self):
         update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
@@ -269,6 +273,7 @@ class ContainerStack(pyNestedClass):
 
         self.ecs_task_definitions.append(update_bucket_policies_task.task_definition)
 
+    @run_if("modules.datasets.active")
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
