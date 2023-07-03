@@ -32,11 +32,15 @@ class ContainerStack(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
         self._envname = envname
+        self._resource_prefix = resource_prefix
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
 
-        cdkproxy_image_tag = f'cdkproxy-{image_tag}'
+        self._cdkproxy_image_tag = f'cdkproxy-{image_tag}'
+        self._ecr_repository = ecr_repository
+        self._vpc = vpc
+        self._prod_sizing = prod_sizing
 
         self.ecs_security_groups: [aws_ec2.SecurityGroup] = []
 
@@ -65,7 +69,7 @@ class ContainerStack(pyNestedClass):
             f'ShareManagementTaskContainer{envname}',
             container_name=f'container',
             image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
+                repository=ecr_repository, tag=self._cdkproxy_image_tag
             ),
             environment=self._create_env('DEBUG'),
             command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
@@ -91,30 +95,9 @@ class ContainerStack(pyNestedClass):
             string_value=cdkproxy_container.container_name,
         )
 
-        scheduled_tasks_sg = self.create_task_sg(
+        self._scheduled_tasks_sg = self.create_task_sg(
             envname, resource_prefix, vpc, vpc_endpoints_sg
         )
-
-        # TODO introduce the ability to change the deployment depending on config.json file
-        sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment=self._create_env('INFO'),
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='tables-syncer'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-tables-syncer-schedule',
-            task_id=f'{resource_prefix}-{envname}-tables-syncer',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-        self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
@@ -122,7 +105,7 @@ class ContainerStack(pyNestedClass):
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
-            image_tag=cdkproxy_image_tag,
+            image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='catalog-indexer'
             ),
@@ -131,7 +114,7 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-catalog-indexer',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self._scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
         self.ecs_security_groups.extend(catalog_indexer_task.task.security_groups)
@@ -142,7 +125,7 @@ class ContainerStack(pyNestedClass):
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
-            image_tag=cdkproxy_image_tag,
+            image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(
                 envname, resource_prefix, log_group_name='stacks-updater'
             ),
@@ -151,7 +134,7 @@ class ContainerStack(pyNestedClass):
             task_id=f'{resource_prefix}-{envname}-stacks-updater',
             task_role=self.task_role,
             vpc=vpc,
-            security_group=scheduled_tasks_sg,
+            security_group=self._scheduled_tasks_sg,
             prod_sizing=prod_sizing,
         )
         self.ecs_security_groups.extend(stacks_updater.task.security_groups)
@@ -161,95 +144,6 @@ class ContainerStack(pyNestedClass):
             f'StacksUpdaterTaskDefParam{envname}',
             parameter_name=f'/dataall/{envname}/ecs/task_def_arn/stacks_updater',
             string_value=stacks_updater_task_def.task_definition_arn,
-        )
-
-        # TODO introduce the ability to change the deployment depending on config.json file
-        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment=self._create_env('DEBUG'),
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='policies-updater'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-policies-updater-schedule',
-            task_id=f'{resource_prefix}-{envname}-policies-updater',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-        self.ecs_security_groups.extend(
-            update_bucket_policies_task.task.security_groups
-        )
-
-        # TODO introduce the ability to change the deployment depending on config.json file
-        subscriptions_task, subscription_task_def = self.set_scheduled_task(
-            cluster=cluster,
-            command=[
-                'python3.8',
-                '-m',
-                'dataall.modules.datasets.tasks.dataset_subscription_task',
-            ],
-            container_id=f'container',
-            ecr_repository=ecr_repository,
-            environment=self._create_env('INFO'),
-            image_tag=cdkproxy_image_tag,
-            log_group=self.create_log_group(
-                envname, resource_prefix, log_group_name='subscriptions'
-            ),
-            schedule_expression=Schedule.expression('rate(15 minutes)'),
-            scheduled_task_id=f'{resource_prefix}-{envname}-subscriptions-schedule',
-            task_id=f'{resource_prefix}-{envname}-subscriptions',
-            task_role=self.task_role,
-            vpc=vpc,
-            security_group=scheduled_tasks_sg,
-            prod_sizing=prod_sizing,
-        )
-        self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
-
-        share_management_task_definition = ecs.FargateTaskDefinition(
-            self,
-            f'{resource_prefix}-{envname}-share-manager',
-            cpu=1024,
-            memory_limit_mib=2048,
-            task_role=self.task_role,
-            execution_role=self.task_role,
-            family=f'{resource_prefix}-{envname}-share-manager',
-        )
-
-        # TODO introduce the ability to change the deployment depending on config.json file
-        share_management_container = share_management_task_definition.add_container(
-            f'ShareManagementTaskContainer{envname}',
-            container_name=f'container',
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=ecr_repository, tag=cdkproxy_image_tag
-            ),
-            environment=self._create_env('DEBUG'),
-            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
-            logging=ecs.LogDriver.aws_logs(
-                stream_prefix='task',
-                log_group=self.create_log_group(
-                    envname, resource_prefix, log_group_name='share-manager'
-                ),
-            ),
-        )
-
-        ssm.StringParameter(
-            self,
-            f'ShareManagementTaskDef{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/task_def_arn/share_management',
-            string_value=share_management_task_definition.task_definition_arn,
-        )
-
-        ssm.StringParameter(
-            self,
-            f'ShareManagementContainerParam{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/container/share_management',
-            string_value=share_management_container.container_name,
         )
 
         ssm.StringParameter(
@@ -270,22 +164,139 @@ class ContainerStack(pyNestedClass):
             ),
         )
 
-        ssm.StringParameter(
-            self,
-            f'SecurityGroup{envname}',
-            parameter_name=f'/dataall/{envname}/ecs/security_groups',
-            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
-        )
-
         self.ecs_cluster = cluster
+
+        self.add_sync_dataset_table_task()
+        self.add_bucket_policy_updater_task()
+        self.add_subscription_task()
+        self.add_share_management_task()
+
         self.ecs_task_definitions = [
             cdkproxy_task_definition,
-            sync_tables_task.task_definition,
-            update_bucket_policies_task.task_definition,
             catalog_indexer_task.task_definition,
-            share_management_task_definition,
-            subscriptions_task.task_definition,
         ]
+
+    def add_share_management_task(self):
+        share_management_task_definition = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-manager',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+            family=f'{self._resource_prefix}-{self._envname}-share-manager',
+        )
+
+        share_management_container = share_management_task_definition.add_container(
+            f'ShareManagementTaskContainer{self._envname}',
+            container_name=f'container',
+            image=ecs.ContainerImage.from_ecr_repository(
+                repository=self._ecr_repository, tag=self._cdkproxy_image_tag
+            ),
+            environment=self._create_env('DEBUG'),
+            command=['python3.8', '-m', 'dataall.modules.dataset_sharing.tasks.share_manager_task'],
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix='task',
+                log_group=self.create_log_group(
+                    self._envname, self._resource_prefix, log_group_name='share-manager'
+                ),
+            ),
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareManagementTaskDef{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/share_management',
+            string_value=share_management_task_definition.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareManagementContainerParam{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/share_management',
+            string_value=share_management_container.container_name,
+        )
+        self.ecs_task_definitions.append(share_management_task_definition)
+
+    def add_subscription_task(self):
+        subscriptions_task, subscription_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=[
+                'python3.8',
+                '-m',
+                'dataall.modules.datasets.tasks.dataset_subscription_task',
+            ],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='subscriptions'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-subscriptions-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-subscriptions',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self._scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_security_groups.extend(subscriptions_task.task.security_groups)
+        self.ecs_task_definitions.append(subscriptions_task.task_definition)
+
+    def add_bucket_policy_updater_task(self):
+        update_bucket_policies_task, update_bucket_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.bucket_policy_updater'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('DEBUG'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='policies-updater'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-policies-updater-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-policies-updater',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self._scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_security_groups.extend(
+            update_bucket_policies_task.task.security_groups
+        )
+
+        self.ecs_task_definitions.append(update_bucket_policies_task.task_definition)
+
+    def add_sync_dataset_table_task(self):
+        sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.8', '-m', 'dataall.modules.datasets.tasks.tables_syncer'],
+            container_id=f'container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('INFO'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='tables-syncer'
+            ),
+            schedule_expression=Schedule.expression('rate(15 minutes)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-tables-syncer-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-tables-syncer',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self._scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_security_groups.extend(sync_tables_task.task.security_groups)
+
+        ssm.StringParameter(
+            self,
+            f'SecurityGroup{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/security_groups',
+            string_value=','.join([s.security_group_id for s in sync_tables_task.task.security_groups]),
+        )
+        self.ecs_task_definitions.append(sync_tables_task.task_definition)
 
     def create_cicd_stacks_updater_role(self, envname, resource_prefix, tooling_account_id):
         cicd_stacks_updater_role = iam.Role(
@@ -503,7 +514,7 @@ class ContainerStack(pyNestedClass):
         vpc,
         security_group,
         prod_sizing,
-    ) -> ecs_patterns.ScheduledFargateTask:
+    ) -> (ecs.FargateTaskDefinition, ecs_patterns.ScheduledFargateTask):
         task = ecs.FargateTaskDefinition(
             self,
             task_id,
