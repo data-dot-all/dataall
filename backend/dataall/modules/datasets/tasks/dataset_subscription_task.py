@@ -15,7 +15,7 @@ from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.tasks.subscriptions import poll_queues
+from dataall.modules.datasets.tasks.subscriptions import poll_queues
 from dataall.utils import json_utils
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
