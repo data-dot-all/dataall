@@ -105,12 +105,12 @@ class DatasetTableService:
 
     @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
-        # TODO THERE WAS NO PERMISSION CHECK
-        with get_context().db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
             return [
                 {"tableUri": t.tableUri, "GlueTableName": t.GlueTableName}
                 for t in DatasetTableRepository.query_dataset_tables_shared_with_env(
-                    session, env_uri, dataset_uri
+                    session, env_uri, dataset_uri, context.username, context.groups
                 )
             ]
 
