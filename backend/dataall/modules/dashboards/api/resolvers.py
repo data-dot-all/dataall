@@ -1,6 +1,6 @@
 from dataall.api.context import Context
 from dataall.db import models
-from dataall.db.api import  Glossary, Vote
+from dataall.db.api import Glossary, Vote, Organization
 from dataall.db.exceptions import RequiredParameter
 from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
@@ -22,11 +22,16 @@ def import_dashboard(context: Context, source, input: dict = None):
     if not input.get('label'):
         raise RequiredParameter('label')
 
-    return DashboardService.import_dashboard(uri=input['environmentUri'], data=input)
+    return DashboardService.import_dashboard(
+        uri=input['environmentUri'],
+        admin_group=input['SamlGroupName'],
+        data=input
+    )
 
 
 def update_dashboard(context, source, input: dict = None):
     return DashboardService.update_dashboard(uri=input['dashboardUri'], data=input)
+
 
 def list_dashboards(context: Context, source, filter: dict = None):
     if not filter:
@@ -54,8 +59,7 @@ def resolve_user_role(context: Context, source: Dashboard):
 
 def get_dashboard_organization(context: Context, source: Dashboard, **kwargs):
     with context.engine.scoped_session() as session:
-        org = session.query(models.Organization).get(source.organizationUri)
-    return org
+        return Organization.get_organization_by_uri(session, source.organizationUri)
 
 
 def request_dashboard_share(
