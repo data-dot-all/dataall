@@ -76,7 +76,7 @@ On left pane choose **Datasets**, then click on the **Create** button. Fill the 
 
 ## :material-import: **Import a dataset**
 
-If you already have data stored on Amazon S3 buckets, data.all got you covered with the import feature. In addition to
+If you already have data stored on Amazon S3 buckets in your data.all environment, data.all got you covered with the import feature. In addition to
 the fields of a newly created dataset you have to specify the S3 bucket and optionally a Glue database:
 
 | Field             | Description                                                                | Required | Editable |Example
