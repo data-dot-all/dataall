@@ -277,8 +277,8 @@ class S3ShareManager:
         )
         key_alias = f"alias/{self.dataset.KmsAlias}"
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
-        kms_keyId = kms_client.get_key_id(key_alias)
-        existing_policy = kms_client.get_key_policy(kms_keyId, "default")
+        kms_key_id = kms_client.get_key_id(key_alias)
+        existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(self.target_account_id, self.target_requester_IAMRoleName)
         if existing_policy and f'{target_requester_id}:*' not in existing_policy:
             policy = json.loads(existing_policy)
@@ -298,7 +298,7 @@ class S3ShareManager:
                     }
                 }
             )
-            kms_client.put_key_policy(kms_keyId, "default", json.dumps(policy))
+            kms_client.put_key_policy(kms_key_id, json.dumps(policy))
 
     def delete_access_point_policy(self):
         logger.info(
@@ -382,13 +382,13 @@ class S3ShareManager:
         )
         key_alias = f"alias/{dataset.KmsAlias}"
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
-        kms_keyId = kms_client.get_key_id(key_alias)
-        existing_policy = kms_client.get_key_policy(kms_keyId, "default")
+        kms_key_id = kms_client.get_key_id(key_alias)
+        existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_id = SessionHelper.get_role_id(target_environment.AwsAccountId, share.principalIAMRoleName)
         if existing_policy and f'{target_requester_id}:*' in existing_policy:
             policy = json.loads(existing_policy)
             policy["Statement"] = [item for item in policy["Statement"] if item["Sid"] != f"{target_requester_id}"]
-            kms_client.put_key_policy(kms_keyId, "default", json.dumps(policy))
+            kms_client.put_key_policy(kms_key_id, json.dumps(policy))
 
     def handle_share_failure(self, error: Exception) -> None:
         """

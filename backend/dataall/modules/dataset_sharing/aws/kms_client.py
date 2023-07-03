@@ -6,17 +6,18 @@ log = logging.getLogger(__name__)
 
 
 class KmsClient:
+    _DEFAULT_POLICY_NAME = "default"
 
     def __init__(self, account_id: str, region: str):
         session = SessionHelper.remote_session(accountid=account_id)
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 
-    def put_key_policy(self, key_id: str, policy_name: str, policy: str):
+    def put_key_policy(self, key_id: str, policy: str):
         try:
             self._client.put_key_policy(
                 KeyId=key_id,
-                PolicyName=policy_name,
+                PolicyName=self._DEFAULT_POLICY_NAME,
                 Policy=policy,
             )
         except Exception as e:
@@ -25,11 +26,11 @@ class KmsClient:
             )
             raise e
 
-    def get_key_policy(self, key_id: str, policy_name: str):
+    def get_key_policy(self, key_id: str):
         try:
             response = self._client.get_key_policy(
                 KeyId=key_id,
-                PolicyName=policy_name,
+                PolicyName=self._DEFAULT_POLICY_NAME,
             )
         except Exception as e:
             log.error(
