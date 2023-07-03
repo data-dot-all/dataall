@@ -1,14 +1,11 @@
-name: Run Semgrep differential
+name: Run Semgrep-full
 
 on:
   workflow_dispatch:
-  push:
     branches:
-    - main
-  pull_request:
-    branches:
-    - main
-    - release/*
+      - main
+  schedule:
+    - cron:  '0 1 * * 6'
 
 permissions:
   contents: read
@@ -26,7 +23,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: semgrep ci --verbose --error --baseline-commit $ --metrics=off
+      - run: semgrep ci --verbose --metrics=off --sarif --output=semgrep.sarif
         env:
            # Add the rules that Semgrep uses by setting the SEMGREP_RULES environment variable.
            SEMGREP_RULES: p/default # more at semgrep.dev/explore
+
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
