@@ -83,7 +83,7 @@ class ContainerStack(pyNestedClass):
                 log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
                     log_driver="awslogs",
                     options={
-                        "awslogs-group": f'/{resource_prefix}/{envname}/ecs/cdkproxy',
+                        "awslogs-group": cdkproxy_log_group.log_group_name,
                         "awslogs-region": self.region,
                         "awslogs-stream-prefix": "task"
                     },
