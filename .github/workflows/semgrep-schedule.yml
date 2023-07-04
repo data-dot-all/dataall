@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  semgrep:
+  semgrep-full:
     runs-on: ubuntu-latest
 
     container:
