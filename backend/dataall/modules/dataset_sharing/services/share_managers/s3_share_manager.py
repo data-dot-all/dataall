@@ -322,7 +322,10 @@ class S3ShareManager:
             else:
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}0"])
                 access_point_policy["Statement"].remove(statements[f"{target_requester_id}1"])
-        s3_client.attach_access_point_policy(self.access_point_name, json.dumps(access_point_policy))
+        s3_client.attach_access_point_policy(
+            access_point_name=self.access_point_name,
+            policy=json.dumps(access_point_policy)
+        )
 
     @staticmethod
     def delete_access_point(

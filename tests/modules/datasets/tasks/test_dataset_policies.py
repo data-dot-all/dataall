@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from dataall.api.constants import OrganisationUserRole
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.bucket_policy_updater import BucketPoliciesUpdater
@@ -137,18 +139,11 @@ def test_group_prefixes_by_accountid(db, mocker):
 
 
 def test_handler(org, env, db, sync_dataset, mocker):
-    mocker.patch(
-        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.init_s3_client',
-        return_value=True,
-    )
-    mocker.patch(
-        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.get_bucket_policy',
-        return_value={'Version': '2012-10-17', 'Statement': []},
-    )
-    mocker.patch(
-        'dataall.modules.datasets.tasks.bucket_policy_updater.BucketPoliciesUpdater.put_bucket_policy',
-        return_value={'status': 'SUCCEEDED'},
-    )
+    s3_client = MagicMock()
+    mocker.patch('dataall.modules.datasets.tasks.bucket_policy_updater.S3BucketPolicyClient', s3_client)
+    s3_client().get_bucket_policy.return_value = {'Version': '2012-10-17', 'Statement': []}
+    s3_client().put_bucket_policy.return_value = {'status': 'SUCCEEDED'}
+
     updater = BucketPoliciesUpdater(db)
     assert len(updater.sync_imported_datasets_bucket_policies()) == 1
     assert updater.sync_imported_datasets_bucket_policies()[0]['status'] == 'SUCCEEDED'

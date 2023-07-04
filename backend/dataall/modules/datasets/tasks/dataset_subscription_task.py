@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 
 from dataall import db
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.db import get_engine
 from dataall.db import models

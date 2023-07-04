@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from .. import db
 from ..db import Base
 from ..db.dbconfig import DbConfig
-from ..utils import Parameter, Secrets
+from ..utils import Parameter
 
 try:
     from urllib import quote_plus, unquote_plus

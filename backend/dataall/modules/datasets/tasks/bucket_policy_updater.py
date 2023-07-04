@@ -29,7 +29,7 @@ class BucketPoliciesUpdater:
                 session.query(Dataset)
                 .filter(
                     and_(
-                        Dataset.imported == True,
+                        Dataset.imported,
                         Dataset.deleted.is_(None),
                     )
                 )
