@@ -26,13 +26,9 @@ class DashboardQuicksightClient:
 
     def register_user_in_group(self, group_name, user_role='READER'):
         QuicksightClient.create_quicksight_group(self._account_id, group_name)
-        exists = False
         user = self._describe_user()
 
         if user is not None:
-            exists = True
-
-        if exists:
             self._client.update_user(
                 UserName=self._username,
                 AwsAccountId=self._account_id,
@@ -82,7 +78,7 @@ class DashboardQuicksightClient:
         )
         return response.get('EmbedUrl')
 
-    def get_shared_reader_session(self,  group_name, user_role='READER', dashboard_id=None):
+    def get_shared_reader_session(self, group_name, user_role='READER', dashboard_id=None):
         aws_account_id = self._account_id
         identity_region = QuicksightClient.get_identity_region(aws_account_id)
         group_principal = f"arn:aws:quicksight:{identity_region}:{aws_account_id}:group/default/{group_name}"
@@ -267,4 +263,3 @@ class DashboardQuicksightClient:
         except ClientError:
             return None
         return response.get('User')
-

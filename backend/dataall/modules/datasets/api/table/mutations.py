@@ -27,4 +27,3 @@ syncTables = gql.MutationField(
     type=gql.Ref('DatasetTableSearchResult'),
     resolver=sync_tables,
 )
-

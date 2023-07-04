@@ -1,5 +1,5 @@
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.core.permission_checker import has_tenant_permission, has_resource_permission, has_group_permission
 from dataall.db.api import ResourcePolicy, Glossary, Vote, Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.db.models import Activity
@@ -22,7 +22,8 @@ class DashboardService:
     @staticmethod
     @has_tenant_permission(MANAGE_DASHBOARDS)
     @has_resource_permission(CREATE_DASHBOARD)
-    def import_dashboard(uri: str, data: dict = None) -> Dashboard:
+    @has_group_permission(CREATE_DASHBOARD)
+    def import_dashboard(uri: str, admin_group: str, data: dict = None) -> Dashboard:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = Environment.get_environment_by_uri(session, data['environmentUri'])
@@ -42,14 +43,6 @@ class DashboardService:
                     action=CREATE_DASHBOARD,
                     message=f'User: {context.username} has not AUTHOR rights on quicksight for the environment {env.label}',
                 )
-            Environment.check_group_environment_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                uri=uri,
-                group=data['SamlGroupName'],
-                permission_name=CREATE_DASHBOARD,
-            )
 
             env = data.get(
                 'environment', Environment.get_environment_by_uri(session, uri)
@@ -139,4 +132,3 @@ class DashboardService:
                 'Dashboard',
                 data['terms'],
             )
-

@@ -31,7 +31,7 @@ class DashboardShareService:
             if not share:
                 share = DashboardRepository.create_share(session, context.username, dashboard, principal_id)
             else:
-                DashboardShareService._check_stare_status(share)
+                DashboardShareService._check_share_status(share)
 
                 if share.status == DashboardShareStatus.REJECTED.value:
                     share.status = DashboardShareStatus.REQUESTED.value
@@ -97,14 +97,14 @@ class DashboardShareService:
 
     @staticmethod
     def _change_share_status(share, status):
-        DashboardShareService._check_stare_status(share)
+        DashboardShareService._check_share_status(share)
         if share.status == status.value:
             return share
 
         share.status = status.value
 
     @staticmethod
-    def _check_stare_status(share):
+    def _check_share_status(share):
         if share.status not in DashboardShareStatus.__members__:
             raise InvalidInput(
                 'Share status',

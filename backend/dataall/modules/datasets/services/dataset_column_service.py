@@ -59,4 +59,3 @@ class DatasetColumnService:
 
         Worker.queue(engine=get_context().db_engine, task_ids=[task.taskUri])
         return column
-
