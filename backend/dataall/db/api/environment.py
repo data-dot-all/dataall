@@ -18,8 +18,6 @@ from ..models import EnvironmentGroup
 from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
-    PrincipalType
-
 )
 from ..models.Permission import PermissionType
 from ..paginator import paginate

@@ -14,6 +14,7 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
 from ....aws.handlers.parameter_store import ParameterStoreManager
+from ....core.group.services.environment_resource_manager import EnvironmentResourceManager
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -127,10 +128,8 @@ def update_environment(
             data=input,
             check_perm=True,
         )
-        if input.get('dashboardsEnabled') or (
-            environment.resourcePrefix != previous_resource_prefix
-        ):
-            stack_helper.deploy_stack(targetUri=environment.environmentUri)
+
+        EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment)
     return environment
 
 
