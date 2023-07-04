@@ -131,4 +131,3 @@ class DashboardService:
                 'Dashboard',
                 data['terms'],
             )
-

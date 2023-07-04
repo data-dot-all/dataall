@@ -129,7 +129,9 @@ def update_environment(
             check_perm=True,
         )
 
-        EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment)
+        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
+            stack_helper.deploy_stack(targetUri=environment.environmentUri)
+
     return environment
 
 

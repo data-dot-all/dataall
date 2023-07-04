@@ -25,7 +25,7 @@ depends_on = None
 
 Base = declarative_base()
 
-UNUSED_PERMISSIONS = ['LIST_DATASETS',  'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
+UNUSED_PERMISSIONS = ['LIST_DATASETS', 'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
                       'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
                       'CREATE_DATASET_TABLE', 'LIST_PIPELINES', 'DASHBOARD_URL']
 
@@ -151,7 +151,6 @@ def downgrade():
         session.add_all(envs)
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
-
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")

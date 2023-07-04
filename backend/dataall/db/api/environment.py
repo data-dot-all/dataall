@@ -1005,4 +1005,4 @@ class Environment:
     @staticmethod
     def get_boolean_env_param(session, env: models.Environment, param: str) -> bool:
         param = EnvironmentParameterRepository(session).get_param(env.environmentUri, param)
-        return param and param.value.lower() == "true"
+        return param is not None and param.value.lower() == "true"

@@ -1,8 +1,6 @@
 from abc import ABC
 from typing import List
 
-from dataall.api.Objects.Stack import stack_helper
-
 
 class EnvironmentResource(ABC):
     @staticmethod
@@ -15,7 +13,7 @@ class EnvironmentResource(ABC):
 
     @staticmethod
     def update_env(session, environment):
-        pass
+        return False
 
 
 class EnvironmentResourceManager:
@@ -42,8 +40,7 @@ class EnvironmentResourceManager:
         for resource in cls._resources:
             deploy_stack |= resource.update_env(session, environment)
 
-        if deploy_stack:
-            stack_helper.deploy_stack(targetUri=environment.environmentUri)
+        return deploy_stack
 
     @classmethod
     def delete_env(cls, session, environment):
