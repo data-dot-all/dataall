@@ -25,9 +25,9 @@ depends_on = None
 
 Base = declarative_base()
 
-UNUSED_PERMISSIONS = ['LIST_DATASETS',  'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
+UNUSED_PERMISSIONS = ['LIST_DATASETS', 'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
                       'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
-                      'CREATE_DATASET_TABLE', 'LIST_PIPELINES']
+                      'CREATE_DATASET_TABLE', 'LIST_PIPELINES', 'DASHBOARD_URL']
 
 
 class Environment(Resource, Base):
@@ -36,6 +36,7 @@ class Environment(Resource, Base):
     notebooksEnabled = Column(Boolean)
     mlStudiosEnabled = Column(Boolean)
     pipelinesEnabled = Column(Boolean)
+    dashboardsEnabled = Column(Boolean)
 
 
 class EnvironmentParameter(Base):
@@ -84,6 +85,9 @@ def upgrade():
             _add_param_if_exists(
                 params, env, "pipelinesEnabled", str(env.pipelinesEnabled).lower()  # for frontend
             )
+            _add_param_if_exists(
+                params, env, "dashboardsEnabled", str(env.dashboardsEnabled).lower()  # for frontend
+            )
 
         session.add_all(params)
         print("Migration of the environmental parameters has been complete")
@@ -91,6 +95,7 @@ def upgrade():
         op.drop_column("environment", "notebooksEnabled")
         op.drop_column("environment", "mlStudiosEnabled")
         op.drop_column("environment", "pipelinesEnabled")
+        op.drop_column("environment", "dashboardsEnabled")
         print("Dropped the columns from the environment table ")
 
         create_foreign_key_to_env(op, 'sagemaker_notebook')
@@ -125,6 +130,7 @@ def downgrade():
         op.add_column("environment", Column("notebooksEnabled", Boolean, default=True))
         op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
         op.add_column("environment", Column("pipelinesEnabled", Boolean, default=True))
+        op.add_column("environment", Column("dashboardsEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
         params = session.query(EnvironmentParameter).all()
@@ -135,7 +141,8 @@ def downgrade():
                 environmentUri=param.environmentUri,
                 notebooksEnabled=params["notebooksEnabled"] == "true",
                 mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
-                pipelinesEnabled=params["pipelinesEnabled"] == "true"
+                pipelinesEnabled=params["pipelinesEnabled"] == "true",
+                dashboardsEnabled=params["dashboardsEnabled"] == "true"
             ))
 
         for name in UNUSED_PERMISSIONS:
@@ -144,7 +151,6 @@ def downgrade():
         session.add_all(envs)
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
-
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")

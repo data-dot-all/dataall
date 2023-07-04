@@ -1,65 +1,3 @@
-import pytest
-
-from dataall.db import models
-
-
-@pytest.fixture(scope='module')
-def org1(db, org, tenant, user, group) -> models.Organization:
-    org = org('testorg', user.userName, group.name)
-    yield org
-
-
-@pytest.fixture(scope='module')
-def env1(
-    db, org1: models.Organization, user, group, env
-) -> models.Environment:
-    env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
-    yield env1
-
-
-@pytest.fixture(scope='module')
-def dashboard(client, env1, org1, group, module_mocker, patch_es):
-    module_mocker.patch(
-        'dataall.aws.handlers.quicksight.Quicksight.can_import_dashboard',
-        return_value=True,
-    )
-    response = client.query(
-        """
-            mutation importDashboard(
-                $input:ImportDashboardInput,
-            ){
-                importDashboard(input:$input){
-                    dashboardUri
-                    name
-                    label
-                    DashboardId
-                    created
-                    owner
-                    SamlGroupName
-                }
-            }
-        """,
-        input={
-            'dashboardId': f'1234',
-            'label': f'1234',
-            'environmentUri': env1.environmentUri,
-            'SamlGroupName': group.name,
-            'terms': ['term'],
-        },
-        username='alice',
-        groups=[group.name],
-    )
-    assert response.data.importDashboard.owner == 'alice'
-    assert response.data.importDashboard.SamlGroupName == group.name
-    yield response.data.importDashboard
-
-
-def test_count_votes(client, dashboard, env1):
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert response.data.countUpVotes == 0
-
 
 def count_votes_query(client, target_uri, target_type, group):
     response = client.query(
@@ -91,38 +29,6 @@ def get_vote_query(client, target_uri, target_type, group):
         groups=[group],
     )
     return response
-
-
-def test_upvote(patch_es, client, env1, dashboard):
-
-    response = upvote_mutation(
-        client, dashboard.dashboardUri, 'dashboard', True, env1.SamlGroupName
-    )
-    assert response.data.upVote.upvote
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert response.data.countUpVotes == 1
-    response = get_vote_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert response.data.getVote.upvote
-
-    response = upvote_mutation(
-        client, dashboard.dashboardUri, 'dashboard', False, env1.SamlGroupName
-    )
-
-    assert not response.data.upVote.upvote
-
-    response = get_vote_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert not response.data.getVote.upvote
-
-    response = count_votes_query(
-        client, dashboard.dashboardUri, 'dashboard', env1.SamlGroupName
-    )
-    assert response.data.countUpVotes == 0
 
 
 def upvote_mutation(client, target_uri, target_type, upvote, group):

@@ -5,7 +5,7 @@ const deleteDashboard = (dashboardUri) => ({
     dashboardUri
   },
   mutation: gql`
-    mutation importDashboard($dashboardUri: String!) {
+    mutation deleteDashboard($dashboardUri: String!) {
       deleteDashboard(dashboardUri: $dashboardUri)
     }
   `

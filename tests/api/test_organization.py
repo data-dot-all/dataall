@@ -1,6 +1,8 @@
 import dataall
 import pytest
 
+from dataall.core.environment.models import EnvironmentParameter
+
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
@@ -280,6 +282,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
 
     assert 'OrganizationResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
+        session.query(EnvironmentParameter).filter(EnvironmentParameter.environmentUri == env2.environmentUri).delete()
         env = session.query(dataall.db.models.Environment).get(env2.environmentUri)
         session.delete(env)
         session.commit()

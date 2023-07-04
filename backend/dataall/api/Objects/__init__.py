@@ -18,7 +18,6 @@ from . import (
     Activity,
     Group,
     Principal,
-    Dashboard,
     Organization,
     Stack,
     Test,

@@ -3,9 +3,8 @@ import os
 import sys
 
 from dataall.core.catalog.catalog_indexer import CatalogIndexer
-from dataall.db import get_engine, models
+from dataall.db import get_engine
 from dataall.modules.loader import load_modules, ImportMode
-from dataall.searchproxy.indexers import DashboardIndexer
 from dataall.utils.alarm_service import AlarmService
 
 root = logging.getLogger()
@@ -21,13 +20,6 @@ def index_objects(engine):
         with engine.scoped_session() as session:
             for indexer in CatalogIndexer.all():
                 indexed_objects_counter += indexer.index(session)
-
-            all_dashboards: [models.Dashboard] = session.query(models.Dashboard).all()
-            log.info(f'Found {len(all_dashboards)} dashboards')
-            dashboard: models.Dashboard
-            for dashboard in all_dashboards:
-                DashboardIndexer.upsert(session=session, dashboard_uri=dashboard.dashboardUri)
-                indexed_objects_counter = indexed_objects_counter + 1
 
             log.info(f'Successfully indexed {indexed_objects_counter} objects')
             return indexed_objects_counter

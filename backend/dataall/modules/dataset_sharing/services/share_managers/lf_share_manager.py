@@ -5,9 +5,10 @@ import time
 
 from botocore.exceptions import ClientError
 
+from dataall.db.api import Environment
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
-from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.ram import Ram
 from dataall.db import exceptions, models
@@ -41,12 +42,6 @@ class LFShareManager:
         self.shared_db_name = self.build_shared_db_name()
         self.principals = self.get_share_principals()
 
-        self.glue_client = GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            database=self.shared_db_name,
-        )
-
     @abc.abstractmethod
     def process_approved_shares(self) -> [str]:
         return NotImplementedError
@@ -67,8 +62,10 @@ class LFShareManager:
         List of principals
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
-        if self.target_environment.dashboardsEnabled:
-            group = Quicksight.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
+        dashboard_enabled = Environment.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
+
+        if dashboard_enabled:
+            group = QuicksightClient.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
             if group and group.get('Group'):
                 group_arn = group.get('Group').get('Arn')
                 if group_arn:
@@ -130,7 +127,7 @@ class LFShareManager:
         -------
         exceptions.AWSResourceNotFound
         """
-        if not self.glue_client.table_exists(table.GlueTableName):
+        if not self.glue_client().table_exists(table.GlueTableName):
             raise exceptions.AWSResourceNotFound(
                 action='ProcessShare',
                 message=(
@@ -211,7 +208,7 @@ class LFShareManager:
         bool
         """
         logger.info(f'Deleting shared database {self.shared_db_name}')
-        return self.glue_client.delete_database()
+        return self.glue_client().delete_database()
 
     @classmethod
     def create_resource_link(cls, **data) -> dict:
@@ -276,7 +273,7 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        glue_client = self.glue_client
+        glue_client = self.glue_client()
         if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Resource link could not be found '
@@ -327,7 +324,7 @@ class LFShareManager:
         -------
         True if revoke is successful
         """
-        glue_client = self.glue_client
+        glue_client = self.glue_client()
         if not glue_client.table_exists(table.GlueTableName):
             logger.info(
                 f'Source table could not be found '
@@ -353,7 +350,7 @@ class LFShareManager:
 
     def delete_resource_link_table(self, table: DatasetTable):
         logger.info(f'Deleting shared table {table.GlueTableName}')
-        glue_client = self.glue_client
+        glue_client = self.glue_client()
 
         if not glue_client.table_exists(table.GlueTableName):
             return True
@@ -529,3 +526,10 @@ class LFShareManager:
             table, self.share, self.target_environment
         )
         return True
+
+    def glue_client(self):
+        return GlueClient(
+            account_id=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            database=self.shared_db_name,
+        )

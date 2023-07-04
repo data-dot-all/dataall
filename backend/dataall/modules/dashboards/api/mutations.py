@@ -1,5 +1,5 @@
-from ... import gql
-from .resolvers import *
+from dataall.api import gql
+from dataall.modules.dashboards.api.resolvers import *
 
 
 importDashboard = gql.MutationField(
@@ -69,4 +69,13 @@ rejectDashboardShare = gql.MutationField(
         gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
     ],
     resolver=reject_dashboard_share,
+)
+
+createQuicksightDataSourceSet = gql.MutationField(
+    name='createQuicksightDataSourceSet',
+    args=[
+        gql.Argument(name='vpcConnectionId', type=gql.NonNullableType(gql.String))
+    ],
+    type=gql.String,
+    resolver=create_quicksight_data_source_set,
 )

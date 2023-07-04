@@ -14,7 +14,6 @@ const getEnvironment = ({ environmentUri }) => ({
         name
         label
         AwsAccountId
-        dashboardsEnabled
         warehousesEnabled
         region
         owner

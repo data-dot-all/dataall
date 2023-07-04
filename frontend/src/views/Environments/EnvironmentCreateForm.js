@@ -153,7 +153,6 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          dashboardsEnabled: values.dashboardsEnabled,
           warehousesEnabled: values.warehousesEnabled,
           EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
           resourcePrefix: values.resourcePrefix,
@@ -161,6 +160,10 @@ const EnvironmentCreateForm = (props) => {
             {
               key: 'notebooksEnabled',
               value: String(values.notebooksEnabled)
+            },
+            {
+              key: 'dashboardsEnabled',
+              value: String(values.dashboardsEnabled)
             },
             {
               key: 'mlStudiosEnabled',

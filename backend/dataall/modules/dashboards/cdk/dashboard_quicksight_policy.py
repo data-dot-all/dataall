@@ -1,12 +1,12 @@
 from aws_cdk import aws_iam as iam
 
-from dataall.db import permissions
-from .service_policy import ServicePolicy
+from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall.modules.dashboards.services.dashboard_permissions import CREATE_DASHBOARD
 
 
-class QuickSight(ServicePolicy):
+class QuickSightPolicy(ServicePolicy):
     def get_statements(self, group_permissions, **kwargs):
-        if permissions.CREATE_DASHBOARD not in group_permissions:
+        if CREATE_DASHBOARD not in group_permissions:
             return []
 
         return [

@@ -14,6 +14,9 @@
         },
         "worksheets": {
             "active": true
+        },
+        "dashboards": {
+            "active": true
         }
     }
 }

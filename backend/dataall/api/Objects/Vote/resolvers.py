@@ -2,7 +2,6 @@ from typing import Dict, Type
 
 from dataall import db
 from dataall.api.context import Context
-from dataall.searchproxy.indexers import DashboardIndexer
 from dataall.searchproxy.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
@@ -51,7 +50,3 @@ def get_vote(context: Context, source, targetUri: str = None, targetType: str = 
             data={'targetType': targetType},
             check_perm=True,
         )
-
-
-# TODO should migrate after into the Dashboard module
-add_vote_type("dashboard", DashboardIndexer)

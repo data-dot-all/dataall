@@ -33,9 +33,15 @@ const EnvironmentFeatures = (props) => {
             </Typography>
             <Typography color="textPrimary" variant="body2">
               <Label
-                color={environment.dashboardsEnabled ? 'success' : 'error'}
+                color={
+                  environment.parameters['dashboardsEnabled'] === 'true'
+                    ? 'success'
+                    : 'error'
+                }
               >
-                {environment.dashboardsEnabled ? 'Enabled' : 'Disabled'}
+                {environment.parameters['dashboardsEnabled'] === 'true'
+                  ? 'Enabled'
+                  : 'Disabled'}
               </Label>
             </Typography>
           </ListItem>

@@ -3,8 +3,7 @@ from typing import Type, Dict, Optional, Protocol, Union
 
 from dataall.api import gql
 from dataall.api.gql.graphql_union_type import UnionTypeRegistry
-from dataall.db import Resource, models
-from dataall.searchproxy.indexers import DashboardIndexer
+from dataall.db import Resource
 from dataall.searchproxy.base_indexer import BaseIndexer
 
 
@@ -59,11 +58,3 @@ class GlossaryRegistry(UnionTypeRegistry):
         definition = cls._DEFINITIONS[target_type]
         if definition.reindexer:
             definition.reindexer.upsert(session, target_uri)
-
-
-GlossaryRegistry.register(GlossaryDefinition(
-    target_type="Dashboard",
-    object_type="Dashboard",
-    model=models.Dashboard,
-    reindexer=DashboardIndexer
-))

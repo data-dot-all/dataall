@@ -24,7 +24,6 @@ class Environment(Resource, Base):
     EnvironmentDefaultAthenaWorkGroup = Column(String)
     roleCreated = Column(Boolean, nullable=False, default=False)
 
-    dashboardsEnabled = Column(Boolean, default=False)
     warehousesEnabled = Column(Boolean, default=True)
 
     userRoleInEnvironment = query_expression()

@@ -19,7 +19,7 @@ from aws_cdk.aws_glue import CfnCrawler
 
 from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
-from dataall.aws.handlers.quicksight import Quicksight
+from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.db import models
 from dataall.db.api import Environment
@@ -78,6 +78,10 @@ class DatasetStack(Stack):
                 raise Exception('ObjectNotFound')
         return dataset
 
+    def has_quicksight_enabled(self, env) -> bool:
+        with self.get_engine().scoped_session() as session:
+            return Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
+
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         super().__init__(
             scope,
@@ -97,8 +101,8 @@ class DatasetStack(Stack):
         env_group = self.get_env_group(dataset)
 
         quicksight_default_group_arn = None
-        if env.dashboardsEnabled:
-            quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
+        if self.has_quicksight_enabled(env):
+            quicksight_default_group = QuicksightClient.create_quicksight_group(AwsAccountId=env.AwsAccountId)
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key

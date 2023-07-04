@@ -32,7 +32,6 @@ const listOrganizationEnvironments = ({ organizationUri, filter }) => ({
             tags
             environmentType
             AwsAccountId
-            dashboardsEnabled
             warehousesEnabled
             userRoleInEnvironment
             stack {

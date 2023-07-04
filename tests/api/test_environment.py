@@ -29,7 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                dashboardsEnabled
                 warehousesEnabled
                 stack{
                  EcsTaskArn
@@ -54,10 +53,13 @@ def test_get_environment(client, org1, env1, group):
         response.data.getEnvironment.organization.organizationUri
         == org1.organizationUri
     )
-    assert response.data.getEnvironment.owner == 'alice'
-    assert response.data.getEnvironment.AwsAccountId == env1.AwsAccountId
-    assert response.data.getEnvironment.dashboardsEnabled
-    assert response.data.getEnvironment.warehousesEnabled
+    body = response.data.getEnvironment
+    assert body.owner == 'alice'
+    assert body.AwsAccountId == env1.AwsAccountId
+    assert body.warehousesEnabled
+
+    params = {p.key: p.value for p in body.parameters}
+    assert params["dashboardsEnabled"] == "true"
 
 
 def test_get_environment_object_not_found(client, org1, env1, group):
@@ -85,7 +87,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
 
 
 def test_update_env(client, org1, env1, group):
-    query =  """
+    query = """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
                 organization{
@@ -98,7 +100,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                dashboardsEnabled
                 warehousesEnabled
                 parameters {
                     key
@@ -114,7 +115,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -134,7 +134,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'dashboardsEnabled': False,
             'warehousesEnabled': False,
             'parameters': [
                 {
@@ -674,7 +673,6 @@ def test_create_environment(db, client, org1, env1, user, group):
                 owner
                 EnvironmentDefaultIAMRoleName
                 EnvironmentDefaultIAMRoleImported
-                dashboardsEnabled
                 resourcePrefix
                 networks{
                  VpcId
@@ -699,18 +697,17 @@ def test_create_environment(db, client, org1, env1, user, group):
             'vpcId': 'vpc-1234567',
             'privateSubnetIds': 'subnet-1',
             'publicSubnetIds': 'subnet-21',
-            'dashboardsEnabled': True,
             'resourcePrefix': 'customer-prefix',
         },
     )
-    assert response.data.createEnvironment.dashboardsEnabled
-    assert response.data.createEnvironment.networks
-    assert (
-        response.data.createEnvironment.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
-    )
-    assert response.data.createEnvironment.EnvironmentDefaultIAMRoleImported
-    assert response.data.createEnvironment.resourcePrefix == 'customer-prefix'
-    for vpc in response.data.createEnvironment.networks:
+
+    body = response.data.createEnvironment
+
+    assert body.networks
+    assert body.EnvironmentDefaultIAMRoleName == 'myOwnIamRole'
+    assert body.EnvironmentDefaultIAMRoleImported
+    assert body.resourcePrefix == 'customer-prefix'
+    for vpc in body.networks:
         assert vpc.privateSubnetIds
         assert vpc.publicSubnetIds
         assert vpc.default
