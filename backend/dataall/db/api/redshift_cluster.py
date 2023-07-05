@@ -3,13 +3,14 @@ import logging
 from sqlalchemy import and_, or_, literal
 
 from .. import models, exceptions, paginate, permissions
-from . import has_resource_perm, ResourcePolicy, Environment
+from . import ResourcePolicy, Environment
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
+from dataall.core.permission_checker import has_resource_permission
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class RedshiftCluster:
         pass
 
     @staticmethod
-    @has_resource_perm(permissions.CREATE_REDSHIFT_CLUSTER)
+    @has_resource_permission(permissions.CREATE_REDSHIFT_CLUSTER)
     def create(session, username, groups, uri: str, data: dict = None, check_perm=None):
 
         RedshiftCluster.__validate_cluster_data(data, uri)
@@ -177,7 +178,7 @@ class RedshiftCluster:
         return cluster
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
+    @has_resource_permission(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
     def list_available_datasets(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
@@ -269,7 +270,7 @@ class RedshiftCluster:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
+    @has_resource_permission(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
     def list_cluster_datasets(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
@@ -297,7 +298,7 @@ class RedshiftCluster:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
+    @has_resource_permission(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
     def list_available_cluster_tables(
         session, username, groups, uri: str, data: dict = None, check_perm=None
     ):
@@ -388,13 +389,13 @@ class RedshiftCluster:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.GET_REDSHIFT_CLUSTER)
+    @has_resource_permission(permissions.GET_REDSHIFT_CLUSTER)
     def get_cluster(session, username, groups, uri, data=None, check_perm=True):
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
         return cluster
 
     @staticmethod
-    @has_resource_perm(permissions.ADD_DATASET_TO_REDSHIFT_CLUSTER)
+    @has_resource_permission(permissions.ADD_DATASET_TO_REDSHIFT_CLUSTER)
     def add_dataset(session, username, groups, uri, data=None, check_perm=True):
         cluster = RedshiftCluster.get_redshift_cluster_by_uri(session, uri)
 
@@ -424,7 +425,7 @@ class RedshiftCluster:
         return cluster, dataset
 
     @staticmethod
-    @has_resource_perm(permissions.REMOVE_DATASET_FROM_REDSHIFT_CLUSTER)
+    @has_resource_permission(permissions.REMOVE_DATASET_FROM_REDSHIFT_CLUSTER)
     def remove_dataset_from_cluster(
         session, username, groups, uri, data=None, check_perm=True
     ):
@@ -501,7 +502,7 @@ class RedshiftCluster:
         return cluster_dataset_table
 
     @staticmethod
-    @has_resource_perm(permissions.ENABLE_REDSHIFT_TABLE_COPY)
+    @has_resource_permission(permissions.ENABLE_REDSHIFT_TABLE_COPY)
     def enable_copy_table(
         session, username, groups, uri, data=None, check_perm=True
     ) -> models.RedshiftClusterDatasetTable:
@@ -528,7 +529,7 @@ class RedshiftCluster:
         return table
 
     @staticmethod
-    @has_resource_perm(permissions.DISABLE_REDSHIFT_TABLE_COPY)
+    @has_resource_permission(permissions.DISABLE_REDSHIFT_TABLE_COPY)
     def disable_copy_table(
         session, username, groups, uri, data=None, check_perm=True
     ) -> bool:
@@ -548,7 +549,7 @@ class RedshiftCluster:
         return True
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
+    @has_resource_permission(permissions.LIST_REDSHIFT_CLUSTER_DATASETS)
     def list_copy_enabled_tables(
         session, username, groups, uri, data=None, check_perm=True
     ) -> [models.RedshiftClusterDatasetTable]:
