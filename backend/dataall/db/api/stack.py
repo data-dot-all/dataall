@@ -1,10 +1,11 @@
 import logging
 
-from . import ResourcePolicy, TargetType
+from . import TargetType
 from .. import exceptions
 from .. import models
-from ...core.context import get_context
-from ...utils.naming_convention import (
+from dataall.core.context import get_context
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

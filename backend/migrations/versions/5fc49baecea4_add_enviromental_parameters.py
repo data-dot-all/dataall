@@ -12,8 +12,10 @@ from typing import List
 from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
+
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import Resource, models
-from dataall.db.api import ResourcePolicy, Permission
 from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
@@ -151,7 +153,6 @@ def downgrade():
         session.add_all(envs)
         print("Dropping environment_parameter table...")
         op.drop_table("environment_parameters")
-
 
     except Exception as ex:
         print(f"Failed to execute the rollback script due to: {ex}")

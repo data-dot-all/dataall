@@ -13,6 +13,7 @@ from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_sc
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.core.context import set_context, dispose_context, RequestContext
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import init_permissions, get_engine, api, permissions
 from dataall.modules.loader import load_modules, ImportMode
 
@@ -116,14 +117,14 @@ def handler(event, context):
             groups = get_groups(event['requestContext']['authorizer']['claims'])
             with ENGINE.scoped_session() as session:
                 for group in groups:
-                    policy = api.TenantPolicy.find_tenant_policy(
+                    policy = TenantPolicy.find_tenant_policy(
                         session, group, 'dataall'
                     )
                     if not policy:
                         print(
                             f'No policy found for Team {group}. Attaching TENANT_ALL permissions'
                         )
-                        api.TenantPolicy.attach_group_tenant_policy(
+                        TenantPolicy.attach_group_tenant_policy(
                             session=session,
                             group=group,
                             permissions=permissions.TENANT_ALL,

@@ -1,7 +1,8 @@
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.db import utils
-from dataall.db.api import ResourcePolicy, Environment
+from dataall.db.api import Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.db.models import Activity, PrincipalType, EnvironmentGroup, ConsumptionRole, Task
 from dataall.aws.handlers.service_handlers import Worker

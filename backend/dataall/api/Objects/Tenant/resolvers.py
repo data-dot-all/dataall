@@ -1,13 +1,13 @@
 import os
 
-from .... import db
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.parameter_store import ParameterStoreManager
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 
 
 def update_group_permissions(context, source, input=None):
     with context.engine.scoped_session() as session:
-        return db.api.TenantPolicy.update_group_permissions(
+        return TenantPolicy.update_group_permissions(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -19,7 +19,7 @@ def update_group_permissions(context, source, input=None):
 
 def list_tenant_permissions(context, source):
     with context.engine.scoped_session() as session:
-        return db.api.TenantPolicy.list_tenant_permissions(
+        return TenantPolicy.list_tenant_permissions(
             session=session, username=context.username, groups=context.groups
         )
 
@@ -28,7 +28,7 @@ def list_tenant_groups(context, source, filter=None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.TenantPolicy.list_tenant_groups(
+        return TenantPolicy.list_tenant_groups(
             session=session,
             username=context.username,
             groups=context.groups,

@@ -1,9 +1,10 @@
 import os
 import logging
-from .... import db
-from ....db import exceptions
-from ....db.models import Group
-from ....aws.handlers.cognito import Cognito
+from dataall import db
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.db import exceptions
+from dataall.db.models import Group
+from dataall.aws.handlers.cognito import Cognito
 
 log = logging.getLogger()
 
@@ -23,7 +24,7 @@ def resolve_group_tenant_permissions(context, source):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return db.api.TenantPolicy.list_group_tenant_permissions(
+        return TenantPolicy.list_group_tenant_permissions(
             session=session,
             username=context.username,
             groups=context.groups,

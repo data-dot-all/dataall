@@ -2,8 +2,10 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
-from dataall.db.api import TenantPolicy, Tenant
+from dataall.db.api import Tenant
 from dataall.db.models.Permission import PermissionType
 from dataall.db.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
@@ -13,7 +15,7 @@ def permissions(db, all_perms):
         permissions = []
         for p in all_perms:
             permissions.append(
-                dataall.db.api.Permission.save_permission(
+                Permission.save_permission(
                     session,
                     name=p,
                     description=p,
@@ -22,7 +24,7 @@ def permissions(db, all_perms):
             )
         for p in dataall.db.permissions.TENANT_ALL:
             permissions.append(
-                dataall.db.api.Permission.save_permission(
+                Permission.save_permission(
                     session,
                     name=p,
                     description=p,

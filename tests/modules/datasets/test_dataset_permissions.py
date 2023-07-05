@@ -1,7 +1,9 @@
 import pytest
 
 from dataall.core.context import set_context, RequestContext
-from dataall.db.api import ResourcePolicy, TenantPolicy, Environment, Organization, Tenant
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.db.api import Environment, Organization, Tenant
 from dataall.db.exceptions import ResourceUnauthorized
 from dataall.db.models import GroupMember
 from dataall.db.permissions import TENANT_ALL

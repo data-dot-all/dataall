@@ -6,10 +6,10 @@ from .. import exceptions, permissions
 from .. import models
 from . import (
     Environment,
-    ResourcePolicy,
 )
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.core.context import get_context
+from ...core.permissions.db.resource_policy import ResourcePolicy
 
 log = logging.getLogger(__name__)
 
@@ -23,11 +23,11 @@ class Vpc:
     @has_resource_permission(permissions.CREATE_NETWORK)
     def create_network(session, uri: str, data: dict = None) -> models.Vpc:
         Vpc._validate_input(data)
-        context = get_context()
+        username = get_context().username
         Environment.check_group_environment_permission(
             session=session,
-            username=context.username,
-            groups=context.groups,
+            username=username,
+            groups=get_context().groups,
             uri=uri,
             group=data['SamlGroupName'],
             permission_name=permissions.CREATE_NETWORK,

@@ -7,7 +7,6 @@ from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJ
 from tests.api.client import *
 from tests.api.conftest import *
 
-from dataall.db.api import ResourcePolicy
 from dataall.db.models import Environment, EnvironmentGroup, Organization, \
     PrincipalType
 from dataall.modules.datasets import Dataset, DatasetTable, DatasetStorageLocation

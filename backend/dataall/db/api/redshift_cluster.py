@@ -3,14 +3,15 @@ import logging
 from sqlalchemy import and_, or_, literal
 
 from .. import models, exceptions, paginate, permissions
-from . import ResourcePolicy, Environment
+from . import Environment
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.core.permission_checker import has_resource_permission
+from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 
 log = logging.getLogger(__name__)
 

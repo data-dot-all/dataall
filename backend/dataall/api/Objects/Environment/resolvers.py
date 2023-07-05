@@ -10,13 +10,14 @@ from sqlalchemy import and_, exc
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
-from ....aws.handlers.sts import SessionHelper
-from ....aws.handlers.cloudformation import CloudFormation
-from ....aws.handlers.iam import IAM
-from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....db import exceptions, permissions
-from ....db.api import Environment, ResourcePolicy, Stack
-from ....utils.naming_convention import (
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.aws.handlers.cloudformation import CloudFormation
+from dataall.aws.handlers.iam import IAM
+from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.db import exceptions, permissions
+from dataall.db.api import Environment, Stack
+from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )

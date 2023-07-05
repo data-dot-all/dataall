@@ -6,12 +6,13 @@ from botocore.exceptions import ClientError
 from .... import db
 from ...constants import RedshiftClusterRole
 from ..Stack import stack_helper
-from ....api.context import Context
-from ....aws.handlers.redshift import Redshift
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.sts import SessionHelper
-from ....db import permissions, models
-from ....db.api import ResourcePolicy, KeyValueTag, Stack
+from dataall.api.context import Context
+from dataall.aws.handlers.redshift import Redshift
+from dataall.aws.handlers.service_handlers import Worker
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.db import permissions, models
+from dataall.db.api import KeyValueTag, Stack
 
 log = logging.getLogger(__name__)
 

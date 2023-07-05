@@ -1,3 +1,6 @@
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from .client import *
 from dataall.db import models
 
@@ -45,7 +48,7 @@ def patch_stack_tasks(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield dataall.db.api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -136,25 +139,25 @@ def group4(db, user3):
 def tenant(db, group, group2, permissions, user, user2, user3, group3, group4):
     with db.scoped_session() as session:
         tenant = dataall.db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
             permissions=dataall.db.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group2.name,
             permissions=dataall.db.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group3.name,
             permissions=dataall.db.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
-        dataall.db.api.TenantPolicy.attach_group_tenant_policy(
+        TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group4.name,
             permissions=dataall.db.permissions.TENANT_ALL,
@@ -260,7 +263,7 @@ def environment_group(db):
                 environmentAthenaWorkGroup="workgroup",
             )
             session.add(env_group)
-            dataall.db.api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 resource_uri=environment.environmentUri,
                 group=group.name,

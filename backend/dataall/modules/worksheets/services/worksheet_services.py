@@ -1,10 +1,10 @@
 import logging
 
 from dataall import db
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions
 from dataall.db import models
-from dataall.db.api import ResourcePolicy
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository

@@ -7,9 +7,8 @@ from sqlalchemy.orm import with_expression, aliased
 from .. import models, exceptions, permissions, paginate, Resource
 from ..models.Glossary import GlossaryNodeStatus
 from ..paginator import Page
-from dataall.core.permission_checker import has_tenant_permission
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission
+from dataall.core.permissions.permission_checker import has_tenant_permission
 
 logger = logging.getLogger(__name__)
 

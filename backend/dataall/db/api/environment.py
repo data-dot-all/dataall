@@ -7,8 +7,6 @@ from sqlalchemy.sql import and_
 
 from .. import exceptions, permissions, models
 from . import (
-    ResourcePolicy,
-    Permission,
     KeyValueTag
 )
 from ..api.organization import Organization
@@ -26,8 +24,10 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
-from ...core.context import get_context
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.context import get_context
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 
 log = logging.getLogger(__name__)
 

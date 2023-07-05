@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.permissions.db.permission import Permission
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 
@@ -99,7 +100,7 @@ def table(org, env, db, sync_dataset):
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield dataall.db.api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 def test_tables_sync(db, org, env, sync_dataset, table, mocker):

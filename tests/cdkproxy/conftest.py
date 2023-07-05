@@ -1,12 +1,13 @@
 import pytest
 
+from dataall.core.permissions.db.permission import Permission
 from dataall.db import models, api
 
 
 @pytest.fixture(scope='module', autouse=True)
 def permissions(db):
     with db.scoped_session() as session:
-        yield api.Permission.init_permissions(session)
+        yield Permission.init_permissions(session)
 
 
 @pytest.fixture(scope='module', autouse=True)

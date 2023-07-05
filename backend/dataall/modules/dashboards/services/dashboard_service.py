@@ -1,6 +1,7 @@
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission, has_group_permission
-from dataall.db.api import ResourcePolicy, Glossary, Vote, Environment
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission, has_group_permission
+from dataall.db.api import Glossary, Vote, Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.db.models import Activity
 from dataall.modules.dashboards import DashboardRepository, Dashboard

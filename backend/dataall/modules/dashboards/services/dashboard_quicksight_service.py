@@ -3,8 +3,9 @@ import os
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission
-from dataall.db.api import Environment, TenantPolicy
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
+from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.db.api import Environment
 from dataall.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
 from dataall.db.permissions import TENANT_ALL
 from dataall.modules.dashboards import DashboardRepository, Dashboard

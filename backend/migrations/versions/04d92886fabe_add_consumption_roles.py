@@ -11,6 +11,8 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import api, models, permissions, utils
 from datetime import datetime
 
@@ -109,7 +111,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        api.Permission.init_permissions(session)
+        Permission.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -125,7 +127,7 @@ def upgrade():
                 session=session, uri=env.environmentUri, filter=None
             )
             for group in groups:
-                api.ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.attach_resource_policy(
                     session=session,
                     resource_uri=env.environmentUri,
                     group=group.groupUri,

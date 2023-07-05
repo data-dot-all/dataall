@@ -2,11 +2,11 @@ import logging
 
 from sqlalchemy.sql import and_
 
-from .. import exceptions, permissions, paginate
-from .. import models
-from ..api.permission import Permission
-from ..api.tenant import Tenant
-from ..models.Permission import PermissionType
+from dataall.db import exceptions, permissions, paginate
+from dataall.db import models
+from dataall.core.permissions.db.permission import Permission
+from dataall.db.api.tenant import Tenant
+from dataall.db.models.Permission import PermissionType
 
 logger = logging.getLogger(__name__)
 

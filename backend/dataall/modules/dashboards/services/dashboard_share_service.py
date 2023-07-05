@@ -1,6 +1,6 @@
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_tenant_permission, has_resource_permission
-from dataall.db.api import ResourcePolicy
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db.exceptions import InvalidInput, UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository
 from dataall.modules.dashboards.db.models import DashboardShareStatus, Dashboard

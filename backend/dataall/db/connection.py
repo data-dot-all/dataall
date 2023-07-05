@@ -8,10 +8,11 @@ import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
-from .. import db
-from ..db import Base
-from ..db.dbconfig import DbConfig
-from ..utils import Parameter
+from dataall import db
+from dataall.core.permissions.db.permission import Permission
+from dataall.db import Base
+from dataall.db.dbconfig import DbConfig
+from dataall.utils import Parameter
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -99,7 +100,7 @@ def init_permissions(engine, envname=None):
     with engine.scoped_session() as session:
         log.info('Initiating permissions')
         db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        db.api.Permission.init_permissions(session)
+        Permission.init_permissions(session)
 
 
 def drop_schema_if_exists(engine, envname):
@@ -115,7 +116,6 @@ def get_engine(envname=ENVNAME):
     schema = os.getenv('schema_name', envname)
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
-        secret = Secrets()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
         secretsmanager = boto3.client(
             'secretsmanager', region_name=os.environ.get('AWS_REGION', 'eu-west-1')

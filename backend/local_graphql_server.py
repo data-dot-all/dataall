@@ -10,6 +10,7 @@ from flask_cors import CORS
 from dataall import db
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
 from dataall.searchproxy import connect, run_query
 from dataall.modules.loader import load_modules, ImportMode
@@ -79,7 +80,7 @@ def request_context(headers, mock=False):
 
     for group in groups:
         with engine.scoped_session() as session:
-            api.TenantPolicy.attach_group_tenant_policy(
+            TenantPolicy.attach_group_tenant_policy(
                 session=session,
                 group=group,
                 permissions=db.permissions.TENANT_ALL,

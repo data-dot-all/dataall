@@ -1,7 +1,4 @@
-from .permission import Permission
 from .tenant import Tenant
-from .tenant_policy import TenantPolicy
-from .resource_policy import ResourcePolicy
 from .target_type import TargetType
 from .keyvaluetag import KeyValueTag
 from .stack import Stack

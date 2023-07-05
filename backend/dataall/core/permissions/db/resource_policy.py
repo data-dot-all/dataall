@@ -3,10 +3,10 @@ from typing import Optional
 
 from sqlalchemy.sql import and_
 
-from .. import exceptions
-from .. import models
-from . import Permission
-from ..models.Permission import PermissionType
+from dataall.core.permissions.db.permission import Permission
+from dataall.db import exceptions
+from dataall.db import models
+from dataall.db.models.Permission import PermissionType
 
 logger = logging.getLogger(__name__)
 

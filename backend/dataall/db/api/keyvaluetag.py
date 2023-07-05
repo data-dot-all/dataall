@@ -1,10 +1,10 @@
 import logging
 
 from . import TargetType
-from .resource_policy import ResourcePolicy
 from .. import exceptions
 from .. import models
-from ...core.context import get_context
+from dataall.core.context import get_context
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 
 logger = logging.getLogger(__name__)
 

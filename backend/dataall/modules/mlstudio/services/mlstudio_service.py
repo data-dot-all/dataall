@@ -10,11 +10,11 @@ from typing import List, Dict
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db.api import (
-    ResourcePolicy,
-    Environment, KeyValueTag, Stack,
+    Environment, Stack,
 )
-from dataall.db import models, exceptions
+from dataall.db import exceptions
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 
@@ -28,7 +28,7 @@ from dataall.modules.mlstudio.services.mlstudio_permissions import (
     SGMSTUDIO_USER_URL,
     DELETE_SGMSTUDIO_USER,
 )
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
 

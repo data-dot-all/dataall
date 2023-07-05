@@ -10,6 +10,9 @@ from sqlalchemy import orm, Column, String, Text, DateTime, and_
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
+
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import api, utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
@@ -75,7 +78,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Re-Initializing permissions...')
-        api.Permission.init_permissions(session)
+        Permission.init_permissions(session)
         print('Permissions re-initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
@@ -91,7 +94,7 @@ def upgrade():
 
             groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
             for group in groups:
-                api.ResourcePolicy.attach_resource_policy(
+                ResourcePolicy.attach_resource_policy(
                     session=session,
                     resource_uri=table.tableUri,
                     group=group,
@@ -116,7 +119,7 @@ def upgrade():
         ).all()
         for shared_table in share_table_items:
             share = ShareObjectRepository.get_share_by_uri(session, shared_table.shareUri)
-            api.ResourcePolicy.attach_resource_policy(
+            ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,
                 permissions=DATASET_TABLE_READ,

@@ -6,8 +6,9 @@ from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.context import get_context
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
-from dataall.db.api import Vote, ResourcePolicy, KeyValueTag, Stack, Environment
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.db.api import Vote, KeyValueTag, Stack, Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.models import ShareObject

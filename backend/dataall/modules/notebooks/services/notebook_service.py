@@ -2,7 +2,6 @@
 A service layer for sagemaker notebooks
 Central part for working with notebooks
 """
-import contextlib
 import dataclasses
 import logging
 from dataclasses import dataclass, field
@@ -10,9 +9,8 @@ from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
-from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db.api import (
-    ResourcePolicy,
     Environment, KeyValueTag, Stack,
 )
 from dataall.db import models, exceptions
@@ -26,7 +24,7 @@ from dataall.utils.slugify import slugify
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
     GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
-from dataall.core.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
 
