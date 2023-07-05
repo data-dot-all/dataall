@@ -1,5 +1,5 @@
-from .... import db
-from ... import gql
+from dataall import db
+from dataall.api import gql
 
 
 def resolve_enum(context, source: db.models.Notification):
