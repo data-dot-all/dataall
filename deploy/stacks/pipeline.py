@@ -114,7 +114,7 @@ class PipelineStack(Stack):
         if self.source == 'github':
             source = CodePipelineSource.git_hub(
                 repo_string='awslabs/aws-dataall',
-                branch=git_branch,
+                branch=self.git_branch,
                 authentication=SecretValue.secrets_manager(secret_id='github-access-token-secret'),
             )
 
