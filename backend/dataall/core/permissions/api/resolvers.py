@@ -1,13 +1,12 @@
 import logging
 
-from dataall.api.context import Context
 from dataall.core.permissions.db.permission import Permission
 
 log = logging.getLogger(__name__)
 
 
 def list_tenant_permissions(
-    context: Context,
+    context,
     source,
     filter: dict = None,
 ):

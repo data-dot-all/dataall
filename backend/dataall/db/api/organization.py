@@ -182,7 +182,7 @@ class Organization:
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ORGANIZATIONS)
     @has_resource_permission(permissions.INVITE_ORGANIZATION_GROUP)
-    def invite_group(session, username, uri, data=None) -> (models.Organization, models.OrganizationGroup):
+    def invite_group(session, uri, data=None) -> (models.Organization, models.OrganizationGroup):
         Organization.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -198,7 +198,7 @@ class Organization:
         org_group = OrganizationGroup(
             organizationUri=organization.organizationUri,
             groupUri=group,
-            invitedBy=username,
+            invitedBy=get_context().username,
         )
         session.add(org_group)
         ResourcePolicy.attach_resource_policy(

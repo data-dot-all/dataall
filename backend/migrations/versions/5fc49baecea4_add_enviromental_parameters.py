@@ -113,6 +113,8 @@ def upgrade():
         migrate_groups_permissions(session)
         delete_unused_resource_permissions(session)
 
+        op.drop_table("tenant_administrator")
+
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
 

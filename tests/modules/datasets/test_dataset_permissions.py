@@ -120,6 +120,8 @@ def test_unauthorized_resource_policy(
 
 def test_create_dataset(db, env, user, group, group_user, dataset, permissions, tenant):
     with db.scoped_session() as session:
+        set_context(RequestContext(db, user.userName, [group.name]))
+
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
@@ -165,7 +167,6 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
             IAMDatasetAdminRoleArn=f'arn:aws:iam::123456789012:role/dataset',
         )
 
-        set_context(RequestContext(db, user.userName, [group.name]))
         dataset = DatasetService.create_dataset(
             uri=env_with_perm.environmentUri,
             admin_group=group.name,

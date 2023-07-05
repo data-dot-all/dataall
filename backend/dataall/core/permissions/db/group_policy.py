@@ -39,9 +39,10 @@ class GroupPolicy:
         belongs_to_env = (
             session.query(EnvironmentGroup)
             .filter(EnvironmentGroup.environmentUri == environment_uri)
-            .filter(EnvironmentGroup.groupUri.in_(group))
-            .first()
+            .filter(EnvironmentGroup.groupUri.in_([group]))
+            .count()
         )
+
         if not belongs_to_env:
             raise UnauthorizedOperation(
                 action=permission_name,
