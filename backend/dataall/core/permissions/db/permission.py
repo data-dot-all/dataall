@@ -94,13 +94,6 @@ class Permission:
         return Permission.paginated_permissions(session, data)
 
     @staticmethod
-    def paginated_resource_permissions(session, data) -> dict:
-        if not data:
-            data = dict()
-        data['type'] = PermissionType.RESOURCE
-        return Permission.paginated_permissions(session, data)
-
-    @staticmethod
     def paginated_permissions(session, data) -> dict:
         query = session.query(models.Permission)
         if data:

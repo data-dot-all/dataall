@@ -367,26 +367,6 @@ def test_paging(db, client, org1, env1, user, group):
 def test_group_invitation(db, client, env1, org1, group2, user, group3, group):
     response = client.query(
         """
-        query listResourcePermissions($filter:ResourcePermissionFilter){
-            listResourcePermissions(filter:$filter){
-                count
-                nodes{
-                    permissionUri
-                    name
-                    type
-                }
-            }
-        }
-        """,
-        username=user.userName,
-        groups=[group.name, group2.name],
-        filter={},
-    )
-
-    assert response.data.listResourcePermissions.count > 1
-
-    response = client.query(
-        """
         query listEnvironmentGroupInvitationPermissions($environmentUri:String){
             listEnvironmentGroupInvitationPermissions(environmentUri:$environmentUri){
                     permissionUri
