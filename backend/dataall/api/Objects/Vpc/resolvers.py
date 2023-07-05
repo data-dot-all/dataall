@@ -11,6 +11,7 @@ def create_network(context: Context, source, input):
         vpc = Vpc.create_network(
             session=session,
             uri=input['environmentUri'],
+            admin_group=input['SamlGroupName'],
             data=input,
         )
     return vpc

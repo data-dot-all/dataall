@@ -5,9 +5,9 @@ and interact with resources or do some actions in the app
 from typing import Protocol, Callable
 
 from dataall.core.context import RequestContext, get_context
+from dataall.core.permissions.db.group_policy import GroupPolicy
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db.api import Environment
 
 
 class Identifiable(Protocol):
@@ -18,7 +18,7 @@ class Identifiable(Protocol):
 
 def _check_group_environment_permission(session, permission, uri, admin_group):
     context: RequestContext = get_context()
-    Environment.check_group_environment_permission(
+    GroupPolicy.check_group_environment_permission(
         session=session,
         username=context.username,
         groups=context.groups,

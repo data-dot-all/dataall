@@ -12,6 +12,7 @@ from dataall.utils.naming_convention import (
 from dataall.utils.slugify import slugify
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from ...core.permissions.db.group_policy import GroupPolicy
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class RedshiftCluster:
 
         RedshiftCluster.__validate_cluster_data(data, uri)
 
-        Environment.check_group_environment_permission(
+        GroupPolicy.check_group_environment_permission(
             session=session,
             username=username,
             groups=groups,

@@ -888,46 +888,6 @@ class Environment:
         return session.delete(environment)
 
     @staticmethod
-    def check_group_environment_membership(
-        session, environment_uri, group, username, user_groups, permission_name
-    ):
-        if group and group not in user_groups:
-            raise exceptions.UnauthorizedOperation(
-                action=permission_name,
-                message=f'User: {username} is not a member of the team {group}',
-            )
-        if group not in Environment.list_environment_groups(
-            session=session,
-            uri=environment_uri,
-        ):
-            raise exceptions.UnauthorizedOperation(
-                action=permission_name,
-                message=f'Team: {group} is not a member of the environment {environment_uri}',
-            )
-
-    @staticmethod
-    def check_group_environment_permission(
-        session, username, groups, uri, group, permission_name
-    ):
-
-        Environment.check_group_environment_membership(
-            session=session,
-            username=username,
-            user_groups=groups,
-            group=group,
-            environment_uri=uri,
-            permission_name=permission_name,
-        )
-
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=username,
-            groups=[group],
-            resource_uri=uri,
-            permission_name=permission_name,
-        )
-
-    @staticmethod
     def get_environment_parameters(session, env_uri):
         return EnvironmentParameterRepository(session).get_params(env_uri)
 

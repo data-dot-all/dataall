@@ -13,6 +13,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import permissions, models
 from dataall.db.api import KeyValueTag, Stack
+from ....core.permissions.db.group_policy import GroupPolicy
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def import_cluster(context: Context, source, environmentUri: str, clusterInput: 
             resource_uri=environmentUri,
             permission_name=permissions.CREATE_REDSHIFT_CLUSTER,
         )
-        db.api.Environment.check_group_environment_permission(
+        GroupPolicy.check_group_environment_permission(
             session=session,
             username=context.username,
             groups=context.groups,

@@ -26,7 +26,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Initializing permissions...')
-        api.Permission.init_permissions(session)
+        Permission.init_permissions(session)
         print('Permissions initialized successfully')
     except Exception as e:
         print(f'Failed to init permissions due to: {e}')
