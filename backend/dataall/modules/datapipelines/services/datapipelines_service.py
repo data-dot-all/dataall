@@ -157,11 +157,7 @@ class DataPipelineService:
             )
         if pipeline_group not in Environment.list_environment_groups(
             session=session,
-            username=username,
-            groups=groups,
             uri=environment_uri,
-            data=None,
-            check_perm=True,
         ):
             raise exceptions.UnauthorizedOperation(
                 action=CREATE_PIPELINE,

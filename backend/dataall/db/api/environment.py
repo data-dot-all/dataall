@@ -7,8 +7,6 @@ from sqlalchemy.sql import and_
 
 from .. import exceptions, permissions, models
 from . import (
-    has_resource_perm,
-    has_tenant_perm,
     ResourcePolicy,
     Permission,
     KeyValueTag
@@ -18,8 +16,6 @@ from ..models import EnvironmentGroup
 from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
-    PrincipalType
-
 )
 from ..models.Permission import PermissionType
 from ..paginator import paginate
@@ -30,22 +26,25 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
+from ...core.context import get_context
 
 log = logging.getLogger(__name__)
 
 
 class Environment:
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.LINK_ENVIRONMENT)
-    def create_environment(session, username, groups, uri, data=None, check_perm=None):
+    @has_resource_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_tenant_permission(permissions.LINK_ENVIRONMENT)
+    def create_environment(session, uri, data=None):
+        context = get_context()
         Environment._validate_creation_params(data, uri)
         organization = Organization.get_organization_by_uri(session, uri)
         env = models.Environment(
             organizationUri=data.get('organizationUri'),
             label=data.get('label', 'Unnamed'),
             tags=data.get('tags', []),
-            owner=username,
+            owner=context.username,
             description=data.get('description', ''),
             environmentType=data.get('type', EnvironmentType.Data.value),
             AwsAccountId=data.get('AwsAccountId'),
@@ -108,7 +107,7 @@ class Environment:
                 privateSubnetIds=data.get('privateSubnetIds', []),
                 publicSubnetIds=data.get('publicSubnetIds', []),
                 SamlGroupName=data['SamlGroupName'],
-                owner=username,
+                owner=context.username,
                 label=f"{env.name}-{data.get('vpcId')}",
                 name=f"{env.name}-{data.get('vpcId')}",
                 default=True,
@@ -143,8 +142,8 @@ class Environment:
         activity = models.Activity(
             action='ENVIRONMENT:CREATE',
             label='ENVIRONMENT:CREATE',
-            owner=username,
-            summary=f'{username} linked environment {env.AwsAccountId} to organization {organization.name}',
+            owner=context.username,
+            summary=f'{context.username} linked environment {env.AwsAccountId} to organization {organization.name}',
             targetUri=env.environmentUri,
             targetType='env',
         )
@@ -175,9 +174,9 @@ class Environment:
             )
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.UPDATE_ENVIRONMENT)
-    def update_environment(session, username, groups, uri, data=None, check_perm=None):
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT)
+    def update_environment(session, uri, data=None):
         Environment._validate_resource_prefix(data)
         environment = Environment.get_environment_by_uri(session, uri)
         if data.get('label'):
@@ -216,11 +215,9 @@ class Environment:
         EnvironmentParameterRepository(session).update_params(env_uri, new_params)
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.INVITE_ENVIRONMENT_GROUP)
-    def invite_group(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> (models.Environment, models.EnvironmentGroup):
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.INVITE_ENVIRONMENT_GROUP)
+    def invite_group(session, uri, data=None) -> (models.Environment, models.EnvironmentGroup):
         Environment.validate_invite_params(data)
 
         group: str = data['groupUri']
@@ -260,7 +257,7 @@ class Environment:
         environment_group = EnvironmentGroup(
             environmentUri=environment.environmentUri,
             groupUri=group,
-            invitedBy=username,
+            invitedBy=get_context().username,
             environmentIAMRoleName=env_group_iam_role_name,
             environmentIAMRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}',
             environmentIAMRoleImported=env_role_imported,
@@ -317,16 +314,9 @@ class Environment:
             )
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.REMOVE_ENVIRONMENT_GROUP)
-    def remove_group(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
-
-        group: str = data['groupUri']
-
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.REMOVE_ENVIRONMENT_GROUP)
+    def remove_group(session, uri, group):
         environment = Environment.get_environment_by_uri(session, uri)
 
         if group == environment.SamlGroupName:
@@ -381,11 +371,9 @@ class Environment:
         return environment
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.UPDATE_ENVIRONMENT_GROUP)
-    def update_group_permissions(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.UPDATE_ENVIRONMENT_GROUP)
+    def update_group_permissions(session, uri, data=None):
         Environment.validate_invite_params(data)
 
         group = data['groupUri']
@@ -419,20 +407,19 @@ class Environment:
         return environment
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
-    def list_group_permissions(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not data.get('groupUri'):
-            raise exceptions.RequiredParameter('groupUri')
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
+    def list_group_permissions(session, uri, group_uri):
+        # the permission checked
+        return Environment.list_group_permissions(session, uri, group_uri)
 
+    @staticmethod
+    def list_group_permissions_internal(session, uri, group_uri):
+        """No permission check, only for internal usages"""
         environment = Environment.get_environment_by_uri(session, uri)
 
         return ResourcePolicy.get_resource_policy_permissions(
             session=session,
-            group_uri=data['groupUri'],
+            group_uri=group_uri,
             resource_uri=environment.environmentUri,
         )
 
@@ -452,11 +439,9 @@ class Environment:
         return group_invitation_permissions
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES)
-    def add_consumption_role(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> (models.Environment, models.EnvironmentGroup):
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES)
+    def add_consumption_role(session, uri, data=None) -> (models.Environment, models.EnvironmentGroup):
 
         group: str = data['groupUri']
         IAMRoleArn: str = data['IAMRoleArn']
@@ -492,15 +477,10 @@ class Environment:
         return consumption_role
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
-    def remove_consumption_role(session, username, groups, uri, data=None, check_perm=None):
-        if not data:
-            raise exceptions.RequiredParameter('data')
-        if not uri:
-            raise exceptions.RequiredParameter('consumptionRoleUri')
-
-        consumption_role = Environment.get_environment_consumption_role(session, uri, data.get('environmentUri'))
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
+    def remove_consumption_role(session, uri, env_uri):
+        consumption_role = Environment.get_environment_consumption_role(session, uri, env_uri)
 
         if consumption_role:
             session.delete(consumption_role)
@@ -543,17 +523,16 @@ class Environment:
         return query
 
     @staticmethod
-    def paginated_user_environments(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def paginated_user_environments(session, data=None) -> dict:
+        context = get_context()
         return paginate(
-            query=Environment.query_user_environments(session, username, groups, data),
+            query=Environment.query_user_environments(session, context.username, context.groups, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 5),
         ).to_dict()
 
     @staticmethod
-    def query_user_environment_groups(session, username, groups, uri, filter) -> Query:
+    def query_user_environment_groups(session, groups, uri, filter) -> Query:
         query = (
             session.query(models.EnvironmentGroup)
             .filter(models.EnvironmentGroup.environmentUri == uri)
@@ -569,13 +548,11 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def paginated_user_environment_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
+    def paginated_user_environment_groups(session, uri, data=None) -> dict:
         return paginate(
             query=Environment.query_user_environment_groups(
-                session, username, groups, uri, data
+                session, get_context().groups, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 1000),
@@ -596,10 +573,8 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def paginated_all_environment_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
+    def paginated_all_environment_groups(session, uri, data=None) -> dict:
         return paginate(
             query=Environment.query_all_environment_groups(
                 session, uri, data
@@ -609,21 +584,17 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def list_environment_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> [str]:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
+    def list_environment_groups(session, uri) -> [str]:
         return [
             g.groupUri
             for g in Environment.query_user_environment_groups(
-                session, username, groups, uri, data
+                session, get_context().groups, uri, {}
             ).all()
         ]
 
     @staticmethod
-    def query_environment_invited_groups(
-        session, username, groups, uri, filter
-    ) -> Query:
+    def query_environment_invited_groups(session, uri, filter) -> Query:
         query = (
             session.query(models.EnvironmentGroup)
             .join(
@@ -649,29 +620,20 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def paginated_environment_invited_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_GROUPS)
+    def paginated_environment_invited_groups(session, uri, data=None) -> dict:
         return paginate(
-            query=Environment.query_environment_invited_groups(
-                session, username, groups, uri, data
-            ),
+            query=Environment.query_environment_invited_groups(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_GROUPS)
-    def list_environment_invited_groups(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
-        return Environment.query_environment_invited_groups(
-            session, username, groups, uri, data
-        ).all()
+    def list_environment_invited_groups(session, uri):
+        return Environment.query_environment_invited_groups(session, uri, {}).all()
 
     @staticmethod
-    def query_user_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
+    def query_user_environment_consumption_roles(session, groups, uri, filter) -> Query:
         query = (
             session.query(models.ConsumptionRole)
             .filter(models.ConsumptionRole.environmentUri == uri)
@@ -695,20 +657,18 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def paginated_user_environment_consumption_roles(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+    def paginated_user_environment_consumption_roles(session, uri, data=None) -> dict:
         return paginate(
             query=Environment.query_user_environment_consumption_roles(
-                session, username, groups, uri, data
+                session, get_context().groups, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 1000),
         ).to_dict()
 
     @staticmethod
-    def query_all_environment_consumption_roles(session, username, groups, uri, filter) -> Query:
+    def query_all_environment_consumption_roles(session, uri, filter) -> Query:
         query = session.query(models.ConsumptionRole).filter(
             models.ConsumptionRole.environmentUri == uri
         )
@@ -729,34 +689,20 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
     def paginated_all_environment_consumption_roles(
-        session, username, groups, uri, data=None, check_perm=None
+        session, uri, data=None
     ) -> dict:
         return paginate(
             query=Environment.query_all_environment_consumption_roles(
-                session, username, groups, uri, data
+                session, uri, data
             ),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def list_environment_consumption_roles(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> [str]:
-        return [
-            {"value": g.IAMRoleArn, "label": g.consumptionRoleName}
-            for g in Environment.query_user_environment_consumption_roles(
-                session, username, groups, uri, data
-            ).all()
-        ]
-
-    @staticmethod
-    def find_consumption_roles_by_IAMArn(
-            session, uri, arn
-    ) -> Query:
+    def find_consumption_roles_by_IAMArn(session, uri, arn) -> Query:
         return session.query(models.ConsumptionRole).filter(
             and_(
                 models.ConsumptionRole.environmentUri == uri,
@@ -765,7 +711,7 @@ class Environment:
         ).first()
 
     @staticmethod
-    def query_environment_networks(session, username, groups, uri, filter) -> Query:
+    def query_environment_networks(session, uri, filter) -> Query:
         query = session.query(models.Vpc).filter(
             models.Vpc.environmentUri == uri,
         )
@@ -780,14 +726,10 @@ class Environment:
         return query
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_NETWORKS)
-    def paginated_environment_networks(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_NETWORKS)
+    def paginated_environment_networks(session, uri, data=None) -> dict:
         return paginate(
-            query=Environment.query_environment_networks(
-                session, username, groups, uri, data
-            ),
+            query=Environment.query_environment_networks(session, uri, data),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
@@ -900,10 +842,8 @@ class Environment:
         return q
 
     @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-    def paginated_environment_redshift_clusters(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
+    @has_resource_permission(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
+    def paginated_environment_redshift_clusters(session, uri, data=None):
         query = Environment.list_environment_redshift_clusters_query(session, uri, data)
         return paginate(
             query=query,
@@ -912,18 +852,12 @@ class Environment:
         ).to_dict()
 
     @staticmethod
-    @has_resource_perm(permissions.GET_ENVIRONMENT)
-    def get_stack(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> models.Stack:
-        return session.query(models.Stack).get(data['stackUri'])
+    @has_resource_permission(permissions.GET_ENVIRONMENT)
+    def get_stack(session, uri, stack_uri) -> models.Stack:
+        return session.query(models.Stack).get(stack_uri)
 
     @staticmethod
-    def delete_environment(session, username, groups, uri, data=None, check_perm=None):
-        environment = data.get(
-            'environment', Environment.get_environment_by_uri(session, uri)
-        )
-
+    def delete_environment(session, uri, environment):
         env_groups = (
             session.query(models.EnvironmentGroup)
             .filter(models.EnvironmentGroup.environmentUri == uri)
@@ -967,11 +901,7 @@ class Environment:
             )
         if group not in Environment.list_environment_groups(
             session=session,
-            username=username,
-            groups=user_groups,
             uri=environment_uri,
-            data={},
-            check_perm=True,
         ):
             raise exceptions.UnauthorizedOperation(
                 action=permission_name,

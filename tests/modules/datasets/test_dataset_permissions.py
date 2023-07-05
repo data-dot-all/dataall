@@ -139,8 +139,6 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
         )
         env_with_perm = Environment.create_environment(
             session=session,
-            username=user.userName,
-            groups=[group.name],
             uri=org_with_perm.organizationUri,
             data={
                 'label': 'EnvWithPerm',
@@ -151,7 +149,6 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
                 'region': 'eu-west-1',
                 'cdk_role_name': 'cdkrole',
             },
-            check_perm=True,
         )
 
         data = dict(

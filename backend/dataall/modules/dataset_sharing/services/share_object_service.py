@@ -326,11 +326,7 @@ class ShareObjectService:
             )
         if share_object_group not in Environment.list_environment_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=environment_uri,
-            data=None,
-            check_perm=True,
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
