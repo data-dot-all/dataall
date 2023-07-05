@@ -277,9 +277,6 @@ class Environment:
 
     @staticmethod
     def validate_permissions(session, uri, g_permissions, group):
-        if permissions.CREATE_REDSHIFT_CLUSTER in g_permissions:
-            g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-
         if permissions.INVITE_ENVIRONMENT_GROUP in g_permissions:
             g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
             g_permissions.append(permissions.REMOVE_ENVIRONMENT_GROUP)
@@ -293,7 +290,6 @@ class Environment:
         g_permissions.append(permissions.GET_ENVIRONMENT)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUPS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
-        g_permissions.append(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
         g_permissions.append(permissions.LIST_ENVIRONMENT_NETWORKS)
         g_permissions.append(permissions.CREDENTIALS_ENVIRONMENT)
 
@@ -333,25 +329,7 @@ class Environment:
                 message=f'Team: {group} is the owner of the environment {environment.name}',
             )
 
-        group_env_objects_count = (
-            session.query(models.Environment)
-            .outerjoin(
-                models.RedshiftCluster,
-                models.RedshiftCluster.environmentUri
-                == models.Environment.environmentUri,
-            )
-            .filter(
-                and_(
-                    models.Environment.environmentUri == environment.environmentUri,
-                    or_(
-                        models.RedshiftCluster.SamlGroupName == group,
-                    ),
-                )
-            )
-            .count()
-        )
-
-        group_env_objects_count += EnvironmentResourceManager.count_group_resources(
+        group_env_objects_count = EnvironmentResourceManager.count_group_resources(
             session=session,
             environment=environment,
             group_uri=group
@@ -881,33 +859,6 @@ class Environment:
             f'Retrieved all active dataall environments {[e.AwsAccountId for e in environments]}'
         )
         return environments
-
-    @staticmethod
-    def list_environment_redshift_clusters_query(session, environment_uri, filter):
-        q = session.query(models.RedshiftCluster).filter(
-            models.RedshiftCluster.environmentUri == environment_uri
-        )
-        term = filter.get('term', None)
-        if term:
-            q = q.filter(
-                or_(
-                    models.RedshiftCluster.label.ilike('%' + term + '%'),
-                    models.RedshiftCluster.description.ilike('%' + term + '%'),
-                )
-            )
-        return q
-
-    @staticmethod
-    @has_resource_perm(permissions.LIST_ENVIRONMENT_REDSHIFT_CLUSTERS)
-    def paginated_environment_redshift_clusters(
-        session, username, groups, uri, data=None, check_perm=None
-    ):
-        query = Environment.list_environment_redshift_clusters_query(session, uri, data)
-        return paginate(
-            query=query,
-            page_size=data.get('pageSize', 10),
-            page=data.get('page', 1),
-        ).to_dict()
 
     @staticmethod
     @has_resource_perm(permissions.GET_ENVIRONMENT)

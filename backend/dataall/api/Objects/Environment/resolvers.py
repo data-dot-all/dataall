@@ -549,22 +549,6 @@ def delete_environment(
     return True
 
 
-def list_environment_redshift_clusters(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = dict()
-    with context.engine.scoped_session() as session:
-        return Environment.paginated_environment_redshift_clusters(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
-            check_perm=True,
-        )
-
-
 def enable_subscriptions(
     context: Context, source, environmentUri: str = None, input: dict = None
 ):

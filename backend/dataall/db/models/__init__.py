@@ -12,9 +12,6 @@ from .Notification import Notification, NotificationType
 from .Organization import Organization
 from .OrganizationGroup import OrganizationGroup
 from .Permission import Permission, PermissionType
-from .RedshiftCluster import RedshiftCluster
-from .RedshiftClusterDataset import RedshiftClusterDataset
-from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .ResourcePolicy import ResourcePolicy
 from .ResourcePolicyPermission import ResourcePolicyPermission
 from .Stack import Stack
