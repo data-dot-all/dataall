@@ -232,18 +232,6 @@ class PipelineStack(Stack):
             policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
             statements= [
-                # iam.PolicyStatement(
-                #     actions=[
-                #         "ec2:CreateNetworkInterface",
-                #         "ec2:DescribeNetworkInterfaces",
-                #         "ec2:DeleteNetworkInterface",
-                #         "ec2:DescribeSubnets",
-                #         "ec2:DescribeSecurityGroups",
-                #         "ec2:DescribeDhcpOptions",
-                #         "ec2:DescribeVpcs"
-                #     ],
-                #     resources=['*'],
-                # ),
                 iam.PolicyStatement(
                     actions=[
                         'sts:GetServiceBearerToken',
@@ -318,19 +306,9 @@ class PipelineStack(Stack):
                 iam.PolicyStatement(
                     actions=[
                         'cloudfront:CreateInvalidation',
-                        # 'ssm:GetParametersByPath',
-                        # 'ssm:GetParameters',
-                        # 'ssm:GetParameter',
-                        # 's3:Get*',
-                        # 's3:Put*',
-                        # 's3:List*',
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        # f'arn:aws:s3:::{self.resource_prefix}-*',
-                        # f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        # f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        # f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
                         f'arn:aws:cloudfront::*:distribution/*',
                     ],

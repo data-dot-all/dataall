@@ -11,8 +11,6 @@ from aws_cdk import (
 
 from .pyNestedStack import pyNestedClass
 
-import boto3
-
 class VpcStack(pyNestedClass):
     def __init__(
         self,
