@@ -9,11 +9,8 @@ def list_key_value_tags(
     with context.engine.scoped_session() as session:
         return db.api.KeyValueTag.list_key_value_tags(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=targetUri,
-            data={'targetType': targetType},
-            check_perm=True,
+            target_type=targetType,
         )
 
 
@@ -21,11 +18,8 @@ def update_key_value_tags(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         kv_tags = db.api.KeyValueTag.update_key_value_tags(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['targetUri'],
             data=input,
-            check_perm=True,
         )
         stack_helper.deploy_stack(targetUri=input['targetUri'])
         return kv_tags

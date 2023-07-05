@@ -4,21 +4,14 @@ from . import TargetType
 from .resource_policy import ResourcePolicy
 from .. import exceptions
 from .. import models
+from ...core.context import get_context
 
 logger = logging.getLogger(__name__)
 
 
 class KeyValueTag:
     @staticmethod
-    def update_key_value_tags(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> [models.KeyValueTag]:
-
+    def update_key_value_tags(session, uri: str, data: dict = None) -> [models.KeyValueTag]:
         if not uri:
             raise exceptions.RequiredParameter('targetUri')
         if not data:
@@ -26,10 +19,11 @@ class KeyValueTag:
         if not data.get('targetType'):
             raise exceptions.RequiredParameter('targetType')
 
+        context = get_context()
         ResourcePolicy.check_user_resource_permission(
             session=session,
-            username=username,
-            groups=groups,
+            username=context.username,
+            groups=context.groups,
             resource_uri=uri,
             permission_name=TargetType.get_resource_update_permission_name(
                 data['targetType']
@@ -62,19 +56,18 @@ class KeyValueTag:
         return tags
 
     @staticmethod
-    def list_key_value_tags(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def list_key_value_tags(session, uri, target_type) -> dict:
+        context = get_context()
         ResourcePolicy.check_user_resource_permission(
             session=session,
-            username=username,
-            groups=groups,
+            username=context.username,
+            groups=context.groups,
             resource_uri=uri,
             permission_name=TargetType.get_resource_read_permission_name(
-                data['targetType']
+                target_type
             ),
         )
-        return KeyValueTag.find_key_value_tags(session, uri, data['targetType'])
+        return KeyValueTag.find_key_value_tags(session, uri, target_type)
 
     @staticmethod
     def find_key_value_tags(session, target_uri, target_type) -> [models.KeyValueTag]:
