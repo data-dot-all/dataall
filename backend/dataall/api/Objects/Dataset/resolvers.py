@@ -15,7 +15,6 @@ from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.sns import Sns
 from ....aws.handlers.quicksight import Quicksight
-from ....aws.handlers.parameter_store import ParameterStoreManager
 from ....db import paginate, exceptions, permissions, models
 from ....db.api import Dataset, Environment, ShareObject, ResourcePolicy
 from ....db.api.organization import Organization
