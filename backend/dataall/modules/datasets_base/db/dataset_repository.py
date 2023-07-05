@@ -7,7 +7,7 @@ from dataall.db.api import (
     Environment,
 )
 from dataall.db.api import Organization
-from dataall.db import models, exceptions, paginate
+from dataall.db import models, paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification
@@ -242,17 +242,6 @@ class DatasetRepository(EnvironmentResource):
         return (
             session.query(DatasetTable)
             .filter(DatasetTable.datasetUri == dataset_uri)
-            .all()
-        )
-
-    @staticmethod
-    def list_dataset_redshift_clusters(
-        session, dataset_uri
-    ) -> [models.RedshiftClusterDataset]:
-        """return the dataset clusters"""
-        return (
-            session.query(models.RedshiftClusterDataset)
-            .filter(models.RedshiftClusterDataset.datasetUri == dataset_uri)
             .all()
         )
 

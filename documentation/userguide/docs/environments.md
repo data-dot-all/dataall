@@ -186,7 +186,6 @@ the environment organization. There are several tabs just below the environment 
 - Teams: list of all teams onboarded to this environment.
 - Datasets: list of all datasets owned and shared with for this environment
 - Networks: VPCs created and owned by the environment
-- Warehouses: Redshift clusters imported or created in this environment
 - Subscriptions: SNS topic subscriptions enabled or disabled in the environment
 - Tags: editable key-value tags
 - Stack: CloudFormation stack details and logs
@@ -266,9 +265,9 @@ disabled as appears in the following picture.
 ![](pictures/environments/env_teams_2.png#zoom#shadow)
 
 When the invitation is saved, the environment CloudFormation stack gets automatically updated and creates a
-new IAM role for the new team. The IAM role policies mapped to the permissions granted to the invited team
-(e.g., a team  invited without "Create Redshift clusters" permission will not have
-redshift permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
+new IAM role for the new team. The IAM role policies are mapped to the permissions and are granted to the invited team
+(e.g., a team  invited without "Create ML Studio" permission will not have
+Sagemaker permissions on the associated IAM role).To remove a group, in the *Actions* column select the minus icon.
 
 
 !!! warning "Automated permission assignment"

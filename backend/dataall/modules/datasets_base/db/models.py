@@ -76,7 +76,6 @@ class DatasetTable(Resource, Base):
     confidentiality = Column(String, nullable=True)
     userRoleForTable = query_expression()
     projectPermission = query_expression()
-    redshiftClusterPermission = query_expression()
     stage = Column(String, default='RAW')
     topics = Column(ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
@@ -132,8 +131,6 @@ class Dataset(Resource, Base):
     stewards = Column(String, nullable=True)
 
     SamlAdminGroupName = Column(String, nullable=True)
-
-    redshiftClusterPermission = query_expression()
 
     importedS3Bucket = Column(Boolean, default=False)
     importedGlueDatabase = Column(Boolean, default=False)
