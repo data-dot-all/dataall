@@ -13,14 +13,12 @@ from ariadne import (
 from .. import gql
 from ...api.constants import GraphQLEnumMapper
 from . import (
-    Permission,
     Environment,
     Activity,
     Group,
     Principal,
     Organization,
     Stack,
-    Test,
     RedshiftCluster,
     Glossary,
     Feed,
