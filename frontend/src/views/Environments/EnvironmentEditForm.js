@@ -511,37 +511,6 @@ const EnvironmentEditForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            {/*                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.warehousesEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="warehousesEnabled"
-                                      value={values.warehousesEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Warehouses{' '}
-                                      <small>
-                                        (Requires Amazon Redshift clusters)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.warehousesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>
