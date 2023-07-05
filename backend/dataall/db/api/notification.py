@@ -29,15 +29,6 @@ class Notification:
         return notification
 
     @staticmethod
-    def list_my_notifications(session, username):
-        return (
-            session.query(models.Notification)
-            .filter(models.Notification.username == username)
-            .order_by(models.Notification.created.desc())
-            .all()
-        )
-
-    @staticmethod
     def paginated_notifications(session, username, filter=None):
         if not filter:
             filter = {}

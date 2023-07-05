@@ -126,16 +126,12 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
         )
         org_with_perm = Organization.create_organization(
             session=session,
-            username=user.userName,
-            groups=[group.name],
-            uri=None,
             data={
                 'label': 'OrgWithPerm',
                 'SamlGroupName': group.name,
                 'description': 'desc',
                 'tags': [],
             },
-            check_perm=True,
         )
         env_with_perm = Environment.create_environment(
             session=session,

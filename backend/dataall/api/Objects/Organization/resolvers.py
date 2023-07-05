@@ -9,11 +9,7 @@ def create_organization(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         organization = Organization.create_organization(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data=input,
-            check_perm=True,
         )
         return organization
 
@@ -22,11 +18,8 @@ def update_organization(context, source, organizationUri=None, input=None):
     with context.engine.scoped_session() as session:
         return Organization.update_organization(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=organizationUri,
             data=input,
-            check_perm=True,
         )
 
 
@@ -44,11 +37,7 @@ def list_organizations(context: Context, source, filter=None):
     with context.engine.scoped_session() as session:
         return Organization.paginated_user_organizations(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -58,11 +47,8 @@ def list_groups(context, source: models.Organization, filter=None):
     with context.engine.scoped_session() as session:
         return Organization.paginated_organization_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.organizationUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -72,11 +58,8 @@ def list_organization_environments(context, source, filter=None):
     with context.engine.scoped_session() as session:
         return Organization.paginated_organization_environments(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=source.organizationUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -111,11 +94,7 @@ def archive_organization(context: Context, source, organizationUri: str = None):
     with context.engine.scoped_session() as session:
         return Organization.archive_organization(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=organizationUri,
-            data=None,
-            check_perm=True,
         )
 
 
@@ -123,11 +102,8 @@ def invite_group(context: Context, source, input):
     with context.engine.scoped_session() as session:
         organization, organization_group = db.api.Organization.invite_group(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['organizationUri'],
             data=input,
-            check_perm=True,
         )
         return organization
 
@@ -136,11 +112,8 @@ def remove_group(context: Context, source, organizationUri=None, groupUri=None):
     with context.engine.scoped_session() as session:
         organization = db.api.Organization.remove_group(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=organizationUri,
-            data={'groupUri': groupUri},
-            check_perm=True,
+            group=groupUri
         )
         return organization
 
@@ -153,11 +126,8 @@ def list_organization_invited_groups(
     with context.engine.scoped_session() as session:
         return db.api.Organization.paginated_organization_invited_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=organizationUri,
             data=filter,
-            check_perm=True,
         )
 
 
@@ -169,11 +139,8 @@ def list_organization_groups(
     with context.engine.scoped_session() as session:
         return db.api.Organization.paginated_organization_groups(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=organizationUri,
             data=filter,
-            check_perm=True,
         )
 
 
