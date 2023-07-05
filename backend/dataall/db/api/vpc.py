@@ -5,11 +5,11 @@ from sqlalchemy import and_
 from .. import exceptions, permissions
 from .. import models
 from . import (
-    has_tenant_perm,
-    has_resource_perm,
     Environment,
     ResourcePolicy,
 )
+from dataall.core.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.context import get_context
 
 log = logging.getLogger(__name__)
 
@@ -19,23 +19,15 @@ class Vpc:
         pass
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.CREATE_NETWORK)
-    def create_network(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> models.Vpc:
-
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.CREATE_NETWORK)
+    def create_network(session, uri: str, data: dict = None) -> models.Vpc:
         Vpc._validate_input(data)
-
+        context = get_context()
         Environment.check_group_environment_permission(
             session=session,
-            username=username,
-            groups=groups,
+            username=context.username,
+            groups=context.groups,
             uri=uri,
             group=data['SamlGroupName'],
             permission_name=permissions.CREATE_NETWORK,
@@ -116,22 +108,15 @@ class Vpc:
             raise exceptions.RequiredParameter('label')
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.GET_NETWORK)
-    def get_network(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> models.Vpc:
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.GET_NETWORK)
+    def get_network(session, uri: str) -> models.Vpc:
         return Vpc.get_vpc_by_uri(session, uri)
 
     @staticmethod
-    @has_tenant_perm(permissions.MANAGE_ENVIRONMENTS)
-    @has_resource_perm(permissions.DELETE_NETWORK)
-    def delete(session, username, groups, uri, data=None, check_perm=None) -> bool:
+    @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
+    @has_resource_permission(permissions.DELETE_NETWORK)
+    def delete(session, uri) -> bool:
         vpc = Vpc.get_vpc_by_uri(session, uri)
         session.delete(vpc)
         ResourcePolicy.delete_resource_policy(
