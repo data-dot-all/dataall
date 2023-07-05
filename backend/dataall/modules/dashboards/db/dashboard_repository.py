@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import exceptions, paginate
 from dataall.db.api import Environment
 from dataall.modules.dashboards.db.models import DashboardShare, DashboardShareStatus, Dashboard

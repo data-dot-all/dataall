@@ -1,7 +1,7 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 

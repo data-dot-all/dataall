@@ -14,7 +14,7 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
 from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....core.group.services.environment_resource_manager import EnvironmentResourceManager
+from ....core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (

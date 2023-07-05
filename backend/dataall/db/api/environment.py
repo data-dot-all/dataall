@@ -21,13 +21,13 @@ from ..models.Enums import (
 )
 from ..models.Permission import PermissionType
 from ..paginator import paginate
-from dataall.core.environment.models import EnvironmentParameter
+from dataall.core.environment.db.models import EnvironmentParameter
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 
 log = logging.getLogger(__name__)
 
