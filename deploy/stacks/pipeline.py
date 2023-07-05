@@ -144,7 +144,7 @@ class PipelineStack(Stack):
                     'cdk synth',
                     'echo ${CODEBUILD_SOURCE_VERSION}'
                 ],
-                role=self.pipeline_iam_role,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
             cross_account_keys=True,
@@ -209,41 +209,41 @@ class PipelineStack(Stack):
 
     def set_codebuild_iam_roles(self):
         # IAM Role Creation
-        self.pipeline_iam_role = iam.Role(
+        self.baseline_codebuild_role = iam.Role(
             self,
-            id=f'CDKPipelinesRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-role',
+            id=f'CodeBuildBaselineRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-role',
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('codebuild.amazonaws.com'),
                 iam.ServicePrincipal('codepipeline.amazonaws.com'),
                 iam.AccountPrincipal(self.account),
             ),
         )
-        self.codebuild_role = iam.Role(
+        self.expanded_codebuild_role = iam.Role(
             self,
-            id=f'CobdeBuildRole{self.git_branch}',
-            role_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-role',
+            id=f'CodeBuildExpandedRole{self.git_branch}',
+            role_name=f'{self.resource_prefix}-{self.git_branch}-expanded-codebuild-role',
             assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
         )
 
-        self.pipeline_iam_policy = iam.Policy(
+        self.baseline_codebuild_policy = iam.Policy(
             self,
-            'CDKPipelinePolicy',
-            policy_name=f'{self.resource_prefix}-{self.git_branch}-cdkpipelines-policy',
-            roles=[self.pipeline_iam_role, self.codebuild_role],
+            'BaselineCodeBuildPolicy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-codebuild-policy',
+            roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
             statements= [
-                iam.PolicyStatement(
-                    actions=[
-                        "ec2:CreateNetworkInterface",
-                        "ec2:DescribeNetworkInterfaces",
-                        "ec2:DeleteNetworkInterface",
-                        "ec2:DescribeSubnets",
-                        "ec2:DescribeSecurityGroups",
-                        "ec2:DescribeDhcpOptions",
-                        "ec2:DescribeVpcs"
-                    ],
-                    resources=['*'],
-                ),
+                # iam.PolicyStatement(
+                #     actions=[
+                #         "ec2:CreateNetworkInterface",
+                #         "ec2:DescribeNetworkInterfaces",
+                #         "ec2:DeleteNetworkInterface",
+                #         "ec2:DescribeSubnets",
+                #         "ec2:DescribeSecurityGroups",
+                #         "ec2:DescribeDhcpOptions",
+                #         "ec2:DescribeVpcs"
+                #     ],
+                #     resources=['*'],
+                # ),
                 iam.PolicyStatement(
                     actions=[
                         'sts:GetServiceBearerToken',
@@ -309,28 +309,28 @@ class PipelineStack(Stack):
                 ),
             ],
         )
-        self.codebuild_policy = iam.Policy(
+        self.expanded_codebuild_policy = iam.Policy(
             self,
-            'CodeBuildPolicy',
-            policy_name=f'{self.resource_prefix}-{self.git_branch}-codebuild-policy',
-            roles=[self.codebuild_role],
+            'ExpandedCodeBuildPolicy',
+            policy_name=f'{self.resource_prefix}-{self.git_branch}-expanded-codebuild-policy',
+            roles=[self.expanded_codebuild_role],
             statements= [
                 iam.PolicyStatement(
                     actions=[
                         'cloudfront:CreateInvalidation',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
+                        # 'ssm:GetParametersByPath',
+                        # 'ssm:GetParameters',
+                        # 'ssm:GetParameter',
+                        # 's3:Get*',
+                        # 's3:Put*',
+                        # 's3:List*',
                         'sts:AssumeRole',
                     ],
                     resources=[
-                        f'arn:aws:s3:::{self.resource_prefix}-*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
+                        # f'arn:aws:s3:::{self.resource_prefix}-*',
+                        # f'arn:aws:s3:::{self.resource_prefix}*/*',
+                        # f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        # f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
                         f'arn:aws:cloudfront::*:distribution/*',
                     ],
@@ -346,10 +346,10 @@ class PipelineStack(Stack):
                     iam.ServicePrincipal('codebuild.amazonaws.com'),
                     iam.AccountPrincipal(self.account),
                 ),
-                managed_policies=[self.pipeline_iam_policy, self.git_release_policy, self.codebuild_policy]
+                managed_policies=[self.baseline_codebuild_policy, self.git_release_policy, self.expanded_codebuild_policy]
             )
-            self.codebuild_policy.attach_to_role(self.git_project_role)
-            self.pipeline_iam_policy.attach_to_role(self.git_project_role)
+            self.expanded_codebuild_policy.attach_to_role(self.git_project_role)
+            self.baseline_codebuild_policy.attach_to_role(self.git_project_role)
             self.git_release_policy = iam.Policy(
                 self,
                 'GitReleasePolicy',
@@ -432,7 +432,7 @@ class PipelineStack(Stack):
                         'make drop-tables',
                         'make upgrade-db',
                     ],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -448,7 +448,7 @@ class PipelineStack(Stack):
                         '. env/bin/activate',
                         'make check-security',
                     ],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                 ),
                 pipelines.CodeBuildStep(
@@ -467,7 +467,7 @@ class PipelineStack(Stack):
                         'npm install',
                         'npm run lint',
                     ],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                 ),
             )
@@ -502,7 +502,7 @@ class PipelineStack(Stack):
                         )
                     ),
                     commands=[],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -517,7 +517,7 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -536,7 +536,7 @@ class PipelineStack(Stack):
                         'cd source_build/ && zip -r ../source_build/source_build.zip *',
                         f'aws s3api put-object --bucket {self.pipeline_bucket.bucket_name}  --key source_build.zip --body source_build.zip',
                     ],
-                    role=self.pipeline_iam_role,
+                    role=self.baseline_codebuild_role,
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
                 ),
@@ -577,7 +577,7 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role=self.pipeline_iam_role,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
             pipelines.CodeBuildStep(
@@ -595,7 +595,7 @@ class PipelineStack(Stack):
                 commands=[
                     f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
                 ],
-                role=self.pipeline_iam_role,
+                role=self.baseline_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -661,7 +661,7 @@ class PipelineStack(Stack):
                     'if [ "$(jq -r .builds[0].buildStatus codebuild-output.json)" = "FAILED" ]; then echo "Failed";  cat codebuild-output.json; exit -1; fi',
                     'cat codebuild-output.json ',
                 ],
-                role=self.codebuild_role,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -687,13 +687,13 @@ class PipelineStack(Stack):
                     'aws sts get-caller-identity --profile buildprofile',
                     f"export cluster_name=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cluster/name --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export private_subnets=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/private_subnets --profile buildprofile --output text --query 'Parameter.Value')",
-                    f"export security_groups=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cdkproxy_security_groups --profile buildprofile --output text --query 'Parameter.Value')",
+                    f"export security_groups=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/security_groups --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export task_definition=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/task_def_arn/stacks_updater --profile buildprofile --output text --query 'Parameter.Value')",
                     'network_config="awsvpcConfiguration={subnets=[$private_subnets],securityGroups=[$security_groups],assignPublicIp=DISABLED}"',
                     f'cluster_arn="arn:aws:ecs:{target_env["region"]}:{target_env["account"]}:cluster/$cluster_name"',
                     f'aws --profile buildprofile ecs run-task --task-definition $task_definition --cluster "$cluster_arn" --launch-type "FARGATE" --network-configuration "$network_config" --launch-type FARGATE --propagate-tags TASK_DEFINITION',
                 ],
-                role=self.codebuild_role,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -748,7 +748,7 @@ class PipelineStack(Stack):
                     'aws s3 sync build/ s3://$bucket --profile buildprofile',
                     "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*' --profile buildprofile",
                 ],
-                role=self.codebuild_role,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
             self.cognito_config_action(target_env),
@@ -783,7 +783,7 @@ class PipelineStack(Stack):
                     'aws s3 sync site/ s3://$bucket',
                     "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
                 ],
-                role=self.codebuild_role,
+                role=self.expanded_codebuild_role,
                 vpc=self.vpc,
             ),
         )
@@ -810,7 +810,7 @@ class PipelineStack(Stack):
                 'pip install boto3==1.20.46',
                 'python deploy/configs/rum_config.py',
             ],
-            role=self.codebuild_role,
+            role=self.expanded_codebuild_role,
             vpc=self.vpc,
         )
 
@@ -837,7 +837,7 @@ class PipelineStack(Stack):
                 'pip install boto3==1.20.46',
                 'python deploy/configs/cognito_urls_config.py',
             ],
-            role=self.codebuild_role,
+            role=self.expanded_codebuild_role,
             vpc=self.vpc,
         )
 
@@ -895,7 +895,7 @@ class PipelineStack(Stack):
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
-                    role=self.codebuild_role,
+                    role=self.expanded_codebuild_role,
                     vpc=self.vpc,
                 ),
                 pipelines.CodeBuildStep(
@@ -919,7 +919,7 @@ class PipelineStack(Stack):
                         'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
                         'docker push $REPOSITORY_URI:$IMAGE_TAG',
                     ],
-                    role=self.codebuild_role,
+                    role=self.expanded_codebuild_role,
                     vpc=self.vpc,
                 ),
             ],

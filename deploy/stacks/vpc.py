@@ -24,8 +24,6 @@ class VpcStack(pyNestedClass):
         cidr=None,
         resource_prefix=None,
         restricted_nacl=False,
-        backend_vpc=False,
-        tooling_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -33,7 +31,7 @@ class VpcStack(pyNestedClass):
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, f'vpc', vpc_id=vpc_id)
         else:
-            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl, backend_vpc, tooling_region)
+            self.create_new_vpc(cidr, envname, resource_prefix, restricted_nacl)
 
         if vpc_endpoints_sg:
             self.vpce_security_group = ec2.SecurityGroup.from_security_group_id(
@@ -112,7 +110,7 @@ class VpcStack(pyNestedClass):
                 description=f'{resource_prefix}-{envname}-cidrBlock',
             )
 
-    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl, backend_vpc, tooling_region):
+    def create_new_vpc(self, cidr, envname, resource_prefix, restricted_nacl):
         self.vpc = ec2.Vpc(
             self,
             'VPC',
