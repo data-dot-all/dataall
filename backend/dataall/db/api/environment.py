@@ -795,19 +795,15 @@ class Environment:
     def get_environment_by_uri(session, uri) -> models.Environment:
         if not uri:
             raise exceptions.RequiredParameter('environmentUri')
-        environment: models.Environment = Environment.find_environment_by_uri(
-            session, uri
-        )
+        environment: models.Environment = session.query(models.Environment).get(uri)
         if not environment:
             raise exceptions.ObjectNotFound(models.Environment.__name__, uri)
         return environment
 
     @staticmethod
+    @has_resource_permission(permissions.GET_ENVIRONMENT)
     def find_environment_by_uri(session, uri) -> models.Environment:
-        if not uri:
-            raise exceptions.RequiredParameter('environmentUri')
-        environment: models.Environment = session.query(models.Environment).get(uri)
-        return environment
+        return Environment.get_environment_by_uri(session, uri)
 
     @staticmethod
     def list_all_active_environments(session) -> [models.Environment]:
@@ -857,6 +853,7 @@ class Environment:
         return session.query(models.Stack).get(stack_uri)
 
     @staticmethod
+    @has_resource_permission(permissions.DELETE_ENVIRONMENT)
     def delete_environment(session, uri, environment):
         env_groups = (
             session.query(models.EnvironmentGroup)

@@ -307,15 +307,7 @@ def resolve_vpc_list(context: Context, source, **kwargs):
 
 def get_environment(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.GET_ENVIRONMENT,
-        )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
-        return environment
+        return db.api.Environment.find_environment_by_uri(session, uri=environmentUri)
 
 
 def resolve_user_role(context: Context, source: models.Environment):
@@ -464,13 +456,6 @@ def delete_environment(
     context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
 ):
     with context.engine.scoped_session() as session:
-        ResourcePolicy.check_user_resource_permission(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            resource_uri=environmentUri,
-            permission_name=permissions.DELETE_ENVIRONMENT,
-        )
         environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
 
         try:
