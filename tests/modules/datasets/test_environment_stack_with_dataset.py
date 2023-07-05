@@ -2,7 +2,9 @@ from aws_cdk import App
 from aws_cdk.assertions import Template
 
 from dataall.cdkproxy.stacks import EnvironmentSetup
+from dataall.modules.datasets_base.db.models import Dataset
 from tests.cdkproxy.conftest import *
+
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
@@ -11,6 +13,42 @@ def patch_extensions(mocker):
             f"{extension.__module__}.{extension.__name__}.extent",
             return_value=True,
         )
+
+
+@pytest.fixture(scope='function', autouse=True)
+def another_group(db, env):
+    with db.scoped_session() as session:
+        env_group: models.EnvironmentGroup = models.EnvironmentGroup(
+            environmentUri=env.environmentUri,
+            groupUri='anothergroup',
+            environmentIAMRoleArn='aontherGroupArn',
+            environmentIAMRoleName='anotherGroupRole',
+            environmentAthenaWorkGroup='workgroup',
+        )
+        session.add(env_group)
+        dataset = Dataset(
+            label='thisdataset',
+            environmentUri=env.environmentUri,
+            organizationUri=env.organizationUri,
+            name='anotherdataset',
+            description='test',
+            AwsAccountId=env.AwsAccountId,
+            region=env.region,
+            S3BucketName='bucket',
+            GlueDatabaseName='db',
+            IAMDatasetAdminRoleArn='role',
+            IAMDatasetAdminUserArn='xxx',
+            KmsAlias='xxx',
+            owner='me',
+            confidentiality='C1',
+            businessOwnerEmail='jeff',
+            businessOwnerDelegationEmails=['andy'],
+            SamlAdminGroupName=env_group.groupUri,
+            GlueCrawlerName='dhCrawler',
+        )
+        session.add(dataset)
+        yield env_group
+
 
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, env, another_group, permissions):
