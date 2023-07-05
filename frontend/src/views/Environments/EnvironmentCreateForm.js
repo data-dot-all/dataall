@@ -153,7 +153,6 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          warehousesEnabled: values.warehousesEnabled,
           EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
           resourcePrefix: values.resourcePrefix,
           parameters: [
@@ -381,7 +380,6 @@ const EnvironmentCreateForm = (props) => {
                 notebooksEnabled: true,
                 mlStudiosEnabled: true,
                 pipelinesEnabled: true,
-                warehousesEnabled: true,
                 EnvironmentDefaultIAMRoleName: '',
                 resourcePrefix: 'dataall'
               }}

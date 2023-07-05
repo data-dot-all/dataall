@@ -47,6 +47,7 @@ class Environment(Resource, Base):
     mlStudiosEnabled = Column(Boolean)
     pipelinesEnabled = Column(Boolean)
     dashboardsEnabled = Column(Boolean)
+    warehousesEnabled = Column(Boolean)
 
 
 class EnvironmentParameter(Base):
@@ -80,7 +81,7 @@ def upgrade():
             Column("paramKey", String, primary_key=True),
             Column("paramValue", String, nullable=False),
         )
-        print("Creation of environment_parameters is done")
+        print("Creation of environment_parameters table is done")
 
         print("Migrating the environmental parameters from environment table to environment_parameters table...")
         envs: List[Environment] = session.query(Environment).all()
@@ -106,6 +107,7 @@ def upgrade():
         op.drop_column("environment", "mlStudiosEnabled")
         op.drop_column("environment", "pipelinesEnabled")
         op.drop_column("environment", "dashboardsEnabled")
+        op.drop_column("environment", "warehousesEnabled")
         print("Dropped the columns from the environment table ")
 
         create_foreign_key_to_env(op, 'sagemaker_notebook')
@@ -141,6 +143,7 @@ def downgrade():
         op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
         op.add_column("environment", Column("pipelinesEnabled", Boolean, default=True))
         op.add_column("environment", Column("dashboardsEnabled", Boolean, default=True))
+        op.add_column("environment", Column("warehousesEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
         params = session.query(EnvironmentParameter).all()
@@ -152,7 +155,8 @@ def downgrade():
                 notebooksEnabled=params["notebooksEnabled"] == "true",
                 mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
                 pipelinesEnabled=params["pipelinesEnabled"] == "true",
-                dashboardsEnabled=params["dashboardsEnabled"] == "true"
+                dashboardsEnabled=params["dashboardsEnabled"] == "true",
+                dashboardsEnabled=params["warehousesEnabled"] == "true"
             ))
 
         save_deleted_permissions(session)

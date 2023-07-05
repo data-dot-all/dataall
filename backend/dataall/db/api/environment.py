@@ -57,7 +57,6 @@ class Environment:
             ),
             EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{data.get("EnvironmentDefaultIAMRoleName")}',
             CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{data['cdk_role_name']}",
-            warehousesEnabled=data.get('warehousesEnabled', True),
             resourcePrefix=data.get('resourcePrefix'),
         )
 
@@ -184,8 +183,6 @@ class Environment:
             environment.description = data.get('description', 'No description provided')
         if data.get('tags'):
             environment.tags = data.get('tags')
-        if 'warehousesEnabled' in data.keys():
-            environment.warehousesEnabled = data.get('warehousesEnabled')
         if data.get('resourcePrefix'):
             environment.resourcePrefix = data.get('resourcePrefix')
 

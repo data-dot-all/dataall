@@ -75,7 +75,6 @@ const EnvironmentEditForm = (props) => {
             label: values.label,
             tags: values.tags,
             description: values.description,
-            warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
@@ -215,7 +214,6 @@ const EnvironmentEditForm = (props) => {
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
                 dashboardsEnabled:
                   env.parameters['dashboardsEnabled'] === 'true',
-                warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
               }}
               validationSchema={Yup.object().shape({

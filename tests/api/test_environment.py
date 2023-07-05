@@ -29,7 +29,6 @@ def get_env(client, env1, group):
                 region
                 SamlGroupName
                 owner
-                warehousesEnabled
                 stack{
                  EcsTaskArn
                  EcsTaskId
@@ -56,7 +55,6 @@ def test_get_environment(client, org1, env1, group):
     body = response.data.getEnvironment
     assert body.owner == 'alice'
     assert body.AwsAccountId == env1.AwsAccountId
-    assert body.warehousesEnabled
 
     params = {p.key: p.value for p in body.parameters}
     assert params["dashboardsEnabled"] == "true"
@@ -100,7 +98,6 @@ def test_update_env(client, org1, env1, group):
                 owner
                 tags
                 resourcePrefix
-                warehousesEnabled
                 parameters {
                     key
                     value
@@ -115,7 +112,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'warehousesEnabled': False,
             'parameters': [
                 {
                     'key': 'moduleEnabled',
@@ -134,7 +130,6 @@ def test_update_env(client, org1, env1, group):
         input={
             'label': 'DEV',
             'tags': ['test', 'env'],
-            'warehousesEnabled': False,
             'parameters': [
                 {
                     'key': 'moduleEnabled',
@@ -155,7 +150,6 @@ def test_update_env(client, org1, env1, group):
     assert response.data.updateEnvironment.label == 'DEV'
     assert str(response.data.updateEnvironment.tags) == str(['test', 'env'])
     assert not response.data.updateEnvironment.dashboardsEnabled
-    assert not response.data.updateEnvironment.warehousesEnabled
     assert response.data.updateEnvironment.parameters
     assert response.data.updateEnvironment.parameters[0]["key"] == "moduleEnabled"
     assert response.data.updateEnvironment.parameters[0]["value"] == "True"
