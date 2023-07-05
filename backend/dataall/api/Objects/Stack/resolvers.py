@@ -101,11 +101,8 @@ def update_stack(
     with context.engine.scoped_session() as session:
         stack = db.api.Stack.update_stack(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=targetUri,
-            data={'targetType': targetType},
-            check_perm=True,
+            target_type=targetType
         )
     stack_helper.deploy_stack(stack.targetUri)
     return stack
