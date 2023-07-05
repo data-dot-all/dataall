@@ -20,7 +20,7 @@ class DashboardIndexer(BaseIndexer):
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dashboard_uri)
             count_upvotes = db.api.Vote.count_upvotes(
-                session, None, None, dashboard_uri, {'targetType': 'dashboard'}
+                session, dashboard_uri, target_type='dashboard'
             )
             BaseIndexer._index(
                 doc_id=dashboard_uri,

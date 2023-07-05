@@ -3,21 +3,14 @@ from datetime import datetime
 
 from .. import exceptions
 from .. import models
+from ...core.context import get_context
 
 logger = logging.getLogger(__name__)
 
 
 class Vote:
     @staticmethod
-    def upvote(
-        session,
-        username: str,
-        groups: [str],
-        uri: str,
-        data: dict = None,
-        check_perm: bool = False,
-    ) -> [models.Vote]:
-
+    def upvote(session, uri: str, data: dict = None) -> [models.Vote]:
         if not uri:
             raise exceptions.RequiredParameter('targetUri')
         if not data:
@@ -41,7 +34,7 @@ class Vote:
 
         else:
             vote: models.Vote = models.Vote(
-                username=username,
+                username=get_context().username,
                 targetUri=uri,
                 targetType=data['targetType'],
                 upvote=data['upvote'],
@@ -52,22 +45,16 @@ class Vote:
         return vote
 
     @staticmethod
-    def count_upvotes(
-        session, username, groups, uri, data=None, check_perm=None
-    ) -> dict:
+    def count_upvotes(session, uri, target_type) -> dict:
         return (
             session.query(models.Vote)
             .filter(
                 models.Vote.targetUri == uri,
-                models.Vote.targetType == data['targetType'],
+                models.Vote.targetType == target_type,
                 models.Vote.upvote == True,
             )
             .count()
         )
-
-    @staticmethod
-    def get_vote(session, username, groups, uri, data=None, check_perm=None) -> dict:
-        return Vote.find_vote(session, uri, data['targetType'])
 
     @staticmethod
     def find_vote(session, target_uri, target_type) -> [models.Vote]:

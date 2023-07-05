@@ -17,11 +17,8 @@ def count_upvotes(
     with context.engine.scoped_session() as session:
         return db.api.Vote.count_upvotes(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=targetUri,
-            data={'targetType': targetType},
-            check_perm=True,
+            target_type=targetType
         )
 
 
@@ -29,11 +26,8 @@ def upvote(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
         vote = db.api.Vote.upvote(
             session=session,
-            username=context.username,
-            groups=context.groups,
             uri=input['targetUri'],
             data=input,
-            check_perm=True,
         )
 
         _VOTE_TYPES[vote.targetType].upsert(session, vote.targetUri)
@@ -42,11 +36,8 @@ def upvote(context: Context, source, input=None):
 
 def get_vote(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Vote.get_vote(
+        return db.api.Vote.find_vote(
             session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=targetUri,
-            data={'targetType': targetType},
-            check_perm=True,
+            target_uri=targetUri,
+            target_type=targetType
         )

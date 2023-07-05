@@ -17,7 +17,7 @@ class DatasetIndexer(BaseIndexer):
         count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
         count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
         count_upvotes = Vote.count_upvotes(
-            session, None, None, dataset_uri, {'targetType': 'dataset'}
+            session, dataset_uri, target_type='dataset'
         )
 
         if dataset:

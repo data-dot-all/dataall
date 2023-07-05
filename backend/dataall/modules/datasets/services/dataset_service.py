@@ -192,7 +192,7 @@ class DatasetService:
                 session, dataset.datasetUri
             )
             count_upvotes = Vote.count_upvotes(
-                session, None, None, dataset.datasetUri, {'targetType': 'dataset'}
+                session, dataset.datasetUri, target_type='dataset'
             )
         return {
             'tables': count_tables or 0,
