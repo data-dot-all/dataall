@@ -1,4 +1,4 @@
-from ... import gql
+from .... import gql
 from .resolvers import *
 from ....api.constants import RedshiftClusterRole
 

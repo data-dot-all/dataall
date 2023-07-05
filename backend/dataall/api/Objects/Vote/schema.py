@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 
 Vote = gql.ObjectType(
     name='Vote',

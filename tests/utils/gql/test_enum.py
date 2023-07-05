@@ -1,7 +1,7 @@
 from enum import Enum
 
 import pytest
-import dataall.api.gql as gql
+import dataall.gql as gql
 
 
 @pytest.fixture(scope='module')

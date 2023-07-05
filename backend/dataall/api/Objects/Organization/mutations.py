@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 from .input_types import (
     ModifyOrganizationInput,
     NewOrganizationInput,

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Type, Dict
 
-from dataall.api import gql
-from dataall.api.gql.graphql_union_type import UnionTypeRegistry
-from dataall.db import Resource, models
+from dataall import gql
+from dataall.gql.graphql_union_type import UnionTypeRegistry
+from dataall.db import Resource
 
 
 @dataclass

@@ -1,4 +1,4 @@
-from ... import gql
+from .... import gql
 from ....db import models
 
 

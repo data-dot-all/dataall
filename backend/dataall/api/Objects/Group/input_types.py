@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 
 GroupFilter = gql.InputType(
     name='GroupFilter',

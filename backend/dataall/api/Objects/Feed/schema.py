@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 from .resolvers import *
 from dataall.api.Objects.Feed.registry import FeedRegistry
 

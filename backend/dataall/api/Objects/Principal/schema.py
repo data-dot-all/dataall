@@ -1,4 +1,4 @@
-from ... import gql
+from .... import gql
 from ....api.constants import PrincipalType
 
 

@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 
 ImportDashboardInput = gql.InputType(
     name='ImportDashboardInput',

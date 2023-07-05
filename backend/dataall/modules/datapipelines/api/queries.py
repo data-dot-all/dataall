@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.datapipelines.api.resolvers import list_pipelines, get_pipeline, ls, list_branches, cat, \
     get_creds, list_pipeline_environments, get_pipeline_environment
 

@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 from dataall.modules.dataset_sharing.api.resolvers import union_resolver, resolve_shared_item, resolve_dataset, \
     resolve_consumption_data, resolve_existing_shared_items, resolve_share_object_statistics, resolve_principal, \

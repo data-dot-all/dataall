@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 
 FeedMessageInput = gql.InputType(
     name='FeedMessageInput', arguments=[gql.Argument(name='content', type=gql.String)]

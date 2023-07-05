@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.dashboards.api.resolvers import *
 
 from dataall.api.Objects.Environment.resolvers import resolve_environment

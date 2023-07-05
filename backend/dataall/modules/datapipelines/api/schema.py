@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.datapipelines.api.resolvers import list_pipeline_environments, \
     get_clone_url_http, get_stack, resolve_user_role
 from dataall.modules.datapipelines.api.enums import DataPipelineRole

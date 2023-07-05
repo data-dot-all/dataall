@@ -1,5 +1,5 @@
 """The module defines GraphQL queries for the SageMaker ML Studio"""
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.mlstudio.api.resolvers import (
     get_sagemaker_studio_user,
     list_sagemaker_studio_users,

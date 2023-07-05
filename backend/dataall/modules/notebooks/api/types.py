@@ -1,5 +1,5 @@
 """Defines the object types of the SageMaker notebooks"""
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.notebooks.api.resolvers import (
     resolve_notebook_stack,
     resolve_notebook_status,

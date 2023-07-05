@@ -1,4 +1,4 @@
-from ... import gql
+from dataall import gql
 from .resolvers import get_group, list_cognito_groups
 
 getGroup = gql.QueryField(

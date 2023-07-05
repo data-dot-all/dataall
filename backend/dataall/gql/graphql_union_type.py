@@ -29,7 +29,7 @@ class Union:
 
 
 if __name__ == '__main__':
-    from .. import gql
+    from dataall import gql
 
     User = gql.ObjectType(name='User', fields=[])
 

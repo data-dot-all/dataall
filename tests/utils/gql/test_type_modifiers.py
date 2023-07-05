@@ -1,4 +1,4 @@
-import dataall.api.gql as gql
+import dataall.gql as gql
 
 
 def test_non_nullable_modifier_scalar():

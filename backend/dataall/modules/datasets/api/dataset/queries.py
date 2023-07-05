@@ -1,4 +1,4 @@
-from dataall.api import gql
+from dataall import gql
 from dataall.modules.datasets.api.dataset.input_types import DatasetFilter
 from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset,
