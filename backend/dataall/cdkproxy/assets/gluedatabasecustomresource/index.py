@@ -51,9 +51,12 @@ def on_create(event):
 
     if not exists:
         try:
+            db_input = props.get('DatabaseInput').copy()
+            if "Imported" in db_input:
+                del db_input["Imported"]
             response = glue_client.create_database(
                 CatalogId=props.get('CatalogId'),
-                DatabaseInput=props.get('DatabaseInput'),
+                DatabaseInput=db_input,
             )
         except ClientError as e:
             log.exception(f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}")
