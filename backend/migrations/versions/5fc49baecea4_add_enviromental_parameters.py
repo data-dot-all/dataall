@@ -16,7 +16,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import Resource, models
-from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission
+from dataall.core.permissions.db.permission_models import  PermissionType, ResourcePolicyPermission
+from dataall.db.models import EnvironmentGroup
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
 # revision identifiers, used by Alembic.

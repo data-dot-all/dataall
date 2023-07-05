@@ -3,10 +3,10 @@ import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
 from dataall.db.api import Tenant
-from dataall.db.models.Permission import PermissionType
 from dataall.db.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
 

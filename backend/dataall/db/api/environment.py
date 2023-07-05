@@ -15,7 +15,6 @@ from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
 )
-from ..models.Permission import PermissionType
 from ..paginator import paginate
 from dataall.core.environment.models import EnvironmentParameter
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
@@ -28,6 +27,7 @@ from dataall.core.permissions.permission_checker import has_resource_permission,
 from dataall.core.context import get_context
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from ...core.permissions.db.permission_models import PermissionType
 
 log = logging.getLogger(__name__)
 

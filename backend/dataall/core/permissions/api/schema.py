@@ -1,9 +1,10 @@
 from dataall import db
 from dataall.api import gql
+from dataall.core.permissions.db.permission_models import PermissionType
 
 
 def resolve_enum(context, source: db.models.Notification):
-    return source.type.name if source.type else db.models.PermissionType.TENANT.name
+    return source.type.name if source.type else PermissionType.TENANT.name
 
 
 Permission = gql.ObjectType(

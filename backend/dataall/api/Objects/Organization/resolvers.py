@@ -1,8 +1,8 @@
-from .... import db
-from ....api.constants import OrganisationUserRole
-from ....api.context import Context
-from ....db.api.organization import Organization
-from ....db import models
+from dataall import db
+from dataall.api.constants import OrganisationUserRole
+from dataall.api.context import Context
+from dataall.db.api.organization import Organization
+from dataall.db import models
 
 
 def create_organization(context: Context, source, input=None):

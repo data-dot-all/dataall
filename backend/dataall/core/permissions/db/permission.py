@@ -2,9 +2,11 @@ import logging
 
 from sqlalchemy import or_
 
+from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.db.paginator import paginate
-from dataall.db import models, exceptions, permissions
-from dataall.db.models.Permission import PermissionType
+from dataall.db import exceptions, permissions
+from dataall.core.permissions.db import permission_models as models
+
 
 logger = logging.getLogger(__name__)
 

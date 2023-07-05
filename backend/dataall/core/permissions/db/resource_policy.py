@@ -4,9 +4,9 @@ from typing import Optional
 from sqlalchemy.sql import and_
 
 from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.db import exceptions
-from dataall.db import models
-from dataall.db.models.Permission import PermissionType
+from dataall.core.permissions.db import permission_models as models
 
 logger = logging.getLogger(__name__)
 
