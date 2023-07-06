@@ -7,7 +7,7 @@ from aws_cdk import Environment, App
 from tabulate import tabulate
 
 from dataall.cdkproxy.stacks import instanciate_stack
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.base.loader import load_modules, ImportMode
 
 print(sys.version)
 logger = logging.getLogger('cdkapp process')

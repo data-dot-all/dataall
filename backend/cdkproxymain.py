@@ -10,7 +10,7 @@ from fastapi import FastAPI, BackgroundTasks, status, Response
 import dataall.cdkproxy.cdk_cli_wrapper as wrapper
 from dataall.cdkproxy.stacks import StackManager
 from dataall import db
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.base.loader import load_modules, ImportMode
 
 print('\n'.join(sys.path))
 

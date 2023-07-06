@@ -7,7 +7,7 @@ from dataall.modules.datapipelines.db.models import DataPipeline
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
     GET_PIPELINE, UPDATE_PIPELINE
-from dataall.modules.loader import ModuleInterface, ImportMode
+from dataall.base.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
 

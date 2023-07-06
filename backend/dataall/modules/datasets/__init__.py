@@ -6,7 +6,7 @@ from dataall.modules.datasets_base.db.dataset_repository import DatasetRepositor
 from dataall.modules.datasets_base import DatasetBaseModuleInterface
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetStorageLocation, DatasetTable, Dataset
 from dataall.modules.datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
-from dataall.modules.loader import ModuleInterface, ImportMode
+from dataall.base.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
 

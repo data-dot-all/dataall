@@ -4,7 +4,7 @@ import sys
 import time
 
 from dataall.core.stack_finder import StackFinder
-from dataall.modules.loader import ImportMode, load_modules
+from dataall.base.loader import ImportMode, load_modules
 from dataall import db
 from dataall.db import models
 from dataall.aws.handlers.ecs import Ecs

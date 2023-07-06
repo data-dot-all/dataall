@@ -5,7 +5,7 @@ from typing import Set
 from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository
 from dataall.modules.dashboards.db.models import Dashboard
-from dataall.modules.loader import ImportMode, ModuleInterface
+from dataall.base.loader import ImportMode, ModuleInterface
 
 log = logging.getLogger(__name__)
 

@@ -14,8 +14,8 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.core.context import set_context, dispose_context, RequestContext
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import init_permissions, get_engine, api, permissions
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.db import init_permissions, get_engine, permissions
+from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))

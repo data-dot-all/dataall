@@ -4,7 +4,7 @@ import sys
 
 from dataall.core.catalog.catalog_indexer import CatalogIndexer
 from dataall.db import get_engine
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.base.loader import load_modules, ImportMode
 from dataall.utils.alarm_service import AlarmService
 
 root = logging.getLogger()

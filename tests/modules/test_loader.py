@@ -3,8 +3,8 @@ from typing import List, Type, Set
 
 import pytest
 
-from dataall.modules.loader import ModuleInterface, ImportMode
-from dataall.modules import loader
+from dataall.base.loader import ModuleInterface, ImportMode
+from dataall.base import loader
 
 order = []
 
@@ -97,11 +97,11 @@ def clean_order():
 
 def patch_loading(mocker, all_modules, in_config):
     mocker.patch(
-        'dataall.modules.loader._all_modules',
+        'dataall.base.loader._all_modules',
         return_value=all_modules,
     )
     mocker.patch(
-        'dataall.modules.loader._load_modules',
+        'dataall.base.loader._load_modules',
         return_value=({module.name() for module in in_config}, {})
     )
 
@@ -109,7 +109,7 @@ def patch_loading(mocker, all_modules, in_config):
 @pytest.fixture(scope="function", autouse=True)
 def patch_modes(mocker):
     mocker.patch(
-        'dataall.modules.loader._ACTIVE_MODES', set()
+        'dataall.base.loader._ACTIVE_MODES', set()
     )
     yield
 

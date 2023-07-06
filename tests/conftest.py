@@ -2,7 +2,7 @@ import os
 import pytest
 import dataall
 from dataall.core.config import config
-from dataall.modules.loader import load_modules, ImportMode
+from dataall.base.loader import load_modules, ImportMode
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
