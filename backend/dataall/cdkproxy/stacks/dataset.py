@@ -2,10 +2,8 @@ import logging
 import os
 
 from aws_cdk import (
-    custom_resources as cr,
     aws_s3 as s3,
     aws_kms as kms,
-    aws_lambda as _lambda,
     aws_iam as iam,
     aws_ssm as ssm,
     aws_glue as glue,
@@ -101,13 +99,15 @@ class Dataset(Stack):
             quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
 
         # Dataset S3 Bucket and KMS key
-        if dataset.imported and dataset.importedS3Bucket and dataset.importedKmsKey:
+        dataset_key = False
+        if dataset.imported and dataset.importedS3Bucket:
             dataset_bucket = s3.Bucket.from_bucket_name(
                 self, f'ImportedBucket{dataset.datasetUri}', dataset.S3BucketName
             )
-            dataset_key = kms.Key.from_lookup(
-                self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
-            )
+            if dataset.importedKmsKey:
+                dataset_key = kms.Key.from_lookup(
+                    self, f'ImportedKey{dataset.datasetUri}', alias_name=f"alias/{dataset.KmsAlias}"
+                )
         else:
             dataset_key = kms.Key(
                 self,
@@ -115,21 +115,51 @@ class Dataset(Stack):
                 alias=dataset.KmsAlias,
                 enable_key_rotation=True,
                 policy=iam.PolicyDocument(
-                    assign_sids=True,
                     statements=[
                         iam.PolicyStatement(
+                            sid="EnableDatasetOwnerKeyUsage",
                             resources=['*'],
                             effect=iam.Effect.ALLOW,
                             principals=[
-                                iam.AccountPrincipal(account_id=dataset.AwsAccountId),
-                                iam.ArnPrincipal(
-                                    f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}'
-                                ),
+                                iam.ArnPrincipal(env_group.environmentIAMRoleArn),
                             ],
-                            actions=['kms:*'],
+                            actions=[
+                                "kms:Encrypt",
+                                "kms:Decrypt",
+                                "kms:ReEncrypt*",
+                                "kms:GenerateDataKey*",
+                                "kms:DescribeKey",
+                                "kms:List*",
+                                "kms:GetKeyPolicy",
+                            ],
+                        ),
+                        iam.PolicyStatement(
+                            sid='KMSPivotRolePermissions',
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                'kms:Decrypt',
+                                'kms:Encrypt',
+                                'kms:GenerateDataKey*',
+                                'kms:PutKeyPolicy',
+                                "kms:GetKeyPolicy",
+                                'kms:ReEncrypt*',
+                                'kms:TagResource',
+                                'kms:UntagResource',
+                                'kms:DeleteAlias',
+                                'kms:DescribeKey',
+                                'kms:CreateAlias',
+                                'kms:List*',
+                            ],
+                            resources=['*'],
+                            principals=[
+                                iam.ArnPrincipal(f'arn:aws:iam::{env.AwsAccountId}:role/{self.pivot_role_name}')
+                            ],
                         )
-                    ],
+                    ]
                 ),
+                admins=[
+                    iam.ArnPrincipal(env.CDKRoleArn),
+                ]
             )
 
             dataset_bucket = s3.Bucket(
@@ -227,16 +257,6 @@ class Dataset(Stack):
                     resources=[dataset_bucket.bucket_arn + '/*'],
                 ),
                 iam.PolicyStatement(
-                    sid="KMSAccess",
-                    actions=[
-                        "kms:Decrypt",
-                        "kms:Encrypt",
-                        "kms:GenerateDataKey"
-                    ],
-                    effect=iam.Effect.ALLOW,
-                    resources=[dataset_key.key_arn],
-                ),
-                iam.PolicyStatement(
                     sid="ReadAccessPointsDatasetBucket",
                     actions=[
                         's3:GetAccessPoint',
@@ -261,9 +281,18 @@ class Dataset(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f"arn:aws:glue:*:{dataset.AwsAccountId}:catalog",
-                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/{dataset.GlueDatabaseName}",
                         f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:table/{dataset.GlueDatabaseName}/*"
+                    ]
+                ),
+                iam.PolicyStatement(
+                    sid="GlueAccessDefault",
+                    actions=[
+                        "glue:GetDatabase",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[
+                        f"arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:database/default",
                     ]
                 ),
                 iam.PolicyStatement(
@@ -317,6 +346,19 @@ class Dataset(Stack):
                 ),
             ],
         )
+        if dataset_key:
+            dataset_admin_policy.add_statements(
+                iam.PolicyStatement(
+                    sid="KMSAccess",
+                    actions=[
+                        "kms:Decrypt",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey"
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=[dataset_key.key_arn],
+                )
+            )
         dataset_admin_policy.node.add_dependency(dataset_bucket)
 
         dataset_admin_role = iam.Role(
@@ -332,9 +374,28 @@ class Dataset(Stack):
         )
         dataset_admin_policy.attach_to_role(dataset_admin_role)
 
+        # Add Key Policy For Users
+        if not dataset.imported:
+            dataset_key.add_to_resource_policy(
+                iam.PolicyStatement(
+                    sid="EnableDatasetIAMRoleKeyUsage",
+                    resources=['*'],
+                    effect=iam.Effect.ALLOW,
+                    principals=[dataset_admin_role],
+                    actions=[
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*",
+                        "kms:DescribeKey"
+                    ],
+                )
+            )
+
         # Datalake location custom resource: registers the S3 location in LakeFormation
         registered_location = LakeFormation.check_existing_lf_registered_location(
             resource_arn=f'arn:aws:s3:::{dataset.S3BucketName}',
+            role_arn=dataset.IAMDatasetAdminRoleArn,
             accountid=env.AwsAccountId,
             region=env.region
         )
@@ -360,45 +421,6 @@ class Dataset(Stack):
         if quicksight_default_group_arn:
             dataset_admins.append(quicksight_default_group_arn)
 
-        # Glue Database custom resource: creates the Glue database and grants the default permissions (dataset role, admin, pivotrole, QS group)
-        # Old provider, to be deleted in future release
-        glue_db_handler_arn = ssm.StringParameter.from_string_parameter_name(
-            self,
-            'GlueDbCRArnParameter',
-            string_parameter_name=f'/dataall/{dataset.environmentUri}/cfn/custom-resources/lambda/arn',
-        )
-
-        glue_db_handler = _lambda.Function.from_function_attributes(
-            self,
-            'CustomGlueDatabaseHandler',
-            function_arn=glue_db_handler_arn.string_value,
-            same_environment=True,
-        )
-
-        GlueDatabase = cr.Provider(
-            self,
-            f'{env.resourcePrefix}GlueDbCustomResourceProvider',
-            on_event_handler=glue_db_handler,
-        )
-        old_glue_db = CustomResource(
-            self,
-            f'{env.resourcePrefix}DatasetDatabase',
-            service_token=GlueDatabase.service_token,
-            resource_type='Custom::GlueDatabase',
-            properties={
-                'CatalogId': dataset.AwsAccountId,
-                'DatabaseInput': {
-                    'Description': 'dataall database {} '.format(
-                        dataset.GlueDatabaseName
-                    ),
-                    'LocationUri': f's3://{dataset.S3BucketName}/',
-                    'Name': f'{dataset.GlueDatabaseName}',
-                    'CreateTableDefaultPermissions': [],
-                },
-                'DatabaseAdministrators': dataset_admins,
-            },
-        )
-
         # Get the Provider service token from SSM, the Lambda and Provider are created as part of the environment stack
         glue_db_provider_service_token = ssm.StringParameter.from_string_parameter_name(
             self,
@@ -420,6 +442,7 @@ class Dataset(Stack):
                     'LocationUri': f's3://{dataset.S3BucketName}/',
                     'Name': f'{dataset.GlueDatabaseName}',
                     'CreateTableDefaultPermissions': [],
+                    'Imported': 'IMPORTED-' if dataset.imported else ''
                 },
                 'DatabaseAdministrators': dataset_admins
             },

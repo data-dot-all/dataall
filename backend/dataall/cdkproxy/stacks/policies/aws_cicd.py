@@ -13,7 +13,7 @@ class AwsCICD(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                #sid="GenericCodeCommit",
+                # sid="GenericCodeCommit",
                 actions=[
                     'codecommit:List*',
                     'codecommit:CreateApprovalRuleTemplate',
@@ -26,7 +26,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="TagCICD",
+                # sid="TagCICD",
                 actions=[
                     "codecommit:TagResource",
                     "codepipeline:TagResource"
@@ -44,7 +44,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="AllCodecommitTeamRepo",
+                # sid="AllCodecommitTeamRepo",
                 not_actions=[
                     "codecommit:TagResource",
                     "codecommit:UntagResource",
@@ -59,7 +59,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="GenericCodePipeline",
+                # sid="GenericCodePipeline",
                 actions=[
                     'codepipeline:AcknowledgeJob',
                     'codepipeline:AcknowledgeThirdPartyJob',
@@ -77,7 +77,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="AllCodepipelineTeamRepo",
+                # sid="AllCodepipelineTeamRepo",
                 not_actions=[
                     "codepipeline:TagResource",
                     "codepipeline:UntagResource",
@@ -96,7 +96,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="CodePipelineCreateS3Bucket",
+                # sid="CodePipelineCreateS3Bucket",
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:CreateBucket',
@@ -112,7 +112,7 @@ class AwsCICD(ServicePolicy):
                 ],
             ),
             iam.PolicyStatement(
-                #sid="GenericCodeBuild",
+                # sid="GenericCodeBuild",
                 actions=[
                     'codebuild:ListCuratedEnvironmentImages',
                     'codebuild:ListReportGroups',
@@ -133,7 +133,7 @@ class AwsCICD(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="TagCodebuildTeamRepo",
+                # sid="TagCodebuildTeamRepo",
                 actions=[
                     'codebuild:CreateProject',
                     'codebuild:UpdateProject',
@@ -152,7 +152,7 @@ class AwsCICD(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="AllCodebuildTeamRepo",
+                # sid="AllCodebuildTeamRepo",
                 not_actions=[
                     'codebuild:CreateProject',
                     'codebuild:UpdateProject',

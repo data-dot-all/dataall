@@ -51,9 +51,12 @@ def on_create(event):
 
     if not exists:
         try:
+            db_input = props.get('DatabaseInput').copy()
+            if "Imported" in db_input:
+                del db_input["Imported"]
             response = glue_client.create_database(
                 CatalogId=props.get('CatalogId'),
-                DatabaseInput=props.get('DatabaseInput'),
+                DatabaseInput=db_input,
             )
         except ClientError as e:
             log.exception(f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}")
@@ -101,7 +104,7 @@ def on_create(event):
             }
         )
     lf_client.batch_grant_permissions(CatalogId=props['CatalogId'], Entries=Entries)
-    physical_id = props['DatabaseInput']['Name']
+    physical_id = props['DatabaseInput']['Imported'] + props['DatabaseInput']['Name']
 
     return {'PhysicalResourceId': physical_id}
 
@@ -113,18 +116,23 @@ def on_update(event):
 def on_delete(event):
     """ Deletes the created Glue database.
     With this action, Lake Formation permissions are also deleted.
+    Imported databases are not deleted
     """
     physical_id = event['PhysicalResourceId']
-    log.info('delete resource %s' % physical_id)
-    try:
-        glue_client.get_database(Name=physical_id)
-    except ClientError as e:
-        log.exception(f'Resource {physical_id} does not exists')
-        raise Exception(f'Resource {physical_id} does not exists')
+    if physical_id.startswith('IMPORTED'):
+        log.info(f'Imported database {physical_id} will not be deleted (it was not created by dataa.all)')
+    else:
+        database_name = physical_id.replace('IMPORTED-', '')
+        log.info('delete resource %s' % database_name)
+        try:
+            glue_client.get_database(Name=database_name)
+        except ClientError as e:
+            log.exception(f'Resource {database_name} does not exists')
+            raise Exception(f'Resource {database_name} does not exists')
 
-    try:
-        response = glue_client.delete_database(CatalogId=AWS_ACCOUNT, Name=physical_id)
-        log.info(f'Successfully deleted database {physical_id} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
-    except ClientError as e:
-        log.exception(f'Could not delete databse {physical_id} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
-        raise Exception(f'Could not delete databse {physical_id} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+        try:
+            response = glue_client.delete_database(CatalogId=AWS_ACCOUNT, Name=database_name)
+            log.info(f'Successfully deleted database {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+        except ClientError as e:
+            log.exception(f'Could not delete databse {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+            raise Exception(f'Could not delete databse {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')

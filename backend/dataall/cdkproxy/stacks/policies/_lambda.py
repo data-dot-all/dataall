@@ -13,7 +13,7 @@ class Lambda(ServicePolicy):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
-                #sid="ListLambda",
+                # sid="ListLambda",
                 actions=[
                     'lambda:List*',
                     'lambda:GetLayer*',
@@ -25,7 +25,7 @@ class Lambda(ServicePolicy):
                 resources=['*'],
             ),
             iam.PolicyStatement(
-                #sid="GenericLambdaFunctions",
+                # sid="GenericLambdaFunctions",
                 actions=[
                     'lambda:UpdateFunctionCodeSigningConfig',
                     'lambda:UpdateEventSourceMapping',
@@ -38,7 +38,7 @@ class Lambda(ServicePolicy):
                 ],
             ),
             iam.PolicyStatement(
-                #sid="CreateTeamLambda",
+                # sid="CreateTeamLambda",
                 actions=[
                     'lambda:CreateFunction',
                     'lambda:TagResource',
@@ -54,7 +54,7 @@ class Lambda(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="ManageTeamLambda",
+                # sid="ManageTeamLambda",
                 not_actions=[
                     'lambda:CreateFunction',
                     'lambda:TagResource',
@@ -71,7 +71,7 @@ class Lambda(ServicePolicy):
                 },
             ),
             iam.PolicyStatement(
-                #sid="ManageLambdaLayers",
+                # sid="ManageLambdaLayers",
                 actions=[
                     'lambda:PublishLayerVersion',
                     'lambda:DeleteLayerVersion',
@@ -82,7 +82,7 @@ class Lambda(ServicePolicy):
                 ]
             ),
             iam.PolicyStatement(
-                #sid="LoggingLambda",
+                # sid="LoggingLambda",
                 actions=[
                     'logs:CreateLogGroup',
                     'logs:CreateLogStream',
