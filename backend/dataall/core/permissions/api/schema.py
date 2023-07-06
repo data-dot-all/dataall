@@ -1,4 +1,5 @@
-from dataall import db, gql
+from dataall import db
+from dataall.base.api import gql
 from dataall.core.permissions.db.permission_models import PermissionType
 
 

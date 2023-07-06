@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 from .resolvers import *
 from ...constants import GlossaryRole
 from dataall.api.Objects.Glossary.registry import GlossaryRegistry

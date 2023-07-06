@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.profiling.resolvers import (
     list_profiling_runs,
     list_table_profiling_runs,

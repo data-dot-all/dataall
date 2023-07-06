@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 
 CreateGlossaryInput = gql.InputType(
     name='CreateGlossaryInput',

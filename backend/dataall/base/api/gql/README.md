@@ -7,7 +7,7 @@ brings a simple visitor mechanism for schema extension.
 `gql` maps GraphQL constructs to Python classes, that can be defined, manipulated and extended.
 
 ```python
-import dataall.gql as gql
+import dataall.base.api.gql as gql
 
 Post = gql.ObjectType(
     name="Post",
@@ -90,7 +90,7 @@ Type modifiers can be applied for any valid GraphQL type, including scalar and O
 Defines an array from the provided type
 
 ```python
-import dataall.gql as gql
+import dataall.base.api.gql as gql
 
 gql.ArrayType(gql.String)  # will output [String]
 
@@ -105,7 +105,7 @@ gql.ArrayType(Foo)  # will output [Foo]
 Defines a required type from the provided type
 
 ```python
-import dataall.gql as gql
+import dataall.base.api.gql as gql
 
 gql.NonNullableType(gql.String)  # will output String!
 
@@ -125,7 +125,7 @@ gql.NonNullableType(gql.String)  # will output String!
 - `directives(list(gql.DirectiveArgs))` : A list of field Directive arguments
 
 ```python
-import dataall.gql as gql
+import dataall.base.api.gql as gql
 
 Child = gql.ObjectType(name="Child", fields=[gql.Field(name="id", type=gql.String)])
 # A simple field

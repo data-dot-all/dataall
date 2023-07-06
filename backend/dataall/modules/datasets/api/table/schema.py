@@ -1,5 +1,5 @@
 from dataall.modules.datasets.api.table_column.resolvers import list_table_columns
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,

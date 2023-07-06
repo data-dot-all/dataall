@@ -10,7 +10,7 @@ from ariadne import (
     make_executable_schema,
 )
 
-from ... import gql
+from ...base.api import gql
 from ...api.constants import GraphQLEnumMapper
 from . import (
     Environment,

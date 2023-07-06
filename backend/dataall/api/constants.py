@@ -9,7 +9,7 @@
 
 
 from enum import Enum
-from .. import gql
+from ..base.api import gql
 
 
 class GraphQLEnumMapper(Enum):

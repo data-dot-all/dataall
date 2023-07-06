@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 
 Tenant = gql.ObjectType(
     name='Tenant',

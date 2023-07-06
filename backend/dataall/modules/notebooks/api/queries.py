@@ -1,5 +1,5 @@
 """The module defines GraphQL queries for the SageMaker notebooks"""
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.notebooks.api.resolvers import (
     get_notebook,
     list_notebooks,

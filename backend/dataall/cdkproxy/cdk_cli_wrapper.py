@@ -38,7 +38,7 @@ class CDKCliWrapperExtension:
         raise NotImplementedError("Method cleanup is not implemented")
 
 
-_CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, Type[CDKCliWrapperExtension]] = {}
+_CDK_CLI_WRAPPER_EXTENSIONS: Dict[str, CDKCliWrapperExtension] = {}
 
 
 def aws_configure(profile_name='default'):

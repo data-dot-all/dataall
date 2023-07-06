@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 from dataall.api.constants import GraphQLEnumMapper, SortDirection
 
 

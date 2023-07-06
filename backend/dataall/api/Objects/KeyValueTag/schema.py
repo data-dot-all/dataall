@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 
 KeyValueTag = gql.ObjectType(
     name='KeyValueTag',

@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.table.input_types import ModifyDatasetTableInput
 from dataall.modules.datasets.api.table.resolvers import (
     update_table, delete_table, sync_tables,

@@ -1,4 +1,4 @@
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.datasets.api.table_column.resolvers import resolve_terms
 
 

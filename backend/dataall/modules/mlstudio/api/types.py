@@ -1,5 +1,5 @@
 """Defines the object types of the SageMaker ML Studio"""
-from dataall import gql
+from dataall.base.api import gql
 from dataall.modules.mlstudio.api.resolvers import (
     resolve_user_role,
     resolve_sagemaker_studio_user_status,
