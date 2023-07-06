@@ -75,7 +75,6 @@ const EnvironmentEditForm = (props) => {
             label: values.label,
             tags: values.tags,
             description: values.description,
-            warehousesEnabled: values.warehousesEnabled,
             resourcePrefix: values.resourcePrefix,
             parameters: [
               {
@@ -215,7 +214,6 @@ const EnvironmentEditForm = (props) => {
                 pipelinesEnabled: env.parameters['pipelinesEnabled'] === 'true',
                 dashboardsEnabled:
                   env.parameters['dashboardsEnabled'] === 'true',
-                warehousesEnabled: env.warehousesEnabled,
                 resourcePrefix: env.resourcePrefix
               }}
               validationSchema={Yup.object().shape({
@@ -511,37 +509,6 @@ const EnvironmentEditForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            {/*                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked={values.warehousesEnabled}
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="warehousesEnabled"
-                                      value={values.warehousesEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Warehouses{' '}
-                                      <small>
-                                        (Requires Amazon Redshift clusters)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.warehousesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>

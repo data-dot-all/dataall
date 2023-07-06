@@ -137,10 +137,6 @@ class DatasetSubscriptionService:
                             f'Producer message before notifications: {message}'
                         )
 
-                        self.redshift_copy(
-                            session, message, dataset, environment, table
-                        )
-
                         message = {
                             'location': prefix,
                             'owner': dataset.owner,
@@ -175,36 +171,6 @@ class DatasetSubscriptionService:
             TopicArn=f'arn:aws:sns:{environment.region}:{environment.AwsAccountId}:{environment.subscriptionsConsumersTopicName}',
             Message=json.dumps(message),
         )
-        return response
-
-    # TODO redshift related code
-    def redshift_copy(
-        self,
-        session,
-        message,
-        dataset: Dataset,
-        environment: models.Environment,
-        table: DatasetTable,
-    ):
-        log.info(
-            f'Redshift copy starting '
-            f'{environment.environmentUri}|{dataset.datasetUri}'
-            f'|{json_utils.to_json(message)}'
-        )
-
-        task = models.Task(
-            action='redshift.subscriptions.copy',
-            targetUri=environment.environmentUri,
-            payload={
-                'datasetUri': dataset.datasetUri,
-                'message': json_utils.to_json(message),
-                'tableUri': table.tableUri,
-            },
-        )
-        session.add(task)
-        session.commit()
-
-        response = Worker.queue(self.engine, [task.taskUri])
         return response
 
 

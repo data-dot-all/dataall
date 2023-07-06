@@ -1,6 +1,5 @@
 import logging
 
-from dataall import db
 from dataall.modules.datasets.api.dataset.resolvers import get_dataset
 from dataall.api.context import Context
 from dataall.db.api import Glossary
@@ -57,24 +56,6 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return Glossary.get_glossary_terms_links(
             session, source.tableUri, 'DatasetTable'
         )
-
-
-def resolve_redshift_copy_schema(context, source: DatasetTable, clusterUri: str):
-    if not source:
-        return None
-    with context.engine.scoped_session() as session:
-        return db.api.RedshiftCluster.get_cluster_dataset_table(
-            session, clusterUri, source.datasetUri, source.tableUri
-        ).schema
-
-
-def resolve_redshift_copy_location(
-    context, source: DatasetTable, clusterUri: str
-):
-    with context.engine.scoped_session() as session:
-        return db.api.RedshiftCluster.get_cluster_dataset_table(
-            session, clusterUri, source.datasetUri, source.tableUri
-        ).dataLocation
 
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):

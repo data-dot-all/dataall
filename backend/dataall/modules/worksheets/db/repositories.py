@@ -4,7 +4,7 @@ DAO layer that encapsulates the logic and interaction with the database for work
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import paginate
 from dataall.modules.worksheets.db.models import Worksheet, WorksheetQueryResult
 

@@ -71,16 +71,6 @@ getEnvironmentAssumeRoleUrl = gql.QueryField(
     test_scope='Environment',
 )
 
-listEnvironmentRedshiftClusters = gql.QueryField(
-    name='listEnvironmentClusters',
-    type=gql.Ref('RedshiftClusterSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('RedshiftClusterFilter')),
-    ],
-    resolver=list_environment_redshift_clusters,
-)
-
 
 listEnvironmentInvitedGroups = gql.QueryField(
     name='listEnvironmentInvitedGroups',

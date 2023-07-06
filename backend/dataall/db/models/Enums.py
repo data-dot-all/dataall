@@ -36,13 +36,6 @@ class ProjectMemberRole(Enum):
     NotContributor = '000'
 
 
-class RedshiftClusterRole(Enum):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class ScheduledQueryRole(Enum):
     Creator = '950'
     Admin = '900'

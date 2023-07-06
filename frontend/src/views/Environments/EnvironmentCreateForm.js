@@ -153,7 +153,6 @@ const EnvironmentCreateForm = (props) => {
           tags: values.tags,
           description: values.description,
           region: values.region,
-          warehousesEnabled: values.warehousesEnabled,
           EnvironmentDefaultIAMRoleName: values.EnvironmentDefaultIAMRoleName,
           resourcePrefix: values.resourcePrefix,
           parameters: [
@@ -381,7 +380,6 @@ const EnvironmentCreateForm = (props) => {
                 notebooksEnabled: true,
                 mlStudiosEnabled: true,
                 pipelinesEnabled: true,
-                warehousesEnabled: true,
                 EnvironmentDefaultIAMRoleName: '',
                 resourcePrefix: 'dataall'
               }}
@@ -631,37 +629,6 @@ const EnvironmentCreateForm = (props) => {
                                 />
                               </FormGroup>
                             </Box>
-                            {/*                            <Box sx={{ ml: 2 }}>
-                              <FormGroup>
-                                <FormControlLabel
-                                  color="primary"
-                                  control={
-                                    <Switch
-                                      defaultChecked
-                                      color="primary"
-                                      onChange={handleChange}
-                                      edge="start"
-                                      name="warehousesEnabled"
-                                      value={values.warehousesEnabled}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      color="textSecondary"
-                                      gutterBottom
-                                      variant="subtitle2"
-                                    >
-                                      Warehouses{' '}
-                                      <small>
-                                        (Requires Amazon Redshift clusters)
-                                      </small>
-                                    </Typography>
-                                  }
-                                  labelPlacement="end"
-                                  value={values.warehousesEnabled}
-                                />
-                              </FormGroup>
-                            </Box>*/}
                           </CardContent>
                         </Card>
                       </Box>

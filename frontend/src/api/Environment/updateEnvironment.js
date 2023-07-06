@@ -16,7 +16,6 @@ const updateEnvironment = ({ environmentUri, input }) => ({
         userRoleInEnvironment
         SamlGroupName
         AwsAccountId
-        warehousesEnabled
         created
         parameters {
           key

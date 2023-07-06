@@ -14,7 +14,7 @@ from ....aws.handlers.sts import SessionHelper
 from ....aws.handlers.cloudformation import CloudFormation
 from ....aws.handlers.iam import IAM
 from ....aws.handlers.parameter_store import ParameterStoreManager
-from ....core.group.services.environment_resource_manager import EnvironmentResourceManager
+from ....core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from ....db import exceptions, permissions
 from ....db.api import Environment, ResourcePolicy, Stack
 from ....utils.naming_convention import (
@@ -547,22 +547,6 @@ def delete_environment(
         )
 
     return True
-
-
-def list_environment_redshift_clusters(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = dict()
-    with context.engine.scoped_session() as session:
-        return Environment.paginated_environment_redshift_clusters(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=environmentUri,
-            data=filter,
-            check_perm=True,
-        )
 
 
 def enable_subscriptions(
