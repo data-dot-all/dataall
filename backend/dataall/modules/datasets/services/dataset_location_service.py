@@ -1,4 +1,4 @@
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.db.api import Glossary
 from dataall.db.exceptions import ResourceShared, ResourceAlreadyExists

@@ -1,4 +1,4 @@
-from dataall.core.config import config
+from dataall.base.config import config
 
 
 def test_config():

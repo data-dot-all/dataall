@@ -1,6 +1,6 @@
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.db import models
 from dataall.modules.datasets.aws.glue_table_client import GlueTableClient

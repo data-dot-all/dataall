@@ -1,7 +1,7 @@
 import logging
 
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.db import utils

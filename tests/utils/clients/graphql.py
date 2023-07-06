@@ -3,11 +3,10 @@ import json
 import pytest
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
-from ariadne.asgi import GraphQL
 from flask import Flask, request, jsonify, Response
 from dotted.collection import DottedCollection
 import dataall
-from dataall.core.context import set_context, RequestContext, dispose_context
+from dataall.base.context import set_context, RequestContext, dispose_context
 
 
 class ClientWrapper:

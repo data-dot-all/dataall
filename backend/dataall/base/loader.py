@@ -7,7 +7,7 @@ from collections import defaultdict, deque
 from enum import Enum, auto
 from typing import List, Type, Set
 
-from dataall.core.config import config
+from dataall.base.config import config
 
 log = logging.getLogger(__name__)
 

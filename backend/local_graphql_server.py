@@ -14,8 +14,8 @@ from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import get_engine, Base, init_permissions
 from dataall.searchproxy import connect, run_query
 from dataall.base.loader import load_modules, ImportMode
-from dataall.core.config import config
-from dataall.core.context import set_context, dispose_context, RequestContext
+from dataall.base.config import config
+from dataall.base.context import set_context, dispose_context, RequestContext
 
 import logging
 

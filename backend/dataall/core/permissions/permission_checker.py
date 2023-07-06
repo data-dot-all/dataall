@@ -4,7 +4,7 @@ and interact with resources or do some actions in the app
 """
 from typing import Protocol, Callable
 
-from dataall.core.context import RequestContext, get_context
+from dataall.base.context import RequestContext, get_context
 from dataall.core.permissions.db.group_policy import GroupPolicy
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant_policy import TenantPolicy

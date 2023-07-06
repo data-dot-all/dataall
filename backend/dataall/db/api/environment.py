@@ -24,7 +24,7 @@ from dataall.utils.naming_convention import (
 )
 from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from ...core.permissions.db.permission_models import PermissionType

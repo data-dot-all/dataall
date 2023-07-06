@@ -8,8 +8,8 @@ from ....aws.handlers.ecs import Ecs
 from ....db import models
 from ....utils import Parameter
 
-from dataall.core.config import config
-from dataall.core.context import get_context
+from dataall.base.config import config
+from dataall.base.context import get_context
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):

@@ -9,7 +9,7 @@ from . import (
 )
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from ...core.permissions.db.resource_policy import ResourcePolicy
 
 log = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import logging
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.context import Context
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.db import models, exceptions
 from dataall.db.api import Environment, Stack
 from dataall.modules.datapipelines.api.enums import DataPipelineRole

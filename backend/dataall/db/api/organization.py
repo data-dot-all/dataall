@@ -8,7 +8,7 @@ from .. import models
 from ..models import OrganizationGroup
 from ..models.Enums import OrganisationUserRole
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.core.context import get_context
+from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 
 logger = logging.getLogger(__name__)
