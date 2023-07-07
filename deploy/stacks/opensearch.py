@@ -1,3 +1,5 @@
+import re
+
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_iam as iam,
@@ -77,7 +79,7 @@ class OpenSearchStack(pyNestedClass):
         self.domain = opensearch.Domain(
             self,
             f'OpenSearchDomain{envname}',
-            domain_name=f'{resource_prefix}-{envname}-domain',
+            domain_name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-domain')[:28].lower(),
             version=opensearch.EngineVersion.OPENSEARCH_1_1,
             capacity=opensearch.CapacityConfig(
                 data_nodes=2, master_nodes=3 if prod_sizing else 0

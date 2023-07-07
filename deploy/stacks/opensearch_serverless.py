@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any, Dict, List, Optional
 from aws_cdk import (
     aws_ec2 as ec2,
@@ -32,7 +33,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         self.cfn_collection = opensearchserverless.CfnCollection(
             self,
             f'OpenSearchCollection{envname}',
-            name=f'{resource_prefix}-{envname}-collection',
+            name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-collection')[:28].lower(),
             type="SEARCH",
         )
 
@@ -49,7 +50,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         cfn_encryption_policy = opensearchserverless.CfnSecurityPolicy(
             self,
             f'OpenSearchCollectionEncryptionPolicy{envname}',
-            name=f'{resource_prefix}-{envname}-encryption-policy',
+            name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-encryption-policy')[:28].lower(),
             type='encryption',
             policy=self._get_encryption_policy(
                 collection_name=self.cfn_collection.name,
@@ -60,7 +61,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         cfn_vpc_endpoint = opensearchserverless.CfnVpcEndpoint(
             self,
             f'OpenSearchCollectionVpcEndpoint{envname}',
-            name=f'{resource_prefix}-{envname}-vpc-endpoint',
+            name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-vpc-endpoint')[:28].lower(),
             vpc_id=vpc.vpc_id,
             security_group_ids=[vpc_endpoints_sg.security_group_id],
             subnet_ids=[subnet.subnet_id for subnet in vpc.private_subnets],
@@ -69,7 +70,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         cfn_network_policy = opensearchserverless.CfnSecurityPolicy(
             self,
             f'OpenSearchCollectionNetworkPolicy{envname}',
-            name=f'{resource_prefix}-{envname}-network-policy',
+            name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-network-policy')[:28].lower(),
             type='network',
             policy=self._get_network_policy(
                 collection_name=self.cfn_collection.name,
@@ -87,7 +88,7 @@ class OpenSearchServerlessStack(pyNestedClass):
         opensearchserverless.CfnAccessPolicy(
             self,
             f'OpenSearchCollectionAccessPolicy{envname}',
-            name=f'{resource_prefix}-{envname}-access-policy',
+            name=re.sub(r"[^a-z0-9-]","",f'{resource_prefix}-{envname}-access-policy')[:28].lower(),
             type='data',
             policy=self._get_access_policy(
                 collection_name=self.cfn_collection.name,
