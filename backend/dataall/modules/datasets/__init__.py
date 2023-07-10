@@ -27,7 +27,7 @@ class DatasetApiModuleInterface(ModuleInterface):
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.db.api import TargetType
-        from dataall.api.Objects.Vote.resolvers import add_vote_type
+        from dataall.core.vote.api.resolvers import add_vote_type
         from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.core.glossary.api.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager

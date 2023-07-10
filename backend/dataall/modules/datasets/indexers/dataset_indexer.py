@@ -1,6 +1,6 @@
 """Indexes Datasets in OpenSearch"""
-
-from dataall.db.api import Vote, Environment, Organization
+from dataall.core.vote.db.vote import Vote
+from dataall.db.api import Environment, Organization
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.searchproxy.base_indexer import BaseIndexer

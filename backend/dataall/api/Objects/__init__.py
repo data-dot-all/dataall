@@ -23,7 +23,6 @@ from . import (
     Vpc,
     Tenant,
     KeyValueTag,
-    Vote,
 )
 
 

@@ -13,4 +13,3 @@ from .Task import Task
 from .Tenant import Tenant
 from .User import User
 from .Vpc import Vpc
-from .Vote import Vote

@@ -1,7 +1,7 @@
 from typing import Dict, Type
 
-from dataall import db
 from dataall.api.context import Context
+from dataall.core.vote.db.vote import Vote
 from dataall.searchproxy.base_indexer import BaseIndexer
 
 _VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
@@ -15,7 +15,7 @@ def count_upvotes(
     context: Context, source, targetUri: str = None, targetType: str = None
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Vote.count_upvotes(
+        return Vote.count_upvotes(
             session=session,
             uri=targetUri,
             target_type=targetType
@@ -24,7 +24,7 @@ def count_upvotes(
 
 def upvote(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
-        vote = db.api.Vote.upvote(
+        vote = Vote.upvote(
             session=session,
             uri=input['targetUri'],
             data=input,
@@ -36,7 +36,7 @@ def upvote(context: Context, source, input=None):
 
 def get_vote(context: Context, source, targetUri: str = None, targetType: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Vote.find_vote(
+        return Vote.find_vote(
             session=session,
             target_uri=targetUri,
             target_type=targetType

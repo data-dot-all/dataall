@@ -1,6 +1,6 @@
 import logging
 
-from dataall import db
+from dataall.core.vote.db.vote import Vote
 from dataall.db.api import Environment, Organization
 from dataall.modules.dashboards import DashboardRepository
 from dataall.searchproxy.base_indexer import BaseIndexer
@@ -19,7 +19,7 @@ class DashboardIndexer(BaseIndexer):
             org = Organization.get_organization_by_uri(session, env.organizationUri)
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dashboard_uri)
-            count_upvotes = db.api.Vote.count_upvotes(
+            count_upvotes = Vote.count_upvotes(
                 session, dashboard_uri, target_type='dashboard'
             )
             BaseIndexer._index(

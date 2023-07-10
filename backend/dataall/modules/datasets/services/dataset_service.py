@@ -8,7 +8,8 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
-from dataall.db.api import Vote, KeyValueTag, Stack, Environment
+from dataall.core.vote.db.vote import Vote
+from dataall.db.api import KeyValueTag, Stack, Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.models import ShareObject
