@@ -389,6 +389,7 @@ class PivotRole(NestedStack):
                     effect=iam.Effect.ALLOW,
                     actions=['ram:DeleteResourceShare'],
                     resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
+                    conditions={'StringEquals': {'aws:ResourceTag/dataall': 'true'}},
                 ),
                 iam.PolicyStatement(
                     sid='RamInvitations',
@@ -421,6 +422,19 @@ class PivotRole(NestedStack):
                     ],
                     resources=[
                         f'arn:aws:cloudformation:*:{self.account}:stack/{env_resource_prefix}*/*',
+                        f'arn:aws:cloudformation:*:{self.account}:stack/CDKToolkit/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    sid='CloudFormationDataPipeliens',
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "cloudformation:DeleteStack",
+                        "cloudformation:DescribeStacks",
+                        "cloudformation:DescribeStackEvents",
+                        "cloudformation:DescribeStackResources"
+                    ],
+                    resources=[
                         f'arn:aws:cloudformation:*:{self.account}:stack/*/*',
                     ],
                 ),

@@ -42,9 +42,9 @@ Resources:
                 'sts:ExternalId': !Ref ExternalId
               StringLike:
                 'aws:PrincipalArn': [
-                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*graphql-role",
-                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*awsworker-role",
-                  !Sub "arn:aws:iam::${AWS::AccountId}:role/*ecs-tasks-role"
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*graphql-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*awsworker-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*ecs-tasks-role"
                 ]
   PivotRolePolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -310,7 +310,7 @@ Resources:
               - "ram:RejectResourceShareInvitation"
               - "ram:EnableSharingWithAwsOrganization"
             Resource: '*'
-          - Sid: RamReadGlue
+          - Sid: RamRead
             Effect: Allow
             Action:
               - 'ram:Get*'
@@ -326,6 +326,14 @@ Resources:
             Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormationDataPipelines
+            Effect: Allow
+            Action:
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:DescribeStackResources'
+              - 'cloudformation:DescribeStackEvents'
+              - 'cloudformation:DeleteStack'
+            Resource:
               - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
       ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
       Roles:
@@ -371,22 +379,6 @@ Resources:
               - 'lakeformation:UpdateTableObjects'
               - 'lakeformation:DeleteObjectsOnCancel'
             Resource: '*'
-          - Sid: Compute
-            Effect: Allow
-            Action:
-              - 'lambda:AddPermission'
-              - 'lambda:InvokeFunction'
-              - 'lambda:RemovePermission'
-              - 'lambda:GetFunction'
-              - 'lambda:GetFunctionConfiguration'
-              - 'codepipeline:GetPipelineState'
-              - 'codepipeline:GetPipeline'
-              - 'codepipeline:CreatePipeline'
-              - 'codepipeline:TagResource'
-              - 'codepipeline:UntagResource'
-            Resource:
-              - !Sub 'arn:aws:lambda:*:${AWS::AccountId}:function:${EnvironmentResourcePrefix}*'
-            Resource: !Sub 'arn:aws:databrew:*:${AWS::AccountId}:*/${EnvironmentResourcePrefix}*'
           - Sid: QuickSight
             Effect: Allow
             Action:

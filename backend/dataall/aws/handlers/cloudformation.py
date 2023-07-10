@@ -46,7 +46,6 @@ class CloudFormation:
         try:
             data = {
                 'accountid': task.payload['accountid'],
-                'cdk_role_arn': task.payload['cdk_role_arn'],
                 'region': task.payload['region'],
                 'stack_name': task.payload['stack_name'],
             }
@@ -61,7 +60,6 @@ class CloudFormation:
         accountid = data['accountid']
         region = data['region']
         stack_name = data['stack_name']
-        cdk_role_arn = data['cdk_role_arn']
         try:
             aws_session = SessionHelper.remote_session(accountid=accountid)
             cfnclient = aws_session.client('cloudformation', region_name=region)
