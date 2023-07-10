@@ -87,7 +87,7 @@ def test_get_environment_object_not_found(client, org1, env1, group):
 
 
 def test_update_env(client, org1, env1, group):
-    query =  """
+    query = """
         mutation UpdateEnv($environmentUri:String!,$input:ModifyEnvironmentInput){
             updateEnvironment(environmentUri:$environmentUri,input:$input){
                 organization{

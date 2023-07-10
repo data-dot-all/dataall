@@ -75,7 +75,7 @@ def approve_dashboard_share(context: Context, source: Dashboard, shareUri: str =
     return DashboardShareService.approve_dashboard_share(uri=shareUri)
 
 
-def reject_dashboard_share(context: Context,source: Dashboard, shareUri: str = None):
+def reject_dashboard_share(context: Context, source: Dashboard, shareUri: str = None):
     return DashboardShareService.reject_dashboard_share(uri=shareUri)
 
 

@@ -10,7 +10,6 @@ from typing import List, Dict
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.core.context import get_context as context
-from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.db.api import (
     ResourcePolicy,
     Environment, KeyValueTag, Stack,

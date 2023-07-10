@@ -33,7 +33,7 @@ def preview(context, source, tableUri: str = None):
 def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
     if not source:
         return None
-    return DatasetTableService.get_glue_table_properties(source.tableUri)
+    return DatasetTableService.get_glue_table_properties(uri=source.tableUri)
 
 
 def sync_tables(context: Context, source, datasetUri: str = None):

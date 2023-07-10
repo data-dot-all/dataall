@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from sqlalchemy import or_
 from sqlalchemy.sql import and_
 
 from dataall.db import exceptions, paginate
@@ -46,7 +47,7 @@ class DatasetTableRepository:
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
-        session, environment_uri: str, dataset_uri: str
+        session, environment_uri: str, dataset_uri: str, username: str, groups: [str]
     ):
         """For a given dataset, returns the list of Tables shared with the environment
         This means looking at approved ShareObject items
@@ -68,6 +69,10 @@ class DatasetTableRepository:
                     ShareObject.datasetUri == dataset_uri,  # for this dataset
                     ShareObject.environmentUri == environment_uri,  # for this environment
                     ShareObjectItem.status.in_(share_item_shared_states),
+                    or_(
+                        ShareObject.owner == username,
+                        ShareObject.principalId.in_(groups),
+                    ),
                 )
             )
             .all()
