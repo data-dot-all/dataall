@@ -54,7 +54,11 @@ class S3ResourcesStack(pyNestedClass):
         pivot_role = os.path.realpath(
             os.path.abspath(os.path.join(__file__, '..', '..', 'pivot_role'))
         )
-
+        
+        cdk_exec_policy = os.path.realpath(
+            os.path.abspath(os.path.join(__file__, '..', '..', 'cdk_exec_policy'))
+        )
+        
         s3d.BucketDeployment(
             self,
             f'PivotRoleDeployment{envname}',
@@ -68,6 +72,21 @@ class S3ResourcesStack(pyNestedClass):
             f'S3ResourcesBucketKeyParam{envname}',
             parameter_name=f'/dataall/{envname}/s3/pivot_role_prefix',
             string_value='roles/pivotRole.yaml',
+        )
+
+        s3d.BucketDeployment(
+            self,
+            f'CDKExecutionPolicyDeployment{envname}',
+            sources=[s3d.Source.asset(cdk_exec_policy)],
+            destination_bucket=self.bucket,
+            destination_key_prefix='policies',
+        )
+
+        ssm.StringParameter(
+            self,
+            f'S3ResourcesBucketKeyParam{envname}',
+            parameter_name=f'/dataall/{envname}/s3/cdk_exec_policy_prefix',
+            string_value='policies/cdkExecPolicy.yaml',
         )
 
         CfnOutput(
