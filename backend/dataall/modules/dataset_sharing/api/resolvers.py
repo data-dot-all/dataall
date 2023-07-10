@@ -209,20 +209,6 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
     return ShareObjectService.list_shares_in_my_outbox(filter)
 
 
-def list_data_items_shared_with_env_group(
-    context, source, environmentUri: str = None, groupUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = {}
-    with context.engine.scoped_session() as session:
-        return ShareItemService.paginated_shared_with_environment_group_datasets(
-            session=session,
-            env_uri=environmentUri,
-            group_uri=groupUri,
-            data=filter,
-        )
-
-
 def list_shared_with_environment_data_items(
     context: Context, source, environmentUri: str = None, filter: dict = None
 ):

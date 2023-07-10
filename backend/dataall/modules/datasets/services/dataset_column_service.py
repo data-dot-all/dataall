@@ -8,6 +8,7 @@ from dataall.modules.datasets.db.dataset_column_repository import DatasetColumnR
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
 from dataall.modules.datasets_base.db.models import DatasetTable, DatasetTableColumn
+from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE
 
 
 class DatasetColumnService:
@@ -23,10 +24,10 @@ class DatasetColumnService:
         return table.datasetUri
 
     @staticmethod
-    def paginate_active_columns_for_table(table_uri: str, filter=None):
-        # TODO THERE WAS NO PERMISSION CHECK!!!
+    @has_resource_permission(GET_DATASET_TABLE)
+    def paginate_active_columns_for_table(uri: str, filter=None):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetColumnRepository.paginate_active_columns_for_table(session, table_uri, filter)
+            return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
 
     @classmethod
     @has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri, param_name="table_uri")
@@ -57,4 +58,3 @@ class DatasetColumnService:
 
         Worker.queue(engine=get_context().db_engine, task_ids=[task.taskUri])
         return column
-

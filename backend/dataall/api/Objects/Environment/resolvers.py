@@ -17,6 +17,7 @@ from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db import exceptions, permissions
 from dataall.db.api import Environment, Stack
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -122,10 +123,10 @@ def update_environment(
             uri=environmentUri,
             data=input,
         )
-        if input.get('dashboardsEnabled') or (
-            environment.resourcePrefix != previous_resource_prefix
-        ):
+
+        if EnvironmentResourceManager.deploy_updated_stack(session, previous_resource_prefix, environment):
             stack_helper.deploy_stack(targetUri=environment.environmentUri)
+
     return environment
 
 
@@ -480,19 +481,6 @@ def delete_environment(
         )
 
     return True
-
-
-def list_environment_redshift_clusters(
-    context: Context, source, environmentUri: str = None, filter: dict = None
-):
-    if not filter:
-        filter = dict()
-    with context.engine.scoped_session() as session:
-        return Environment.paginated_environment_redshift_clusters(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
 
 
 def enable_subscriptions(

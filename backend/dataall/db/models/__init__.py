@@ -11,9 +11,6 @@ from .GroupMember import GroupMember
 from .Notification import Notification, NotificationType
 from .Organization import Organization
 from .OrganizationGroup import OrganizationGroup
-from .RedshiftCluster import RedshiftCluster
-from .RedshiftClusterDataset import RedshiftClusterDataset
-from .RedshiftClusterDatasetTable import RedshiftClusterDatasetTable
 from .Stack import Stack
 from .Tag import Tag, ItemTags, updateObjectTags
 from .Task import Task

@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
@@ -936,7 +936,7 @@ class ShareObjectRepository:
             session.delete(share)
 
     @staticmethod
-    def paginate_shared_datasets(session, env_uri, group_uri, data):
+    def paginate_shared_datasets(session, env_uri, data):
         share_item_shared_states = ShareItemSM.get_share_item_shared_states()
         q = (
             session.query(
@@ -1005,7 +1005,6 @@ class ShareObjectRepository:
                 and_(
                     ShareObjectItem.status.in_(share_item_shared_states),
                     ShareObject.environmentUri == env_uri,
-                    ShareObject.principalId == group_uri if group_uri else True,
                 )
             )
         )

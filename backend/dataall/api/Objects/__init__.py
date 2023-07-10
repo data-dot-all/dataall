@@ -19,7 +19,6 @@ from . import (
     Principal,
     Organization,
     Stack,
-    RedshiftCluster,
     Glossary,
     Feed,
     Notification,

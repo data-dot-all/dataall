@@ -327,15 +327,6 @@ class DatasetService:
                     message=f'Dataset {dataset.name} is shared with other teams. '
                             'Revoke all dataset shares before deletion.',
                 )
-            redshift_datasets = DatasetRepository.list_dataset_redshift_clusters(
-                session, uri
-            )
-            if redshift_datasets:
-                raise UnauthorizedOperation(
-                    action=DELETE_DATASET,
-                    message='Dataset is used by Redshift clusters. '
-                            'Remove clusters associations first.',
-                )
 
             tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
             for uri in tables:

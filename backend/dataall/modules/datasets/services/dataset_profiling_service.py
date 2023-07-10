@@ -10,9 +10,10 @@ from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfile
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
-from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE
+from dataall.modules.datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, DatasetTable
+from dataall.modules.datasets_base.services.permissions import GET_DATASET_TABLE
 
 
 class DatasetProfilingService:
@@ -61,22 +62,22 @@ class DatasetProfilingService:
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
     @staticmethod
-    def list_profiling_runs(dataset_uri):
-        # TODO NO PERMISSION CHECK
+    @has_resource_permission(GET_DATASET)
+    def list_profiling_runs(uri):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetProfilingRepository.list_profiling_runs(session, dataset_uri)
+            return DatasetProfilingRepository.list_profiling_runs(session, uri)
 
     @staticmethod
-    def get_last_table_profiling_run(table_uri: str):
-        # TODO NO PERMISSION CHECK
+    @has_resource_permission(GET_DATASET_TABLE)
+    def get_last_table_profiling_run(uri: str):
         with get_context().db_engine.scoped_session() as session:
             run: DatasetProfilingRun = (
-                DatasetProfilingRepository.get_table_last_profiling_run(session, table_uri)
+                DatasetProfilingRepository.get_table_last_profiling_run(session, uri)
             )
 
             if run:
                 if not run.results:
-                    table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
+                    table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
                     dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
                     environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
                     content = S3ProfilerClient(environment).get_profiling_results_from_s3(dataset, table, run)
@@ -86,7 +87,7 @@ class DatasetProfilingService:
 
                 if not run.results:
                     run_with_results = (
-                        DatasetProfilingRepository.get_table_last_profiling_run_with_results(session, table_uri)
+                        DatasetProfilingRepository.get_table_last_profiling_run_with_results(session, uri)
                     )
                     if run_with_results:
                         run = run_with_results
@@ -94,7 +95,7 @@ class DatasetProfilingService:
             return run
 
     @staticmethod
-    def list_table_profiling_runs(table_uri: str):
-        # TODO NO PERMISSION CHECK
+    @has_resource_permission(GET_DATASET_TABLE)
+    def list_table_profiling_runs(uri: str):
         with get_context().db_engine.scoped_session() as session:
-            return DatasetProfilingRepository.list_table_profiling_runs(session, table_uri)
+            return DatasetProfilingRepository.list_table_profiling_runs(session, uri)

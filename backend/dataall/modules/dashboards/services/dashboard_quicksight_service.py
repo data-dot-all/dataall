@@ -168,4 +168,3 @@ class DashboardQuicksightService:
         if not region:
             region = cls._REGION
         return DashboardQuicksightClient(get_context().username, account_id, region)
-

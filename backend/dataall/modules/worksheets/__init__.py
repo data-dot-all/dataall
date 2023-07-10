@@ -1,7 +1,7 @@
 """Contains the code related to worksheets"""
 import logging
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.base.loader import ImportMode, ModuleInterface
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository

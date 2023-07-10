@@ -59,34 +59,6 @@ def env(db, org: models.Organization) -> models.Environment:
     yield env
 
 
-@pytest.fixture(scope='module', autouse=True)
-def redshift_cluster(db, env: models.Environment) -> models.RedshiftCluster:
-    with db.scoped_session() as session:
-        cluster = models.RedshiftCluster(
-            environmentUri=env.environmentUri,
-            organizationUri=env.organizationUri,
-            owner='owner',
-            label='cluster',
-            description='desc',
-            masterDatabaseName='dev',
-            masterUsername='masteruser',
-            databaseName='datahubdb',
-            nodeType='dc1.large',
-            numberOfNodes=2,
-            port=5432,
-            region=env.region,
-            AwsAccountId=env.AwsAccountId,
-            status='CREATING',
-            vpc='vpc-12344',
-            IAMRoles=[env.EnvironmentDefaultIAMRoleArn],
-            tags=[],
-            SamlGroupName='admins',
-            imported=False,
-        )
-        session.add(cluster)
-    yield cluster
-
-
 @pytest.fixture(scope='function', autouse=True)
 def patch_ssm(mocker):
     mocker.patch(

@@ -169,9 +169,4 @@ class ShareItemService:
     @staticmethod
     @has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, None, data)
-
-    @staticmethod
-    def paginated_shared_with_environment_group_datasets(session, env_uri, group_uri, data) -> dict:
-        # TODO THERE WAS NOT PERMISSION
-        return ShareObjectRepository.paginate_shared_datasets(session, env_uri, group_uri, data)
+        return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
