@@ -7,7 +7,7 @@ from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
 from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, GET_DASHBOARD, \
-    UPDATE_DASHBOARD, CREATE_DASHBOARD, DASHBOARD_ALL
+    UPDATE_DASHBOARD, CREATE_DASHBOARD, DASHBOARD_ALL, DELETE_DASHBOARD
 
 
 class DashboardService:
@@ -87,8 +87,9 @@ class DashboardService:
             return dashboard
 
     @staticmethod
+    @has_tenant_permission(MANAGE_DASHBOARDS)
+    @has_resource_permission(DELETE_DASHBOARD)
     def delete_dashboard(uri) -> bool:
-        # TODO THERE WAS NO PERMISSION CHECK
         with get_context().db_engine.scoped_session() as session:
             dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
             DashboardRepository.delete_dashboard(session, dashboard)
