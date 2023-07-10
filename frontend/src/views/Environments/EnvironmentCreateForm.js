@@ -43,6 +43,7 @@ import { SET_ERROR } from '../../store/errorReducer';
 import { useDispatch } from '../../store';
 import ChipInput from '../../components/TagsInput';
 import getPivotRolePresignedUrl from '../../api/Environment/getPivotRolePresignedUrl';
+import getCDKExecPolicyPresignedUrl from '../../api/Environment/getCDKExecPolicyPresignedUrl';
 import getPivotRoleExternalId from '../../api/Environment/getPivotRoleExternalId';
 import getPivotRoleName from '../../api/Environment/getPivotRoleName';
 
@@ -96,6 +97,16 @@ const EnvironmentCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
   };
+
+  const getCDKExecPolicyUrl = async () => {
+    const response = await client.query(getCDKExecPolicyPresignedUrl(params.uri));
+    if (!response.errors) {
+      window.open(response.data.getCDKExecPolicyPresignedUrl, '_blank');
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
+  
   const getExternalId = async () => {
     const response = await client.query(getPivotRoleExternalId(params.uri));
     if (!response.errors) {
@@ -283,6 +294,42 @@ const EnvironmentCreateForm = (props) => {
                     </IconButton>
                   </CopyToClipboard>
                   {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://ACCOUNT_ID/REGION`}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography color="textSecondary" variant="subtitle2">
+                Use the below CloudFormation stack to create the custom IAM policy. 
+                </Typography>
+                <Button
+                            color="primary"
+                            startIcon={<CloudDownloadOutlined fontSize="small" />}
+                            sx={{ mt: 1, mb: 2, ml: 2 }}
+                            variant="outlined"
+                            onClick={() => {
+                              getCDKExecPolicyUrl().catch((e) =>
+                                dispatch({ type: SET_ERROR, error: e.message })
+                              );
+                            }}
+                          >
+                            CloudFormation stack for CDK custom execution policy
+                </Button>
+                <Typography color="textPrimary" variant="subtitle2">
+                  <CopyToClipboard
+                    onCopy={() => copyNotification()}
+                    text={`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
+                  >
+                    <IconButton>
+                      <CopyAllOutlined
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.primary.contrastText
+                              : theme.palette.primary.main
+                        }}
+                      />
+                    </IconButton>
+                  </CopyToClipboard>
+                  {`cdk bootstrap --trust ${trustedAccount} -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::ACCOUNT_ID:policy/DataAllCustomCDKPolicy aws://ACCOUNT_ID/REGION`}
                 </Typography>
               </Box>
               {process.env.REACT_APP_ENABLE_PIVOT_ROLE_AUTO_CREATE == 'True' ? (
