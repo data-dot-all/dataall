@@ -370,7 +370,6 @@ class PivotRole(NestedStack):
                     actions=['ram:UpdateResourceShare'],
                     resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
                     conditions={
-                        'StringEquals': {'aws:ResourceTag/dataall': 'true'},
                         'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']},
                     },
                 ),
@@ -388,8 +387,7 @@ class PivotRole(NestedStack):
                     sid='RamDeleteResource',
                     effect=iam.Effect.ALLOW,
                     actions=['ram:DeleteResourceShare'],
-                    resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
-                    conditions={'StringEquals': {'aws:ResourceTag/dataall': 'true'}},
+                    resources=[f'arn:aws:ram:*:{self.account}:resource-share/*']
                 ),
                 iam.PolicyStatement(
                     sid='RamInvitations',
