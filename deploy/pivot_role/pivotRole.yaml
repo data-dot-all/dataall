@@ -256,51 +256,6 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: Redshift
-            Effect: Allow
-            Action:
-              - 'redshift:DeleteTags'
-              - 'redshift:ModifyClusterIamRoles'
-              - 'redshift:DescribeClusterSecurityGroups'
-              - 'redshift:DescribeClusterSubnetGroups'
-              - 'redshift:pauseCluster'
-              - 'redshift:resumeCluster'
-            Resource: '*'
-            Condition:
-              StringEquals:
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftRead
-            Effect: Allow
-            Action:
-              - 'redshift:DescribeClusters'
-              - 'redshift:CreateTags'
-              - 'redshift:DescribeClusterSubnetGroups'
-            Resource: '*'
-          - Sid: RedshiftCreds
-            Effect: Allow
-            Action:
-              - 'redshift:GetClusterCredentials'
-            Resource:
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbgroup:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbname:*/*'
-              - !Sub 'arn:aws:redshift:*:${AWS::AccountId}:dbuser:*/*'
-          - Sid: AllowRedshiftSubnet
-            Effect: Allow
-            Action:
-              - 'redshift:CreateClusterSubnetGroup'
-            Resource: '*'
-          - Sid: AllowRedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
           - Sid: EC2SG
             Effect: Allow
             Action:
@@ -418,32 +373,6 @@ Resources:
             Condition:
               StringEquals:
                 'aws:RequestTag/dataall': 'true'
-          - Sid: SGandRedshift
-            Effect: Allow
-            Action:
-              - 'ec2:DeleteTags'
-              - 'ec2:DeleteSecurityGroup'
-              - 'redshift:DeleteClusterSubnetGroup'
-            Resource:
-              - '*'
-            Condition:
-              'ForAnyValue:StringEqualsIfExists':
-                'aws:ResourceTag/dataall': 'true'
-          - Sid: RedshiftDataApi
-            Effect: Allow
-            Action:
-              - 'redshift-data:ListTables'
-              - 'redshift-data:GetStatementResult'
-              - 'redshift-data:CancelStatement'
-              - 'redshift-data:ListSchemas'
-              - 'redshift-data:ExecuteStatement'
-              - 'redshift-data:ListStatements'
-              - 'redshift-data:ListDatabases'
-              - 'redshift-data:DescribeStatement'
-            Resource: '*'
-            Condition:
-              StringEqualsIfExists:
-                'aws:ResourceTag/dataall': 'true'
           - Sid: DevTools0
             Effect: Allow
             Action: 'cloudformation:ValidateTemplate'

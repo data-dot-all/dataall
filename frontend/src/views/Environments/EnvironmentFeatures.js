@@ -112,25 +112,6 @@ const EnvironmentFeatures = (props) => {
               </Label>
             </Typography>
           </ListItem>
-          {/*          <ListItem
-            disableGutters
-            divider
-            sx={{
-              justifyContent: 'space-between',
-              padding: 2
-            }}
-          >
-            <Typography color="textSecondary" variant="subtitle2">
-              Warehouses
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              <Label
-                color={environment.warehousesEnabled ? 'success' : 'error'}
-              >
-                {environment.warehousesEnabled ? 'Enabled' : 'Disabled'}
-              </Label>
-            </Typography>
-          </ListItem>*/}
         </List>
       </CardContent>
     </Card>

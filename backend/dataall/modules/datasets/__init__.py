@@ -30,7 +30,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.api.Objects.Vote.resolvers import add_vote_type
         from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
-        from dataall.core.group.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer
         from dataall.modules.datasets.indexers.table_indexer import DatasetTableIndexer

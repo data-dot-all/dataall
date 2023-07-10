@@ -106,7 +106,7 @@ class SessionHelper:
         return SessionHelper.get_secret(secret_name=f'dataall-pivot-role-name-{os.getenv("envname", "local")}')
 
     @classmethod
-    def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None, redshiftcluster=None):
+    def get_console_access_url(cls, boto3_session, region='eu-west-1', bucket=None):
         """Returns an AWS Console access url for the boto3 session
         Args:
             boto3_session(object): a boto3 session
@@ -133,11 +133,6 @@ class SessionHelper:
         if bucket:
             request_parameters += '&Destination=' + quote_plus(
                 'https://{}.console.aws.amazon.com/s3/buckets/{}/'.format(region, bucket)
-            )
-
-        elif redshiftcluster:
-            request_parameters += '&Destination=' + quote_plus(
-                f'https://{region}.console.aws.amazon.com/redshiftv2/' f'home?region={region}#query-editor:'
             )
         else:
             request_parameters += '&Destination=' + urllib.parse.quote_plus(f'https://{region}.console.aws.amazon.com/')

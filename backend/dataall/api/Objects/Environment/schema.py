@@ -83,7 +83,6 @@ Environment = gql.ObjectType(
             resolver=resolve_user_role,
         ),
         gql.Field('validated', type=gql.Boolean),
-        gql.Field('warehousesEnabled', type=gql.Boolean),
         gql.Field('roleCreated', type=gql.Boolean),
         gql.Field('isOrganizationDefaultEnvironment', type=gql.Boolean),
         gql.Field('stack', type=gql.Ref('Stack'), resolver=get_environment_stack),

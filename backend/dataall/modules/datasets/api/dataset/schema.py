@@ -11,7 +11,6 @@ from dataall.modules.datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     list_dataset_share_objects,
     get_dataset_glossary_terms,
-    resolve_redshift_copy_enabled,
     get_dataset_stack
 )
 from dataall.api.constants import EnvironmentPermission
@@ -139,21 +138,6 @@ Dataset = gql.ObjectType(
                 gql.Argument(name='projectUri', type=gql.NonNullableType(gql.String))
             ],
             type=gql.Ref('DatasetRole'),
-        ),
-        gql.Field(
-            name='redshiftClusterPermission',
-            args=[
-                gql.Argument(name='clusterUri', type=gql.NonNullableType(gql.String))
-            ],
-            type=gql.Ref('DatasetRole'),
-        ),
-        gql.Field(
-            name='redshiftDataCopyEnabled',
-            args=[
-                gql.Argument(name='clusterUri', type=gql.NonNullableType(gql.String))
-            ],
-            type=gql.Boolean,
-            resolver=resolve_redshift_copy_enabled,
         ),
         gql.Field(
             name='isPublishedInEnvironment',

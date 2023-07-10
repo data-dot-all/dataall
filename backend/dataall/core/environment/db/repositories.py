@@ -1,4 +1,4 @@
-from dataall.core.environment.models import EnvironmentParameter
+from dataall.core.environment.db.models import EnvironmentParameter
 from sqlalchemy.sql import and_
 
 

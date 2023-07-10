@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
-from dataall.core.group.services.environment_resource_manager import EnvironmentResource
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \

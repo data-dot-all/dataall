@@ -3,9 +3,7 @@ from dataall.api import gql
 from dataall.modules.datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,
-    resolve_redshift_copy_location,
-    resolve_glossary_terms,
-    resolve_redshift_copy_schema
+    resolve_glossary_terms
 )
 from dataall.api.constants import GraphQLEnumMapper
 
@@ -58,22 +56,6 @@ DatasetTable = gql.ObjectType(
             name='columns',
             resolver=list_table_columns,
             type=gql.Ref('DatasetTableColumnSearchResult'),
-        ),
-        gql.Field(
-            name='RedshiftSchema',
-            args=[
-                gql.Argument(name='clusterUri', type=gql.NonNullableType(gql.String))
-            ],
-            type=gql.String,
-            resolver=resolve_redshift_copy_schema,
-        ),
-        gql.Field(
-            name='RedshiftCopyDataLocation',
-            args=[
-                gql.Argument(name='clusterUri', type=gql.NonNullableType(gql.String))
-            ],
-            type=gql.String,
-            resolver=resolve_redshift_copy_location,
         ),
         gql.Field(
             name='terms',

@@ -14,7 +14,7 @@ from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.db import Resource, models
 from dataall.db.api import ResourcePolicy, Permission
-from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission
+from dataall.db.models import EnvironmentGroup, PermissionType, ResourcePolicyPermission, TenantPolicyPermission
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
 # revision identifiers, used by Alembic.
@@ -25,9 +25,19 @@ depends_on = None
 
 Base = declarative_base()
 
-UNUSED_PERMISSIONS = ['LIST_DATASETS', 'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
-                      'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
-                      'CREATE_DATASET_TABLE', 'LIST_PIPELINES', 'DASHBOARD_URL']
+UNUSED_RESOURCE_PERMISSIONS = [
+    'LIST_DATASETS', 'LIST_DATASET_TABLES', 'LIST_DATASET_SHARES', 'SUMMARY_DATASET',
+    'IMPORT_DATASET', 'UPLOAD_DATASET', 'URL_DATASET', 'STACK_DATASET', 'SUBSCRIPTIONS_DATASET',
+    'CREATE_DATASET_TABLE', 'LIST_PIPELINES', 'DASHBOARD_URL', 'GET_REDSHIFT_CLUSTER',
+    'SHARE_REDSHIFT_CLUSTER', 'DELETE_REDSHIFT_CLUSTER', 'REBOOT_REDSHIFT_CLUSTER', 'RESUME_REDSHIFT_CLUSTER',
+    'PAUSE_REDSHIFT_CLUSTER', 'ADD_DATASET_TO_REDSHIFT_CLUSTER', 'LIST_REDSHIFT_CLUSTER_DATASETS',
+    'REMOVE_DATASET_FROM_REDSHIFT_CLUSTER', 'ENABLE_REDSHIFT_TABLE_COPY', 'DISABLE_REDSHIFT_TABLE_COPY',
+    'GET_REDSHIFT_CLUSTER_CREDENTIALS', 'CREATE_REDSHIFT_CLUSTER', 'LIST_ENVIRONMENT_REDSHIFT_CLUSTERS'
+]
+
+UNUSED_TENANT_PERMISSIONS = [
+    'MANAGE_REDSHIFT_CLUSTERS'
+]
 
 
 class Environment(Resource, Base):
@@ -37,6 +47,7 @@ class Environment(Resource, Base):
     mlStudiosEnabled = Column(Boolean)
     pipelinesEnabled = Column(Boolean)
     dashboardsEnabled = Column(Boolean)
+    warehousesEnabled = Column(Boolean)
 
 
 class EnvironmentParameter(Base):
@@ -70,7 +81,7 @@ def upgrade():
             Column("paramKey", String, primary_key=True),
             Column("paramValue", String, nullable=False),
         )
-        print("Creation of environment_parameters is done")
+        print("Creation of environment_parameters table is done")
 
         print("Migrating the environmental parameters from environment table to environment_parameters table...")
         envs: List[Environment] = session.query(Environment).all()
@@ -96,6 +107,7 @@ def upgrade():
         op.drop_column("environment", "mlStudiosEnabled")
         op.drop_column("environment", "pipelinesEnabled")
         op.drop_column("environment", "dashboardsEnabled")
+        op.drop_column("environment", "warehousesEnabled")
         print("Dropped the columns from the environment table ")
 
         create_foreign_key_to_env(op, 'sagemaker_notebook')
@@ -108,7 +120,7 @@ def upgrade():
         session.commit()
 
         migrate_groups_permissions(session)
-        delete_unused_resource_permissions(session)
+        delete_unused_permissions(session)
 
     except Exception as ex:
         print(f"Failed to execute the migration script due to: {ex}")
@@ -131,6 +143,7 @@ def downgrade():
         op.add_column("environment", Column("mlStudiosEnabled", Boolean, default=True))
         op.add_column("environment", Column("pipelinesEnabled", Boolean, default=True))
         op.add_column("environment", Column("dashboardsEnabled", Boolean, default=True))
+        op.add_column("environment", Column("warehousesEnabled", Boolean, default=True))
 
         print("Filling environment table with parameters rows...")
         params = session.query(EnvironmentParameter).all()
@@ -142,11 +155,11 @@ def downgrade():
                 notebooksEnabled=params["notebooksEnabled"] == "true",
                 mlStudiosEnabled=params["mlStudiosEnabled"] == "true",
                 pipelinesEnabled=params["pipelinesEnabled"] == "true",
-                dashboardsEnabled=params["dashboardsEnabled"] == "true"
+                dashboardsEnabled=params["dashboardsEnabled"] == "true",
+                dashboardsEnabled=params["warehousesEnabled"] == "true"
             ))
 
-        for name in UNUSED_PERMISSIONS:
-            Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
+        save_deleted_permissions(session)
 
         session.add_all(envs)
         print("Dropping environment_parameter table...")
@@ -205,8 +218,8 @@ def migrate_groups_permissions(session):
             )
 
 
-def delete_unused_resource_permissions(session):
-    for name in UNUSED_PERMISSIONS:
+def delete_unused_permissions(session):
+    for name in UNUSED_RESOURCE_PERMISSIONS:
         perm = Permission.get_permission_by_name(session, name, PermissionType.RESOURCE.value)
         (
             session.query(ResourcePolicyPermission)
@@ -214,3 +227,20 @@ def delete_unused_resource_permissions(session):
             .delete()
         )
         session.delete(perm)
+    
+    for name in UNUSED_TENANT_PERMISSIONS:
+        perm = Permission.get_permission_by_name(session, name, PermissionType.TENANT.value)
+        (
+            session.query(TenantPolicyPermission)
+            .filter(TenantPolicyPermission.permissionUri == perm.permissionUri)
+            .delete()
+        )
+        session.delete(perm)
+
+
+def save_deleted_permissions(session):
+    for name in UNUSED_RESOURCE_PERMISSIONS:
+            Permission.save_permission(session, name, name, PermissionType.RESOURCE.value)
+
+    for name in UNUSED_TENANT_PERMISSIONS:
+            Permission.save_permission(session, name, name, PermissionType.TENANT.value)
