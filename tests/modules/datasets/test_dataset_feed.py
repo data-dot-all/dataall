@@ -1,5 +1,5 @@
 
-from dataall.api.Objects.Feed.registry import FeedRegistry
+from dataall.core.feed.api.registry import FeedRegistry
 from dataall.modules.datasets_base.db.models import DatasetTableColumn
 
 

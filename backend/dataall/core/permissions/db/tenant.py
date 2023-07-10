@@ -1,6 +1,6 @@
 import logging
 
-from .. import models
+from dataall.core.permissions.db import permission_models as models
 
 logger = logging.getLogger(__name__)
 

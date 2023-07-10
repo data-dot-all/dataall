@@ -4,9 +4,15 @@ from .resolvers import *
 
 listTenantPermissions = gql.QueryField(
     name='listTenantPermissions',
-    args=[
-        gql.Argument(name='filter', type=gql.Ref('TenantPermissionFilter')),
-    ],
-    type=gql.Ref('PermissionSearchResult'),
+    type=gql.ArrayType(gql.Ref('Permission')),
     resolver=list_tenant_permissions,
+)
+
+listTenantGroups = gql.QueryField(
+    name='listTenantGroups',
+    args=[
+        gql.Argument(name='filter', type=gql.Ref('GroupFilter')),
+    ],
+    type=gql.Ref('GroupSearchResult'),
+    resolver=list_tenant_groups,
 )

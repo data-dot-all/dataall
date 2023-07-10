@@ -10,7 +10,6 @@ from .connection import (
     has_table,
     has_column,
     drop_schema_if_exists,
-    init_permissions,
 )
 from .dbconfig import DbConfig
 from .paginator import paginate

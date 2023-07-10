@@ -21,7 +21,6 @@ from . import (
     Stack,
     Notification,
     Vpc,
-    Tenant,
     KeyValueTag,
 )
 

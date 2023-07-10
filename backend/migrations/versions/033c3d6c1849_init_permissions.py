@@ -11,6 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from dataall.core.permissions.db import Permission
 from dataall.db import api, get_engine, has_table
 
 # revision identifiers, used by Alembic.

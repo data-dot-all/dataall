@@ -10,6 +10,5 @@ from .Organization import Organization
 from .OrganizationGroup import OrganizationGroup
 from .Stack import Stack
 from .Task import Task
-from .Tenant import Tenant
 from .User import User
 from .Vpc import Vpc

@@ -4,7 +4,7 @@ import logging
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.db.api import Environment, Glossary
+from dataall.db.api import Environment
 from dataall.db.exceptions import ResourceShared
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.datasets.aws.athena_table_client import AthenaTableClient

@@ -2,6 +2,7 @@ from dataall.base.api import gql
 from .input_types import UpdateGroupTenantPermissionsInput
 from .resolvers import *
 
+
 updateGroupPermission = gql.MutationField(
     name='updateGroupTenantPermissions',
     args=[

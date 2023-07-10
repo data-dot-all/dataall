@@ -87,3 +87,12 @@ class ResourcePolicyPermission(Base):
     permission = relationship('Permission')
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
+
+
+class Tenant(Base):
+    __tablename__ = 'tenant'
+    tenantUri = Column(String, primary_key=True, default=utils.uuid('tenant'))
+    name = Column(String, nullable=False, index=True, unique=True)
+    description = Column(String, default='No description provided')
+    created = Column(DateTime, default=datetime.datetime.now)
+    updated = Column(DateTime, onupdate=datetime.datetime.now)

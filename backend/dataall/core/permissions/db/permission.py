@@ -89,33 +89,6 @@ class Permission:
         return permission
 
     @staticmethod
-    def paginated_tenant_permissions(session, data) -> dict:
-        if not data:
-            data = dict()
-        data['type'] = PermissionType.TENANT
-        return Permission.paginated_permissions(session, data)
-
-    @staticmethod
-    def paginated_permissions(session, data) -> dict:
-        query = session.query(models.Permission)
-        if data:
-            if data.get('type'):
-                query = query.filter(models.Permission.type == data['type'])
-            if data.get('term'):
-                term = data['term']
-                query = query.filter(
-                    or_(
-                        models.Permission.name.ilike('%' + term + '%'),
-                        models.Permission.description.ilike('%' + term + '%'),
-                    )
-                )
-        return paginate(
-            query=query,
-            page=data.get('page', 1),
-            page_size=data.get('pageSize', 10),
-        ).to_dict()
-
-    @staticmethod
     def init_permissions(session):
         perms = []
         count_resource_permissions = (

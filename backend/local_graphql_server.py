@@ -10,8 +10,9 @@ from flask_cors import CORS
 from dataall import db
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import get_engine, Base, init_permissions
+from dataall.db import get_engine, Base
 from dataall.searchproxy import connect, run_query
 from dataall.base.loader import load_modules, ImportMode
 from dataall.base.config import config
@@ -38,7 +39,7 @@ CDKPROXY_URL = (
 )
 config.set_property("cdk_proxy_url", CDKPROXY_URL)
 
-init_permissions(engine)
+save_permissions_with_tenant(engine)
 
 
 class Context:

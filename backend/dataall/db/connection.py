@@ -96,13 +96,6 @@ def create_schema_and_tables(engine, envname):
         raise e
 
 
-def init_permissions(engine, envname=None):
-    with engine.scoped_session() as session:
-        log.info('Initiating permissions')
-        db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
-        Permission.init_permissions(session)
-
-
 def drop_schema_if_exists(engine, envname):
     try:
         if engine.dialect.has_schema(engine, envname):

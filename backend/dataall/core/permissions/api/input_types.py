@@ -1,10 +1,10 @@
 from dataall.base.api import gql
 
-TenantPermissionFilter = gql.InputType(
-    name='TenantPermissionFilter',
+
+UpdateGroupTenantPermissionsInput = gql.InputType(
+    name='UpdateGroupTenantPermissionsInput',
     arguments=[
-        gql.Argument(name='term', type=gql.Boolean),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
+        gql.Argument('permissions', gql.ArrayType(gql.String)),
+        gql.Argument('groupUri', gql.NonNullableType(gql.String)),
     ],
 )

@@ -1,5 +1,6 @@
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from .client import *
 from dataall.db import models
@@ -114,7 +115,7 @@ def group4(db, user3):
 @pytest.fixture(scope='module')
 def tenant(db, group, group2, permissions, user, user2, user3, group3, group4):
     with db.scoped_session() as session:
-        tenant = dataall.db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        tenant = Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,

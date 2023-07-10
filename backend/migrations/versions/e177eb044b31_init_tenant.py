@@ -11,6 +11,7 @@ from alembic import op
 from sqlalchemy import orm
 
 from dataall import db
+from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import api
 
@@ -25,7 +26,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Initializing permissions...')
-        db.api.Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
+        Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
         print('Tenant initialized successfully')
         print('Attaching superusers group DHAdmins...')
         TenantPolicy.attach_group_tenant_policy(

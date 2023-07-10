@@ -13,8 +13,9 @@ from dataall.api.Objects import bootstrap as bootstrap_schema, get_executable_sc
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
 from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import init_permissions, get_engine, permissions
+from dataall.db import  get_engine, permissions
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
@@ -32,7 +33,7 @@ ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 Worker.queue = SqsQueue.send
 
-init_permissions(ENGINE)
+save_permissions_with_tenant(ENGINE)
 
 
 def resolver_adapter(resolver):

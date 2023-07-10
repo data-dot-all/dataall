@@ -1,4 +1,3 @@
-from .tenant import Tenant
 from .target_type import TargetType
 from .keyvaluetag import KeyValueTag
 from .stack import Stack

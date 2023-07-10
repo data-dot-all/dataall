@@ -29,3 +29,13 @@ PermissionSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(Permission)),
     ],
 )
+
+
+Tenant = gql.ObjectType(
+    name='Tenant',
+    fields=[
+        gql.Field(name='tenantUri', type=gql.ID),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+    ],
+)
