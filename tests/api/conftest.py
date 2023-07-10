@@ -52,16 +52,8 @@ def permissions(db):
         yield Permission.init_permissions(session)
 
 
-@pytest.fixture(scope='module', autouse=True)
-def user(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='alice@test.com', userName='alice')
-        session.add(user)
-        yield user
-
-
 @pytest.fixture(scope='module')
-def group(db, user):
+def group(db):
     with db.scoped_session() as session:
         group = dataall.db.models.Group(name='testadmins', label='testadmins', owner='alice')
         session.add(group)
@@ -69,35 +61,19 @@ def group(db, user):
         yield group
 
 
-@pytest.fixture(scope='module', autouse=True)
-def user2(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='bob@test.com', userName='bob')
-        session.add(user)
-        yield user
-
-
 @pytest.fixture(scope='module')
-def group2(db, user2):
+def group2(db):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner=user2.userName)
+        group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner='bob')
         session.add(group)
         session.commit()
         yield group
 
 
-@pytest.fixture(scope='module', autouse=True)
-def user3(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='david@test.com', userName='david')
-        session.add(user)
-        yield user
-
-
 @pytest.fixture(scope='module')
-def group3(db, user3):
+def group3(db):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='datascientists', label='datascientists', owner=user3.userName)
+        group = dataall.db.models.Group(name='datascientists', label='datascientists', owner='david')
         session.add(group)
         session.commit()
         yield group
@@ -113,7 +89,7 @@ def group4(db, user3):
 
 
 @pytest.fixture(scope='module')
-def tenant(db, group, group2, permissions, user, user2, user3, group3, group4):
+def tenant(db, group, group2, permissions, group3, group4):
     with db.scoped_session() as session:
         tenant = Tenant.save_tenant(session, name='dataall', description='Tenant dataall')
         TenantPolicy.attach_group_tenant_policy(
@@ -289,7 +265,7 @@ def org(client):
 
 @pytest.fixture(scope='module')
 def org_fixture(org, user, group, tenant):
-    org1 = org('testorg', user.userName, group.name)
+    org1 = org('testorg', 'alice', group.name)
     yield org1
 
 

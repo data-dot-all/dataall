@@ -69,18 +69,17 @@ def tables1(table: typing.Callable, dataset1: Dataset):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table1(table: typing.Callable, dataset1: Dataset,
-           user: dataall.db.models.User) -> DatasetTable:
+def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset1,
         name="table1",
-        username=user.userName
+        username='alice'
     )
 
 
 @pytest.fixture(scope='module')
-def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
-    yield org('org2', user2.userName, group2.name)
+def org2(org: typing.Callable, group2, tenant) -> dataall.db.models.Organization:
+    yield org('org2', 'bob', group2.name)
 
 
 @pytest.fixture(scope='module')
@@ -116,12 +115,11 @@ def tables2(table, dataset2):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def table2(table: typing.Callable, dataset2: Dataset,
-           user2: dataall.db.models.User) -> DatasetTable:
+def table2(table: typing.Callable, dataset2: Dataset) -> DatasetTable:
     yield table(
         dataset=dataset2,
         name="table2",
-        username=user2.userName
+        username='bob'
     )
 
 

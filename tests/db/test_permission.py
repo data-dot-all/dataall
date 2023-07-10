@@ -44,14 +44,6 @@ def tenant(db):
 
 
 @pytest.fixture(scope='module')
-def user(db):
-    with db.scoped_session() as session:
-        user = dataall.db.models.User(userId='alice@test.com', userName='alice')
-        session.add(user)
-        yield user
-
-
-@pytest.fixture(scope='module')
 def group(db, user):
     with db.scoped_session() as session:
         group = dataall.db.models.Group(
