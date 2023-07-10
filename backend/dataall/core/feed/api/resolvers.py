@@ -1,8 +1,9 @@
 from sqlalchemy import or_
 
 from dataall.api.context import Context
-from dataall.db import paginate, models
-from dataall.api.Objects.Feed.registry import FeedRegistry
+from dataall.core.feed.db.feed_models import FeedMessage
+from dataall.db import paginate
+from dataall.core.feed.api.registry import FeedRegistry
 
 
 class Feed:
@@ -50,7 +51,7 @@ def post_message(
     input: dict = None,
 ):
     with context.engine.scoped_session() as session:
-        m = models.FeedMessage(
+        m = FeedMessage(
             targetUri=targetUri,
             targetType=targetType,
             creator=context.username,
@@ -66,18 +67,18 @@ def resolve_messages(context: Context, source: Feed, filter: dict = None):
     if not filter:
         filter = {}
     with context.engine.scoped_session() as session:
-        q = session.query(models.FeedMessage).filter(
-            models.FeedMessage.targetUri == source.targetUri
+        q = session.query(FeedMessage).filter(
+            FeedMessage.targetUri == source.targetUri
         )
         term = filter.get('term')
         if term:
             q = q.filter(
                 or_(
-                    models.FeedMessage.content.ilike('%' + term + '%'),
-                    models.FeedMessage.creator.ilike('%' + term + '%'),
+                    FeedMessage.content.ilike('%' + term + '%'),
+                    FeedMessage.creator.ilike('%' + term + '%'),
                 )
             )
-        q = q.order_by(models.FeedMessage.created.desc())
+        q = q.order_by(FeedMessage.created.desc())
 
     return paginate(
         q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)

@@ -28,7 +28,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.db.api import TargetType
         from dataall.api.Objects.Vote.resolvers import add_vote_type
-        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
+        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer

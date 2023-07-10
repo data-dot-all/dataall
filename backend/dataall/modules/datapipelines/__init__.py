@@ -26,7 +26,7 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.db.api import TargetType
-        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
+        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.datapipelines.api
         FeedRegistry.register(FeedDefinition("DataPipeline", DataPipeline))

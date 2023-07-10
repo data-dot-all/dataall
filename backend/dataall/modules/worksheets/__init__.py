@@ -17,7 +17,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
         return ImportMode.API in modes
 
     def __init__(self):
-        from dataall.api.Objects.Feed.registry import FeedRegistry, FeedDefinition
+        from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.worksheets.api
 

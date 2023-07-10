@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from .resolvers import *
-from dataall.api.Objects.Feed.registry import FeedRegistry
+from dataall.core.feed.api.registry import FeedRegistry
 
 
 FeedTarget = gql.Union(
