@@ -2,7 +2,6 @@ from dataall.base.context import set_context, RequestContext
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.db.api import Environment, Organization
 from dataall.db.exceptions import ResourceUnauthorized
-from dataall.db.models import GroupMember
 from dataall.db.permissions import TENANT_ALL
 from dataall.modules.datasets.services.dataset_permissions import DATASET_WRITE, UPDATE_DATASET, MANAGE_DATASETS, \
     DATASET_READ
@@ -30,14 +29,6 @@ def tenant(db):
         yield tenant
 
 
-@pytest.fixture(scope='module')
-def group_user(db, group, user):
-    with db.scoped_session() as session:
-        member = GroupMember(userName=user.userName, groupUri=group.groupUri)
-        session.add(member)
-        yield member
-
-
 @pytest.fixture(scope='module', autouse=True)
 def dataset(org, env, db, group):
     with db.scoped_session() as session:
@@ -62,7 +53,7 @@ def dataset(org, env, db, group):
     yield dataset
 
 
-def test_attach_resource_policy(db, user, group, group_user, dataset):
+def test_attach_resource_policy(db, user, group, dataset):
     permissions(db, ENVIRONMENT_ALL + ORGANIZATION_ALL + DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ)
     with db.scoped_session() as session:
         ResourcePolicy.attach_resource_policy(

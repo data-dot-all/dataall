@@ -65,12 +65,6 @@ def group(db, user):
         group = dataall.db.models.Group(name='testadmins', label='testadmins', owner='alice')
         session.add(group)
         session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
-        session.commit()
         yield group
 
 
@@ -87,12 +81,6 @@ def group2(db, user2):
     with db.scoped_session() as session:
         group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner=user2.userName)
         session.add(group)
-        session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user2.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
         session.commit()
         yield group
 
@@ -111,12 +99,6 @@ def group3(db, user3):
         group = dataall.db.models.Group(name='datascientists', label='datascientists', owner=user3.userName)
         session.add(group)
         session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user3.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
-        session.commit()
         yield group
 
 
@@ -125,12 +107,6 @@ def group4(db, user3):
     with db.scoped_session() as session:
         group = dataall.db.models.Group(name='externals', label='externals', owner=user3.userName)
         session.add(group)
-        session.commit()
-        member = dataall.db.models.GroupMember(
-            userName=user3.userName,
-            groupUri=group.groupUri,
-        )
-        session.add(member)
         session.commit()
         yield group
 
