@@ -2,7 +2,7 @@ import logging
 
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.context import Context
-from dataall.db import paginate, models
+from dataall.core.glossary.db.glossary import Glossary
 from dataall.db.api import Environment
 from dataall.db.api.organization import Organization
 from dataall.db.exceptions import RequiredParameter, InvalidInput
@@ -160,15 +160,7 @@ def get_dataset_glossary_terms(context: Context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        terms = (
-            session.query(models.GlossaryNode)
-            .join(
-                models.TermLink, models.TermLink.nodeUri == models.GlossaryNode.nodeUri
-            )
-            .filter(models.TermLink.targetUri == source.datasetUri)
-        )
-
-    return paginate(terms, page_size=100, page=1).to_dict()
+        return Glossary.get_glossary_terms_links(session, source.datasetUri, 'Dataset')
 
 
 def list_datasets_created_in_environment(

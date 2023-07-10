@@ -2,11 +2,10 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, String, DateTime, Enum
-from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
 
-from .. import Base
-from .. import utils
+from dataall.db import Base
+from dataall.db import utils
 
 
 class GlossaryNodeStatus(enum.Enum):
@@ -35,19 +34,6 @@ class GlossaryNode(Base):
     admin = Column(String, nullable=True)
     isLinked = query_expression()
     isMatch = query_expression()
-
-
-class GlossarySchemaDefinition:
-    __tablename__ = 'glossary_schema'
-    schemaUri = Column(String, primary_key=True, default=utils.uuid('glossary_schema'))
-    json_schema = Column(postgresql.JSON, nullable=False)
-
-
-class GlossarySchemaMap:
-    __tablename__ = 'glossary_schema_map'
-    schemaUri = Column(String, primary_key=True, nullable=False)
-    nodeUri = Column(String, primary_key=True, nullable=False)
-    schema = Column(postgresql.JSON, nullable=False)
 
 
 class TermLink(Base):

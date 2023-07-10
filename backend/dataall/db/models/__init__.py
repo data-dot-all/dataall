@@ -3,7 +3,6 @@ from .Activity import Activity
 from .KeyValueTag import KeyValueTag
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup
-from .Glossary import GlossaryNode, TermLink
 from .Group import Group
 from .ConsumptionRole import ConsumptionRole
 from .Notification import Notification, NotificationType

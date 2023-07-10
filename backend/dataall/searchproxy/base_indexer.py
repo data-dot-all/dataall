@@ -6,7 +6,7 @@ from operator import and_
 
 from sqlalchemy.orm import with_expression
 
-from dataall.db import models
+from dataall.core.glossary.db.glossary_models import GlossaryNode, TermLink
 from dataall.searchproxy import connect
 
 log = logging.getLogger(__name__)
@@ -54,19 +54,19 @@ class BaseIndexer(ABC):
     @staticmethod
     def _get_target_glossary_terms(session, target_uri):
         q = (
-            session.query(models.TermLink)
+            session.query(TermLink)
             .options(
-                with_expression(models.TermLink.path, models.GlossaryNode.path),
-                with_expression(models.TermLink.label, models.GlossaryNode.label),
-                with_expression(models.TermLink.readme, models.GlossaryNode.readme),
+                with_expression(TermLink.path, GlossaryNode.path),
+                with_expression(TermLink.label, GlossaryNode.label),
+                with_expression(TermLink.readme, GlossaryNode.readme),
             )
             .join(
-                models.GlossaryNode, models.GlossaryNode.nodeUri == models.TermLink.nodeUri
+                GlossaryNode, GlossaryNode.nodeUri == TermLink.nodeUri
             )
             .filter(
                 and_(
-                    models.TermLink.targetUri == target_uri,
-                    models.TermLink.approvedBySteward.is_(True),
+                    TermLink.targetUri == target_uri,
+                    TermLink.approvedBySteward.is_(True),
                 )
             )
         )

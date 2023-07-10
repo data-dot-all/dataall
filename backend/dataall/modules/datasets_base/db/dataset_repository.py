@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
+from dataall.core.glossary.db.glossary_models import TermLink, GlossaryNode
 from dataall.db.api import (
     Environment,
 )
@@ -192,25 +193,25 @@ class DatasetRepository(EnvironmentResource):
     def update_dataset_glossary_terms(session, username, uri, data):
         if data.get('terms'):
             input_terms = data.get('terms', [])
-            current_links = session.query(models.TermLink).filter(
-                models.TermLink.targetUri == uri
+            current_links = session.query(TermLink).filter(
+                TermLink.targetUri == uri
             )
             for current_link in current_links:
                 if current_link not in input_terms:
                     session.delete(current_link)
             for nodeUri in input_terms:
-                term = session.query(models.GlossaryNode).get(nodeUri)
+                term = session.query(GlossaryNode).get(nodeUri)
                 if term:
                     link = (
-                        session.query(models.TermLink)
+                        session.query(TermLink)
                         .filter(
-                            models.TermLink.targetUri == uri,
-                            models.TermLink.nodeUri == nodeUri,
+                            TermLink.targetUri == uri,
+                            TermLink.nodeUri == nodeUri,
                         )
                         .first()
                     )
                     if not link:
-                        new_link = models.TermLink(
+                        new_link = TermLink(
                             targetUri=uri,
                             nodeUri=nodeUri,
                             targetType='Dataset',
@@ -255,11 +256,11 @@ class DatasetRepository(EnvironmentResource):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, uri)]
         for tableUri in tables:
             term_links = (
-                session.query(models.TermLink)
+                session.query(TermLink)
                 .filter(
                     and_(
-                        models.TermLink.targetUri == tableUri,
-                        models.TermLink.targetType == 'DatasetTable',
+                        TermLink.targetUri == tableUri,
+                        TermLink.targetType == 'DatasetTable',
                     )
                 )
                 .all()
@@ -268,11 +269,11 @@ class DatasetRepository(EnvironmentResource):
                 session.delete(link)
                 session.commit()
         term_links = (
-            session.query(models.TermLink)
+            session.query(TermLink)
             .filter(
                 and_(
-                    models.TermLink.targetUri == uri,
-                    models.TermLink.targetType == 'Dataset',
+                    TermLink.targetUri == uri,
+                    TermLink.targetType == 'Dataset',
                 )
             )
             .all()

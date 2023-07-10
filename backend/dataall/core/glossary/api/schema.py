@@ -1,7 +1,7 @@
 from dataall.base.api import gql
 from .resolvers import *
-from ...constants import GlossaryRole
-from dataall.api.Objects.Glossary.registry import GlossaryRegistry
+from dataall.api.constants import GlossaryRole
+from dataall.core.glossary.api.registry import GlossaryRegistry
 
 GlossaryNode = gql.Union(
     name='GlossaryNode',

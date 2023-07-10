@@ -1,6 +1,6 @@
 from dataall.api.context import Context
-from dataall.db import models
-from dataall.db.api import Glossary, Vote, Organization
+from dataall.core.glossary.db.glossary import Glossary
+from dataall.db.api import Vote, Organization
 from dataall.db.exceptions import RequiredParameter
 from dataall.modules.dashboards.api.enums import DashboardRole
 from dataall.modules.dashboards.db.dashboard_repository import DashboardRepository

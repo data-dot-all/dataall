@@ -1,4 +1,5 @@
 from dataall.api.context import Context
+from dataall.core.glossary.db.glossary_models import TermLink
 from dataall.db import paginate, models
 from dataall.modules.datasets.services.dataset_column_service import DatasetColumnService
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable
@@ -27,8 +28,8 @@ def resolve_terms(context, source: DatasetTableColumn, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        q = session.query(models.TermLink).filter(
-            models.TermLink.targetUri == source.columnUri
+        q = session.query(TermLink).filter(
+            TermLink.targetUri == source.columnUri
         )
     return paginate(q, page=1, page_size=15).to_dict()
 

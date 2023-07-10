@@ -19,8 +19,6 @@ from . import (
     Principal,
     Organization,
     Stack,
-    Glossary,
-    Feed,
     Notification,
     Vpc,
     Tenant,

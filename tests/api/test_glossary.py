@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from dataall.core.glossary.db.glossary_models import GlossaryNode
 from dataall.db import models
 import pytest
 
@@ -414,7 +416,7 @@ def test_delete_category(client, db, c1, group):
         groups=[group.name],
     )
     with db.scoped_session() as session:
-        node = session.query(models.GlossaryNode).get(c1.nodeUri)
+        node = session.query(GlossaryNode).get(c1.nodeUri)
         assert node.deleted >= now
 
 

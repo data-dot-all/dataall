@@ -20,7 +20,7 @@ class DashboardApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.dashboards.api
         from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
-        from dataall.api.Objects.Glossary.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.core.glossary.api.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.api.Objects.Vote.resolvers import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
 
