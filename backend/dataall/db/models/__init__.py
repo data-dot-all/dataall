@@ -1,5 +1,4 @@
 from .Enums import *
-from .Activity import Activity
 from .KeyValueTag import KeyValueTag
 from .Environment import Environment
 from .EnvironmentGroup import EnvironmentGroup

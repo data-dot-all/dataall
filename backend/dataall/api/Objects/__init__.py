@@ -14,7 +14,6 @@ from ...base.api import gql
 from ...api.constants import GraphQLEnumMapper
 from . import (
     Environment,
-    Activity,
     Group,
     Principal,
     Organization,

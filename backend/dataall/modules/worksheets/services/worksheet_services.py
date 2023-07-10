@@ -1,10 +1,10 @@
 import logging
 
 from dataall import db
+from dataall.core.activity.db.activity_models import Activity
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions
-from dataall.db import models
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.models import Worksheet
 from dataall.modules.worksheets.db.repositories import WorksheetRepository
@@ -40,7 +40,7 @@ class WorksheetService:
         session.add(worksheet)
         session.commit()
 
-        activity = models.Activity(
+        activity = Activity(
             action='WORKSHEET:CREATE',
             label='WORKSHEET:CREATE',
             owner=username,
@@ -67,7 +67,7 @@ class WorksheetService:
             setattr(worksheet, field, data.get(field))
         session.commit()
 
-        activity = models.Activity(
+        activity = Activity(
             action='WORKSHEET:UPDATE',
             label='WORKSHEET:UPDATE',
             owner=username,

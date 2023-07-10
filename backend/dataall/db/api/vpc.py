@@ -10,7 +10,8 @@ from . import (
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.base.context import get_context
-from ...core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.activity.db.activity_models import Activity
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class Vpc:
         session.add(vpc)
         session.commit()
 
-        activity = models.Activity(
+        activity = Activity(
             action='NETWORK:CREATE',
             label='NETWORK:CREATE',
             owner=username,

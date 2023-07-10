@@ -2,6 +2,7 @@ import json
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.activity.db.activity_models import Activity
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
@@ -75,7 +76,7 @@ class DataPipelineService:
         pipeline.repo = aws_compliant_name
         pipeline.name = aws_compliant_name
 
-        activity = models.Activity(
+        activity = Activity(
             action='PIPELINE:CREATE',
             label='PIPELINE:CREATE',
             owner=username,

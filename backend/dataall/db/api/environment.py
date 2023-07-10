@@ -28,7 +28,7 @@ from dataall.base.context import get_context
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.permission_models import PermissionType
-
+from dataall.core.activity.db.activity_models import Activity
 
 log = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class Environment:
         )
         session.commit()
 
-        activity = models.Activity(
+        activity = Activity(
             action='ENVIRONMENT:CREATE',
             label='ENVIRONMENT:CREATE',
             owner=context.username,

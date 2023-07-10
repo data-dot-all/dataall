@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
+from dataall.core.activity.db.activity_models import Activity
 from dataall.core.glossary.db.glossary_models import TermLink, GlossaryNode
 from dataall.db.api import (
     Environment,
@@ -89,7 +90,7 @@ class DatasetRepository(EnvironmentResource):
         DatasetRepository._set_dataset_aws_resources(dataset, data, environment)
         DatasetRepository._set_import_data(dataset, data)
 
-        activity = models.Activity(
+        activity = Activity(
             action='dataset:create',
             label='dataset:create',
             owner=username,
@@ -178,7 +179,7 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def update_dataset_activity(session, dataset, username) :
-        activity = models.Activity(
+        activity = Activity(
             action='dataset:update',
             label='dataset:update',
             owner=username,

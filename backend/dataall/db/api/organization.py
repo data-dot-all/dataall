@@ -10,6 +10,7 @@ from ..models.Enums import OrganisationUserRole
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.activity.db.activity_models import Activity
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class Organization:
         )
         session.add(member)
 
-        activity = models.Activity(
+        activity = Activity(
             action='org:create',
             label='org:create',
             owner=username,
@@ -84,7 +85,7 @@ class Organization:
         session.commit()
 
         context = get_context()
-        activity = models.Activity(
+        activity = Activity(
             action='org:update',
             label='org:create',
             owner=context.username,
