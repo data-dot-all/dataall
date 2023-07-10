@@ -80,13 +80,6 @@ class ScheduledQueryRole(GraphQLEnumMapper):
     NoPermission = '000'
 
 
-class AirflowClusterRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class SortDirection(GraphQLEnumMapper):
     asc = 'asc'
     desc = 'desc'
