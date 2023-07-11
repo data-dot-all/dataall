@@ -1,11 +1,11 @@
 import logging
 
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import models
+from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
+from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetProfilingRun, Dataset
-from dataall.modules.datasets.db.dataset_profiling_repository import DatasetProfilingRepository
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class DatasetProfilingGlueHandler:
 
     @staticmethod
     @Worker.handler('glue.job.profiling_run_status')
-    def get_profiling_run(engine, task: models.Task):
+    def get_profiling_run(engine, task: Task):
         with engine.scoped_session() as session:
             profiling: DatasetProfilingRun = (
                 DatasetProfilingRepository.get_profiling_run(

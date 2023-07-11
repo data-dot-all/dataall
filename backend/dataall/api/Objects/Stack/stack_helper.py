@@ -2,14 +2,14 @@ import os
 
 import requests
 
-from .... import db
-from ....aws.handlers.service_handlers import Worker
-from ....aws.handlers.ecs import Ecs
-from ....db import models
-from ....utils import Parameter
-
 from dataall.base.config import config
 from dataall.base.context import get_context
+from .... import db
+from ....aws.handlers.ecs import Ecs
+from ....aws.handlers.service_handlers import Worker
+from ....core.tasks.db.task_models import Task
+from ....db import models
+from ....utils import Parameter
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
@@ -38,7 +38,7 @@ def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
 
 
 def save_describe_stack_task(session, environment, stack, target_uri):
-    cfn_task = models.Task(
+    cfn_task = Task(
         targetUri=stack.stackUri,
         action='cloudformation.stack.describe_resources',
         payload={
@@ -73,7 +73,7 @@ def deploy_stack(targetUri):
             if not Ecs.is_task_running(cluster_name, f'awsworker-{stack.stackUri}'):
                 stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack.stackUri)
             else:
-                task: models.Task = models.Task(
+                task: Task = Task(
                     action='ecs.cdkproxy.deploy', targetUri=stack.stackUri
                 )
                 session.add(task)
@@ -93,7 +93,7 @@ def delete_stack(
         )
         if not stack:
             return
-        task = models.Task(
+        task = Task(
             targetUri=target_uri,
             action='cloudformation.stack.delete',
             payload={

@@ -1,1 +1,1 @@
-from dataall.core.catalog import api
+from dataall.core.catalog import api, tasks

@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 
 from .service_handlers import Worker
 from ... import db
+from ...core.tasks.db.task_models import Task
 from ...db import models
 from ...utils import Parameter
 
@@ -19,7 +20,7 @@ class Ecs:
 
     @staticmethod
     @Worker.handler(path='ecs.cdkproxy.deploy')
-    def deploy_stack(engine, task: models.Task):
+    def deploy_stack(engine, task: Task):
         with engine.scoped_session() as session:
             stack: models.Stack = db.api.Stack.get_stack_by_uri(
                 session, stack_uri=task.targetUri

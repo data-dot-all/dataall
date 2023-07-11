@@ -1,7 +1,7 @@
 import logging
 
 from dataall.aws.handlers.service_handlers import Worker
-from dataall.db import models
+from dataall.core.tasks.db.task_models import Task
 from dataall.modules.datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
@@ -13,7 +13,7 @@ class DatasetCrawlerHandler:
 
     @staticmethod
     @Worker.handler(path='glue.crawler.start')
-    def start_crawler(engine, task: models.Task):
+    def start_crawler(engine, task: Task):
         with engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(
                 session, task.targetUri

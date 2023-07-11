@@ -1,16 +1,17 @@
 import json
 import logging
 
-from dataall.aws.handlers.service_handlers import Worker
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.context import Context
+from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.core.tasks.db.task_models import Task
 from dataall.db import models, exceptions
 from dataall.db.api import Environment, Stack
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
-from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
+from dataall.modules.datapipelines.services.datapipelines_service import DataPipelineService
 
 log = logging.getLogger(__name__)
 
@@ -226,7 +227,7 @@ def _delete_repository(
 ):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        task = models.Task(
+        task = Task(
             targetUri=target_uri,
             action='repo.datapipeline.delete',
             payload={

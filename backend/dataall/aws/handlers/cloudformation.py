@@ -5,6 +5,7 @@ from botocore.exceptions import ClientError
 
 from .service_handlers import Worker
 from .sts import SessionHelper
+from ...core.tasks.db.task_models import Task
 from ...db import models, Engine
 from ...utils import json_utils
 
@@ -42,7 +43,7 @@ class CloudFormation:
 
     @staticmethod
     @Worker.handler(path='cloudformation.stack.delete')
-    def delete_stack(engine, task: models.Task):
+    def delete_stack(engine, task: Task):
         try:
             data = {
                 'accountid': task.payload['accountid'],
@@ -77,7 +78,7 @@ class CloudFormation:
 
     @staticmethod
     @Worker.handler(path='cloudformation.stack.status')
-    def get_stack_status(engine, task: models.Task):
+    def get_stack_status(engine, task: Task):
         try:
             data = {
                 'accountid': task.payload['accountid'],
@@ -104,7 +105,7 @@ class CloudFormation:
 
     @staticmethod
     @Worker.handler(path='cloudformation.stack.describe_resources')
-    def describe_stack_resources(engine, task: models.Task):
+    def describe_stack_resources(engine, task: Task):
         try:
             filtered_resources = []
             filtered_events = []
@@ -203,7 +204,7 @@ class CloudFormation:
 
 
 @Worker.handler(path='environment.check.cdk.boostrap')
-def check_cdk_boostrap(engine: Engine, task: models.Task):
+def check_cdk_boostrap(engine: Engine, task: Task):
     with engine.scoped_session() as session:
         account = task.payload.get('account')
         region = task.payload.get('region')
