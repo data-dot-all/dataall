@@ -17,16 +17,16 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from dataall.cdkproxy.stacks.manager import stack
 from dataall import db
 from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
+from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.db import models
 from dataall.db.api import Environment
 from dataall.modules.datasets.aws.lf_dataset_client import LakeFormationDatasetClient
-from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datasets_base.db.models import Dataset
+from dataall.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 

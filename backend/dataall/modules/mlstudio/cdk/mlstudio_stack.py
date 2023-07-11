@@ -15,26 +15,21 @@ from aws_cdk import (
     RemovalPolicy,
     Stack
 )
-
 from botocore.exceptions import ClientError
 
-from dataall.modules.mlstudio.db.models import SagemakerStudioUser
-from dataall.db.models import EnvironmentGroup
-
-
-from dataall.cdkproxy.stacks.manager import stack
-from dataall.db import Engine, get_engine
-from dataall.db.api import Environment as EnvironmentRepository
-from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
-
-from dataall.aws.handlers.sts import SessionHelper
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.modules.mlstudio.aws.ec2_client import EC2
-from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
-
+from dataall.aws.handlers.sts import SessionHelper
 from dataall.cdkproxy.stacks import EnvironmentSetup
 from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
+from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
+from dataall.db import Engine, get_engine
+from dataall.db.api import Environment as EnvironmentRepository
+from dataall.db.models import EnvironmentGroup
+from dataall.modules.mlstudio.aws.ec2_client import EC2
+from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
+from dataall.modules.mlstudio.db.models import SagemakerStudioUser
+from dataall.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 

@@ -2,6 +2,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
+from dataall.core.stacks.db.stack_models import Stack
 from dataall.db import models, exceptions, paginate
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 
@@ -52,11 +53,11 @@ class DatapipelinesRepository(EnvironmentResource):
     @staticmethod
     def get_pipeline_stack_by_uri(session, uri):
         return (
-            session.query(models.Stack)
+            session.query(Stack)
             .filter(
                 and_(
-                    models.Stack.targetUri == uri,
-                    models.Stack.stack == 'PipelineStack',
+                    Stack.targetUri == uri,
+                    Stack.stack == 'PipelineStack',
                 ))
             .first()
         )

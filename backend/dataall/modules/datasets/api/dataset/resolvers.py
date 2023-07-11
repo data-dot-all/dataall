@@ -1,8 +1,8 @@
 import logging
 
-from dataall.api.Objects.Stack import stack_helper
 from dataall.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.stacks.api import stack_helper
 from dataall.db.api import Environment
 from dataall.db.api.organization import Organization
 from dataall.db.exceptions import RequiredParameter, InvalidInput

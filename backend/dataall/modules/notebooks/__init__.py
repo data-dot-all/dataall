@@ -1,8 +1,8 @@
 """Contains the code related to SageMaker notebooks"""
 import logging
 
-from dataall.db.api import TargetType
 from dataall.base.loader import ImportMode, ModuleInterface
+from dataall.core.stacks.db.target_type import TargetType
 
 log = logging.getLogger(__name__)
 

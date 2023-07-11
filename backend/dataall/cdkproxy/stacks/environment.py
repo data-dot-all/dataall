@@ -24,6 +24,7 @@ from aws_cdk import (
     Tags,
 )
 
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from .manager import stack
 from .pivot_role import PivotRole
 from .policies.data_policy import S3Policy
@@ -33,7 +34,6 @@ from ...aws.handlers.parameter_store import ParameterStoreManager
 from ...aws.handlers.sts import SessionHelper
 from ...db import models
 from ...utils.cdk_nag_utils import CDKNagUtil
-from ...utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
 

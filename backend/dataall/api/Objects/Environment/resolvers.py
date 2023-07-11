@@ -7,22 +7,23 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from sqlalchemy import and_, exc
 
-from dataall.core.vpc.db.vpc import Vpc
-from ..Organization.resolvers import *
-from ..Stack import stack_helper
-from ...constants import *
-from dataall.aws.handlers.sts import SessionHelper
-from dataall.aws.handlers.cloudformation import CloudFormation
 from dataall.aws.handlers.iam import IAM
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import exceptions, permissions
-from dataall.db.api import Environment, Stack
+from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.aws.cloudformation import CloudFormation
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.vpc.db.vpc import Vpc
+from dataall.db import exceptions, permissions
+from dataall.db.api import Environment
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from ..Organization.resolvers import *
+from ...constants import *
 
 log = logging.getLogger()
 

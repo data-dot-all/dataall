@@ -1,17 +1,20 @@
 import json
 import logging
 
-from dataall.api.Objects.Stack import stack_helper
 from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
+    has_group_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.tasks.db.task_models import Task
 from dataall.core.vote.db.vote import Vote
-from dataall.db.api import KeyValueTag, Stack, Environment
+from dataall.db.api import Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
-from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_permissions import SHARE_OBJECT_APPROVER

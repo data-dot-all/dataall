@@ -2,25 +2,26 @@ import os
 
 import requests
 
+from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
-from .... import db
-from ....aws.handlers.ecs import Ecs
-from ....aws.handlers.service_handlers import Worker
-from ....core.tasks.db.task_models import Task
-from ....db import models
-from ....utils import Parameter
+from dataall.core.stacks.aws.ecs import Ecs
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.stacks.db.stack_models import Stack as StackModel
+from dataall.core.tasks.db.task_models import Task
+from dataall.db import models
+from dataall.utils import Parameter
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
     context = get_context()
     with context.db_engine.scoped_session() as session:
         env: models.Environment = session.query(models.Environment).get(environmentUri)
-        stack: models.Stack = db.api.Stack.find_stack_by_target_uri(
+        stack: StackModel = Stack.find_stack_by_target_uri(
             session, target_uri=targetUri
         )
         if not stack:
-            stack = models.Stack(
+            stack = StackModel(
                 stack='environment',
                 payload={},
                 targetUri=targetUri,
@@ -58,7 +59,7 @@ def save_describe_stack_task(session, environment, stack, target_uri):
 def deploy_stack(targetUri):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: models.Stack = db.api.Stack.get_stack_by_target_uri(
+        stack: StackModel = Stack.get_stack_by_target_uri(
             session, target_uri=targetUri
         )
         envname = os.getenv('envname', 'local')
@@ -88,7 +89,7 @@ def delete_stack(
 ):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        stack: models.Stack = db.api.Stack.find_stack_by_target_uri(
+        stack: StackModel = Stack.find_stack_by_target_uri(
             session, target_uri=target_uri
         )
         if not stack:

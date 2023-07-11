@@ -3,11 +3,10 @@ import uuid
 
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from .sts import SessionHelper
-from ...core.tasks.db.task_models import Task
-from ...db import models, Engine
-from ...utils import json_utils
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.stacks.db.stack import Stack
+from dataall.core.tasks.db.task_models import Task
+from dataall.utils import json_utils
 
 log = logging.getLogger(__name__)
 
@@ -42,22 +41,6 @@ class CloudFormation:
             raise Exception(f'CDKToolkitDeploymentActionRoleNotFound: {e}')
 
     @staticmethod
-    @Worker.handler(path='cloudformation.stack.delete')
-    def delete_stack(engine, task: Task):
-        try:
-            data = {
-                'accountid': task.payload['accountid'],
-                'cdk_role_arn': task.payload['cdk_role_arn'],
-                'region': task.payload['region'],
-                'stack_name': task.payload['stack_name'],
-            }
-            CloudFormation.delete_cloudformation_stack(**data)
-        except ClientError as e:
-            log.error(f'Failed to delete CFN stack{task.targetUri}: {e}')
-            raise e
-        return {'status': 200, 'stackDeleted': True}
-
-    @staticmethod
     def delete_cloudformation_stack(**data):
         accountid = data['accountid']
         region = data['region']
@@ -77,20 +60,6 @@ class CloudFormation:
             raise e
 
     @staticmethod
-    @Worker.handler(path='cloudformation.stack.status')
-    def get_stack_status(engine, task: Task):
-        try:
-            data = {
-                'accountid': task.payload['accountid'],
-                'region': task.payload['region'],
-                'stack_name': task.payload['stack_name'],
-            }
-            return CloudFormation._get_stack(**data)['StackStatus']
-        except ClientError as e:
-            log.error(f'Failed to Get CFN stack status{task.targetUri}: {e}')
-            raise e
-
-    @staticmethod
     def _get_stack(**data) -> dict:
         try:
             accountid = data['accountid']
@@ -104,7 +73,6 @@ class CloudFormation:
             raise e
 
     @staticmethod
-    @Worker.handler(path='cloudformation.stack.describe_resources')
     def describe_stack_resources(engine, task: Task):
         try:
             filtered_resources = []
@@ -129,7 +97,7 @@ class CloudFormation:
             ]
             events = CloudFormation._describe_stack_events(**data)['StackEvents']
             with engine.scoped_session() as session:
-                stack: models.Stack = session.query(models.Stack).get(
+                stack: Stack = session.query(Stack).get(
                     task.payload['stackUri']
                 )
                 stack.status = status
@@ -165,7 +133,7 @@ class CloudFormation:
                 session.commit()
         except ClientError as e:
             with engine.scoped_session() as session:
-                stack: models.Stack = session.query(models.Stack).get(
+                stack: Stack = session.query(Stack).get(
                     task.payload['stackUri']
                 )
                 if not stack.error:
@@ -201,18 +169,3 @@ class CloudFormation:
             return stack_events
         except ClientError as e:
             log.error(e, exc_info=True)
-
-
-@Worker.handler(path='environment.check.cdk.boostrap')
-def check_cdk_boostrap(engine: Engine, task: Task):
-    with engine.scoped_session() as session:
-        account = task.payload.get('account')
-        region = task.payload.get('region')
-        aws = SessionHelper.remote_session(accountid=account)
-        cfn = aws.client('cloudformation', region_name=region)
-        response = cfn.describe_stacks(StackName='CDKToolkit')
-        stacks = response['Stacks']
-        if len(stacks):
-            return True
-        else:
-            return False

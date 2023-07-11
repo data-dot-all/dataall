@@ -3,21 +3,20 @@
 # Additionally, it uses the cdk plugin cdk-assume-role-credential-plugin to run cdk commands on target accounts
 # see : https://github.com/aws-samples/cdk-assume-role-credential-plugin
 
+import ast
 import logging
 import os
 import subprocess
 import sys
-import ast
+from abc import abstractmethod
+from typing import Dict
 
 import boto3
-from abc import abstractmethod
 from botocore.exceptions import ClientError
-from typing import Dict, Type
 
+from dataall.core.stacks.db.stack_models import Stack
 from ..aws.handlers.sts import SessionHelper
 from ..db import Engine
-from ..db import models
-from ..db.api import Environment, Stack
 from ..utils.alarm_service import AlarmService
 
 logger = logging.getLogger('cdksass')
@@ -81,7 +80,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
 
     with engine.scoped_session() as session:
         try:
-            stack: models.Stack = session.query(models.Stack).get(stackid)
+            stack: Stack = session.query(Stack).get(stackid)
             logger.warning(f'stackuri = {stack.stackUri}, stackId = {stack.stackid}')
             stack.status = 'PENDING'
             session.commit()
@@ -192,7 +191,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
 def describe_stack(stack, engine: Engine = None, stackid: str = None):
     if not stack:
         with engine.scoped_session() as session:
-            stack = session.query(models.Stack).get(stackid)
+            stack = session.query(Stack).get(stackid)
     if stack.status == 'DELETE_COMPLETE':
         return {'StackId': stack.stackid, 'StackStatus': stack.status}
     session = SessionHelper.remote_session(stack.accountid)

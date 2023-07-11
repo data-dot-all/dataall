@@ -2,12 +2,12 @@
 import logging
 from typing import List, Type
 
+from dataall.base.loader import ModuleInterface, ImportMode
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.modules.datapipelines.db.models import DataPipeline
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import \
     GET_PIPELINE, UPDATE_PIPELINE
-from dataall.base.loader import ModuleInterface, ImportMode
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
-        from dataall.db.api import TargetType
+        from dataall.core.stacks.db.target_type import TargetType
         from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
 
         import dataall.modules.datapipelines.api

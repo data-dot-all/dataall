@@ -1,15 +1,10 @@
 import logging
 import os
-import time
 
 import boto3
 from botocore.exceptions import ClientError
 
-from .service_handlers import Worker
-from ... import db
-from ...core.tasks.db.task_models import Task
-from ...db import models
-from ...utils import Parameter
+from dataall.utils import Parameter
 
 log = logging.getLogger('aws:ecs')
 
@@ -17,26 +12,6 @@ log = logging.getLogger('aws:ecs')
 class Ecs:
     def __init__(self):
         pass
-
-    @staticmethod
-    @Worker.handler(path='ecs.cdkproxy.deploy')
-    def deploy_stack(engine, task: Task):
-        with engine.scoped_session() as session:
-            stack: models.Stack = db.api.Stack.get_stack_by_uri(
-                session, stack_uri=task.targetUri
-            )
-            envname = os.environ.get('envname', 'local')
-            cluster_name = Parameter().get_parameter(
-                env=envname, path='ecs/cluster/name'
-            )
-
-            while Ecs.is_task_running(cluster_name=cluster_name, started_by=f'awsworker-{task.targetUri}'):
-                log.info(
-                    f'ECS task for stack stack-{task.targetUri} is running waiting for 30 seconds before retrying...'
-                )
-                time.sleep(30)
-
-            stack.EcsTaskArn = Ecs.run_cdkproxy_task(stack_uri=task.targetUri)
 
     @staticmethod
     def run_cdkproxy_task(stack_uri):

@@ -3,12 +3,13 @@ import os
 import sys
 import time
 
-from dataall.core.stack_finder import StackFinder
-from dataall.base.loader import ImportMode, load_modules
 from dataall import db
-from dataall.db import models
-from dataall.aws.handlers.ecs import Ecs
+from dataall.base.loader import ImportMode, load_modules
+from dataall.core.stack_finder import StackFinder
+from dataall.core.stacks.aws.ecs import Ecs
+from dataall.core.stacks.db.stack import Stack
 from dataall.db import get_engine
+from dataall.db import models
 from dataall.utils import Parameter
 
 root = logging.getLogger()
@@ -40,7 +41,7 @@ def update_stacks(engine, envname):
 
 
 def update_stack(session, envname, target_uri, wait=False):
-    stack: models.Stack = db.api.Stack.get_stack_by_target_uri(
+    stack = Stack.get_stack_by_target_uri(
         session, target_uri=target_uri
     )
     cluster_name = Parameter().get_parameter(env=envname, path='ecs/cluster/name')

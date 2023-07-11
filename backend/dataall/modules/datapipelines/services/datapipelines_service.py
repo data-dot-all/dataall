@@ -3,14 +3,12 @@ import logging
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db.api import (
-    Environment,
-    KeyValueTag,
-)
-from dataall.db import models, exceptions
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.db import exceptions
+from dataall.db.api import Environment
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
 from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient

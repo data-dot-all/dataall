@@ -1,8 +1,8 @@
 """Contains the code related to SageMaker ML Studio user profiles"""
 import logging
 
-from dataall.db.api import TargetType
 from dataall.base.loader import ImportMode, ModuleInterface
+from dataall.core.stacks.db.target_type import TargetType
 from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 
 log = logging.getLogger(__name__)

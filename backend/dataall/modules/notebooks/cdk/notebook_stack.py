@@ -13,15 +13,14 @@ from aws_cdk import (
     CfnOutput,
 )
 
-from dataall.modules.notebooks.db.models import SagemakerNotebook
-from dataall.modules.notebooks.db import models
-from dataall.db.models import EnvironmentGroup
-
 from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.db import Engine, get_engine
 from dataall.db.api import Environment
+from dataall.db.models import EnvironmentGroup
+from dataall.modules.notebooks.db import models
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.utils.cdk_nag_utils import CDKNagUtil
-from dataall.utils.runtime_stacks_tagging import TagsUtil
 
 logger = logging.getLogger(__name__)
 

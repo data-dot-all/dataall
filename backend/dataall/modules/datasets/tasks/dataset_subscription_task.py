@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -14,11 +13,10 @@ from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets.aws.sns_dataset_client import SnsDatasetClient
-from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
-from dataall.modules.datasets.tasks.subscriptions import poll_queues
-from dataall.utils import json_utils
-from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
+from dataall.modules.datasets.tasks.subscriptions import poll_queues
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
 root = logging.getLogger()

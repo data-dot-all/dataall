@@ -10,7 +10,7 @@ from datetime import datetime
 from botocore.exceptions import ClientError
 
 from ..aws.handlers.sts import SessionHelper
-from ..db import models
+from ..core.stacks.db.stack_models import Stack
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class AlarmService:
         self.envname = os.getenv('envname', 'local')
         self.region = os.environ.get('AWS_REGION', 'eu-west-1')
 
-    def trigger_stack_deployment_failure_alarm(self, stack: models.Stack):
+    def trigger_stack_deployment_failure_alarm(self, stack: Stack):
         logger.info('Triggering deployment failure alarm...')
         subject = f'ALARM: DATAALL Stack {stack.name} Deployment Failure Notification'
         message = f"""

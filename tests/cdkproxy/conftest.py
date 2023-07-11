@@ -1,7 +1,8 @@
 import pytest
 
 from dataall.core.permissions.db.permission import Permission
-from dataall.db import models, api
+from dataall.core.stacks.db.stack_models import KeyValueTag
+from dataall.db import models
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -49,7 +50,7 @@ def env(db, org: models.Organization) -> models.Environment:
             environmentAthenaWorkGroup='workgroup',
         )
         session.add(env_group)
-        tags = models.KeyValueTag(
+        tags = KeyValueTag(
             targetType='environment',
             targetUri=env.environmentUri,
             key='CREATOR',

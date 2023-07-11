@@ -4,10 +4,10 @@ from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
+from dataall.core.tasks.db.task_models import Task
 from dataall.db import utils
 from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound, UnauthorizedOperation
-from dataall.db.models import Task
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
@@ -18,7 +18,6 @@ from dataall.modules.dataset_sharing.services.share_permissions import GET_SHARE
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import Dataset
-
 
 log = logging.getLogger(__name__)
 

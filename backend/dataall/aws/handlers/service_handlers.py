@@ -3,7 +3,7 @@ import os
 import time
 from functools import wraps
 
-from ...db.models import Task
+from ...core.tasks.db.task_models import Task
 from ...utils.json_utils import to_json
 
 log = logging.getLogger(__name__)

@@ -19,6 +19,7 @@ from fastapi import FastAPI, BackgroundTasks, status, Response
 
 import cdk_cli_wrapper as wrapper
 from stacks import StackManager
+from ..core.stacks.db.stack_models import Stack
 from ..db import get_engine
 from ..db import models
 
@@ -135,7 +136,7 @@ async def create_stack(
         }
 
     with engine.scoped_session() as session:
-        stack: models.Stack = session.query(models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_302_FOUND
@@ -172,7 +173,7 @@ async def delete_stack(
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: models.Stack = session.query(models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_302_FOUND
@@ -207,7 +208,7 @@ def get_stack(stackid: str, response: Response):
             'message': f'Failed to connect to database for environment `{ENVNAME}`',
         }
     with engine.scoped_session() as session:
-        stack: models.Stack = session.query(models.Stack).get(stackid)
+        stack: Stack = session.query(Stack).get(stackid)
         if not stack:
             logger.warning(f'Could not find stack with stackUri `{stackid}`')
             response.status_code = status.HTTP_404_NOT_FOUND

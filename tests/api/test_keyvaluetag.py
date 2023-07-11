@@ -1,8 +1,8 @@
-import dataall
-from dataall.db import models
 import pytest
 
+from dataall.core.stacks.db.target_type import TargetType
 from dataall.db import exceptions
+from dataall.db import models
 
 
 @pytest.fixture(scope='module')
@@ -43,7 +43,7 @@ def list_tags_query(client, target_uri, target_type, group):
 
 def test_unsupported_target_type(db):
     with pytest.raises(exceptions.InvalidInput):
-        assert dataall.db.api.TargetType.is_supported_target_type('unknown')
+        assert TargetType.is_supported_target_type('unknown')
 
 
 def update_key_value_tags(client, target_uri, target_type, tags, group):

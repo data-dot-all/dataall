@@ -5,31 +5,30 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import and_
 
-from .. import exceptions, permissions, models
-from . import (
-    KeyValueTag
+from dataall.base.context import get_context
+from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.db.models import EnvironmentParameter
+from dataall.core.environment.db.repositories import EnvironmentParameterRepository
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.permissions.db.permission import Permission
+from dataall.core.permissions.db.permission_models import PermissionType
+from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
+from dataall.core.vpc.db.vpc_models import Vpc
+from dataall.db.paginator import paginate
+from dataall.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
 )
+from .. import exceptions, permissions, models
 from ..api.organization import Organization
 from ..models import EnvironmentGroup
 from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
 )
-from dataall.db.paginator import paginate
-from dataall.core.environment.db.models import EnvironmentParameter
-from dataall.core.environment.db.repositories import EnvironmentParameterRepository
-from dataall.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
-from dataall.base.context import get_context
-from dataall.core.permissions.db.permission import Permission
-from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.core.permissions.db.permission_models import PermissionType
-from dataall.core.activity.db.activity_models import Activity
-from dataall.core.vpc.db.vpc_models import Vpc
+from ...core.stacks.db.keyvaluetag import KeyValueTag
+from ...core.stacks.db.stack_models import Stack
 
 log = logging.getLogger(__name__)
 
@@ -801,8 +800,8 @@ class Environment:
 
     @staticmethod
     @has_resource_permission(permissions.GET_ENVIRONMENT)
-    def get_stack(session, uri, stack_uri) -> models.Stack:
-        return session.query(models.Stack).get(stack_uri)
+    def get_stack(session, uri, stack_uri) -> Stack:
+        return session.query(Stack).get(stack_uri)
 
     @staticmethod
     @has_resource_permission(permissions.DELETE_ENVIRONMENT)

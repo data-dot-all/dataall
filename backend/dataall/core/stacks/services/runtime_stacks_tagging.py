@@ -4,8 +4,10 @@ from enum import Enum
 
 from aws_cdk import Stack, Tags
 
-from .. import db
-from ..db import models
+from dataall import db
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.stack_models import KeyValueTag as KeyValueTagModel
+from dataall.db import models
 
 
 # Tag keys for Stacks
@@ -56,10 +58,10 @@ class TagsUtil:
             target_stack = cls.get_target(session, stack, model_name)
             environment = cls.get_environment(session, target_stack)
             organisation = cls.get_organization(session, environment)
-            key_value_tags: [models.KeyValueTag] = cls.get_model_key_value_tags(
+            key_value_tags: [KeyValueTagModel] = cls.get_model_key_value_tags(
                 session, stack, target_type
             )
-            cascaded_tags: [models.KeyValueTag] = cls.get_environment_cascade_key_value_tags(
+            cascaded_tags: [KeyValueTagModel] = cls.get_environment_cascade_key_value_tags(
                 session, environment.environmentUri
             )
 
@@ -135,7 +137,7 @@ class TagsUtil:
     def get_model_key_value_tags(cls, session, stack, target_type):
         return [
             (kv.key, kv.value)
-            for kv in db.api.KeyValueTag.find_key_value_tags(
+            for kv in KeyValueTag.find_key_value_tags(
                 session,
                 stack.target_uri,
                 target_type,
@@ -146,7 +148,7 @@ class TagsUtil:
     def get_environment_cascade_key_value_tags(cls, session, environmentUri):
         return [
             (kv.key, kv.value)
-            for kv in db.api.KeyValueTag.find_environment_cascade_key_value_tags(
+            for kv in KeyValueTag.find_environment_cascade_key_value_tags(
                 session,
                 environmentUri,
             )

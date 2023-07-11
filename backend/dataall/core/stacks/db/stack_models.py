@@ -1,10 +1,10 @@
 import datetime
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, String, Boolean
 from sqlalchemy.dialects import postgresql
 
-from .. import Base
-from .. import utils
+from dataall.db import Base
+from dataall.db import utils
 
 
 class Stack(Base):
@@ -31,3 +31,13 @@ class Stack(Base):
         DateTime, default=lambda: datetime.datetime(year=1900, month=1, day=1)
     )
     EcsTaskArn = Column(String, nullable=True)
+
+
+class KeyValueTag(Base):
+    __tablename__ = 'keyvaluetag'
+    tagUri = Column(String, primary_key=True, default=utils.uuid('keyvaluetag'))
+    targetUri = Column(String, nullable=False)
+    targetType = Column(String, nullable=False)
+    key = Column(String, nullable=False)
+    value = Column(String, nullable=False)
+    cascade = Column(Boolean, default=False)

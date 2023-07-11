@@ -7,24 +7,25 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-from dataall.api.Objects.Stack import stack_helper
 from dataall.base.context import get_context as context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db.api import (
-    Environment, KeyValueTag, Stack,
-)
+from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
+    has_group_permission
+from dataall.core.stacks.api import stack_helper
+from dataall.core.stacks.db.keyvaluetag import KeyValueTag
+from dataall.core.stacks.db.stack import Stack
 from dataall.db import models, exceptions
+from dataall.db.api import Environment
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
+from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
+from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
+    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
 from dataall.utils.slugify import slugify
-from dataall.modules.notebooks.db.models import SagemakerNotebook
-from dataall.modules.notebooks.services.notebook_permissions import MANAGE_NOTEBOOKS, CREATE_NOTEBOOK, NOTEBOOK_ALL, \
-    GET_NOTEBOOK, UPDATE_NOTEBOOK, DELETE_NOTEBOOK
-from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, has_group_permission
 
 logger = logging.getLogger(__name__)
 

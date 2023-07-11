@@ -1,10 +1,11 @@
 import logging
 
-from . import TargetType
-from .. import exceptions
-from .. import models
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
+from dataall.core.stacks.db import stack_models as models
+from dataall.core.stacks.db.target_type import TargetType
+from dataall.db import exceptions
+from dataall.db.models import Environment
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
@@ -46,7 +47,7 @@ class Stack:
     def create_stack(
         session, environment_uri, target_label, target_uri, target_type, payload=None
     ) -> models.Stack:
-        environment: models.Environment = session.query(models.Environment).get(
+        environment: Environment = session.query(Environment).get(
             environment_uri
         )
         if not environment:
