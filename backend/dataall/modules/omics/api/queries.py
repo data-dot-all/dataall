@@ -1,4 +1,4 @@
-"""The module defines GraphQL queries for Omics Pipelines"""
+"""The module defines GraphQL queries for Omics uns"""
 
 #
 # (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
@@ -10,17 +10,17 @@
 from dataall.api import gql
 from .resolvers import *
 
-listOmicsPipelines = gql.QueryField(
-    name="listOmicsPipelines",
-    args=[gql.Argument(name="filter", type=gql.Ref("OmicsPipelineFilter"))],
-    resolver=list_pipelines,
-    type=gql.Ref("OmicsPipelineSearchResults"),
+listOmicsRuns = gql.QueryField(
+    name="listOmicsRuns",
+    args=[gql.Argument(name="filter", type=gql.Ref("OmicsRunFilter"))],
+    resolver=list_omics_runs,
+    type=gql.Ref("OmicRunSearchResults"),
 )
 
-getOmicsPipeline = gql.QueryField(
-    name="getOmicsPipeline",
-    args=[gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String))],
-    type=gql.Ref("OmicsPipeline"),
-    resolver=get_omics_pipeline,
+getOmicWorkflow = gql.QueryField(
+    name="getOmicsWorkflow",
+    args=[gql.Argument(name="workflowUri", type=gql.NonNullableType(gql.String))],
+    type=gql.Ref("OmicsRun"),
+    resolver=get_omics_workflow,
 )
 

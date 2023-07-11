@@ -1,9 +1,9 @@
 import logging
 
 from dataall.db import exceptions
-from dataall.modules.omics.api.enums import OmicsPipelineRole
-from dataall.modules.omics.services.omics_service import OmicsPipelineService, OmicsPipelineCreationRequest
-from dataall.modules.omics.db.api.omics_pipeline import OmicsPipeline
+from dataall.modules.omics.api.enums import OmicsRunRole
+from dataall.modules.omics.services.omics_service import OmicsService, OmicsRunCreationRequest
+from dataall.modules.omics.db.models import OmicsRun, OmicsWorkflow
 from dataall.api.Objects.Stack import stack_helper
 from dataall.api.Objects.Stack.stack_helper import deploy_stack
 from dataall.api.context import Context
@@ -12,6 +12,7 @@ from dataall.db.api import Environment, ResourcePolicy, Organization
 
 log = logging.getLogger(__name__)
 
+## TODO: it is very incomplete but can serve as starting point
 class RequestValidator:
     """Aggregates all validation logic for operating with omics"""
     @staticmethod
@@ -35,170 +36,57 @@ class RequestValidator:
         if not data.get(name):
             raise exceptions.RequiredParameter(name)
 
-def create_omics_pipeline(context: Context, source, input=None):
+def create_omics_run(context: Context, source, input=None):
     RequestValidator.validate_creation_request(input)
-    request = OmicsPipelineCreationRequest.from_dict(input)
-    return OmicsPipelineService.create_omics_pipeline(
+    request = OmicsRunCreationRequest.from_dict(input)
+    return OmicsService.create_omics_run(
         uri=input["environmentUri"],
         admin_group=input["SamlAdminGroupName"],
         request=request
     )
 
-    # with context.engine.scoped_session() as session:
-    #     omics_pipeline = OmicsPipeline.create_pipeline(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=input["environmentUri"],
-    #         data=input,
-    #         check_perm=True,
-    #     )
-    #
-    #     stack = models.Stack(
-    #         stack="OmicsPipeline",
-    #         accountid=omics_pipeline.AwsAccountId,
-    #         targetUri=omics_pipeline.OmicsPipelineUri,
-    #         region=omics_pipeline.region,
-    #         payload={"account": omics_pipeline.AwsAccountId, "region": omics_pipeline.region},
-    #     )
-    #     session.add(stack)
-    #     session.commit()
-    #
-    #     deploy_stack(context, omics_pipeline.OmicsPipelineUri)
-    #
-    # return omics_pipeline
 
-def update_omics_pipeline(context: Context, source, OmicsPipelineUri: str, input: dict = None):
-    RequestValidator.required_uri(OmicsPipelineUri)
-    return OmicsPipelineService.update_omics_pipeline(OmicsPipelineUri, input)
-
-    # with context.engine.scoped_session() as session:
-    #     omics_pipeline = OmicsPipeline.update_pipeline(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=OmicsPipelineUri,
-    #         data=input,
-    #         check_perm=True,
-    #     )
-    #     return omics_pipeline
+# def update_omics_pipeline(context: Context, source, OmicsPipelineUri: str, input: dict = None):
+#     RequestValidator.required_uri(OmicsPipelineUri)
+#     return OmicsPipelineService.update_omics_pipeline(OmicsPipelineUri, input)
 
 
-def list_pipelines(context: Context, source, filter: dict = None):
+def list_runs(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
-    return OmicsPipelineService.list_user_omics_pipelines(filter)
-    # with context.engine.scoped_session() as session:
-    #     return OmicsPipeline.paginated_user_instances(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=None,
-    #         data=filter,
-    #         check_perm=None,
-    #     )
+    return OmicsService.list_user_runs(filter)
 
 
-def get_omics_pipeline(context: Context, source, OmicsPipelineUri: str = None):
-    RequestValidator.required_uri(OmicsPipelineUri)
-    return OmicsPipelineService.get_omics_pipeline(OmicsPipelineUri)
-    # with context.engine.scoped_session() as session:
-    #     return OmicsPipeline.get_instance(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=OmicsPipelineUri,
-    #         data=None,
-    #         check_perm=True,
-    #     )
+def list_workflows(context: Context, source, filter: dict = None):
+    if not filter:
+        filter = {}
+    return OmicsService.list_workflows(filter)
+
+def get_omics_workflow(context: Context, source, workflowUri: str = None):
+    RequestValidator.required_uri(workflowUri)
+    return OmicsService.get_omics_workflow(workflowUri)
 
 
-def delete_omics_pipeline(context: Context, source, OmicsPipelineUri: str = None, deleteFromAWS: bool = None):
-    RequestValidator.required_uri(OmicsPipelineUri)
-    return OmicsPipelineService.delete_omics_pipeline(
-        uri=OmicsPipelineUri,
+
+def delete_omics_run(context: Context, source, runUri: str = None, deleteFromAWS: bool = None):
+    RequestValidator.required_uri(runUri)
+    return OmicsService.delete_omics_run(
+        uri=runUri,
         delete_from_aws=deleteFromAWS
     )
-    # with context.engine.scoped_session() as session:
-    #     pipeline = OmicsPipeline.get_pipeline_by_uri(session, OmicsPipelineUri)
-    #     env: models.Environment = Environment.get_environment_by_uri(session, pipeline.environmentUri)
-    #     OmicsPipeline.delete(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         uri=OmicsPipelineUri,
-    #         data={"pipeline": pipeline},
-    #         check_perm=True,
-    #     )
-    #
-    # if deleteFromAWS:
-    #     stack_helper.delete_stack(
-    #         context=context,
-    #         target_uri=OmicsPipelineUri,
-    #         accountid=env.AwsAccountId,
-    #         cdk_role_arn=env.CDKRoleArn,
-    #         region=env.region,
-    #         target_type="OmicsPipeline",
-    #     )
-    #
-    # return True
 
-def update_omics_pipeline_stack(context: Context, source, OmicsPipelineUri: str = None):
-    RequestValidator.required_uri(OmicsPipelineUri)
-    return OmicsPipelineService.update_omics_pipeline_stack(
-        uri=OmicsPipelineUri,
-    )
-    # with context.engine.scoped_session() as session:
-    #     ResourcePolicy.check_user_resource_permission(
-    #         session=session,
-    #         username=context.username,
-    #         groups=context.groups,
-    #         resource_uri=OmicsPipelineUri,
-    #         permission_name=permissions.UPDATE_OMICS_PIPELINE,
-    #     )
-    #     pipeline = OmicsPipeline.get_pipeline_by_uri(session, OmicsPipelineUri)
-    # stack_helper.deploy_stack(context=context, targetUri=pipeline.OmicsPipelineUri)
-    # return True
 
-def resolve_user_role(context: Context, source: OmicsPipeline):
+def resolve_user_role(context: Context, source: OmicsRun):
     if context.username and source.owner == context.username:
-        return OmicsPipelineRole.Creator.value
+        return OmicsRunRole.Creator.value
     elif context.groups and source.SamlGroupName in context.groups:
-        return OmicsPipelineRole.Admin.value
-    return OmicsPipelineRole.NoPermission.value
+        return OmicsRunRole.Admin.value
+    return OmicsRunRole.NoPermission.value
 
 
-def resolve_cipipeline_status(context: Context, source: OmicsPipeline):
-    # call boto3 for codepipeline status
-    return source.CiPipelineStatus
-
-def resolve_step_function_status(context: Context, source: OmicsPipeline):
-    # call boto3 for StepFunctionStatus status
-    return source.StepFunctionStatus
-
-
-def resolve_workflow_status(context: Context, source: OmicsPipeline):
-    # call boto3 for OmicsWorkflowStatus status
-    return source.OmicsWorkflowStatus
-
-
-# def resolve_omics_pipeline_env(context: Context, source: OmicsPipeline, **kwargs):
-#     if not source:
-#         return None
-#     with context.engine.scoped_session() as session:
-#         return Environment.find_environment_by_uri(session, source.environmentUri)
-#
-#
-# def resolve_omics_pipeline_org(context: Context, source: OmicsPipeline, **kwargs):
-#     if not source:
-#         return None
-#     with context.engine.scoped_session() as session:
-#         return Organization.find_organization_by_uri(session, source.environmentUri)
-#
-
-def resolve_omics_pipeline_stack(context, source: OmicsPipeline, **kwargs):
+def resolve_omics_run_stack(context, source: OmicsRun, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
-        targetUri=source.OmicsPipelineUri,
+        targetUri=source.runUri,
         environmentUri=source.environmentUri,
     )
 

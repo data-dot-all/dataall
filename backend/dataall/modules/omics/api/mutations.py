@@ -10,37 +10,31 @@
 from dataall.api import gql
 from .resolvers import *
 
-createOmicsPipeline = gql.MutationField(
-    name="createOmicsPipeline",
-    type=gql.Ref("OmicsPipeline"),
-    args=[gql.Argument(name="input", type=gql.NonNullableType(gql.Ref("NewOmicsPipelineInput")))],
-    resolver=create_omics_pipeline,
+createOmicsRun = gql.MutationField(
+    name="createOmicsRun",
+    type=gql.Ref("OmicsRun"),
+    args=[gql.Argument(name="input", type=gql.NonNullableType(gql.Ref("NewOmicsRunInput")))],
+    resolver=create_omics_run,
 )
 
-updateOmicsPipeline = gql.MutationField(
-    name="updateOmicsPipeline",
-    type=gql.Ref("OmicsPipeline"),
-    args=[
-        gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
-        gql.Argument(name="input", type=gql.Ref("UpdateOmicsPipelineInput")),
-    ],
-    resolver=update_omics_pipeline,
-)
+# updateOmicsPipeline = gql.MutationField(
+#     name="updateOmicsPipeline",
+#     type=gql.Ref("OmicsPipeline"),
+#     args=[
+#         gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
+#         gql.Argument(name="input", type=gql.Ref("UpdateOmicsPipelineInput")),
+#     ],
+#     resolver=update_omics_pipeline,
+# )
 
-deleteOmicsPipeline = gql.MutationField(
-    name="deleteOmicsPipeline",
+deleteOmicsRun = gql.MutationField(
+    name="deleteOmicsRun",
     type=gql.Boolean,
     args=[
-        gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String)),
+        gql.Argument(name="runUri", type=gql.NonNullableType(gql.String)),
         gql.Argument(name="deleteFromAWS", type=gql.Boolean),
     ],
-    resolver=delete_omics_pipeline,
+    resolver=delete_omics_run,
 )
 
 
-updateOmicsPipelineStack = gql.MutationField(
-    name="updateOmicsPipelineStack",
-    args=[gql.Argument(name="OmicsPipelineUri", type=gql.NonNullableType(gql.String))],
-    resolver=update_omics_pipeline_stack,
-    type=gql.Boolean,
-)

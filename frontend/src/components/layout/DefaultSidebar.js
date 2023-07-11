@@ -120,6 +120,11 @@ const DefaultSidebar = (props) => {
                 title: 'Dashboards',
                 path: '/console/dashboards',
                 icon: <MdShowChart size={15} />
+              },
+              {
+                title: 'Omics',
+                path: '/console/omics',
+                icon: <MdShowChart size={15} />
               }
             ]
           },

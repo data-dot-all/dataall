@@ -1,4 +1,4 @@
-"""The module defines GraphQL input types for Omics Pipelines"""
+"""The module defines GraphQL input types for Omics Runs"""
 
 #
 # (c) 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
@@ -9,8 +9,8 @@
 
 from dataall.api import gql
 
-NewOmicsPipelineInput = gql.InputType(
-    name="NewOmicsPipelineInput",
+NewOmicsRunInput = gql.InputType(
+    name="NewOmicsRunInput",
     arguments=[
         gql.Field("environmentUri", type=gql.NonNullableType(gql.String)),
         gql.Field("label", type=gql.NonNullableType(gql.String)),
@@ -20,15 +20,12 @@ NewOmicsPipelineInput = gql.InputType(
         gql.Field("updated", type=gql.String),
         gql.Field("owner", type=gql.String),
         gql.Field("SamlGroupName", type=gql.NonNullableType(gql.String)),
-        gql.Field("S3InputBucket", type=gql.NonNullableType(gql.String)),
-        gql.Field("S3InputPrefix", type=gql.NonNullableType(gql.String)),
-        gql.Field("S3OutputBucket", type=gql.NonNullableType(gql.String)),
-        gql.Field("S3OutputPrefix", type=gql.NonNullableType(gql.String)),
+        ##TODO: define inputs
     ],
 )
 
-UpdateOmicsPipelineInput = gql.InputType(
-    name="UpdateOmicsPipelineInput",
+UpdateOmicsRunInput = gql.InputType(
+    name="UpdateOmicsRunInput",
     arguments=[
         gql.Argument(name="label", type=gql.String),
         gql.Argument(name="description", type=gql.String),
@@ -40,8 +37,8 @@ UpdateOmicsPipelineInput = gql.InputType(
     ],
 )
 
-OmicsPipelineFilter = gql.InputType(
-    name="OmicsPipelineFilter",
+OmicsRunFilter = gql.InputType(
+    name="OmicsRunFilter",
     arguments=[
         gql.Argument(name="term", type=gql.String),
         gql.Argument(name="page", type=gql.Integer),
