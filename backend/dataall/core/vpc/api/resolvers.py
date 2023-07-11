@@ -1,7 +1,7 @@
 import logging
 
-from ....api.context import Context
-from ....db.api import Vpc
+from dataall.api.context import Context
+from dataall.db.api import Vpc
 
 log = logging.getLogger(__name__)
 

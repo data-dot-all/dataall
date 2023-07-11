@@ -1,6 +1,6 @@
 import pytest
 
-import dataall
+from dataall.core.vpc.db.vpc_models import Vpc
 
 
 @pytest.fixture(scope='module')
@@ -16,7 +16,7 @@ def env1(env, org1, user, group, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def vpc(env1, group, client) -> dataall.db.models.Vpc:
+def vpc(env1, group, client) -> Vpc:
     response = client.query(
         """
         mutation createNetwork($input:NewVpcInput){

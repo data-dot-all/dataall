@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy import and_
 
-from .. import exceptions, permissions
-from .. import models
-from . import (
+from dataall.db import exceptions, permissions
+from dataall.core.vpc.db import vpc_models as models
+from dataall.db.api import (
     Environment,
 )
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \

@@ -7,6 +7,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from sqlalchemy import and_, exc
 
+from dataall.core.vpc.db.vpc import Vpc
 from ..Organization.resolvers import *
 from ..Stack import stack_helper
 from ...constants import *
@@ -302,7 +303,7 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 def resolve_vpc_list(context: Context, source, **kwargs):
     with context.engine.scoped_session() as session:
-        return db.api.Vpc.get_environment_vpc_list(
+        return Vpc.get_environment_vpc_list(
             session=session, environment_uri=source.environmentUri
         )
 

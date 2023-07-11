@@ -15,7 +15,7 @@ from ..models.Enums import (
     EnvironmentType,
     EnvironmentPermission,
 )
-from ..paginator import paginate
+from dataall.db.paginator import paginate
 from dataall.core.environment.db.models import EnvironmentParameter
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.utils.naming_convention import (
@@ -29,6 +29,7 @@ from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.vpc.db.vpc_models import Vpc
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ class Environment:
             env.EnvironmentDefaultIAMRoleImported = True
 
         if data.get('vpcId'):
-            vpc = models.Vpc(
+            vpc = Vpc(
                 environmentUri=env.environmentUri,
                 region=env.region,
                 AwsAccountId=env.AwsAccountId,
@@ -119,7 +120,7 @@ class Environment:
                 group=data['SamlGroupName'],
                 permissions=permissions.NETWORK_ALL,
                 resource_uri=vpc.vpcUri,
-                resource_type=models.Vpc.__name__,
+                resource_type=Vpc.__name__,
             )
         env_group = models.EnvironmentGroup(
             environmentUri=env.environmentUri,
@@ -688,15 +689,15 @@ class Environment:
 
     @staticmethod
     def query_environment_networks(session, uri, filter) -> Query:
-        query = session.query(models.Vpc).filter(
-            models.Vpc.environmentUri == uri,
+        query = session.query(Vpc).filter(
+            Vpc.environmentUri == uri,
         )
         if filter.get('term'):
             term = filter.get('term')
             query = query.filter(
                 or_(
-                    models.Vpc.label.ilike('%' + term + '%'),
-                    models.Vpc.VpcId.ilike('%' + term + '%'),
+                    Vpc.label.ilike('%' + term + '%'),
+                    Vpc.VpcId.ilike('%' + term + '%'),
                 )
             )
         return query

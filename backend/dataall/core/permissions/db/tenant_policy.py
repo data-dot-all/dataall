@@ -118,7 +118,6 @@ class TenantPolicy:
 
     @staticmethod
     def find_tenant_policy(session, group_uri: str, tenant_name: str):
-
         TenantPolicy.validate_find_tenant_policy(group_uri, tenant_name)
 
         tenant_policy = (
