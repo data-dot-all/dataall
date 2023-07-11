@@ -29,7 +29,7 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.db.api import TargetType
         from dataall.core.vote.api.resolvers import add_vote_type
         from dataall.core.feed.api.registry import FeedRegistry, FeedDefinition
-        from dataall.core.glossary.api.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.core.catalog.api.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.datasets.indexers.location_indexer import DatasetLocationIndexer

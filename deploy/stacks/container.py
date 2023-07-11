@@ -118,7 +118,7 @@ class ContainerStack(pyNestedClass):
 
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.catalog_indexer_task'],
+            command=['python3.8', '-m', 'dataall.core.catalog.tasks.catalog_indexer_task'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),

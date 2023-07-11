@@ -1,5 +1,5 @@
 from dataall.api.context import Context
-from dataall.core.glossary.db.glossary import Glossary
+from dataall.core.catalog.db.glossary import Glossary
 from dataall.db.exceptions import RequiredParameter
 from dataall.modules.datasets.services.dataset_location_service import DatasetLocationService
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Dataset

@@ -1,5 +1,5 @@
 from dataall.base.context import get_context
-from dataall.core.glossary.db.glossary import Glossary
+from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission, has_group_permission
 from dataall.core.vote.db.vote import Vote

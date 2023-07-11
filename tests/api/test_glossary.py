@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from dataall.core.glossary.db.glossary_models import GlossaryNode
+from dataall.core.catalog.db.glossary_models import GlossaryNode
 from dataall.db import models
 import pytest
 

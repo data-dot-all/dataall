@@ -1,5 +1,5 @@
 from dataall.api.context import Context
-from dataall.core.glossary.db.glossary import Glossary
+from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.vote.db.vote import Vote
 from dataall.db.api import Organization
 from dataall.db.exceptions import RequiredParameter

@@ -4,12 +4,12 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.glossary.db.glossary_models import TermLink, GlossaryNode
+from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.db.api import (
     Environment,
 )
 from dataall.db.api import Organization
-from dataall.db import models, paginate
+from dataall.db import paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language
 from dataall.modules.datasets_base.db.enums import ConfidentialityClassification

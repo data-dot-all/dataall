@@ -1,7 +1,6 @@
-import pytest
 from typing import List
 
-from dataall.core.glossary.db.glossary_models import TermLink
+from dataall.core.catalog.db.glossary_models import TermLink
 from dataall.db.models import Environment, Organization
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 from tests.api.test_glossary import *
