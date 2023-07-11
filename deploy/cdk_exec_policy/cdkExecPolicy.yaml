@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Custom least privilege IAM policy for linking environments to dataall
+Parameters:
+  AwsAccountId:
+    Description: AWS AccountId of the dataall INFRASTRUCTURE account that we wish to link this environment with.
+    Type: String
+  PolicyName:
+    Description: IAM policy name (copy/paste from the UI)
+    Type: String
+    Default: 'DataAllCustomCDKPolicy'
+  EnvironmentResourcePrefix:
+    Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
+    Type: String
+Resources:
+  CDKCustomExecutionPolicy0:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Ref PolicyName
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: KMS
+            Action:
+              - 'kms:CreateKey'
+            Effect: Allow
+            Resource: '*'
+          - Sid: ec2
+            Action:
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:CreateSecurityGroup'
+              - 'ec2:createTags'
+              - 'ec2:DeleteSecurityGroup'
+              - 'ec2:RevokeSecurityGroupEgress'
+              - 'ec2:AuthorizeSecurityGroupIngress'
+              - 'ec2:AuthorizeSecurityGroupEgress'
+            Effect: Allow
+            Resource: '*'
+          - Sid: Athena
+            Effect: Allow
+            Action: 'athena:CreateWorkGroup'
+            Resource:
+              - !Sub 'arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/*'
+          - Sid: IAM
+            Action:
+              - 'iam:CreatePolicy'
+              - 'iam:GetPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/*'
+          - Sid: IAMRole
+            Action:
+              - 'iam:AttachRolePolicy'
+              - 'iam:CreateRole'
+              - 'iam:CreateServiceLinkedRole'
+              - 'iam:GetRole'
+              - 'iam:GetRolePolicy'
+              - 'iam:PutRolePolicy'
+            Effect: Allow
+            Resource: '*'
+          - Sid: KMSCreateAlias
+            Action:
+              - 'kms:CreateAlias'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/*'
+          - Sid: KMSKey
+            Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutBucketNotification'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
+          - Sid: ReadBuckets
+            Action:
+              - 'kms:CreateAlias'
+              - 'kms:CreateGrant'
+              - 'kms:Decrypt'
+              - 'kms:DescribeKey'
+              - 'kms:EnableKeyRotation'
+              - 'kms:Encrypt'
+              - 'kms:GetKeyPolicy'
+              - 'kms:GetKeyRotationStatus'
+              - 'kms:ListResourceTags'
+              - 'kms:PutKeyPolicy'
+              - 'kms:TagResource'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*'
+          - Sid: Lambda
+            Action:
+              - 'lambda:AddPermission'
+              - 'lambda:CreateFunction'
+              - 'lambda:GetFunction'
+              - 'lambda:GetFunctionCodeSigningConfig'
+              - 'lambda:GetRuntimeManagementConfig'
+              - 'lambda:PutFunctionEventInvokeConfig'
+              - 'lambda:InvokeFunction'
+            Effect: Allow
+            Resource: '*'
+          - Sid: LambdaPublishLayer
+            Effect: Allow
+            Action:
+              - 'lambda:PublishLayerVersion'
+            Resource:
+              - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
+          - Sid: S3
+            Action:
+              - 's3:CreateBucket'
+              - 's3:GetBucketPolicy'
+              - 's3:PutBucketCORS'
+              - 's3:PutBucketLogging'
+              - 's3:PutBucketPolicy'
+              - 's3:PutBucketPublicAccessBlock'
+              - 's3:PutBucketTagging'
+              - 's3:PutBucketVersioning'
+              - 's3:PutEncryptionConfiguration'
+              - 's3:PutLifecycleConfiguration'
+            Effect: Allow
+            Resource: 'arn:aws:s3:::*'
+          - Sid: SQS
+            Effect: Allow
+            Action:
+              - 'sqs:CreateQueue'
+              - 'sqs:SetQueueAttributes'
+            Resource: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*'
+          - Sid: SSM
+            Effect: Allow
+            Action:
+              - 'ssm:GetParameters'
+              - 'ssm:PutParameter'
+            Resource: '*'
+          - Sid: Logs
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'logs:DescribeLogStreams'
+            Resource: 'arn:aws:logs:*:*:*'
+          - Sid: STS
+            Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+              - 'iam:*Role*'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
+          - Sid: CloudFormation
+            Effect: Allow
+            Action:
+              - 'cloudformation:*'
+            Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: ECR
+            Effect: Allow
+            Action:
+              - 'ecr:SetRepositoryPolicy'
+              - 'ecr:GetLifecyclePolicy'
+              - 'ecr:PutImageScanningConfiguration'
+              - 'ecr:DescribeRepositories'
+              - 'ecr:CreateRepository'
+              - 'ecr:DeleteRepository'
+            Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/cdk-*'
+          - Sid: SSMTwo
+            Effect: Allow
+            Action:
+              - 'ssm:GetParameter'
+              - 'ssm:PutParameter'
+              - 'ssm:DeleteParameter'
+            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
+          - Sid: CloudformationTwo
+            Effect: Allow
+            Action:
+              - '*'
+            Resource: '*'
+            Condition:
+              'ForAnyValue:StringEquals':
+                'aws:CalledVia': 'cloudformation.amazonaws.com'
+          - Sid: S3Staging
+            Effect: Allow
+            Action:
+              - 's3:*'
+            Resource:
+              - !Sub 'arn:aws:s3:::cdktoolkit-stagingbucket-*'
