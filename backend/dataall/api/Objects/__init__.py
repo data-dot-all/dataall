@@ -18,8 +18,6 @@ from . import (
     Principal,
     Organization,
     Stack,
-    Notification,
-    Vpc,
     KeyValueTag,
 )
 

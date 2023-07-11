@@ -1,8 +1,8 @@
-from ....base.api import gql
-from ....db import models
+from dataall.base.api import gql
+from dataall.core.notifications.db.notification_models import Notification
 
 
-def resolve_enum(context, source: models.Notification):
+def resolve_enum(context, source: Notification):
     return source.type.name
 
 

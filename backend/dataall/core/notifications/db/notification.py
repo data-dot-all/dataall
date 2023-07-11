@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import func, and_
 
-from .. import models
-from ...db import paginate
+from dataall.core.notifications.db import notification_models as models
+from dataall.db import paginate
 
 
 class Notification:
