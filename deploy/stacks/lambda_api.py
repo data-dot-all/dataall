@@ -36,6 +36,7 @@ class LambdaApiStack(pyNestedClass):
         envname='dev',
         resource_prefix='dataall',
         vpc=None,
+        vpce_connection=None,
         sqs_queue: sqs.Queue = None,
         ecr_repository=None,
         image_tag=None,
@@ -55,7 +56,9 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
+        esproxy_sg = self.create_lambda_sgs(envname, "esproxy", resource_prefix, vpc)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
             self,
             'ElasticSearchProxyHandler',
@@ -66,6 +69,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['search_handler.handler']
             ),
             vpc=vpc,
+            security_groups=[esproxy_sg],
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
@@ -76,6 +80,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
+        api_handler_sg = self.create_lambda_sgs(envname, "apihandler", resource_prefix, vpc)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
@@ -86,6 +91,7 @@ class LambdaApiStack(pyNestedClass):
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
             vpc=vpc,
+            security_groups=[api_handler_sg],
             memory_size=3008 if prod_sizing else 1024,
             timeout=Duration.minutes(15),
             environment={'envname': envname, 'LOG_LEVEL': 'INFO'},
@@ -96,6 +102,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
+        awsworker_sg = self.create_lambda_sgs(envname, "awsworker", resource_prefix, vpc)
         self.aws_handler = _lambda.DockerImageFunction(
             self,
             'AWSWorker',
@@ -109,6 +116,7 @@ class LambdaApiStack(pyNestedClass):
             memory_size=1664 if prod_sizing else 256,
             timeout=Duration.minutes(15),
             vpc=vpc,
+            security_groups=[awsworker_sg],
             dead_letter_queue_enabled=True,
             dead_letter_queue=self.aws_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.aws_handler_dlq),
@@ -119,6 +127,31 @@ class LambdaApiStack(pyNestedClass):
                 queue=sqs_queue,
                 batch_size=1,
             )
+        )
+
+        # Add VPC Endpoint Connectivity
+        if vpce_connection:
+            for lmbda in [
+                self.aws_handler,
+                self.api_handler,
+                self.elasticsearch_proxy_handler,
+            ]:
+                lmbda.connections.allow_from(
+                    vpce_connection,
+                    ec2.Port.tcp_range(start_port=1024, end_port=65535),
+                    'Allow Lambda from VPC Endpoint'
+                )
+                lmbda.connections.allow_to(
+                    vpce_connection,
+                    ec2.Port.tcp(443),
+                    'Allow Lambda to VPC Endpoint'
+                )
+
+        # Add NAT Connectivity For API Handler
+        self.api_handler.connections.allow_to(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            'Allow NAT Internet Access SG Egress'
         )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
@@ -141,6 +174,17 @@ class LambdaApiStack(pyNestedClass):
             param_name='backend_sns_topic_arn',
             topic_name=f'{resource_prefix}-{envname}-backend-topic',
         )
+        
+    def create_lambda_sgs(self, envname, name, resource_prefix, vpc):
+        lambda_sg = ec2.SecurityGroup(
+            self,
+            f'{name}SG{envname}',
+            security_group_name=f'{resource_prefix}-{envname}-{name}-sg',
+            vpc=vpc,
+            allow_all_outbound=False,
+            disable_inline_rules=True,
+        )
+        return lambda_sg
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name):
 

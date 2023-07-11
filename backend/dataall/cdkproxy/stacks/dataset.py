@@ -95,8 +95,7 @@ class Dataset(Stack):
 
         quicksight_default_group_arn = None
         if env.dashboardsEnabled:
-            quicksight_default_group = Quicksight.create_quicksight_group(AwsAccountId=env.AwsAccountId)
-            quicksight_default_group_arn = quicksight_default_group['Group']['Arn']
+            quicksight_default_group_arn = f"arn:aws:quicksight:{dataset.region}:{dataset.AwsAccountId}:group/default/{Quicksight._DEFAULT_GROUP_NAME}"
 
         # Dataset S3 Bucket and KMS key
         dataset_key = False

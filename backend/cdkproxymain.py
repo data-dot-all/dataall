@@ -52,7 +52,12 @@ def up(response: Response):
 def check_creds(response: Response):
     logger.info('GET /awscreds')
     try:
-        sts = boto3.client('sts', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        sts = boto3.client(
+            'sts',
+            region_name=region,
+            endpoint_url=f"https://sts.{region}.amazonaws.com"
+        )
         data = sts.get_caller_identity()
         return {
             'DH_DOCKER_VERSION': os.environ.get('DH_DOCKER_VERSION'),
