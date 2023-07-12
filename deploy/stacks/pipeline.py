@@ -95,6 +95,8 @@ class PipelineStack(Stack):
             iam.PolicyStatement(
                 actions=[
                     'ecr:GetAuthorizationToken',
+                    'ec2:DescribePrefixLists',
+                    'ec2:DescribeManagedPrefixLists'
                 ],
                 resources=['*'],
             ),
