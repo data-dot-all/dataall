@@ -55,6 +55,15 @@ Resources:
               - 'iam:GetRole'
               - 'iam:GetRolePolicy'
               - 'iam:PutRolePolicy'
+              - 'iam:TagRole'
+              - 'iam:UnTagRole'
+              - 'iam:DeleteRole'
+              - 'iam:DetachRolePolicy'
+              - 'iam:DeleteRolePolicy'
+              - 'iam:PassRole'
+              - 'iam:UpdateAssumeRolePolicy'
+              - 'iam:ListPolicyVersions'
+              - 'iam:DeletePolicy'
             Effect: Allow
             Resource: '*'
           - Sid: KMSCreateAlias
@@ -94,6 +103,7 @@ Resources:
               - 'lambda:GetRuntimeManagementConfig'
               - 'lambda:PutFunctionEventInvokeConfig'
               - 'lambda:InvokeFunction'
+              - 'lambda:RemovePermission'
             Effect: Allow
             Resource: '*'
           - Sid: LambdaPublishLayer
@@ -114,6 +124,8 @@ Resources:
               - 's3:PutBucketVersioning'
               - 's3:PutEncryptionConfiguration'
               - 's3:PutLifecycleConfiguration'
+              - 's3:DeleteBucketPolicy'
+              - 's3:DeleteBucket'
             Effect: Allow
             Resource: 'arn:aws:s3:::*'
           - Sid: SQS
@@ -178,3 +190,24 @@ Resources:
               - 's3:*'
             Resource:
               - !Sub 'arn:aws:s3:::cdktoolkit-stagingbucket-*'
+          - Sid: Pipelines
+            Effect: Allow
+            Action:
+              - 'codepipeline:TagResource'
+              - 'codepipeline:UntagResource'
+              - 'codepipeline:CreatePipeline'
+              - 'codepipeline:UpdatePipeline'
+              - 'codepipeline:StartPipelineExecution'
+              - 'codepipeline:GetPipeline'
+              - 'codepipeline:GetPipelineState'
+              - 'codepipeline:DeletePipeline'
+            Resource: '*'
+          - Sid: Eventrules
+            Effect: Allow
+            Action:
+              - 'events:PutRule'
+              - 'events:DescribeRule'
+              - 'events:PutTargets'
+              - 'events:RemoveTargets'
+              - 'events:DeleteRule'
+            Resource: '*'
