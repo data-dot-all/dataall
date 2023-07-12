@@ -1,6 +1,8 @@
 import dataall
 import pytest
 
+from dataall.core.environment.db.models import EnvironmentParameter
+
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):
@@ -15,25 +17,19 @@ def org2(org, user2, group2, tenant):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env_dev(env, org2, user2, group2, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+def env_dev(env, org2, user2, group2, tenant):
     env2 = env(org2, 'dev', user2.userName, group2.name, '222222222222', 'eu-west-1', 'description')
     yield env2
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env_other(env, org2, user2, group2, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+def env_other(env, org2, user2, group2, tenant):
     env2 = env(org2, 'other', user2.userName, group2.name, '222222222222', 'eu-west-1')
     yield env2
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env_prod(env, org2, user2, group2, tenant, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+def env_prod(env, org2, user2, group2, tenant):
     env2 = env(org2, 'prod', user2.userName, group2.name, '111111111111', 'eu-west-1', 'description')
     yield env2
 
@@ -188,7 +184,7 @@ def test_list_organizations_anyone(client, org1):
     assert response.data.listOrganizations.count == 0
 
 
-def test_group_invitation(db, client, org1, group2, user, group3, group, dataset, env, module_mocker):
+def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     response = client.query(
         """
         mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
@@ -266,8 +262,6 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, dataset
 
     assert response.data.listOrganizationGroups.count == 2
 
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
     env2 = env(org1, 'devg2', user.userName, group2.name, '111111111112', 'eu-west-1')
     assert env2.environmentUri
 
@@ -288,8 +282,9 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, dataset
 
     assert 'OrganizationResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset = session.query(dataall.db.models.Environment).get(env2.environmentUri)
-        session.delete(dataset)
+        session.query(EnvironmentParameter).filter(EnvironmentParameter.environmentUri == env2.environmentUri).delete()
+        env = session.query(dataall.db.models.Environment).get(env2.environmentUri)
+        session.delete(env)
         session.commit()
 
     response = client.query(

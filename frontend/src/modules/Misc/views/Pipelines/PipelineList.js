@@ -88,8 +88,7 @@ const PipelineList = () => {
   const devOptions = [
     { value: 'cdk-trunk', label: 'CDK Pipelines - Trunk-based' },
     { value: 'trunk', label: 'CodePipeline - Trunk-based' },
-    { value: 'gitflow', label: 'CodePipeline - Gitflow' },
-    { value: 'template', label: 'GitHub Template' }
+    { value: 'gitflow', label: 'CodePipeline - Gitflow' }
   ]; /*DBT Pipelines*/
 
   const regions = AwsRegions.map((region) => ({

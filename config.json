@@ -1,6 +1,21 @@
 {
     "modules": {
+        "mlstudio": {
+            "active": true
+        },
         "notebooks": {
+            "active": true
+        },
+        "datapipelines": {
+            "active": true
+        },
+        "datasets": {
+            "active": true
+        },
+        "worksheets": {
+            "active": true
+        },
+        "dashboards": {
             "active": true
         }
     }

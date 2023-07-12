@@ -8,17 +8,15 @@ log = logging.getLogger(__name__)
 
 class IAM:
     @staticmethod
-    def client(account_id: str):
-        session = SessionHelper.remote_session(account_id)
+    def client(account_id: str, role=None):
+        session = SessionHelper.remote_session(accountid=account_id, role=role)
         return session.client('iam')
 
     @staticmethod
-    def get_role(
-        account_id: str,
-        role_arn: str
-    ):
+    def get_role(account_id: str, role_arn: str, role=None):
+        log.info(f"Getting IAM role = {role_arn}")
         try:
-            iamcli = IAM.client(account_id)
+            iamcli = IAM.client(account_id=account_id, role=role)
             response = iamcli.get_role(
                 RoleName=role_arn.split("/")[-1]
             )

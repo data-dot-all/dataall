@@ -11,8 +11,6 @@ class MockSagemakerClient:
     def get_notebook_instance_status(self):
         return "INSERVICE"
 
-
-
 @pytest.fixture(scope='module')
 def org1(org, user, group, tenant):
     org1 = org('testorg', user.userName, group.name)
@@ -20,11 +18,7 @@ def org1(org, user, group, tenant):
 
 
 @pytest.fixture(scope='module')
-def env1(env, org1, user, group, tenant, db, module_mocker):
-    module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
-    )
+def env1(env, org1, user, group, tenant, module_mocker):
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1',
                parameters={"notebooksEnabled": "True"})
     yield env1
@@ -42,7 +36,7 @@ def test_sgm_notebook(sgm_notebook, group):
 @pytest.fixture(scope='module', autouse=True)
 def patch_aws(module_mocker):
     module_mocker.patch(
-        "dataall.modules.notebooks.services.services.client",
+        "dataall.modules.notebooks.services.notebook_service.client",
         return_value=MockSagemakerClient(),
     )
 

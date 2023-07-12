@@ -6,15 +6,16 @@ Create Date: 2022-12-22 10:18:55.835315
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy import orm, Column, String, Text, DateTime, and_
 from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
-from dataall.db import api, models, permissions, utils, Resource
+from dataall.db import api, utils, Resource
 from datetime import datetime
-from dataall.db.models.Enums import ShareObjectStatus, ShareableType
-
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
+from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = 'd05f9a5b215e'
@@ -85,7 +86,7 @@ def upgrade():
         print('Back-filling dataset table permissions for owners/stewards...')
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
-            dataset = api.Dataset.get_dataset_by_uri(session, table.datasetUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             env = api.Environment.get_environment_by_uri(session, dataset.environmentUri)
 
             groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
@@ -94,8 +95,8 @@ def upgrade():
                     session=session,
                     resource_uri=table.tableUri,
                     group=group,
-                    permissions=permissions.DATASET_TABLE_READ,
-                    resource_type=models.DatasetTable.__name__,
+                    permissions=DATASET_TABLE_READ,
+                    resource_type=DatasetTable.__name__,
                 )
         print('dataset table permissions updated successfully for owners/stewards')
     except Exception as e:
@@ -108,19 +109,19 @@ def upgrade():
         share_table_items: [ShareObjectItem] = session.query(ShareObjectItem).filter(
             (
                 and_(
-                    ShareObjectItem.status == ShareObjectStatus.Share_Succeeded.value,
+                    ShareObjectItem.status == ShareItemStatus.Share_Succeeded.value,
                     ShareObjectItem.itemType == ShareableType.Table.value
                 )
             )
         ).all()
         for shared_table in share_table_items:
-            share = api.ShareObject.get_share_by_uri(session, shared_table.shareUri)
+            share = ShareObjectRepository.get_share_by_uri(session, shared_table.shareUri)
             api.ResourcePolicy.attach_resource_policy(
                 session=session,
                 group=share.principalId,
-                permissions=permissions.DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_READ,
                 resource_uri=shared_table.itemUri,
-                resource_type=models.DatasetTable.__name__,
+                resource_type=DatasetTable.__name__,
             )
         print('dataset table permissions updated for all shared tables')
     except Exception as e:

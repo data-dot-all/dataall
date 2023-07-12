@@ -14,7 +14,7 @@ ENVNAME = os.getenv('envname', 'local')
 
 engine = get_engine(envname=ENVNAME)
 
-load_modules(modes=[ImportMode.TASKS])
+load_modules(modes={ImportMode.HANDLERS})
 
 
 def handler(event, context=None):

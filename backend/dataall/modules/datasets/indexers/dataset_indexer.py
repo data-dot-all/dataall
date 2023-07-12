@@ -1,0 +1,53 @@
+"""Indexes Datasets in OpenSearch"""
+
+from dataall.db.api import Vote, Environment, Organization
+from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
+from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
+from dataall.searchproxy.base_indexer import BaseIndexer
+
+
+class DatasetIndexer(BaseIndexer):
+
+    @classmethod
+    def upsert(cls, session, dataset_uri: str):
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        org = Organization.get_organization_by_uri(session, dataset.organizationUri)
+
+        count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
+        count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
+        count_upvotes = Vote.count_upvotes(
+            session, None, None, dataset_uri, {'targetType': 'dataset'}
+        )
+
+        if dataset:
+            glossary = BaseIndexer._get_target_glossary_terms(session, dataset_uri)
+            BaseIndexer._index(
+                doc_id=dataset_uri,
+                doc={
+                    'name': dataset.name,
+                    'owner': dataset.owner,
+                    'label': dataset.label,
+                    'admins': dataset.SamlAdminGroupName,
+                    'database': dataset.GlueDatabaseName,
+                    'source': dataset.S3BucketName,
+                    'resourceKind': 'dataset',
+                    'description': dataset.description,
+                    'classification': dataset.confidentiality,
+                    'tags': [t.replace('-', '') for t in dataset.tags or []],
+                    'topics': dataset.topics,
+                    'region': dataset.region.replace('-', ''),
+                    'environmentUri': env.environmentUri,
+                    'environmentName': env.name,
+                    'organizationUri': org.organizationUri,
+                    'organizationName': org.name,
+                    'created': dataset.created,
+                    'updated': dataset.updated,
+                    'deleted': dataset.deleted,
+                    'glossary': glossary,
+                    'tables': count_tables,
+                    'folders': count_folders,
+                    'upvotes': count_upvotes,
+                },
+            )
+        return dataset

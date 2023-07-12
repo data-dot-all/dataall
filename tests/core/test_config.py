@@ -25,4 +25,8 @@ def test_default_config():
     assert "notebooks" in modules
     assert "active" in modules["notebooks"]
 
-    assert config.get_property("modules.notebooks.active") == "true"
+    assert "datasets" in modules
+    assert "active" in modules["datasets"]
+
+    assert config.get_property("modules.notebooks.active")
+    assert config.get_property("modules.datasets.active")
