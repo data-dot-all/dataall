@@ -121,8 +121,8 @@ def on_delete(event):
     physical_id = event['PhysicalResourceId']
     if physical_id.startswith('IMPORTED'):
         log.info(f'Imported database {physical_id} will not be deleted (it was not created by dataa.all)')
-    else:
-        database_name = physical_id.replace('IMPORTED-', '')
+    elif physical_id.startswith('CREATED'):
+        database_name = physical_id.replace('CREATED-', '')
         log.info('delete resource %s' % database_name)
         try:
             glue_client.get_database(Name=database_name)
@@ -134,5 +134,7 @@ def on_delete(event):
             response = glue_client.delete_database(CatalogId=AWS_ACCOUNT, Name=database_name)
             log.info(f'Successfully deleted database {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
         except ClientError as e:
-            log.exception(f'Could not delete databse {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
-            raise Exception(f'Could not delete databse {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+            log.exception(f'Could not delete database {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+            raise Exception(f'Could not delete database {database_name} in aws://{AWS_ACCOUNT}/{AWS_REGION}')
+    else:
+        log.info('Old PhysicalID, do not delete anything')
