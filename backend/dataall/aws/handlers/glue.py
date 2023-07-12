@@ -398,6 +398,7 @@ class Glue:
                     'region': dataset.region,
                     'accountid': dataset.AwsAccountId,
                     'database': dataset.GlueDatabaseName,
+                    'dataset_role': dataset.IAMDatasetAdminRoleArn,
                     'location': location or f's3://{dataset.S3BucketName}',
                 }
             )
@@ -407,6 +408,7 @@ class Glue:
         try:
             accountid = data['accountid']
             database = data.get('database')
+            dataset_role = data['dataset_role']
             session = SessionHelper.remote_session(accountid=accountid)
             glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
             crawler_name = data.get('crawler_name')
@@ -414,12 +416,12 @@ class Glue:
             crawler = Glue._get_crawler(glue, crawler_name)
             if crawler:
                 Glue._update_existing_crawler(
-                    glue, accountid, crawler_name, targets, database
+                    glue, dataset_role, crawler_name, targets, database
                 )
             else:
                 crawler = glue.create_crawler(
                     Name=crawler_name,
-                    Role=SessionHelper.get_delegation_role_arn(accountid=accountid),
+                    Role=dataset_role,
                     DatabaseName=database,
                     Targets=targets,
                     Tags=data.get('tags', {'Application': 'dataall'}),
@@ -458,6 +460,7 @@ class Glue:
                     'region': dataset.region,
                     'accountid': dataset.AwsAccountId,
                     'database': dataset.GlueDatabaseName,
+                    'dataset_role': dataset.IAMDatasetAdminRoleArn,
                     'location': location,
                 }
             )
@@ -468,12 +471,13 @@ class Glue:
             accountid = data['accountid']
             crawler_name = data['crawler_name']
             database = data['database']
+            dataset_role = data['dataset_role']
             targets = {'S3Targets': [{'Path': data.get('location')}]}
             session = SessionHelper.remote_session(accountid=accountid)
             glue = session.client('glue', region_name=data.get('region', 'eu-west-1'))
             if data.get('location'):
                 Glue._update_existing_crawler(
-                    glue, crawler_name, targets, database
+                    glue, dataset_role, crawler_name, targets, database
                 )
             crawler = Glue._get_crawler(glue, crawler_name)
             glue.start_crawler(Name=crawler_name)
@@ -496,7 +500,7 @@ class Glue:
         return crawler.get('Crawler') if crawler else None
 
     @staticmethod
-    def _update_existing_crawler(glue, crawler_name, targets, database):
+    def _update_existing_crawler(glue, dataset_role, crawler_name, targets, database):
         try:
             glue.stop_crawler(Name=crawler_name)
         except ClientError as e:
@@ -508,6 +512,7 @@ class Glue:
         try:
             glue.update_crawler(
                 Name=crawler_name,
+                Role=dataset_role,
                 DatabaseName=database,
                 Targets=targets,
             )
