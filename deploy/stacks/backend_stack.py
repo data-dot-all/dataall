@@ -294,7 +294,7 @@ class BackendStack(Stack):
             ],
             database=aurora_stack.cluster.cluster_identifier,
             ecs_cluster=self.ecs_stack.ecs_cluster,
-            ecs_task_definitions=self.ecs_stack.ecs_task_definitions,
+            ecs_task_definitions_families=self.ecs_stack.ecs_task_definitions_families,
             backend_api=self.lambda_api_stack.backend_api_name,
             queue_name=sqs_stack.queue.queue_name,
             **kwargs,

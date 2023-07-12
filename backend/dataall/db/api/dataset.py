@@ -539,11 +539,19 @@ class Dataset:
 
     @staticmethod
     def list_dataset_shares_with_existing_shared_items(session, dataset_uri) -> [models.ShareObject]:
-        query = session.query(models.ShareObject).filter(
-            and_(
-                models.ShareObject.datasetUri == dataset_uri,
-                models.ShareObject.deleted.is_(None),
-                models.ShareObject.existingSharedItems.is_(True),
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(models.ShareObject)
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+            )
+            .filter(
+                and_(
+                    models.ShareObject.datasetUri == dataset_uri,
+                    models.ShareObject.deleted.is_(None),
+                    models.ShareObjectItem.status.in_(share_item_shared_states),
+                )
             )
         )
         return query.all()
@@ -587,23 +595,36 @@ class Dataset:
 
     @staticmethod
     def _delete_dataset_shares_with_no_shared_items(session, dataset_uri):
-        share_objects = (
+        share_item_shared_states = api.ShareItemSM.get_share_item_shared_states()
+        shares = (
             session.query(models.ShareObject)
+            .outerjoin(
+                models.ShareObjectItem,
+                models.ShareObjectItem.shareUri == models.ShareObject.shareUri
+            )
             .filter(
                 and_(
                     models.ShareObject.datasetUri == dataset_uri,
-                    models.ShareObject.existingSharedItems.is_(False),
+                    models.ShareObjectItem.status.notin_(share_item_shared_states),
                 )
             )
             .all()
         )
-        for share in share_objects:
-            (
+        for share in shares:
+            share_items = (
                 session.query(models.ShareObjectItem)
                 .filter(models.ShareObjectItem.shareUri == share.shareUri)
-                .delete()
+                .all()
             )
-            session.delete(share)
+            for item in share_items:
+                session.delete(item)
+
+            share_obj = (
+                session.query(models.ShareObject)
+                .filter(models.ShareObject.shareUri == share.shareUri)
+                .first()
+            )
+            session.delete(share_obj)
 
     @staticmethod
     def _delete_dataset_term_links(session, uri):
