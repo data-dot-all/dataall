@@ -1,26 +1,6 @@
 from enum import Enum
 
 
-class GroupMemberRole(Enum):
-    Owner = 'Owner'
-    Admin = 'Admin'
-    Member = 'Member'
-    NotMember = 'NotMember'
-
-
-class ProjectMemberRole(Enum):
-    ProjectCreator = '999'
-    Admin = '900'
-    NotContributor = '000'
-
-
-class ScheduledQueryRole(Enum):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
-
 class SortDirection(Enum):
     asc = 'asc'
     desc = 'desc'

@@ -32,31 +32,10 @@ class GraphQLEnumMapper(Enum):
         return None
 
 
-class GroupMemberRole(GraphQLEnumMapper):
-    Owner = 'Owner'
-    Admin = 'Admin'
-    Member = 'Member'
-    NotMember = 'NotMember'
-
-
-class ProjectMemberRole(GraphQLEnumMapper):
-    ProjectCreator = '999'
-    Admin = '900'
-    NotContributor = '000'
-
-
 class GlossaryRole(GraphQLEnumMapper):
     # Permissions on a glossary
     Admin = '900'
     NoPermission = '000'
-
-
-class ScheduledQueryRole(GraphQLEnumMapper):
-    Creator = '950'
-    Admin = '900'
-    Shared = '300'
-    NoPermission = '000'
-
 
 class SortDirection(GraphQLEnumMapper):
     asc = 'asc'
