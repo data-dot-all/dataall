@@ -1,10 +1,11 @@
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
 
 
 def get_principal(session, principalId, principalType=None, principalIAMRoleName=None, environmentUri=None, groupUri=None):
     if principalType in ['Group', 'ConsumptionRole']:
         environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-        organization = db.api.Organization.get_organization_by_uri(
+        organization = Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
         if principalType in ['ConsumptionRole']:

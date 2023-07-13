@@ -1,5 +1,6 @@
 import pytest
 
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.db import models
 from dataall.api import constants
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
@@ -26,9 +27,9 @@ def group2(db):
 
 @pytest.fixture(scope="module")
 def org(db):
-    def factory(label: str, owner: str, SamlGroupName: str) -> models.Organization:
+    def factory(label: str, owner: str, SamlGroupName: str) -> Organization:
         with db.scoped_session() as session:
-            org = models.Organization(
+            org = Organization(
                 label=label,
                 owner=owner,
                 tags=[],
@@ -45,7 +46,7 @@ def org(db):
 @pytest.fixture(scope="module")
 def environment(db):
     def factory(
-        organization: models.Organization,
+        organization: Organization,
         awsAccountId: str,
         label: str,
         owner: str,
@@ -98,7 +99,7 @@ def environment_group(db):
 @pytest.fixture(scope="module")
 def dataset(db):
     def factory(
-        organization: models.Organization,
+        organization: Organization,
         environment: Environment,
         label: str,
     ) -> Dataset:

@@ -4,7 +4,7 @@ from dataall.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
-from dataall.db.api.organization import Organization
+from dataall.core.organizations.db.organization import Organization
 from dataall.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.datasets import Dataset

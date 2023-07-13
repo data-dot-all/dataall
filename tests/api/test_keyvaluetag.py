@@ -1,20 +1,21 @@
 import pytest
 
 from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.stacks.db.target_type import TargetType
 from dataall.db import exceptions
 from dataall.db import models
 
 
 @pytest.fixture(scope='module')
-def org1(db, org, tenant, user, group) -> models.Organization:
+def org1(db, org, tenant, user, group) -> Organization:
     org = org('testorg', user.userName, group.name)
     yield org
 
 
 @pytest.fixture(scope='module')
 def env1(
-    db, org1: models.Organization, user, group, module_mocker, env
+    db, org1: Organization, user, group, module_mocker, env
 ) -> Environment:
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1

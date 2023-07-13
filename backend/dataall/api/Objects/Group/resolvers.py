@@ -1,7 +1,7 @@
 import os
 import logging
-from dataall import db
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
 from dataall.db.models import Group
@@ -58,8 +58,8 @@ def list_cognito_groups(context, source, filter: dict = None):
                 ).all()
         if category == 'organization':
             with context.engine.scoped_session() as session:
-                organization = db.api.Organization.get_organization_by_uri(session, category_uri)
-                invited_groups = db.api.Organization.query_organization_groups(
+                organization = Organization.get_organization_by_uri(session, category_uri)
+                invited_groups = Organization.query_organization_groups(
                     session=session,
                     uri=organization.organizationUri,
                     filter=None,

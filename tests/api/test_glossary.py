@@ -2,19 +2,20 @@ from datetime import datetime
 
 from dataall.core.catalog.db.glossary_models import GlossaryNode
 from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.db import models
 import pytest
 
 
 @pytest.fixture(scope='module')
-def _org(db, org, tenant, user, group) -> models.Organization:
+def _org(db, org, tenant, user, group) -> Organization:
     org = org('testorg', user.userName, group.name)
     yield org
 
 
 @pytest.fixture(scope='module', autouse=True)
 def _env(
-    db, _org: models.Organization, user, group, env
+    db, _org: Organization, user, group, env
 ) -> Environment:
     env1 = env(_org, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1

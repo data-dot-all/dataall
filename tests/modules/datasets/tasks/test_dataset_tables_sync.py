@@ -4,6 +4,7 @@ import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
@@ -12,7 +13,7 @@ from dataall.modules.datasets.tasks.tables_syncer import sync_tables
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],

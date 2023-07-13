@@ -1,3 +1,4 @@
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.db import models
 import pytest
 
@@ -7,14 +8,14 @@ from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
 
 
 @pytest.fixture(scope='module')
-def org1(db, org, tenant, user, group) -> models.Organization:
+def org1(db, org, tenant, user, group) -> Organization:
     org = org('testorg', user.userName, group.name)
     yield org
 
 
 @pytest.fixture(scope='module')
 def env1(
-        db, org1: models.Organization, user, group, module_mocker, env
+        db, org1: Organization, user, group, module_mocker, env
 ) -> Environment:
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(

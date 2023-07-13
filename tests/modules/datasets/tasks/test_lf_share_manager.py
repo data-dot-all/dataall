@@ -10,6 +10,7 @@ import pytest
 
 from typing import Callable
 
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.db import models
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.api.enums import ShareItemStatus
@@ -32,7 +33,7 @@ LF_CLIENT = "dataall.modules.dataset_sharing.aws.lakeformation_client.LakeFormat
 
 
 @pytest.fixture(scope="module")
-def org1(org: Callable) -> models.Organization:
+def org1(org: Callable) -> Organization:
     yield org(
         label="org",
         owner="alice",
@@ -41,7 +42,7 @@ def org1(org: Callable) -> models.Organization:
 
 
 @pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: models.Organization, group: models.Group) -> Environment:
+def source_environment(environment: Callable, org1: Organization, group: models.Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=SOURCE_ENV_ACCOUNT,
@@ -71,7 +72,7 @@ def source_environment_group_requesters(environment_group: Callable, source_envi
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: models.Organization, group2: models.Group) -> Environment:
+def target_environment(environment: Callable, org1: Organization, group2: models.Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=TARGET_ACCOUNT_ENV,
@@ -92,7 +93,7 @@ def target_environment_group(environment_group: Callable, target_environment: En
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: models.Organization, source_environment: Environment) -> Dataset:
+def dataset1(dataset: Callable, org1: Organization, source_environment: Environment) -> Dataset:
     yield dataset(
         organization=org1,
         environment=source_environment,

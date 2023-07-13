@@ -6,7 +6,8 @@ from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.db import models, exceptions, paginate
+from dataall.core.organizations.db.organization_models import Organization
+from dataall.db import exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareObjectStatus, ShareItemActions, \
     ShareItemStatus, ShareableType
@@ -954,8 +955,8 @@ class ShareObjectRepository:
                 ShareObjectItem.GlueDatabaseName.label('GlueDatabaseName'),
                 ShareObjectItem.GlueTableName.label('GlueTableName'),
                 ShareObjectItem.S3AccessPointName.label('S3AccessPointName'),
-                models.Organization.organizationUri.label('organizationUri'),
-                models.Organization.name.label('organizationName'),
+                Organization.organizationUri.label('organizationUri'),
+                Organization.name.label('organizationName'),
                 case(
                     [
                         (
@@ -989,8 +990,8 @@ class ShareObjectRepository:
                 Environment.environmentUri == Dataset.environmentUri,
             )
             .join(
-                models.Organization,
-                models.Organization.organizationUri
+                Organization,
+                Organization.organizationUri
                 == Environment.organizationUri,
             )
             .outerjoin(

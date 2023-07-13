@@ -5,6 +5,7 @@ import pytest
 
 import dataall
 from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.models import Dataset
 
 
@@ -28,13 +29,13 @@ def dataset1(env1, org1, dataset, group) -> Dataset:
 
 
 @pytest.fixture(scope='module')
-def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organization:
+def org2(org: typing.Callable, user2, group2, tenant) -> Organization:
     yield org('org2', user2.userName, group2.name)
 
 
 @pytest.fixture(scope='module')
 def env2(
-    env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
+    env: typing.Callable, org2: Organization, user2, group2, tenant
 ) -> Environment:
     yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-2')
 

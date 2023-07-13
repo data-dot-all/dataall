@@ -19,9 +19,9 @@ from fastapi import FastAPI, BackgroundTasks, status, Response
 
 import cdk_cli_wrapper as wrapper
 from stacks import StackManager
+from ..core.organizations.db.organization_models import Organization
 from ..core.stacks.db.stack_models import Stack
 from ..db import get_engine
-from ..db import models
 
 print('\n'.join(sys.path))
 
@@ -38,7 +38,7 @@ def connect():
     try:
         engine = get_engine(envname=ENVNAME)
         with engine.scoped_session() as session:
-            orgs = session.query(models.Organization).all()
+            orgs = session.query(Organization).all()
         return engine
     except Exception as e:
         raise Exception('Connection Error')

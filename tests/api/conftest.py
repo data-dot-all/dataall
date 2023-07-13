@@ -1,4 +1,5 @@
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
@@ -173,7 +174,7 @@ def env(client):
 @pytest.fixture(scope="module")
 def environment(db):
     def factory(
-        organization: models.Organization,
+        organization: Organization,
         awsAccountId: str,
         label: str,
         owner: str,

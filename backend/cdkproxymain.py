@@ -11,6 +11,7 @@ import dataall.cdkproxy.cdk_cli_wrapper as wrapper
 from dataall import db
 from dataall.base.loader import load_modules, ImportMode
 from dataall.cdkproxy.stacks import StackManager
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.stacks.db.stack_models import Stack
 
 print('\n'.join(sys.path))
@@ -31,7 +32,7 @@ def connect():
     try:
         engine = db.get_engine(envname=ENVNAME)
         with engine.scoped_session() as session:
-            orgs = session.query(db.models.Organization).all()
+            orgs = session.query(Organization).all()
         return engine
     except Exception as e:
         raise Exception('Connection Error')

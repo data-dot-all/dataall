@@ -5,6 +5,7 @@ import pytest
 import dataall
 from dataall.api.constants import PrincipalType
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
@@ -31,7 +32,7 @@ def org1(org: typing.Callable, user, group, tenant):
 
 
 @pytest.fixture(scope='module')
-def env1(environment: typing.Callable, org1: dataall.db.models.Organization, user, group
+def env1(environment: typing.Callable, org1: Organization, user, group
          ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
@@ -54,7 +55,7 @@ def env1group(environment_group: typing.Callable, env1, user, group
 
 
 @pytest.fixture(scope='module')
-def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: Environment
+def dataset1(dataset_model: typing.Callable, org1: Organization, env1: Environment
              ) -> Dataset:
     yield dataset_model(
         organization=org1,
@@ -79,13 +80,13 @@ def table1(table: typing.Callable, dataset1: Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope='module')
-def org2(org: typing.Callable, group2, tenant) -> dataall.db.models.Organization:
+def org2(org: typing.Callable, group2, tenant) -> Organization:
     yield org('org2', 'bob', group2.name)
 
 
 @pytest.fixture(scope='module')
 def env2(
-        environment: typing.Callable, org2: dataall.db.models.Organization, user2, group2
+        environment: typing.Callable, org2: Organization, user2, group2
 ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
@@ -100,7 +101,7 @@ def env2(
 
 @pytest.fixture(scope='module')
 def dataset2(
-        dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: Environment
+        dataset_model: typing.Callable, org2: Organization, env2: Environment
 ) -> Dataset:
     yield dataset_model(
         organization=org2,

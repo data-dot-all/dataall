@@ -21,7 +21,7 @@ from dataall.utils.naming_convention import (
     NamingConventionPattern,
 )
 from dataall.db import exceptions, permissions, models
-from dataall.db.api.organization import Organization
+from dataall.core.organizations.db.organization import Organization
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
 

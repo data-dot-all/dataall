@@ -2,6 +2,7 @@ import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
 from dataall.core.environment.db.models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.tasks.stacks_updater import update_stacks
 
@@ -9,7 +10,7 @@ from dataall.tasks.stacks_updater import update_stacks
 @pytest.fixture(scope='module', autouse=True)
 def org(db):
     with db.scoped_session() as session:
-        org = dataall.db.models.Organization(
+        org = Organization(
             label='org',
             owner='alice',
             tags=[],

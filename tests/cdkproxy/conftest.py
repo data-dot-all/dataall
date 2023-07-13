@@ -1,6 +1,7 @@
 import pytest
 
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.stacks.db.stack_models import KeyValueTag
 from dataall.db import models
@@ -13,9 +14,9 @@ def permissions(db):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def org(db) -> models.Organization:
+def org(db) -> Organization:
     with db.scoped_session() as session:
-        org = models.Organization(
+        org = Organization(
             name='org', owner='me', label='org', description='test'
         )
         session.add(org)
@@ -23,7 +24,7 @@ def org(db) -> models.Organization:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env(db, org: models.Organization) -> Environment:
+def env(db, org: Organization) -> Environment:
     with db.scoped_session() as session:
         env = Environment(
             name='env',

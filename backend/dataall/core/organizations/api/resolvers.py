@@ -1,10 +1,8 @@
-from dataall import db
 from dataall.api.constants import OrganisationUserRole
 from dataall.api.context import Context
 from dataall.core.environment.db.models import Environment
-from dataall.db.api.organization import Organization
-from dataall.db import models
-
+from dataall.core.organizations.db.organization import Organization
+from dataall.core.organizations.db import organization_models as models
 
 def create_organization(context: Context, source, input=None):
     with context.engine.scoped_session() as session:
@@ -42,7 +40,7 @@ def list_organizations(context: Context, source, filter=None):
         )
 
 
-def list_groups(context, source: models.Organization, filter=None):
+def list_groups(context, source: Organization, filter=None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     with context.engine.scoped_session() as session:
@@ -66,11 +64,11 @@ def list_organization_environments(context, source, filter=None):
 
 def stats(context, source: models.Organization, **kwargs):
     with context.engine.scoped_session() as session:
-        environments = db.api.Organization.count_organization_environments(
+        environments = Organization.count_organization_environments(
             session=session, uri=source.organizationUri
         )
 
-        groups = db.api.Organization.count_organization_invited_groups(
+        groups = Organization.count_organization_invited_groups(
             session=session, uri=source.organizationUri, group=source.SamlGroupName
         )
 
@@ -101,7 +99,7 @@ def archive_organization(context: Context, source, organizationUri: str = None):
 
 def invite_group(context: Context, source, input):
     with context.engine.scoped_session() as session:
-        organization, organization_group = db.api.Organization.invite_group(
+        organization, organization_group = Organization.invite_group(
             session=session,
             uri=input['organizationUri'],
             data=input,
@@ -111,7 +109,7 @@ def invite_group(context: Context, source, input):
 
 def remove_group(context: Context, source, organizationUri=None, groupUri=None):
     with context.engine.scoped_session() as session:
-        organization = db.api.Organization.remove_group(
+        organization = Organization.remove_group(
             session=session,
             uri=organizationUri,
             group=groupUri
@@ -125,7 +123,7 @@ def list_organization_invited_groups(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Organization.paginated_organization_invited_groups(
+        return Organization.paginated_organization_invited_groups(
             session=session,
             uri=organizationUri,
             data=filter,
@@ -138,7 +136,7 @@ def list_organization_groups(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Organization.paginated_organization_groups(
+        return Organization.paginated_organization_groups(
             session=session,
             uri=organizationUri,
             data=filter,
