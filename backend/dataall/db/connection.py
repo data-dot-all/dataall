@@ -9,6 +9,8 @@ from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
 from .. import db
+from ..aws.handlers.secrets_manager import SecretsManager
+from ..aws.handlers.sts import SessionHelper
 from ..db import Base
 from ..db.dbconfig import DbConfig
 from ..utils import Parameter
@@ -115,13 +117,8 @@ def get_engine(envname=ENVNAME):
     schema = os.getenv('schema_name', envname)
     if envname not in ['local', 'pytest', 'dkrcompose']:
         param_store = Parameter()
-        secret = Secrets()
         credential_arn = param_store.get_parameter(env=envname, path='aurora/dbcreds')
-        secretsmanager = boto3.client(
-            'secretsmanager', region_name=os.environ.get('AWS_REGION', 'eu-west-1')
-        )
-        db_credentials_string = secretsmanager.get_secret_value(SecretId=credential_arn)
-        creds = json.loads(db_credentials_string['SecretString'])
+        creds = SessionHelper.get_secret(credential_arn)
         user = creds['username']
         pwd = creds['password']
         db_params = {
