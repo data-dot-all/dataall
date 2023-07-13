@@ -153,6 +153,11 @@ class LambdaApiStack(pyNestedClass):
             ec2.Port.tcp(443),
             'Allow NAT Internet Access SG Egress'
         )
+        self.aws_handler.connections.allow_to(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            'Allow NAT Internet Access SG Egress'
+        )
 
         self.backend_api_name = f'{resource_prefix}-{envname}-api'
 
