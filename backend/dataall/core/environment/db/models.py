@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.orm import query_expression
 from dataall.db import Resource, Base, utils
 
-from dataall.db.models.Enums import EnvironmentPermission as EnvironmentPermissionEnum
+from dataall.core.environment.api.enums import EnvironmentPermission
 
 
 class Environment(Resource, Base):
@@ -55,7 +55,7 @@ class EnvironmentGroup(Base):
 
     # environmentRole is the role of the entity (group or user) in the Environment
     groupRoleInEnvironment = Column(
-        String, nullable=False, default=EnvironmentPermissionEnum.Invited.value
+        String, nullable=False, default=EnvironmentPermission.Invited.value
     )
 
 

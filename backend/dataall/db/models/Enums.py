@@ -16,20 +16,6 @@ class GroupMemberRole(Enum):
     NotMember = 'NotMember'
 
 
-class EnvironmentPermission(Enum):
-    Owner = '999'
-    Admin = '900'
-    DatasetCreator = '800'
-    Invited = '200'
-    ProjectAccess = '050'
-    NotInvited = '000'
-
-
-class EnvironmentType(Enum):
-    Data = 'Data'
-    Compute = 'Compute'
-
-
 class ProjectMemberRole(Enum):
     ProjectCreator = '999'
     Admin = '900'

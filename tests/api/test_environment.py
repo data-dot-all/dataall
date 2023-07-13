@@ -300,7 +300,7 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
         """,
         username=user.userName,
         groups=[group.name],
-        filter={'roles': [dataall.api.constants.EnvironmentPermission.Invited.name]},
+        filter={'roles': [dataall.core.environment.api.enums.EnvironmentPermission.Invited.name]},
     )
 
     assert response.data.listEnvironments.count == 1

@@ -13,6 +13,7 @@ from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.environment.api.enums import EnvironmentPermission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation

@@ -1,7 +1,7 @@
 from dataall.base.api import gql
 
 from dataall.core.environment.api.resolvers import *
-from dataall.api.constants import EnvironmentPermission
+from dataall.core.environment.api.enums import EnvironmentPermission
 
 
 EnvironmentUserPermission = gql.ObjectType(

@@ -23,10 +23,8 @@ from dataall.utils.naming_convention import (
 from dataall.db import exceptions, permissions, models
 from dataall.db.api.organization import Organization
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
-from dataall.db.models.Enums import (
-    EnvironmentType,
-    EnvironmentPermission,
-)
+from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
+
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack_models import Stack
 
