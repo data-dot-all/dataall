@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Custom least privilege IAM policy for linking environments to dataall
 Parameters:
   AwsAccountId:
-    Description: AWS AccountId of the dataall INFRASTRUCTURE account that we wish to link this environment with.
+    Description: AWS AccountId of the account that we wish to link.
     Type: String
   PolicyName:
-    Description: IAM policy name (copy/paste from the UI)
+    Description: IAM policy name (The same name must be used during CDK bootstrapping. Default is DataAllCustomCDKPolicy.)
     Type: String
     Default: 'DataAllCustomCDKPolicy'
   EnvironmentResourcePrefix:
@@ -64,7 +64,49 @@ Resources:
               - 'iam:UpdateAssumeRolePolicy'
               - 'iam:ListPolicyVersions'
               - 'iam:DeletePolicy'
+              - 'iam:ListPolicies'
+              - 'iam:ListAttachedRolePolicies'
+              - 'iam:ListGenerateServiceLastAccessedDetails'
+              - 'iam:ListEntitiesForPolicy'
+              - 'iam:ListPoliciesGrantingServiceAccess'
+              - 'iam:ListRoles'
+              - 'iam:GetServiceLastAccessedDetails'
+              - 'iam:ListAccountAliases'
+              - 'iam:ListRolePolicies'
             Effect: Allow
+            Resource: '*'
+          - Sid: IAMQuickSight
+            Effect: Allow
+            Action:
+              - 'iam:CreatePolicyVersion'
+              - 'iam:DeletePolicyVersion'
+            Resource:
+               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/service-role/AWSQuickSight*'
+          - Sid: QuickSight
+            Effect: Allow
+            Action:
+              - 'ds:AuthorizeApplication'
+              - 'ds:UnauthorizeApplication'
+              - 'ds:CheckAlias'
+              - 'ds:CreateAlias'
+              - 'ds:DescribeDirectories'
+              - 'ds:DescribeTrusts'
+              - 'ds:DeleteDirectory'
+              - 'ds:CreateIdentityPoolDirectory'
+              - 'quicksight:CreateAdmin'
+              - 'quicksight:CreateUser'
+              - 'quicksight:Subscribe'
+              - 'quicksight:GetGroupMapping'
+              - 'quicksight:SearchDirectoryGroups'
+              - 'quicksight:SetGroupMapping'
+              - 'quicksight:RegisterUser'
+              - 'quicksight:GetDashboardEmbedUrl'
+              - 'quicksight:DescribeDashboardPermissions'
+            Resource: '*'
+          - Sid: QuickSightDeny
+            Effect: Deny
+            Action:
+              - 'quicksight:Unsubscribe'
             Resource: '*'
           - Sid: KMSCreateAlias
             Action:
@@ -200,8 +242,33 @@ Resources:
               - 'codepipeline:StartPipelineExecution'
               - 'codepipeline:GetPipeline'
               - 'codepipeline:GetPipelineState'
+              - 'codepipeline:GetPipelineExecution'
+              - 'codepipeline:ListPipelineExecutions'
+              - 'codepipeline:ListActionExecutions'
+              - 'codepipeline:ListActionTypes'
+              - 'codepipeline:ListPipelines'
+              - 'codepipeline:ListTagsForResource'
               - 'codepipeline:DeletePipeline'
+              - 'codestar-notifications:ListNotificationRules'
+              - 'codestar-notifications:ListEventTypes'
+              - 'codestar-notifications:ListTargets'
             Resource: '*'
+          - Sid: PipelinesS3
+            Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:GetBucketPolicy'
+            Resource:
+              - 'arn:aws:s3::*:codepipeline-*'
+          - Sid: CodeStarNotificationsReadOnly
+            Effect: Allow
+            Action:
+              - 'codestar-notifications:DescribeNotificationRule'
+            Resource: '*'
+            Condition:
+              'StringLike':
+                'codestar-notifications:NotificationsForResource': 'arn:aws:codepipeline:*'
           - Sid: Eventrules
             Effect: Allow
             Action:
