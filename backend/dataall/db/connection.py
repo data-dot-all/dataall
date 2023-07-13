@@ -1,15 +1,12 @@
-import json
 import logging
 import os
 from contextlib import contextmanager
 
-import boto3
 import sqlalchemy
 from sqlalchemy.engine import reflection
 from sqlalchemy.orm import sessionmaker
 
 from .. import db
-from ..aws.handlers.secrets_manager import SecretsManager
 from ..aws.handlers.sts import SessionHelper
 from ..db import Base
 from ..db.dbconfig import DbConfig
