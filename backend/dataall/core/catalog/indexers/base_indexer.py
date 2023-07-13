@@ -7,7 +7,7 @@ from operator import and_
 from sqlalchemy.orm import with_expression
 
 from dataall.core.catalog.db.glossary_models import GlossaryNode, TermLink
-from dataall.searchproxy import connect
+from dataall.base.searchproxy import connect
 
 log = logging.getLogger(__name__)
 

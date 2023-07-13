@@ -13,7 +13,7 @@ from dataall.core.permissions import permissions
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import get_engine, Base
-from dataall.searchproxy import connect, run_query
+from dataall.base.searchproxy import connect, run_query
 from dataall.base.loader import load_modules, ImportMode
 from dataall.base.config import config
 from dataall.base.context import set_context, dispose_context, RequestContext

@@ -5,7 +5,7 @@ import boto3
 import opensearchpy
 from requests_aws4auth import AWS4Auth
 
-from .. import utils
+from dataall import utils
 
 CREATE_INDEX_REQUEST_BODY = {
     'mappings': {
