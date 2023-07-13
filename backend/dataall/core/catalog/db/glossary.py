@@ -4,7 +4,8 @@ from datetime import datetime
 from sqlalchemy import asc, or_, and_, literal, case
 from sqlalchemy.orm import with_expression, aliased
 
-from dataall.db import exceptions, permissions, paginate, Resource
+from dataall.db import exceptions, paginate, Resource
+from dataall.core.permissions import permissions
 from dataall.core.catalog.db.glossary_models import GlossaryNodeStatus, TermLink, GlossaryNode
 from dataall.db.paginator import Page
 from dataall.base.context import get_context

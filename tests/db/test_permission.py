@@ -8,7 +8,7 @@ from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
-from dataall.db.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
+from dataall.core.permissions.permissions import MANAGE_GROUPS, ENVIRONMENT_ALL, ORGANIZATION_ALL
 
 
 def permissions(db, all_perms):
@@ -23,7 +23,7 @@ def permissions(db, all_perms):
                     permission_type=PermissionType.RESOURCE.name,
                 )
             )
-        for p in dataall.db.permissions.TENANT_ALL:
+        for p in dataall.core.permissions.permissions.TENANT_ALL:
             permissions.append(
                 Permission.save_permission(
                     session,

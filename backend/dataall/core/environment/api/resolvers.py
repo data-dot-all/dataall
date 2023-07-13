@@ -10,7 +10,7 @@ from sqlalchemy import and_, exc
 from dataall.aws.handlers.iam import IAM
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.api.enums import EnvironmentPermission
@@ -19,7 +19,8 @@ from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.vpc.db.vpc import Vpc
-from dataall.db import exceptions, permissions
+from dataall.db import exceptions
+from dataall.core.permissions import permissions
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,

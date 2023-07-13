@@ -1,6 +1,6 @@
 from itertools import chain
 
-from dataall.db.permissions import TENANT_ALL, TENANT_ALL_WITH_DESC, RESOURCES_ALL, RESOURCES_ALL_WITH_DESC, \
+from dataall.core.permissions.permissions import TENANT_ALL, TENANT_ALL_WITH_DESC, RESOURCES_ALL, RESOURCES_ALL_WITH_DESC, \
     ENVIRONMENT_INVITED, ENVIRONMENT_INVITATION_REQUEST, ENVIRONMENT_ALL
 from dataall.modules.datasets_base.services.permissions import DATASET_TABLE_READ
 

@@ -10,10 +10,8 @@ from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy import orm
 
-from dataall import db
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
-from dataall.db import api
 
 revision = 'e177eb044b31'
 down_revision = '033c3d6c1849'
@@ -32,7 +30,7 @@ def upgrade():
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group='DHAdmins',
-            permissions=db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         print('Attaching superusers groups DHAdmins')

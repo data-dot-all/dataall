@@ -7,9 +7,9 @@ from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from dataall import db
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
+from dataall.core.permissions import permissions
 from dataall.core.permissions.db import save_permissions_with_tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import get_engine, Base
@@ -84,7 +84,7 @@ def request_context(headers, mock=False):
             TenantPolicy.attach_group_tenant_policy(
                 session=session,
                 group=group,
-                permissions=db.permissions.TENANT_ALL,
+                permissions=permissions.TENANT_ALL,
                 tenant_name='dataall',
             )
 

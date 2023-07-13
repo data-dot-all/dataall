@@ -97,25 +97,25 @@ def tenant(db, group, group2, permissions, group3, group4):
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group2.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group3.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         TenantPolicy.attach_group_tenant_policy(
             session=session,
             group=group4.name,
-            permissions=dataall.db.permissions.TENANT_ALL,
+            permissions=dataall.core.permissions.permissions.TENANT_ALL,
             tenant_name='dataall',
         )
         yield tenant
@@ -222,7 +222,7 @@ def environment_group(db):
                 session=session,
                 resource_uri=environment.environmentUri,
                 group=group.name,
-                permissions=dataall.db.permissions.ENVIRONMENT_ALL,
+                permissions=dataall.core.permissions.permissions.ENVIRONMENT_ALL,
                 resource_type=Environment.__name__,
             )
             session.commit()

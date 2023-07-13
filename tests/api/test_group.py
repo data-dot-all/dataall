@@ -1,8 +1,5 @@
 import pytest
 
-import dataall
-from dataall.db import permissions
-
 
 @pytest.fixture(scope='module', autouse=True)
 def org1(org, user, group, tenant):

@@ -1,7 +1,6 @@
 from .base import Base, Resource
 from . import models
 from . import exceptions
-from . import permissions
 from .connection import (
     Engine,
     get_engine,
