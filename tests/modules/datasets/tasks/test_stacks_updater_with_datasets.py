@@ -3,7 +3,7 @@ from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.api.enums import OrganisationUserRole
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets_base.db.models import Dataset
-from dataall.tasks.stacks_updater import update_stacks
+from dataall.core.environment.tasks.env_stacks_updater import update_stacks
 
 
 @pytest.fixture(scope='module', autouse=True)

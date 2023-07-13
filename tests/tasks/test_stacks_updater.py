@@ -1,7 +1,7 @@
 import pytest
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
-from dataall.tasks.stacks_updater import update_stacks
+from dataall.core.environment.tasks.env_stacks_updater import update_stacks
 
 
 @pytest.fixture(scope='module', autouse=True)

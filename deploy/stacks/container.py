@@ -138,7 +138,7 @@ class ContainerStack(pyNestedClass):
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.8', '-m', 'dataall.tasks.stacks_updater'],
+            command=['python3.8', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id=f'container',
             ecr_repository=ecr_repository,
             environment=self._create_env('INFO'),
