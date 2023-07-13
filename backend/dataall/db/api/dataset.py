@@ -149,8 +149,7 @@ class Dataset:
         ).build_compliant_name()
         dataset.GlueDatabaseName = data.get('glueDatabaseName') or glue_db_name
 
-        kms_alias = bucket_name
-        dataset.KmsAlias = data.get('KmsKeyAlias') or kms_alias
+        dataset.KmsAlias = bucket_name
 
         iam_role_name = NamingConventionService(
             target_uri=dataset.datasetUri,

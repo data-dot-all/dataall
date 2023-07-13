@@ -85,7 +85,7 @@ def import_dataset(context: Context, source, input=None):
         dataset.importedGlueDatabase = True if input.get('glueDatabaseName') else False
         dataset.importedKmsKey = True if input.get('KmsKeyAlias') else False
         dataset.importedAdminRole = True if input.get('adminRoleName') else False
-
+        dataset.KmsAlias = "SSE-S3" if input.get('KmsKeyAlias') == "" else input.get('KmsKeyAlias')
         Dataset.create_dataset_stack(session, dataset)
 
         indexers.upsert_dataset(
