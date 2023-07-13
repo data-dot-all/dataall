@@ -32,33 +32,7 @@ class Environment(Resource, Base):
     organizationUri = Column(String, nullable=False)
     environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
     AwsAccountId = Column(String, nullable=False)
-    region = Column(String, nullable=False, default='eu-west-1')
-    cognitoGroupName = Column(String, nullable=True)
-
-    validated = Column(Boolean, default=False)
-    environmentType = Column(String, nullable=False, default='Data')
-    isOrganizationDefaultEnvironment = Column(Boolean, default=False)
-    EnvironmentDefaultIAMRoleName = Column(String, nullable=False)
-    EnvironmentDefaultIAMRoleArn = Column(String, nullable=False)
-    EnvironmentDefaultBucketName = Column(String)
-    roleCreated = Column(Boolean, nullable=False, default=False)
-
-    dashboardsEnabled = Column(Boolean, default=False)
-    notebooksEnabled = Column(Boolean, default=True)
-    mlStudiosEnabled = Column(Boolean, default=True)
-    pipelinesEnabled = Column(Boolean, default=True)
-    warehousesEnabled = Column(Boolean, default=True)
-
-    userRoleInEnvironment = query_expression()
-
-    SamlGroupName = Column(String, nullable=True)
-    CDKRoleArn = Column(String, nullable=False)
-
-    subscriptionsEnabled = Column(Boolean, default=False)
-    subscriptionsProducersTopicName = Column(String)
-    subscriptionsProducersTopicImported = Column(Boolean, default=False)
-    subscriptionsConsumersTopicName = Column(String)
-    subscriptionsConsumersTopicImported = Column(Boolean, default=False)
+    resourcePrefix = Column(String, nullable=False, default='dataall')
 
 
 class Dataset(Resource, Base):
