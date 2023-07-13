@@ -1,14 +1,14 @@
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.db.models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.db import utils
 from dataall.db.exceptions import UnauthorizedOperation
-from dataall.db.models import PrincipalType, ConsumptionRole
+from dataall.db.models import PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject

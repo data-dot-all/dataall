@@ -7,7 +7,7 @@ from sqlalchemy.sql import and_
 
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.models import EnvironmentParameter
+from dataall.core.environment.db.models import EnvironmentParameter, ConsumptionRole
 from dataall.core.environment.db.repositories import EnvironmentParameterRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.db.permission import Permission
@@ -431,7 +431,7 @@ class EnvironmentService:
                 message=f'IAM role {IAMRoleArn} is already added to the environment {environment.name}',
             )
 
-        consumption_role = models.ConsumptionRole(
+        consumption_role = ConsumptionRole(
             consumptionRoleName=data['consumptionRoleName'],
             environmentUri=environment.environmentUri,
             groupUri=group,
@@ -447,7 +447,7 @@ class EnvironmentService:
             group=group,
             resource_uri=consumption_role.consumptionRoleUri,
             permissions=permissions.CONSUMPTION_ROLE_ALL,
-            resource_type=models.ConsumptionRole.__name__,
+            resource_type=ConsumptionRole.__name__,
         )
         return consumption_role
 
@@ -465,7 +465,7 @@ class EnvironmentService:
             session=session,
             group=consumption_role.groupUri,
             resource_uri=consumption_role.consumptionRoleUri,
-            resource_type=models.ConsumptionRole.__name__,
+            resource_type=ConsumptionRole.__name__,
         )
         return True
 
@@ -610,15 +610,15 @@ class EnvironmentService:
     @staticmethod
     def query_user_environment_consumption_roles(session, groups, uri, filter) -> Query:
         query = (
-            session.query(models.ConsumptionRole)
-            .filter(models.ConsumptionRole.environmentUri == uri)
-            .filter(models.ConsumptionRole.groupUri.in_(groups))
+            session.query(ConsumptionRole)
+            .filter(ConsumptionRole.environmentUri == uri)
+            .filter(ConsumptionRole.groupUri.in_(groups))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
@@ -626,7 +626,7 @@ class EnvironmentService:
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    models.ConsumptionRole.groupUri == group,
+                    ConsumptionRole.groupUri == group,
                 )
             )
         return query
@@ -644,21 +644,21 @@ class EnvironmentService:
 
     @staticmethod
     def query_all_environment_consumption_roles(session, uri, filter) -> Query:
-        query = session.query(models.ConsumptionRole).filter(
-            models.ConsumptionRole.environmentUri == uri
+        query = session.query(ConsumptionRole).filter(
+            ConsumptionRole.environmentUri == uri
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    models.ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    models.ConsumptionRole.groupUri == group,
+                    ConsumptionRole.groupUri == group,
                 )
             )
         return query
@@ -678,10 +678,10 @@ class EnvironmentService:
 
     @staticmethod
     def find_consumption_roles_by_IAMArn(session, uri, arn) -> Query:
-        return session.query(models.ConsumptionRole).filter(
+        return session.query(ConsumptionRole).filter(
             and_(
-                models.ConsumptionRole.environmentUri == uri,
-                models.ConsumptionRole.IAMRoleArn == arn
+                ConsumptionRole.environmentUri == uri,
+                ConsumptionRole.IAMRoleArn == arn
             )
         ).first()
 
@@ -749,12 +749,12 @@ class EnvironmentService:
     @staticmethod
     def get_environment_consumption_role(session, role_uri, environment_uri):
         role = (
-            session.query(models.ConsumptionRole)
+            session.query(ConsumptionRole)
             .filter(
                 (
                     and_(
-                        models.ConsumptionRole.consumptionRoleUri == role_uri,
-                        models.ConsumptionRole.environmentUri == environment_uri,
+                        ConsumptionRole.consumptionRoleUri == role_uri,
+                        ConsumptionRole.environmentUri == environment_uri,
                     )
                 )
             )
@@ -821,8 +821,8 @@ class EnvironmentService:
             )
 
         env_roles = (
-            session.query(models.ConsumptionRole)
-            .filter(models.ConsumptionRole.environmentUri == uri)
+            session.query(ConsumptionRole)
+            .filter(ConsumptionRole.environmentUri == uri)
             .all()
         )
         for role in env_roles:
