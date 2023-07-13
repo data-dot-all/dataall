@@ -39,7 +39,7 @@ Resources:
             Effect: Allow
             Action: 'athena:CreateWorkGroup'
             Resource:
-              - !Sub 'arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/*'
+              - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/*'
           - Sid: IAM
             Action:
               - 'iam:CreatePolicy'
@@ -113,7 +113,7 @@ Resources:
               - 'kms:CreateAlias'
             Effect: Allow
             Resource:
-              - !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/*'
+              - !Sub 'arn:aws:kms:*:${AWS::AccountId}:alias/*'
           - Sid: KMSKey
             Action:
               - 's3:PutBucketAcl'
@@ -135,7 +135,7 @@ Resources:
               - 'kms:PutKeyPolicy'
               - 'kms:TagResource'
             Effect: Allow
-            Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*'
+            Resource: !Sub 'arn:aws:kms:*:${AWS::AccountId}:key/*'
           - Sid: Lambda
             Action:
               - 'lambda:AddPermission'
@@ -153,7 +153,7 @@ Resources:
             Action:
               - 'lambda:PublishLayerVersion'
             Resource:
-              - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:*'
+              - !Sub 'arn:aws:lambda:*:${AWS::AccountId}:layer:*'
           - Sid: S3
             Action:
               - 's3:CreateBucket'
@@ -175,7 +175,7 @@ Resources:
             Action:
               - 'sqs:CreateQueue'
               - 'sqs:SetQueueAttributes'
-            Resource: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*'
+            Resource: !Sub 'arn:aws:sqs:*:${AWS::AccountId}:*'
           - Sid: SSM
             Effect: Allow
             Action:
@@ -200,7 +200,7 @@ Resources:
             Effect: Allow
             Action:
               - 'cloudformation:*'
-            Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/CDKToolkit/*'
+            Resource: !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
           - Sid: ECR
             Effect: Allow
             Action:
@@ -210,14 +210,14 @@ Resources:
               - 'ecr:DescribeRepositories'
               - 'ecr:CreateRepository'
               - 'ecr:DeleteRepository'
-            Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/cdk-*'
+            Resource: !Sub 'arn:aws:ecr:*:${AWS::AccountId}:repository/cdk-*'
           - Sid: SSMTwo
             Effect: Allow
             Action:
               - 'ssm:GetParameter'
               - 'ssm:PutParameter'
               - 'ssm:DeleteParameter'
-            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
+            Resource: !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/cdk-bootstrap/*'
           - Sid: CloudformationTwo
             Effect: Allow
             Action:
