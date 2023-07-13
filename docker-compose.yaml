@@ -98,7 +98,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1024M
+          memory: 4096M
         reservations:
           memory: 128M
     ports:
