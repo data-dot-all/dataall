@@ -10,7 +10,7 @@ from dataall.modules.mlstudio.api.enums import SagemakerStudioRole
 
 
 from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
-from dataall.api.Objects.Environment.resolvers import resolve_environment
+from dataall.core.environment.api.resolvers import resolve_environment
 
 
 SagemakerStudioUserApps = gql.ArrayType(

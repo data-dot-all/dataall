@@ -11,6 +11,7 @@ import pytest
 from typing import Callable
 
 from dataall.db import models
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.api.enums import ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -40,7 +41,7 @@ def org1(org: Callable) -> models.Organization:
 
 
 @pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: models.Organization, group: models.Group) -> models.Environment:
+def source_environment(environment: Callable, org1: models.Organization, group: models.Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=SOURCE_ENV_ACCOUNT,
@@ -52,8 +53,8 @@ def source_environment(environment: Callable, org1: models.Organization, group: 
 
 
 @pytest.fixture(scope="module")
-def source_environment_group(environment_group: Callable, source_environment: models.Environment,
-                             group: models.Group) -> models.EnvironmentGroup:
+def source_environment_group(environment_group: Callable, source_environment: Environment,
+                             group: models.Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
         group=group
@@ -61,8 +62,8 @@ def source_environment_group(environment_group: Callable, source_environment: mo
 
 
 @pytest.fixture(scope="module")
-def source_environment_group_requesters(environment_group: Callable, source_environment: models.Environment,
-                                        group2: models.Group) -> models.EnvironmentGroup:
+def source_environment_group_requesters(environment_group: Callable, source_environment: Environment,
+                                        group2: models.Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
         group=group2
@@ -70,7 +71,7 @@ def source_environment_group_requesters(environment_group: Callable, source_envi
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: models.Organization, group2: models.Group) -> models.Environment:
+def target_environment(environment: Callable, org1: models.Organization, group2: models.Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=TARGET_ACCOUNT_ENV,
@@ -82,8 +83,8 @@ def target_environment(environment: Callable, org1: models.Organization, group2:
 
 
 @pytest.fixture(scope="module")
-def target_environment_group(environment_group: Callable, target_environment: models.Environment,
-                             group2: models.Group) -> models.EnvironmentGroup:
+def target_environment_group(environment_group: Callable, target_environment: Environment,
+                             group2: models.Group) -> EnvironmentGroup:
     yield environment_group(
         environment=target_environment,
         group=group2
@@ -91,7 +92,7 @@ def target_environment_group(environment_group: Callable, target_environment: mo
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: models.Organization, source_environment: models.Environment) -> Dataset:
+def dataset1(dataset: Callable, org1: models.Organization, source_environment: Environment) -> Dataset:
     yield dataset(
         organization=org1,
         environment=source_environment,
@@ -117,8 +118,8 @@ def table2(table: Callable, dataset1: Dataset) -> DatasetTable:
 
 @pytest.fixture(scope="module")
 def share_same_account(
-        share: Callable, dataset1: Dataset, source_environment: models.Environment,
-        source_environment_group_requesters: models.EnvironmentGroup) -> ShareObject:
+        share: Callable, dataset1: Dataset, source_environment: Environment,
+        source_environment_group_requesters: EnvironmentGroup) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=source_environment,
@@ -128,8 +129,8 @@ def share_same_account(
 
 @pytest.fixture(scope="module")
 def share_cross_account(
-        share: Callable, dataset1: Dataset, target_environment: models.Environment,
-        target_environment_group: models.EnvironmentGroup) -> ShareObject:
+        share: Callable, dataset1: Dataset, target_environment: Environment,
+        target_environment_group: EnvironmentGroup) -> ShareObject:
     yield share(
         dataset=dataset1,
         environment=target_environment,
@@ -240,8 +241,8 @@ def test_build_shared_db_name(
 def test_get_share_principals(
         processor_same_account: ProcessLFSameAccountShare,
         processor_cross_account: ProcessLFCrossAccountShare,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
 ):
@@ -257,8 +258,8 @@ def test_create_shared_database(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         mocker,
         mock_glue_client
@@ -346,8 +347,8 @@ def test_build_share_data(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table1: DatasetTable,
 ):
@@ -394,8 +395,8 @@ def test_create_resource_link(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table1: DatasetTable,
         mocker,
@@ -478,8 +479,8 @@ def test_revoke_table_resource_link_access(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table2: DatasetTable,
         mocker,
@@ -526,8 +527,8 @@ def test_revoke_source_table_access(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table2: DatasetTable,
         mocker,
@@ -568,8 +569,8 @@ def test_delete_resource_link_table(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table2: DatasetTable,
         mock_glue_client
@@ -606,8 +607,8 @@ def test_delete_shared_database(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table1: DatasetTable,
         mock_glue_client
@@ -633,8 +634,8 @@ def test_revoke_external_account_access_on_source_account(
         processor_cross_account: ProcessLFCrossAccountShare,
         share_same_account: ShareObject,
         share_cross_account: ShareObject,
-        source_environment: models.Environment,
-        target_environment: models.Environment,
+        source_environment: Environment,
+        target_environment: Environment,
         dataset1: Dataset,
         table1: DatasetTable,
         table2: DatasetTable,

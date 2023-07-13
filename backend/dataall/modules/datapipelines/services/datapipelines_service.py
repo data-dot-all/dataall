@@ -3,12 +3,12 @@ import logging
 
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.db import exceptions
-from dataall.db.api import Environment
 from dataall.modules.datapipelines.aws.codecommit_datapipeline_client import DatapipelineCodecommitClient
 from dataall.modules.datapipelines.aws.codepipeline_datapipeline_client import CodepipelineDatapipelineClient
 from dataall.modules.datapipelines.aws.glue_datapipeline_client import GlueDatapipelineClient
@@ -38,8 +38,8 @@ class DataPipelineService:
         data: dict = None,
     ) -> DataPipeline:
 
-        environment = Environment.get_environment_by_uri(session, uri)
-        enabled = Environment.get_boolean_env_param(session, environment, "pipelinesEnabled")
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
+        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
         if not enabled:
             raise exceptions.UnauthorizedOperation(
@@ -113,8 +113,8 @@ class DataPipelineService:
         data: dict = None,
     ) -> DataPipelineEnvironment:
 
-        environment = Environment.get_environment_by_uri(session, data['environmentUri'])
-        enabled = Environment.get_boolean_env_param(session, environment, "pipelinesEnabled")
+        environment = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
+        enabled = EnvironmentService.get_boolean_env_param(session, environment, "pipelinesEnabled")
 
         if not enabled:
             raise exceptions.UnauthorizedOperation(
@@ -153,7 +153,7 @@ class DataPipelineService:
                 action=CREATE_PIPELINE,
                 message=f'User: {username} is not a member of the team {pipeline_group}',
             )
-        if pipeline_group not in Environment.list_environment_groups(
+        if pipeline_group not in EnvironmentService.list_environment_groups(
             session=session,
             uri=environment_uri,
         ):
@@ -258,7 +258,7 @@ class DataPipelineService:
     @has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(session, uri):
         pipeline = DatapipelinesRepository.get_pipeline_by_uri(session, uri)
-        env = Environment.get_environment_by_uri(session, pipeline.environmentUri)
+        env = EnvironmentService.get_environment_by_uri(session, pipeline.environmentUri)
 
         env_role_arn = env.EnvironmentDefaultIAMRoleArn
 

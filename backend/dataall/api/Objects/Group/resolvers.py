@@ -1,6 +1,7 @@
 import os
 import logging
 from dataall import db
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
 from dataall.db.models import Group
@@ -13,7 +14,7 @@ def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return db.api.Environment.list_group_permissions(
+        return EnvironmentService.list_group_permissions(
             session=session,
             uri=environmentUri,
             group_uri=source.groupUri
@@ -50,7 +51,7 @@ def list_cognito_groups(context, source, filter: dict = None):
     if category and category_uri:
         if category == 'environment':
             with context.engine.scoped_session() as session:
-                invited_groups = db.api.Environment.query_all_environment_groups(
+                invited_groups = EnvironmentService.query_all_environment_groups(
                     session=session,
                     uri=category_uri,
                     filter=None,

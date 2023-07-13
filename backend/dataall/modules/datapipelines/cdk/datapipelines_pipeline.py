@@ -16,9 +16,9 @@ from botocore.exceptions import ClientError
 from dataall import db
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
-from dataall.db import models
-from dataall.db.api import Environment
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
 from dataall.utils.cdk_nag_utils import CDKNagUtil
@@ -62,16 +62,16 @@ class PipelineStack(Stack):
 
     def get_pipeline_cicd_environment(
         self, pipeline: DataPipeline
-    ) -> models.Environment:
+    ) -> Environment:
         envname = os.environ.get("envname", "local")
         engine = db.get_engine(envname=envname)
         with engine.scoped_session() as session:
-            return Environment.get_environment_by_uri(session, pipeline.environmentUri)
+            return EnvironmentService.get_environment_by_uri(session, pipeline.environmentUri)
 
-    def get_env_team(self, pipeline: DataPipeline) -> models.EnvironmentGroup:
+    def get_env_team(self, pipeline: DataPipeline) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env = Environment.get_environment_group(
+            env = EnvironmentService.get_environment_group(
                 session, pipeline.SamlGroupName, pipeline.environmentUri
             )
         return env

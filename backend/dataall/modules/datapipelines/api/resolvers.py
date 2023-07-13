@@ -4,11 +4,12 @@ import logging
 from dataall.api.context import Context
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.db import models, exceptions
-from dataall.db.api import Environment
+from dataall.db import exceptions
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
@@ -251,7 +252,7 @@ def delete_pipeline(
         pipeline: DataPipeline = DatapipelinesRepository.get_pipeline_by_uri(
             session, DataPipelineUri
         )
-        env: models.Environment = Environment.get_environment_by_uri(
+        env: Environment = EnvironmentService.get_environment_by_uri(
             session, pipeline.environmentUri
         )
 

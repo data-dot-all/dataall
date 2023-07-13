@@ -5,13 +5,14 @@ import time
 
 from botocore.exceptions import ClientError
 
-from dataall.db.api import Environment
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.dataset_sharing.aws.glue_client import GlueClient
 from dataall.modules.dataset_sharing.aws.lakeformation_client import LakeFormationClient
 from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.modules.dataset_sharing.aws.ram_client import RamClient
-from dataall.db import exceptions, models
+from dataall.db import exceptions
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.dataset_sharing.services.dataset_alarm_service import DatasetAlarmService
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
@@ -27,9 +28,9 @@ class LFShareManager:
         share: ShareObject,
         shared_tables: [DatasetTable],
         revoked_tables: [DatasetTable],
-        source_environment: models.Environment,
-        target_environment: models.Environment,
-        env_group: models.EnvironmentGroup,
+        source_environment: Environment,
+        target_environment: Environment,
+        env_group: EnvironmentGroup,
     ):
         self.session = session
         self.env_group = env_group
@@ -62,7 +63,7 @@ class LFShareManager:
         List of principals
         """
         principals = [f"arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}"]
-        dashboard_enabled = Environment.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
+        dashboard_enabled = EnvironmentService.get_boolean_env_param(self.session, self.target_environment, "dashboardsEnabled")
 
         if dashboard_enabled:
             group = QuicksightClient.create_quicksight_group(AwsAccountId=self.target_environment.AwsAccountId)
@@ -150,7 +151,7 @@ class LFShareManager:
     @classmethod
     def create_shared_database(
         cls,
-        target_environment: models.Environment,
+        target_environment: Environment,
         dataset: Dataset,
         shared_db_name: str,
         principals: [str],

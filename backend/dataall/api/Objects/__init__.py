@@ -11,7 +11,6 @@ from ariadne import (
 )
 
 from . import (
-    Environment,
     Group,
     Principal,
     Organization,

@@ -1,3 +1,4 @@
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
@@ -15,11 +16,11 @@ def patch_request(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_env(module_mocker):
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment',
+        'dataall.core.environment.api.resolvers.check_environment',
         return_value='CDKROLENAME',
     )
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
 
 
@@ -178,9 +179,9 @@ def environment(db):
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-    ) -> models.Environment:
+    ) -> Environment:
         with db.scoped_session() as session:
-            env = models.Environment(
+            env = Environment(
                 organizationUri=organization.organizationUri,
                 AwsAccountId=awsAccountId,
                 region="eu-central-1",
@@ -203,12 +204,12 @@ def environment(db):
 @pytest.fixture(scope="module")
 def environment_group(db):
     def factory(
-        environment: models.Environment,
+        environment: Environment,
         group: models.Group,
-    ) -> models.EnvironmentGroup:
+    ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 
-            env_group = models.EnvironmentGroup(
+            env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
                 groupUri=group.name,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
@@ -221,7 +222,7 @@ def environment_group(db):
                 resource_uri=environment.environmentUri,
                 group=group.name,
                 permissions=dataall.db.permissions.ENVIRONMENT_ALL,
-                resource_type=dataall.db.models.Environment.__name__,
+                resource_type=Environment.__name__,
             )
             session.commit()
             return env_group
@@ -272,9 +273,9 @@ def org_fixture(org, user, group, tenant):
 @pytest.fixture(scope='module')
 def env_fixture(env, org_fixture, user, group, tenant, module_mocker):
     module_mocker.patch('requests.post', return_value=True)
-    module_mocker.patch('dataall.api.Objects.Environment.resolvers.check_environment', return_value=True)
+    module_mocker.patch('dataall.core.environment.api.resolvers.check_environment', return_value=True)
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.get_pivot_role_as_part_of_environment', return_value=False
+        'dataall.core.environment.api.resolvers.get_pivot_role_as_part_of_environment', return_value=False
     )
     env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', 'eu-west-1')
     yield env1

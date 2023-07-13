@@ -1,6 +1,7 @@
 from dataall import db
 from dataall.api.constants import OrganisationUserRole
 from dataall.api.context import Context
+from dataall.core.environment.db.models import Environment
 from dataall.db.api.organization import Organization
 from dataall.db import models
 
@@ -151,7 +152,7 @@ def resolve_organization_by_env(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(
+        env: Environment = session.query(Environment).get(
             source.environmentUri
         )
         return session.query(models.Organization).get(env.organizationUri)

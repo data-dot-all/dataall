@@ -6,6 +6,7 @@ import json
 from typing import Callable
 
 import dataall.modules.dataset_sharing.services.share_managers
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.db import models
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
@@ -41,7 +42,7 @@ def source_environment(environment: Callable, org1: models.Organization, group: 
 
 
 @pytest.fixture(scope="module")
-def source_environment_group(environment_group: Callable, source_environment: models.Environment, group: models.Group):
+def source_environment_group(environment_group: Callable, source_environment: Environment, group: models.Group):
     source_environment_group = environment_group(source_environment, group)
     yield source_environment_group
 
@@ -60,13 +61,13 @@ def target_environment(environment: Callable, org1: models.Organization, group2:
 
 
 @pytest.fixture(scope="module")
-def target_environment_group(environment_group: Callable, target_environment: models.Environment, group2: models.Group):
+def target_environment_group(environment_group: Callable, target_environment: Environment, group2: models.Group):
     target_environment_group = environment_group(target_environment, group2)
     yield target_environment_group
 
 
 @pytest.fixture(scope="module")
-def dataset1(dataset: Callable, org1: models.Organization, source_environment: models.Environment):
+def dataset1(dataset: Callable, org1: models.Organization, source_environment: Environment):
     dataset1 = dataset(org1, source_environment, "dataset1")
     yield dataset1
 
@@ -78,8 +79,8 @@ def location1(location: Callable, dataset1: Dataset) -> DatasetStorageLocation:
 
 @pytest.fixture(scope="module")
 def share1(share: Callable, dataset1: Dataset,
-           target_environment: models.Environment,
-           target_environment_group: models.EnvironmentGroup) -> ShareObject:
+           target_environment: Environment,
+           target_environment_group: EnvironmentGroup) -> ShareObject:
     share1 = share(dataset1, target_environment, target_environment_group)
     yield share1
 
@@ -213,8 +214,8 @@ def test_manage_bucket_policy_no_policy(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     base_bucket_policy,
 ):
 
@@ -271,8 +272,8 @@ def test_manage_bucket_policy_existing_policy(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     admin_ap_delegation_bucket_policy,
 ):
 
@@ -313,8 +314,8 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     target_dataset_access_control_policy,
 ):
 
@@ -366,8 +367,8 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
     share1: ShareObject,
     share_item_folder1,
     location1,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
     target_dataset_access_control_policy,
 ):
 
@@ -405,15 +406,15 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(
 
 def test_grant_target_role_access_policy_test_no_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
 
     # Given
@@ -467,15 +468,15 @@ def test_grant_target_role_access_policy_test_no_policy(
 
 def test_update_dataset_bucket_key_policy_with_env_admin(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -574,15 +575,15 @@ def _generate_ap_policy_object(
 
 def test_update_dataset_bucket_key_policy_without_env_admin(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -644,15 +645,15 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
 # NO existing Access point and ap policy
 def test_manage_access_point_and_policy_1(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     access_point_arn = "new-access-point-arn"
@@ -716,15 +717,15 @@ def test_manage_access_point_and_policy_1(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_2(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
@@ -781,15 +782,15 @@ def test_manage_access_point_and_policy_2(
 # current folder is NOT yet in prefix_list
 def test_manage_access_point_and_policy_3(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
@@ -843,15 +844,15 @@ def test_manage_access_point_and_policy_3(
 
 def test_delete_access_point_policy_with_env_admin_one_prefix(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
@@ -905,15 +906,15 @@ def test_delete_access_point_policy_with_env_admin_one_prefix(
 
 def test_delete_access_point_policy_with_env_admin_multiple_prefix(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
 
@@ -962,15 +963,15 @@ def test_delete_access_point_policy_with_env_admin_multiple_prefix(
 
 def test_dont_delete_access_point_with_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [[target_environment.SamlGroupName, ["existing-prefix"]]])
@@ -1000,15 +1001,15 @@ def test_dont_delete_access_point_with_policy(
 
 def test_delete_access_point_without_policy(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_ap_policy = _generate_ap_policy_object("access-point-arn", [])
@@ -1040,15 +1041,15 @@ def test_delete_access_point_without_policy(
 
 def test_delete_target_role_access_policy_no_remaining_statement(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given ap policy that only includes AllowAllToAdminStatement
     existing_target_role_policy = {
@@ -1105,15 +1106,15 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
 def test_delete_target_role_access_policy_with_remaining_statement(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     # target role policy that has a bucket unrelated to the current bucket to be deleted
@@ -1191,15 +1192,15 @@ def test_delete_target_role_access_policy_with_remaining_statement(
 # admin, that should remain
 def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target_env(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)
@@ -1275,15 +1276,15 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
 # The kms key policy only includes the target env admin
 def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_target_env(
     mocker,
-    source_environment_group: models.EnvironmentGroup,
-    target_environment_group: models.EnvironmentGroup,
+    source_environment_group: EnvironmentGroup,
+    target_environment_group: EnvironmentGroup,
     dataset1: Dataset,
     db,
     share1: ShareObject,
     share_item_folder1: ShareObjectItem,
     location1: DatasetStorageLocation,
-    source_environment: models.Environment,
-    target_environment: models.Environment,
+    source_environment: Environment,
+    target_environment: Environment,
 ):
     # Given
     kms_client = mock_kms_client(mocker)

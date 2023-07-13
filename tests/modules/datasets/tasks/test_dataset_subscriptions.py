@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -28,7 +29,7 @@ def org(db):
 @pytest.fixture(scope='module')
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -49,7 +50,7 @@ def env(org, db):
 @pytest.fixture(scope='module')
 def otherenv(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='987654321',
             region='eu-west-1',
@@ -95,7 +96,7 @@ def dataset(org, env, db):
 def share(
     dataset: Dataset,
     db: dataall.db.Engine,
-    otherenv: dataall.db.models.Environment,
+    otherenv: Environment,
 ):
     with db.scoped_session() as session:
 

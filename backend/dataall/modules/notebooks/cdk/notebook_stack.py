@@ -14,10 +14,10 @@ from aws_cdk import (
 )
 
 from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.db import Engine, get_engine
-from dataall.db.api import Environment
-from dataall.db.models import EnvironmentGroup
 from dataall.modules.notebooks.db import models
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.utils.cdk_nag_utils import CDKNagUtil
@@ -51,7 +51,7 @@ class NotebookStack(Stack):
     ) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env_group = Environment.get_environment_group(
+            env_group = EnvironmentService.get_environment_group(
                 session, notebook.SamlAdminGroupName, notebook.environmentUri
             )
         return env_group

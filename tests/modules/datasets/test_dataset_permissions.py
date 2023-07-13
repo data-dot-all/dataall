@@ -1,7 +1,8 @@
 from dataall.base.context import set_context, RequestContext
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
-from dataall.db.api import Environment, Organization
+from dataall.db.api import Organization
 from dataall.db.exceptions import ResourceUnauthorized
 from dataall.db.permissions import TENANT_ALL
 from dataall.modules.datasets.services.dataset_permissions import DATASET_WRITE, UPDATE_DATASET, MANAGE_DATASETS, \
@@ -126,7 +127,7 @@ def test_create_dataset(db, env, user, group, group_user, dataset, permissions, 
                 'tags': [],
             },
         )
-        env_with_perm = Environment.create_environment(
+        env_with_perm = EnvironmentService.create_environment(
             session=session,
             uri=org_with_perm.organizationUri,
             data={

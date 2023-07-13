@@ -1,7 +1,8 @@
 from aws_cdk import App
 from aws_cdk.assertions import Template
 
-from dataall.cdkproxy.stacks import EnvironmentSetup
+from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
+from dataall.core.environment.db.models import EnvironmentGroup
 from dataall.modules.datasets_base.db.models import Dataset
 from tests.cdkproxy.conftest import *
 
@@ -18,7 +19,7 @@ def patch_extensions(mocker):
 @pytest.fixture(scope='function', autouse=True)
 def another_group(db, env):
     with db.scoped_session() as session:
-        env_group: models.EnvironmentGroup = models.EnvironmentGroup(
+        env_group: EnvironmentGroup = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri='anothergroup',
             environmentIAMRoleArn='aontherGroupArn',
@@ -53,7 +54,7 @@ def another_group(db, env):
 @pytest.fixture(scope='function', autouse=True)
 def patch_methods(mocker, db, env, another_group, permissions):
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_engine',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_engine',
         return_value=db,
     )
     mocker.patch(
@@ -65,11 +66,11 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value='False',
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_target',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_target',
         return_value=env,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_groups',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_groups',
         return_value=[another_group],
     )
     mocker.patch(
@@ -82,7 +83,7 @@ def patch_methods(mocker, db, env, another_group, permissions):
         return_value=env,
     )
     mocker.patch(
-        'dataall.cdkproxy.stacks.environment.EnvironmentSetup.get_environment_group_permissions',
+        'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_group_permissions',
         return_value=[permission.name for permission in permissions],
     )
     mocker.patch(

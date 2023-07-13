@@ -2,8 +2,8 @@ import logging
 
 from dataall.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.api import stack_helper
-from dataall.db.api import Environment
 from dataall.db.api.organization import Organization
 from dataall.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.dataset_sharing.db.models import ShareObject
@@ -96,7 +96,7 @@ def get_dataset_environment(context, source: Dataset, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Environment.get_environment_by_uri(session, source.environmentUri)
+        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: Dataset, **kwargs):

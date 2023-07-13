@@ -8,14 +8,15 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.context import get_context as context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
-from dataall.db import models, exceptions
-from dataall.db.api import Environment
+from dataall.db import exceptions
 from dataall.modules.notebooks.aws.sagemaker_notebook_client import client
 from dataall.modules.notebooks.db.models import SagemakerNotebook
 from dataall.modules.notebooks.db.notebook_repository import NotebookRepository
@@ -71,8 +72,8 @@ class NotebookService:
         """
 
         with _session() as session:
-            env = Environment.get_environment_by_uri(session, uri)
-            enabled = Environment.get_boolean_env_param(session, env, "notebooksEnabled")
+            env = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, env, "notebooksEnabled")
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -82,7 +83,7 @@ class NotebookService:
 
             env_group = request.environment
             if not env_group:
-                env_group = Environment.get_environment_group(
+                env_group = EnvironmentService.get_environment_group(
                     session,
                     group_uri=admin_group,
                     environment_uri=env.environmentUri,
@@ -204,7 +205,7 @@ class NotebookService:
                 group=notebook.SamlAdminGroupName,
             )
 
-            env: models.Environment = Environment.get_environment_by_uri(
+            env: Environment = EnvironmentService.get_environment_by_uri(
                 session, notebook.environmentUri
             )
 

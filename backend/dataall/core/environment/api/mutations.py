@@ -1,11 +1,13 @@
-from .input_types import (
+from dataall.base.api import gql
+
+from dataall.core.environment.api.input_types import (
     ModifyEnvironmentInput,
     NewEnvironmentInput,
     EnableDataSubscriptionsInput,
     InviteGroupOnEnvironmentInput,
     AddConsumptionRoleToEnvironmentInput
 )
-from .resolvers import *
+from dataall.core.environment.api.resolvers import *
 
 createEnvironment = gql.MutationField(
     name='createEnvironment',

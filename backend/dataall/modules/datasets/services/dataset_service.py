@@ -5,6 +5,7 @@ from dataall.aws.handlers.quicksight import QuicksightClient
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sts import SessionHelper
 from dataall.base.context import get_context
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
@@ -13,7 +14,6 @@ from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.vote.db.vote import Vote
-from dataall.db.api import Environment
 from dataall.db.exceptions import AWSResourceNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.models import ShareObject
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
@@ -38,7 +38,7 @@ class DatasetService:
 
     @staticmethod
     def check_dataset_account(session, environment):
-        dashboards_enabled = Environment.get_boolean_env_param(session, environment, "dashboardsEnabled")
+        dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, "dashboardsEnabled")
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
                 AwsAccountId=environment.AwsAccountId)
@@ -54,7 +54,7 @@ class DatasetService:
     def create_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            environment = Environment.get_environment_by_uri(session, uri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
             DatasetService.check_dataset_account(session=session, environment=environment)
 
             dataset = DatasetRepository.create_dataset(
@@ -154,7 +154,7 @@ class DatasetService:
     def update_dataset(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             DatasetService.check_dataset_account(session=session, environment=environment)
 
             username = get_context().username
@@ -217,11 +217,11 @@ class DatasetService:
                     dataset_uri=uri,
                     dataset_owner=context.username
                 )
-                shared_environment = Environment.get_environment_by_uri(
+                shared_environment = EnvironmentService.get_environment_by_uri(
                     session=session,
                     uri=share.environmentUri
                 )
-                env_group = Environment.get_environment_group(
+                env_group = EnvironmentService.get_environment_group(
                     session=session,
                     group_uri=share.principalId,
                     environment_uri=share.environmentUri
@@ -321,7 +321,7 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            env = Environment.get_environment_by_uri(
+            env = EnvironmentService.get_environment_by_uri(
                 session, dataset.environmentUri
             )
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(session, uri)
@@ -353,7 +353,7 @@ class DatasetService:
             ResourcePolicy.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
             )
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             if dataset.SamlAdminGroupName != env.SamlGroupName:
                 ResourcePolicy.delete_resource_policy(
                     session=session, resource_uri=uri, group=env.SamlGroupName
@@ -436,7 +436,7 @@ class DatasetService:
 
     @staticmethod
     def _transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
-        env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
         if dataset.stewards != env.SamlGroupName:
             ResourcePolicy.delete_resource_policy(
                 session=session,

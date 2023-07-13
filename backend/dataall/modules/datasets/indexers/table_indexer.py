@@ -1,8 +1,8 @@
 """Indexes DatasetTable in OpenSearch"""
 from operator import and_
 
-from dataall.db import models
-from dataall.db.api import Environment, Organization
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.db.api import Organization
 from dataall.modules.datasets.db.dataset_table_repository import DatasetTableRepository
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
@@ -18,7 +18,7 @@ class DatasetTableIndexer(BaseIndexer):
 
         if table:
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             org = Organization.get_organization_by_uri(session, dataset.organizationUri)
             glossary = BaseIndexer._get_target_glossary_terms(session, table_uri)
 

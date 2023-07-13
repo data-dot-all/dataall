@@ -4,6 +4,7 @@ from typing import List
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.db import models, exceptions, paginate
 from dataall.db.models.Enums import PrincipalType
@@ -563,8 +564,8 @@ class ShareObjectRepository:
         query = (
             session.query(ShareObject)
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 or_(
@@ -580,8 +581,8 @@ class ShareObjectRepository:
 
     @staticmethod
     def get_share_by_dataset_and_environment(session, dataset_uri, environment_uri):
-        environment_groups = session.query(models.EnvironmentGroup).filter(
-            models.EnvironmentGroup.environmentUri == environment_uri
+        environment_groups = session.query(EnvironmentGroup).filter(
+            EnvironmentGroup.environmentUri == environment_uri
         )
         groups = [g.groupUri for g in environment_groups]
         share = session.query(ShareObject).filter(
@@ -661,24 +662,24 @@ class ShareObjectRepository:
 
         dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
 
-        source_environment: models.Environment = session.query(models.Environment).get(
+        source_environment: Environment = session.query(Environment).get(
             dataset.environmentUri
         )
         if not source_environment:
             raise exceptions.ObjectNotFound('SourceEnvironment', dataset.environmentUri)
 
-        target_environment: models.Environment = session.query(models.Environment).get(
+        target_environment: Environment = session.query(Environment).get(
             share.environmentUri
         )
         if not target_environment:
             raise exceptions.ObjectNotFound('TargetEnvironment', share.environmentUri)
 
-        env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
+        env_group: EnvironmentGroup = (
+            session.query(EnvironmentGroup)
             .filter(
                 and_(
-                    models.EnvironmentGroup.environmentUri == share.environmentUri,
-                    models.EnvironmentGroup.groupUri == share.groupUri,
+                    EnvironmentGroup.environmentUri == share.environmentUri,
+                    EnvironmentGroup.groupUri == share.groupUri,
                 )
             )
             .first()
@@ -689,12 +690,12 @@ class ShareObjectRepository:
                 f'environment {target_environment.name}/{target_environment.AwsAccountId}'
             )
 
-        source_env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
+        source_env_group: EnvironmentGroup = (
+            session.query(EnvironmentGroup)
             .filter(
                 and_(
-                    models.EnvironmentGroup.environmentUri == dataset.environmentUri,
-                    models.EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
+                    EnvironmentGroup.environmentUri == dataset.environmentUri,
+                    EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
                 )
             )
             .first()
@@ -773,7 +774,7 @@ class ShareObjectRepository:
             session.query(ShareObject)
             .filter(
                 and_(
-                    models.Environment.environmentUri == environment_uri,
+                    Environment.environmentUri == environment_uri,
                     ShareObject.status == ShareObjectStatus.Approved.value,
                     ShareObject.datasetUri == dataset_uri,
                 )
@@ -944,8 +945,8 @@ class ShareObjectRepository:
                 Dataset.datasetUri.label('datasetUri'),
                 Dataset.name.label('datasetName'),
                 Dataset.description.label('datasetDescription'),
-                models.Environment.environmentUri.label('environmentUri'),
-                models.Environment.name.label('environmentName'),
+                Environment.environmentUri.label('environmentUri'),
+                Environment.name.label('environmentName'),
                 ShareObject.created.label('created'),
                 ShareObject.principalId.label('principalId'),
                 ShareObject.principalType.label('principalType'),
@@ -984,13 +985,13 @@ class ShareObjectRepository:
                 ShareObject.datasetUri == Dataset.datasetUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == Dataset.environmentUri,
+                Environment,
+                Environment.environmentUri == Dataset.environmentUri,
             )
             .join(
                 models.Organization,
                 models.Organization.organizationUri
-                == models.Environment.organizationUri,
+                == Environment.organizationUri,
             )
             .outerjoin(
                 DatasetTable,
@@ -1062,8 +1063,8 @@ class ShareObjectRepository:
                 DatasetTable.S3Prefix.label('S3Prefix'),
                 DatasetTable.AWSAccountId.label('SourceAwsAccountId'),
                 DatasetTable.region.label('SourceRegion'),
-                models.Environment.AwsAccountId.label('TargetAwsAccountId'),
-                models.Environment.region.label('TargetRegion'),
+                Environment.AwsAccountId.label('TargetAwsAccountId'),
+                Environment.region.label('TargetRegion'),
             )
             .join(
                 ShareObjectItem,
@@ -1076,8 +1077,8 @@ class ShareObjectRepository:
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 and_(
@@ -1095,8 +1096,8 @@ class ShareObjectRepository:
                 DatasetStorageLocation.locationUri.label('locationUri'),
                 DatasetStorageLocation.S3BucketName.label('S3BucketName'),
                 DatasetStorageLocation.S3Prefix.label('S3Prefix'),
-                models.Environment.AwsAccountId.label('AwsAccountId'),
-                models.Environment.region.label('region'),
+                Environment.AwsAccountId.label('AwsAccountId'),
+                Environment.region.label('region'),
             )
             .join(
                 ShareObjectItem,
@@ -1109,8 +1110,8 @@ class ShareObjectRepository:
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                models.Environment,
-                models.Environment.environmentUri == ShareObject.environmentUri,
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
             .filter(
                 and_(

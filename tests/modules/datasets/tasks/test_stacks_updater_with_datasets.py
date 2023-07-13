@@ -1,6 +1,7 @@
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
 from dataall.tasks.stacks_updater import update_stacks
 
@@ -23,7 +24,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',

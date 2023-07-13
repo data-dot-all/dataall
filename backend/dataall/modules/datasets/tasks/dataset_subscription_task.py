@@ -4,11 +4,11 @@ import sys
 
 from botocore.exceptions import ClientError
 
-from dataall import db
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.aws.handlers.sqs import SqsQueue
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.db import get_engine
-from dataall.db import models
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
 from dataall.modules.dataset_sharing.services.share_notification_service import ShareNotificationService
@@ -33,10 +33,10 @@ class DatasetSubscriptionService:
     @staticmethod
     def get_environments(engine):
         with engine.scoped_session() as session:
-            return db.api.Environment.list_all_active_environments(session)
+            return EnvironmentService.list_all_active_environments(session)
 
     @staticmethod
-    def get_queues(environments: [models.Environment]):
+    def get_queues(environments: [Environment]):
         queues = []
         for env in environments:
             queues.append(
@@ -116,7 +116,7 @@ class DatasetSubscriptionService:
                     f'Share Item with no share object or no principalId ? {item.shareItemUri}'
                 )
             else:
-                environment = session.query(models.Environment).get(
+                environment = session.query(Environment).get(
                     share_object.principalId
                 )
                 if not environment:

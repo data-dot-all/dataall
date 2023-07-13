@@ -4,6 +4,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import PrincipalType
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.api.enums import ShareableType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
@@ -31,7 +32,7 @@ def org1(org: typing.Callable, user, group, tenant):
 
 @pytest.fixture(scope='module')
 def env1(environment: typing.Callable, org1: dataall.db.models.Organization, user, group
-         ) -> dataall.db.models.Environment:
+         ) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
         organization=org1,
@@ -45,7 +46,7 @@ def env1(environment: typing.Callable, org1: dataall.db.models.Organization, use
 
 @pytest.fixture(scope='module')
 def env1group(environment_group: typing.Callable, env1, user, group
-              ) -> dataall.db.models.EnvironmentGroup:
+              ) -> EnvironmentGroup:
     yield environment_group(
         environment=env1,
         group=group,
@@ -53,7 +54,7 @@ def env1group(environment_group: typing.Callable, env1, user, group
 
 
 @pytest.fixture(scope='module')
-def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: dataall.db.models.Environment
+def dataset1(dataset_model: typing.Callable, org1: dataall.db.models.Organization, env1: Environment
              ) -> Dataset:
     yield dataset_model(
         organization=org1,
@@ -85,7 +86,7 @@ def org2(org: typing.Callable, group2, tenant) -> dataall.db.models.Organization
 @pytest.fixture(scope='module')
 def env2(
         environment: typing.Callable, org2: dataall.db.models.Organization, user2, group2
-) -> dataall.db.models.Environment:
+) -> Environment:
     # user, group and tenant are fixtures defined in conftest
     yield environment(
         organization=org2,
@@ -99,7 +100,7 @@ def env2(
 
 @pytest.fixture(scope='module')
 def dataset2(
-        dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: dataall.db.models.Environment
+        dataset_model: typing.Callable, org2: dataall.db.models.Organization, env2: Environment
 ) -> Dataset:
     yield dataset_model(
         organization=org2,
@@ -124,7 +125,7 @@ def table2(table: typing.Callable, dataset2: Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope='module')
-def env2group(environment_group: typing.Callable, env2, user2, group2) -> dataall.db.models.EnvironmentGroup:
+def env2group(environment_group: typing.Callable, env2, user2, group2) -> EnvironmentGroup:
     yield environment_group(
         environment=env2,
         group=group2,
@@ -139,8 +140,8 @@ def share1_draft(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share1 = share(
         dataset=dataset1,
@@ -216,8 +217,8 @@ def share2_submitted(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share2 = share(
         dataset=dataset1,
@@ -291,8 +292,8 @@ def share3_processed(
         group2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     share3 = share(
         dataset=dataset1,
@@ -363,8 +364,8 @@ def share4_draft(
         user2,
         share: typing.Callable,
         dataset1: Dataset,
-        env2: dataall.db.models.Environment,
-        env2group: dataall.db.models.EnvironmentGroup,
+        env2: Environment,
+        env2group: EnvironmentGroup,
 ) -> ShareObject:
     yield share(
         dataset=dataset1,

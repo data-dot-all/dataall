@@ -7,6 +7,7 @@ from .. import exceptions, permissions, paginate
 from .. import models
 from ..models import OrganizationGroup
 from ..models.Enums import OrganisationUserRole
+from dataall.core.environment.db.models import Environment
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
@@ -139,12 +140,12 @@ class Organization:
 
     @staticmethod
     def query_organization_environments(session, uri, filter) -> Query:
-        query = session.query(models.Environment).filter(models.Environment.organizationUri == uri)
+        query = session.query(Environment).filter(Environment.organizationUri == uri)
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
-                    models.Environment.label.ilike('%' + filter.get('term') + '%'),
-                    models.Environment.description.ilike('%' + filter.get('term') + '%'),
+                    Environment.label.ilike('%' + filter.get('term') + '%'),
+                    Environment.description.ilike('%' + filter.get('term') + '%'),
                 )
             )
         return query
@@ -164,7 +165,7 @@ class Organization:
     @has_resource_permission(permissions.DELETE_ORGANIZATION)
     def archive_organization(session, uri) -> bool:
         org = Organization.get_organization_by_uri(session, uri)
-        environments = session.query(models.Environment).filter(models.Environment.organizationUri == uri).count()
+        environments = session.query(Environment).filter(Environment.organizationUri == uri).count()
         if environments:
             raise exceptions.UnauthorizedOperation(
                 action='ARCHIVE_ORGANIZATION',
@@ -247,11 +248,11 @@ class Organization:
             )
 
         group_env_objects_count = (
-            session.query(models.Environment)
+            session.query(Environment)
             .filter(
                 and_(
-                    models.Environment.organizationUri == organization.organizationUri,
-                    models.Environment.SamlGroupName == group,
+                    Environment.organizationUri == organization.organizationUri,
+                    Environment.SamlGroupName == group,
                 )
             )
             .count()
@@ -347,9 +348,9 @@ class Organization:
     @staticmethod
     def count_organization_environments(session, uri) -> int:
         envs = (
-            session.query(models.Environment)
+            session.query(Environment)
             .filter(
-                models.Environment.organizationUri == uri,
+                Environment.organizationUri == uri,
             )
             .count()
         )

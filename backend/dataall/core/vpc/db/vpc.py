@@ -3,10 +3,8 @@ import logging
 from sqlalchemy import and_
 
 from dataall.db import exceptions, permissions
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.vpc.db import vpc_models as models
-from dataall.db.api import (
-    Environment,
-)
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.base.context import get_context
@@ -44,7 +42,7 @@ class Vpc:
                 message=f'Vpc {data["vpcId"]} is already associated to environment {uri}',
             )
 
-        environment = Environment.get_environment_by_uri(session, uri)
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
 
         vpc = models.Vpc(
             environmentUri=environment.environmentUri,

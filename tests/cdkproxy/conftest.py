@@ -1,5 +1,6 @@
 import pytest
 
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.stacks.db.stack_models import KeyValueTag
 from dataall.db import models
@@ -22,9 +23,9 @@ def org(db) -> models.Organization:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def env(db, org: models.Organization) -> models.Environment:
+def env(db, org: models.Organization) -> Environment:
     with db.scoped_session() as session:
-        env = models.Environment(
+        env = Environment(
             name='env',
             owner='me',
             organizationUri=org.organizationUri,
@@ -42,7 +43,7 @@ def env(db, org: models.Organization) -> models.Environment:
         )
         session.add(env)
         session.commit()
-        env_group = models.EnvironmentGroup(
+        env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=env.SamlGroupName,
             environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,

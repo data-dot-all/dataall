@@ -5,6 +5,8 @@ from enum import Enum
 from aws_cdk import Stack, Tags
 
 from dataall import db
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack_models import KeyValueTag as KeyValueTagModel
 from dataall.db import models
@@ -128,7 +130,7 @@ class TagsUtil:
 
     @classmethod
     def get_environment(cls, session, target_stack):
-        environment: models.Environment = db.api.Environment.get_environment_by_uri(
+        environment: Environment = EnvironmentService.get_environment_by_uri(
             session, target_stack.environmentUri
         )
         return environment

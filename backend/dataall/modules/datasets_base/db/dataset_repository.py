@@ -5,9 +5,7 @@ from sqlalchemy.orm import Query
 
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
-from dataall.db.api import (
-    Environment,
-)
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.db.api import Organization
 from dataall.db import paginate
 from dataall.db.exceptions import ObjectNotFound
@@ -52,7 +50,7 @@ class DatasetRepository(EnvironmentResource):
         uri: str,
         data: dict = None,
     ) -> Dataset:
-        environment = Environment.get_environment_by_uri(session, uri)
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
 
         organization = Organization.get_organization_by_uri(
             session, environment.organizationUri

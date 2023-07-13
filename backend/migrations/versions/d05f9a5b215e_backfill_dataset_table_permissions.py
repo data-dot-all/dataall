@@ -11,9 +11,10 @@ from sqlalchemy.orm import query_expression
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import api, utils, Resource
+from dataall.db import utils, Resource
 from datetime import datetime
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareableType, ShareItemStatus
 from dataall.modules.dataset_sharing.db.share_object_repository import ShareObjectRepository
@@ -90,7 +91,7 @@ def upgrade():
         dataset_tables: [DatasetTable] = session.query(DatasetTable).filter(DatasetTable.deleted.is_(None)).all()
         for table in dataset_tables:
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env = api.Environment.get_environment_by_uri(session, dataset.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
 
             groups = set([dataset.SamlAdminGroupName, env.SamlGroupName, dataset.stewards if dataset.stewards is not None else dataset.SamlAdminGroupName])
             for group in groups:

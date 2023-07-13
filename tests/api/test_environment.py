@@ -1,6 +1,8 @@
 import pytest
 
 import dataall
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -307,7 +309,7 @@ def test_list_environment_role_filter_as_admin(db, client, org1, env1, user, gro
 def test_paging(db, client, org1, env1, user, group):
     for i in range(1, 30):
         with db.scoped_session() as session:
-            env = dataall.db.models.Environment(
+            env = Environment(
                 organizationUri=org1.organizationUri,
                 AwsAccountId=f'12345678901+{i}',
                 region='eu-west-1',
@@ -687,7 +689,7 @@ def test_create_environment(db, client, org1, env1, user, group):
         assert vpc.default
 
     with db.scoped_session() as session:
-        env = dataall.db.api.Environment.get_environment_by_uri(
+        env = EnvironmentService.get_environment_by_uri(
             session, response.data.createEnvironment.environmentUri
         )
         session.delete(env)

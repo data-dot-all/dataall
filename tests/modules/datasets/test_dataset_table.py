@@ -3,6 +3,7 @@ import typing
 import pytest
 
 import dataall
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.datasets_base.db.models import DatasetTableColumn, DatasetTable, Dataset
 
@@ -34,7 +35,7 @@ def org2(org: typing.Callable, user2, group2, tenant) -> dataall.db.models.Organ
 @pytest.fixture(scope='module')
 def env2(
     env: typing.Callable, org2: dataall.db.models.Organization, user2, group2, tenant
-) -> dataall.db.models.Environment:
+) -> Environment:
     yield env(org2, 'dev', user2.userName, group2.name, '2' * 12, 'eu-west-2')
 
 

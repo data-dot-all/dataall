@@ -25,15 +25,16 @@ from aws_cdk import (
 )
 
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
-from .manager import stack
-from .pivot_role import PivotRole
-from .policies.data_policy import S3Policy
-from .policies.service_policy import ServicePolicy
-from ... import db
-from ...aws.handlers.parameter_store import ParameterStoreManager
-from ...aws.handlers.sts import SessionHelper
-from ...db import models
-from ...utils.cdk_nag_utils import CDKNagUtil
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.environment.cdk.pivot_role_stack import PivotRole
+from dataall.cdkproxy.stacks.policies.data_policy import S3Policy
+from dataall.cdkproxy.stacks.policies.service_policy import ServicePolicy
+from dataall import db
+from dataall.aws.handlers.parameter_store import ParameterStoreManager
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.utils.cdk_nag_utils import CDKNagUtil
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class EnvironmentSetup(Stack):
     def register(extension: Type[EnvironmentStackExtension]):
         EnvironmentSetup._EXTENSIONS.append(extension)
 
-    def environment(self) -> models.Environment:
+    def environment(self) -> Environment:
         return self._environment
 
     @staticmethod
@@ -76,10 +77,10 @@ class EnvironmentSetup(Stack):
         engine = db.get_engine(envname=self.get_env_name())
         return engine
 
-    def get_target(self, target_uri) -> models.Environment:
+    def get_target(self, target_uri) -> Environment:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            target = session.query(models.Environment).get(target_uri)
+            target = session.query(Environment).get(target_uri)
             if not target:
                 raise Exception('ObjectNotFound')
         return target
@@ -87,7 +88,7 @@ class EnvironmentSetup(Stack):
     @staticmethod
     def get_environment_group_permissions(engine, environmentUri, group):
         with engine.scoped_session() as session:
-            group_permissions = db.api.Environment.list_group_permissions_internal(
+            group_permissions = EnvironmentService.list_group_permissions_internal(
                 session=session,
                 uri=environmentUri,
                 group_uri=group
@@ -96,17 +97,17 @@ class EnvironmentSetup(Stack):
             return permission_names
 
     @staticmethod
-    def get_environment_groups(engine, environment: models.Environment) -> [models.EnvironmentGroup]:
+    def get_environment_groups(engine, environment: Environment) -> [EnvironmentGroup]:
         with engine.scoped_session() as session:
-            return db.api.Environment.list_environment_invited_groups(
+            return EnvironmentService.list_environment_invited_groups(
                 session,
                 uri=environment.environmentUri,
             )
 
     @staticmethod
-    def get_environment_admins_group(engine, environment: models.Environment) -> [models.EnvironmentGroup]:
+    def get_environment_admins_group(engine, environment: Environment) -> [EnvironmentGroup]:
         with engine.scoped_session() as session:
-            return db.api.Environment.get_environment_group(
+            return EnvironmentService.get_environment_group(
                 session,
                 environment_uri=environment.environmentUri,
                 group_uri=environment.SamlGroupName,
@@ -137,11 +138,11 @@ class EnvironmentSetup(Stack):
 
         self._environment = self.get_target(target_uri=target_uri)
 
-        self.environment_groups: [models.EnvironmentGroup] = self.get_environment_groups(
+        self.environment_groups: [EnvironmentGroup] = self.get_environment_groups(
             self.engine, environment=self._environment
         )
 
-        self.environment_admins_group: models.EnvironmentGroup = self.get_environment_admins_group(
+        self.environment_admins_group: EnvironmentGroup = self.get_environment_admins_group(
             self.engine, self._environment
         )
 
@@ -564,7 +565,7 @@ class EnvironmentSetup(Stack):
             logger.info(f"Adding extension stack{extension.__name__}")
             extension.extent(self)
 
-        TagsUtil.add_tags(stack=self, model=models.Environment, target_type="environment")
+        TagsUtil.add_tags(stack=self, model=Environment, target_type="environment")
 
         CDKNagUtil.check_rules(self)
 
@@ -628,7 +629,7 @@ class EnvironmentSetup(Stack):
         return default_role
 
     def create_or_import_environment_groups_roles(self):
-        group: models.EnvironmentGroup
+        group: EnvironmentGroup
         group_roles = []
         for group in self.environment_groups:
             if not group.environmentIAMRoleImported:

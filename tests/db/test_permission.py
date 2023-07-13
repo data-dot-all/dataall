@@ -2,6 +2,7 @@ import pytest
 
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.tenant import Tenant
@@ -71,7 +72,7 @@ def org(db, group):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db, group):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',

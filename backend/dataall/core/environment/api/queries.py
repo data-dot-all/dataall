@@ -1,7 +1,8 @@
-from .input_types import EnvironmentFilter
-from .resolvers import *
+from dataall.base.api import gql
 
-from .schema import Environment, EnvironmentSearchResult
+from dataall.core.environment.api.input_types import EnvironmentFilter
+from dataall.core.environment.api.resolvers import *
+from dataall.core.environment.api.schema import Environment, EnvironmentSearchResult
 
 
 getTrustAccount = gql.QueryField(

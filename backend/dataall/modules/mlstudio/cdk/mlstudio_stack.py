@@ -19,13 +19,12 @@ from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.cdkproxy.stacks import EnvironmentSetup
-from dataall.cdkproxy.stacks.environment import EnvironmentStackExtension
+from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
 from dataall.cdkproxy.stacks.manager import stack
+from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.db import Engine, get_engine
-from dataall.db.api import Environment as EnvironmentRepository
-from dataall.db.models import EnvironmentGroup
 from dataall.modules.mlstudio.aws.ec2_client import EC2
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
@@ -219,7 +218,7 @@ class SagemakerStudioUserProfile(Stack):
     ) -> EnvironmentGroup:
         engine = self.get_engine()
         with engine.scoped_session() as session:
-            env_group = EnvironmentRepository.get_environment_group(
+            env_group = EnvironmentService.get_environment_group(
                 session, sm_user.SamlAdminGroupName, sm_user.environmentUri,
             )
         return env_group

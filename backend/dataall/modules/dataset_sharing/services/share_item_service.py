@@ -2,11 +2,11 @@ import logging
 
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.db import utils
-from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareItemActions
@@ -85,7 +85,7 @@ class ShareItemService:
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            target_environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            target_environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)

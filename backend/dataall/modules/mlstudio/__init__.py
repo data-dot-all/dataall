@@ -32,7 +32,7 @@ class MLStudioCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.mlstudio.cdk
-        from dataall.cdkproxy.stacks.environment import EnvironmentSetup
+        from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
         from dataall.modules.mlstudio.cdk.mlstudio_stack import SageMakerDomainExtension
 
         EnvironmentSetup.register(SageMakerDomainExtension)

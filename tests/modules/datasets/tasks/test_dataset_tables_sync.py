@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 import dataall
 from dataall.api.constants import OrganisationUserRole
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.tables_syncer import sync_tables
@@ -26,7 +27,7 @@ def org(db):
 @pytest.fixture(scope='module', autouse=True)
 def env(org, db):
     with db.scoped_session() as session:
-        env = dataall.db.models.Environment(
+        env = Environment(
             organizationUri=org.organizationUri,
             AwsAccountId='12345678901',
             region='eu-west-1',
@@ -67,7 +68,7 @@ def sync_dataset(org, env, db):
         )
         session.add(dataset)
         session.commit()
-        env_group = dataall.db.models.EnvironmentGroup(
+        env_group = EnvironmentGroup(
             environmentUri=env.environmentUri,
             groupUri=dataset.SamlAdminGroupName,
             environmentIAMRoleArn=env.EnvironmentDefaultIAMRoleArn,

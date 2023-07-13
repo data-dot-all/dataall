@@ -1,13 +1,14 @@
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.db.models import EnvironmentGroup
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
 from dataall.db import utils
-from dataall.db.api import Environment
 from dataall.db.exceptions import UnauthorizedOperation
-from dataall.db.models import PrincipalType, EnvironmentGroup, ConsumptionRole
+from dataall.db.models import PrincipalType, ConsumptionRole
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareableType, ShareItemStatus, \
     ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
@@ -44,7 +45,7 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
-            environment = Environment.get_environment_by_uri(session, uri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
                 raise UnauthorizedOperation(
@@ -54,14 +55,14 @@ class ShareObjectService:
                 )
 
             if principal_type == PrincipalType.ConsumptionRole.value:
-                consumption_role: ConsumptionRole = Environment.get_environment_consumption_role(
+                consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
                     session,
                     principal_id,
                     environment.environmentUri
                 )
                 principal_iam_role_name = consumption_role.IAMRoleName
             else:
-                env_group: EnvironmentGroup = Environment.get_environment_group(
+                env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session,
                     group_uri,
                     environment.environmentUri
@@ -327,7 +328,7 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'User: {context.username} is not a member of the team {share_object_group}',
             )
-        if share_object_group not in Environment.list_environment_groups(
+        if share_object_group not in EnvironmentService.list_environment_groups(
             session=session,
             uri=environment_uri,
         ):

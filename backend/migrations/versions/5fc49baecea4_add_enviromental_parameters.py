@@ -13,12 +13,12 @@ from alembic import op
 from sqlalchemy import Boolean, Column, String, orm
 from sqlalchemy.ext.declarative import declarative_base
 
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
-from dataall.db import Resource, models
+from dataall.db import Resource
 from dataall.core.permissions.db.permission_models import PermissionType, ResourcePolicyPermission, \
     TenantPolicyPermission
-from dataall.db.models import EnvironmentGroup
 from dataall.modules.datasets.services.dataset_permissions import LIST_ENVIRONMENT_DATASETS, CREATE_DATASET
 
 # revision identifiers, used by Alembic.
@@ -220,7 +220,7 @@ def migrate_groups_permissions(session):
                 group=group.groupUri,
                 permissions=new_perms,
                 resource_uri=group.environmentUri,
-                resource_type=models.Environment.__name__
+                resource_type=Environment.__name__
             )
 
 

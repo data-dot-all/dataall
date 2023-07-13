@@ -1,11 +1,11 @@
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission, \
     has_group_permission
 from dataall.core.vote.db.vote import Vote
-from dataall.db.api import Environment
 from dataall.db.exceptions import UnauthorizedOperation
 from dataall.modules.dashboards import DashboardRepository, Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
@@ -30,8 +30,8 @@ class DashboardService:
     def import_dashboard(uri: str, admin_group: str, data: dict = None) -> Dashboard:
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env = Environment.get_environment_by_uri(session, data['environmentUri'])
-            enabled = Environment.get_boolean_env_param(session, env, "dashboardsEnabled")
+            env = EnvironmentService.get_environment_by_uri(session, data['environmentUri'])
+            enabled = EnvironmentService.get_boolean_env_param(session, env, "dashboardsEnabled")
 
             if not enabled:
                 raise UnauthorizedOperation(
@@ -49,7 +49,7 @@ class DashboardService:
                 )
 
             env = data.get(
-                'environment', Environment.get_environment_by_uri(session, uri)
+                'environment', EnvironmentService.get_environment_by_uri(session, uri)
             )
 
             dashboard = DashboardRepository.create_dashboard(session, env, context.username, data)
@@ -82,7 +82,7 @@ class DashboardService:
                 setattr(dashboard, k, data.get(k))
 
             DashboardService._update_glossary(session, dashboard, data)
-            environment = Environment.get_environment_by_uri(session, dashboard.environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, dashboard.environmentUri)
             DashboardService._set_dashboard_resource_policy(
                 session, environment, dashboard, dashboard.SamlGroupName
             )
@@ -112,8 +112,8 @@ class DashboardService:
     @staticmethod
     def _set_dashboard_resource_policy(session, environment, dashboard, group):
         DashboardService._attach_dashboard_policy(session, group, dashboard)
-        if environment.SamlGroupName != dashboard.SamlGroupName:
-            DashboardService._attach_dashboard_policy(session, environment.SamlGroupName, dashboard)
+        if EnvironmentService.SamlGroupName != dashboard.SamlGroupName:
+            DashboardService._attach_dashboard_policy(session, EnvironmentService.SamlGroupName, dashboard)
 
     @staticmethod
     def _attach_dashboard_policy(session, group: str, dashboard: Dashboard):

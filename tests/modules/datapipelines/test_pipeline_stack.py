@@ -4,6 +4,7 @@ import pytest
 from aws_cdk import App, Stack
 from aws_cdk.assertions import Template
 
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.repositories import DatapipelinesRepository
@@ -12,7 +13,7 @@ from tests.cdkproxy.conftest import *
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pipeline2(db, env: models.Environment) -> DataPipeline:
+def pipeline2(db, env: Environment) -> DataPipeline:
     with db.scoped_session() as session:
         pipeline = DataPipeline(
             label='thistable',
@@ -29,7 +30,7 @@ def pipeline2(db, env: models.Environment) -> DataPipeline:
 
 
 @pytest.fixture(scope='module', autouse=True)
-def pip_envs(db, env: models.Environment, pipeline2: DataPipeline) -> DataPipelineEnvironment:
+def pip_envs(db, env: Environment, pipeline2: DataPipeline) -> DataPipelineEnvironment:
     with db.scoped_session() as session:
         pipeline_env2 = DataPipelineEnvironment(
             owner='me',

@@ -3,13 +3,13 @@ import os
 import sys
 import time
 
-from dataall import db
 from dataall.base.loader import ImportMode, load_modules
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stack_finder import StackFinder
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db.stack import Stack
 from dataall.db import get_engine
-from dataall.db import models
 from dataall.utils import Parameter
 
 root = logging.getLogger()
@@ -24,13 +24,13 @@ SLEEP_TIME = 30
 
 def update_stacks(engine, envname):
     with engine.scoped_session() as session:
-        all_environments: [models.Environment] = db.api.Environment.list_all_active_environments(session)
+        all_environments: [Environment] = EnvironmentService.list_all_active_environments(session)
         additional_stacks = []
         for finder in StackFinder.all():
             additional_stacks.extend(finder.find_stack_uris(session))
 
         log.info(f'Found {len(all_environments)} environments, triggering update stack tasks...')
-        environment: models.Environment
+        environment: Environment
         for environment in all_environments:
             update_stack(session=session, envname=envname, target_uri=environment.environmentUri, wait=True)
 

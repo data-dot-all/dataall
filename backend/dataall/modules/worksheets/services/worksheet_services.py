@@ -1,7 +1,7 @@
 import logging
 
-from dataall import db
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_tenant_permission, has_resource_permission
 from dataall.db import exceptions
@@ -100,10 +100,10 @@ class WorksheetService:
     @staticmethod
     @has_resource_permission(RUN_ATHENA_QUERY)
     def run_sql_query(session, uri, worksheetUri, sqlQuery):
-        environment = db.api.Environment.get_environment_by_uri(session, uri)
+        environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
-        env_group = db.api.Environment.get_environment_group(
+        env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
 

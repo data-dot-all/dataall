@@ -2,9 +2,10 @@ import json
 
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.core.environment.db.models import Environment
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.permission_checker import has_resource_permission
 from dataall.core.tasks.db.task_models import Task
-from dataall.db.api import Environment
 from dataall.db.exceptions import ObjectNotFound
 from dataall.modules.datasets.aws.glue_profiler_client import GlueDatasetProfilerClient
 from dataall.modules.datasets.aws.s3_profiler_client import S3ProfilerClient
@@ -30,7 +31,7 @@ class DatasetProfilingService:
                     raise ObjectNotFound('DatasetTable', table_uri)
                 glue_table_name = table.GlueTableName
 
-            environment: Environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+            environment: Environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             if not environment:
                 raise ObjectNotFound('Environment', dataset.environmentUri)
 
@@ -79,7 +80,7 @@ class DatasetProfilingService:
                 if not run.results:
                     table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
                     dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-                    environment = Environment.get_environment_by_uri(session, dataset.environmentUri)
+                    environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
                     content = S3ProfilerClient(environment).get_profiling_results_from_s3(dataset, table, run)
                     if content:
                         results = json.loads(content)

@@ -3,7 +3,7 @@ from typing import List
 
 from aws_cdk import aws_iam as iam
 
-from ....db import models
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 
 logger = logging.getLogger()
 
@@ -19,8 +19,8 @@ class S3Policy:
         tag_key,
         tag_value,
         resource_prefix,
-        environment: models.Environment,
-        team: models.EnvironmentGroup,
+        environment: Environment,
+        team: EnvironmentGroup,
     ):
         self.stack = stack
         self.id = id

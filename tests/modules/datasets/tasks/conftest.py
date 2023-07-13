@@ -2,6 +2,7 @@ import pytest
 
 from dataall.db import models
 from dataall.api import constants
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
@@ -50,9 +51,9 @@ def environment(db):
         owner: str,
         samlGroupName: str,
         environmentDefaultIAMRoleName: str,
-    ) -> models.Environment:
+    ) -> Environment:
         with db.scoped_session() as session:
-            env = models.Environment(
+            env = Environment(
                 organizationUri=organization.organizationUri,
                 AwsAccountId=awsAccountId,
                 region="eu-central-1",
@@ -75,12 +76,12 @@ def environment(db):
 @pytest.fixture(scope="module")
 def environment_group(db):
     def factory(
-        environment: models.Environment,
+        environment: Environment,
         group: models.Group,
-    ) -> models.EnvironmentGroup:
+    ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 
-            env_group = models.EnvironmentGroup(
+            env_group = EnvironmentGroup(
                 environmentUri=environment.environmentUri,
                 groupUri=group.groupUri,
                 environmentIAMRoleArn=environment.EnvironmentDefaultIAMRoleArn,
@@ -98,7 +99,7 @@ def environment_group(db):
 def dataset(db):
     def factory(
         organization: models.Organization,
-        environment: models.Environment,
+        environment: Environment,
         label: str,
     ) -> Dataset:
         with db.scoped_session() as session:
@@ -173,8 +174,8 @@ def table(db):
 def share(db):
     def factory(
         dataset: Dataset,
-        environment: models.Environment,
-        env_group: models.EnvironmentGroup
+        environment: Environment,
+        env_group: EnvironmentGroup
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(

@@ -1,6 +1,7 @@
 from dataall.db import models
 import pytest
 
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets_base.db.models import Dataset
 from tests.api.test_keyvaluetag import update_key_value_tags, list_tags_query
 
@@ -14,10 +15,10 @@ def org1(db, org, tenant, user, group) -> models.Organization:
 @pytest.fixture(scope='module')
 def env1(
         db, org1: models.Organization, user, group, module_mocker, env
-) -> models.Environment:
+) -> Environment:
     module_mocker.patch('requests.post', return_value=True)
     module_mocker.patch(
-        'dataall.api.Objects.Environment.resolvers.check_environment', return_value=True
+        'dataall.core.environment.api.resolvers.check_environment', return_value=True
     )
     env1 = env(org1, 'dev', user.userName, group.name, '111111111111', 'eu-west-1')
     yield env1

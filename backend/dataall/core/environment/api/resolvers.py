@@ -10,20 +10,21 @@ from sqlalchemy import and_, exc
 from dataall.aws.handlers.iam import IAM
 from dataall.aws.handlers.parameter_store import ParameterStoreManager
 from dataall.aws.handlers.sts import SessionHelper
+from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.vpc.db.vpc import Vpc
 from dataall.db import exceptions, permissions
-from dataall.db.api import Environment
 from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from ..Organization.resolvers import *
-from ...constants import *
+from dataall.api.Objects.Organization.resolvers import *
+from dataall.api.constants import *
 
 log = logging.getLogger()
 
@@ -84,7 +85,7 @@ def create_environment(context: Context, source, input=None):
                                           region=input.get('region')
                                           )
         input['cdk_role_name'] = cdk_role_name
-        env = Environment.create_environment(
+        env = EnvironmentService.create_environment(
             session=session,
             uri=input.get('organizationUri'),
             data=input,
@@ -112,7 +113,7 @@ def update_environment(
 
     with context.engine.scoped_session() as session:
 
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         cdk_role_name = check_environment(context, source,
                                           account_id=environment.AwsAccountId,
                                           region=environment.region
@@ -120,7 +121,7 @@ def update_environment(
 
         previous_resource_prefix = environment.resourcePrefix
 
-        environment = db.api.Environment.update_environment(
+        environment = EnvironmentService.update_environment(
             session,
             uri=environmentUri,
             data=input,
@@ -134,7 +135,7 @@ def update_environment(
 
 def invite_group(context: Context, source, input):
     with context.engine.scoped_session() as session:
-        environment, environment_group = db.api.Environment.invite_group(
+        environment, environment_group = EnvironmentService.invite_group(
             session=session,
             uri=input['environmentUri'],
             data=input,
@@ -147,14 +148,14 @@ def invite_group(context: Context, source, input):
 
 def add_consumption_role(context: Context, source, input):
     with context.engine.scoped_session() as session:
-        env = db.api.Environment.get_environment_by_uri(session, input['environmentUri'])
+        env = EnvironmentService.get_environment_by_uri(session, input['environmentUri'])
         role = IAM.get_role(env.AwsAccountId, input['IAMRoleArn'])
         if not role:
             raise exceptions.AWSResourceNotFound(
                 action='ADD_CONSUMPTION_ROLE',
                 message=f"{input['IAMRoleArn']} does not exist in this account",
             )
-        consumption_role = db.api.Environment.add_consumption_role(
+        consumption_role = EnvironmentService.add_consumption_role(
             session=session,
             uri=input['environmentUri'],
             data=input,
@@ -165,7 +166,7 @@ def add_consumption_role(context: Context, source, input):
 
 def update_group_permissions(context, source, input):
     with context.engine.scoped_session() as session:
-        environment = db.api.Environment.update_group_permissions(
+        environment = EnvironmentService.update_group_permissions(
             session=session,
             uri=input['environmentUri'],
             data=input,
@@ -178,7 +179,7 @@ def update_group_permissions(context, source, input):
 
 def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     with context.engine.scoped_session() as session:
-        environment = db.api.Environment.remove_group(
+        environment = EnvironmentService.remove_group(
             session=session,
             uri=environmentUri,
             group=groupUri,
@@ -191,7 +192,7 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
 
 def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
     with context.engine.scoped_session() as session:
-        status = db.api.Environment.remove_consumption_role(
+        status = EnvironmentService.remove_consumption_role(
             session=session,
             uri=consumptionRoleUri,
             env_uri=environmentUri,
@@ -206,7 +207,7 @@ def list_environment_invited_groups(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_environment_invited_groups(
+        return EnvironmentService.paginated_environment_invited_groups(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -217,7 +218,7 @@ def list_environment_groups(context: Context, source, environmentUri=None, filte
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_user_environment_groups(
+        return EnvironmentService.paginated_user_environment_groups(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -230,7 +231,7 @@ def list_all_environment_groups(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_all_environment_groups(
+        return EnvironmentService.paginated_all_environment_groups(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -243,7 +244,7 @@ def list_environment_consumption_roles(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_user_environment_consumption_roles(
+        return EnvironmentService.paginated_user_environment_consumption_roles(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -256,7 +257,7 @@ def list_all_environment_consumption_roles(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_all_environment_consumption_roles(
+        return EnvironmentService.paginated_all_environment_consumption_roles(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -269,7 +270,7 @@ def list_environment_group_invitation_permissions(
     environmentUri=None,
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Environment.list_group_invitation_permissions(
+        return EnvironmentService.list_group_invitation_permissions(
             session=session,
             username=context.username,
             groups=context.groups,
@@ -281,7 +282,7 @@ def list_environments(context: Context, source, filter=None):
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_user_environments(session, filter)
+        return EnvironmentService.paginated_user_environments(session, filter)
 
 
 def list_environment_networks(
@@ -290,7 +291,7 @@ def list_environment_networks(
     if filter is None:
         filter = {}
     with context.engine.scoped_session() as session:
-        return db.api.Environment.paginated_environment_networks(
+        return EnvironmentService.paginated_environment_networks(
             session=session,
             uri=environmentUri,
             data=filter,
@@ -311,10 +312,10 @@ def resolve_vpc_list(context: Context, source, **kwargs):
 
 def get_environment(context: Context, source, environmentUri: str = None):
     with context.engine.scoped_session() as session:
-        return db.api.Environment.find_environment_by_uri(session, uri=environmentUri)
+        return EnvironmentService.find_environment_by_uri(session, uri=environmentUri)
 
 
-def resolve_user_role(context: Context, source: models.Environment):
+def resolve_user_role(context: Context, source: Environment):
     if source.owner == context.username:
         return EnvironmentPermission.Owner.value
     elif source.SamlGroupName in context.groups:
@@ -322,11 +323,11 @@ def resolve_user_role(context: Context, source: models.Environment):
     else:
         with context.engine.scoped_session() as session:
             env_group = (
-                session.query(models.EnvironmentGroup)
+                session.query(EnvironmentGroup)
                 .filter(
                     and_(
-                        models.EnvironmentGroup.environmentUri == source.environmentUri,
-                        models.EnvironmentGroup.groupUri.in_(context.groups),
+                        EnvironmentGroup.environmentUri == source.environmentUri,
+                        EnvironmentGroup.groupUri.in_(context.groups),
                     )
                 )
                 .first()
@@ -340,7 +341,7 @@ def list_environment_group_permissions(
     context, source, environmentUri: str = None, groupUri: str = None
 ):
     with context.engine.scoped_session() as session:
-        return db.api.Environment.list_group_permissions(
+        return EnvironmentService.list_group_permissions(
             session=session,
             uri=environmentUri,
             group_uri=groupUri
@@ -368,11 +369,11 @@ def _get_environment_group_aws_session(
                 message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
             )
     else:
-        env_group: models.EnvironmentGroup = (
-            session.query(models.EnvironmentGroup)
+        env_group: EnvironmentGroup = (
+            session.query(EnvironmentGroup)
             .filter(
-                models.EnvironmentGroup.environmentUri == environment.environmentUri,
-                models.EnvironmentGroup.groupUri == groupUri,
+                EnvironmentGroup.environmentUri == environment.environmentUri,
+                EnvironmentGroup.groupUri == groupUri,
             )
             .first()
         )
@@ -408,7 +409,7 @@ def get_environment_assume_role_url(
             resource_uri=environmentUri,
             permission_name=permissions.CREDENTIALS_ENVIRONMENT,
         )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         url = SessionHelper.get_console_access_url(
             _get_environment_group_aws_session(
                 session=session,
@@ -433,7 +434,7 @@ def generate_environment_access_token(
             resource_uri=environmentUri,
             permission_name=permissions.CREDENTIALS_ENVIRONMENT,
         )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         c = _get_environment_group_aws_session(
             session=session,
             username=context.username,
@@ -449,7 +450,7 @@ def generate_environment_access_token(
     return json.dumps(credentials)
 
 
-def get_environment_stack(context: Context, source: models.Environment, **kwargs):
+def get_environment_stack(context: Context, source: Environment, **kwargs):
     return stack_helper.get_stack_with_cfn_resources(
         targetUri=source.environmentUri,
         environmentUri=source.environmentUri,
@@ -460,10 +461,10 @@ def delete_environment(
     context: Context, source, environmentUri: str = None, deleteFromAWS: bool = False
 ):
     with context.engine.scoped_session() as session:
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
 
         try:
-            db.api.Environment.delete_environment(
+            EnvironmentService.delete_environment(
                 session,
                 uri=environmentUri,
                 environment=environment
@@ -496,7 +497,7 @@ def enable_subscriptions(
             resource_uri=environmentUri,
             permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
         if input.get('producersTopicArn'):
             environment.subscriptionsProducersTopicName = input.get('producersTopicArn')
             environment.subscriptionsProducersTopicImported = True
@@ -531,7 +532,7 @@ def disable_subscriptions(context: Context, source, environmentUri: str = None):
             resource_uri=environmentUri,
             permission_name=permissions.ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
         )
-        environment = db.api.Environment.get_environment_by_uri(session, environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
 
         environment.subscriptionsConsumersTopicName = None
         environment.subscriptionsConsumersTopicImported = False
@@ -630,12 +631,12 @@ def resolve_environment(context, source, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return session.query(models.Environment).get(source.environmentUri)
+        return session.query(Environment).get(source.environmentUri)
 
 
-def resolve_parameters(context, source: models.Environment, **kwargs):
+def resolve_parameters(context, source: Environment, **kwargs):
     """Resolves a parameters for the environment"""
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return Environment.get_environment_parameters(session, source.environmentUri)
+        return EnvironmentService.get_environment_parameters(session, source.environmentUri)

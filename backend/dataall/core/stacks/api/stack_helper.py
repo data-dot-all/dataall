@@ -5,18 +5,18 @@ import requests
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.base.config import config
 from dataall.base.context import get_context
+from dataall.core.environment.db.models import Environment
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.stacks.db.stack import Stack
 from dataall.core.stacks.db.stack_models import Stack as StackModel
 from dataall.core.tasks.db.task_models import Task
-from dataall.db import models
 from dataall.utils import Parameter
 
 
 def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
     context = get_context()
     with context.db_engine.scoped_session() as session:
-        env: models.Environment = session.query(models.Environment).get(environmentUri)
+        env: Environment = session.query(Environment).get(environmentUri)
         stack: StackModel = Stack.find_stack_by_target_uri(
             session, target_uri=targetUri
         )

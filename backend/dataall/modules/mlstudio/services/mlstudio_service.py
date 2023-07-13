@@ -8,13 +8,13 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from dataall.base.context import get_context
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission, \
     has_group_permission
 from dataall.core.stacks.api import stack_helper
 from dataall.core.stacks.db.stack import Stack
 from dataall.db import exceptions
-from dataall.db.api import Environment
 from dataall.modules.mlstudio.aws.sagemaker_studio_client import sagemaker_studio_client, get_sagemaker_studio_domain
 from dataall.modules.mlstudio.db.mlstudio_repository import SageMakerStudioRepository
 from dataall.modules.mlstudio.db.models import SagemakerStudioUser
@@ -69,8 +69,8 @@ class SagemakerStudioService:
         Throws an exception if a SageMaker domain is not found
         """
         with _session() as session:
-            env = Environment.get_environment_by_uri(session, uri)
-            enabled = Environment.get_boolean_env_param(session, env, "mlStudiosEnabled")
+            env = EnvironmentService.get_environment_by_uri(session, uri)
+            enabled = EnvironmentService.get_boolean_env_param(session, env, "mlStudiosEnabled")
 
             if not enabled:
                 raise exceptions.UnauthorizedOperation(
@@ -177,7 +177,7 @@ class SagemakerStudioService:
         """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""
         with _session() as session:
             user = SagemakerStudioService._get_sagemaker_studio_user(session, uri)
-            env = Environment.get_environment_by_uri(session, user.environmentUri)
+            env = EnvironmentService.get_environment_by_uri(session, user.environmentUri)
             session.delete(user)
 
             ResourcePolicy.delete_resource_policy(
