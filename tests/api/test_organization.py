@@ -2,6 +2,7 @@ import dataall
 import pytest
 
 from dataall.core.environment.db.models import Environment, EnvironmentParameter
+from dataall.core.organizations.api.enums import OrganisationUserRole
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -178,7 +179,7 @@ def test_list_organizations_anyone(client, org1):
         }""",
         'tom',
         ['all'],
-        filter={'roles': [dataall.api.constants.OrganisationUserRole.Member.name]},
+        filter={'roles': [OrganisationUserRole.Member.name]},
     )
     print(response)
     assert response.data.listOrganizations.count == 0

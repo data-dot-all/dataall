@@ -1,9 +1,8 @@
 import pytest
 
 import dataall
-from dataall.api.constants import OrganisationUserRole
 from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.core.permissions.db.permission import Permission
 from dataall.core.permissions.db.permission_models import PermissionType
 from dataall.core.permissions.db.tenant import Tenant

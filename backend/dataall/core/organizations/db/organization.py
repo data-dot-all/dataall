@@ -5,9 +5,8 @@ from sqlalchemy.orm import Query
 
 from dataall.db import exceptions, permissions, paginate
 from dataall.db import models
-from dataall.core.organizations.db.organization_models import OrganizationGroup
+from dataall.core.organizations.db.organization_models import OrganizationGroup, OrganisationUserRole
 from dataall.core.organizations.db import organization_models as models
-from dataall.db.models.Enums import OrganisationUserRole
 from dataall.core.environment.db.models import Environment
 from dataall.core.permissions.permission_checker import has_resource_permission, has_tenant_permission
 from dataall.base.context import get_context

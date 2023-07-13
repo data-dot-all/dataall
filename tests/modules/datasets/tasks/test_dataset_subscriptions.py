@@ -3,9 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 
 import dataall
-from dataall.api.constants import OrganisationUserRole
 from dataall.core.environment.db.models import Environment
-from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset

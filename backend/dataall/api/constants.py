@@ -32,14 +32,6 @@ class GraphQLEnumMapper(Enum):
         return None
 
 
-class OrganisationUserRole(GraphQLEnumMapper):
-    Owner = '999'
-    Admin = '900'
-    Member = '100'
-    NotMember = '000'
-    Invited = '800'
-
-
 class GroupMemberRole(GraphQLEnumMapper):
     Owner = 'Owner'
     Admin = 'Admin'

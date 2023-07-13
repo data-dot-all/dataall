@@ -1,6 +1,5 @@
 from .input_types import *
 from .resolvers import *
-from dataall.api.constants import OrganisationUserRole
 
 OrganizationStats = gql.ObjectType(
     name='OrganizationStats',
