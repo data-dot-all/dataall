@@ -231,6 +231,7 @@ const DatasetImportForm = (props) => {
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 glueDatabaseName: Yup.string().max(255),
+                KmsKeyAlias: Yup.string().max(255),
                 bucketName: Yup.string()
                   .max(255)
                   .required('*S3 bucket name is required'),
