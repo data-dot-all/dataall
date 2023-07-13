@@ -4,7 +4,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
 from dataall.modules.dashboards import DashboardRepository
-from dataall.searchproxy.base_indexer import BaseIndexer
+from dataall.core.catalog.indexers.base_indexer import BaseIndexer
 from dataall.modules.dashboards.db.models import Dashboard
 
 log = logging.getLogger(__name__)

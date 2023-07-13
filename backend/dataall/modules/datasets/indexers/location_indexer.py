@@ -4,7 +4,7 @@ from dataall.core.organizations.db.organization import Organization
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer
-from dataall.searchproxy.base_indexer import BaseIndexer
+from dataall.core.catalog.indexers.base_indexer import BaseIndexer
 
 
 class DatasetLocationIndexer(BaseIndexer):
