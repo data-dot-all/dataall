@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 
 
 class Environment:
+
     @staticmethod
     @has_tenant_permission(permissions.MANAGE_ENVIRONMENTS)
     @has_resource_permission(permissions.LINK_ENVIRONMENT)
