@@ -169,13 +169,20 @@ class Dataset:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
 
-        dataset.GlueCrawlerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-crawler'
-        dataset.GlueProfilingJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-profiler'
+        glue_etl_basename = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE_ETL,
+            resource_prefix=environment.resourcePrefix,
+        ).build_compliant_name()
+
+        dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
+        dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
         dataset.GlueProfilingTriggerSchedule = None
-        dataset.GlueProfilingTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-trigger'
-        dataset.GlueDataQualityJobName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dataquality'
+        dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
+        dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
         dataset.GlueDataQualitySchedule = None
-        dataset.GlueDataQualityTriggerName = f'{dataset.S3BucketName}-{dataset.datasetUri}-dqtrigger'
+        dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
         return dataset
 
     @staticmethod
