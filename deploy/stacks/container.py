@@ -68,7 +68,7 @@ class ContainerStack(pyNestedClass):
                 repository=ecr_repository, tag=cdkproxy_image_tag
             ),
             environment=self._create_env('DEBUG'),
-            command=['python3.8', '-m', 'dataall.tasks.cdkproxy'],
+            command=['python3.8', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(

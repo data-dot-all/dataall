@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
-from ..cdkproxy.cdk_cli_wrapper import deploy_cdk_stack
-from ..db import get_engine
+from dataall.cdkproxy.cdk_cli_wrapper import deploy_cdk_stack
+from dataall.db import get_engine
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -18,6 +18,6 @@ if __name__ == '__main__':
     stack_uri = os.getenv('stackUri')
     logger.info(f'Starting deployment task for stack : {stack_uri}')
 
-    deploy_cdk_stack(engine=engine, stackid=stack_uri, app_path='../cdkproxy/app.py')
+    deploy_cdk_stack(engine=engine, stackid=stack_uri, app_path='../../../cdkproxy/app.py')
 
     logger.info('Deployment task finished successfully')
