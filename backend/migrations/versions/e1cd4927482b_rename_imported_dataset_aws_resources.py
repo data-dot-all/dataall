@@ -101,6 +101,9 @@ def upgrade():
             dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
             dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
             dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
+            if not dataset.importedKmsKey:
+                # Not adding downgrade for this line because this is a fix not an upgrade
+                dataset.KmsAlias = "Undefined"
             session.commit()
         print('imported Datasets resources updated successfully')
     except Exception as e:
@@ -115,15 +118,12 @@ def downgrade():
         imported_datasets: [Dataset] = session.query(Dataset).filter(Dataset.imported.is_(True))
         for dataset in imported_datasets:
             print(f"Updating dataset {dataset.datasetUri}")
-            glue_etl_basename = dataset.S3BucketName
+            glue_etl_basename = f"{dataset.S3BucketName}-{dataset.datasetUri}"
             dataset.GlueCrawlerName = f"{glue_etl_basename}-crawler"
             dataset.GlueProfilingJobName = f"{glue_etl_basename}-profiler"
             dataset.GlueProfilingTriggerName = f"{glue_etl_basename}-trigger"
             dataset.GlueDataQualityJobName = f"{glue_etl_basename}-dataquality"
             dataset.GlueDataQualityTriggerName = f"{glue_etl_basename}-dqtrigger"
-            if not dataset.importedKmsKey:
-                # Not adding downgrade for this line because this is a fix not an upgrade
-                dataset.KmsAlias = "Undefined"
             session.commit()
         print('imported Datasets resources updated successfully')
     except Exception as e:
