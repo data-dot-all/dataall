@@ -4,7 +4,7 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.core.environment.db.models import Environment
 from dataall.modules.datasets import Dataset
 
 log = logging.getLogger(__name__)

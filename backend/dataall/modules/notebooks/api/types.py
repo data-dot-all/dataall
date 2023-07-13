@@ -7,7 +7,7 @@ from dataall.modules.notebooks.api.resolvers import (
 )
 
 from dataall.core.environment.api.resolvers import resolve_environment
-from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
+from dataall.core.organizations.api.resolvers import resolve_organization_by_env
 
 from dataall.modules.notebooks.api.enums import SagemakerNotebookRole
 

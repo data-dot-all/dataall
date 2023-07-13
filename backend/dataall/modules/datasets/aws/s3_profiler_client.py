@@ -1,7 +1,7 @@
 import logging
 
 from dataall.aws.handlers.sts import SessionHelper
-from dataall.db.models import Environment
+from dataall.core.environment.db.models import Environment
 
 log = logging.getLogger(__name__)
 

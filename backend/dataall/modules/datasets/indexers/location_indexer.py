@@ -1,6 +1,6 @@
 """Indexes DatasetStorageLocation in OpenSearch"""
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.db.api import Organization
+from dataall.core.organizations.db.organization import Organization
 from dataall.modules.datasets.db.dataset_location_repository import DatasetLocationRepository
 from dataall.modules.datasets_base.db.dataset_repository import DatasetRepository
 from dataall.modules.datasets.indexers.dataset_indexer import DatasetIndexer

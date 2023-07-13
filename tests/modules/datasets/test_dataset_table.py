@@ -2,7 +2,6 @@ import typing
 
 import pytest
 
-import dataall
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.datasets.services.dataset_table_service import DatasetTableService

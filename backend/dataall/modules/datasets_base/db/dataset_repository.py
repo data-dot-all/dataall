@@ -6,7 +6,7 @@ from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.db.api import Organization
+from dataall.core.organizations.db.organization import Organization
 from dataall.db import paginate
 from dataall.db.exceptions import ObjectNotFound
 from dataall.db.models.Enums import Language

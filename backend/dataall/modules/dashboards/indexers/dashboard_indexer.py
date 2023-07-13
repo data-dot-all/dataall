@@ -1,8 +1,8 @@
 import logging
 
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.organizations.db.organization import Organization
 from dataall.core.vote.db.vote import Vote
-from dataall.db.api import Organization
 from dataall.modules.dashboards import DashboardRepository
 from dataall.searchproxy.base_indexer import BaseIndexer
 from dataall.modules.dashboards.db.models import Dashboard

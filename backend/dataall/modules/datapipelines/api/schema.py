@@ -3,7 +3,7 @@ from dataall.modules.datapipelines.api.resolvers import list_pipeline_environmen
     get_clone_url_http, get_stack, resolve_user_role
 from dataall.modules.datapipelines.api.enums import DataPipelineRole
 from dataall.core.environment.api.resolvers import resolve_environment
-from dataall.api.Objects.Organization.resolvers import resolve_organization_by_env
+from dataall.core.organizations.api.resolvers import resolve_organization_by_env
 
 DataPipeline = gql.ObjectType(
     name='DataPipeline',

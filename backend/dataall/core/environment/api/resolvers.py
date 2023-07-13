@@ -24,8 +24,7 @@ from dataall.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
-from dataall.api.Objects.Organization.resolvers import *
-from dataall.api.constants import *
+from dataall.core.organizations.api.resolvers import *
 
 log = logging.getLogger()
 
