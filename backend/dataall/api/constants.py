@@ -31,12 +31,6 @@ class GraphQLEnumMapper(Enum):
                 return c.name
         return None
 
-
-class GlossaryRole(GraphQLEnumMapper):
-    # Permissions on a glossary
-    Admin = '900'
-    NoPermission = '000'
-
 class SortDirection(GraphQLEnumMapper):
     asc = 'asc'
     desc = 'desc'

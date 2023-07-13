@@ -2,14 +2,12 @@ from datetime import datetime
 
 from sqlalchemy import and_, or_, asc
 
+from dataall.core.catalog.api.enums import GlossaryRole
 from dataall.core.catalog.api.registry import GlossaryRegistry
 from dataall.api.context import Context
 from dataall.core.catalog.db.glossary import Glossary
 from dataall.core.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.db import paginate, exceptions
-from dataall.api.constants import (
-    GlossaryRole
-)
 
 
 def resolve_glossary_node(obj: GlossaryNode, *_):
