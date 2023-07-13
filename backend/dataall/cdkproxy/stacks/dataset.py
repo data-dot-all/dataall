@@ -451,7 +451,7 @@ class Dataset(Stack):
         crawler = glue.CfnCrawler(
             self,
             dataset.GlueCrawlerName,
-            description=f'datall Glue Crawler for bucket {dataset.S3BucketName}',
+            description=f'datall Glue Crawler for S3 Bucket {dataset.S3BucketName}',
             name=dataset.GlueCrawlerName,
             database_name=dataset.GlueDatabaseName,
             schedule={'scheduleExpression': f'{dataset.GlueCrawlerSchedule}'}
@@ -490,6 +490,7 @@ class Dataset(Stack):
             self,
             'DatasetGlueProfilingJob',
             name=dataset.GlueProfilingJobName,
+            description=f'datall Glue Profiling job for dataset {dataset.label}',
             role=dataset_admin_role.role_arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(
@@ -512,6 +513,7 @@ class Dataset(Stack):
                 self,
                 'DatasetGlueProfilingTrigger',
                 name=dataset.GlueProfilingTriggerName,
+                description=f'datall Glue Profiling trigger schedule for dataset {dataset.label}',
                 type='SCHEDULED',
                 schedule=dataset.GlueProfilingTriggerSchedule,
                 start_on_creation=True,
