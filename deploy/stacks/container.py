@@ -393,11 +393,11 @@ class ContainerStack(pyNestedClass):
                         'Allow Lambda to ECS Connection'
                     )
 
-            # Add NAT Gateway Access for RAM API Access
-            sg_connection.add_egress_rule(
+            # Add NAT Gateway Access for Cross-region requests in same region the more specific rules apply
+            sg_connection.allow_to(
                 ec2.Peer.any_ipv4(),
                 ec2.Port.tcp(443),
-                'Allow NAT Internet Access SG Egress',
+                'Allow NAT Internet Access SG Egress'
             )
 
         # Create SSM of Security Group IDs
