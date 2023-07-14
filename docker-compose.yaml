@@ -17,7 +17,8 @@ services:
     environment:
       envname: 'dkrcompose'
       config_location: "/config.json"
-      AWS_DEFAULT_REGION: "eu-west-1"
+      AWS_REGION: "${AWS_REGION:-eu-west-1}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
@@ -39,7 +40,8 @@ services:
     environment:
       envname: 'dkrcompose'
       config_location: "/config.json"
-      AWS_DEFAULT_REGION: "eu-west-1"
+      AWS_REGION: "${AWS_REGION:-eu-west-1}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
     volumes:
       - ./backend:/code
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
@@ -96,7 +98,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1024M
+          memory: 4096M
         reservations:
           memory: 128M
     ports:

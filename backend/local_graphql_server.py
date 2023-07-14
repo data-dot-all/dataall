@@ -8,8 +8,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from dataall import db
-
-sts = boto3.client('sts', region_name='eu-west-1')
 from dataall.api import get_executable_schema
 from dataall.aws.handlers.service_handlers import Worker
 from dataall.db import get_engine, Base, create_schema_and_tables, init_permissions, api
@@ -23,6 +21,8 @@ import logging
 logger = logging.getLogger('graphql')
 logger.propagate = False
 logger.setLevel(logging.INFO)
+
+sts = boto3.client('sts', region_name='eu-west-1')
 Worker.queue = Worker.process
 ENVNAME = os.getenv('envname', 'local')
 logger.warning(f'Connecting to database `{ENVNAME}`')
@@ -30,7 +30,7 @@ engine = get_engine(envname=ENVNAME)
 es = connect(envname=ENVNAME)
 logger.info('Connected')
 # create_schema_and_tables(engine, envname=ENVNAME)
-load_modules(modes=[ImportMode.API, ImportMode.TASKS])
+load_modules(modes={ImportMode.API, ImportMode.HANDLERS})
 Base.metadata.create_all(engine.engine)
 CDKPROXY_URL = (
     'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
@@ -86,12 +86,11 @@ def request_context(headers, mock=False):
                 tenant_name='dataall',
             )
 
-    set_context(RequestContext(engine, username, groups, es))
+    set_context(RequestContext(engine, username, groups))
 
     # TODO: remove when the migration to a new RequestContext API is complete. Used only for backward compatibility
     context = Context(
         engine=engine,
-        es=es,
         schema=schema,
         username=username,
         groups=groups,

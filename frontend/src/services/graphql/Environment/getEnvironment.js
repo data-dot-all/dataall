@@ -14,10 +14,6 @@ export const getEnvironment = ({ environmentUri }) => ({
         name
         label
         AwsAccountId
-        dashboardsEnabled
-        mlStudiosEnabled
-        pipelinesEnabled
-        warehousesEnabled
         region
         owner
         tags
@@ -49,10 +45,6 @@ export const getEnvironment = ({ environmentUri }) => ({
           outputs
           resources
         }
-        dashboardsEnabled
-        mlStudiosEnabled
-        pipelinesEnabled
-        warehousesEnabled
         networks {
           VpcId
           privateSubnetIds

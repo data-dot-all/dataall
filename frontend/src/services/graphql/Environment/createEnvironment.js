@@ -13,10 +13,6 @@ export const createEnvironment = (input) => ({
         SamlGroupName
         AwsAccountId
         created
-        dashboardsEnabled
-        mlStudiosEnabled
-        pipelinesEnabled
-        warehousesEnabled
         parameters {
           key
           value

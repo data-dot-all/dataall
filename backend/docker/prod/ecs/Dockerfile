@@ -49,7 +49,7 @@ RUN /bin/bash -c "pip3.8 install -r /dh.requirements.txt"
 RUN /bin/bash -c "pip3.8 install -r /cdk.requirements.txt"
 
 ADD backend/dataall /dataall
-ADD backend/blueprints /blueprints
+ADD backend/dataall/modules/datapipelines/blueprints /blueprints
 ADD backend/cdkproxymain.py /cdkproxymain.py
 
 ENV config_location="/config.json"

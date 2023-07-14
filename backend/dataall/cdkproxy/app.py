@@ -13,7 +13,7 @@ print(sys.version)
 logger = logging.getLogger('cdkapp process')
 logger.setLevel('INFO')
 
-load_modules(modes=[ImportMode.CDK])
+load_modules(modes={ImportMode.CDK})
 
 
 class CdkRunner:

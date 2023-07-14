@@ -1,18 +1,6 @@
+from tests.api.test_stack import update_stack_query
+
 
 def test_notebook_stack(client, sgm_notebook, group):
-    response = client.query(
-        """
-        mutation updateStack($targetUri:String!, $targetType:String!){
-            updateStack(targetUri:$targetUri, targetType:$targetType){
-                stackUri
-                targetUri
-                name
-            }
-        }
-        """,
-        targetUri=sgm_notebook.notebookUri,
-        targetType="notebook",
-        username="alice",
-        groups=[group.name],
-    )
+    response = update_stack_query(client, sgm_notebook.notebookUri, 'notebook', group.name)
     assert response.data.updateStack.targetUri == sgm_notebook.notebookUri

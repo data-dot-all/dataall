@@ -3,7 +3,6 @@ import os
 import requests
 
 from .... import db
-from ....api.context import Context
 from ....aws.handlers.service_handlers import Worker
 from ....aws.handlers.ecs import Ecs
 from ....db import models
@@ -84,15 +83,6 @@ def deploy_stack(targetUri):
         return stack
 
 
-def deploy_dataset_stack(dataset: models.Dataset):
-    """
-    Each dataset stack deployment triggers environment stack update
-    to rebuild teams IAM roles data access policies
-    """
-    deploy_stack(dataset.datasetUri)
-    deploy_stack(dataset.environmentUri)
-
-
 def delete_stack(
     target_uri, accountid, cdk_role_arn, region
 ):
@@ -115,25 +105,5 @@ def delete_stack(
         )
         session.add(task)
 
-    Worker.queue(context.db_engine, [task.taskUri])
-    return True
-
-
-def delete_repository(
-    target_uri, accountid, cdk_role_arn, region, repo_name
-):
-    context = get_context()
-    with context.db_engine.scoped_session() as session:
-        task = models.Task(
-            targetUri=target_uri,
-            action='repo.datapipeline.delete',
-            payload={
-                'accountid': accountid,
-                'region': region,
-                'cdk_role_arn': cdk_role_arn,
-                'repo_name': repo_name,
-            },
-        )
-        session.add(task)
     Worker.queue(context.db_engine, [task.taskUri])
     return True

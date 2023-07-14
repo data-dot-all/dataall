@@ -164,7 +164,7 @@ export const WorksheetView = () => {
             page: 1,
             pageSize: 10000,
             term: '',
-            uniqueDatasets: true,
+            uniqueShares: true,
             itemTypes: 'DatasetTable'
           }
         })

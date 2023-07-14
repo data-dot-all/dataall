@@ -48,30 +48,6 @@ listEnvironmentNetworks = gql.QueryField(
 )
 
 
-listDatasetsCreatedInEnvironment = gql.QueryField(
-    name='listDatasetsCreatedInEnvironment',
-    type=gql.Ref('DatasetSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
-    ],
-    resolver=list_datasets_created_in_environment,
-    test_scope='Dataset',
-)
-
-
-searchEnvironmentDataItems = gql.QueryField(
-    name='searchEnvironmentDataItems',
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('EnvironmentDataItemFilter')),
-    ],
-    resolver=list_shared_with_environment_data_items,
-    type=gql.Ref('EnvironmentPublishedItemSearchResults'),
-    test_scope='Dataset',
-)
-
-
 generateEnvironmentAccessToken = gql.QueryField(
     name='generateEnvironmentAccessToken',
     args=[
@@ -93,16 +69,6 @@ getEnvironmentAssumeRoleUrl = gql.QueryField(
     type=gql.String,
     resolver=get_environment_assume_role_url,
     test_scope='Environment',
-)
-
-listEnvironmentRedshiftClusters = gql.QueryField(
-    name='listEnvironmentClusters',
-    type=gql.Ref('RedshiftClusterSearchResult'),
-    args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('RedshiftClusterFilter')),
-    ],
-    resolver=list_environment_redshift_clusters,
 )
 
 

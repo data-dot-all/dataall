@@ -47,7 +47,6 @@ import EnvironmentDatasets from './EnvironmentDatasets';
 import EnvironmentOverview from './EnvironmentOverview';
 import EnvironmentSubscriptions from './EnvironmentSubscriptions';
 import EnvironmentTeams from './EnvironmentTeams';
-import EnvironmentWarehouses from './EnvironmentWarehouses';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -62,7 +61,6 @@ const tabs = [
     icon: <FolderOpen fontSize="small" />
   },
   { label: 'Networks', value: 'networks', icon: <FaNetworkWired size={20} /> },
-  /*{ label: 'Warehouses', value: 'warehouses', icon: <GoDatabase size={20} /> },*/
   {
     label: 'Subscriptions',
     value: 'subscriptions',
@@ -261,9 +259,6 @@ const EnvironmentView = () => {
             )}
             {currentTab === 'networks' && (
               <EnvironmentNetworks environment={env} />
-            )}
-            {currentTab === 'warehouses' && (
-              <EnvironmentWarehouses environment={env} />
             )}
             {currentTab === 'subscriptions' && (
               <EnvironmentSubscriptions

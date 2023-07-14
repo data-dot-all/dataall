@@ -1,18 +1,11 @@
 from ... import gql
 from .resolvers import *
+from dataall.api.Objects.Feed.registry import FeedRegistry
 
 
 FeedTarget = gql.Union(
     name='FeedTarget',
-    types=[
-        gql.Ref('Dataset'),
-        gql.Ref('DatasetTable'),
-        gql.Ref('DatasetTableColumn'),
-        gql.Ref('DatasetStorageLocation'),
-        gql.Ref('DataPipeline'),
-        gql.Ref('Worksheet'),
-        gql.Ref('Dashboard'),
-    ],
+    type_registry=FeedRegistry,
     resolver=resolve_feed_target_type,
 )
 

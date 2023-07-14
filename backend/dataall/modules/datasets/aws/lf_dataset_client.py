@@ -1,0 +1,41 @@
+import logging
+from botocore.exceptions import ClientError
+
+from dataall.aws.handlers.sts import SessionHelper
+from dataall.db.models import Environment
+from dataall.modules.datasets_base.db.models import Dataset
+
+log = logging.getLogger(__name__)
+PIVOT_ROLE_NAME_PREFIX = "datallPivotRole"
+
+
+class LakeFormationDatasetClient:
+
+    def __init__(self, env: Environment, dataset: Dataset):
+        session = SessionHelper.remote_session(env.AwsAccountId)
+        self._client = session.client('lakeformation', region_name=env.region)
+        self._dataset = dataset
+        self._env = env
+
+    def check_existing_lf_registered_location(self):
+        """
+        Checks if there is a non-dataall-created registered location for the Dataset
+        Returns False is already existing location else return the resource info
+        """
+
+        resource_arn = f'arn:aws:s3:::{self._dataset.S3BucketName}'
+        try:
+
+            response = self._client.describe_resource(ResourceArn=resource_arn)
+            registered_role_name = response['ResourceInfo']['RoleArn'].lstrip(f"arn:aws:iam::{self._env}:role/")
+            log.info(f'LF data location already registered: {response}, registered with role {registered_role_name}')
+            if registered_role_name.startswith(PIVOT_ROLE_NAME_PREFIX):
+                log.info(
+                    'The existing data location was created as part of the dataset stack. '
+                    'There was no pre-existing data location.')
+                return False
+            return response['ResourceInfo']
+
+        except ClientError as e:
+            log.info(f'LF data location for resource {resource_arn} not found due to {e}')
+            return False
