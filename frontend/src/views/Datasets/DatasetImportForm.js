@@ -231,12 +231,10 @@ const DatasetImportForm = (props) => {
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 glueDatabaseName: Yup.string().max(255),
+                KmsKeyAlias: Yup.string().max(255),
                 bucketName: Yup.string()
                   .max(255)
                   .required('*S3 bucket name is required'),
-                KmsKeyAlias: Yup.string()
-                  .max(255)
-                  .required('*KMS key Alias is required'),
                 confidentiality: Yup.string()
                   .max(255)
                   .required('*Confidentiality is required')
@@ -466,7 +464,7 @@ const DatasetImportForm = (props) => {
                             )}
                             fullWidth
                             helperText={touched.KmsKeyAlias && errors.KmsKeyAlias}
-                            label="Amazon KMS key Alias"
+                            label="Amazon KMS key Alias (if SSE-KMS encryption is used)"
                             name="KmsKeyAlias"
                             onBlur={handleBlur}
                             onChange={handleChange}
