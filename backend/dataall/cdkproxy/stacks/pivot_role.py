@@ -171,7 +171,7 @@ class PivotRole(NestedStack):
                     ],
                     resources=[f'arn:aws:s3:*:{self.account}:accesspoint/*'],
                 ),
-                # Glue - needed to handle databases and tables
+                # Glue - needed to handle databases and tables and cross-account shares
                 iam.PolicyStatement(
                     sid='GlueCatalog',
                     effect=iam.Effect.ALLOW,
@@ -193,6 +193,8 @@ class PivotRole(NestedStack):
                         'glue:UpdatePartition',
                         'glue:UpdateTable',
                         'glue:TagResource',
+                        'glue:DeleteResourcePolicy',
+                        'glue:PutResourcePolicy',
                     ],
                     resources=['*'],
                 ),

@@ -140,6 +140,8 @@ Resources:
               - 'glue:UpdatePartition'
               - 'glue:UpdateTable'
               - 'glue:TagResource'
+              - 'glue:DeleteResourcePolicy'
+              - 'glue:PutResourcePolicy'
             Effect: Allow
             Resource: '*'
           - Sid: GlueETL
