@@ -1,11 +1,12 @@
 import os
 import logging
+
+from dataall.core.cognito_groups.aws.cognito import Cognito
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization import Organization
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from dataall.db import exceptions
-from dataall.db.models import Group
-from dataall.aws.handlers.cognito import Cognito
 
 log = logging.getLogger()
 

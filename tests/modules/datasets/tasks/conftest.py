@@ -1,7 +1,7 @@
 import pytest
 
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.db import models
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
@@ -11,7 +11,7 @@ from dataall.modules.datasets_base.db.models import DatasetStorageLocation, Data
 @pytest.fixture(scope="module")
 def group(db):
     with db.scoped_session() as session:
-        group = models.Group(name="bobteam", label="bobteam", owner="alice")
+        group = Group(name="bobteam", label="bobteam", owner="alice")
         session.add(group)
     yield group
 
@@ -19,7 +19,7 @@ def group(db):
 @pytest.fixture(scope="module")
 def group2(db):
     with db.scoped_session() as session:
-        group = models.Group(name="bobteam2", label="bobteam2", owner="alice2")
+        group = Group(name="bobteam2", label="bobteam2", owner="alice2")
         session.add(group)
     yield group
 
@@ -77,7 +77,7 @@ def environment(db):
 def environment_group(db):
     def factory(
         environment: Environment,
-        group: models.Group,
+        group: Group,
     ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 

@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from .resolvers import get_group, list_cognito_groups
+from dataall.core.cognito_groups.api.resolvers import get_group, list_cognito_groups
 
 getGroup = gql.QueryField(
     name='getGroup',

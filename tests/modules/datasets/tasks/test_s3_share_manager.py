@@ -6,9 +6,9 @@ import json
 from typing import Callable
 
 import dataall.modules.dataset_sharing.services.share_managers
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.db import models
 from dataall.modules.dataset_sharing.aws.s3_client import S3ControlClient
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
 
@@ -30,7 +30,7 @@ def org1(org: Callable) -> Organization:
 
 
 @pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: Organization, group: models.Group):
+def source_environment(environment: Callable, org1: Organization, group: Group):
     source_environment = environment(
         organization=org1,
         awsAccountId=SOURCE_ENV_ACCOUNT,
@@ -43,13 +43,13 @@ def source_environment(environment: Callable, org1: Organization, group: models.
 
 
 @pytest.fixture(scope="module")
-def source_environment_group(environment_group: Callable, source_environment: Environment, group: models.Group):
+def source_environment_group(environment_group: Callable, source_environment: Environment, group: Group):
     source_environment_group = environment_group(source_environment, group)
     yield source_environment_group
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: Organization, group2: models.Group):
+def target_environment(environment: Callable, org1: Organization, group2: Group):
     target_environment = environment(
         organization=org1,
         awsAccountId=TARGET_ACCOUNT_ENV,
@@ -62,7 +62,7 @@ def target_environment(environment: Callable, org1: Organization, group2: models
 
 
 @pytest.fixture(scope="module")
-def target_environment_group(environment_group: Callable, target_environment: Environment, group2: models.Group):
+def target_environment_group(environment_group: Callable, target_environment: Environment, group2: Group):
     target_environment_group = environment_group(target_environment, group2)
     yield target_environment_group
 

@@ -1,3 +1,4 @@
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.db.permission import Permission
@@ -5,7 +6,6 @@ from dataall.core.permissions.db.resource_policy import ResourcePolicy
 from dataall.core.permissions.db.tenant import Tenant
 from dataall.core.permissions.db.tenant_policy import TenantPolicy
 from .client import *
-from dataall.db import models
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -57,7 +57,7 @@ def permissions(db):
 @pytest.fixture(scope='module')
 def group(db):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='testadmins', label='testadmins', owner='alice')
+        group = Group(name='testadmins', label='testadmins', owner='alice')
         session.add(group)
         session.commit()
         yield group
@@ -66,7 +66,7 @@ def group(db):
 @pytest.fixture(scope='module')
 def group2(db):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='dataengineers', label='dataengineers', owner='bob')
+        group = Group(name='dataengineers', label='dataengineers', owner='bob')
         session.add(group)
         session.commit()
         yield group
@@ -75,7 +75,7 @@ def group2(db):
 @pytest.fixture(scope='module')
 def group3(db):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='datascientists', label='datascientists', owner='david')
+        group = Group(name='datascientists', label='datascientists', owner='david')
         session.add(group)
         session.commit()
         yield group
@@ -84,7 +84,7 @@ def group3(db):
 @pytest.fixture(scope='module')
 def group4(db, user3):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(name='externals', label='externals', owner=user3.userName)
+        group = Group(name='externals', label='externals', owner=user3.userName)
         session.add(group)
         session.commit()
         yield group
@@ -206,7 +206,7 @@ def environment(db):
 def environment_group(db):
     def factory(
         environment: Environment,
-        group: models.Group,
+        group: Group,
     ) -> EnvironmentGroup:
         with db.scoped_session() as session:
 

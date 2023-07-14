@@ -10,9 +10,6 @@ from ariadne import (
     make_executable_schema,
 )
 
-from . import (
-    Group,
-)
 from ...api.constants import GraphQLEnumMapper
 from ...base.api import gql
 

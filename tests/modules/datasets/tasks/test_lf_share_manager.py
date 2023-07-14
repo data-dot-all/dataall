@@ -10,8 +10,8 @@ import pytest
 
 from typing import Callable
 
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.db import models
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.modules.dataset_sharing.api.enums import ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem
@@ -42,7 +42,7 @@ def org1(org: Callable) -> Organization:
 
 
 @pytest.fixture(scope="module")
-def source_environment(environment: Callable, org1: Organization, group: models.Group) -> Environment:
+def source_environment(environment: Callable, org1: Organization, group: Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=SOURCE_ENV_ACCOUNT,
@@ -55,7 +55,7 @@ def source_environment(environment: Callable, org1: Organization, group: models.
 
 @pytest.fixture(scope="module")
 def source_environment_group(environment_group: Callable, source_environment: Environment,
-                             group: models.Group) -> EnvironmentGroup:
+                             group: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
         group=group
@@ -64,7 +64,7 @@ def source_environment_group(environment_group: Callable, source_environment: En
 
 @pytest.fixture(scope="module")
 def source_environment_group_requesters(environment_group: Callable, source_environment: Environment,
-                                        group2: models.Group) -> EnvironmentGroup:
+                                        group2: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=source_environment,
         group=group2
@@ -72,7 +72,7 @@ def source_environment_group_requesters(environment_group: Callable, source_envi
 
 
 @pytest.fixture(scope="module")
-def target_environment(environment: Callable, org1: Organization, group2: models.Group) -> Environment:
+def target_environment(environment: Callable, org1: Organization, group2: Group) -> Environment:
     yield environment(
         organization=org1,
         awsAccountId=TARGET_ACCOUNT_ENV,
@@ -85,7 +85,7 @@ def target_environment(environment: Callable, org1: Organization, group2: models
 
 @pytest.fixture(scope="module")
 def target_environment_group(environment_group: Callable, target_environment: Environment,
-                             group2: models.Group) -> EnvironmentGroup:
+                             group2: Group) -> EnvironmentGroup:
     yield environment_group(
         environment=target_environment,
         group=group2

@@ -1,6 +1,7 @@
 import pytest
 
 import dataall
+from dataall.core.cognito_groups.db.cognito_group_models import Group
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
 from dataall.core.permissions.db.permission import Permission
@@ -47,7 +48,7 @@ def tenant(db):
 @pytest.fixture(scope='module')
 def group(db, user):
     with db.scoped_session() as session:
-        group = dataall.db.models.Group(
+        group = Group(
             name='testadmins', label='testadmins', owner='alice'
         )
         session.add(group)
