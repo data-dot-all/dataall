@@ -13,7 +13,6 @@ export * from './getTrustAccount';
 export * from './inviteGroup';
 export * from './listAllEnvironmentConsumptionRoles';
 export * from './listAllEnvironmentGroups';
-export * from './listDataItemsSharedWithEnvGroup';
 export * from './listDatasetsCreatedInEnvironment';
 export * from './listDatasetsOwnedByEnvGroup';
 export * from './listEnvironmentConsumptionRoles';

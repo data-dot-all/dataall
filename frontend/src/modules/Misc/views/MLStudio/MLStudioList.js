@@ -20,10 +20,7 @@ import {
   useSettings
 } from '../../../../design';
 import { SET_ERROR, useDispatch } from '../../../../globalErrors';
-import {
-  listSagemakerStudioUsers,
-  useClient
-} from '../../../../services';
+import { listSagemakerStudioUsers, useClient } from '../../../../services';
 import MLStudioListItem from './MLStudioListItem';
 
 function MLStudioPageHeader() {
