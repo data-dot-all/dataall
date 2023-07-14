@@ -6,17 +6,6 @@ class SortDirection(Enum):
     desc = 'desc'
 
 
-class PrincipalType(Enum):
-    Any = 'Any'
-    Organization = 'Organization'
-    Environment = 'Environment'
-    User = 'User'
-    Project = 'Project'
-    Public = 'Public'
-    Group = 'Group'
-    ConsumptionRole = 'ConsumptionRole'
-
-
 class Language(Enum):
     English = 'English'
     French = 'French'

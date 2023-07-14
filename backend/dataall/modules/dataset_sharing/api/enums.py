@@ -56,3 +56,14 @@ class ShareItemActions(GraphQLEnumMapper):
     RemoveItem = 'RemoveItem'
     Failure = 'Failure'
     Success = 'Success'
+
+
+class PrincipalType(GraphQLEnumMapper):
+    Any = 'Any'
+    Organization = 'Organization'
+    Environment = 'Environment'
+    User = 'User'
+    Project = 'Project'
+    Public = 'Public'
+    Group = 'Group'
+    ConsumptionRole = 'ConsumptionRole'

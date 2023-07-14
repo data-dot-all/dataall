@@ -5,7 +5,7 @@ import pytest
 import dataall
 from dataall.core.environment.db.models import Environment
 from dataall.core.organizations.db.organization_models import Organization, OrganisationUserRole
-from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType
+from dataall.modules.dataset_sharing.db.enums import ShareObjectStatus, ShareItemStatus, ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetTable, Dataset
 from dataall.modules.datasets.tasks.dataset_subscription_task import DatasetSubscriptionService
@@ -121,7 +121,7 @@ def share(
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
-            principalType=dataall.api.constants.PrincipalType.Environment.value,
+            principalType=PrincipalType.Environment.value,
             status=ShareObjectStatus.Approved.value,
         )
         session.add(share)

@@ -12,7 +12,6 @@ from ariadne import (
 
 from . import (
     Group,
-    Principal,
 )
 from ...api.constants import GraphQLEnumMapper
 from ...base.api import gql

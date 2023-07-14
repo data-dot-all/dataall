@@ -2,11 +2,9 @@ import random
 import typing
 import pytest
 
-import dataall
-from dataall.api.constants import PrincipalType
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.dataset_sharing.api.enums import ShareableType
+from dataall.modules.dataset_sharing.api.enums import ShareableType, PrincipalType
 from dataall.modules.dataset_sharing.db.enums import ShareObjectActions, ShareItemActions, ShareObjectStatus, \
     ShareItemStatus
 from dataall.modules.dataset_sharing.db.models import ShareObject, ShareObjectItem

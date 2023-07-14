@@ -2,9 +2,8 @@ import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.db import models
-from dataall.api import constants
 from dataall.core.environment.db.models import Environment, EnvironmentGroup
-from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus
+from dataall.modules.dataset_sharing.db.enums import ShareableType, ShareItemStatus, ShareObjectStatus, PrincipalType
 from dataall.modules.dataset_sharing.db.models import ShareObjectItem, ShareObject
 from dataall.modules.datasets_base.db.models import DatasetStorageLocation, DatasetTable, Dataset
 
@@ -184,7 +183,7 @@ def share(db):
                 environmentUri=environment.environmentUri,
                 owner="bob",
                 principalId=environment.SamlGroupName,
-                principalType=constants.PrincipalType.Group.value,
+                principalType=PrincipalType.Group.value,
                 principalIAMRoleName=env_group.environmentIAMRoleName,
                 status=ShareObjectStatus.Approved.value,
             )
