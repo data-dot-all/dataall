@@ -44,6 +44,8 @@ class Dataset(Resource, Base):
     AwsAccountId = Column(String, nullable=False)
     S3BucketName = Column(String, nullable=False)
     GlueDatabaseName = Column(String, nullable=False)
+    GlueCrawlerName = Column(String)
+    GlueCrawlerSchedule = Column(String)
     GlueProfilingJobName = Column(String)
     GlueProfilingTriggerSchedule = Column(String)
     GlueProfilingTriggerName = Column(String)
