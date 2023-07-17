@@ -210,7 +210,7 @@ class PipelineStack(Stack):
             else:
                 raise Exception
         except Exception as e:
-            PipelineStack.initialize_repo(pipeline, code_dir_path)
+            PipelineStack.initialize_repo(pipeline, code_dir_path, env_vars)
 
             PipelineStack.write_deploy_buildspec(path=code_dir_path, output_file=f"{pipeline.repo}/deploy_buildspec.yaml")
 
@@ -520,7 +520,7 @@ class PipelineStack(Stack):
         with open(f'{path}/{output_file}', 'w') as text_file:
             print(json, file=text_file)
 
-    def initialize_repo(pipeline, code_dir_path):
+    def initialize_repo(pipeline, code_dir_path, env_vars):
 
         venv_name = ".venv"
 
@@ -539,7 +539,8 @@ class PipelineStack(Stack):
             text=True,
             shell=True,  # nosec
             encoding='utf-8',
-            cwd=code_dir_path
+            cwd=code_dir_path,
+            env=env_vars
         )
         if process.returncode == 0:
             logger.info("Successfully Initialized New CDK/DDK App")
