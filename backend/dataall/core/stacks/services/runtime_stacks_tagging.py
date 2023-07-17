@@ -7,7 +7,7 @@ from aws_cdk import Stack, Tags
 from dataall import db
 from dataall.core.environment.db.models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.organizations.db.organization import Organization
 from dataall.core.stacks.db.keyvaluetag import KeyValueTag
 from dataall.core.stacks.db.stack_models import KeyValueTag as KeyValueTagModel
 
@@ -123,7 +123,7 @@ class TagsUtil:
 
     @classmethod
     def get_organization(cls, session, environment):
-        organisation: Organization = Organization.get_organization_by_uri(
+        organisation = Organization.get_organization_by_uri(
             session, environment.organizationUri
         )
         return organisation
